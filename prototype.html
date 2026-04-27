@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReviewLens - 评论分析系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,sans-serif;background:#F7F8FC;color:#2D3436;line-height:1.6;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+:root{--pri:#6C5CE7;--pri-l:#A29BFE;--pri-d:#5A4BD1;--grn:#00B894;--red:#FF6B6B;--yel:#FDCB6E;--blu:#74B9FF;--bg:#F7F8FC;--card:#FFF;--txt:#2D3436;--txt-l:#636E72;--bdr:#E8EAF0;--shd:0 2px 12px rgba(108,92,231,.08);--r:12px;--sw:260px}
+.btn{padding:12px 28px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit;display:inline-block}
+.btn-primary{background:var(--pri);color:#fff}.btn-primary:hover{background:var(--pri-d);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:2px solid var(--pri);color:var(--pri)}.btn-outline:hover{background:#F0EEFF}
+.btn-white{background:#fff;color:var(--pri)}.btn-white:hover{background:#F0EEFF}
+.btn-white-outline{background:transparent;border:2px solid #fff;color:#fff}.btn-white-outline:hover{background:rgba(255,255,255,.15)}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{background:#e55a5a}
+.btn-sm{padding:8px 18px;font-size:13px}.btn-lg{padding:14px 36px;font-size:16px}
+.tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;margin:2px}
+.tag-pos{background:#E8F8F5;color:var(--grn)}.tag-neg{background:#FFEAEA;color:var(--red)}.tag-neu{background:#FFF3E0;color:#E17055}.tag-topic{background:#F0EEFF;color:var(--pri)}.tag-platform{background:#E8F0FE;color:#2D6CDF}
+
+/* LANDING */
+.landing{display:none;min-height:100vh}.landing.active{display:block}
+.land-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 60px;background:var(--card);border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:20}
+.land-nav-logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:var(--pri)}
+.land-nav-logo span:first-child{font-size:26px}
+.land-hero{text-align:center;padding:80px 60px 60px;background:linear-gradient(180deg,#F0EEFF 0%,var(--bg) 100%)}
+.land-hero h1{font-size:42px;font-weight:800;color:var(--txt);margin-bottom:16px;line-height:1.3}
+.land-hero h1 em{font-style:normal;color:var(--pri)}
+.land-hero p{font-size:18px;color:var(--txt-l);max-width:640px;margin:0 auto 32px}
+.land-section{padding:60px;max-width:1100px;margin:0 auto}
+.land-section h2{font-size:28px;font-weight:700;text-align:center;margin-bottom:8px}
+.land-section .sub{font-size:15px;color:var(--txt-l);text-align:center;margin-bottom:40px}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feature-card{background:var(--card);border-radius:var(--r);padding:28px 24px;box-shadow:var(--shd);text-align:center;transition:transform .2s}
+.feature-card:hover{transform:translateY(-4px)}
+.feature-card .icon{font-size:40px;margin-bottom:12px}
+.feature-card h3{font-size:17px;font-weight:600;margin-bottom:8px}
+.feature-card p{font-size:14px;color:var(--txt-l)}
+.pain-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.pain-card{display:flex;gap:16px;background:var(--card);border-radius:var(--r);padding:24px;box-shadow:var(--shd)}
+.pain-card .icon{font-size:32px;flex-shrink:0}
+.pain-card h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.pain-card p{font-size:13px;color:var(--txt-l)}
+.benefit-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:center}
+.benefit-item .num{font-size:36px;font-weight:800;color:var(--pri)}
+.benefit-item .label{font-size:14px;color:var(--txt-l);margin-top:4px}
+.cta-banner{text-align:center;padding:60px;background:linear-gradient(135deg,var(--pri) 0%,var(--blu) 100%);border-radius:20px;margin:40px 60px 60px;color:#fff}
+.cta-banner h2{font-size:28px;font-weight:700;margin-bottom:12px}
+.cta-banner p{font-size:16px;opacity:.85;margin-bottom:24px}
+/* TRIAL */
+.trial-page{display:none;min-height:100vh}.trial-page.active{display:block}
+.trial-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 60px;background:var(--card);border-bottom:1px solid var(--bdr)}
+.trial-nav-logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:var(--pri);cursor:pointer}
+.trial-nav-logo span:first-child{font-size:26px}
+.trial-content{max-width:900px;margin:0 auto;padding:40px 32px}
+.trial-tip{background:linear-gradient(90deg,#F0EEFF,#E8F8F5);border:1px solid var(--pri-l);border-radius:var(--r);padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;font-size:14px}
+.trial-tip .icon{font-size:24px}
+.trial-tip a{color:var(--pri);font-weight:600;text-decoration:underline}
+.trial-tip.warn{background:linear-gradient(90deg,#FFEAEA,#FFF3E0);border-color:#FDCB6E}
+
+/* LOGIN */
+.login-page{display:none;min-height:100vh;background:linear-gradient(135deg,#A29BFE 0%,#6C5CE7 50%,#74B9FF 100%);align-items:center;justify-content:center}
+.login-page.active{display:flex}
+.login-card{background:var(--card);border-radius:20px;padding:48px 40px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,.15);text-align:center}
+.login-logo{font-size:48px;margin-bottom:8px}
+.login-title{font-size:24px;font-weight:700;color:var(--pri);margin-bottom:4px}
+.login-sub{font-size:14px;color:var(--txt-l);margin-bottom:32px}
+.login-input{width:100%;padding:12px 16px;border:2px solid var(--bdr);border-radius:10px;font-size:15px;margin-bottom:16px;transition:border-color .2s;outline:none;font-family:inherit}
+.login-input:focus{border-color:var(--pri)}
+.login-btn{width:100%;padding:14px;background:var(--pri);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.login-btn:hover{background:var(--pri-d)}
+
+/* APP SHELL */
+.app-shell{display:none;min-height:100vh}.app-shell.active{display:flex}
+.sidebar{width:var(--sw);background:var(--card);border-right:1px solid var(--bdr);padding:20px 0;position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:10}
+.sidebar-logo{padding:0 20px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bdr);margin-bottom:12px}
+.sidebar-logo span:first-child{font-size:28px}.sidebar-logo span:last-child{font-size:18px;font-weight:700;color:var(--pri)}
+.nav-item{padding:12px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;font-size:15px;color:var(--txt-l);margin:2px 8px;border-radius:10px}
+.nav-item:hover{background:#F0EEFF;color:var(--pri)}
+.nav-item.active{background:#F0EEFF;color:var(--pri);font-weight:600}
+.nav-item .icon{font-size:20px;width:24px;text-align:center}
+.sidebar-bottom{margin-top:auto;padding:12px 20px;border-top:1px solid var(--bdr)}
+.lang-toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--txt-l)}
+.lang-toggle .lang-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--bdr);background:transparent;cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s}
+.lang-toggle .lang-btn.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+.user-info{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px;color:var(--txt-l)}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--pri-l);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff}
+.logout-btn{margin-left:auto;font-size:12px;color:var(--red);cursor:pointer;border:none;background:none;font-family:inherit}
+.main{margin-left:var(--sw);flex:1;padding:28px 32px;min-height:100vh}
+.page{display:none}.page.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-title{font-size:22px;font-weight:700}.page-desc{font-size:14px;color:var(--txt-l);margin-top:2px}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:13px;font-weight:600;color:var(--txt-l)}
+.form-label .req{color:var(--red)}
+.form-input,.form-select{padding:10px 14px;border:2px solid var(--bdr);border-radius:10px;font-size:14px;outline:none;font-family:inherit;transition:border-color .2s}
+.form-input:focus,.form-select:focus{border-color:var(--pri)}
+.step-indicator{display:flex;gap:0;margin-bottom:28px}
+.step{flex:1;text-align:center;padding:12px;font-size:14px;font-weight:600;color:var(--txt-l);background:var(--card);border-bottom:3px solid var(--bdr);transition:all .2s}
+.step.active{color:var(--pri);border-bottom-color:var(--pri);background:#F0EEFF}
+.step.done{color:var(--grn);border-bottom-color:var(--grn)}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.metric-card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shd);position:relative;overflow:hidden}
+.metric-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:4px 0 0 4px}
+.metric-card:nth-child(1)::before{background:var(--pri)}
+.metric-card:nth-child(2)::before{background:var(--grn)}
+.metric-card:nth-child(3)::before{background:var(--red)}
+.metric-card:nth-child(4)::before{background:var(--yel)}
+.metric-icon{font-size:28px;margin-bottom:8px}
+.metric-val{font-size:28px;font-weight:700}.metric-label{font-size:13px;color:var(--txt-l);margin-top:2px}
+.metric-change{font-size:12px;margin-top:6px;display:inline-block;padding:2px 8px;border-radius:20px}
+.metric-change.up{background:#E8F8F5;color:var(--grn)}.metric-change.down{background:#FFEAEA;color:var(--red)}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shd);margin-bottom:20px}
+.chart-title{font-size:15px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-wrap{position:relative;height:260px}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:14px}
+.data-table th{text-align:left;padding:12px 16px;background:#F7F8FC;color:var(--txt-l);font-weight:600;font-size:13px;border-bottom:1px solid var(--bdr)}
+.data-table td{padding:12px 16px;border-bottom:1px solid var(--bdr)}
+.data-table tr:hover td{background:#FAFBFF}
+.data-table input[type=checkbox]{width:16px;height:16px;accent-color:var(--pri)}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--pri-l);border-radius:var(--r);padding:60px 40px;text-align:center;background:#FAFAFF;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:var(--pri);background:#F0EEFF}
+.upload-zone .icon{font-size:48px;margin-bottom:12px}
+.upload-zone .title{font-size:16px;font-weight:600;margin-bottom:4px}
+.upload-zone .hint{font-size:13px;color:var(--txt-l)}
+.upload-preview{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shd);margin-top:16px;display:none}
+.upload-preview.show{display:block}
+.progress-bar{width:100%;height:6px;background:var(--bdr);border-radius:3px;margin-top:16px;overflow:hidden;display:none}
+.progress-bar.show{display:block}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--pri),var(--blu));border-radius:3px;width:0%;transition:width .3s}
+
+/* PRODUCT CARD (Dashboard) */
+.product-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.product-toolbar .search{flex:1;min-width:200px;padding:10px 16px;border:2px solid var(--bdr);border-radius:10px;font-size:14px;outline:none;font-family:inherit}
+.product-toolbar .search:focus{border-color:var(--pri)}
+.product-block{background:var(--card);border-radius:16px;padding:28px;box-shadow:var(--shd);margin-bottom:24px;border:1px solid var(--bdr)}
+.product-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.product-id{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+.product-id .sku{color:var(--pri)}.product-id .name{color:var(--txt)}
+.product-actions{display:flex;gap:8px}
+.compare-bar{background:#F0EEFF;border-radius:var(--r);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;font-size:14px}
+.compare-item{display:flex;align-items:center;gap:6px}
+.compare-item .old{color:var(--txt-l);text-decoration:line-through}
+.compare-item .arrow{font-weight:700}
+.compare-item .arrow.up{color:var(--grn)}.compare-item .arrow.down{color:var(--red)}
+.compare-item .new{font-weight:700}
+.action-card{background:linear-gradient(135deg,#F0EEFF,#E8F8F5);border-radius:var(--r);padding:20px;margin-top:20px;border-left:4px solid var(--pri)}
+.action-card h4{font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.action-item{font-size:14px;padding:8px 0;border-bottom:1px solid rgba(108,92,231,.1);display:flex;gap:8px}
+.action-item:last-child{border:none}
+.action-item .badge{flex-shrink:0}
+
+/* RESULTS */
+.section-title{font-size:18px;font-weight:700;margin:28px 0 16px;display:flex;align-items:center;gap:8px}
+.view-source{color:var(--pri);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:6px;border:1px solid var(--pri-l);background:#FAFAFF;transition:all .15s}
+.view-source:hover{background:#F0EEFF}
+.source-panel{display:none;background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shd);margin-top:16px;border-left:4px solid var(--pri)}
+.source-panel.show{display:block}
+.source-panel .source-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.source-panel .source-header h4{font-size:15px;font-weight:600}
+.source-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--txt-l)}
+.float-bar{position:sticky;bottom:0;background:var(--card);border-top:2px solid var(--pri);padding:12px 20px;display:none;align-items:center;justify-content:space-between;border-radius:12px 12px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.1);z-index:5}
+.float-bar.show{display:flex}
+.keyword-cloud{display:flex;flex-wrap:wrap;gap:8px;padding:16px 0}
+.keyword{padding:6px 14px;border-radius:20px;font-size:13px;background:#F0EEFF;color:var(--pri)}
+.keyword.lg{font-size:18px;font-weight:600;padding:8px 18px}
+.keyword.md{font-size:15px;font-weight:500}
+.keyword.sm{font-size:12px}
+
+/* HISTORY */
+.hist-layout{display:grid;grid-template-columns:260px 1fr;gap:20px}
+.hist-sidebar{background:var(--card);border-radius:var(--r);padding:16px;box-shadow:var(--shd);height:fit-content;position:sticky;top:20px}
+.hist-sku-item{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .15s;margin-bottom:4px}
+.hist-sku-item:hover{background:#F0EEFF}
+.hist-sku-item.active{background:#F0EEFF;color:var(--pri);font-weight:600}
+.hist-sku-item .sku-code{font-weight:600;font-size:13px}
+.hist-sku-item .sku-name{font-size:12px;color:var(--txt-l)}
+.batch-card{background:var(--card);border-radius:var(--r);padding:16px 20px;box-shadow:var(--shd);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;transition:all .15s}
+.batch-card:hover{box-shadow:0 4px 20px rgba(108,92,231,.12)}
+
+/* SETTINGS */
+.settings-section{background:var(--card);border-radius:var(--r);padding:24px;box-shadow:var(--shd);margin-bottom:20px}
+.settings-section h3{font-size:16px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.rule-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bdr);flex-wrap:wrap;font-size:14px}
+.rule-row:last-child{border:none}
+.rule-input{width:80px;padding:6px 10px;border:2px solid var(--bdr);border-radius:8px;font-size:14px;text-align:center;outline:none;font-family:inherit}
+.rule-input:focus{border-color:var(--pri)}
+.toggle{width:44px;height:24px;background:var(--bdr);border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:var(--grn)}
+.toggle::after{content:'';width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s}
+.toggle.on::after{left:22px}
+
+@media(max-width:1024px){.metrics{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}.feature-grid{grid-template-columns:1fr}.pain-grid{grid-template-columns:1fr}.benefit-row{grid-template-columns:repeat(2,1fr)}.hist-layout{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.land-nav{padding:16px 20px}.land-hero{padding:40px 20px}.land-section{padding:40px 20px}.cta-banner{margin:20px}}
+</style>
+</head>
+<body>
+<!-- ===== LANDING PAGE ===== -->
+<div class="landing active" id="landingPage">
+  <nav class="land-nav"><div class="land-nav-logo"><span>🔍</span><span>ReviewLens</span></div><div style="display:flex;gap:12px"><button class="btn btn-outline btn-sm" onclick="showLogin()">登录</button><button class="btn btn-primary btn-sm" onclick="showTrial()">免费试用</button></div></nav>
+  <div class="land-hero">
+    <h1>跨境电商评论，<em>一键读懂</em></h1>
+    <p>上传评论文件，AI 自动提取产品问题与亮点，帮你从海量评论中找到真正影响销量的关键因素</p>
+    <div style="display:flex;gap:16px;justify-content:center"><button class="btn btn-primary btn-lg" onclick="showTrial()">立即免费试用</button><button class="btn btn-outline btn-lg" onclick="showLogin()">已有账号，登录</button></div>
+  </div>
+  <div class="land-section">
+    <h2>为什么我们做了 ReviewLens？</h2>
+    <div class="sub">跨境卖家每天面对成百上千条多语言评论，人工阅读效率低、遗漏多、无法量化</div>
+    <div class="pain-grid">
+      <div class="pain-card"><div class="icon">😩</div><div><h3>人工读评论太慢</h3><p>一个 SKU 上千条评论，人工逐条阅读需要数小时，且容易遗漏关键信息</p></div></div>
+      <div class="pain-card"><div class="icon">🌍</div><div><h3>多语言难以处理</h3><p>评论涉及英语、西班牙语、法语等多种语言，人工翻译成本高、效率低</p></div></div>
+      <div class="pain-card"><div class="icon">📊</div><div><h3>无法量化问题严重程度</h3><p>知道有差评，但不知道哪个问题被提及最多、影响最大</p></div></div>
+      <div class="pain-card"><div class="icon">🔄</div><div><h3>缺乏持续追踪</h3><p>改进产品后无法对比前后评论变化，不知道优化是否有效</p></div></div>
+    </div>
+  </div>
+  <div class="land-section" style="background:#FAFAFF;margin:0;max-width:100%;padding:60px calc((100% - 1100px)/2)">
+    <h2>相比竞品，我们的核心优势</h2>
+    <div class="sub">不只是情感分析，而是直接告诉你「产品哪里好、哪里差、该怎么改」</div>
+    <div class="feature-grid">
+      <div class="feature-card"><div class="icon">🎯</div><h3>问题 & 亮点直接提取</h3><p>直接输出 TOP10 产品问题和亮点，附带原文溯源</p></div>
+      <div class="feature-card"><div class="icon">📁</div><h3>支持文件批量上传</h3><p>直接上传 CSV/XLSX，支持 Amazon、Shopee、Temu 等平台格式</p></div>
+      <div class="feature-card"><div class="icon">🔔</div><h3>钉钉实时告警</h3><p>差评率超阈值自动推送钉钉通知，第一时间响应</p></div>
+      <div class="feature-card"><div class="icon">📈</div><h3>环比趋势追踪</h3><p>按批次自动对比，验证产品改进效果</p></div>
+      <div class="feature-card"><div class="icon">💰</div><h3>成本仅为竞品 1/10</h3><p>专注评论分析，价格更亲民，功能更聚焦</p></div>
+      <div class="feature-card"><div class="icon">🌐</div><h3>中英双语界面</h3><p>界面支持中英文切换，适合跨境团队协作</p></div>
+    </div>
+  </div>
+  <div class="land-section">
+    <h2>使用 ReviewLens 后</h2><div class="sub">数据驱动的评论分析，让每一次产品决策都有据可依</div>
+    <div class="benefit-row">
+      <div class="benefit-item"><div class="num">90%</div><div class="label">评论分析时间节省</div></div>
+      <div class="benefit-item"><div class="num">TOP10</div><div class="label">精准定位核心问题</div></div>
+      <div class="benefit-item"><div class="num">24h</div><div class="label">差评实时告警响应</div></div>
+      <div class="benefit-item"><div class="num">30天</div><div class="label">环比追踪改进效果</div></div>
+    </div>
+  </div>
+  <div class="cta-banner"><h2>现在就开始分析你的评论</h2><p>无需注册，上传文件即可体验 AI 评论分析的效果</p><div style="display:flex;gap:16px;justify-content:center"><button class="btn btn-white btn-lg" onclick="showTrial()">免费试用</button><button class="btn btn-white-outline btn-lg" onclick="showLogin()">登录解锁完整功能</button></div></div>
+</div>
+
+<!-- ===== TRIAL PAGE ===== -->
+<div class="trial-page" id="trialPage">
+  <nav class="trial-nav"><div class="trial-nav-logo" onclick="showLanding()"><span>🔍</span><span>ReviewLens</span></div><div><button class="btn btn-outline btn-sm" onclick="showLogin()">登录</button></div></nav>
+  <div class="trial-content">
+    <div class="trial-tip"><div class="icon">💡</div><div>试用模式：单次分析，不保存历史记录，不支持导出和环比分析。<a href="javascript:showLogin()">登录</a> 解锁完整功能。</div></div>
+    <div class="page-title" style="margin-bottom:20px">免费试用</div>
+    <div class="form-grid">
+      <div class="form-group"><div class="form-label">产品编号 <span class="req">*</span></div><input class="form-input" placeholder="SKU 或任何可识别该产品的唯一编码"></div>
+      <div class="form-group"><div class="form-label">产品中文名称</div><input class="form-input" placeholder="选填"></div>
+      <div class="form-group"><div class="form-label">平台来源 <span class="req">*</span></div><select class="form-select"><option>请选择...</option><option>Amazon</option><option>Shopee</option><option>Temu</option><option>eBay</option><option>AliExpress</option></select></div>
+      <div class="form-group"><div class="form-label">产品类目 <span class="req">*</span></div><select class="form-select"><option>请选择...</option><option>电子产品</option><option>服装鞋帽</option><option>家居用品</option><option>美妆个护</option></select></div>
+    </div>
+    <div class="upload-zone" onclick="fakeTrialUpload()"><div class="icon">📁</div><div class="title">拖拽文件到此处，或点击选择</div><div class="hint">支持 CSV / XLSX，试用限制 500 条</div></div>
+    <div class="progress-bar" id="trialProgress"><div class="progress-fill" id="trialFill"></div></div>
+    <div class="upload-preview" id="trialPreview">
+      <div class="chart-title">📄 文件预览</div>
+      <table class="data-table"><thead><tr><th>ID</th><th>评论内容</th><th>评分</th><th>日期</th></tr></thead><tbody><tr><td>1</td><td>Great quality, very satisfied!</td><td>⭐5</td><td>2026-04-20</td></tr><tr><td>2</td><td>Shipping was slow.</td><td>⭐3</td><td>2026-04-19</td></tr><tr><td>3</td><td>Broke after one day.</td><td>⭐1</td><td>2026-04-18</td></tr></tbody></table>
+      <div style="margin-top:16px;text-align:right"><button class="btn btn-primary" onclick="fakeTrialAnalyze()">开始分析</button></div>
+    </div>
+    <div id="trialResults" style="display:none">
+      <div class="trial-tip warn" style="margin-top:24px"><div class="icon">🔒</div><div>试用模式下无法导出和查看完整原文。<a href="javascript:showLogin()">登录</a> 解锁全部功能。</div></div>
+      <div class="section-title">📊 分析概览</div>
+      <div class="metrics" style="grid-template-columns:repeat(4,1fr)">
+        <div class="metric-card"><div class="metric-icon">💬</div><div class="metric-val">486</div><div class="metric-label">总评论数</div></div>
+        <div class="metric-card"><div class="metric-icon">😊</div><div class="metric-val">68.5%</div><div class="metric-label">正面率</div></div>
+        <div class="metric-card"><div class="metric-icon">😟</div><div class="metric-val">21.2%</div><div class="metric-label">负面率</div></div>
+        <div class="metric-card"><div class="metric-icon">⭐</div><div class="metric-val">3.9</div><div class="metric-label">平均评分</div></div>
+      </div>
+      <div class="charts-row"><div class="chart-card" style="margin:0"><div class="chart-title">🎯 情感分布</div><div class="chart-wrap"><canvas id="trialPie"></canvas></div></div><div class="chart-card" style="margin:0"><div class="chart-title">🏷️ 热门关键词</div><div class="keyword-cloud"><span class="keyword lg">quality</span><span class="keyword md">shipping</span><span class="keyword lg">price</span><span class="keyword sm">packaging</span><span class="keyword md">design</span><span class="keyword sm">broken</span></div></div></div>
+      <div class="section-title">❌ TOP 10 产品问题</div>
+      <div class="chart-card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>#</th><th>问题描述</th><th>提及次数</th><th>占比</th></tr></thead><tbody><tr><td>1</td><td>产品质量差，容易损坏</td><td>52</td><td>10.7%</td></tr><tr><td>2</td><td>物流速度慢</td><td>45</td><td>9.3%</td></tr><tr><td>3</td><td>实物与图片不符</td><td>38</td><td>7.8%</td></tr><tr><td>4</td><td>尺寸偏差大</td><td>31</td><td>6.4%</td></tr><tr><td>5</td><td>包装简陋</td><td>28</td><td>5.8%</td></tr></tbody></table></div>
+      <div class="section-title" style="margin-top:24px">✅ TOP 10 产品亮点</div>
+      <div class="chart-card" style="padding:0;overflow:hidden"><table class="data-table"><thead><tr><th>#</th><th>亮点描述</th><th>提及次数</th><th>占比</th></tr></thead><tbody><tr><td>1</td><td>性价比高</td><td>68</td><td>14.0%</td></tr><tr><td>2</td><td>外观设计好看</td><td>55</td><td>11.3%</td></tr><tr><td>3</td><td>材质舒适</td><td>42</td><td>8.6%</td></tr><tr><td>4</td><td>发货速度快</td><td>38</td><td>7.8%</td></tr><tr><td>5</td><td>颜色与图片一致</td><td>33</td><td>6.8%</td></tr></tbody></table></div>
+      <div class="trial-tip warn" style="margin-top:20px"><div class="icon">🔒</div><div>试用仅显示前 5 条。<a href="javascript:showLogin()">登录</a> 查看完整 TOP10、原文 TOP20、导出报告、环比分析。</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN PAGE ===== -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">🔍</div><div class="login-title">ReviewLens</div><div class="login-sub">跨境电商评论分析平台</div>
+    <input class="login-input" type="text" placeholder="用户名"><input class="login-input" type="password" placeholder="密码">
+    <button class="login-btn" onclick="doLogin()">登 录</button>
+    <div style="margin-top:16px;font-size:13px;color:var(--txt-l)">还没有账号？<a href="javascript:showTrial()" style="color:var(--pri);font-weight:600">先免费试用</a></div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div class="app-shell" id="appShell">
+  <nav class="sidebar">
+    <div class="sidebar-logo"><span>🔍</span><span>ReviewLens</span></div>
+    <div class="nav-item active" onclick="goPage('dashboard')"><span class="icon">📊</span><span>仪表盘</span></div>
+    <div class="nav-item" onclick="goPage('upload')"><span class="icon">📤</span><span>上传用户评论</span></div>
+    <div class="nav-item" onclick="goPage('results')"><span class="icon">📋</span><span>分析结果</span></div>
+    <div class="nav-item" onclick="goPage('copywriter')"><span class="icon">✍️</span><span>宣传文案</span></div>
+    <div class="nav-item" onclick="goPage('history')"><span class="icon">🕐</span><span>历史记录</span></div>
+    <div class="nav-item" onclick="goPage('settings')"><span class="icon">⚙️</span><span>推送设置</span></div>
+    <div class="sidebar-bottom">
+      <div class="lang-toggle">🌐 <button class="lang-btn active" onclick="setLang('zh')">中文</button><button class="lang-btn" onclick="setLang('en')">EN</button></div>
+      <div class="user-info"><div class="user-avatar">E</div><span>Erika</span><button class="logout-btn" onclick="doLogout()">退出</button></div>
+    </div>
+  </nav>
+  <div class="main">
+<!-- ===== UPLOAD PAGE ===== -->
+    <div class="page" id="page-upload">
+      <div class="page-header"><div><div class="page-title">上传用户评论</div><div class="page-desc">填写产品信息 → 上传评论文件 → AI 自动分析</div></div></div>
+      <div class="step-indicator">
+        <div class="step active" id="step1">① 填写产品信息</div>
+        <div class="step" id="step2">② 上传评论文件</div>
+        <div class="step" id="step3">③ 分析中</div>
+      </div>
+      <!-- Step 1: Form -->
+      <div id="uploadStep1">
+        <div class="form-grid">
+          <div class="form-group"><div class="form-label">产品编号 <span class="req">*</span></div><input class="form-input" placeholder="SKU 或任何可识别该产品的唯一编码"></div>
+          <div class="form-group"><div class="form-label">产品中文名称</div><input class="form-input" placeholder="选填，如：无线蓝牙耳机"></div>
+          <div class="form-group"><div class="form-label">平台来源 <span class="req">*</span></div><select class="form-select"><option>请选择...</option><option>Amazon</option><option>Shopee</option><option>Temu</option><option>eBay</option><option>AliExpress</option><option>其他</option></select></div>
+          <div class="form-group"><div class="form-label">产品类目 <span class="req">*</span></div><select class="form-select"><option>请选择...</option><option>电子产品</option><option>服装鞋帽</option><option>家居用品</option><option>美妆个护</option><option>玩具母婴</option></select></div>
+          <div class="form-group"><div class="form-label">版本号 <span class="req">*</span></div><input class="form-input" placeholder="如：V1、V2"></div>
+          <div class="form-group"><div class="form-label">分析时间段（选填）</div><div style="display:flex;gap:8px;align-items:center"><input class="form-input" type="date"><span style="color:var(--txt-l)">至</span><input class="form-input" type="date"></div></div>
+        </div>
+        <div style="text-align:right"><button class="btn btn-primary" onclick="goUploadStep(2)">下一步：上传文件 →</button></div>
+      </div>
+      <!-- Step 2: Upload -->
+      <div id="uploadStep2" style="display:none">
+        <div class="trial-tip warn" style="margin-bottom:16px"><div class="icon">⚠️</div><div>上传的文件必须包含「评论内容」和「日期」字段，否则将无法上传成功。</div></div>
+        <div class="upload-zone" onclick="fakeUpload()"><div class="icon">📁</div><div class="title">拖拽文件到此处，或点击选择</div><div class="hint">支持 CSV / XLSX 格式，单次最大 50MB</div></div>
+        <div class="progress-bar" id="uploadProgress"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="upload-preview" id="uploadPreview">
+          <div class="chart-title">📄 文件预览（前 5 行）</div>
+          <table class="data-table"><thead><tr><th>ID</th><th>评论内容</th><th>评分</th><th>日期</th></tr></thead><tbody><tr><td>1</td><td>Great quality, very satisfied with the product!</td><td>⭐5</td><td>2026-04-20</td></tr><tr><td>2</td><td>Shipping was slow, but product is okay.</td><td>⭐3</td><td>2026-04-19</td></tr><tr><td>3</td><td>Terrible quality, broke after one day.</td><td>⭐1</td><td>2026-04-18</td></tr><tr><td>4</td><td>Love the design, exactly as described.</td><td>⭐5</td><td>2026-04-17</td></tr><tr><td>5</td><td>Not worth the price, very disappointed.</td><td>⭐2</td><td>2026-04-16</td></tr></tbody></table>
+          <div style="display:flex;justify-content:space-between;margin-top:16px"><button class="btn btn-outline" onclick="goUploadStep(1)">← 返回修改信息</button><button class="btn btn-primary" onclick="goUploadStep(3)">开始分析 →</button></div>
+        </div>
+      </div>
+      <!-- Step 3: Analyzing -->
+      <div id="uploadStep3" style="display:none;text-align:center;padding:60px 0">
+        <div style="font-size:48px;margin-bottom:16px">🔄</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:8px">AI 正在分析评论...</div>
+        <div style="font-size:14px;color:var(--txt-l);margin-bottom:24px">正在提取产品问题与亮点，预计需要 30 秒</div>
+        <div class="progress-bar show" style="max-width:400px;margin:0 auto"><div class="progress-fill" id="analyzeFill"></div></div>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header"><div><div class="page-title">仪表盘</div><div class="page-desc">按产品维度查看评论分析全貌</div></div></div>
+      <div class="product-toolbar">
+        <input class="search" placeholder="搜索 SKU 或产品名称...">
+        <button class="btn btn-outline btn-sm">排序：最近更新</button>
+        <span style="font-size:13px;color:var(--txt-l)">共 3 个产品</span>
+      </div>
+
+      <!-- Product 1 -->
+      <div class="product-block" id="prod1">
+        <div class="product-head">
+          <div class="product-id"><span class="sku">B09XK7G4QL</span><span class="name">无线蓝牙耳机</span><span class="tag tag-platform">Amazon</span></div>
+          <div class="product-actions"><button class="btn btn-outline btn-sm" onclick="pinProduct('prod1')">📌 置顶</button><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l)" onclick="if(confirm('确定删除该产品所有数据？'))this.closest('.product-block').remove()">🗑️ 删除</button></div>
+        </div>
+        <div class="compare-bar" style="margin-bottom:12px;border-left:4px solid var(--pri)">
+          <span style="font-weight:600">🔄 版本环比（同时间段 V1 vs V2 · 10-01~10-31）</span>
+          <div class="compare-item">正面率 <span class="old">65.2%</span> <span class="arrow up">→ 72.1% ↑6.9%</span></div>
+          <div class="compare-item">负面率 <span class="old">22.3%</span> <span class="arrow up">→ 18.7% ↓3.6%</span></div>
+          <div class="compare-item">评分 <span class="old">3.8</span> <span class="arrow up">→ 4.3 ↑0.5</span></div>
+        </div>
+        <div class="compare-bar" style="border-left:4px solid var(--blu)">
+          <span style="font-weight:600">📅 时间环比（同版本 V2 · 09月 vs 10月）</span>
+          <div style="font-size:13px;color:var(--txt-l)">暂无 V2 版本 09 月数据，上传后自动生成时间环比。</div>
+        </div>
+        <div class="metrics">
+          <div class="metric-card"><div class="metric-icon">💬</div><div class="metric-val">4,196</div><div class="metric-label">总评论数</div><div class="metric-change up">↑ 856</div></div>
+          <div class="metric-card"><div class="metric-icon">😊</div><div class="metric-val">72.1%</div><div class="metric-label">正面率</div><div class="metric-change up">↑ 6.9%</div></div>
+          <div class="metric-card"><div class="metric-icon">😟</div><div class="metric-val">18.7%</div><div class="metric-label">负面率</div><div class="metric-change up">↓ 3.6%</div></div>
+          <div class="metric-card"><div class="metric-icon">⭐</div><div class="metric-val">4.3</div><div class="metric-label">平均评分</div><div class="metric-change up">↑ 0.5</div></div>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card" style="margin:0"><div class="chart-title">📈 情感趋势（按批次）</div><div class="chart-wrap"><canvas id="trend1"></canvas></div></div>
+          <div class="chart-card" style="margin:0"><div class="chart-title">📊 评分分布</div><div class="chart-wrap"><canvas id="dist1"></canvas></div></div>
+        </div>
+        <div class="chart-card" style="margin-bottom:0">
+          <div class="chart-title">🕐 批次记录</div>
+          <table class="data-table"><thead><tr><th>批次</th><th>时间段</th><th>评论数</th><th>正面率</th><th>操作</th></tr></thead><tbody>
+            <tr><td>2026年4月第1批</td><td>04-01 ~ 04-15</td><td>1,856</td><td><span class="tag tag-pos">65.2%</span></td><td><span class="view-source" onclick="goPage('results')">查看结果</span></td></tr>
+            <tr><td>2026年4月第2批</td><td>04-16 ~ 04-27</td><td>2,340</td><td><span class="tag tag-pos">72.1%</span></td><td><span class="view-source" onclick="goPage('results')">查看结果</span></td></tr>
+          </tbody></table>
+        </div>
+        <div class="action-card">
+          <h4>💡 行动建议</h4>
+          <div class="action-item"><span class="badge tag tag-pos">↑ 改善</span><span>正面率从 65.2% 提升至 72.1%，产品改进方向正确，建议继续保持</span></div>
+          <div class="action-item"><span class="badge tag tag-neg">⚠️ 关注</span><span>「物流慢」问题占比从 4.2% 上升到 6.7%，建议：考虑切换物流渠道或使用海外仓</span></div>
+          <div class="action-item"><span class="badge tag tag-pos">📢 营销</span><span>「性价比高」亮点占比 13.3%，建议：在 listing 中强化性价比卖点</span></div>
+        </div>
+      </div>
+
+      <!-- Product 2 -->
+      <div class="product-block" id="prod2">
+        <div class="product-head">
+          <div class="product-id"><span class="sku">SP-2024-0891</span><span class="name">硅胶手机壳</span><span class="tag tag-platform">Shopee</span></div>
+          <div class="product-actions"><button class="btn btn-outline btn-sm" onclick="pinProduct('prod2')">📌 置顶</button><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l)" onclick="if(confirm('确定删除？'))this.closest('.product-block').remove()">🗑️ 删除</button></div>
+        </div>
+        <div class="compare-bar" style="margin-bottom:12px;border-left:4px solid var(--pri)">
+          <span style="font-weight:600">🔄 版本环比（同时间段 V1 vs V2 · 10-01~10-31）</span>
+          <div class="compare-item">正面率 <span class="old">58.4%</span> <span class="arrow down">→ 52.1% ↓6.3%</span></div>
+          <div class="compare-item">负面率 <span class="old">25.1%</span> <span class="arrow down">→ 31.8% ↑6.7%</span></div>
+          <div class="compare-item">评分 <span class="old">3.6</span> <span class="arrow down">→ 3.2 ↓0.4</span></div>
+        </div>
+        <div class="compare-bar" style="border-left:4px solid var(--blu)">
+          <span style="font-weight:600">📅 时间环比（同版本 V2 · 09月 vs 10月）</span>
+          <div class="compare-item">正面率 <span class="old">56.8%</span> <span class="arrow down">→ 52.1% ↓4.7%</span></div>
+          <div class="compare-item">负面率 <span class="old">27.3%</span> <span class="arrow down">→ 31.8% ↑4.5%</span></div>
+          <div class="compare-item">评分 <span class="old">3.4</span> <span class="arrow down">→ 3.2 ↓0.2</span></div>
+        </div>
+        <div class="metrics">
+          <div class="metric-card"><div class="metric-icon">💬</div><div class="metric-val">3,012</div><div class="metric-label">总评论数</div></div>
+          <div class="metric-card"><div class="metric-icon">😊</div><div class="metric-val">52.1%</div><div class="metric-label">正面率</div><div class="metric-change down">↓ 6.3%</div></div>
+          <div class="metric-card"><div class="metric-icon">😟</div><div class="metric-val">31.8%</div><div class="metric-label">负面率</div><div class="metric-change down">↑ 6.7%</div></div>
+          <div class="metric-card"><div class="metric-icon">⭐</div><div class="metric-val">3.2</div><div class="metric-label">平均评分</div><div class="metric-change down">↓ 0.4</div></div>
+        </div>
+        <div class="action-card" style="background:linear-gradient(135deg,#FFEAEA,#FFF3E0);border-left-color:var(--red)">
+          <h4>🚨 行动建议（需关注）</h4>
+          <div class="action-item"><span class="badge tag tag-neg">⚠️ 恶化</span><span>正面率下降 6.3%，负面率上升 6.7%，产品口碑正在恶化，需立即排查</span></div>
+          <div class="action-item"><span class="badge tag tag-neg">⚠️ 紧急</span><span>「产品质量差」问题占比从 5.1% 飙升至 12.3%，建议：立即检查最近批次来料质量</span></div>
+          <div class="action-item"><span class="badge tag tag-neg">⚠️ 关注</span><span>「实物与图片不符」新增为 TOP3 问题，建议：更新产品图片，确保真实展示</span></div>
+        </div>
+      </div>
+
+      <!-- Product 3 (brief) -->
+      <div class="product-block" id="prod3">
+        <div class="product-head">
+          <div class="product-id"><span class="sku">TM-88712</span><span class="name">LED化妆镜</span><span class="tag tag-platform">Temu</span></div>
+          <div class="product-actions"><button class="btn btn-outline btn-sm" onclick="pinProduct('prod3')">📌 置顶</button><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l)" onclick="if(confirm('确定删除？'))this.closest('.product-block').remove()">🗑️ 删除</button></div>
+        </div>
+        <div style="padding:20px;text-align:center;color:var(--txt-l);font-size:14px">仅有 1 个批次，暂无环比数据。上传新批次后自动生成对比分析。</div>
+        <div class="metrics">
+          <div class="metric-card"><div class="metric-icon">💬</div><div class="metric-val">876</div><div class="metric-label">总评论数</div></div>
+          <div class="metric-card"><div class="metric-icon">😊</div><div class="metric-val">78.4%</div><div class="metric-label">正面率</div></div>
+          <div class="metric-card"><div class="metric-icon">😟</div><div class="metric-val">12.1%</div><div class="metric-label">负面率</div></div>
+          <div class="metric-card"><div class="metric-icon">⭐</div><div class="metric-val">4.5</div><div class="metric-label">平均评分</div></div>
+        </div>
+        <div class="action-card">
+          <h4>💡 行动建议</h4>
+          <div class="action-item"><span class="badge tag tag-pos">👍 良好</span><span>产品整体评价优秀，正面率 78.4%，建议持续监控，上传新批次追踪趋势</span></div>
+        </div>
+      </div>
+    </div>
+<!-- ===== RESULTS PAGE ===== -->
+    <div class="page" id="page-results">
+      <div class="page-header">
+        <div><div class="page-title">分析结果</div><div class="page-desc">BF005 无线蓝牙耳机 · V2 · 2026-10-01 ~ 10-31 · 2,340 条评论</div></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm">📥 导出报告</button></div>
+      </div>
+
+      <!-- Compare: Version -->
+      <div class="compare-bar" style="margin-bottom:12px;border-left:4px solid var(--pri)">
+        <span style="font-weight:600">🔄 版本环比（同一时间段 V1 vs V2 · 10-01~10-31）</span>
+        <div class="compare-item">正面率 <span class="old">65.2%</span> <span class="arrow up">→ 72.1% ↑6.9%</span></div>
+        <div class="compare-item">负面率 <span class="old">22.3%</span> <span class="arrow up">→ 18.7% ↓3.6%</span></div>
+        <div class="compare-item">评分 <span class="old">3.8</span> <span class="arrow up">→ 4.3 ↑0.5</span></div>
+      </div>
+      <!-- Compare: Time -->
+      <div class="compare-bar" style="margin-bottom:20px;border-left:4px solid var(--blu)">
+        <span style="font-weight:600">📅 时间环比（同版本 V2 · 09月 vs 10月）</span>
+        <div style="padding:8px 0;font-size:13px;color:var(--txt-l)">暂无 V2 版本 09 月数据，上传后自动生成时间环比对比。</div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="metrics">
+        <div class="metric-card"><div class="metric-icon">💬</div><div class="metric-val">2,340</div><div class="metric-label">总评论数</div></div>
+        <div class="metric-card"><div class="metric-icon">😊</div><div class="metric-val">72.1%</div><div class="metric-label">正面率</div><div class="metric-change up">↑ 6.9%</div></div>
+        <div class="metric-card"><div class="metric-icon">😟</div><div class="metric-val">18.7%</div><div class="metric-label">负面率</div><div class="metric-change up">↓ 3.6%</div></div>
+        <div class="metric-card"><div class="metric-icon">⭐</div><div class="metric-val">4.3</div><div class="metric-label">平均评分</div><div class="metric-change up">↑ 0.5</div></div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="chart-card" style="margin:0"><div class="chart-title">🎯 情感分布</div><div class="chart-wrap"><canvas id="sentimentPie"></canvas></div></div>
+        <div class="chart-card" style="margin:0"><div class="chart-title">🏷️ 热门关键词</div><div class="keyword-cloud"><span class="keyword lg">quality</span><span class="keyword md">shipping</span><span class="keyword lg">price</span><span class="keyword sm">packaging</span><span class="keyword md">design</span><span class="keyword sm">color</span><span class="keyword md">durable</span><span class="keyword sm">size</span><span class="keyword lg">value</span><span class="keyword md">comfortable</span><span class="keyword sm">broken</span><span class="keyword sm">refund</span></div></div>
+      </div>
+
+      <!-- Action Suggestions -->
+      <div class="action-card" style="margin-bottom:24px">
+        <h4>💡 行动建议</h4>
+        <div class="action-item"><span class="badge tag tag-pos">↑ 改善</span><span>正面率提升 6.9%，产品改进方向正确，建议继续保持当前供应商和品控标准</span></div>
+        <div class="action-item"><span class="badge tag tag-neg">⚠️ 关注</span><span>「物流慢」问题占比 6.7%（上批 4.2%），建议：评估当前物流渠道时效，考虑海外仓备货</span></div>
+        <div class="action-item"><span class="badge tag tag-neg">⚠️ 关注</span><span>「包装损坏」问题占比 4.2%（上批 3.2%），建议：加强外包装防护，增加缓冲材料</span></div>
+        <div class="action-item"><span class="badge tag tag-pos">📢 营销</span><span>「性价比高」亮点占比 13.3%（上批 11%），建议：在 listing 标题和 A+ 页面强化性价比卖点</span></div>
+      </div>
+
+      <!-- TOP 10 Issues with checkboxes -->
+      <div class="section-title">❌ TOP 10 产品问题 <span style="font-size:13px;font-weight:400;color:var(--txt-l);margin-left:auto">勾选后可推送到钉钉</span></div>
+      <div class="chart-card" style="padding:0;overflow:hidden">
+        <table class="data-table">
+          <thead><tr><th style="width:40px"><input type="checkbox" onchange="toggleAllCheck(this,'issueChk')"></th><th>#</th><th>问题描述</th><th>提及次数</th><th>占比</th><th>环比</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>1</td><td>产品质量差，容易损坏</td><td>187</td><td>8.0%</td><td><span class="tag tag-pos">↓ 1.2%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>2</td><td>物流速度慢，等待时间长</td><td>156</td><td>6.7%</td><td><span class="tag tag-neg">↑ 2.5%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>3</td><td>实物与图片不符</td><td>134</td><td>5.7%</td><td><span class="tag tag-pos">↓ 0.8%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>4</td><td>尺寸偏差大</td><td>112</td><td>4.8%</td><td><span class="tag tag-neu">— 0%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>5</td><td>包装简陋，运输损坏</td><td>98</td><td>4.2%</td><td><span class="tag tag-neg">↑ 1.0%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>6</td><td>客服不回复</td><td>87</td><td>3.7%</td><td><span class="tag tag-pos">↓ 0.5%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>7</td><td>有异味</td><td>72</td><td>3.1%</td><td><span class="tag tag-pos">↓ 0.3%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>8</td><td>功能与描述不一致</td><td>65</td><td>2.8%</td><td><span class="tag tag-neu">— 0%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>9</td><td>退货流程复杂</td><td>54</td><td>2.3%</td><td><span class="tag tag-neg">↑ 0.4%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="issueChk" onchange="updateFloatBar()"></td><td>10</td><td>配件缺失</td><td>43</td><td>1.8%</td><td><span class="tag tag-pos">↓ 0.2%</span></td><td><span class="view-source" onclick="toggleSource('issues')">📄 查看原文</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="source-panel" id="issuesSrc">
+        <div class="source-header"><h4>📄 产品问题 — 代表性原文 TOP 20</h4><div><button class="btn btn-outline btn-sm" style="margin-right:8px">📥 下载源数据</button><button class="source-close" onclick="toggleSource('issues')">✕</button></div></div>
+        <table class="data-table"><thead><tr><th>#</th><th>原文</th><th>评分</th><th>日期</th><th>关联问题</th></tr></thead><tbody>
+          <tr><td>1</td><td>"Broke after 2 days of use, terrible quality."</td><td>⭐1</td><td>04-18</td><td><span class="tag tag-neg">质量差</span></td></tr>
+          <tr><td>2</td><td>"Waited 4 weeks, still hasn't arrived."</td><td>⭐1</td><td>04-15</td><td><span class="tag tag-neg">物流慢</span></td></tr>
+          <tr><td>3</td><td>"Looks completely different from the listing."</td><td>⭐2</td><td>04-20</td><td><span class="tag tag-neg">图片不符</span></td></tr>
+          <tr><td>4</td><td>"Size is way off, ordered M but fits like XS."</td><td>⭐1</td><td>04-12</td><td><span class="tag tag-neg">尺寸偏差</span></td></tr>
+          <tr><td>5</td><td>"Arrived damaged, box was crushed."</td><td>⭐2</td><td>04-19</td><td><span class="tag tag-neg">包装损坏</span></td></tr>
+          <tr><td>6</td><td>"Contacted seller 3 times, no response."</td><td>⭐1</td><td>04-14</td><td><span class="tag tag-neg">客服不回复</span></td></tr>
+          <tr><td>7</td><td>"Strong chemical smell."</td><td>⭐2</td><td>04-16</td><td><span class="tag tag-neg">有异味</span></td></tr>
+          <tr><td>8</td><td>"Product doesn't work as described."</td><td>⭐1</td><td>04-11</td><td><span class="tag tag-neg">功能不符</span></td></tr>
+          <tr><td>9</td><td>"Return process is a nightmare."</td><td>⭐1</td><td>04-13</td><td><span class="tag tag-neg">退货复杂</span></td></tr>
+          <tr><td>10</td><td>"Missing the charging cable."</td><td>⭐2</td><td>04-17</td><td><span class="tag tag-neg">配件缺失</span></td></tr>
+          <tr><td>11</td><td>"Cheap plastic, feels fragile."</td><td>⭐2</td><td>04-10</td><td><span class="tag tag-neg">质量差</span></td></tr>
+          <tr><td>12</td><td>"Shipping took over a month."</td><td>⭐1</td><td>04-09</td><td><span class="tag tag-neg">物流慢</span></td></tr>
+          <tr><td>13</td><td>"Color nothing like the picture."</td><td>⭐2</td><td>04-08</td><td><span class="tag tag-neg">图片不符</span></td></tr>
+          <tr><td>14</td><td>"Too small even for largest size."</td><td>⭐1</td><td>04-07</td><td><span class="tag tag-neg">尺寸偏差</span></td></tr>
+          <tr><td>15</td><td>"No protection during shipping."</td><td>⭐2</td><td>04-06</td><td><span class="tag tag-neg">包装损坏</span></td></tr>
+          <tr><td>16</td><td>"No customer service whatsoever."</td><td>⭐1</td><td>04-05</td><td><span class="tag tag-neg">客服不回复</span></td></tr>
+          <tr><td>17</td><td>"Horrible smell, gave me headache."</td><td>⭐1</td><td>04-04</td><td><span class="tag tag-neg">有异味</span></td></tr>
+          <tr><td>18</td><td>"Advertised waterproof but it's not."</td><td>⭐1</td><td>04-03</td><td><span class="tag tag-neg">功能不符</span></td></tr>
+          <tr><td>19</td><td>"They want me to pay return shipping."</td><td>⭐2</td><td>04-02</td><td><span class="tag tag-neg">退货复杂</span></td></tr>
+          <tr><td>20</td><td>"Only 2 out of 3 items in the set."</td><td>⭐2</td><td>04-01</td><td><span class="tag tag-neg">配件缺失</span></td></tr>
+        </tbody></table>
+      </div>
+
+      <!-- TOP 10 Highlights with checkboxes -->
+      <div class="section-title" style="margin-top:28px">✅ TOP 10 产品亮点 <span style="font-size:13px;font-weight:400;color:var(--txt-l);margin-left:auto">勾选后可推送到钉钉</span></div>
+      <div class="chart-card" style="padding:0;overflow:hidden">
+        <table class="data-table">
+          <thead><tr><th style="width:40px"><input type="checkbox" onchange="toggleAllCheck(this,'hlChk')"></th><th>#</th><th>亮点描述</th><th>提及次数</th><th>占比</th><th>环比</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>1</td><td>性价比高，物超所值</td><td>312</td><td>13.3%</td><td><span class="tag tag-pos">↑ 2.3%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>2</td><td>外观设计好看</td><td>267</td><td>11.4%</td><td><span class="tag tag-pos">↑ 1.1%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>3</td><td>材质舒适</td><td>198</td><td>8.5%</td><td><span class="tag tag-pos">↑ 0.8%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>4</td><td>发货速度快</td><td>176</td><td>7.5%</td><td><span class="tag tag-neu">— 0%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>5</td><td>颜色与图片一致</td><td>145</td><td>6.2%</td><td><span class="tag tag-pos">↑ 1.5%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>6</td><td>包装精美</td><td>123</td><td>5.3%</td><td><span class="tag tag-pos">↑ 0.6%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>7</td><td>功能实用</td><td>98</td><td>4.2%</td><td><span class="tag tag-neu">— 0%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>8</td><td>客服态度好</td><td>87</td><td>3.7%</td><td><span class="tag tag-pos">↑ 0.9%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>9</td><td>耐用性强</td><td>76</td><td>3.2%</td><td><span class="tag tag-pos">↑ 0.4%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+            <tr><td><input type="checkbox" class="hlChk" onchange="updateFloatBar()"></td><td>10</td><td>适合送礼</td><td>54</td><td>2.3%</td><td><span class="tag tag-neu">— 0%</span></td><td><span class="view-source" onclick="toggleSource('highlights')">📄 查看原文</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="source-panel" id="highlightsSrc">
+        <div class="source-header"><h4>📄 产品亮点 — 代表性原文 TOP 20</h4><div><button class="btn btn-outline btn-sm" style="margin-right:8px">📥 下载源数据</button><button class="source-close" onclick="toggleSource('highlights')">✕</button></div></div>
+        <table class="data-table"><thead><tr><th>#</th><th>原文</th><th>评分</th><th>日期</th><th>关联亮点</th></tr></thead><tbody>
+          <tr><td>1</td><td>"Amazing value for the price!"</td><td>⭐5</td><td>04-22</td><td><span class="tag tag-pos">性价比</span></td></tr>
+          <tr><td>2</td><td>"Love the design, looks great."</td><td>⭐5</td><td>04-21</td><td><span class="tag tag-pos">设计</span></td></tr>
+          <tr><td>3</td><td>"Very comfortable, soft material."</td><td>⭐5</td><td>04-20</td><td><span class="tag tag-pos">材质</span></td></tr>
+          <tr><td>4</td><td>"Arrived in just 5 days!"</td><td>⭐4</td><td>04-19</td><td><span class="tag tag-pos">发货快</span></td></tr>
+          <tr><td>5</td><td>"Color matches the listing perfectly."</td><td>⭐5</td><td>04-18</td><td><span class="tag tag-pos">颜色一致</span></td></tr>
+          <tr><td>6</td><td>"Beautiful packaging, like a gift."</td><td>⭐5</td><td>04-17</td><td><span class="tag tag-pos">包装</span></td></tr>
+          <tr><td>7</td><td>"Works great, very practical."</td><td>⭐4</td><td>04-16</td><td><span class="tag tag-pos">功能</span></td></tr>
+          <tr><td>8</td><td>"Support resolved issue in 1 hour."</td><td>⭐5</td><td>04-15</td><td><span class="tag tag-pos">客服</span></td></tr>
+          <tr><td>9</td><td>"Still perfect after 3 months."</td><td>⭐5</td><td>04-14</td><td><span class="tag tag-pos">耐用</span></td></tr>
+          <tr><td>10</td><td>"Bought as gift, they loved it!"</td><td>⭐5</td><td>04-13</td><td><span class="tag tag-pos">送礼</span></td></tr>
+        </tbody></table>
+      </div>
+
+      <!-- ===== CUSTOM COMPARE SECTION ===== -->
+      <div class="section-title" style="margin-top:36px">📊 自定义环比对比</div>
+      <div class="chart-card" style="margin-bottom:0">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px">
+          <div class="form-group" style="margin:0"><div class="form-label" style="margin-bottom:4px">对比维度</div><select class="form-select" style="padding:8px 12px;font-size:13px"><option>版本对比（同时间段不同版本）</option><option>时间对比（同版本不同时间段）</option></select></div>
+          <div class="form-group" style="margin:0"><div class="form-label" style="margin-bottom:4px">基准</div><select class="form-select" style="padding:8px 12px;font-size:13px"><option>V1 · 10-01~10-31</option><option>V2 · 09-01~09-30</option></select></div>
+          <div class="form-group" style="margin:0"><div class="form-label" style="margin-bottom:4px">对比目标</div><select class="form-select" style="padding:8px 12px;font-size:13px"><option>V2 · 10-01~10-31（当前）</option><option>V1 · 09-01~09-30</option></select></div>
+          <button class="btn btn-primary btn-sm" style="margin-top:18px">生成对比</button>
+        </div>
+
+        <!-- Compare results -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+          <div style="background:#F7F8FC;border-radius:10px;padding:16px;text-align:center"><div style="font-size:13px;color:var(--txt-l)">正面率变化</div><div style="font-size:24px;font-weight:700;color:var(--grn)">+6.9%</div><div style="font-size:12px;color:var(--txt-l)">65.2% → 72.1%</div></div>
+          <div style="background:#F7F8FC;border-radius:10px;padding:16px;text-align:center"><div style="font-size:13px;color:var(--txt-l)">负面率变化</div><div style="font-size:24px;font-weight:700;color:var(--grn)">-3.6%</div><div style="font-size:12px;color:var(--txt-l)">22.3% → 18.7%</div></div>
+          <div style="background:#F7F8FC;border-radius:10px;padding:16px;text-align:center"><div style="font-size:13px;color:var(--txt-l)">评分变化</div><div style="font-size:24px;font-weight:700;color:var(--grn)">+0.5</div><div style="font-size:12px;color:var(--txt-l)">3.8 → 4.3</div></div>
+        </div>
+
+        <!-- TOP issues compare table -->
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">❌ 产品问题环比 <span style="font-size:12px;font-weight:400;color:var(--txt-l)">（可删除/排序/置顶）</span></div>
+        <table class="data-table" style="margin-bottom:20px">
+          <thead><tr><th style="width:30px"></th><th>问题</th><th>基准占比</th><th>当前占比</th><th>变化</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>📌</td><td>物流速度慢</td><td>4.2%</td><td>6.7%</td><td><span class="tag tag-neg">↑ 2.5%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+            <tr><td></td><td>包装简陋</td><td>3.2%</td><td>4.2%</td><td><span class="tag tag-neg">↑ 1.0%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+            <tr><td></td><td>产品质量差</td><td>9.2%</td><td>8.0%</td><td><span class="tag tag-pos">↓ 1.2%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+            <tr><td></td><td>实物与图片不符</td><td>6.5%</td><td>5.7%</td><td><span class="tag tag-pos">↓ 0.8%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+            <tr><td></td><td>客服不回复</td><td>4.2%</td><td>3.7%</td><td><span class="tag tag-pos">↓ 0.5%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;gap:8px;margin-bottom:20px"><button class="btn btn-outline btn-sm">按占比排序</button><button class="btn btn-outline btn-sm">按环比值排序</button></div>
+
+        <!-- TOP highlights compare table -->
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">✅ 产品亮点环比 <span style="font-size:12px;font-weight:400;color:var(--txt-l)">（可删除/排序/置顶）</span></div>
+        <table class="data-table">
+          <thead><tr><th style="width:30px"></th><th>亮点</th><th>基准占比</th><th>当前占比</th><th>变化</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>📌</td><td>性价比高</td><td>11.0%</td><td>13.3%</td><td><span class="tag tag-pos">↑ 2.3%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+            <tr><td></td><td>颜色与图片一致</td><td>4.7%</td><td>6.2%</td><td><span class="tag tag-pos">↑ 1.5%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+            <tr><td></td><td>外观设计好看</td><td>10.3%</td><td>11.4%</td><td><span class="tag tag-pos">↑ 1.1%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+            <tr><td></td><td>客服态度好</td><td>2.8%</td><td>3.7%</td><td><span class="tag tag-pos">↑ 0.9%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+            <tr><td></td><td>材质舒适</td><td>7.7%</td><td>8.5%</td><td><span class="tag tag-pos">↑ 0.8%</span></td><td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l);padding:4px 8px;font-size:11px">✕ 移除</button></td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-outline btn-sm">按占比排序</button><button class="btn btn-outline btn-sm">按环比值排序</button></div>
+      </div>
+
+      <!-- Float bar for DingTalk push -->
+      <div class="float-bar" id="floatBar">
+        <div><span id="checkedCount">0</span> 项已选中</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="form-select" style="padding:6px 12px;font-size:13px"><option>选择钉钉群...</option><option>产品质量群</option><option>运营团队群</option><option>供应链群</option></select>
+          <button class="btn btn-primary btn-sm" onclick="alert('已推送到钉钉群！')">🔔 推送到钉钉</button>
+        </div>
+      </div>
+    </div>
+
+<!-- ===== HISTORY PAGE ===== -->
+    <div class="page" id="page-history">
+      <div class="page-header"><div><div class="page-title">历史记录</div><div class="page-desc">按产品查看所有分析批次</div></div></div>
+      <div class="hist-layout">
+        <div class="hist-sidebar">
+          <div style="font-size:13px;font-weight:600;color:var(--txt-l);margin-bottom:12px">产品列表（3）</div>
+          <input class="form-input" style="width:100%;margin-bottom:12px;padding:8px 12px;font-size:13px" placeholder="搜索 SKU...">
+          <div class="hist-sku-item active" onclick="selectHistSku(this)"><div class="sku-code">B09XK7G4QL</div><div class="sku-name">无线蓝牙耳机 · Amazon</div></div>
+          <div class="hist-sku-item" onclick="selectHistSku(this)"><div class="sku-code">SP-2024-0891</div><div class="sku-name">硅胶手机壳 · Shopee</div></div>
+          <div class="hist-sku-item" onclick="selectHistSku(this)"><div class="sku-code">TM-88712</div><div class="sku-name">LED化妆镜 · Temu</div></div>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:600;margin-bottom:4px">B09XK7G4QL · 无线蓝牙耳机</div>
+          <div style="font-size:13px;color:var(--txt-l);margin-bottom:16px">Amazon · 电子产品 · 共 2 个批次</div>
+          <div class="batch-card">
+            <div>
+              <div style="font-weight:600">2026年4月第2批</div>
+              <div style="font-size:13px;color:var(--txt-l)">04-16 ~ 04-27 · 2,340 条评论</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="tag tag-pos">72.1% 正面</span>
+              <span style="font-size:13px;color:var(--txt-l)">⭐ 4.3</span>
+              <button class="btn btn-outline btn-sm" onclick="goPage('results')">查看结果</button>
+              <button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l)">🗑️</button>
+            </div>
+          </div>
+          <div class="batch-card">
+            <div>
+              <div style="font-weight:600">2026年4月第1批</div>
+              <div style="font-size:13px;color:var(--txt-l)">04-01 ~ 04-15 · 1,856 条评论</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="tag tag-neu">65.2% 正面</span>
+              <span style="font-size:13px;color:var(--txt-l)">⭐ 3.8</span>
+              <button class="btn btn-outline btn-sm" onclick="goPage('results')">查看结果</button>
+              <button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l)">🗑️</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS PAGE ===== -->
+    <div class="page" id="page-settings">
+      <div class="page-header"><div><div class="page-title">推送设置</div><div class="page-desc">配置钉钉 Webhook 和自动推送规则</div></div></div>
+
+      <div class="settings-section">
+        <h3>🔗 钉钉 Webhook 配置</h3>
+        <div class="form-grid">
+          <div class="form-group full"><div class="form-label">Webhook URL <span class="req">*</span></div><input class="form-input" placeholder="https://oapi.dingtalk.com/robot/send?access_token=..." value="https://oapi.dingtalk.com/robot/send?access_token=abc123..."></div>
+          <div class="form-group"><div class="form-label">加签密钥（Secret）</div><input class="form-input" placeholder="SEC..." value="SECxxxxxxxxxxxx"></div>
+          <div class="form-group"><div class="form-label">群名称备注</div><input class="form-input" placeholder="如：产品质量群" value="产品质量群"></div>
+        </div>
+        <div style="margin-top:12px"><button class="btn btn-outline btn-sm">+ 添加更多群</button><button class="btn btn-primary btn-sm" style="margin-left:8px">测试连接</button></div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🌐 全局推送规则</h3>
+        <div style="font-size:13px;color:var(--txt-l);margin-bottom:16px">以下规则适用于所有产品，单个产品可在下方覆盖自定义规则</div>
+        <div class="rule-row">
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          <span>当某个问题在最近两个批次中占比均 ≥</span>
+          <input class="rule-input" value="5" type="number">
+          <span>% 时，自动推送钉钉告警</span>
+        </div>
+        <div class="rule-row">
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          <span>当负面率 ≥</span>
+          <input class="rule-input" value="25" type="number">
+          <span>% 时，自动推送钉钉告警</span>
+        </div>
+        <div class="rule-row">
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          <span>当负面率环比上升 ≥</span>
+          <input class="rule-input" value="5" type="number">
+          <span>% 时，自动推送钉钉告警</span>
+        </div>
+        <div class="rule-row">
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          <span>每次新批次分析完成后，自动推送分析摘要</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>📦 产品级自定义规则</h3>
+        <div style="font-size:13px;color:var(--txt-l);margin-bottom:16px">为特定产品设置不同的推送阈值，覆盖全局规则</div>
+        <div class="chart-card" style="padding:0;overflow:hidden;margin:0;box-shadow:none">
+          <table class="data-table">
+            <thead><tr><th>产品 SKU</th><th>产品名称</th><th>问题占比阈值</th><th>负面率阈值</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600;color:var(--pri)">B09XK7G4QL</td>
+                <td>无线蓝牙耳机</td>
+                <td><input class="rule-input" value="5" type="number">%</td>
+                <td><input class="rule-input" value="20" type="number">%</td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')" style="display:inline-block"></div></td>
+                <td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l)">🗑️</button></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600;color:var(--pri)">SP-2024-0891</td>
+                <td>硅胶手机壳</td>
+                <td><input class="rule-input" value="3" type="number">%</td>
+                <td><input class="rule-input" value="30" type="number">%</td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')" style="display:inline-block"></div></td>
+                <td><button class="btn btn-sm" style="background:var(--bdr);color:var(--txt-l)">🗑️</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px"><button class="btn btn-outline btn-sm">+ 添加产品规则</button></div>
+      </div>
+
+      <div style="text-align:right;margin-top:8px"><button class="btn btn-primary">保存设置</button></div>
+    </div>
+
+    <!-- ===== COPYWRITER PAGE ===== -->
+    <div class="page" id="page-copywriter">
+      <div class="page-header"><div><div class="page-title">生成宣传文案 & 选品依据</div><div class="page-desc">基于真实用户评论，AI 生成产品宣传语和选品洞察</div></div></div>
+
+      <!-- Step 1: Select product & records -->
+      <div class="settings-section">
+        <h3>① 选择产品和分析记录</h3>
+        <div class="form-grid">
+          <div class="form-group"><div class="form-label">产品编号 <span class="req">*</span></div><select class="form-select" id="copyProduct"><option>请选择...</option><option>BF005 · 无线蓝牙耳机</option><option>SP-2024-0891 · 硅胶手机壳</option><option>TM-88712 · LED化妆镜</option></select></div>
+          <div class="form-group"><div class="form-label">版本号（选填）</div><select class="form-select"><option>全部版本</option><option>V1</option><option>V2</option></select></div>
+        </div>
+        <div style="font-size:14px;font-weight:600;margin:16px 0 12px">选择分析记录：</div>
+        <div class="chart-card" style="padding:0;overflow:hidden;margin:0;box-shadow:none;border:1px solid var(--bdr)">
+          <table class="data-table">
+            <thead><tr><th style="width:40px"><input type="checkbox" checked onchange="this.closest('table').querySelectorAll('tbody input').forEach(c=>c.checked=this.checked)"></th><th>版本</th><th>时间段</th><th>评论数</th><th>正面率</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" checked></td><td>V2</td><td>10-01 ~ 10-31</td><td>2,340</td><td><span class="tag tag-pos">72.1%</span></td></tr>
+              <tr><td><input type="checkbox" checked></td><td>V1</td><td>10-01 ~ 10-31</td><td>1,856</td><td><span class="tag tag-neu">65.2%</span></td></tr>
+              <tr><td><input type="checkbox"></td><td>V1</td><td>09-01 ~ 09-30</td><td>1,432</td><td><span class="tag tag-neu">61.8%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step 2: Choose output type -->
+      <div class="settings-section">
+        <h3>② 选择生成内容</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:12px">
+          <label style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F7F8FC;border-radius:10px;cursor:pointer;border:2px solid var(--bdr);transition:all .15s"><input type="checkbox" checked style="accent-color:var(--pri)"><span style="font-size:14px;font-weight:500">产品广告宣传语</span></label>
+          <label style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F7F8FC;border-radius:10px;cursor:pointer;border:2px solid var(--bdr);transition:all .15s"><input type="checkbox" checked style="accent-color:var(--pri)"><span style="font-size:14px;font-weight:500">社交媒体宣传语</span></label>
+          <label style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#F7F8FC;border-radius:10px;cursor:pointer;border:2px solid var(--bdr);transition:all .15s"><input type="checkbox" style="accent-color:var(--pri)"><span style="font-size:14px;font-weight:500">客户理想产品描述</span></label>
+        </div>
+        <div style="margin-top:16px;text-align:right"><button class="btn btn-primary" onclick="showCopyResult()">🪄 生成文案</button></div>
+      </div>
+
+      <!-- Step 3: Generated results -->
+      <div id="copyResults" style="display:none">
+        <div class="settings-section" style="border-left:4px solid var(--pri)">
+          <h3>📢 产品广告宣传语</h3>
+          <div style="background:#F7F8FC;border-radius:10px;padding:20px;margin-bottom:12px">
+            <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:var(--pri)">「收纳空间巨大，音质超乎想象」</div>
+            <div style="font-size:14px;color:var(--txt-l);line-height:1.8">
+              真实用户 Anna 说："Amazing value for the price, the sound quality exceeded my expectations!"<br>
+              真实用户 Mike 说："Love the design, looks exactly like the pictures, very comfortable to wear."<br>
+              <span style="font-weight:500;color:var(--txt)">基于 2,340 条真实评论，72.1% 用户给出好评。核心卖点：性价比高（13.3%）、外观设计好（11.4%）、材质舒适（8.5%）</span>
+            </div>
+          </div>
+          <div style="background:#F7F8FC;border-radius:10px;padding:20px">
+            <div style="font-size:16px;font-weight:600;margin-bottom:12px;color:var(--pri)">「千人验证，好评率超 72%」</div>
+            <div style="font-size:14px;color:var(--txt-l);line-height:1.8">
+              真实用户 Sarah 说："Best purchase I've made this year, great quality and fast delivery!"<br>
+              <span style="font-weight:500;color:var(--txt)">V2 版本相比 V1 好评率提升 6.9%，产品持续优化中。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section" style="border-left:4px solid var(--blu)">
+          <h3>📱 社交媒体宣传语</h3>
+          <div style="background:#F7F8FC;border-radius:10px;padding:20px;margin-bottom:12px">
+            <div style="font-size:15px;line-height:1.8">
+              <div style="font-weight:600;margin-bottom:8px">Instagram / 小红书：</div>
+              🎧 "性价比之王！2000+用户真实验证"<br>
+              💬 用户@Anna："Sound quality exceeded my expectations!"<br>
+              ✅ 72% 好评率 | 设计好看 | 佩戴舒适<br>
+              <span style="color:var(--pri)">#无线耳机 #性价比 #好物推荐</span>
+            </div>
+          </div>
+          <div style="background:#F7F8FC;border-radius:10px;padding:20px">
+            <div style="font-size:15px;line-height:1.8">
+              <div style="font-weight:600;margin-bottom:8px">Twitter / X：</div>
+              Just upgraded to V2 and the reviews speak for themselves 🔥<br>
+              72% positive rate, users love the design & comfort.<br>
+              "Best purchase this year" - real customer review<br>
+              <span style="color:var(--pri)">#ProductReview #Earbuds</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section" style="border-left:4px solid var(--grn)">
+          <h3>🎯 客户理想产品描述（选品依据）</h3>
+          <div style="background:#F7F8FC;border-radius:10px;padding:20px">
+            <div style="font-size:14px;line-height:1.9;color:var(--txt)">
+              基于 4,196 条真实用户评论分析，客户对该品类产品的理想画像：<br><br>
+              客户最看重的是<span style="font-weight:600;color:var(--pri)">性价比</span>（13.3% 提及），其次是<span style="font-weight:600;color:var(--pri)">外观设计</span>（11.4%）和<span style="font-weight:600;color:var(--pri)">材质舒适度</span>（8.5%）。客户期望产品在 $20-50 价位段内提供超出预期的品质感，外观需与商品图片高度一致，佩戴/使用体验要舒适。物流方面，客户对 7 天内到货有较高期望，超过 2 周会产生明显不满。包装需要有一定品质感，尤其是作为礼物购买的场景（2.3% 提及送礼）。
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:right;margin-top:8px">
+          <button class="btn btn-outline btn-sm">📋 复制全部文案</button>
+          <button class="btn btn-outline btn-sm">📥 导出为文档</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* ===== PAGE SWITCHING ===== */
+function hideAll(){["landingPage","trialPage","loginPage","appShell"].forEach(id=>document.getElementById(id).classList.remove("active"))}
+function showLanding(){hideAll();document.getElementById("landingPage").classList.add("active")}
+function showTrial(){hideAll();document.getElementById("trialPage").classList.add("active")}
+function showLogin(){hideAll();document.getElementById("loginPage").classList.add("active")}
+function doLogin(){hideAll();document.getElementById("appShell").classList.add("active");initCharts()}
+function doLogout(){showLanding()}
+
+function goPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("page-"+id).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+  const idx={dashboard:0,upload:1,results:2,copywriter:3,history:4,settings:5}[id];
+  document.querySelectorAll(".nav-item")[idx].classList.add("active");
+  if(id==="results") initResultCharts();
+}
+
+/* ===== UPLOAD STEPS ===== */
+function goUploadStep(step){
+  document.getElementById("uploadStep1").style.display=step===1?"block":"none";
+  document.getElementById("uploadStep2").style.display=step===2?"block":"none";
+  document.getElementById("uploadStep3").style.display=step===3?"block":"none";
+  document.querySelectorAll(".step-indicator .step").forEach((s,i)=>{s.classList.remove("active","done");if(i<step-1)s.classList.add("done");if(i===step-1)s.classList.add("active");});
+  if(step===3) runAnalysis();
+}
+function fakeUpload(){
+  const bar=document.getElementById("uploadProgress"),fill=document.getElementById("progressFill");
+  bar.classList.add("show");fill.style.width="0%";
+  let w=0;const iv=setInterval(()=>{w+=Math.random()*15+5;if(w>=100){w=100;clearInterval(iv);setTimeout(()=>{bar.classList.remove("show");document.getElementById("uploadPreview").classList.add("show");},300);}fill.style.width=w+"%";},150);
+}
+function runAnalysis(){
+  const fill=document.getElementById("analyzeFill");fill.style.width="0%";
+  let w=0;const iv=setInterval(()=>{w+=Math.random()*5+1;if(w>=100){w=100;clearInterval(iv);setTimeout(()=>goPage("results"),600);}fill.style.width=w+"%";},150);
+}
+
+/* ===== TRIAL ===== */
+function fakeTrialUpload(){
+  const bar=document.getElementById("trialProgress"),fill=document.getElementById("trialFill");
+  bar.classList.add("show");fill.style.width="0%";
+  let w=0;const iv=setInterval(()=>{w+=Math.random()*15+5;if(w>=100){w=100;clearInterval(iv);setTimeout(()=>{bar.classList.remove("show");document.getElementById("trialPreview").classList.add("show");},300);}fill.style.width=w+"%";},150);
+}
+function fakeTrialAnalyze(){
+  const bar=document.getElementById("trialProgress"),fill=document.getElementById("trialFill");
+  bar.classList.add("show");fill.style.width="0%";
+  let w=0;const iv=setInterval(()=>{w+=Math.random()*8+2;if(w>=100){w=100;clearInterval(iv);setTimeout(()=>{bar.classList.remove("show");document.getElementById("trialResults").style.display="block";initTrialChart();document.getElementById("trialResults").scrollIntoView({behavior:"smooth"});},500);}fill.style.width=w+"%";},200);
+}
+
+/* ===== SOURCE PANELS ===== */
+function toggleSource(type){const el=document.getElementById(type+"Src");el.classList.toggle("show");if(el.classList.contains("show"))el.scrollIntoView({behavior:"smooth",block:"start"});}
+
+/* ===== CHECKBOX & FLOAT BAR ===== */
+function toggleAllCheck(master,cls){document.querySelectorAll("."+cls).forEach(c=>c.checked=master.checked);updateFloatBar();}
+function updateFloatBar(){
+  const count=document.querySelectorAll(".issueChk:checked,.hlChk:checked").length;
+  document.getElementById("checkedCount").textContent=count;
+  document.getElementById("floatBar").classList.toggle("show",count>0);
+}
+
+/* ===== DASHBOARD ACTIONS ===== */
+function pinProduct(id){const el=document.getElementById(id);el.parentElement.prepend(el);}
+function selectHistSku(el){document.querySelectorAll(".hist-sku-item").forEach(i=>i.classList.remove("active"));el.classList.add("active");}
+
+/* ===== CHARTS ===== */
+let chartsInit=false,resultChartsInit=false,trialChartInit=false;
+function initCharts(){
+  if(chartsInit)return;chartsInit=true;
+  new Chart(document.getElementById("trend1"),{type:"bar",data:{labels:["批次1 (04-01~15)","批次2 (04-16~27)"],datasets:[{label:"正面率",data:[65.2,72.1],backgroundColor:"#00B894",borderRadius:8},{label:"负面率",data:[22.3,18.7],backgroundColor:"#FF6B6B",borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{usePointStyle:true}}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}}}}});
+  new Chart(document.getElementById("dist1"),{type:"bar",data:{labels:["⭐1","⭐2","⭐3","⭐4","⭐5"],datasets:[{label:"Reviews",data:[98,156,312,890,1784],backgroundColor:["#FF6B6B","#FDCB6E","#74B9FF","#A29BFE","#00B894"],borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+}
+function initResultCharts(){
+  if(resultChartsInit)return;resultChartsInit=true;
+  new Chart(document.getElementById("sentimentPie"),{type:"doughnut",data:{labels:["正面","中性","负面"],datasets:[{data:[72.1,9.2,18.7],backgroundColor:["#00B894","#FDCB6E","#FF6B6B"],borderWidth:0,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:"65%",plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:16}}}}});
+}
+function initTrialChart(){
+  if(trialChartInit)return;trialChartInit=true;
+  new Chart(document.getElementById("trialPie"),{type:"doughnut",data:{labels:["正面","中性","负面"],datasets:[{data:[68.5,10.3,21.2],backgroundColor:["#00B894","#FDCB6E","#FF6B6B"],borderWidth:0,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:"65%",plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:16}}}}});
+}
+function setLang(lang){document.querySelectorAll(".lang-btn").forEach(b=>b.classList.toggle("active",b.textContent.trim()===(lang==="zh"?"中文":"EN")));}
+function showCopyResult(){document.getElementById("copyResults").style.display="block";document.getElementById("copyResults").scrollIntoView({behavior:"smooth"});}
+</script>
+</body>
+</html>
