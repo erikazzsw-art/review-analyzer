@@ -12,7 +12,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 评论分析 Web 系统 V1.0 — 跨境电商评论分析工具
 
-- 技术栈：Python 3.10+ / Streamlit / SQLite / DeepSeek API / 钉钉 Webhook
+- 技术栈：Python 3.10+ / Streamlit / SQLite / DeepSeek API / 飞书 Webhook
 - 完整需求和执行计划：详见 `plan.md`
 
 
