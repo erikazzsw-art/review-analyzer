@@ -33,6 +33,15 @@ text
 | 添加错误处理 | `docs/error-handling.md` |
 | 处理文件编码/解析 | `docs/file-guide.md` |
 
+## Git 工作流与进度追踪
+
+- 项目进度文件：`PROGRESS.md`（8个模块，checkbox 驱动）
+- 进度更新脚本：`python3 update_progress.py`
+- 每次提交代码后，运行 `python3 update_progress.py` 更新进度
+- 当模块内任务完成时，在 PROGRESS.md 中将 `[ ]` 改为 `[x]`，然后运行脚本
+- 分支策略：main（稳定）→ develop（开发主线）→ feature/mX-*（模块分支）
+- 模块完成后合并到 develop，验证通过后合并到 main
+
 ## 快速参考
 
 - 类型注解：所有函数参数和返回值必须标注类型
