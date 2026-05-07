@@ -18,7 +18,7 @@ from review_analyzer.database import (
     update_session_stats,
 )
 from review_analyzer.parser import parse_file
-from review_analyzer.analyzer import analyze_batch
+from review_analyzer.analyzer import analyze_batch, get_api_key
 from review_analyzer.notifier import auto_notify_after_analysis
 
 
@@ -275,6 +275,7 @@ def render_upload() -> None:
         results = analyze_batch(
             comments=[c["content"] for c in unprocessed],
             category=category_name,
+            api_key=get_api_key(user_id),
             progress_callback=progress_callback,
         )
 
