@@ -63,7 +63,7 @@ def render_landing_page() -> None:
     # 顶部导航
     st.markdown("""
     <div class="land-nav">
-        <div class="land-nav-logo"><span>🔍</span><span>ReviewLens</span></div>
+        <div class="land-nav-logo"><span>🔍</span><span>ClueAI</span></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -89,7 +89,7 @@ def render_landing_page() -> None:
     # 痛点区域
     st.markdown("""
     <div class="land-section">
-        <h2>为什么我们做了 ReviewLens？</h2>
+        <h2>为什么我们做了 ClueAI？</h2>
         <div class="sub">跨境卖家每天面对成百上千条多语言评论，人工阅读效率低、遗漏多、无法量化</div>
         <div class="pain-grid">
             <div class="pain-card"><div class="icon">😩</div><div><h3>人工读评论太慢</h3><p>一个 SKU 上千条评论，人工逐条阅读需要数小时，且容易遗漏关键信息</p></div></div>
@@ -119,7 +119,7 @@ def render_landing_page() -> None:
     # 数据亮点
     st.markdown("""
     <div class="land-section">
-        <h2>使用 ReviewLens 后</h2>
+        <h2>使用 ClueAI 后</h2>
         <div class="sub">数据驱动的评论分析，让每一次产品决策都有据可依</div>
         <div class="benefit-row">
             <div class="benefit-item"><div class="num">90%</div><div class="label">评论分析时间节省</div></div>

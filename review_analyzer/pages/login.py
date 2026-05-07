@@ -22,7 +22,7 @@ def render_login_page() -> None:
                     box-shadow:0 20px 60px rgba(0,0,0,0.15);text-align:center;
                     margin-top:60px;">
             <div style="font-size:48px;margin-bottom:8px;">🔍</div>
-            <div style="font-size:24px;font-weight:700;color:#6C5CE7;margin-bottom:4px;">ReviewLens</div>
+            <div style="font-size:24px;font-weight:700;color:#6C5CE7;margin-bottom:4px;">ClueAI</div>
             <div style="font-size:14px;color:#636E72;margin-bottom:32px;">跨境电商评论分析平台</div>
         </div>
         """, unsafe_allow_html=True)

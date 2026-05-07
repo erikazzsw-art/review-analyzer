@@ -34,7 +34,7 @@ def render_trial_page() -> None:
         st.markdown("""
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <span style="font-size:26px;">🔍</span>
-            <span style="font-size:20px;font-weight:700;color:#6C5CE7;">ReviewLens</span>
+            <span style="font-size:20px;font-weight:700;color:#6C5CE7;">ClueAI</span>
         </div>
         """, unsafe_allow_html=True)
     with col_btn:

@@ -122,7 +122,7 @@ def send_notification(
 
 def _test_webhook(webhook_url: str, platform: str = "feishu", secret: str = "") -> dict:
     """测试 Webhook 连接"""
-    test_text = "🔔 ReviewLens 测试消息\n\nWebhook 连接测试成功！"
+    test_text = "🔔 ClueAI 测试消息\n\nWebhook 连接测试成功！"
 
     if platform == "feishu":
         body = _build_feishu_body(test_text, secret)

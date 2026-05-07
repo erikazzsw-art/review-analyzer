@@ -22,6 +22,15 @@
 
 ## 📝 需求变更日志
 
+### 2026-05-07
+
+#### 品牌与 UI 优化
+- **修改**：全站品牌名称 ReviewLens → ClueAI（涉及 app.py、auth.py、login.py、landing.py、trial.py、notifier.py）— 来源：Erika
+- **新增**：侧边栏品牌名 ClueAI 可点击，点击后返回首页（仪表盘）— 来源：Erika
+
+#### 性能优化
+- **修改**：AI 分析从串行调用改为并发 10 线程（ThreadPoolExecutor），100 条评论分析时间从 ≈170s 降至 ≈31s — 来源：Erika
+
 ### 2026-05-06
 
 #### 宣传文案页（Copywriter）— 重大重构

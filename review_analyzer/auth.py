@@ -130,7 +130,7 @@ def render_auth_page() -> None:
     if is_logged_in():
         return
 
-    st.title("ReviewLens")
+    st.title("ClueAI")
     st.caption("跨境电商评论分析系统")
 
     tab_login, tab_register = st.tabs(["登录", "注册"])

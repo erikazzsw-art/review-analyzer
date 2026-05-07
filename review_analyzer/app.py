@@ -1,4 +1,4 @@
-"""ReviewLens — Streamlit 主入口"""
+"""ClueAI — Streamlit 主入口"""
 
 import sys
 from pathlib import Path
@@ -20,7 +20,7 @@ from review_analyzer.pages.history import render_history
 from review_analyzer.pages.settings import render_settings
 
 st.set_page_config(
-    page_title="ReviewLens - 评论分析系统",
+    page_title="ClueAI - 评论分析系统",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -383,12 +383,30 @@ def main() -> None:
 
     # 侧边栏
     with st.sidebar:
+        if st.button("🔍 ClueAI", key="brand_home_btn", use_container_width=True, type="secondary"):
+            st.session_state["current_page"] = "dashboard"
+            st.rerun()
         st.markdown("""
-        <div style="display:flex;align-items:center;gap:10px;padding:0 0 16px;
-                    border-bottom:1px solid #E8EAF0;margin-bottom:12px;">
-            <span style="font-size:28px;">🔍</span>
-            <span style="font-size:18px;font-weight:700;color:#6C5CE7;">ReviewLens</span>
-        </div>
+        <style>
+        [data-testid="stSidebar"] button[kind="secondary"]:first-of-type {
+            font-size: 18px;
+            font-weight: 700;
+            color: #6C5CE7;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #E8EAF0;
+            border-radius: 0;
+            padding: 8px 0 16px;
+            margin-bottom: 12px;
+            text-align: left;
+            justify-content: flex-start;
+        }
+        [data-testid="stSidebar"] button[kind="secondary"]:first-of-type:hover {
+            color: #5A4BD1;
+            background: transparent;
+            border-bottom: 1px solid #E8EAF0;
+        }
+        </style>
         """, unsafe_allow_html=True)
 
         if "lang" not in st.session_state:
