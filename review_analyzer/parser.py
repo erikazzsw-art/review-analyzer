@@ -27,9 +27,20 @@ def detect_columns(df: pd.DataFrame) -> dict[str, Optional[str]]:
     """自动识别 DataFrame 列名到标准字段的映射（模糊匹配）。"""
     cols_lower = {c.strip().lower(): c for c in df.columns}
 
+    def _is_id_column(col_lower: str) -> bool:
+        return col_lower.endswith("_id") or col_lower == "id"
+
     def _find(aliases: list[str]) -> Optional[str]:
+        # 第一轮：精确匹配
         for alias in aliases:
             for col_lower, col_orig in cols_lower.items():
+                if col_lower == alias.lower():
+                    return col_orig
+        # 第二轮：子串匹配（排除 ID 列）
+        for alias in aliases:
+            for col_lower, col_orig in cols_lower.items():
+                if _is_id_column(col_lower):
+                    continue
                 if alias.lower() in col_lower:
                     return col_orig
         return None
