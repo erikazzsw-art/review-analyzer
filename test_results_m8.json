@@ -1,0 +1,1032 @@
+{
+  "run_time": "2026-05-07T14:05:07.188483",
+  "summary": {
+    "total": 58,
+    "passed": 56,
+    "failed": 2,
+    "skipped": 0,
+    "pass_rate": "96.6%"
+  },
+  "results": [
+    {
+      "id": "1.1.1",
+      "name": "注册新用户",
+      "status": "PASS",
+      "detail": "user_id=1"
+    },
+    {
+      "id": "1.1.2",
+      "name": "密码验证（正确/错误）",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.1.3",
+      "name": "session_state 存储 user_id/username",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.1.4",
+      "name": "重复注册检测",
+      "status": "PASS",
+      "detail": "正确拒绝重复用户名"
+    },
+    {
+      "id": "1.1.5",
+      "name": "重新登录验证",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.2.1",
+      "name": "CSV 文件解析",
+      "status": "PASS",
+      "detail": "解析 10 条评论"
+    },
+    {
+      "id": "1.2.2",
+      "name": "必填项校验（产品编号）",
+      "status": "PASS",
+      "detail": "UI层验证产品编号非空"
+    },
+    {
+      "id": "1.2.3",
+      "name": "重复检测",
+      "status": "PASS",
+      "detail": "首次0重复，二次10重复"
+    },
+    {
+      "id": "1.2.4",
+      "name": "分析范围（只分析本次上传）",
+      "status": "PASS",
+      "detail": "10 条待分析"
+    },
+    {
+      "id": "1.3.1",
+      "name": "AI 分析（批量10条）",
+      "status": "PASS",
+      "detail": "正面4/负面5/总10, 进度回调10次"
+    },
+    {
+      "id": "1.3.2",
+      "name": "分析结果字段完整性",
+      "status": "PASS",
+      "detail": "is_processed=True, sentiment=True, category=True"
+    },
+    {
+      "id": "1.3.3",
+      "name": "TOP10 标签提取",
+      "status": "PASS",
+      "detail": "问题标签5个, 亮点标签5个"
+    },
+    {
+      "id": "1.3.4",
+      "name": "Session 统计数据更新",
+      "status": "PASS",
+      "detail": "total=10, pos=4, neg=5"
+    },
+    {
+      "id": "1.5.1",
+      "name": "查看历史记录列表",
+      "status": "PASS",
+      "detail": "1 个会话"
+    },
+    {
+      "id": "1.5.2",
+      "name": "按产品搜索历史",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.5.3",
+      "name": "查看单个历史结果",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.5.4",
+      "name": "编辑会话标题",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.5.5",
+      "name": "删除会话（级联删除评论）",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.6.1",
+      "name": "API Key 加密/解密",
+      "status": "PASS",
+      "detail": "AES加密后可还原"
+    },
+    {
+      "id": "1.6.2",
+      "name": "推送配置保存/加载",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.6.3",
+      "name": "类目标签增删改（设置持久化）",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.6.4",
+      "name": "配置持久化（跨登录生效）",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "1.4.1",
+      "name": "飞书 Webhook 测试连接",
+      "status": "PASS",
+      "detail": "连接成功"
+    },
+    {
+      "id": "1.4.2",
+      "name": "飞书推送消息发送",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "2.0",
+      "name": "创建用户 B",
+      "status": "PASS",
+      "detail": "user_b_id=2"
+    },
+    {
+      "id": "2.1.1",
+      "name": "用户 B 无法查看用户 A 的会话",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "2.1.2",
+      "name": "用户 B 无法查看用户 A 的评论",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "2.1.3",
+      "name": "用户 B 无法通过 ID 访问用户 A 的 session",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "2.1.4",
+      "name": "用户 B 无法通过评论 ID 访问用户 A 数据",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "2.1.5",
+      "name": "用户 B 无法查看用户 A 的设置",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "2.2.1",
+      "name": "并发上传后数据隔离",
+      "status": "PASS",
+      "detail": "A有10条评论/1个会话, B有3条/1个会话"
+    },
+    {
+      "id": "2.3.1",
+      "name": "数据库查询强制 user_id 检查",
+      "status": "PASS",
+      "detail": "所有查询均包含 user_id 过滤"
+    },
+    {
+      "id": "3.1",
+      "name": "情感准确率",
+      "status": "PASS",
+      "detail": "29/30 = 96.7%"
+    },
+    {
+      "id": "3.2",
+      "name": "分类准确率",
+      "status": "PASS",
+      "detail": "27/30 = 90.0%"
+    },
+    {
+      "id": "3.3",
+      "name": "优先级准确率",
+      "status": "PASS",
+      "detail": "26/30 = 86.7%"
+    },
+    {
+      "id": "3.4",
+      "name": "标签准确率",
+      "status": "FAIL",
+      "detail": "25/30 = 83.3%"
+    },
+    {
+      "id": "3.5",
+      "name": "综合准确率",
+      "status": "PASS",
+      "detail": "89.2%（合格标准 ≥85%）"
+    },
+    {
+      "id": "4.1.1",
+      "name": "XLSX 导出 — 文件生成",
+      "status": "PASS",
+      "detail": "文件大小=10304bytes, 文件名=TEST001-V1-全部-分析结果-20260507.xlsx"
+    },
+    {
+      "id": "4.1.2",
+      "name": "XLSX 导出 — 4个Sheet结构",
+      "status": "PASS",
+      "detail": "Sheets: ['总览摘要', '源评论分析明细', 'TOP10 核心问题点', 'TOP10 产品亮点']"
+    },
+    {
+      "id": "4.1.3",
+      "name": "XLSX 导出 — 总览摘要数据",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "4.1.4",
+      "name": "XLSX 导出 — 源评论明细数据",
+      "status": "PASS",
+      "detail": "10 行数据"
+    },
+    {
+      "id": "4.2.1",
+      "name": "CSV 导出 — 文件生成与编码",
+      "status": "PASS",
+      "detail": "UTF-8 BOM ✓, 10 行数据"
+    },
+    {
+      "id": "5.1",
+      "name": "API Key 无效 — 友好提示",
+      "status": "PASS",
+      "detail": "捕获到认证异常: AuthenticationError"
+    },
+    {
+      "id": "5.2",
+      "name": "不支持的文件格式 — 友好提示",
+      "status": "PASS",
+      "detail": "不支持的文件格式：jpg"
+    },
+    {
+      "id": "5.3",
+      "name": "无评论内容文件 — 友好提示",
+      "status": "PASS",
+      "detail": "上传失败：未找到评论内容字段，请确认文件包含评论文字"
+    },
+    {
+      "id": "5.4",
+      "name": "空评论/异常不阻塞流程",
+      "status": "PASS",
+      "detail": "空评论返回 unrecognizable"
+    },
+    {
+      "id": "5.5",
+      "name": "无权限访问（不存在的 user_id）",
+      "status": "PASS",
+      "detail": "返回空列表"
+    },
+    {
+      "id": "5.6",
+      "name": "密码强度校验（<6字符）",
+      "status": "PASS",
+      "detail": "UI 层限制密码长度 ≥6"
+    },
+    {
+      "id": "5.7",
+      "name": "SQL 注入防护",
+      "status": "PASS",
+      "detail": "参数化查询有效"
+    },
+    {
+      "id": "6.1",
+      "name": "100 条评论批量插入",
+      "status": "PASS",
+      "detail": "耗时 0.01s（标准 <5s）"
+    },
+    {
+      "id": "6.2",
+      "name": "AI 分析性能（10条实测 → 推算100条）",
+      "status": "FAIL",
+      "detail": "10条耗时 17.0s, 推算100条≈170s（标准 ≤60s）"
+    },
+    {
+      "id": "6.3",
+      "name": "100 条评论 XLSX 导出",
+      "status": "PASS",
+      "detail": "耗时 0.02s（标准 ≤5s）, 文件 12562 bytes"
+    },
+    {
+      "id": "6.4",
+      "name": "数据库查询性能（100次 get_sessions）",
+      "status": "PASS",
+      "detail": "耗时 0.05s（标准 <2s）"
+    },
+    {
+      "id": "E.1",
+      "name": "Walmart 格式解析",
+      "status": "PASS",
+      "detail": "解析到 2 条评论"
+    },
+    {
+      "id": "E.2",
+      "name": "Amazon 格式解析",
+      "status": "PASS",
+      "detail": "解析到 2 条评论"
+    },
+    {
+      "id": "E.3",
+      "name": "列名模糊匹配",
+      "status": "PASS",
+      "detail": "content=Review Text, date=Review Date, rating=Star Rating"
+    },
+    {
+      "id": "E.4",
+      "name": "评分情感判断",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "E.5",
+      "name": "推送规则引擎触发",
+      "status": "PASS",
+      "detail": "触发 2 条规则"
+    }
+  ],
+  "ai_report": {
+    "accuracy": {
+      "sentiment": 96.66666666666667,
+      "category": 90.0,
+      "priority": 86.66666666666667,
+      "tag": 83.33333333333334
+    },
+    "overall": 89.16666666666667,
+    "correct": {
+      "sentiment": 29,
+      "category": 27,
+      "priority": 26,
+      "tag": 25
+    },
+    "total": 30,
+    "failures": [
+      {
+        "index": 10,
+        "content": "Broke after just one month of normal use. Very poor durabili",
+        "gt_sentiment": "negative",
+        "ai_sentiment": "negative",
+        "gt_category": "产品质量",
+        "ai_category": "产品质量",
+        "gt_tag": "材质粗糙",
+        "ai_tag": "不耐用"
+      },
+      {
+        "index": 20,
+        "content": "This is exactly what I needed. Perfect size and great qualit",
+        "gt_sentiment": "positive",
+        "ai_sentiment": "positive",
+        "gt_category": "正面反馈",
+        "ai_category": "正面反馈",
+        "gt_tag": "做工精细",
+        "ai_tag": "尺寸合适, 质量好"
+      },
+      {
+        "index": 23,
+        "content": "Absolutely love it! Best purchase I've made this year.",
+        "gt_sentiment": "positive",
+        "ai_sentiment": "positive",
+        "gt_category": "正面反馈",
+        "ai_category": "单纯好评",
+        "gt_tag": "性价比高",
+        "ai_tag": ""
+      },
+      {
+        "index": 25,
+        "content": "Nice design and good build quality for the price.",
+        "gt_sentiment": "positive",
+        "ai_sentiment": "positive",
+        "gt_category": "正面反馈",
+        "ai_category": "正面反馈",
+        "gt_tag": "外观好看",
+        "ai_tag": "做工精细, 性价比高"
+      },
+      {
+        "index": 27,
+        "content": "It's fine I guess. Average quality.",
+        "gt_sentiment": "neutral",
+        "ai_sentiment": "negative",
+        "gt_category": "其他",
+        "ai_category": "产品质量",
+        "gt_tag": "",
+        "ai_tag": "材质粗糙"
+      }
+    ],
+    "test_set": [
+      {
+        "content": "The packaging was completely destroyed when it arrived. Box was crushed.",
+        "rating": 1,
+        "gt": {
+          "sentiment": "negative",
+          "category": "包装物流",
+          "priority": "高",
+          "tag_field": "issue_tag",
+          "tag": "包装破损"
+        }
+      },
+      {
+        "content": "Very hard to assemble, instructions are confusing and missing parts.",
+        "rating": 2,
+        "gt": {
+          "sentiment": "negative",
+          "category": "使用体验",
+          "priority": "高",
+          "tag_field": "issue_tag",
+          "tag": "安装困难"
+        }
+      },
+      {
+        "content": "The material feels cheap and rough. Not worth the price.",
+        "rating": 2,
+        "gt": {
+          "sentiment": "negative",
+          "category": "产品质量",
+          "priority": "中",
+          "tag_field": "issue_tag",
+          "tag": "材质粗糙"
+        }
+      },
+      {
+        "content": "Color is completely different from the picture. Looks nothing like what was advertised.",
+        "rating": 1,
+        "gt": {
+          "sentiment": "negative",
+          "category": "产品质量",
+          "priority": "中",
+          "tag_field": "issue_tag",
+          "tag": "颜色差异"
+        }
+      },
+      {
+        "content": "Strong chemical smell. Had to leave it outside for a week before using.",
+        "rating": 2,
+        "gt": {
+          "sentiment": "negative",
+          "category": "产品质量",
+          "priority": "高",
+          "tag_field": "issue_tag",
+          "tag": "气味刺鼻"
+        }
+      },
+      {
+        "content": "The size is way off from what was listed. Too small for my space.",
+        "rating": 1,
+        "gt": {
+          "sentiment": "negative",
+          "category": "产品质量",
+          "priority": "中",
+          "tag_field": "issue_tag",
+          "tag": "尺寸偏差"
+        }
+      },
+      {
+        "content": "Wobbles a lot when you sit on it. Doesn't feel stable at all.",
+        "rating": 2,
+        "gt": {
+          "sentiment": "negative",
+          "category": "产品质量",
+          "priority": "高",
+          "tag_field": "issue_tag",
+          "tag": "稳定性差"
+        }
+      },
+      {
+        "content": "Customer service was unhelpful and rude when I reported the issue.",
+        "rating": 1,
+        "gt": {
+          "sentiment": "negative",
+          "category": "客服售后",
+          "priority": "高",
+          "tag_field": "issue_tag",
+          "tag": "客服态度差"
+        }
+      },
+      {
+        "content": "Way too expensive for what you get. Better options available for half the price.",
+        "rating": 2,
+        "gt": {
+          "sentiment": "negative",
+          "category": "性价比",
+          "priority": "中",
+          "tag_field": "issue_tag",
+          "tag": "价格偏高"
+        }
+      },
+      {
+        "content": "Broke after just one month of normal use. Very poor durability.",
+        "rating": 1,
+        "gt": {
+          "sentiment": "negative",
+          "category": "产品质量",
+          "priority": "高",
+          "tag_field": "issue_tag",
+          "tag": "材质粗糙"
+        }
+      },
+      {
+        "content": "Excellent craftsmanship! Every detail is well made.",
+        "rating": 5,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "做工精细"
+        }
+      },
+      {
+        "content": "Assembly took only 20 minutes with clear instructions. So easy!",
+        "rating": 5,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "安装简单"
+        }
+      },
+      {
+        "content": "Beautiful design that matches my room perfectly. Love the look!",
+        "rating": 5,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "外观好看"
+        }
+      },
+      {
+        "content": "Solid wood construction. Very sturdy and well built.",
+        "rating": 5,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "材质扎实"
+        }
+      },
+      {
+        "content": "Amazing value for the price. Can't believe how good it is for what I paid.",
+        "rating": 5,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "性价比高"
+        }
+      },
+      {
+        "content": "Great quality product. Exactly as described and shown in photos.",
+        "rating": 4,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "做工精细"
+        }
+      },
+      {
+        "content": "Very comfortable and looks fantastic. Would recommend to everyone.",
+        "rating": 5,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "外观好看"
+        }
+      },
+      {
+        "content": "Sturdy and reliable. Using it every day without any issues.",
+        "rating": 4,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "材质扎实"
+        }
+      },
+      {
+        "content": "Easy to put together and looks great. Happy with my purchase.",
+        "rating": 5,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "安装简单"
+        }
+      },
+      {
+        "content": "This is exactly what I needed. Perfect size and great quality.",
+        "rating": 5,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "做工精细"
+        }
+      },
+      {
+        "content": "Delivery was super slow and the box had a dent.",
+        "rating": null,
+        "gt": {
+          "sentiment": "negative",
+          "category": "包装物流",
+          "priority": "中",
+          "tag_field": "issue_tag",
+          "tag": "包装破损"
+        }
+      },
+      {
+        "content": "OK product, nothing special but does the job.",
+        "rating": null,
+        "gt": {
+          "sentiment": "neutral",
+          "category": "其他",
+          "priority": "低",
+          "tag_field": "issue_tag",
+          "tag": ""
+        }
+      },
+      {
+        "content": "Absolutely love it! Best purchase I've made this year.",
+        "rating": null,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "性价比高"
+        }
+      },
+      {
+        "content": "The instructions were terrible and took me 3 hours to build.",
+        "rating": null,
+        "gt": {
+          "sentiment": "negative",
+          "category": "使用体验",
+          "priority": "中",
+          "tag_field": "issue_tag",
+          "tag": "安装困难"
+        }
+      },
+      {
+        "content": "Nice design and good build quality for the price.",
+        "rating": null,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "外观好看"
+        }
+      },
+      {
+        "content": "Smells horrible! Chemical odor that won't go away.",
+        "rating": null,
+        "gt": {
+          "sentiment": "negative",
+          "category": "产品质量",
+          "priority": "高",
+          "tag_field": "issue_tag",
+          "tag": "气味刺鼻"
+        }
+      },
+      {
+        "content": "It's fine I guess. Average quality.",
+        "rating": null,
+        "gt": {
+          "sentiment": "neutral",
+          "category": "其他",
+          "priority": "低",
+          "tag_field": "issue_tag",
+          "tag": ""
+        }
+      },
+      {
+        "content": "Amazing product! Solid, beautiful, and easy to assemble.",
+        "rating": null,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "做工精细"
+        }
+      },
+      {
+        "content": "The legs are uneven and it wobbles. Very disappointing.",
+        "rating": null,
+        "gt": {
+          "sentiment": "negative",
+          "category": "产品质量",
+          "priority": "高",
+          "tag_field": "issue_tag",
+          "tag": "稳定性差"
+        }
+      },
+      {
+        "content": "Perfect furniture piece. Exactly what I was looking for.",
+        "rating": null,
+        "gt": {
+          "sentiment": "positive",
+          "category": "正面反馈",
+          "priority": "无",
+          "tag_field": "highlight_tag",
+          "tag": "外观好看"
+        }
+      }
+    ],
+    "ai_results": [
+      {
+        "sentiment": "negative",
+        "category": "包装物流",
+        "priority": "高",
+        "reason": "包装严重破损，影响产品完整性",
+        "improvement": "加强包装防护，使用更坚固的纸箱和缓冲材料，并在外箱标注易碎标识",
+        "issue_tag": "包装破损",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "使用体验",
+        "priority": "高",
+        "reason": "安装困难且说明书混乱，缺少零件，严重影响使用体验",
+        "improvement": "优化说明书，增加图文步骤和视频二维码；加强出厂质检，确保配件齐全",
+        "issue_tag": "安装困难",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "中",
+        "reason": "用户反馈材质廉价粗糙，认为不值这个价",
+        "improvement": "升级原材料，增加表面处理工艺，提升触感；调整定价或增加促销活动以匹配用户预期",
+        "issue_tag": "材质粗糙",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "高",
+        "reason": "用户反馈颜色与图片严重不符，属于虚假宣传或色差问题，影响购买决策。",
+        "improvement": "优化产品图片拍摄，确保颜色真实还原；在详情页增加色差提示或提供实物视频；考虑增加颜色确认服务。",
+        "issue_tag": "颜色差异",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "高",
+        "reason": "用户反映产品有强烈化学气味，需要通风一周才能使用，属于严重质量问题。",
+        "improvement": "检查原材料和胶水等辅料，更换为低挥发性环保材料；增加出厂前通风或除味工序；在包装内放置除味包。",
+        "issue_tag": "气味刺鼻",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "高",
+        "reason": "用户反馈尺寸与描述严重不符，导致无法使用",
+        "improvement": "核实产品尺寸标注准确性，增加实物测量图或对比图，在详情页明确标注误差范围",
+        "issue_tag": "尺寸偏差",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "高",
+        "reason": "用户反映椅子坐下时摇晃严重，稳定性差，属于安全隐患问题。",
+        "improvement": "检查产品结构设计，加强连接件或增加加固部件，确保稳定性。",
+        "issue_tag": "稳定性差",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "客服售后",
+        "priority": "中",
+        "reason": "用户反馈客服态度差，不帮忙解决问题",
+        "improvement": "加强客服培训，建立投诉处理流程，确保客服礼貌专业并及时响应",
+        "issue_tag": "客服态度差",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "性价比",
+        "priority": "中",
+        "reason": "用户认为价格过高，不值这个价，有更便宜的选择。",
+        "improvement": "考虑降低售价或增加附加价值，如赠送配件或延长保修。",
+        "issue_tag": "价格偏高",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "高",
+        "reason": "正常使用一个月即损坏，属于严重质量问题",
+        "improvement": "加强关键部件的耐久性测试，更换更耐用的材料，并提供延长保修服务",
+        "issue_tag": "不耐用",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户称赞做工精细，细节处理到位",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "做工精细"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户称赞安装简单，说明产品设计合理，安装说明清晰。",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "安装简单"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户称赞设计美观，与房间搭配完美，表达喜爱之情。",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "外观好看"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户称赞实木结构和坚固做工",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "材质扎实"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户表达了对产品性价比的高度认可，认为物超所值。",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "性价比高"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户称赞产品质量好，与描述和图片一致",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "做工精细"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户表达了对产品的舒适度和外观的满意，并推荐给他人。",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "外观好看"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户称赞产品坚固可靠，日常使用无问题",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "材质扎实"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户表示组装简单、外观好看，对购买满意。",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "安装简单, 外观好看"
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户明确表示产品尺寸合适、质量好，属于正面评价。",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "尺寸合适, 质量好"
+      },
+      {
+        "sentiment": "negative",
+        "category": "包装物流",
+        "priority": "中",
+        "reason": "用户抱怨物流慢且包装有凹陷，属于包装物流问题",
+        "improvement": "优化物流合作伙伴选择，加强包装防护，使用更坚固的纸箱和填充物",
+        "issue_tag": "包装破损",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "neutral",
+        "category": "单纯好评",
+        "priority": "无",
+        "reason": "用户认为产品一般但能用，无明显情感倾向",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "positive",
+        "category": "单纯好评",
+        "priority": "无",
+        "reason": "用户表达喜爱，但未提供具体细节",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "使用体验",
+        "priority": "中",
+        "reason": "用户抱怨安装说明差，导致安装耗时过长",
+        "improvement": "优化安装说明书，增加图文步骤和视频教程链接",
+        "issue_tag": "安装困难",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户称赞设计美观且做工质量好，性价比高",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "做工精细, 性价比高"
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "高",
+        "reason": "用户反映产品有强烈化学气味，属于严重质量问题，影响健康和使用体验。",
+        "improvement": "检查原材料和胶水等辅料，更换为低VOC环保材料；增加产品出厂前的通风散味工序；在包装内放置活性炭包或除味剂。",
+        "issue_tag": "气味刺鼻",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "低",
+        "reason": "用户认为质量一般，属于轻微负面评价",
+        "improvement": "提升产品整体品质，加强质检流程",
+        "issue_tag": "材质粗糙",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户称赞产品坚固、美观且易于组装，属于正面反馈。",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "做工精细, 安装简单"
+      },
+      {
+        "sentiment": "negative",
+        "category": "产品质量",
+        "priority": "高",
+        "reason": "桌腿不平导致摇晃，属于严重质量问题",
+        "improvement": "加强出厂前水平校准检测，确保桌腿长度一致；在包装内增加水平仪或调整脚垫",
+        "issue_tag": "稳定性差",
+        "highlight_tag": ""
+      },
+      {
+        "sentiment": "positive",
+        "category": "正面反馈",
+        "priority": "无",
+        "reason": "用户表达了对家具的满意，认为完美符合期望。",
+        "improvement": "",
+        "issue_tag": "",
+        "highlight_tag": "外观好看"
+      }
+    ]
+  }
+}
