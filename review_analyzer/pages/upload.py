@@ -1,6 +1,7 @@
 """上传用户评论页面 — 三步流程"""
 
 import hashlib
+import os
 from datetime import datetime
 
 import pandas as pd
@@ -154,7 +155,14 @@ def render_upload() -> None:
 
         if uploaded_file:
             try:
-                df = parse_file(uploaded_file)
+                import tempfile
+                suffix = os.path.splitext(uploaded_file.name)[1]
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                    tmp.write(uploaded_file.getvalue())
+                    tmp_path = tmp.name
+                file_type = suffix.lstrip(".").lower()
+                df = parse_file(tmp_path, file_type)
+                os.unlink(tmp_path)
                 st.session_state["upload_df"] = df
 
                 st.success(f"文件解析成功，共 {len(df)} 条评论")
