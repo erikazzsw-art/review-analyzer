@@ -273,7 +273,7 @@ def render_upload() -> None:
             status_text.text(f"正在分析第 {current} / {total} 条评论...")
 
         results = analyze_batch(
-            comments=[c["content"] for c in unprocessed],
+            comments=[{"content": c["content"], "rating": c.get("rating")} for c in unprocessed],
             category=category_name,
             api_key=get_api_key(user_id),
             progress_callback=progress_callback,
