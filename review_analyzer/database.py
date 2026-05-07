@@ -375,6 +375,27 @@ def delete_session(user_id: int, session_id: int) -> None:
         conn.commit()
 
 
+def delete_product(user_id: int, product_id: str) -> None:
+    with get_connection() as conn:
+        session_ids = [
+            row[0] for row in conn.execute(
+                "SELECT id FROM sessions WHERE user_id = ? AND product_id = ?",
+                (user_id, product_id),
+            ).fetchall()
+        ]
+        if session_ids:
+            placeholders = ",".join("?" * len(session_ids))
+            conn.execute(
+                f"DELETE FROM comments WHERE user_id = ? AND session_id IN ({placeholders})",
+                [user_id] + session_ids,
+            )
+            conn.execute(
+                f"DELETE FROM sessions WHERE user_id = ? AND id IN ({placeholders})",
+                [user_id] + session_ids,
+            )
+        conn.commit()
+
+
 # ============================================================
 # Settings CRUD
 # ============================================================

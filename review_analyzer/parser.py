@@ -9,14 +9,14 @@ from typing import Optional
 import pandas as pd
 from dateutil import parser as dateutil_parser
 
-from config import (
+from review_analyzer.config import (
     CONTENT_COLUMN_ALIASES,
     DATE_COLUMN_ALIASES,
     RATING_COLUMN_ALIASES,
     SOURCE_COLUMN_ALIASES,
     USER_COLUMN_ALIASES,
 )
-from database import get_connection
+from review_analyzer.database import get_connection
 
 
 # ============================================================
