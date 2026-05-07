@@ -6,6 +6,7 @@ import streamlit as st
 
 from review_analyzer.auth import get_current_user_id
 from review_analyzer.database import get_setting, set_setting, get_sessions
+from review_analyzer.notifier import _test_webhook
 
 
 def _load_settings(user_id: int) -> dict:
@@ -120,7 +121,16 @@ def render_settings() -> None:
 
     col_btn1, col_btn2, _ = st.columns([1, 1, 4])
     with col_btn1:
-        st.button("测试连接", key="test_webhook", type="primary")
+        if st.button("测试连接", key="test_webhook", type="primary"):
+            if not webhook_url:
+                st.error("请先填写 Webhook URL")
+            else:
+                with st.spinner("正在测试连接..."):
+                    result = _test_webhook(webhook_url, "feishu", webhook_secret)
+                if result["ok"]:
+                    st.success("✓ 连接成功")
+                else:
+                    st.error(f"连接失败：{result['msg']}")
     with col_btn2:
         st.button("+ 添加群", key="add_webhook_group")
 

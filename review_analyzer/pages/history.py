@@ -4,6 +4,7 @@ import streamlit as st
 
 from review_analyzer.auth import get_current_user_id
 from review_analyzer.database import get_sessions, delete_session
+from review_analyzer.exporter import export_to_xlsx
 
 
 def render_history() -> None:
@@ -99,9 +100,17 @@ def render_history() -> None:
                         st.session_state["current_page"] = "results"
                         st.rerun()
                 with btn_col3:
-                    if st.button("📥 导出", key=f"hist_export_{s['id']}"):
-                        st.session_state["export_session_id"] = s["id"]
-                        st.toast("导出功能将在 M7 模块实现")
+                    try:
+                        xlsx_bytes, xlsx_fn = export_to_xlsx(s["id"], user_id)
+                        st.download_button(
+                            "📥 导出",
+                            data=xlsx_bytes,
+                            file_name=xlsx_fn,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            key=f"hist_export_{s['id']}",
+                        )
+                    except Exception:
+                        st.button("📥 导出", key=f"hist_export_{s['id']}", disabled=True)
                 with btn_col4:
                     if st.button("🗑️", key=f"hist_del_{s['id']}"):
                         delete_session(user_id, s["id"])

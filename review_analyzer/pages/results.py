@@ -1,12 +1,15 @@
 """分析结果页面 — 纵向单页布局"""
 
+import json
 from collections import Counter
 
 import plotly.graph_objects as go
 import streamlit as st
 
 from review_analyzer.auth import get_current_user_id
-from review_analyzer.database import get_sessions, get_comments, get_session_by_id
+from review_analyzer.database import get_sessions, get_comments, get_session_by_id, get_setting
+from review_analyzer.exporter import export_to_xlsx
+from review_analyzer.notifier import push_selected_items
 
 
 def _get_top_tags(comments: list[dict], tag_field: str, pool_size: int) -> list[dict]:
@@ -90,7 +93,18 @@ def render_results() -> None:
     # 导出按钮
     col_export = st.columns([4, 1])
     with col_export[1]:
-        st.button("📥 导出报告", key="export_report")
+        try:
+            xlsx_bytes, xlsx_filename = export_to_xlsx(session_id, user_id)
+            st.download_button(
+                "📥 导出报告",
+                data=xlsx_bytes,
+                file_name=xlsx_filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key="export_report",
+            )
+        except Exception as e:
+            st.button("📥 导出报告", key="export_report", disabled=True)
+            st.error(f"导出失败：{e}")
 
     # 环比条（版本环比）
     sessions_same_product = get_sessions(user_id, product_id=session.get("product_id"))
@@ -261,7 +275,7 @@ def render_results() -> None:
     _render_custom_compare(session, user_id)
 
     # 底部浮动操作栏
-    _render_floating_bar()
+    _render_floating_bar(session_id, user_id, top_issues, top_highlights)
 
 
 def _render_action_suggestions(pos_rate: float, neg_rate: float, comments: list[dict]) -> None:
@@ -461,7 +475,7 @@ def _render_compare_result(base: dict, target: dict, user_id: int) -> None:
             )
 
 
-def _render_floating_bar() -> None:
+def _render_floating_bar(session_id: int, user_id: int, top_issues: list[dict], top_highlights: list[dict]) -> None:
     """底部浮动操作栏 — 勾选 TOP10 项后显示"""
     selected_issues = [k for k in st.session_state if k.startswith("issue_chk_") and st.session_state[k]]
     selected_highlights = [k for k in st.session_state if k.startswith("highlight_chk_") and st.session_state[k]]
@@ -481,9 +495,57 @@ def _render_floating_bar() -> None:
         </div>
         """, unsafe_allow_html=True)
 
+        # 读取用户 Webhook 配置
+        raw_settings = get_setting(user_id, "push_settings")
+        webhook_url = ""
+        webhook_secret = ""
+        group_name = "默认群"
+        if raw_settings:
+            try:
+                push_settings = json.loads(raw_settings)
+                webhook_url = push_settings.get("webhook_url", "")
+                webhook_secret = push_settings.get("webhook_secret", "")
+                group_name = push_settings.get("webhook_group_name", "") or "默认群"
+            except json.JSONDecodeError:
+                pass
+
         col_group, col_push, _ = st.columns([2, 1, 2])
         with col_group:
-            st.selectbox("选择飞书群", ["默认群"], key="push_group_select", label_visibility="collapsed")
+            st.selectbox("选择飞书群", [group_name], key="push_group_select", label_visibility="collapsed")
         with col_push:
             if st.button("📤 推送到飞书", type="primary", key="push_to_feishu"):
-                st.toast("推送功能将在 M7 模块实现")
+                if not webhook_url:
+                    st.error("请先在「推送设置」页配置飞书 Webhook")
+                else:
+                    selected_tags = []
+                    for k in selected_issues:
+                        rank = int(k.replace("issue_chk_", ""))
+                        match = next((i for i in top_issues if i["rank"] == rank), None)
+                        if match:
+                            selected_tags.append(match["tag"])
+                    tag_type = "issue"
+
+                    selected_hl_tags = []
+                    for k in selected_highlights:
+                        rank = int(k.replace("highlight_chk_", ""))
+                        match = next((i for i in top_highlights if i["rank"] == rank), None)
+                        if match:
+                            selected_hl_tags.append(match["tag"])
+
+                    all_tags = selected_tags + selected_hl_tags
+                    push_type = "issue" if selected_tags and not selected_hl_tags else (
+                        "highlight" if selected_hl_tags and not selected_tags else "issue"
+                    )
+
+                    result = push_selected_items(
+                        user_id=user_id,
+                        webhook_url=webhook_url,
+                        secret=webhook_secret,
+                        session_id=session_id,
+                        selected_tags=all_tags,
+                        tag_type=push_type,
+                    )
+                    if result["ok"]:
+                        st.success("推送成功 ✓")
+                    else:
+                        st.error(f"推送失败：{result['msg']}")

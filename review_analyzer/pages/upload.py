@@ -18,6 +18,7 @@ from review_analyzer.database import (
 )
 from review_analyzer.parser import parse_file
 from review_analyzer.analyzer import analyze_batch
+from review_analyzer.notifier import auto_notify_after_analysis
 
 
 def _render_step_indicator(current: int) -> None:
@@ -280,6 +281,14 @@ def render_upload() -> None:
                 negative_count += 1
 
         update_session_stats(user_id, session_id, len(unprocessed), positive_count, negative_count)
+
+        # 自动推送（根据用户设置的规则判断）
+        try:
+            push_result = auto_notify_after_analysis(user_id, session_id)
+            if push_result and push_result.get("ok"):
+                st.toast("📤 已自动推送分析摘要到飞书")
+        except Exception:
+            pass
 
         progress_bar.progress(1.0)
         status_text.text("分析完成！")
