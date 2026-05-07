@@ -1,188 +1,262 @@
-# ReviewLens — Figma 搭建指南
+# ReviewLens — Figma 搭建教程（零基础版）
 
-基于 prototype.html 原型，按以下步骤在 Figma 中还原完整设计。
+> 面向第一次使用 Figma 的产品经理，从注册到完成 9 页原型，每步都有操作路径。
 
 ---
 
-## 一、项目初始化
+## 〇、Figma 基础入门
 
-### 1. 创建文件
-- 新建 Figma 文件，命名 `ReviewLens - 评论分析系统`
-- 创建 5 个 Page：`Login`、`Dashboard`、`Upload`、`Results`、`History`
+### 0.1 注册与打开
 
-### 2. 设置画框尺寸
-- 桌面端：1440 × 900（主设计稿）
-- 平板端：1024 × 768（可选适配）
+1. 打开 https://www.figma.com ，点 Sign up，邮箱注册（免费版够用）
+2. 进入主页，点左上角 `+ New design file` 创建新文件
+3. 双击顶部文件名，改为 `ReviewLens - 评论分析系统`
 
-### 3. 建立颜色样式（Color Styles）
-在右侧面板 → Local Styles → 添加以下颜色：
+### 0.2 界面认识
+
+```
+┌──────────────────────────────────────────────────┐
+│  顶部工具栏（选择/画框/形状/文字/画笔等工具）        │
+├────────┬─────────────────────────┬───────────────┤
+│ 左侧   │                         │ 右侧          │
+│ 图层   │     画布（中间工作区）     │ 属性面板      │
+│ 面板   │                         │ (Design/      │
+│        │                         │  Prototype)   │
+├────────┴─────────────────────────┴───────────────┤
+│  底部状态栏（缩放比例等）                           │
+└──────────────────────────────────────────────────┘
+```
+
+### 0.3 常用快捷键（Mac）
+
+| 操作 | 快捷键 | 说明 |
+|------|--------|------|
+| 选择 | `V` | 默认工具，选中/移动 |
+| 画框 | `F` | 创建 Frame（页面容器） |
+| 矩形 | `R` | 画矩形/卡片背景 |
+| 文字 | `T` | 输入文字 |
+| 缩放 | `Cmd + 滚轮` | 放大缩小画布 |
+| 适应屏幕 | `Cmd + 1` | 看到全部内容 |
+| 复制 | `Cmd + D` | 原地复制 |
+| 编组 | `Cmd + G` | 多元素打包 |
+| 撤销 | `Cmd + Z` | 撤销 |
+
+### 0.4 核心概念
+
+- **Frame**：页面容器，类似 PPT 一页。每个页面用一个 Frame
+- **Component**：可复用组件，改母版所有引用自动更新
+- **Auto Layout**：自动排列，像 Flexbox 一样均匀分布
+- **Variant**：组件的不同状态（如按钮的默认/悬停）
+
+### 0.5 文件结构
+
+左侧面板顶部，点 `Page 1` 旁的 `+`，创建 2 个 Page：
+
+| Page | 用途 |
+|------|------|
+| 🎨 Design System | 颜色、字体、组件库 |
+| 📄 Pages | 9 个页面设计稿 |
+
+---
+
+## 一、设计系统（在 🎨 Design System 页操作）
+
+### 1.1 颜色样式
+
+**操作**：`R` 画小矩形 → 右侧 Fill 点颜色块 → 输入色值 → 点 Style 图标(四个点) → `+` 新建样式 → 输入名称
 
 | 名称 | 色值 | 用途 |
 |------|------|------|
 | Primary | `#6C5CE7` | 主色、按钮、导航高亮 |
-| Primary Light | `#A29BFE` | 头像背景、渐变辅助 |
+| Primary Light | `#A29BFE` | 渐变辅助、头像背景 |
+| Primary Dark | `#5A4BD1` | 按钮悬停 |
 | Green | `#00B894` | 正面标签、上升指标 |
 | Red | `#FF6B6B` | 负面标签、下降指标 |
 | Yellow | `#FDCB6E` | 中性标签、星级 |
-| Blue | `#74B9FF` | 辅助图表色 |
+| Blue | `#74B9FF` | 辅助图表、时间环比 |
 | Background | `#F7F8FC` | 页面背景 |
-| Card | `#FFFFFF` | 卡片背景 |
+| Card White | `#FFFFFF` | 卡片背景 |
 | Text | `#2D3436` | 主文字 |
 | Text Light | `#636E72` | 辅助文字 |
 | Border | `#E8EAF0` | 分割线、边框 |
-| Hover BG | `#F0EEFF` | 悬停背景 |
+| Hover BG | `#F0EEFF` | 悬停/激活背景 |
 
-### 4. 建立文字样式（Text Styles）
+创建完后把矩形排成一排留在画布上，方便查看。
+
+### 1.2 文字样式
+
+**操作**：`T` 输入文字 → 右侧调字体/大小/粗细 → 点 Style 图标 → `+` 新建
 
 | 名称 | 字体 | 大小 | 粗细 |
 |------|------|------|------|
-| H1 / Page Title | PingFang SC | 22px | Bold (700) |
-| H2 / Card Title | PingFang SC | 16px | Semibold (600) |
-| H3 / Chart Title | PingFang SC | 15px | Semibold (600) |
-| Body | PingFang SC | 14px | Regular (400) |
-| Small | PingFang SC | 13px | Regular (400) |
-| Caption | PingFang SC | 12px | Regular (400) |
-| Metric Value | PingFang SC | 28px | Bold (700) |
-| Login Title | PingFang SC | 24px | Bold (700) |
+| H1 Page Title | PingFang SC | 22px | Bold 700 |
+| H2 Section Title | PingFang SC | 18px | Bold 700 |
+| H3 Card Title | PingFang SC | 16px | Semi 600 |
+| Body | PingFang SC | 14px | Regular 400 |
+| Body Bold | PingFang SC | 14px | Semi 600 |
+| Small | PingFang SC | 13px | Regular 400 |
+| Caption | PingFang SC | 12px | Regular 400 |
+| Metric Value | PingFang SC | 28px | Bold 700 |
+| Hero Title | PingFang SC | 42px | Extra 800 |
+
+> 没有 PingFang SC 就用 `Noto Sans SC`，Figma 内置。
+
+### 1.3 组件库
+
+**创建组件通用步骤**：选中元素 → 右键 → Create Component（`Cmd+Option+K`）
+
+#### ① 导航项 Nav Item
+- 尺寸 224×44，圆角 10，Auto Layout 横向间距 12，内边距 12/20
+- 内容：图标(20px) + 文字(15px)
+- Variant Default：无背景，文字 `#636E72`
+- Variant Active：背景 `#F0EEFF`，文字 `#6C5CE7`，字重 600
+
+#### ② 指标卡片 Metric Card
+- 高约 120，圆角 12，白底，阴影 X0 Y2 Blur12 `#6C5CE7` 8%
+- 左侧 4px 色条矩形
+- 内部纵向：图标(28px) → 数值(28px Bold) → 标签(13px灰) → 变化标签
+- 4 个 Variant 按色条区分：紫=总评论、绿=正面率、红=负面率、黄=评分
+
+#### ③ 标签 Tag
+- 圆角 20，内边距 4/12，字号 12
+- Positive：底 `#E8F8F5` 字 `#00B894`
+- Negative：底 `#FFEAEA` 字 `#FF6B6B`
+- Neutral：底 `#FFF3E0` 字 `#E17055`
+- Topic：底 `#F0EEFF` 字 `#6C5CE7`
+- Platform：底 `#E8F0FE` 字 `#2D6CDF`
+
+#### ④ 按钮 Button
+- 圆角 10，内边距 12/28，字号 15 Semi
+- Primary：底 `#6C5CE7` 字白
+- Outline：透明+2px边框 `#6C5CE7`，字 `#6C5CE7`
+- Danger：底 `#FF6B6B` 字白
+- Small：内边距 8/18，字号 13
+
+#### ⑤ 输入框 Input
+- 高 44，圆角 10，边框 2px
+- Default：边框 `#E8EAF0`
+- Focus：边框 `#6C5CE7`
+
+#### ⑥ 环比对比条 Compare Bar
+- 圆角 12，底 `#F0EEFF`，内边距 16/20，左侧 4px 色条
+- Version 版本环比：色条 `#6C5CE7`，标题 "🔄 版本环比"
+- Time 时间环比：色条 `#74B9FF`，标题 "📅 时间环比"
+- 内容：旧值(删除线) → 新值 + 变化%
+
+#### ⑦ 行动建议卡片 Action Card
+- 圆角 12，左侧 4px 边条
+- Normal：渐变 `#F0EEFF`→`#E8F8F5`，边条紫
+- Warning：渐变 `#FFEAEA`→`#FFF3E0`，边条红
+
+#### ⑧ 步骤指示器 Step Indicator
+- 3 个等宽块横排，底部 3px 边框
+- Default：白底，灰字，灰边框
+- Active：`#F0EEFF` 底，紫字，紫边框
+- Done：白底，绿字，绿边框
+
+#### ⑨ 侧边栏 Sidebar（整体组件）
+- 宽 260，高撑满，白底，右侧 1px 边框
+- 顶部：🔍 + "ReviewLens"(18px Bold 紫) + 分割线
+- 中间：6 个 Nav Item（📊仪表盘 / 📤上传用户评论 / 📋分析结果 / ✍️宣传文案 / 🕐历史记录 / ⚙️推送设置）
+- 底部：语言切换(🌐 中文/EN) + 用户(头像E + Erika + 退出)
+
+搭页面时复制侧边栏，手动切换对应 Nav Item 为 Active。
 
 ---
 
-## 二、创建组件（Components）
+## 二、逐页搭建（在 📄 Pages 页操作）
 
-### 1. 侧边栏导航项 (Nav Item)
-- 尺寸：224 × 44px
-- 圆角：10px
-- 内边距：12px 20px
-- 图标（20px）+ 间距 12px + 文字（15px）
-- 创建 2 个 Variant：`Default`（文字 #636E72）、`Active`（背景 #F0EEFF，文字 #6C5CE7，字重 600）
+每个页面：按 `F` 创建 Frame → 右侧输入宽 1440 高 900 → 双击左侧图层名改名。
 
-### 2. 指标卡片 (Metric Card)
-- 尺寸：自适应宽度 × 120px
-- 圆角：12px
-- 白底 + 阴影 `0 2px 12px rgba(108,92,231,0.08)`
-- 左侧 4px 色条（用矩形，圆角左上左下 4px）
-- 内部结构（纵向排列）：图标 28px → 数值 28px Bold → 标签 13px → 变化标签
+### 页面 1：欢迎页（Landing）
 
-### 3. 标签 (Tag)
-- 圆角：20px
-- 内边距：4px 12px
-- 创建 4 个 Variant：
-  - `Positive`：背景 #E8F8F5，文字 #00B894
-  - `Negative`：背景 #FFEAEA，文字 #FF6B6B
-  - `Neutral`：背景 #FFF3E0，文字 #E17055
-  - `Topic`：背景 #F0EEFF，文字 #6C5CE7
+**Frame**：1440 × 2400（长页面，需要滚动）
 
-### 4. 按钮 (Button)
-- 圆角：10px
-- 内边距：10px 24px
-- Variant `Primary`：背景 #6C5CE7，文字白色
-- Variant `Outline`：边框 2px #6C5CE7，文字 #6C5CE7
-- Variant `Small`：内边距 6px 14px，字号 13px
+**结构从上到下**：
 
-### 5. 输入框 (Input)
-- 高度：44px
-- 圆角：10px
-- 边框：2px #E8EAF0
-- 内边距：12px 16px
-- Variant `Focus`：边框色改为 #6C5CE7
+**① 顶部导航栏**（固定高度 60）
+- 白底，底部 1px 边框
+- 左：🔍 + "ReviewLens"(20px Bold 紫)
+- 右：两个按钮 —「登录」(Outline Small) +「免费试用」(Primary Small)
+- Auto Layout 横向，两端对齐（Space Between），内边距 16/60
 
-### 6. 表格行 (Table Row)
-- 高度：48px
-- 底部 1px 分割线 #E8EAF0
-- Variant `Hover`：背景 #FAFBFF
+**② Hero 区域**（高约 360）
+- 背景：线性渐变从 `#F0EEFF` 到 `#F7F8FC`（从上到下）
+- 居中排列：
+  - 大标题 42px Extra Bold："跨境电商评论，一键读懂"（"一键读懂"用紫色）
+  - 副标题 18px 灰色，最大宽度 640
+  - 两个按钮并排：「立即免费试用」(Primary Large) +「已有账号，登录」(Outline Large)
 
-### 7. 主题卡片 (Topic Card)
-- 圆角：12px
-- 白底 + 阴影
-- 左侧 4px 色条
-- 内部：主题名 16px Bold → 情感比例条（6px 高，三色拼接）→ 标签行 → 引用评论
+**③ 痛点区域**
+- 标题 28px Bold 居中："为什么我们做了 ReviewLens？"
+- 副标题 15px 灰色居中
+- 2×2 网格，每个痛点卡片：
+  - 白底圆角 12，阴影，内边距 24
+  - 左侧大图标(32px) + 右侧标题(15px Bold) + 描述(13px 灰)
+  - 4 张卡片：😩人工读评论太慢 / 🌍多语言难处理 / 📊无法量化问题 / 🔄缺乏持续追踪
 
-### 8. 历史记录卡片 (History Card)
-- 圆角：12px
-- 白底 + 阴影
-- 内部：元信息行（13px 灰色）→ 文件名（16px Bold）→ 统计行
+**④ 核心优势区域**
+- 浅紫背景 `#FAFAFF`
+- 标题 + 副标题居中
+- 3×2 网格特性卡片，每张：
+  - 白底圆角 12，阴影，居中对齐
+  - 大图标(40px) + 标题(17px Semi) + 描述(14px 灰)
+  - 6 张：🎯问题亮点直接提取 / 📁文件批量上传 / 🔔钉钉实时告警 / 📈环比趋势追踪 / 💰成本仅竞品1/10 / 🌐中英双语
 
-### 9. Tab 切换组
-- 容器：白底圆角 10px + 阴影，内边距 4px
-- 单个 Tab：圆角 8px，内边距 8px 20px
-- Variant `Active`：背景 #6C5CE7，文字白色
-- Variant `Default`：无背景，文字 #636E72
+**⑤ 收益数据区域**
+- 4 列等宽，居中
+  - 每列：大数字(36px Extra Bold 紫) + 标签(14px 灰)
+  - 90% 时间节省 / TOP10 精准定位 / 24h 实时告警 / 30天 环比追踪
 
----
+**⑥ CTA 横幅**
+- 圆角 20，渐变背景（紫→蓝 135°），内边距 60，白色文字
+- 标题 28px Bold + 副标题 16px + 两个白色按钮
 
-## 三、逐页搭建
+### 页面 2：试用页（Trial）
 
-### Page 1：登录页
+**Frame**：1440 × 1800（长页面）
 
-1. 画框 1440 × 900
-2. 背景：线性渐变 135°，`#A29BFE` → `#6C5CE7` → `#74B9FF`
-3. 居中放置登录卡片：
-   - 400 × auto，圆角 20px，白底
-   - 阴影：`0 20px 60px rgba(0,0,0,0.15)`
-   - 内边距：48px 40px
-4. 卡片内容（居中对齐，纵向排列）：
-   - 🔍 图标（48px）
-   - "ReviewLens"（24px Bold，#6C5CE7）
-   - 副标题（14px，#636E72）
-   - 用户名输入框
-   - 密码输入框
-   - 登录按钮（Primary，全宽）
+**① 顶部导航**
+- 同欢迎页导航，右侧只有「登录」按钮
 
-### Page 2：仪表盘
+**② 提示条**
+- 渐变背景（紫→绿），圆角 12，边框 `#A29BFE`
+- 💡 图标 + 文字："试用模式：单次分析，不保存历史。登录 解锁完整功能。"
 
-1. 左侧固定侧边栏 240px 宽，白底
-   - Logo 区域 + 4 个导航项 + 底部语言切换 & 用户信息
-2. 右侧主内容区（左边距 240px，内边距 28px 32px）：
-   - 页面标题行
-   - 4 列指标卡片（等宽 grid，间距 16px）
-   - 图表行：左 1.2fr 折线图 + 右 0.8fr 柱状图（间距 16px）
-   - 最近记录表格卡片
+**③ 表单区域**
+- 2×2 网格表单：
+  - 产品编号（必填）| 产品中文名称（选填）
+  - 平台来源（下拉，必填）| 产品类目（下拉，必填）
 
-### Page 3：上传分析
+**④ 上传区域**
+- 虚线边框 2px dashed `#A29BFE`，圆角 12，内边距 60/40
+- 居中：📁图标 + "拖拽文件到此处" + "支持 CSV/XLSX，试用限 500 条"
 
-1. 侧边栏同上（"上传分析"项高亮）
-2. 主内容：
-   - 页面标题
-   - 上传区域：虚线边框 2px dashed #A29BFE，圆角 12px，内边距 60px 40px
-   - 进度条：6px 高，圆角 3px，渐变填充
-   - 文件预览表格卡片
-   - 操作行：类目下拉框 + 开始分析按钮
+**⑤ 文件预览表格**（模拟上传后显示）
+- 白底卡片，表格 4 列：ID / 评论内容 / 评分 / 日期
+- 右下角「开始分析」按钮
 
-### Page 4：分析结果
+**⑥ 分析结果预览**（模拟分析完成后）
+- 🔒 提示条（橙色渐变）："试用模式下无法导出。登录 解锁。"
+- 4 个指标卡片（总评论 486 / 正面率 68.5% / 负面率 21.2% / 评分 3.9）
+- 情感分布饼图（用圆形+扇形模拟）+ 热门关键词云
+- TOP5 问题表格 + TOP5 亮点表格（试用只显示 5 条）
+- 底部 🔒 提示："试用仅显示前 5 条。登录 查看完整内容。"
 
-1. 侧边栏同上（"分析结果"项高亮）
-2. 主内容：
-   - 标题行 + 右侧导出/推送按钮
-   - Tab 切换组
-   - 概览 Tab：左侧环形图 + 右侧关键词云 → 下方 3 列情感指标卡
-   - 主题 Tab：2 列 grid 主题卡片
-   - 原文 Tab：搜索栏 + 筛选下拉 + 评论表格
+### 页面 3：登录页（Login）
 
-### Page 5：历史记录
+**Frame**：1440 × 900
 
-1. 侧边栏同上（"历史记录"项高亮）
-2. 主内容：
-   - 页面标题
-   - 搜索栏 + 时间筛选下拉
-   - 历史卡片 grid（auto-fill，最小 320px）
-
----
-
-## 四、原型交互（Prototype 模式）
-
-1. 登录按钮 → Navigate to `Dashboard`
-2. 侧边栏导航项 → Navigate to 对应页面
-3. 上传区域点击 → 显示进度条 → 显示预览（用 Smart Animate）
-4. 开始分析按钮 → Navigate to `Results`
-5. Tab 切换 → 用 Variant 交互或 Navigate to 不同 Frame
-6. 历史卡片点击 → Navigate to `Results`
-7. 退出按钮 → Navigate to `Login`
-8. 语言切换 → 用 Component Variant 切换中/英文版本
-
----
-
-## 五、导出与交付
-
-1. 选中所有页面 → 右侧 Export → 导出 2x PNG 用于评审
-2. 使用 Figma 的 Share 功能生成预览链接
-3. 开发交付时使用 Dev Mode 查看间距、颜色、字体参数
+- 全屏渐变背景：135° 从 `#A29BFE` → `#6C5CE7` → `#74B9FF`
+- 正中放登录卡片：
+  - 宽 400，圆角 20，白底
+  - 阴影：X0 Y20 Blur60 黑色 15%
+  - 内边距 48/40，居中对齐
+  - 内容纵向排列：
+    1. 🔍 图标 48px
+    2. "ReviewLens" 24px Bold 紫色
+    3. "跨境电商评论分析平台" 14px 灰色
+    4. 用户名输入框
+    5. 密码输入框
+    6. 「登 录」按钮（Primary，全宽）
+    7. "还没有账号？先免费试用" 13px 灰色，链接紫色

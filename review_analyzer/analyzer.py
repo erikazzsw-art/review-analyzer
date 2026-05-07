@@ -3,6 +3,8 @@
 import json
 import logging
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 
 from openai import AuthenticationError, OpenAI
@@ -244,53 +246,93 @@ def analyze_comment(
     return _make_unrecognizable()
 
 
+def _analyze_one(
+    index: int,
+    item: dict,
+    category: str,
+    api_key: str,
+) -> tuple[int, dict]:
+    """分析单条评论，返回 (索引, 合并结果)。供线程池调用。"""
+    content = item.get("content", "").strip()
+
+    if not content:
+        return index, {**item, **_make_unrecognizable()}
+
+    rating = item.get("rating")
+    if rating is not None:
+        try:
+            rating = int(rating)
+        except (ValueError, TypeError):
+            rating = None
+
+    try:
+        analysis = analyze_comment(content, category, api_key, rating)
+    except AuthenticationError:
+        raise
+    except Exception as e:
+        logger.error(f"第 {index + 1} 条分析失败: {e}")
+        analysis = _make_unrecognizable()
+
+    return index, {**item, **analysis}
+
+
 def analyze_batch(
     comments: list[dict],
     category: str,
     api_key: str,
     progress_callback: Optional[callable] = None,
+    max_workers: int = 10,
 ) -> list[dict]:
     """
-    批量分析，带进度回调。
-    每条评论调用 analyze_comment，异常时跳过该条不阻塞整体流程。
+    批量分析，带进度回调。并发调用 DeepSeek API 提升性能。
     无效 API Key 时抛出异常停止分析。
 
     comments 中每个 dict 需包含 "content" 字段，可选 "rating" 字段。
     返回列表中每个 dict 包含原始字段 + AI 分析结果字段。
     """
-    results: list[dict] = []
     total = len(comments)
+    if total == 0:
+        return []
 
-    for i, item in enumerate(comments):
-        content = item.get("content", "").strip()
+    results: list[Optional[dict]] = [None] * total
+    lock = threading.Lock()
+    done_count = 0
+    auth_error = None
 
-        if not content:
-            merged = {**item, **_make_unrecognizable()}
-            results.append(merged)
-            if progress_callback:
-                progress_callback(i + 1, total)
-            continue
-
-        rating = item.get("rating")
-        if rating is not None:
-            try:
-                rating = int(rating)
-            except (ValueError, TypeError):
-                rating = None
-
+    def on_done(future):
+        nonlocal done_count, auth_error
         try:
-            analysis = analyze_comment(content, category, api_key, rating)
+            idx, merged = future.result()
+            results[idx] = merged
         except AuthenticationError:
-            raise ValueError("API Key 无效，请检查您的 DeepSeek API Key 设置")
+            auth_error = ValueError("API Key 无效，请检查您的 DeepSeek API Key 设置")
+            return
         except Exception as e:
-            logger.error(f"第 {i + 1} 条分析失败: {e}")
-            analysis = _make_unrecognizable()
+            logger.error(f"并发分析异常: {e}")
+            return
 
-        merged = {**item, **analysis}
-        results.append(merged)
-
+        with lock:
+            done_count += 1
+            current = done_count
         if progress_callback:
-            progress_callback(i + 1, total)
+            progress_callback(current, total)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = []
+        for i, item in enumerate(comments):
+            f = executor.submit(_analyze_one, i, item, category, api_key)
+            f.add_done_callback(on_done)
+            futures.append(f)
+
+        for f in futures:
+            f.result(timeout=120)
+            if auth_error:
+                executor.shutdown(wait=False, cancel_futures=True)
+                raise auth_error
+
+    for i, r in enumerate(results):
+        if r is None:
+            results[i] = {**comments[i], **_make_unrecognizable()}
 
     return results
 

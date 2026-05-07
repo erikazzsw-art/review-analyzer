@@ -1,5 +1,10 @@
 """ReviewLens — Streamlit 主入口"""
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import streamlit as st
 
 from review_analyzer.database import init_db
