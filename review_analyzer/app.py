@@ -56,6 +56,13 @@ st.markdown("""
 footer {visibility: hidden;}
 header {visibility: hidden;}
 
+/* 隐藏标题旁的锚点链接按钮 */
+.stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a,
+.stMarkdown h4 a, .stMarkdown h5 a, .stMarkdown h6 a,
+[data-testid="stHeaderActionElements"] {
+    display: none !important;
+}
+
 /* 页面背景 */
 .stApp {
     background: var(--bg);

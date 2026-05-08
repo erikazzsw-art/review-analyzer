@@ -279,44 +279,38 @@ def render_results() -> None:
 
 
 def _render_action_suggestions(pos_rate: float, neg_rate: float, comments: list[dict]) -> None:
-    """渲染行动建议"""
+    """渲染行动建议（自然语言）"""
     is_danger = neg_rate > 25 or pos_rate < 55
     card_class = "action-card danger" if is_danger else "action-card"
-    title = "🚨 行动建议（需关注）" if is_danger else "💡 行动建议"
+    title = "行动建议（需关注）" if is_danger else "行动建议"
 
     suggestions = []
     if pos_rate >= 70:
-        suggestions.append(("tag-pos", "↑ 改善", f"正面率 {pos_rate:.1f}%，产品改进方向正确，建议继续保持"))
+        suggestions.append(f"正面率达到 {pos_rate:.1f}%，产品改进方向正确，建议继续保持当前策略。")
     elif pos_rate < 55:
-        suggestions.append(("tag-neg", "⚠️ 恶化", f"正面率仅 {pos_rate:.1f}%，产品口碑正在恶化，需立即排查"))
+        suggestions.append(f"正面率仅为 {pos_rate:.1f}%，产品口碑正在下滑，建议立即排查用户不满意的主要原因。")
 
     if neg_rate > 25:
-        suggestions.append(("tag-neg", "⚠️ 紧急", f"负面率 {neg_rate:.1f}% 超过警戒线，建议立即排查核心问题"))
+        suggestions.append(f"负面率已达 {neg_rate:.1f}%，超过 25% 警戒线，建议优先处理用户反馈最集中的问题。")
 
-    # 基于 TOP 问题生成建议
     negative_comments = [c for c in comments if c.get("sentiment") == "negative"]
     top_issues = _get_top_tags(negative_comments, "issue_tag", len(negative_comments))
     if top_issues and top_issues[0]["pct"] > 5:
-        suggestions.append(("tag-neg", "⚠️ 关注",
-                           f"「{top_issues[0]['tag']}」问题占比 {top_issues[0]['pct']:.1f}%，建议重点改进"))
+        suggestions.append(
+            f"用户反馈最集中的问题是「{top_issues[0]['tag']}」，占负面评论的 {top_issues[0]['pct']:.1f}%，建议将其列为改进优先项。")
 
-    # 基于亮点生成营销建议
     positive_comments = [c for c in comments if c.get("sentiment") == "positive"]
     top_highlights = _get_top_tags(positive_comments, "highlight_tag", len(positive_comments))
     if top_highlights:
-        suggestions.append(("tag-pos", "📢 营销",
-                           f"「{top_highlights[0]['tag']}」亮点占比 {top_highlights[0]['pct']:.1f}%，建议在 listing 中强化"))
+        suggestions.append(
+            f"产品最受认可的亮点是「{top_highlights[0]['tag']}」，占正面评论的 {top_highlights[0]['pct']:.1f}%，建议在产品详情页和广告文案中重点突出。")
 
     if not suggestions:
-        suggestions.append(("tag-pos", "👍 良好", "产品整体表现正常，建议持续监控"))
+        suggestions.append("产品整体表现正常，建议持续监控评论动态。")
 
     items_html = ""
-    for tag_cls, badge_text, text in suggestions:
-        items_html += f"""
-        <div style="font-size:14px;padding:8px 0;border-bottom:1px solid rgba(108,92,231,0.1);display:flex;gap:8px;">
-            <span class="tag {tag_cls}">{badge_text}</span>
-            <span>{text}</span>
-        </div>"""
+    for i, text in enumerate(suggestions, 1):
+        items_html += f'<div style="font-size:14px;padding:10px 0;border-bottom:1px solid rgba(108,92,231,0.08);line-height:1.6;">{i}. {text}</div>'
 
     st.markdown(f"""
     <div class="{card_class}">

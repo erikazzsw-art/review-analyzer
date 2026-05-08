@@ -180,8 +180,12 @@ def render_upload() -> None:
                     new_records = df[~df["_hash"].isin(existing_hashes)]
 
                     if len(duplicates) > 0:
-                        st.warning(f"检测到 {len(duplicates)} 条重复评论，将自动跳过")
-                        st.session_state["upload_df_clean"] = new_records.drop(columns=["_hash"])
+                        if len(new_records) == 0:
+                            st.error(f"上传数据重复：全部 {len(duplicates)} 条评论与已有记录相同，请勿重复上传")
+                            st.session_state["upload_df_clean"] = new_records.drop(columns=["_hash"])
+                        else:
+                            st.warning(f"检测到 {len(duplicates)} 条重复评论（将自动跳过），剩余 {len(new_records)} 条待分析")
+                            st.session_state["upload_df_clean"] = new_records.drop(columns=["_hash"])
                     else:
                         st.session_state["upload_df_clean"] = df.drop(columns=["_hash"])
                 else:
@@ -212,7 +216,7 @@ def render_upload() -> None:
         df = st.session_state.get("upload_df_clean")
 
         if df is None or df.empty:
-            st.error("没有可分析的数据")
+            st.error("上传数据重复：所有评论与已有记录相同，无需重复分析")
             if st.button("返回"):
                 st.session_state["upload_step"] = 1
                 st.rerun()

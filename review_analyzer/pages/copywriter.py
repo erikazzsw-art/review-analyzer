@@ -1,9 +1,14 @@
 """宣传文案页面 — 基于评论分析生成广告文案"""
 
+import json
+import os
+
 import streamlit as st
+from openai import OpenAI
 
 from review_analyzer.auth import get_current_user_id
 from review_analyzer.database import get_sessions, get_comments
+from review_analyzer.analyzer import get_api_key
 
 
 PLATFORM_DATA = {
@@ -185,8 +190,9 @@ def render_copywriter() -> None:
     for i, (pid, pdata) in enumerate(PLATFORM_DATA.items()):
         with platform_cols[i]:
             is_active = st.session_state["copy_platform"] == pid
-            border_style = "border:2px solid #6C5CE7;background:#F0EEFF;" if is_active else "border:2px solid #E8EAF0;"
-            if st.button(f"{pdata['icon']}\n{pdata['label']}", key=f"platform_{pid}", use_container_width=True):
+            btn_type = "primary" if is_active else "secondary"
+            if st.button(f"{pdata['icon']} {pdata['label']}", key=f"platform_{pid}",
+                         use_container_width=True, type=btn_type):
                 st.session_state["copy_platform"] = pid
                 st.rerun()
 
@@ -233,10 +239,24 @@ def render_copywriter() -> None:
         platform_info = PLATFORM_DATA[platform]
         rules = PLATFORM_RULES[platform]
 
+        # 收集评论数据用于 AI 生成
+        selected_sessions = st.session_state.get("copy_selected_sessions", [])
+        all_comments = []
+        for sid in selected_sessions:
+            all_comments.extend(get_comments(user_id, session_id=sid))
+
+        # 取 TOP 评论摘要（正面+负面各取前15条）
+        pos_samples = [c["content"] for c in all_comments if c.get("sentiment") == "positive" and c.get("content")][:15]
+        neg_samples = [c["content"] for c in all_comments if c.get("sentiment") == "negative" and c.get("content")][:15]
+        review_summary = "正面评论摘要:\n" + "\n".join(f"- {r[:100]}" for r in pos_samples)
+        if neg_samples:
+            review_summary += "\n\n负面评论摘要:\n" + "\n".join(f"- {r[:100]}" for r in neg_samples)
+
+        features_text = st.session_state.get("copy_features", "")
+
         st.markdown("<br>", unsafe_allow_html=True)
 
         if gen_ad_copy:
-            # 平台政策提示
             st.markdown(f"""
             <div style="padding:10px 14px;background:#F0EEFF;border-radius:8px;font-size:12px;
                         color:#636E72;line-height:1.6;border:1px solid #E0DCFF;margin-bottom:16px;">
@@ -244,24 +264,11 @@ def render_copywriter() -> None:
             </div>
             """, unsafe_allow_html=True)
 
-            st.markdown(f"### 📢 {platform_info['name']}")
+            st.markdown(f"**{platform_info['name']}**")
 
-            # 每种广告类型一张卡片
             for ad_type in platform_info["types"]:
-                st.markdown(f"""
-                <div class="copy-card">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                        <span style="font-size:15px;font-weight:600;">{ad_type['name']}</span>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="font-size:12px;color:#636E72;background:#fff;padding:3px 10px;
-                                         border-radius:20px;border:1px solid #E8EAF0;">≤ {ad_type['limit']} 字符</span>
-                            <span class="compliance-badge pass">✓ 合规</span>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"**{ad_type['name']}**（≤ {ad_type['limit']} 字符）")
 
-                # 风格选择器
                 style_key = f"style_{platform}_{ad_type['id']}"
                 if style_key not in st.session_state:
                     st.session_state[style_key] = "简洁专业"
@@ -269,52 +276,131 @@ def render_copywriter() -> None:
                 style_cols = st.columns(4)
                 for si, style in enumerate(STYLES):
                     with style_cols[si]:
+                        btn_type = "primary" if st.session_state[style_key] == style else "secondary"
                         if st.button(style, key=f"style_btn_{platform}_{ad_type['id']}_{si}",
-                                     use_container_width=True):
+                                     use_container_width=True, type=btn_type):
                             st.session_state[style_key] = style
+                            if f"copy_result_{platform}_{ad_type['id']}" in st.session_state:
+                                del st.session_state[f"copy_result_{platform}_{ad_type['id']}"]
                             st.rerun()
 
-                # 文案内容（示例）
+                # AI 生成文案
+                result_key = f"copy_result_{platform}_{ad_type['id']}"
+                refresh_key = f"refresh_{platform}_{ad_type['id']}"
+
+                need_generate = result_key not in st.session_state
+                if st.session_state.get(f"_refresh_{refresh_key}"):
+                    need_generate = True
+                    st.session_state[f"_refresh_{refresh_key}"] = False
+
+                if need_generate and all_comments:
+                    current_style = st.session_state[style_key]
+                    prompt = f"""你是跨境电商广告文案专家。根据以下用户评论分析结果，为产品生成{platform_info['name']}的{ad_type['name']}。
+
+要求：
+1. 风格：{current_style}
+2. 字符限制：不超过 {ad_type['limit']} 个英文字符
+3. 语言：英文为主，下方附中文翻译
+4. 禁止使用以下违禁词：{', '.join(rules['prohibited'])}
+5. 只输出一条文案，格式为 JSON：{{"en": "英文文案", "zh": "中文翻译"}}
+
+{f'产品功能点：{features_text}' if features_text else ''}
+
+{review_summary}"""
+
+                    try:
+                        api_key = get_api_key(user_id)
+                        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1", timeout=30.0)
+                        resp = client.chat.completions.create(
+                            model="deepseek-chat",
+                            messages=[{"role": "user", "content": prompt}],
+                            temperature=0.7,
+                            max_tokens=300,
+                            response_format={"type": "json_object"},
+                        )
+                        result = json.loads(resp.choices[0].message.content)
+                        st.session_state[result_key] = result
+                    except Exception as e:
+                        st.session_state[result_key] = {"en": f"生成失败: {e}", "zh": ""}
+
+                copy_result = st.session_state.get(result_key, {})
+                en_text = copy_result.get("en", "")
+                zh_text = copy_result.get("zh", "")
+                char_count = len(en_text)
+                is_compliant = not any(w in en_text.lower() for w in rules["prohibited"])
+                badge = '<span class="compliance-badge pass">✓ 合规</span>' if is_compliant else '<span class="compliance-badge warn">⚠ 有风险</span>'
+
                 st.markdown(f"""
                 <div style="font-size:14px;line-height:1.8;padding:14px 16px;background:#fff;
                             border-radius:10px;border:1px solid #E8EAF0;margin:8px 0;">
-                    <strong style="color:#2D3436;">Sample ad copy for {ad_type['name']} will be generated by AI...</strong>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-size:12px;color:#636E72;">{char_count} / {ad_type['limit']} 字符</span>
+                        {badge}
+                    </div>
+                    <strong style="color:#2D3436;">{en_text}</strong>
                     <div style="border-top:1px dashed #E8EAF0;margin-top:8px;padding-top:8px;
                                 font-size:12px;color:#636E72;">
-                        中文翻译参考：AI 将根据评论分析结果生成对应文案
+                        中文参考：{zh_text}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                # 操作按钮
-                btn_cols = st.columns([3, 1, 1])
-                with btn_cols[0]:
-                    st.markdown(f'<span style="font-size:12px;color:#636E72;">0 / {ad_type["limit"]} 字符</span>',
-                                unsafe_allow_html=True)
+                btn_cols = st.columns([4, 1])
                 with btn_cols[1]:
-                    st.button("🔄 刷新", key=f"refresh_{platform}_{ad_type['id']}")
-                with btn_cols[2]:
-                    st.button("📋 复制", key=f"copy_{platform}_{ad_type['id']}")
+                    if st.button("刷新", key=refresh_key, use_container_width=True):
+                        if result_key in st.session_state:
+                            del st.session_state[result_key]
+                        st.rerun()
 
-                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("")
 
         if gen_ideal_desc:
-            st.markdown("""
+            st.markdown("**客户理想产品描述（选品依据）**")
+
+            ideal_key = "copy_ideal_desc"
+            if ideal_key not in st.session_state and all_comments:
+                prompt = f"""你是跨境电商选品分析师。根据以下用户评论，分析客户对该品类产品的理想画像。
+
+输出维度：
+1. 客户最看重的产品特性（前5项）
+2. 价格预期范围
+3. 物流时效要求
+4. 包装品质期望
+5. 售后服务要求
+
+输出格式为 JSON：{{"features": ["特性1", ...], "price_range": "...", "logistics": "...", "packaging": "...", "service": "...", "summary": "一段完整的选品建议"}}
+
+{review_summary}"""
+                try:
+                    api_key = get_api_key(user_id)
+                    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1", timeout=30.0)
+                    resp = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.3,
+                        max_tokens=600,
+                        response_format={"type": "json_object"},
+                    )
+                    st.session_state[ideal_key] = json.loads(resp.choices[0].message.content)
+                except Exception as e:
+                    st.session_state[ideal_key] = {"summary": f"生成失败: {e}"}
+
+            ideal = st.session_state.get(ideal_key, {})
+            features = ideal.get("features", [])
+            summary = ideal.get("summary", "")
+
+            features_html = " ".join(f'<span class="tag tag-topic">{f}</span>' for f in features)
+            st.markdown(f"""
             <div class="settings-section" style="border-left:4px solid #00B894;">
-                <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">🎯 客户理想产品描述（选品依据）</h3>
-                <div style="background:#F7F8FC;border-radius:10px;padding:20px;">
-                    <div style="font-size:14px;line-height:1.9;color:#2D3436;">
-                        基于真实用户评论分析，客户对该品类产品的理想画像将由 AI 自动生成。<br><br>
-                        分析维度包括：客户最看重的产品特性、价格预期、物流时效要求、包装品质期望等。
-                    </div>
+                <div style="margin-bottom:12px;">{features_html}</div>
+                <div style="font-size:14px;line-height:1.9;color:#2D3436;">
+                    {summary}
+                </div>
+                <div style="margin-top:12px;font-size:13px;color:#636E72;">
+                    价格预期：{ideal.get('price_range', '—')} ｜
+                    物流要求：{ideal.get('logistics', '—')} ｜
+                    包装期望：{ideal.get('packaging', '—')} ｜
+                    售后要求：{ideal.get('service', '—')}
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
-        # 底部操作
-        st.markdown("<br>", unsafe_allow_html=True)
-        col_copy_all, col_export = st.columns(2)
-        with col_copy_all:
-            st.button("📋 复制全部文案", key="copy_all_btn")
-        with col_export:
-            st.button("📥 导出为文档", key="export_copy_btn")
