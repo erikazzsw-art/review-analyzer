@@ -190,22 +190,18 @@ def _render_action_card(product: dict) -> None:
 
     suggestions = []
     if pos_rate >= 70:
-        suggestions.append(('<span class="tag tag-pos">👍 良好</span>',
-                           f"产品整体评价优秀，正面率 {pos_rate:.1f}%，建议持续监控"))
+        suggestions.append(f"产品整体评价优秀，正面率 {pos_rate:.1f}%，建议持续监控并扩大宣传")
     elif pos_rate < 55:
-        suggestions.append(('<span class="tag tag-neg">⚠️ 恶化</span>',
-                           f"正面率仅 {pos_rate:.1f}%，产品口碑需要关注"))
+        suggestions.append(f"正面率仅 {pos_rate:.1f}%，产品口碑正在恶化，需立即排查原因")
     if neg_rate > 25:
-        suggestions.append(('<span class="tag tag-neg">⚠️ 紧急</span>',
-                           f"负面率 {neg_rate:.1f}% 超过警戒线，建议立即排查"))
+        suggestions.append(f"负面率 {neg_rate:.1f}% 超过警戒线，建议立即排查核心问题并优化产品")
 
     if not suggestions:
-        suggestions.append(('<span class="tag tag-pos">📢 营销</span>',
-                           "建议基于产品亮点优化 listing 文案"))
+        suggestions.append("产品表现稳定，建议基于亮点优化 listing 文案")
 
     items_html = ""
-    for badge, text in suggestions:
-        items_html += f'<div style="font-size:14px;padding:8px 0;border-bottom:1px solid rgba(108,92,231,0.1);display:flex;gap:8px;">{badge}<span>{text}</span></div>'
+    for text in suggestions:
+        items_html += f'<div style="font-size:14px;padding:8px 0;border-bottom:1px solid rgba(108,92,231,0.1);">• {text}</div>'
 
     st.markdown(f"""
     <div class="{card_class}">
