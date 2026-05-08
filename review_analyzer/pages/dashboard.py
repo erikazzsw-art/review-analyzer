@@ -4,30 +4,28 @@ import streamlit as st
 import plotly.graph_objects as go
 
 from review_analyzer.auth import get_current_user_id
-from review_analyzer.database import get_sessions, get_comments
+from review_analyzer.database import get_sessions, get_comments, get_product_stats_deduped, get_comments_deduped
 
 
 def _get_products(user_id: int) -> list[dict]:
-    """获取用户所有产品及其汇总数据"""
+    """获取用户所有产品及其汇总数据（按 content_hash 去重统计）"""
     sessions = get_sessions(user_id)
     products: dict[str, dict] = {}
     for s in sessions:
         pid = s["product_id"]
         if pid not in products:
+            stats = get_product_stats_deduped(user_id, pid)
             products[pid] = {
                 "product_id": pid,
                 "name": "",
                 "platform": "",
                 "category": s.get("category", ""),
                 "sessions": [],
-                "total_reviews": 0,
-                "positive_count": 0,
-                "negative_count": 0,
+                "total_reviews": stats["total_reviews"],
+                "positive_count": stats["positive_count"],
+                "negative_count": stats["negative_count"],
             }
         products[pid]["sessions"].append(s)
-        products[pid]["total_reviews"] += s.get("total_reviews", 0)
-        products[pid]["positive_count"] += s.get("positive_count", 0)
-        products[pid]["negative_count"] += s.get("negative_count", 0)
     return list(products.values())
 
 
@@ -117,34 +115,30 @@ def _render_charts(product: dict, idx: int) -> None:
     with col2:
         user_id = get_current_user_id()
         if user_id and product["sessions"]:
-            latest_session = sessions[-1] if sessions else None
-            if latest_session:
-                comments = get_comments(user_id, session_id=latest_session["id"])
-                ratings = [c["rating"] for c in comments if c.get("rating")]
-                if ratings:
-                    from collections import Counter
-                    rating_counts = Counter(ratings)
-                    stars = ["⭐1", "⭐2", "⭐3", "⭐4", "⭐5"]
-                    counts = [rating_counts.get(i, 0) for i in range(1, 6)]
-                    colors = ["#FF6B6B", "#FDCB6E", "#74B9FF", "#A29BFE", "#00B894"]
+            comments = get_comments_deduped(user_id, product["product_id"])
+            ratings = [c["rating"] for c in comments if c.get("rating")]
+            if ratings:
+                from collections import Counter
+                rating_counts = Counter(ratings)
+                stars = ["⭐1", "⭐2", "⭐3", "⭐4", "⭐5"]
+                counts = [rating_counts.get(i, 0) for i in range(1, 6)]
+                colors = ["#FF6B6B", "#FDCB6E", "#74B9FF", "#A29BFE", "#00B894"]
 
-                    fig = go.Figure(go.Bar(
-                        x=stars, y=counts,
-                        marker_color=colors,
-                        marker_cornerradius=8,
-                    ))
-                    fig.update_layout(
-                        title="📊 评分分布",
-                        height=280,
-                        margin=dict(l=20, r=20, t=40, b=20),
-                        plot_bgcolor="white",
-                        paper_bgcolor="white",
-                    )
-                    st.plotly_chart(fig, use_container_width=True, key=f"dist_{idx}")
-                else:
-                    st.info("暂无评分数据")
+                fig = go.Figure(go.Bar(
+                    x=stars, y=counts,
+                    marker_color=colors,
+                    marker_cornerradius=8,
+                ))
+                fig.update_layout(
+                    title="📊 评分分布",
+                    height=280,
+                    margin=dict(l=20, r=20, t=40, b=20),
+                    plot_bgcolor="white",
+                    paper_bgcolor="white",
+                )
+                st.plotly_chart(fig, use_container_width=True, key=f"dist_{idx}")
             else:
-                st.info("暂无数据")
+                st.info("暂无评分数据")
         else:
             st.info("暂无数据")
 

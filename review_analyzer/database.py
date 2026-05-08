@@ -276,6 +276,43 @@ def get_existing_hashes(user_id: int, product_id: str) -> set[str]:
         return {r["content_hash"] for r in rows}
 
 
+def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
+    """按 content_hash 去重后统计产品级指标。"""
+    sql = """
+        SELECT
+            COUNT(*) AS total_reviews,
+            SUM(CASE WHEN sentiment = 'positive' THEN 1 ELSE 0 END) AS positive_count,
+            SUM(CASE WHEN sentiment = 'negative' THEN 1 ELSE 0 END) AS negative_count
+        FROM (
+            SELECT sentiment,
+                   ROW_NUMBER() OVER (PARTITION BY content_hash ORDER BY id DESC) AS rn
+            FROM comments
+            WHERE user_id = ? AND product_id = ? AND content_hash IS NOT NULL
+        )
+        WHERE rn = 1
+    """
+    with get_connection() as conn:
+        row = conn.execute(sql, (user_id, product_id)).fetchone()
+        return dict(row) if row else {"total_reviews": 0, "positive_count": 0, "negative_count": 0}
+
+
+def get_comments_deduped(user_id: int, product_id: str) -> list[dict]:
+    """按 content_hash 去重，保留最新一条记录。"""
+    sql = """
+        SELECT * FROM (
+            SELECT *,
+                   ROW_NUMBER() OVER (PARTITION BY content_hash ORDER BY id DESC) AS rn
+            FROM comments
+            WHERE user_id = ? AND product_id = ? AND content_hash IS NOT NULL
+        )
+        WHERE rn = 1
+        ORDER BY id DESC
+    """
+    with get_connection() as conn:
+        rows = conn.execute(sql, (user_id, product_id)).fetchall()
+        return [dict(r) for r in rows]
+
+
 def get_unprocessed_comments(user_id: int, session_id: int) -> list[dict]:
     with get_connection() as conn:
         rows = conn.execute(
