@@ -16,7 +16,6 @@ from review_analyzer.pages.dashboard import render_dashboard
 from review_analyzer.pages.upload import render_upload
 from review_analyzer.pages.results import render_results
 from review_analyzer.pages.copywriter import render_copywriter
-from review_analyzer.pages.history import render_history
 from review_analyzer.pages.settings import render_settings
 
 st.set_page_config(
@@ -426,7 +425,6 @@ def main() -> None:
             "upload": ("📤", "上传评论"),
             "results": ("📋", "分析结果"),
             "copywriter": ("✍️", "宣传文案"),
-            "history": ("🕐", "历史记录"),
             "settings": ("⚙️", "推送设置"),
         }
         nav_items_en = {
@@ -434,7 +432,6 @@ def main() -> None:
             "upload": ("📤", "Upload"),
             "results": ("📋", "Results"),
             "copywriter": ("✍️", "Copywriter"),
-            "history": ("🕐", "History"),
             "settings": ("⚙️", "Settings"),
         }
         nav_items = nav_items_zh if lang == "zh" else nav_items_en
@@ -494,8 +491,6 @@ def main() -> None:
         render_results()
     elif page == "copywriter":
         render_copywriter()
-    elif page == "history":
-        render_history()
     elif page == "settings":
         render_settings()
 

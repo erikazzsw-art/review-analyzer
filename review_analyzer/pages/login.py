@@ -6,6 +6,8 @@ from review_analyzer.auth import login, register
 
 
 def render_login_page() -> None:
+    default_tab = st.session_state.pop("login_default_tab", "login")
+
     st.markdown("""
     <style>
     [data-testid="stSidebar"] { display: none; }
@@ -27,7 +29,10 @@ def render_login_page() -> None:
         </div>
         """, unsafe_allow_html=True)
 
-        tab_login, tab_register = st.tabs(["登录", "注册"])
+        if default_tab == "register":
+            tab_register, tab_login = st.tabs(["注册", "登录"])
+        else:
+            tab_login, tab_register = st.tabs(["登录", "注册"])
 
         with tab_login:
             with st.form("login_form"):
@@ -64,7 +69,6 @@ def render_login_page() -> None:
 
         st.markdown("""
         <div style="text-align:center;margin-top:16px;font-size:13px;color:rgba(255,255,255,0.8);">
-            还没有账号？切换到"注册"标签页创建账号
         </div>
         """, unsafe_allow_html=True)
 

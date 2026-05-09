@@ -169,27 +169,46 @@ def render_upload() -> None:
                 st.markdown("**📄 文件预览（前 5 行）**")
                 st.dataframe(df.head(5), use_container_width=True)
 
-                # 重复检测
+                # 过滤完全空行（无内容、无评分、无标题）
+                def _is_empty_row(row):
+                    content = str(row.get("content", "")).strip() if pd.notna(row.get("content")) else ""
+                    rating = row.get("rating")
+                    has_rating = pd.notna(rating) if rating is not None else False
+                    reviewer = str(row.get("reviewer", "")).strip() if pd.notna(row.get("reviewer")) else ""
+                    return not content and not has_rating and not reviewer
+
+                empty_mask = df.apply(_is_empty_row, axis=1)
+                empty_count = empty_mask.sum()
+                if empty_count > 0:
+                    st.info(f"已跳过 {empty_count} 条完全空白的行")
+                    df = df[~empty_mask].reset_index(drop=True)
+
+                # 重复检测：用所有关键字段组合 hash
                 info = st.session_state.get("upload_info", {})
                 existing_hashes = get_existing_hashes(user_id, info.get("product_id", ""))
-                if "content" in df.columns:
-                    df["_hash"] = df["content"].apply(
-                        lambda x: hashlib.md5(str(x).encode()).hexdigest() if pd.notna(x) else ""
-                    )
-                    duplicates = df[df["_hash"].isin(existing_hashes)]
-                    new_records = df[~df["_hash"].isin(existing_hashes)]
 
-                    if len(duplicates) > 0:
-                        if len(new_records) == 0:
-                            st.error(f"上传数据重复：全部 {len(duplicates)} 条评论与已有记录相同，请勿重复上传")
-                            st.session_state["upload_df_clean"] = new_records.drop(columns=["_hash"])
-                        else:
-                            st.warning(f"检测到 {len(duplicates)} 条重复评论（将自动跳过），剩余 {len(new_records)} 条待分析")
-                            st.session_state["upload_df_clean"] = new_records.drop(columns=["_hash"])
+                def _compute_row_hash(row):
+                    parts = [
+                        str(row.get("content", "")) if pd.notna(row.get("content")) else "",
+                        str(row.get("rating", "")) if pd.notna(row.get("rating")) else "",
+                        str(row.get("date", "")) if pd.notna(row.get("date")) else "",
+                        str(row.get("reviewer", "")) if pd.notna(row.get("reviewer")) else "",
+                    ]
+                    return hashlib.md5("|".join(parts).encode()).hexdigest()
+
+                df["_hash"] = df.apply(_compute_row_hash, axis=1)
+                duplicates = df[df["_hash"].isin(existing_hashes)]
+                new_records = df[~df["_hash"].isin(existing_hashes)]
+
+                if len(duplicates) > 0:
+                    if len(new_records) == 0:
+                        st.error(f"上传数据重复：全部 {len(duplicates)} 条评论与已有记录相同，请勿重复上传")
+                        st.session_state["upload_df_clean"] = new_records.drop(columns=["_hash"])
                     else:
-                        st.session_state["upload_df_clean"] = df.drop(columns=["_hash"])
+                        st.warning(f"检测到 {len(duplicates)} 条重复评论（将自动跳过），剩余 {len(new_records)} 条待分析")
+                        st.session_state["upload_df_clean"] = new_records.drop(columns=["_hash"])
                 else:
-                    st.session_state["upload_df_clean"] = df
+                    st.session_state["upload_df_clean"] = df.drop(columns=["_hash"])
 
             except Exception as e:
                 st.error(f"文件解析失败：{str(e)}")
@@ -249,16 +268,20 @@ def render_upload() -> None:
         # 准备评论数据
         comments_to_insert = []
         for _, row in df.iterrows():
-            content = str(row.get("content", ""))
+            content = str(row.get("content", "")) if pd.notna(row.get("content")) else ""
+            rating_val = row.get("rating") if pd.notna(row.get("rating")) else None
+            date_val = str(row.get("date", "")) if pd.notna(row.get("date")) else ""
+            reviewer_val = str(row.get("reviewer", "")) if pd.notna(row.get("reviewer")) else ""
+            hash_parts = [content, str(rating_val or ""), date_val, reviewer_val]
             comment = {
                 "product_id": info.get("product_id"),
                 "version": info.get("version", "V1"),
                 "content": content,
-                "rating": row.get("rating") if pd.notna(row.get("rating")) else None,
-                "date": str(row.get("date", "")),
-                "reviewer": str(row.get("reviewer", "")) if pd.notna(row.get("reviewer")) else None,
+                "rating": rating_val,
+                "date": date_val,
+                "reviewer": reviewer_val if reviewer_val else None,
                 "source": info.get("platform"),
-                "content_hash": hashlib.md5(content.encode()).hexdigest(),
+                "content_hash": hashlib.md5("|".join(hash_parts).encode()).hexdigest(),
                 "session_id": session_id,
             }
             comments_to_insert.append(comment)
@@ -283,16 +306,30 @@ def render_upload() -> None:
             progress_callback=progress_callback,
         )
 
-        # 更新分析结果
+        # 更新分析结果：有评分以评分为准覆写 sentiment
         positive_count = 0
         negative_count = 0
+        unrecognizable_count = 0
         for comment, result in zip(unprocessed, results):
+            rating = comment.get("rating")
+            if rating is not None:
+                try:
+                    rating = int(rating)
+                    result["sentiment"] = "negative" if rating <= 3 else "positive"
+                except (ValueError, TypeError):
+                    pass
+
             update_comment_analysis(user_id, comment["id"], result)
-            if result.get("sentiment") == "positive":
+
+            sentiment = result.get("sentiment")
+            if sentiment == "unrecognizable":
+                unrecognizable_count += 1
+            elif sentiment == "positive":
                 positive_count += 1
-            elif result.get("sentiment") == "negative":
+            elif sentiment == "negative":
                 negative_count += 1
 
+        valid_count = len(unprocessed) - unrecognizable_count
         update_session_stats(user_id, session_id, len(unprocessed), positive_count, negative_count)
 
         # 自动推送（根据用户设置的规则判断）

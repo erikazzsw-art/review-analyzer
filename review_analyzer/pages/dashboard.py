@@ -24,6 +24,7 @@ def _get_products(user_id: int) -> list[dict]:
                 "total_reviews": stats["total_reviews"],
                 "positive_count": stats["positive_count"],
                 "negative_count": stats["negative_count"],
+                "unrecognizable_count": stats.get("unrecognizable_count", 0),
             }
         products[pid]["sessions"].append(s)
     return list(products.values())
@@ -32,18 +33,22 @@ def _get_products(user_id: int) -> list[dict]:
 def _render_metric_cards(product: dict) -> None:
     """渲染4个指标卡片"""
     total = product["total_reviews"]
+    unrec = product.get("unrecognizable_count", 0)
+    valid = total - unrec
     pos = product["positive_count"]
     neg = product["negative_count"]
-    pos_rate = f"{pos / total * 100:.1f}%" if total > 0 else "0%"
-    neg_rate = f"{neg / total * 100:.1f}%" if total > 0 else "0%"
+    pos_rate = f"{pos / valid * 100:.1f}%" if valid > 0 else "0%"
+    neg_rate = f"{neg / valid * 100:.1f}%" if valid > 0 else "0%"
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
+        invalid_note = f"<div style='font-size:11px;color:#FF6B6B;margin-top:2px;'>无效 {unrec} 条</div>" if unrec > 0 else ""
         st.markdown(f"""
         <div class="metric-card purple">
             <div class="metric-icon">💬</div>
-            <div class="metric-val">{total:,}</div>
-            <div class="metric-label">总评论数</div>
+            <div class="metric-val">{valid:,}</div>
+            <div class="metric-label">有效评论</div>
+            {invalid_note}
         </div>
         """, unsafe_allow_html=True)
     with col2:
@@ -178,11 +183,13 @@ def _render_batch_table(product: dict) -> None:
 def _render_action_card(product: dict) -> None:
     """渲染行动建议卡"""
     total = product["total_reviews"]
-    if total == 0:
+    unrec = product.get("unrecognizable_count", 0)
+    valid = total - unrec
+    if valid == 0:
         return
 
-    pos_rate = product["positive_count"] / total * 100
-    neg_rate = product["negative_count"] / total * 100
+    pos_rate = product["positive_count"] / valid * 100
+    neg_rate = product["negative_count"] / valid * 100
 
     is_danger = neg_rate > 25 or pos_rate < 55
     card_class = "action-card danger" if is_danger else "action-card"

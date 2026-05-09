@@ -282,7 +282,8 @@ def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
         SELECT
             COUNT(*) AS total_reviews,
             SUM(CASE WHEN sentiment = 'positive' THEN 1 ELSE 0 END) AS positive_count,
-            SUM(CASE WHEN sentiment = 'negative' THEN 1 ELSE 0 END) AS negative_count
+            SUM(CASE WHEN sentiment = 'negative' THEN 1 ELSE 0 END) AS negative_count,
+            SUM(CASE WHEN sentiment = 'unrecognizable' THEN 1 ELSE 0 END) AS unrecognizable_count
         FROM (
             SELECT sentiment,
                    ROW_NUMBER() OVER (PARTITION BY content_hash ORDER BY id DESC) AS rn
@@ -293,7 +294,7 @@ def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
     """
     with get_connection() as conn:
         row = conn.execute(sql, (user_id, product_id)).fetchone()
-        return dict(row) if row else {"total_reviews": 0, "positive_count": 0, "negative_count": 0}
+        return dict(row) if row else {"total_reviews": 0, "positive_count": 0, "negative_count": 0, "unrecognizable_count": 0}
 
 
 def get_comments_deduped(user_id: int, product_id: str) -> list[dict]:

@@ -75,15 +75,21 @@ def render_landing_page() -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    # 登录/试用按钮
-    col_l, col_btn1, col_btn2, col_r = st.columns([2, 1.2, 1.2, 2])
+    # 登录/试用/注册按钮
+    col_l, col_btn1, col_btn2, col_btn3, col_r = st.columns([1.5, 1.2, 1.2, 1.2, 1.5])
     with col_btn1:
         if st.button("立即免费试用", type="primary", use_container_width=True, key="landing_trial"):
             st.session_state["show_page"] = "trial"
             st.rerun()
     with col_btn2:
+        if st.button("注册账号", use_container_width=True, key="landing_register"):
+            st.session_state["show_page"] = "login"
+            st.session_state["login_default_tab"] = "register"
+            st.rerun()
+    with col_btn3:
         if st.button("已有账号，登录", use_container_width=True, key="landing_login"):
             st.session_state["show_page"] = "login"
+            st.session_state["login_default_tab"] = "login"
             st.rerun()
 
     # 痛点区域
@@ -139,12 +145,18 @@ def render_landing_page() -> None:
     """, unsafe_allow_html=True)
 
     # 底部 CTA 按钮
-    col_l2, col_cta1, col_cta2, col_r2 = st.columns([2, 1.2, 1.2, 2])
+    col_l2, col_cta1, col_cta2, col_cta3, col_r2 = st.columns([1.5, 1.2, 1.2, 1.2, 1.5])
     with col_cta1:
         if st.button("免费试用", type="primary", use_container_width=True, key="landing_cta_trial"):
             st.session_state["show_page"] = "trial"
             st.rerun()
     with col_cta2:
-        if st.button("登录解锁完整功能", use_container_width=True, key="landing_cta_login"):
+        if st.button("注册账号", use_container_width=True, key="landing_cta_register"):
             st.session_state["show_page"] = "login"
+            st.session_state["login_default_tab"] = "register"
+            st.rerun()
+    with col_cta3:
+        if st.button("登录", use_container_width=True, key="landing_cta_login"):
+            st.session_state["show_page"] = "login"
+            st.session_state["login_default_tab"] = "login"
             st.rerun()
