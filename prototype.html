@@ -212,11 +212,11 @@ a{text-decoration:none;color:inherit}
 <body>
 <!-- ===== LANDING PAGE ===== -->
 <div class="landing active" id="landingPage">
-  <nav class="land-nav"><div class="land-nav-logo"><span>🔍</span><span>ReviewLens</span></div><div style="display:flex;gap:12px"><button class="btn btn-outline btn-sm" onclick="showLogin()">登录</button><button class="btn btn-primary btn-sm" onclick="showTrial()">免费试用</button></div></nav>
+  <nav class="land-nav"><div class="land-nav-logo"><span>🔍</span><span>ReviewLens</span></div><div style="display:flex;gap:12px"><button class="btn btn-outline btn-sm" onclick="showLogin()">登录</button><button class="btn btn-outline btn-sm" onclick="showRegister()">注册</button><button class="btn btn-primary btn-sm" onclick="showTrial()">免费试用</button></div></nav>
   <div class="land-hero">
     <h1>跨境电商评论，<em>一键读懂</em></h1>
     <p>上传评论文件，AI 自动提取产品问题与亮点，帮你从海量评论中找到真正影响销量的关键因素</p>
-    <div style="display:flex;gap:16px;justify-content:center"><button class="btn btn-primary btn-lg" onclick="showTrial()">立即免费试用</button><button class="btn btn-outline btn-lg" onclick="showLogin()">已有账号，登录</button></div>
+    <div style="display:flex;gap:16px;justify-content:center"><button class="btn btn-primary btn-lg" onclick="showRegister()">免费注册</button><button class="btn btn-outline btn-lg" onclick="showTrial()">先试用，不注册</button><button class="btn btn-outline btn-lg" onclick="showLogin()">已有账号，登录</button></div>
   </div>
   <div class="land-section">
     <h2>为什么我们做了 ReviewLens？</h2>
@@ -249,7 +249,7 @@ a{text-decoration:none;color:inherit}
       <div class="benefit-item"><div class="num">30天</div><div class="label">环比追踪改进效果</div></div>
     </div>
   </div>
-  <div class="cta-banner"><h2>现在就开始分析你的评论</h2><p>无需注册，上传文件即可体验 AI 评论分析的效果</p><div style="display:flex;gap:16px;justify-content:center"><button class="btn btn-white btn-lg" onclick="showTrial()">免费试用</button><button class="btn btn-white-outline btn-lg" onclick="showLogin()">登录解锁完整功能</button></div></div>
+  <div class="cta-banner"><h2>现在就开始分析你的评论</h2><p>免费注册，解锁全部功能；或直接试用，无需注册</p><div style="display:flex;gap:16px;justify-content:center"><button class="btn btn-white btn-lg" onclick="showRegister()">免费注册</button><button class="btn btn-white-outline btn-lg" onclick="showTrial()">先试用看看</button><button class="btn btn-white-outline btn-lg" onclick="showLogin()">已有账号，登录</button></div></div>
 </div>
 
 <!-- ===== TRIAL PAGE ===== -->
@@ -296,7 +296,21 @@ a{text-decoration:none;color:inherit}
     <div class="login-logo">🔍</div><div class="login-title">ReviewLens</div><div class="login-sub">跨境电商评论分析平台</div>
     <input class="login-input" type="text" placeholder="用户名"><input class="login-input" type="password" placeholder="密码">
     <button class="login-btn" onclick="doLogin()">登 录</button>
-    <div style="margin-top:16px;font-size:13px;color:var(--txt-l)">还没有账号？<a href="javascript:showTrial()" style="color:var(--pri);font-weight:600">先免费试用</a></div>
+    <div style="margin-top:16px;font-size:13px;color:var(--txt-l)">还没有账号？<a href="javascript:showRegister()" style="color:var(--pri);font-weight:600">免费注册</a></div>
+  </div>
+</div>
+
+<!-- ===== REGISTER PAGE ===== -->
+<div class="login-page" id="registerPage">
+  <div class="login-card">
+    <div class="login-logo">🔍</div><div class="login-title">免费注册</div><div class="login-sub">注册后解锁全部功能：导出报告、环比分析、钉钉推送</div>
+    <input class="login-input" type="text" placeholder="用户名">
+    <input class="login-input" type="email" placeholder="邮箱">
+    <input class="login-input" type="password" placeholder="密码">
+    <input class="login-input" type="password" placeholder="确认密码">
+    <button class="login-btn" onclick="doRegister()">注 册</button>
+    <div style="margin-top:16px;font-size:13px;color:var(--txt-l)">已有账号？<a href="javascript:showLogin()" style="color:var(--pri);font-weight:600">去登录</a></div>
+    <div style="margin-top:8px;font-size:13px;color:var(--txt-l)">不想注册？<a href="javascript:showTrial()" style="color:var(--pri);font-weight:600">先免费试用</a></div>
   </div>
 </div>
 
@@ -849,11 +863,13 @@ a{text-decoration:none;color:inherit}
 </div>
 <script>
 /* ===== PAGE SWITCHING ===== */
-function hideAll(){["landingPage","trialPage","loginPage","appShell"].forEach(id=>document.getElementById(id).classList.remove("active"))}
+function hideAll(){["landingPage","trialPage","loginPage","registerPage","appShell"].forEach(id=>document.getElementById(id).classList.remove("active"))}
 function showLanding(){hideAll();document.getElementById("landingPage").classList.add("active")}
 function showTrial(){hideAll();document.getElementById("trialPage").classList.add("active")}
 function showLogin(){hideAll();document.getElementById("loginPage").classList.add("active")}
+function showRegister(){hideAll();document.getElementById("registerPage").classList.add("active")}
 function doLogin(){hideAll();document.getElementById("appShell").classList.add("active");initCharts()}
+function doRegister(){hideAll();document.getElementById("appShell").classList.add("active");initCharts()}
 function doLogout(){showLanding()}
 
 function goPage(id){
