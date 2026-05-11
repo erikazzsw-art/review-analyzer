@@ -49,3 +49,6 @@ text
 - 密码存储：使用 `bcrypt`，禁止明文或 MD5
 - API Key 加密：使用 `cryptography.fernet`
 - 禁止提交：`.env`、`*.db` 文件
+
+## Architecture
+/review_analyzer             # Analysis modules (23 files)
