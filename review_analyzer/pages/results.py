@@ -1,5 +1,7 @@
 """分析结果页面 — 纵向单页布局"""
 
+from __future__ import annotations
+
 import json
 from collections import Counter
 from datetime import datetime, timedelta, date as date_type

@@ -1,5 +1,7 @@
 """仪表盘页面 — 按产品维度展示分析全貌"""
 
+from __future__ import annotations
+
 import streamlit as st
 import plotly.graph_objects as go
 

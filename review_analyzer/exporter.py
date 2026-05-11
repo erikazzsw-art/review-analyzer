@@ -1,5 +1,7 @@
 """导出 CSV / XLSX — 多 Sheet 结构化输出"""
 
+from __future__ import annotations
+
 import io
 from collections import Counter
 from datetime import datetime

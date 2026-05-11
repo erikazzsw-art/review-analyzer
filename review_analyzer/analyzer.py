@@ -1,5 +1,7 @@
 """AI 分析核心 — 跨境电商评论分析"""
 
+from __future__ import annotations
+
 import json
 import logging
 import os
