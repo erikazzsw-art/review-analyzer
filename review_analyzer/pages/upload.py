@@ -193,6 +193,8 @@ def render_upload() -> None:
                         str(row.get("rating", "")) if pd.notna(row.get("rating")) else "",
                         str(row.get("date", "")) if pd.notna(row.get("date")) else "",
                         str(row.get("reviewer", "")) if pd.notna(row.get("reviewer")) else "",
+                        str(row.get("source", "")) if pd.notna(row.get("source")) else "",
+                        str(row.get("raw_data", "")) if pd.notna(row.get("raw_data")) else "",
                     ]
                     return hashlib.md5("|".join(parts).encode()).hexdigest()
 
@@ -272,7 +274,9 @@ def render_upload() -> None:
             rating_val = row.get("rating") if pd.notna(row.get("rating")) else None
             date_val = str(row.get("date", "")) if pd.notna(row.get("date")) else ""
             reviewer_val = str(row.get("reviewer", "")) if pd.notna(row.get("reviewer")) else ""
-            hash_parts = [content, str(rating_val or ""), date_val, reviewer_val]
+            source_val = str(row.get("source", "")) if pd.notna(row.get("source")) else ""
+            raw_data_val = str(row.get("raw_data", "")) if pd.notna(row.get("raw_data")) else ""
+            hash_parts = [content, str(rating_val or ""), date_val, reviewer_val, source_val, raw_data_val]
             comment = {
                 "product_id": info.get("product_id"),
                 "version": info.get("version", "V1"),
@@ -314,7 +318,7 @@ def render_upload() -> None:
             rating = comment.get("rating")
             if rating is not None:
                 try:
-                    rating = int(rating)
+                    rating = int(float(rating))
                     result["sentiment"] = "negative" if rating <= 3 else "positive"
                 except (ValueError, TypeError):
                     pass

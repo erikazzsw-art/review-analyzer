@@ -47,8 +47,7 @@ def _parse_comment_date(date_str: str) -> date_type | None:
 
 
 def _apply_time_filter(comments: list[dict], session: dict, user_id: int) -> tuple[list[dict], str]:
-    """时间筛选 — 返回筛选后的 comments 和筛选标签"""
-    # 找到数据中的最新日期作为基准
+    """时间筛选 — 返回筛选后的 comments 和筛选标签。超出当前 session 时合并同产品历史数据。"""
     all_dates = []
     for c in comments:
         d = _parse_comment_date(c.get("date", ""))
@@ -70,7 +69,6 @@ def _apply_time_filter(comments: list[dict], session: dict, user_id: int) -> tup
             btn_type = "primary" if selected_option == opt else "secondary"
             if st.button(opt, key=f"time_filter_{opt}", use_container_width=True, type=btn_type):
                 st.session_state["time_filter_option"] = opt
-                # 设置默认日期
                 if opt == "7天":
                     st.session_state["time_filter_start"] = max_date - timedelta(days=6)
                     st.session_state["time_filter_end"] = max_date
@@ -91,7 +89,6 @@ def _apply_time_filter(comments: list[dict], session: dict, user_id: int) -> tup
     if selected_option == "全部":
         return comments, "全部"
 
-    # 所有非"全部"选项都显示日期选择器
     col_start, col_end = st.columns(2)
     default_start = st.session_state.get("time_filter_start", min_date)
     default_end = st.session_state.get("time_filter_end", max_date)
@@ -101,16 +98,34 @@ def _apply_time_filter(comments: list[dict], session: dict, user_id: int) -> tup
     with col_end:
         filter_end = st.date_input("结束日期", value=default_end, key="time_filter_date_end")
 
-    # 数据不足提示
-    data_start = max(min_date, filter_start) if filter_start else min_date
-    data_end = min(max_date, filter_end) if filter_end else max_date
+    # 判断是否需要跨 session 合并
+    need_merge = filter_start < min_date
+    merged_comments = comments
 
-    if filter_start and filter_start < min_date:
-        st.info(f"⚠️ 数据最早日期为 {min_date}，早于筛选起始日期 {filter_start}")
+    if need_merge:
+        product_id = session.get("product_id")
+        all_sessions = get_sessions(user_id, product_id=product_id)
+        other_session_ids = [s["id"] for s in all_sessions if s["id"] != session.get("id")]
+
+        if other_session_ids:
+            extra_comments = []
+            for sid in other_session_ids:
+                extra_comments.extend(get_comments(user_id, session_id=sid))
+            # 去重（按 content_hash）
+            seen_hashes = set()
+            deduped = []
+            for c in comments + extra_comments:
+                h = c.get("content_hash", id(c))
+                if h not in seen_hashes:
+                    seen_hashes.add(h)
+                    deduped.append(c)
+            merged_comments = deduped
+        else:
+            st.warning(f"⚠️ 当前产品数据最早为 {min_date}，无更早的历史数据，无法覆盖 {filter_start} 起的时间范围。")
 
     # 筛选评论
     filtered = []
-    for c in comments:
+    for c in merged_comments:
         d = _parse_comment_date(c.get("date", ""))
         if d is None:
             continue
@@ -123,6 +138,9 @@ def _apply_time_filter(comments: list[dict], session: dict, user_id: int) -> tup
     if len(filtered) == 0:
         st.warning("所选时间范围内无评论数据")
         return comments, "全部"
+
+    if need_merge and filtered:
+        st.info(f"已合并历史数据，共 {len(filtered)} 条评论覆盖 {filter_start} ~ {filter_end}")
 
     label = f"{filter_start} ~ {filter_end}"
     return filtered, label
@@ -211,43 +229,6 @@ def render_results() -> None:
             st.button("📥 导出报告", key="export_report", disabled=True)
             st.error(f"导出失败：{e}")
 
-    # 环比条（版本环比）
-    sessions_same_product = get_sessions(user_id, product_id=session.get("product_id"))
-    other_sessions = [s for s in sessions_same_product if s["id"] != session_id]
-
-    if other_sessions:
-        prev = other_sessions[0]
-        prev_total = prev.get("total_reviews", 0)
-        prev_pos = prev.get("positive_count", 0) / prev_total * 100 if prev_total > 0 else 0
-        prev_neg = prev.get("negative_count", 0) / prev_total * 100 if prev_total > 0 else 0
-        pos_diff = pos_rate - prev_pos
-        neg_diff = neg_rate - prev_neg
-
-        pos_arrow = "↑" if pos_diff >= 0 else "↓"
-        neg_arrow = "↑" if neg_diff >= 0 else "↓"
-        pos_color = "#00B894" if pos_diff >= 0 else "#FF6B6B"
-        neg_color = "#00B894" if neg_diff <= 0 else "#FF6B6B"
-
-        st.markdown(f"""
-        <div class="compare-bar version">
-            <span style="font-weight:600;">🔄 版本环比（{prev.get('version', '')} vs {session.get('version', '')}）</span>
-            <span>正面率 <span style="color:#636E72;text-decoration:line-through;">{prev_pos:.1f}%</span>
-            <span style="font-weight:700;color:{pos_color};">→ {pos_rate:.1f}% {pos_arrow}{abs(pos_diff):.1f}%</span></span>
-            <span>负面率 <span style="color:#636E72;text-decoration:line-through;">{prev_neg:.1f}%</span>
-            <span style="font-weight:700;color:{neg_color};">→ {neg_rate:.1f}% {neg_arrow}{abs(neg_diff):.1f}%</span></span>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div class="compare-bar version">
-            <span style="font-weight:600;">🔄 版本环比</span>
-            <span style="font-size:13px;color:#636E72;">暂无对比数据，上传同产品不同版本后自动生成。</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # 时间环比（优化7）
-    _render_time_comparison(comments)
-
     # 4 指标卡片
     ratings = [c["rating"] for c in comments if c.get("rating")]
     avg_rating = sum(ratings) / len(ratings) if ratings else 0
@@ -291,7 +272,7 @@ def render_results() -> None:
     # 图表：情感分布 + 关键词云
     col_chart1, col_chart2 = st.columns([1.2, 0.8])
     with col_chart1:
-        neutral_count = total - pos_count - neg_count
+        neutral_count = valid_total - pos_count - neg_count
         fig = go.Figure(go.Pie(
             labels=["正面", "中性", "负面"],
             values=[pos_count, neutral_count, neg_count],
@@ -371,8 +352,8 @@ def render_results() -> None:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 自定义环比对比
-    _render_custom_compare(session, user_id)
+    # 环比分析（优化7）
+    _render_comparison_section(session, user_id)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -383,119 +364,156 @@ def render_results() -> None:
     _render_floating_bar(session_id, user_id, top_issues, top_highlights)
 
 
-def _render_time_comparison(comments: list[dict]) -> None:
-    """时间环比 — 周/双周/月自动划分当期vs上期"""
-    dated_comments = []
-    for c in comments:
-        d = _parse_comment_date(c.get("date", ""))
-        if d:
-            dated_comments.append((d, c))
+def _render_comparison_section(session: dict, user_id: int) -> None:
+    """环比分析 — 支持时间粒度 + 版本筛选 + 跨 session 数据合并"""
+    st.markdown("""
+    <div style="font-size:18px;font-weight:700;margin:28px 0 16px;display:flex;align-items:center;gap:8px;">
+        🔄 环比分析
+    </div>
+    """, unsafe_allow_html=True)
 
-    if len(dated_comments) < 2:
-        st.markdown("""
-        <div class="compare-bar time">
-            <span style="font-weight:600;">📅 时间环比</span>
-            <span style="font-size:13px;color:#636E72;">评论数据不足（需要至少2条有日期的评论），无法生成时间环比。</span>
-        </div>
-        """, unsafe_allow_html=True)
+    product_id = session.get("product_id")
+    all_sessions = get_sessions(user_id, product_id=product_id)
+
+    if not all_sessions:
+        st.info("暂无数据，上传评论后自动生成环比分析。")
         return
 
-    max_date = max(d for d, _ in dated_comments)
-    min_date = min(d for d, _ in dated_comments)
-    date_span = (max_date - min_date).days
+    # 收集该产品所有版本
+    versions = list(dict.fromkeys(s["version"] for s in all_sessions))
 
-    # 自动选择合适的环比周期
-    period_options = []
-    if date_span >= 14:
-        period_options.append("周环比（7天）")
-    if date_span >= 28:
-        period_options.append("双周环比（14天）")
-    if date_span >= 60:
-        period_options.append("月环比（30天）")
-
-    if not period_options:
-        st.markdown(f"""
-        <div class="compare-bar time">
-            <span style="font-weight:600;">📅 时间环比</span>
-            <span style="font-size:13px;color:#636E72;">数据跨度仅 {date_span} 天，至少需要 14 天数据才能生成环比。</span>
-        </div>
-        """, unsafe_allow_html=True)
-        return
-
-    col_period, _ = st.columns([1, 3])
+    # 环比设置
+    col_period, col_v1, col_v2 = st.columns(3)
     with col_period:
-        selected_period = st.selectbox("环比周期", period_options, key="time_compare_period")
+        period = st.selectbox("时间粒度", ["周环比（7天）", "双周环比（14天）", "月环比（30天）"], key="compare_period")
+    with col_v1:
+        version1 = st.selectbox("版本 1", versions, key="compare_v1")
+    with col_v2:
+        compare_mode = "同版本" if len(versions) == 1 else st.radio(
+            "对比模式", ["同版本不同时间段", "跨版本对比"], key="compare_mode", horizontal=True
+        )
+        if compare_mode == "跨版本对比" or (isinstance(compare_mode, str) and "跨版本" in compare_mode):
+            other_versions = [v for v in versions if v != version1]
+            if other_versions:
+                version2 = st.selectbox("版本 2", other_versions, key="compare_v2")
+            else:
+                st.info("只有一个版本，无法跨版本对比")
+                version2 = None
+        else:
+            version2 = None
 
-    if "7天" in selected_period:
+    if "7天" in period:
         days = 7
-    elif "14天" in selected_period:
+    elif "14天" in period:
         days = 14
     else:
         days = 30
 
-    current_start = max_date - timedelta(days=days - 1)
-    current_end = max_date
-    prev_start = current_start - timedelta(days=days)
-    prev_end = current_start - timedelta(days=1)
+    if st.button("生成环比", type="primary", key="run_comparison"):
+        # 收集版本1的所有评论（跨 session）
+        v1_sessions = [s for s in all_sessions if s["version"] == version1]
+        v1_comments = []
+        for s in v1_sessions:
+            v1_comments.extend(get_comments(user_id, session_id=s["id"]))
 
-    current_comments = [c for d, c in dated_comments if current_start <= d <= current_end]
-    prev_comments = [c for d, c in dated_comments if prev_start <= d <= prev_end]
+        # 按日期排序
+        v1_dated = []
+        for c in v1_comments:
+            d = _parse_comment_date(c.get("date", ""))
+            if d:
+                v1_dated.append((d, c))
+        v1_dated.sort(key=lambda x: x[0])
 
-    if not prev_comments:
+        if not v1_dated:
+            st.warning(f"版本 {version1} 无有效日期数据")
+            return
+
+        v1_max = max(d for d, _ in v1_dated)
+
+        if version2:
+            # 跨版本对比：版本1最近N天 vs 版本2最近N天
+            v2_sessions = [s for s in all_sessions if s["version"] == version2]
+            v2_comments = []
+            for s in v2_sessions:
+                v2_comments.extend(get_comments(user_id, session_id=s["id"]))
+
+            v2_dated = []
+            for c in v2_comments:
+                d = _parse_comment_date(c.get("date", ""))
+                if d:
+                    v2_dated.append((d, c))
+            v2_dated.sort(key=lambda x: x[0])
+
+            if not v2_dated:
+                st.warning(f"版本 {version2} 无有效日期数据")
+                return
+
+            v2_max = max(d for d, _ in v2_dated)
+
+            current_comments = [c for d, c in v1_dated if d >= v1_max - timedelta(days=days - 1)]
+            prev_comments = [c for d, c in v2_dated if d >= v2_max - timedelta(days=days - 1)]
+
+            label_current = f"{version1} 最近{days}天（{v1_max - timedelta(days=days-1)}~{v1_max}）"
+            label_prev = f"{version2} 最近{days}天（{v2_max - timedelta(days=days-1)}~{v2_max}）"
+        else:
+            # 同版本时间环比：当期 vs 上期
+            current_start = v1_max - timedelta(days=days - 1)
+            prev_end = current_start - timedelta(days=1)
+            prev_start = prev_end - timedelta(days=days - 1)
+
+            current_comments = [c for d, c in v1_dated if d >= current_start]
+            prev_comments = [c for d, c in v1_dated if prev_start <= d <= prev_end]
+
+            label_current = f"当期（{current_start}~{v1_max}）"
+            label_prev = f"上期（{prev_start}~{prev_end}）"
+
+            if not prev_comments:
+                st.warning(f"上期（{prev_start}~{prev_end}）无数据，无法生成环比。")
+                return
+
+        # 计算指标
+        def _calc(clist):
+            t = len(clist)
+            unrec = sum(1 for c in clist if c.get("sentiment") == "unrecognizable")
+            valid = t - unrec
+            p = sum(1 for c in clist if c.get("sentiment") == "positive")
+            n = sum(1 for c in clist if c.get("sentiment") == "negative")
+            return (p / valid * 100 if valid > 0 else 0, n / valid * 100 if valid > 0 else 0, t)
+
+        cur_pos, cur_neg, cur_total = _calc(current_comments)
+        prev_pos, prev_neg, prev_total = _calc(prev_comments)
+
+        pos_diff = cur_pos - prev_pos
+        neg_diff = cur_neg - prev_neg
+        pos_color = "#00B894" if pos_diff >= 0 else "#FF6B6B"
+        neg_color = "#00B894" if neg_diff <= 0 else "#FF6B6B"
+        pos_arrow = "↑" if pos_diff >= 0 else "↓"
+        neg_arrow = "↑" if neg_diff >= 0 else "↓"
+
         st.markdown(f"""
         <div class="compare-bar time">
-            <span style="font-weight:600;">📅 时间环比（{selected_period}）</span>
-            <span style="font-size:13px;color:#636E72;">上期（{prev_start} ~ {prev_end}）无数据，无法对比。</span>
+            <span style="font-weight:600;">📊 环比结果</span>
+            <span style="font-size:12px;color:#636E72;">{label_current}（{cur_total}条） vs {label_prev}（{prev_total}条）</span>
+            <span>正面率 <span style="color:#636E72;text-decoration:line-through;">{prev_pos:.1f}%</span>
+            <span style="font-weight:700;color:{pos_color};">→ {cur_pos:.1f}% {pos_arrow}{abs(pos_diff):.1f}%</span></span>
+            <span>负面率 <span style="color:#636E72;text-decoration:line-through;">{prev_neg:.1f}%</span>
+            <span style="font-weight:700;color:{neg_color};">→ {cur_neg:.1f}% {neg_arrow}{abs(neg_diff):.1f}%</span></span>
         </div>
         """, unsafe_allow_html=True)
-        return
 
-    # 计算当期/上期指标
-    def _calc_rates(clist: list[dict]) -> tuple[float, float, int]:
-        t = len(clist)
-        unrec = sum(1 for c in clist if c.get("sentiment") == "unrecognizable")
-        valid = t - unrec
-        p = sum(1 for c in clist if c.get("sentiment") == "positive")
-        n = sum(1 for c in clist if c.get("sentiment") == "negative")
-        pr = p / valid * 100 if valid > 0 else 0
-        nr = n / valid * 100 if valid > 0 else 0
-        return pr, nr, t
+        # TOP 问题变化
+        cur_neg_c = [c for c in current_comments if c.get("sentiment") == "negative"]
+        prev_neg_c = [c for c in prev_comments if c.get("sentiment") == "negative"]
 
-    cur_pos, cur_neg, cur_total = _calc_rates(current_comments)
-    prev_pos, prev_neg, prev_total = _calc_rates(prev_comments)
+        if cur_neg_c or prev_neg_c:
+            cur_issues = _get_top_tags(cur_neg_c, "issue_tag", len(cur_neg_c))
+            prev_issues = _get_top_tags(prev_neg_c, "issue_tag", len(prev_neg_c))
+            cur_map = {i["tag"]: i["pct"] for i in cur_issues}
+            prev_map = {i["tag"]: i["pct"] for i in prev_issues}
+            all_tags = list(dict.fromkeys([i["tag"] for i in cur_issues] + [i["tag"] for i in prev_issues]))
 
-    pos_diff = cur_pos - prev_pos
-    neg_diff = cur_neg - prev_neg
-
-    pos_arrow = "↑" if pos_diff >= 0 else "↓"
-    neg_arrow = "↑" if neg_diff >= 0 else "↓"
-    pos_color = "#00B894" if pos_diff >= 0 else "#FF6B6B"
-    neg_color = "#00B894" if neg_diff <= 0 else "#FF6B6B"
-
-    st.markdown(f"""
-    <div class="compare-bar time">
-        <span style="font-weight:600;">📅 时间环比（{selected_period}）</span>
-        <span style="font-size:12px;color:#636E72;">当期 {current_start}~{current_end}（{cur_total}条） vs 上期 {prev_start}~{prev_end}（{prev_total}条）</span>
-        <span>正面率 <span style="color:#636E72;text-decoration:line-through;">{prev_pos:.1f}%</span>
-        <span style="font-weight:700;color:{pos_color};">→ {cur_pos:.1f}% {pos_arrow}{abs(pos_diff):.1f}%</span></span>
-        <span>负面率 <span style="color:#636E72;text-decoration:line-through;">{prev_neg:.1f}%</span>
-        <span style="font-weight:700;color:{neg_color};">→ {cur_neg:.1f}% {neg_arrow}{abs(neg_diff):.1f}%</span></span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # TOP问题变化
-    cur_neg_comments = [c for c in current_comments if c.get("sentiment") == "negative"]
-    prev_neg_comments = [c for c in prev_comments if c.get("sentiment") == "negative"]
-
-    if cur_neg_comments or prev_neg_comments:
-        cur_issues = _get_top_tags(cur_neg_comments, "issue_tag", len(cur_neg_comments))
-        prev_issues = _get_top_tags(prev_neg_comments, "issue_tag", len(prev_neg_comments))
-        cur_map = {i["tag"]: i["pct"] for i in cur_issues}
-        prev_map = {i["tag"]: i["pct"] for i in prev_issues}
-        all_tags = list(dict.fromkeys([i["tag"] for i in cur_issues] + [i["tag"] for i in prev_issues]))
-
-        if all_tags:
-            with st.expander("📊 TOP问题环比变化", expanded=False):
+            if all_tags:
+                st.markdown("**❌ TOP 问题环比变化**")
                 for tag in all_tags[:8]:
                     b_pct = prev_map.get(tag, 0)
                     t_pct = cur_map.get(tag, 0)
@@ -608,98 +626,6 @@ def _render_top_table(top_items: list[dict], prefix: str, all_comments: list[dic
                     )
 
 
-def _render_custom_compare(session: dict, user_id: int) -> None:
-    """自定义环比对比板块"""
-    st.markdown("""
-    <div style="font-size:18px;font-weight:700;margin:28px 0 16px;display:flex;align-items:center;gap:8px;">
-        🔄 自定义环比对比
-    </div>
-    """, unsafe_allow_html=True)
-
-    all_sessions = get_sessions(user_id)
-    product_sessions = [s for s in all_sessions if s["product_id"] == session["product_id"]]
-
-    if len(product_sessions) < 2:
-        st.info("需要至少 2 个批次才能进行环比对比。上传新批次后自动解锁。")
-        return
-
-    session_labels = {
-        s["id"]: f"{s['version']} · {s.get('date_range_start', '?')}~{s.get('date_range_end', '?')} ({s.get('total_reviews', 0)}条)"
-        for s in product_sessions
-    }
-
-    col_dim, col_base, col_target = st.columns(3)
-    with col_dim:
-        compare_dim = st.selectbox("对比维度", ["版本环比", "时间环比"], key="custom_compare_dim")
-    with col_base:
-        base_id = st.selectbox("基准批次", list(session_labels.keys()),
-                               format_func=lambda x: session_labels[x], key="custom_compare_base")
-    with col_target:
-        target_id = st.selectbox("对比批次", list(session_labels.keys()),
-                                 format_func=lambda x: session_labels[x], index=min(1, len(session_labels) - 1),
-                                 key="custom_compare_target")
-
-    if st.button("生成对比", type="primary", key="custom_compare_btn"):
-        if base_id == target_id:
-            st.warning("基准批次和对比批次不能相同")
-        else:
-            base_session = next((s for s in product_sessions if s["id"] == base_id), None)
-            target_session = next((s for s in product_sessions if s["id"] == target_id), None)
-            if base_session and target_session:
-                _render_compare_result(base_session, target_session, user_id)
-
-
-def _render_compare_result(base: dict, target: dict, user_id: int) -> None:
-    """渲染环比对比结果"""
-    base_total = base.get("total_reviews", 0) or 1
-    target_total = target.get("total_reviews", 0) or 1
-    base_pos = base.get("positive_count", 0) / base_total * 100
-    target_pos = target.get("positive_count", 0) / target_total * 100
-    base_neg = base.get("negative_count", 0) / base_total * 100
-    target_neg = target.get("negative_count", 0) / target_total * 100
-    diff_pos = target_pos - base_pos
-    diff_neg = target_neg - base_neg
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        delta_color = "normal" if diff_pos >= 0 else "inverse"
-        st.metric("正面率变化", f"{target_pos:.1f}%", f"{diff_pos:+.1f}%", delta_color=delta_color)
-    with col2:
-        delta_color = "inverse" if diff_neg > 0 else "normal"
-        st.metric("负面率变化", f"{target_neg:.1f}%", f"{diff_neg:+.1f}%", delta_color=delta_color)
-    with col3:
-        st.metric("评论数变化", f"{target_total:,}", f"{target_total - base_total:+,}")
-
-    # 问题环比表
-    base_comments = get_comments(user_id, base["id"])
-    target_comments = get_comments(user_id, target["id"])
-
-    base_neg_comments = [c for c in base_comments if c.get("sentiment") == "negative"]
-    target_neg_comments = [c for c in target_comments if c.get("sentiment") == "negative"]
-    base_issues = _get_top_tags(base_neg_comments, "issue_tag", len(base_neg_comments))
-    target_issues = _get_top_tags(target_neg_comments, "issue_tag", len(target_neg_comments))
-
-    base_issue_map = {item["tag"]: item["pct"] for item in base_issues}
-    target_issue_map = {item["tag"]: item["pct"] for item in target_issues}
-    all_issue_tags = list(dict.fromkeys(
-        [item["tag"] for item in target_issues] + [item["tag"] for item in base_issues]
-    ))
-
-    if all_issue_tags:
-        st.markdown("**❌ 问题环比**")
-        for tag in all_issue_tags[:10]:
-            b_pct = base_issue_map.get(tag, 0)
-            t_pct = target_issue_map.get(tag, 0)
-            diff = t_pct - b_pct
-            arrow = "↑" if diff > 0 else ("↓" if diff < 0 else "—")
-            color = "#FF6B6B" if diff > 0 else "#00B894"
-            st.markdown(
-                f"- **{tag}**：{b_pct:.1f}% → {t_pct:.1f}% "
-                f"<span style='color:{color};font-weight:600;'>{arrow}{abs(diff):.1f}%</span>",
-                unsafe_allow_html=True,
-            )
-
-
 def _render_floating_bar(session_id: int, user_id: int, top_issues: list[dict], top_highlights: list[dict]) -> None:
     """底部浮动操作栏 — 勾选 TOP10 项后显示"""
     selected_issues = [k for k in st.session_state if k.startswith("issue_chk_") and st.session_state[k]]
@@ -777,7 +703,7 @@ def _render_floating_bar(session_id: int, user_id: int, top_issues: list[dict], 
 
 
 def _render_history_section(user_id: int, current_session_id: int) -> None:
-    """历史分析记录 — 整合到结果页底部"""
+    """历史分析记录 — 整合到结果页底部，直接展示"""
     sessions = get_sessions(user_id)
     if not sessions:
         return
@@ -788,87 +714,85 @@ def _render_history_section(user_id: int, current_session_id: int) -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    with st.expander("查看所有分析记录", expanded=False):
-        # 按产品分组
-        products: dict[str, list[dict]] = {}
-        for s in sessions:
-            pid = s["product_id"]
-            if pid not in products:
-                products[pid] = []
-            products[pid].append(s)
+    # 按产品分组
+    products: dict[str, list[dict]] = {}
+    for s in sessions:
+        pid = s["product_id"]
+        if pid not in products:
+            products[pid] = []
+        products[pid].append(s)
 
-        # 产品搜索框
-        search_sku = st.text_input(
-            "🔍 搜索产品编号",
-            placeholder="输入 SKU 关键词快速筛选...",
-            key="hist_search_in_results",
-            label_visibility="collapsed",
-        )
+    # 产品搜索框（直接可见）
+    search_sku = st.text_input(
+        "🔍 搜索产品编号",
+        placeholder="输入 SKU 关键词快速筛选...",
+        key="hist_search_in_results",
+    )
 
-        filtered_products = products
-        if search_sku:
-            filtered_products = {
-                pid: sess for pid, sess in products.items()
-                if search_sku.lower() in pid.lower()
-            }
+    filtered_products = products
+    if search_sku:
+        filtered_products = {
+            pid: sess for pid, sess in products.items()
+            if search_sku.lower() in pid.lower()
+        }
 
-        if not filtered_products:
-            st.info("未找到匹配的产品")
-            return
+    if not filtered_products:
+        st.info("未找到匹配的产品")
+        return
 
-        for pid, product_sessions in filtered_products.items():
+    for pid, product_sessions in filtered_products.items():
+        st.markdown(f"""
+        <div style="font-size:15px;font-weight:600;margin:16px 0 8px;padding:8px 12px;
+                    background:#F0EEFF;border-radius:8px;display:flex;align-items:center;justify-content:space-between;">
+            <span>📦 {pid}（{len(product_sessions)} 个批次）</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        for s in product_sessions:
+            total = s.get("total_reviews", 0)
+            pos = s.get("positive_count", 0)
+            pos_rate = f"{pos / total * 100:.1f}%" if total > 0 else "—"
+            title = s.get("custom_title") or s.get("auto_title") or s["version"]
+            is_current = s["id"] == current_session_id
+
+            date_range = ""
+            if s.get("date_range_start") and s.get("date_range_end"):
+                date_range = f"{s['date_range_start']} ~ {s['date_range_end']}"
+
+            current_badge = ' <span style="background:#6C5CE7;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">当前</span>' if is_current else ""
+
             st.markdown(f"""
-            <div style="font-size:15px;font-weight:600;margin:16px 0 8px;padding:8px 12px;
-                        background:#F0EEFF;border-radius:8px;display:flex;align-items:center;justify-content:space-between;">
-                <span>📦 {pid}（{len(product_sessions)} 个批次）</span>
+            <div style="font-size:13px;color:#636E72;padding:4px 12px;">
+                {title}{current_badge} · {date_range or '—'} · {total:,} 条评论 ·
+                <span class="tag tag-pos">{pos_rate}</span>
             </div>
             """, unsafe_allow_html=True)
 
-            for s in product_sessions:
-                total = s.get("total_reviews", 0)
-                pos = s.get("positive_count", 0)
-                pos_rate = f"{pos / total * 100:.1f}%" if total > 0 else "—"
-                title = s.get("custom_title") or s.get("auto_title") or s["version"]
-                is_current = s["id"] == current_session_id
+            col_view, col_export, col_del, _ = st.columns([1, 1, 1, 3])
+            with col_view:
+                if is_current:
+                    st.button("当前查看", key=f"histR_view_{s['id']}", disabled=True)
+                elif st.button("查看结果", key=f"histR_view_{s['id']}"):
+                    st.session_state["view_session_id"] = s["id"]
+                    st.rerun()
+            with col_export:
+                try:
+                    xlsx_bytes, xlsx_fn = export_to_xlsx(s["id"], user_id)
+                    st.download_button(
+                        "📥 导出",
+                        data=xlsx_bytes,
+                        file_name=xlsx_fn,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"histR_export_{s['id']}",
+                    )
+                except Exception:
+                    st.button("📥 导出", key=f"histR_export_{s['id']}", disabled=True)
+            with col_del:
+                if st.button("🗑️ 删除", key=f"histR_del_{s['id']}"):
+                    delete_session(user_id, s["id"])
+                    if s["id"] == current_session_id:
+                        st.session_state.pop("view_session_id", None)
+                    st.rerun()
 
-                date_range = ""
-                if s.get("date_range_start") and s.get("date_range_end"):
-                    date_range = f"{s['date_range_start']} ~ {s['date_range_end']}"
-
-                current_badge = ' <span style="background:#6C5CE7;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">当前</span>' if is_current else ""
-
-                st.markdown(f"""
-                <div style="font-size:13px;color:#636E72;padding:4px 12px;">
-                    {title}{current_badge} · {date_range or '—'} · {total:,} 条评论 ·
-                    <span class="tag tag-pos">{pos_rate}</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-                col_view, col_export, col_del, _ = st.columns([1, 1, 1, 3])
-                with col_view:
-                    if is_current:
-                        st.button("当前查看", key=f"histR_view_{s['id']}", disabled=True)
-                    elif st.button("查看结果", key=f"histR_view_{s['id']}"):
-                        st.session_state["view_session_id"] = s["id"]
-                        st.rerun()
-                with col_export:
-                    try:
-                        xlsx_bytes, xlsx_fn = export_to_xlsx(s["id"], user_id)
-                        st.download_button(
-                            "📥 导出",
-                            data=xlsx_bytes,
-                            file_name=xlsx_fn,
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            key=f"histR_export_{s['id']}",
-                        )
-                    except Exception:
-                        st.button("📥 导出", key=f"histR_export_{s['id']}", disabled=True)
-                with col_del:
-                    if st.button("🗑️ 删除", key=f"histR_del_{s['id']}"):
-                        delete_session(user_id, s["id"])
-                        if s["id"] == current_session_id:
-                            st.session_state.pop("view_session_id", None)
-                        st.rerun()
-
-            st.markdown("<hr style='border:none;border-top:1px solid #E8EAF0;margin:8px 0;'>",
-                        unsafe_allow_html=True)
+        st.markdown("<hr style='border:none;border-top:1px solid #E8EAF0;margin:8px 0;'>",
+                    unsafe_allow_html=True)
