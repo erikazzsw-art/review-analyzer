@@ -377,14 +377,17 @@ def check_duplicates(
     Returns:
         dict with keys: new_count, duplicate_count, duplicates (list[dict]).
     """
-    from sqlalchemy import text
-    with get_connection() as conn:
-        result = conn.execute(
-            text("SELECT content_hash FROM comments "
-                 "WHERE user_id = :uid AND product_id = :pid AND version = :ver AND content_hash IS NOT NULL"),
-            {"uid": user_id, "pid": product_id, "ver": version},
-        )
-        rows = result.fetchall()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT content_hash FROM comments "
+                "WHERE user_id = %s AND product_id = %s AND version = %s AND content_hash IS NOT NULL",
+                (user_id, product_id, version),
+            )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
     existing_hashes: set[str] = {r[0] for r in rows}
 
     duplicates: list[dict] = []
