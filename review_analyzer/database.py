@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ssl
 from typing import Optional
 
 import streamlit as st
@@ -14,9 +15,17 @@ def _get_engine() -> Engine:
         # 统一为 SQLAlchemy 格式，使用 pg8000 驱动
         if db_url.startswith("postgres://"):
             db_url = db_url.replace("postgres://", "postgresql+pg8000://", 1)
-        elif db_url.startswith("postgresql://"):
+        elif db_url.startswith("postgresql://") and "+pg8000" not in db_url:
             db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
-        st.session_state["db_engine"] = create_engine(db_url, pool_pre_ping=True)
+        # Supabase 要求 SSL 连接
+        ssl_ctx = ssl.create_default_context()
+        ssl_ctx.check_hostname = False
+        ssl_ctx.verify_mode = ssl.CERT_NONE
+        st.session_state["db_engine"] = create_engine(
+            db_url,
+            pool_pre_ping=True,
+            connect_args={"ssl_context": ssl_ctx},
+        )
     return st.session_state["db_engine"]
 
 
