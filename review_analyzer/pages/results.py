@@ -146,40 +146,167 @@ def _apply_time_filter(comments: list[dict], session: dict, user_id: int) -> tup
     return filtered, label
 
 
+def _render_product_search(user_id: int) -> tuple[int | None, bool]:
+    """顶部产品搜索框 — 输入产品编码搜索并切换查看不同产品的分析结果。
+    返回 (session_id, show_all_data): show_all_data=True 表示展示该产品全部数据。
+    """
+    sessions = get_sessions(user_id)
+    if not sessions:
+        return None, False
+
+    # 收集所有产品编码
+    all_product_ids = list(dict.fromkeys(s["product_id"] for s in sessions))
+
+    st.markdown("""
+    <div style="margin-bottom:16px;padding:16px 20px;background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb;">
+        <div style="font-size:13px;font-weight:600;color:#4d4d4d;margin-bottom:8px;">🔍 选择分析产品</div>
+    """, unsafe_allow_html=True)
+
+    search_input = st.text_input(
+        "搜索产品编码",
+        placeholder="输入产品编码搜索...",
+        key="product_search_input",
+        label_visibility="collapsed",
+    )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 根据搜索词过滤产品
+    if search_input:
+        matched_products = [pid for pid in all_product_ids if search_input.lower() in pid.lower()]
+    else:
+        matched_products = all_product_ids
+
+    if not matched_products and search_input:
+        st.caption("未找到匹配的产品编码")
+        return sessions[0]["id"], False
+
+    # 确定当前选中的产品
+    current_product = st.session_state.get("selected_product_id")
+    if current_product and current_product not in matched_products:
+        current_product = None
+    if not current_product and matched_products:
+        current_product = matched_products[0]
+
+    # 显示匹配的产品列表供选择
+    if matched_products:
+        selected_product = st.selectbox(
+            "选择产品",
+            matched_products,
+            index=matched_products.index(current_product) if current_product in matched_products else 0,
+            key="product_select_box",
+            label_visibility="collapsed",
+        )
+
+        if selected_product != st.session_state.get("selected_product_id"):
+            st.session_state["selected_product_id"] = selected_product
+            st.session_state.pop("selected_record_id", None)
+            st.session_state["product_view_mode"] = "all"
+
+        # 获取该产品的上传记录（最近5条）
+        product_sessions = [s for s in sessions if s["product_id"] == selected_product][:5]
+
+        if product_sessions:
+            st.caption(f"最近上传记录（{selected_product}）— 点击可查看单次上传数据")
+
+            # 全部数据选项 + 各条记录
+            view_mode = st.session_state.get("product_view_mode", "all")
+
+            col_all, col_sep = st.columns([2, 4])
+            with col_all:
+                btn_type = "primary" if view_mode == "all" else "secondary"
+                if st.button("📊 全部数据", key="view_all_data", type=btn_type):
+                    st.session_state["product_view_mode"] = "all"
+                    st.session_state.pop("selected_record_id", None)
+                    st.rerun()
+
+            # 显示各条上传记录
+            for s in product_sessions:
+                title = s.get("custom_title") or s.get("auto_title") or s["version"]
+                created = s.get("created_at", "")[:16]
+                total = s.get("total_reviews", 0)
+                is_selected = (view_mode == "record" and
+                               st.session_state.get("selected_record_id") == s["id"])
+                btn_type = "primary" if is_selected else "secondary"
+                if st.button(
+                    f"{title} · {s['version']} · {created} · {total}条",
+                    key=f"record_btn_{s['id']}",
+                    type=btn_type,
+                ):
+                    st.session_state["product_view_mode"] = "record"
+                    st.session_state["selected_record_id"] = s["id"]
+                    st.rerun()
+
+            # 返回结果
+            if view_mode == "all":
+                # 返回最新 session，但标记为展示全部数据
+                return product_sessions[0]["id"], True
+            else:
+                chosen_id = st.session_state.get("selected_record_id", product_sessions[0]["id"])
+                return chosen_id, False
+
+    if sessions:
+        return sessions[0]["id"], False
+    return None, False
+
+
 def render_results() -> None:
     user_id = get_current_user_id()
     if not user_id:
         st.warning("请先登录")
         return
 
-    # 确定要查看的 session
-    session_id = st.session_state.get("view_session_id")
+    sessions = get_sessions(user_id)
+    if not sessions:
+        st.markdown("""
+        <div style="text-align:center;padding:60px 0;color:#4d4d4d;">
+            <div style="font-size:28px;font-weight:700;color:#202020;margin-bottom:8px;font-family:'Montserrat',system-ui,sans-serif;">暂无分析结果</div>
+            <div style="font-size:14px;">前往「上传用户评论」页面上传文件并分析</div>
+        </div>
+        """, unsafe_allow_html=True)
+        return
 
-    # 如果没有指定 session，显示选择器
+    # 顶部产品搜索框（始终显示）
+    view_session_id = st.session_state.get("view_session_id")
+    show_all_data = False
+    if view_session_id:
+        # 从历史记录跳转过来，显示返回按钮
+        target_session = get_session_by_id(user_id, view_session_id)
+        if target_session:
+            col_back, col_info = st.columns([1, 5])
+            with col_back:
+                if st.button("← 返回搜索", key="back_to_search"):
+                    st.session_state.pop("view_session_id", None)
+                    st.rerun()
+            with col_info:
+                st.caption(f"当前查看：{target_session.get('product_id')} · {target_session.get('version')}")
+        session_id = view_session_id
+    else:
+        session_id, show_all_data = _render_product_search(user_id)
+
     if not session_id:
-        sessions = get_sessions(user_id)
-        if not sessions:
-            st.markdown("""
-            <div style="text-align:center;padding:60px 0;color:#4d4d4d;">
-                <div style="font-size:28px;font-weight:700;color:#202020;margin-bottom:8px;font-family:'Montserrat',system-ui,sans-serif;">暂无分析结果</div>
-                <div style="font-size:14px;">前往「上传用户评论」页面上传文件并分析</div>
-            </div>
-            """, unsafe_allow_html=True)
-            return
-
-        session_options = {
-            f"{s.get('product_id')} · {s.get('version')} · {s.get('auto_title', '')}": s["id"]
-            for s in sessions
-        }
-        selected = st.selectbox("选择分析记录", list(session_options.keys()), key="result_session_select")
-        session_id = session_options[selected]
+        st.info("请选择一个产品查看分析结果")
+        return
 
     session = get_session_by_id(user_id, session_id)
     if not session:
         st.error("未找到该分析记录")
         return
 
-    comments = get_comments(user_id, session_id=session_id)
+    # 加载评论数据：全部数据模式合并该产品所有 session 的评论
+    if show_all_data:
+        product_id = session.get("product_id")
+        all_product_sessions = get_sessions(user_id, product_id=product_id)
+        comments = []
+        seen_hashes: set = set()
+        for s in all_product_sessions:
+            for c in get_comments(user_id, session_id=s["id"]):
+                h = c.get("content_hash", id(c))
+                if h not in seen_hashes:
+                    seen_hashes.add(h)
+                    comments.append(c)
+    else:
+        comments = get_comments(user_id, session_id=session_id)
 
     # 时间筛选（优化6）
     comments, filter_label = _apply_time_filter(comments, session, user_id)
@@ -200,11 +327,12 @@ def render_results() -> None:
         date_range = f"{session['date_range_start']} ~ {session['date_range_end']}"
 
     invalid_note = f" · 无效评论 {unrecognizable_count} 条（不参与统计）" if unrecognizable_count > 0 else ""
+    data_scope = "全部数据" if show_all_data else session.get('version', '')
     st.markdown(f"""
     <div style="margin-bottom:24px;">
         <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">分析结果</div>
         <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">
-            {session.get('product_id', '')} · {session.get('version', '')}
+            {session.get('product_id', '')} · {data_scope}
             {(' · ' + date_range) if date_range else ''} · {valid_total:,} 条有效评论{invalid_note}
         </div>
     </div>
