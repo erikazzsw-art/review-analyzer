@@ -13,17 +13,18 @@ def render_trial_page() -> None:
     st.markdown("""
     <style>
     [data-testid="stSidebar"] { display: none; }
-    .stApp { background: #FAFAFF; }
+    .stApp { background: #ffffff; }
     .trial-tip {
-        background: linear-gradient(90deg, #F0EEFF, #E8F8F5);
-        border: 1px solid #A29BFE; border-radius: 14px;
+        background: #f5f5f5;
+        border: 1px solid #e8e8e8; border-radius: 8px;
         padding: 16px 20px; margin-bottom: 24px;
         display: flex; align-items: center; gap: 12px; font-size: 14px;
+        font-family: 'Inter', system-ui, sans-serif;
     }
-    .trial-tip .icon { font-size: 24px; }
+    .trial-tip .icon { font-size: 20px; color: #ff682c; }
     .trial-tip.warn {
-        background: linear-gradient(90deg, #FFEAEA, #FFF3E0);
-        border-color: #FDCB6E;
+        background: #fef3e0;
+        border-color: #f39c12;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -33,8 +34,7 @@ def render_trial_page() -> None:
     with col_logo:
         st.markdown("""
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
-            <span style="font-size:26px;">🔍</span>
-            <span style="font-size:20px;font-weight:700;color:#6C5CE7;">ClueAI</span>
+            <span style="font-size:20px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">ClueAI</span>
         </div>
         """, unsafe_allow_html=True)
     with col_btn:
@@ -45,12 +45,12 @@ def render_trial_page() -> None:
     # 提示条
     st.markdown("""
     <div class="trial-tip">
-        <div class="icon">💡</div>
+        <div class="icon">●</div>
         <div>试用模式：单次分析，不保存历史记录，不支持导出和环比分析。登录后解锁完整功能。</div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div style="font-size:22px;font-weight:700;margin-bottom:20px;">免费试用</div>',
+    st.markdown('<div style="font-size:22px;font-weight:700;margin-bottom:20px;font-family:Montserrat,system-ui,sans-serif;color:#202020;">免费试用</div>',
                 unsafe_allow_html=True)
 
     # 表单区

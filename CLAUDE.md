@@ -1,4 +1,3 @@
-markdown
 # CLAUDE.md
 
 This file provides guidance to Claude Code when working with code in this repository.
@@ -14,9 +13,6 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 - 技术栈：Python 3.10+ / Streamlit / SQLite / DeepSeek API / 飞书 Webhook
 - 完整需求和执行计划：详见 `plan.md`
-
-
-text
 
 ## 扩展规范（按需加载）
 
@@ -52,3 +48,41 @@ text
 
 ## Architecture
 /review_analyzer             # Analysis modules (23 files)
+
+## 项目文件说明（重要！）
+
+### 线上网站入口文件
+- **唯一入口**：`app.py`（Streamlit 主文件）
+- 所有用户可见的页面内容（欢迎页面、注册按钮、登录按钮、图表、评论列表等）都写在 **Python 文件** 中，使用 Streamlit 组件
+- **禁止修改**：`prototype.html` 是一个废弃的静态原型文件，不会被部署到线上
+
+### 修改规则（强制）
+1. 当用户要求修改"页面"、"按钮"、"欢迎页"、"注册/登录"、"图表"、"评论显示"等内容时
+2. **必须修改 `app.py` 中的 Streamlit 代码**
+3. **绝对不要修改 `prototype.html`**
+4. 如果不确定修改哪个文件，先询问用户
+
+## Git 分支与部署配置（重要！）
+
+### 当前配置
+- Streamlit Cloud 部署分支：**develop**
+- 日常修改的目标分支：**develop**
+- main 分支：仅用于稳定版本，不要直接推送
+
+### 每次修改代码后的标准流程（强制）
+
+当用户提出 bug 修改需求时，请按以下步骤执行：
+
+```bash
+# 1. 确认当前在 develop 分支
+git checkout develop
+
+# 2. 拉取最新代码（避免冲突）
+git pull origin develop
+
+# 3. 修改代码（修改 app.py）
+
+# 4. 提交并推送到 develop
+git add .
+git commit -m "fix: [简要描述修改内容]"
+git push origin develop

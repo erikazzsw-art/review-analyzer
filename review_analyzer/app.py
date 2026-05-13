@@ -33,27 +33,58 @@ init_db()
 
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;700;800&display=swap');
+
 :root {
-    --pri: #6C5CE7;
-    --pri-l: #A29BFE;
-    --pri-d: #5A4BD1;
-    --grn: #00B894;
-    --red: #FF6B6B;
-    --yel: #FDCB6E;
-    --blu: #74B9FF;
-    --bg: #F7F8FC;
-    --card: #FFFFFF;
-    --txt: #2D3436;
-    --txt-l: #636E72;
-    --bdr: #E8EAF0;
-    --shd: 0 2px 12px rgba(108, 92, 231, 0.08);
-    --r: 12px;
+    --pri: #ff682c;
+    --pri-l: #ff8f66;
+    --pri-d: #e55520;
+    --grn: #2ecc71;
+    --red: #e74c3c;
+    --yel: #f39c12;
+    --blu: #3498db;
+    --bg: #ffffff;
+    --card: #ffffff;
+    --card-alt: #efefef;
+    --txt: #202020;
+    --txt-l: #4d4d4d;
+    --txt-m: #828282;
+    --bdr: #e8e8e8;
+    --shd: none;
+    --r: 8px;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-heading: 'Montserrat', system-ui, sans-serif;
 }
 
-/* 隐藏 Streamlit 默认元素 */
+/* 隐藏 Streamlit 默认元素（保留 header 以确保侧边栏展开按钮可用） */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-header {visibility: hidden;}
+[data-testid="stToolbar"] {display: none !important;}
+[data-testid="stDecoration"] {display: none !important;}
+[data-testid="stStatusWidget"] {display: none !important;}
+
+/* 侧边栏展开按钮 — 确保在白色背景上可见 */
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"] {
+    background: #202020 !important;
+    border-radius: 0 8px 8px 0 !important;
+    padding: 10px !important;
+    border: none !important;
+}
+[data-testid="collapsedControl"] svg,
+[data-testid="stSidebarCollapsedControl"] svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+/* Streamlit 1.56 可能用 button 包裹 */
+[data-testid="stSidebar"] + section [data-testid="collapsedControl"] button,
+header button[kind="header"] {
+    background: #202020 !important;
+    color: #ffffff !important;
+    border-radius: 0 8px 8px 0 !important;
+}
 
 /* 隐藏标题旁的锚点链接按钮 */
 .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a,
@@ -65,11 +96,22 @@ header {visibility: hidden;}
 /* 页面背景 */
 .stApp {
     background: var(--bg);
+    font-family: var(--font-body);
+}
+
+/* 全局字体 */
+.stMarkdown, .stText, p, span, div, label {
+    font-family: var(--font-body);
+}
+h1, h2, h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+    color: var(--txt);
 }
 
 /* 侧边栏样式 */
 [data-testid="stSidebar"] {
-    background: var(--card);
+    background: #f5f5f5;
     border-right: 1px solid var(--bdr);
     width: 260px !important;
 }
@@ -80,43 +122,45 @@ header {visibility: hidden;}
 
 /* 自定义按钮 */
 .stButton > button {
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: 20px;
+    font-weight: 500;
     font-size: 14px;
     padding: 8px 20px;
     transition: all 0.15s;
+    font-family: var(--font-body);
+    border: 1px solid var(--bdr);
 }
 
-/* 主色按钮 */
+/* 主色按钮 — ghost 风格 */
 .stButton > button[kind="primary"] {
-    background: var(--pri);
-    color: white;
-    border: none;
+    background: transparent;
+    color: var(--txt);
+    border: 2px solid var(--txt);
 }
 .stButton > button[kind="primary"]:hover {
-    background: var(--pri-d);
-    transform: translateY(-1px);
+    background: var(--txt);
+    color: #ffffff;
 }
 
 /* 表单输入框 */
 .stTextInput > div > div > input,
 .stSelectbox > div > div,
 .stDateInput > div > div > input {
-    border: 2px solid var(--bdr);
-    border-radius: 10px;
+    border: 1px solid var(--bdr);
+    border-radius: 8px;
     font-size: 14px;
+    font-family: var(--font-body);
 }
 .stTextInput > div > div > input:focus {
-    border-color: var(--pri);
+    border-color: var(--txt);
     box-shadow: none;
 }
 
 /* 指标卡片 */
 .metric-card {
-    background: var(--card);
+    background: var(--card-alt);
     border-radius: var(--r);
-    padding: 20px;
-    box-shadow: var(--shd);
+    padding: 28px;
     position: relative;
     overflow: hidden;
 }
@@ -133,24 +177,24 @@ header {visibility: hidden;}
 .metric-card.green::before { background: var(--grn); }
 .metric-card.red::before { background: var(--red); }
 .metric-card.yellow::before { background: var(--yel); }
-.metric-icon { font-size: 28px; margin-bottom: 8px; }
-.metric-val { font-size: 28px; font-weight: 700; color: var(--txt); }
-.metric-label { font-size: 13px; color: var(--txt-l); margin-top: 2px; }
-.metric-change { font-size: 12px; margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 20px; }
-.metric-change.up { background: #E8F8F5; color: var(--grn); }
-.metric-change.down { background: #FFEAEA; color: var(--red); }
+.metric-icon { font-size: 16px; margin-bottom: 12px; color: var(--txt-m); }
+.metric-val { font-size: 32px; font-weight: 800; color: var(--txt); font-family: var(--font-heading); letter-spacing: -0.02em; }
+.metric-label { font-size: 13px; color: var(--txt-l); margin-top: 6px; font-weight: 500; }
+.metric-change { font-size: 12px; margin-top: 8px; display: inline-block; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+.metric-change.up { background: #e8f8f0; color: var(--grn); }
+.metric-change.down { background: #fdeaea; color: var(--red); }
 
 /* 标签 */
 .tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; margin: 2px; }
-.tag-pos { background: #E8F8F5; color: var(--grn); }
-.tag-neg { background: #FFEAEA; color: var(--red); }
-.tag-neu { background: #FFF3E0; color: #E17055; }
-.tag-topic { background: #F0EEFF; color: var(--pri); }
-.tag-platform { background: #E8F0FE; color: #2D6CDF; }
+.tag-pos { background: #e8f8f0; color: var(--grn); }
+.tag-neg { background: #fdeaea; color: var(--red); }
+.tag-neu { background: #fef3e0; color: #e67e22; }
+.tag-topic { background: #fff0eb; color: var(--pri); }
+.tag-platform { background: #eef6ff; color: #2d6cdf; }
 
 /* 环比条 */
 .compare-bar {
-    background: #F0EEFF;
+    background: var(--card-alt);
     border-radius: var(--r);
     padding: 16px 20px;
     margin-bottom: 12px;
@@ -165,50 +209,50 @@ header {visibility: hidden;}
 
 /* 行动建议卡 */
 .action-card {
-    background: linear-gradient(135deg, #F0EEFF, #E8F8F5);
+    background: var(--card-alt);
     border-radius: var(--r);
     padding: 20px;
     margin-top: 20px;
     border-left: 4px solid var(--pri);
 }
 .action-card.danger {
-    background: linear-gradient(135deg, #FFEAEA, #FFF3E0);
+    background: #fdeaea;
     border-left-color: var(--red);
 }
 
 /* 产品卡片 */
 .product-block {
     background: var(--card);
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: var(--shd);
-    margin-bottom: 24px;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 28px;
     border: 1px solid var(--bdr);
 }
 
 /* 数据表格 */
 .dataframe {
     font-size: 14px !important;
+    font-family: var(--font-body) !important;
 }
 .dataframe th {
-    background: #F7F8FC !important;
+    background: #f5f5f5 !important;
     color: var(--txt-l) !important;
     font-weight: 600 !important;
 }
 .dataframe tr:hover td {
-    background: #FAFBFF !important;
+    background: #f5f5f5 !important;
 }
 
 /* 上传区 */
 [data-testid="stFileUploader"] {
-    border: 2px dashed var(--pri-l);
+    border: 2px dashed var(--bdr);
     border-radius: var(--r);
     padding: 20px;
-    background: #FAFAFF;
+    background: #f5f5f5;
 }
 [data-testid="stFileUploader"]:hover {
     border-color: var(--pri);
-    background: #F0EEFF;
+    background: #fff0eb;
 }
 
 /* 步骤指示器 */
@@ -222,15 +266,16 @@ header {visibility: hidden;}
     text-align: center;
     padding: 12px;
     font-size: 14px;
-    font-weight: 600;
-    color: var(--txt-l);
+    font-weight: 500;
+    color: var(--txt-m);
     background: var(--card);
     border-bottom: 3px solid var(--bdr);
+    font-family: var(--font-body);
 }
 .step-item.active {
-    color: var(--pri);
+    color: var(--txt);
     border-bottom-color: var(--pri);
-    background: #F0EEFF;
+    background: #fff0eb;
 }
 .step-item.done {
     color: var(--grn);
@@ -242,7 +287,7 @@ header {visibility: hidden;}
     background: var(--card);
     border-radius: var(--r);
     padding: 20px;
-    box-shadow: var(--shd);
+    border: 1px solid var(--bdr);
 }
 
 /* 设置区块 */
@@ -250,34 +295,33 @@ header {visibility: hidden;}
     background: var(--card);
     border-radius: var(--r);
     padding: 24px;
-    box-shadow: var(--shd);
+    border: 1px solid var(--bdr);
     margin-bottom: 20px;
 }
 
 /* 平台卡片 */
 .platform-card {
-    background: #F7F8FC;
-    border: 2px solid var(--bdr);
-    border-radius: 12px;
+    background: #f5f5f5;
+    border: 1px solid var(--bdr);
+    border-radius: 8px;
     padding: 16px 12px;
     text-align: center;
     cursor: pointer;
     transition: all 0.15s;
 }
 .platform-card:hover {
-    border-color: var(--pri-l);
-    background: #F0EEFF;
+    border-color: var(--pri);
+    background: #fff0eb;
 }
 .platform-card.active {
     border-color: var(--pri);
-    background: #F0EEFF;
-    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+    background: #fff0eb;
 }
 
 /* 文案卡片 */
 .copy-card {
-    background: #F7F8FC;
-    border-radius: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
     padding: 20px;
     margin-bottom: 14px;
 }
@@ -292,8 +336,8 @@ header {visibility: hidden;}
     font-size: 11px;
     font-weight: 600;
 }
-.compliance-badge.pass { background: #E8F8F0; color: #00B894; border: 1px solid #B8F0D8; }
-.compliance-badge.warn { background: #FFF3E0; color: #E67E22; border: 1px solid #FDDCB0; }
+.compliance-badge.pass { background: #e8f8f0; color: var(--grn); border: 1px solid #b8f0d8; }
+.compliance-badge.warn { background: #fef3e0; color: #e67e22; border: 1px solid #fddcb0; }
 
 /* 历史记录布局 */
 .hist-sku-item {
@@ -304,15 +348,15 @@ header {visibility: hidden;}
     transition: all 0.15s;
     margin-bottom: 4px;
 }
-.hist-sku-item:hover { background: #F0EEFF; }
-.hist-sku-item.active { background: #F0EEFF; color: var(--pri); font-weight: 600; }
+.hist-sku-item:hover { background: #fff0eb; }
+.hist-sku-item.active { background: #fff0eb; color: var(--pri); font-weight: 600; }
 
 /* 批次卡片 */
 .batch-card {
     background: var(--card);
     border-radius: var(--r);
     padding: 16px 20px;
-    box-shadow: var(--shd);
+    border: 1px solid var(--bdr);
     margin-bottom: 12px;
     display: flex;
     align-items: center;
@@ -320,7 +364,7 @@ header {visibility: hidden;}
 }
 
 /* 关键词云 */
-.keyword { padding: 6px 14px; border-radius: 20px; font-size: 13px; background: #F0EEFF; color: var(--pri); display: inline-block; margin: 4px; }
+.keyword { padding: 6px 14px; border-radius: 20px; font-size: 13px; background: #fff0eb; color: var(--pri); display: inline-block; margin: 4px; }
 .keyword.lg { font-size: 18px; font-weight: 600; padding: 8px 18px; }
 .keyword.md { font-size: 15px; font-weight: 500; }
 .keyword.sm { font-size: 12px; }
@@ -332,8 +376,8 @@ header {visibility: hidden;}
     background: var(--card);
     border-top: 2px solid var(--pri);
     padding: 12px 20px;
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
     z-index: 5;
 }
 
@@ -342,14 +386,14 @@ header {visibility: hidden;}
     background: var(--card);
     border-radius: var(--r);
     padding: 20px;
-    box-shadow: var(--shd);
+    border: 1px solid var(--bdr);
     margin-top: 16px;
     border-left: 4px solid var(--pri);
 }
 
 /* 进度条 */
 .stProgress > div > div > div {
-    background: linear-gradient(90deg, var(--pri), var(--blu));
+    background: var(--pri);
 }
 
 /* 侧边栏导航项 */
@@ -363,11 +407,12 @@ header {visibility: hidden;}
     font-size: 15px;
     color: var(--txt-l);
     margin: 2px 8px;
-    border-radius: 10px;
+    border-radius: 8px;
     text-decoration: none;
+    font-family: var(--font-body);
 }
-.nav-item:hover { background: #F0EEFF; color: var(--pri); }
-.nav-item.active { background: #F0EEFF; color: var(--pri); font-weight: 600; }
+.nav-item:hover { background: #fff0eb; color: var(--pri); }
+.nav-item.active { background: #fff0eb; color: var(--pri); font-weight: 600; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -387,9 +432,27 @@ def main() -> None:
             render_landing_page()
         return
 
-    # 侧边栏
+    # 侧边栏 — 强制覆盖 landing/login/trial 页面的隐藏样式
+    st.markdown("""
+    <style>
+    section[data-testid="stSidebar"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 260px !important;
+        min-width: 260px !important;
+        transform: none !important;
+        position: relative !important;
+    }
+    section[data-testid="stSidebar"] > div {
+        display: block !important;
+        visibility: visible !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     with st.sidebar:
-        if st.button("🔍 ClueAI", key="brand_home_btn", use_container_width=True, type="secondary"):
+        if st.button("ClueAI", key="brand_home_btn", use_container_width=True, type="secondary"):
             st.session_state["current_page"] = "dashboard"
             st.rerun()
         st.markdown("""
@@ -397,10 +460,12 @@ def main() -> None:
         [data-testid="stSidebar"] button[kind="secondary"]:first-of-type {
             font-size: 18px;
             font-weight: 700;
-            color: #6C5CE7;
+            color: #202020;
+            font-family: 'Montserrat', system-ui, sans-serif;
+            letter-spacing: -0.02em;
             background: transparent;
             border: none;
-            border-bottom: 1px solid #E8EAF0;
+            border-bottom: 1px solid #e8e8e8;
             border-radius: 0;
             padding: 8px 0 16px;
             margin-bottom: 12px;
@@ -408,9 +473,9 @@ def main() -> None:
             justify-content: flex-start;
         }
         [data-testid="stSidebar"] button[kind="secondary"]:first-of-type:hover {
-            color: #5A4BD1;
+            color: #ff682c;
             background: transparent;
-            border-bottom: 1px solid #E8EAF0;
+            border-bottom: 1px solid #e8e8e8;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -468,8 +533,8 @@ def main() -> None:
         # 用户信息
         username = get_current_username() or "User"
         st.markdown(f"""
-        <div style="display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px;color:#636E72;">
-            <div style="width:32px;height:32px;border-radius:50%;background:#A29BFE;
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px;color:#4d4d4d;">
+            <div style="width:32px;height:32px;border-radius:50%;background:#ff682c;
                         display:flex;align-items:center;justify-content:center;
                         font-size:14px;color:#fff;">{username[0].upper()}</div>
             <span>{username}</span>

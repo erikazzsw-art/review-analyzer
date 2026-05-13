@@ -160,9 +160,8 @@ def render_results() -> None:
         sessions = get_sessions(user_id)
         if not sessions:
             st.markdown("""
-            <div style="text-align:center;padding:60px 0;color:#636E72;">
-                <div style="font-size:48px;margin-bottom:16px;">📋</div>
-                <div style="font-size:18px;font-weight:600;margin-bottom:8px;">暂无分析结果</div>
+            <div style="text-align:center;padding:60px 0;color:#4d4d4d;">
+                <div style="font-size:28px;font-weight:700;color:#202020;margin-bottom:8px;font-family:'Montserrat',system-ui,sans-serif;">暂无分析结果</div>
                 <div style="font-size:14px;">前往「上传用户评论」页面上传文件并分析</div>
             </div>
             """, unsafe_allow_html=True)
@@ -202,13 +201,11 @@ def render_results() -> None:
 
     invalid_note = f" · 无效评论 {unrecognizable_count} 条（不参与统计）" if unrecognizable_count > 0 else ""
     st.markdown(f"""
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-        <div>
-            <div style="font-size:22px;font-weight:700;">分析结果</div>
-            <div style="font-size:14px;color:#636E72;margin-top:2px;">
-                {session.get('product_id', '')} · {session.get('version', '')}
-                {(' · ' + date_range) if date_range else ''} · {valid_total:,} 条有效评论{invalid_note}
-            </div>
+    <div style="margin-bottom:24px;">
+        <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">分析结果</div>
+        <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">
+            {session.get('product_id', '')} · {session.get('version', '')}
+            {(' · ' + date_range) if date_range else ''} · {valid_total:,} 条有效评论{invalid_note}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -237,7 +234,7 @@ def render_results() -> None:
     with col1:
         st.markdown(f"""
         <div class="metric-card purple">
-            <div class="metric-icon">💬</div>
+            <div class="metric-icon">◆</div>
             <div class="metric-val">{total:,}</div>
             <div class="metric-label">总评论数</div>
         </div>
@@ -245,7 +242,7 @@ def render_results() -> None:
     with col2:
         st.markdown(f"""
         <div class="metric-card green">
-            <div class="metric-icon">😊</div>
+            <div class="metric-icon">▲</div>
             <div class="metric-val">{pos_rate:.1f}%</div>
             <div class="metric-label">正面率</div>
         </div>
@@ -253,7 +250,7 @@ def render_results() -> None:
     with col3:
         st.markdown(f"""
         <div class="metric-card red">
-            <div class="metric-icon">😟</div>
+            <div class="metric-icon">▼</div>
             <div class="metric-val">{neg_rate:.1f}%</div>
             <div class="metric-label">负面率</div>
         </div>
@@ -261,7 +258,7 @@ def render_results() -> None:
     with col4:
         st.markdown(f"""
         <div class="metric-card yellow">
-            <div class="metric-icon">⭐</div>
+            <div class="metric-icon">★</div>
             <div class="metric-val">{avg_rating:.1f}</div>
             <div class="metric-label">平均评分</div>
         </div>
@@ -276,21 +273,22 @@ def render_results() -> None:
         fig = go.Figure(go.Pie(
             labels=["正面", "中性", "负面"],
             values=[pos_count, neutral_count, neg_count],
-            marker=dict(colors=["#00B894", "#FDCB6E", "#FF6B6B"]),
+            marker=dict(colors=["#2ecc71", "#f39c12", "#e74c3c"]),
             hole=0.65,
             hoverinfo="label+percent+value",
         ))
         fig.update_layout(
-            title="🎯 情感分布",
+            title="情感分布",
             height=300,
             margin=dict(l=20, r=20, t=40, b=20),
             legend=dict(orientation="h", yanchor="bottom", y=-0.15),
             paper_bgcolor="white",
+            font=dict(family="Inter, system-ui, sans-serif"),
         )
         st.plotly_chart(fig, use_container_width=True, key="result_pie")
 
     with col_chart2:
-        st.markdown("**🏷️ 热门关键词**")
+        st.markdown("**热门关键词**")
         all_tags = []
         for c in comments:
             for field in ["issue_tag", "highlight_tag"]:
@@ -321,9 +319,10 @@ def render_results() -> None:
     top_issues = _get_top_tags(negative_comments, "issue_tag", len(negative_comments))
 
     st.markdown("""
-    <div style="font-size:18px;font-weight:700;margin:28px 0 16px;display:flex;align-items:center;gap:8px;">
-        ❌ TOP 10 产品问题
-        <span style="font-size:13px;font-weight:400;color:#636E72;margin-left:auto;">勾选后可推送到飞书</span>
+    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">1</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">TOP 10 产品问题</span>
+        <span style="font-size:12px;color:#828282;margin-left:4px;">勾选后可推送到飞书</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -339,9 +338,10 @@ def render_results() -> None:
     top_highlights = _get_top_tags(positive_comments, "highlight_tag", len(positive_comments))
 
     st.markdown("""
-    <div style="font-size:18px;font-weight:700;margin:28px 0 16px;display:flex;align-items:center;gap:8px;">
-        ✅ TOP 10 产品亮点
-        <span style="font-size:13px;font-weight:400;color:#636E72;margin-left:auto;">勾选后可推送到飞书</span>
+    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">2</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">TOP 10 产品亮点</span>
+        <span style="font-size:12px;color:#828282;margin-left:4px;">勾选后可推送到飞书</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -367,8 +367,9 @@ def render_results() -> None:
 def _render_comparison_section(session: dict, user_id: int) -> None:
     """环比分析 — 支持时间粒度 + 版本筛选 + 跨 session 数据合并"""
     st.markdown("""
-    <div style="font-size:18px;font-weight:700;margin:28px 0 16px;display:flex;align-items:center;gap:8px;">
-        🔄 环比分析
+    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">3</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">环比分析</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -485,18 +486,18 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
 
         pos_diff = cur_pos - prev_pos
         neg_diff = cur_neg - prev_neg
-        pos_color = "#00B894" if pos_diff >= 0 else "#FF6B6B"
-        neg_color = "#00B894" if neg_diff <= 0 else "#FF6B6B"
+        pos_color = "#2ecc71" if pos_diff >= 0 else "#e74c3c"
+        neg_color = "#2ecc71" if neg_diff <= 0 else "#e74c3c"
         pos_arrow = "↑" if pos_diff >= 0 else "↓"
         neg_arrow = "↑" if neg_diff >= 0 else "↓"
 
         st.markdown(f"""
         <div class="compare-bar time">
-            <span style="font-weight:600;">📊 环比结果</span>
-            <span style="font-size:12px;color:#636E72;">{label_current}（{cur_total}条） vs {label_prev}（{prev_total}条）</span>
-            <span>正面率 <span style="color:#636E72;text-decoration:line-through;">{prev_pos:.1f}%</span>
+            <span style="font-weight:600;">环比结果</span>
+            <span style="font-size:12px;color:#828282;">{label_current}（{cur_total}条） vs {label_prev}（{prev_total}条）</span>
+            <span>正面率 <span style="color:#828282;text-decoration:line-through;">{prev_pos:.1f}%</span>
             <span style="font-weight:700;color:{pos_color};">→ {cur_pos:.1f}% {pos_arrow}{abs(pos_diff):.1f}%</span></span>
-            <span>负面率 <span style="color:#636E72;text-decoration:line-through;">{prev_neg:.1f}%</span>
+            <span>负面率 <span style="color:#828282;text-decoration:line-through;">{prev_neg:.1f}%</span>
             <span style="font-weight:700;color:{neg_color};">→ {cur_neg:.1f}% {neg_arrow}{abs(neg_diff):.1f}%</span></span>
         </div>
         """, unsafe_allow_html=True)
@@ -513,13 +514,13 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
             all_tags = list(dict.fromkeys([i["tag"] for i in cur_issues] + [i["tag"] for i in prev_issues]))
 
             if all_tags:
-                st.markdown("**❌ TOP 问题环比变化**")
+                st.markdown("**TOP 问题环比变化**")
                 for tag in all_tags[:8]:
                     b_pct = prev_map.get(tag, 0)
                     t_pct = cur_map.get(tag, 0)
                     diff = t_pct - b_pct
                     arrow = "↑" if diff > 0 else ("↓" if diff < 0 else "—")
-                    color = "#FF6B6B" if diff > 0 else "#00B894"
+                    color = "#e74c3c" if diff > 0 else "#2ecc71"
                     st.markdown(
                         f"- **{tag}**：{b_pct:.1f}% → {t_pct:.1f}% "
                         f"<span style='color:{color};font-weight:600;'>{arrow}{abs(diff):.1f}%</span>",
@@ -559,7 +560,7 @@ def _render_action_suggestions(pos_rate: float, neg_rate: float, comments: list[
 
     items_html = ""
     for i, text in enumerate(suggestions, 1):
-        items_html += f'<div style="font-size:14px;padding:10px 0;border-bottom:1px solid rgba(108,92,231,0.08);line-height:1.6;">{i}. {text}</div>'
+        items_html += f'<div style="font-size:14px;padding:10px 0;border-bottom:1px solid #e8e8e8;line-height:1.6;">{i}. {text}</div>'
 
     st.markdown(f"""
     <div class="{card_class}">
@@ -640,7 +641,7 @@ def _render_floating_bar(session_id: int, user_id: int, top_issues: list[dict], 
                     已选择 {total_selected} 项（问题 {len(selected_issues)} + 亮点 {len(selected_highlights)}）
                 </span>
                 <div style="display:flex;gap:8px;align-items:center;">
-                    <span style="font-size:13px;color:#636E72;">推送到：</span>
+                    <span style="font-size:13px;color:#828282;">推送到：</span>
                 </div>
             </div>
         </div>
@@ -709,8 +710,9 @@ def _render_history_section(user_id: int, current_session_id: int) -> None:
         return
 
     st.markdown("""
-    <div style="font-size:18px;font-weight:700;margin:28px 0 16px;display:flex;align-items:center;gap:8px;">
-        🕐 历史分析记录
+    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">4</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">历史分析记录</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -724,7 +726,7 @@ def _render_history_section(user_id: int, current_session_id: int) -> None:
 
     # 产品搜索框（直接可见）
     search_sku = st.text_input(
-        "🔍 搜索产品编号",
+        "搜索产品编号",
         placeholder="输入 SKU 关键词快速筛选...",
         key="hist_search_in_results",
     )
@@ -742,9 +744,9 @@ def _render_history_section(user_id: int, current_session_id: int) -> None:
 
     for pid, product_sessions in filtered_products.items():
         st.markdown(f"""
-        <div style="font-size:15px;font-weight:600;margin:16px 0 8px;padding:8px 12px;
-                    background:#F0EEFF;border-radius:8px;display:flex;align-items:center;justify-content:space-between;">
-            <span>📦 {pid}（{len(product_sessions)} 个批次）</span>
+        <div style="font-size:14px;font-weight:600;margin:16px 0 8px;padding:8px 12px;
+                    background:#f9f9f9;border-radius:8px;border:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;">
+            <span>{pid}（{len(product_sessions)} 个批次）</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -759,10 +761,10 @@ def _render_history_section(user_id: int, current_session_id: int) -> None:
             if s.get("date_range_start") and s.get("date_range_end"):
                 date_range = f"{s['date_range_start']} ~ {s['date_range_end']}"
 
-            current_badge = ' <span style="background:#6C5CE7;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">当前</span>' if is_current else ""
+            current_badge = ' <span style="background:#ff682c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">当前</span>' if is_current else ""
 
             st.markdown(f"""
-            <div style="font-size:13px;color:#636E72;padding:4px 12px;">
+            <div style="font-size:13px;color:#4d4d4d;padding:4px 12px;">
                 {title}{current_badge} · {date_range or '—'} · {total:,} 条评论 ·
                 <span class="tag tag-pos">{pos_rate}</span>
             </div>
@@ -794,5 +796,5 @@ def _render_history_section(user_id: int, current_session_id: int) -> None:
                         st.session_state.pop("view_session_id", None)
                     st.rerun()
 
-        st.markdown("<hr style='border:none;border-top:1px solid #E8EAF0;margin:8px 0;'>",
+        st.markdown("<hr style='border:none;border-top:1px solid #e8e8e8;margin:8px 0;'>",
                     unsafe_allow_html=True)

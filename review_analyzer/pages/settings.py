@@ -45,27 +45,23 @@ def _load_settings(user_id: int) -> dict:
     }
 
 
-def _section_header(title: str, subtitle: str = "") -> None:
-    html = f'<div style="margin-bottom:20px;"><h3 style="font-size:18px;font-weight:700;color:#2D3436;margin:0 0 4px;">{title}</h3>'
-    if subtitle:
-        html += f'<p style="font-size:13px;color:#636E72;margin:0;line-height:1.5;">{subtitle}</p>'
-    html += '</div>'
-    st.markdown(html, unsafe_allow_html=True)
-
-
-def _rule_row(label: str, enabled_key: str, enabled_val: bool,
-              threshold_key: str, threshold_val: int, suffix: str = "% 时触发告警") -> tuple:
-    col_on, col_desc, col_val = st.columns([0.3, 5, 1.2])
+def _rule_row(label: str, desc: str, enabled_key: str, enabled_val: bool,
+              threshold_key: str, threshold_val: int, color: str = "#ff682c") -> tuple:
+    col_on, col_desc, col_val = st.columns([0.2, 5, 0.8])
     with col_on:
         enabled = st.checkbox("启用", value=enabled_val, key=enabled_key, label_visibility="collapsed")
     with col_desc:
-        st.markdown(f'<div style="font-size:14px;color:#2D3436;padding-top:6px;">{label}</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="padding-top:6px;">
+            <span style="font-size:14px;color:#202020;">{label}</span>
+            <span style="font-size:12px;color:#828282;margin-left:8px;">{desc}</span>
+        </div>
+        """, unsafe_allow_html=True)
     with col_val:
         threshold = st.number_input(
             "阈值", value=threshold_val, min_value=1, max_value=100,
             key=threshold_key, label_visibility="collapsed"
         )
-    st.markdown(f'<div style="font-size:12px;color:#B2BEC3;margin:-8px 0 12px 32px;">{suffix}</div>', unsafe_allow_html=True)
     return enabled, threshold
 
 
@@ -77,23 +73,35 @@ def render_settings() -> None:
 
     st.markdown("""
     <style>
-    .settings-page h3 { margin-top: 0; }
-    .settings-page .stNumberInput input { text-align: center; }
-    .divider { border: none; border-top: 1px solid #F0F0F5; margin: 24px 0; }
-    /* 缩小 checkbox 列的右侧间距 */
-    [data-testid="column"]:first-child { min-width: 0 !important; flex: 0 0 32px !important; max-width: 40px !important; }
-    [data-testid="stCheckbox"] { padding-top: 6px; }
+    .settings-page .stNumberInput input { text-align: center; font-size: 14px; width: 64px !important; min-width: 56px !important; }
+    .settings-page .stNumberInput { max-width: 72px !important; }
+    .settings-page [data-testid="column"]:first-child { min-width: 0 !important; flex: 0 0 24px !important; max-width: 28px !important; padding-right: 0 !important; }
+    .settings-page [data-testid="stCheckbox"] { padding-top: 6px; }
+    .settings-page [data-testid="column"]:nth-child(2) { padding-left: 0 !important; }
     </style>
-    <div class="settings-page">
-        <h2 style="font-size:22px;font-weight:700;color:#2D3436;margin-bottom:4px;">推送设置</h2>
-        <p style="font-size:13px;color:#636E72;margin-bottom:28px;">配置飞书 Webhook 通知和自动推送规则</p>
+    <div class="settings-page"></div>
+    """, unsafe_allow_html=True)
+
+    # 页头
+    st.markdown("""
+    <div style="margin-bottom:32px;">
+        <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">推送设置</div>
+        <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">配置飞书 Webhook 通知渠道和自动推送规则</div>
     </div>
     """, unsafe_allow_html=True)
 
     settings = _load_settings(user_id)
 
-    # ── 飞书 Webhook ──────────────────────────────────────────
-    _section_header("🔗 飞书 Webhook", "配置机器人 Webhook 地址，用于接收告警和通知推送")
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 1. 飞书 Webhook
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">1</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">飞书 Webhook</span>
+        <span style="font-size:12px;color:#828282;margin-left:4px;">配置机器人 Webhook 地址，用于接收告警和通知推送</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     webhook_url = st.text_input(
         "Webhook URL",
@@ -128,49 +136,62 @@ def render_settings() -> None:
                 with st.spinner("正在测试连接..."):
                     result = _test_webhook(webhook_url, "feishu", webhook_secret)
                 if result["ok"]:
-                    st.success("✓ 连接成功")
+                    st.success("连接成功")
                 else:
                     st.error(f"连接失败：{result['msg']}")
     with col_btn2:
         st.button("+ 添加群", key="add_webhook_group")
 
-    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+    st.markdown('<div style="height:32px;"></div>', unsafe_allow_html=True)
 
-    # ── 全局推送规则 ──────────────────────────────────────────
-    _section_header(
-        "🌐 全局推送规则",
-        '适用于所有产品。规则之间为"或"关系，任一条件触发即推送。'
-    )
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 2. 全局推送规则
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">2</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">全局推送规则</span>
+        <span style="font-size:12px;color:#828282;margin-left:4px;">适用于所有产品，任一条件触发即推送</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     rules = settings.get("rules", {})
 
-    # 问题监控
-    st.markdown('<div style="font-size:15px;font-weight:600;color:#6C5CE7;margin-bottom:10px;">⚠️ 问题监控</div>', unsafe_allow_html=True)
+    # ── 问题监控 ──
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:8px;margin:16px 0 10px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#e74c3c;display:inline-block;"></span>
+        <span style="font-size:14px;font-weight:600;color:#202020;">问题监控</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     issue_pct_enabled, issue_pct = _rule_row(
-        "某个产品问题占比达到阈值",
+        "产品问题占比达到阈值",
+        "超过此 % 时触发",
         "rule_issue_pct_enabled", rules.get("issue_pct_enabled", True),
         "rule_issue_pct", rules.get("issue_pct_threshold", 5),
-        "超过此百分比时推送告警"
     )
 
     neg_rate_enabled, neg_rate = _rule_row(
-        "产品负面评价率达到阈值",
+        "负面评价率达到阈值",
+        "超过此 % 时触发",
         "rule_neg_rate_enabled", rules.get("neg_rate_enabled", True),
         "rule_neg_rate", rules.get("neg_rate_threshold", 25),
-        "超过此百分比时推送告警"
     )
 
-    st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
-
-    # 环比监控
-    st.markdown('<div style="font-size:15px;font-weight:600;color:#6C5CE7;margin-bottom:10px;">📊 环比监控</div>', unsafe_allow_html=True)
+    # ── 环比监控 ──
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:8px;margin:20px 0 10px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#3498db;display:inline-block;"></span>
+        <span style="font-size:14px;font-weight:600;color:#202020;">环比监控</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     neg_compare_enabled, neg_compare_threshold = _rule_row(
         "负面率环比上升达到阈值",
+        "与上一周期相比上升超过此 %",
         "rule_neg_compare_enabled", rules.get("neg_rate_compare_enabled", True),
         "rule_neg_compare", rules.get("neg_rate_compare_threshold", 5),
-        "与上一周期相比上升超过此百分比时告警"
     )
 
     col_w, col_v = st.columns(2)
@@ -184,35 +205,42 @@ def render_settings() -> None:
     st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
 
     issue_compare_enabled, issue_compare_threshold = _rule_row(
-        "某产品问题环比上升达到阈值",
+        "问题环比上升达到阈值",
+        "与上一周期相比上升超过此 %",
         "rule_issue_compare_enabled", rules.get("issue_compare_enabled", False),
         "rule_issue_compare", rules.get("issue_compare_threshold", 3),
-        "与上一周期相比上升超过此百分比时告警"
     )
 
-    st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
-
-    # 亮点监控
-    st.markdown('<div style="font-size:15px;font-weight:600;color:#6C5CE7;margin-bottom:10px;">✅ 亮点监控</div>', unsafe_allow_html=True)
+    # ── 亮点监控 ──
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:8px;margin:20px 0 10px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#2ecc71;display:inline-block;"></span>
+        <span style="font-size:14px;font-weight:600;color:#202020;">亮点监控</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     hl_pct_enabled, hl_pct = _rule_row(
-        "某个产品亮点占比达到阈值",
+        "产品亮点占比达到阈值",
+        "超过此 % 时通知",
         "rule_hl_pct_enabled", rules.get("highlight_pct_enabled", False),
         "rule_hl_pct", rules.get("highlight_pct_threshold", 10),
-        "超过此百分比时推送通知"
     )
 
     hl_compare_enabled, hl_compare_threshold = _rule_row(
-        "某产品亮点环比上升达到阈值",
+        "亮点环比上升达到阈值",
+        "与上一周期相比上升超过此 %",
         "rule_hl_compare_enabled", rules.get("highlight_compare_enabled", False),
         "rule_hl_compare", rules.get("highlight_compare_threshold", 5),
-        "与上一周期相比上升超过此百分比时通知"
     )
 
-    st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
+    # ── 其他 ──
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:8px;margin:20px 0 10px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#828282;display:inline-block;"></span>
+        <span style="font-size:14px;font-weight:600;color:#202020;">其他</span>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # 其他
-    st.markdown('<div style="font-size:15px;font-weight:600;color:#6C5CE7;margin-bottom:10px;">📨 其他</div>', unsafe_allow_html=True)
     auto_push = st.checkbox(
         "新批次分析完成后自动推送摘要",
         value=rules.get("auto_push_new_batch", False),
@@ -220,19 +248,23 @@ def render_settings() -> None:
     )
 
     st.markdown("""
-    <div style="margin-top:16px;padding:10px 14px;background:#FAFBFE;border:1px solid #E8EAF0;
-                border-radius:8px;font-size:12px;color:#636E72;line-height:1.6;">
-        💡 环比对比时，若所选时间段内数据不足，系统将提示调整时间范围。
+    <div style="margin-top:12px;font-size:12px;color:#828282;line-height:1.6;">
+        提示：环比对比时，若所选时间段内数据不足，系统将提示调整时间范围。
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+    st.markdown('<div style="height:32px;"></div>', unsafe_allow_html=True)
 
-    # ── 产品级自定义规则 ──────────────────────────────────────
-    _section_header(
-        "📦 产品级规则",
-        "为特定产品设置不同阈值，覆盖全局规则。"
-    )
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 3. 产品级自定义规则
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">3</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">产品级规则</span>
+        <span style="font-size:12px;color:#828282;margin-left:4px;">为特定产品设置不同阈值，覆盖全局规则</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     sessions = get_sessions(user_id)
     product_ids = list(set(s["product_id"] for s in sessions))
@@ -253,9 +285,9 @@ def render_settings() -> None:
                 with cols[4]:
                     st.checkbox("启用", value=rule.get("enabled", True), key=f"pr_enabled_{i}")
                 with cols[5]:
-                    st.button("🗑️", key=f"pr_del_{i}")
+                    st.button("删除", key=f"pr_del_{i}")
     else:
-        st.markdown('<div style="font-size:13px;color:#B2BEC3;padding:12px 0;">暂无自定义规则，点击下方按钮添加</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:13px;color:#828282;padding:16px 0;">暂无自定义规则，点击下方按钮添加</div>', unsafe_allow_html=True)
 
     if st.button("+ 添加产品规则", key="add_product_rule"):
         if product_ids:
@@ -268,43 +300,55 @@ def render_settings() -> None:
                 "enabled": True,
             })
 
-    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+    st.markdown('<div style="height:32px;"></div>', unsafe_allow_html=True)
 
-    # ── 推送预览 ─────────────────────────────────────────────
-    _section_header("📋 推送预览", "飞书群消息示例")
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # 4. 推送预览
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">4</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">推送预览</span>
+        <span style="font-size:12px;color:#828282;margin-left:4px;">飞书群消息示例</span>
+    </div>
+    """, unsafe_allow_html=True)
 
-    tab1, tab2 = st.tabs(["⚠️ 问题告警", "✅ 亮点通知"])
+    tab1, tab2 = st.tabs(["问题告警", "亮点通知"])
 
     with tab1:
         st.markdown("""
-        <div style="background:#FFFBFB;border-radius:10px;padding:16px 20px;font-size:13px;
-                    line-height:2;border:1px solid #FFE0E0;">
-            <div style="font-weight:600;color:#E74C3C;margin-bottom:4px;">⚠️ 产品问题告警</div>
-            <div style="color:#636E72;">B09XK7G4QL · 无线蓝牙耳机</div>
-            <div style="margin-top:8px;">📌 触发规则：问题占比 ≥ 5%</div>
-            <div>📊 问题详情：</div>
-            <div style="padding-left:16px;">• "包装破损" 占比 8.2%（环比 ↑2.4%）</div>
-            <div style="padding-left:16px;">• "充电异常" 占比 5.3%（环比 ↑1.1%）</div>
-            <div style="margin-top:8px;color:#B2BEC3;">⏰ 2026-05-06 14:30</div>
+        <div style="background:#fff5f5;border-radius:8px;padding:20px;font-size:13px;
+                    line-height:2;border:1px solid #ffe0e0;border-left:4px solid #e74c3c;">
+            <div style="font-weight:600;color:#c0392b;font-size:14px;margin-bottom:8px;">产品问题告警</div>
+            <div style="color:#4d4d4d;font-weight:500;">B09XK7G4QL · 无线蓝牙耳机</div>
+            <div style="margin-top:10px;padding:10px 14px;background:#fff;border-radius:6px;border:1px solid #ffe0e0;">
+                <div style="font-size:12px;color:#828282;margin-bottom:4px;">触发规则：问题占比 ≥ 5%</div>
+                <div style="color:#202020;">• "包装破损" 占比 <strong style="color:#e74c3c;">8.2%</strong>（环比 ↑2.4%）</div>
+                <div style="color:#202020;">• "充电异常" 占比 <strong style="color:#e74c3c;">5.3%</strong>（环比 ↑1.1%）</div>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:#828282;">2026-05-06 14:30</div>
         </div>
         """, unsafe_allow_html=True)
 
     with tab2:
         st.markdown("""
-        <div style="background:#F0FFF4;border-radius:10px;padding:16px 20px;font-size:13px;
-                    line-height:2;border:1px solid #B8F0D8;">
-            <div style="font-weight:600;color:#00B894;margin-bottom:4px;">✅ 产品亮点通知</div>
-            <div style="color:#636E72;">B09XK7G4QL · 无线蓝牙耳机</div>
-            <div style="margin-top:8px;">📌 触发规则：亮点占比 ≥ 10%</div>
-            <div>📊 亮点详情：</div>
-            <div style="padding-left:16px;">• "性价比高" 占比 13.3%（环比 ↑2.1%）</div>
-            <div style="padding-left:16px;">• 代表评论："Amazing value for the price!"</div>
-            <div style="margin-top:8px;">💡 建议：可在 Listing 中强化"性价比"卖点</div>
-            <div style="color:#B2BEC3;">⏰ 2026-05-06 14:30</div>
+        <div style="background:#f0faf4;border-radius:8px;padding:20px;font-size:13px;
+                    line-height:2;border:1px solid #b8f0d8;border-left:4px solid #2ecc71;">
+            <div style="font-weight:600;color:#1e8449;font-size:14px;margin-bottom:8px;">产品亮点通知</div>
+            <div style="color:#4d4d4d;font-weight:500;">B09XK7G4QL · 无线蓝牙耳机</div>
+            <div style="margin-top:10px;padding:10px 14px;background:#fff;border-radius:6px;border:1px solid #b8f0d8;">
+                <div style="font-size:12px;color:#828282;margin-bottom:4px;">触发规则：亮点占比 ≥ 10%</div>
+                <div style="color:#202020;">• "性价比高" 占比 <strong style="color:#2ecc71;">13.3%</strong>（环比 ↑2.1%）</div>
+                <div style="color:#202020;">• 代表评论："Amazing value for the price!"</div>
+            </div>
+            <div style="margin-top:10px;padding:8px 12px;background:#e8f8f0;border-radius:6px;font-size:12px;color:#1e8449;">
+                💡 建议：可在 Listing 中强化"性价比"卖点
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:#828282;">2026-05-06 14:30</div>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('<div style="height:24px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:32px;"></div>', unsafe_allow_html=True)
 
     # ── 保存 ─────────────────────────────────────────────────
     _, col_save = st.columns([5, 1.5])

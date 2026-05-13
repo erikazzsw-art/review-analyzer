@@ -12,7 +12,7 @@ def render_login_page() -> None:
     <style>
     [data-testid="stSidebar"] { display: none; }
     .stApp {
-        background: linear-gradient(135deg, #A29BFE 0%, #6C5CE7 50%, #74B9FF 100%);
+        background: #f5f5f5;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -20,12 +20,12 @@ def render_login_page() -> None:
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("""
-        <div style="background:white;border-radius:20px;padding:48px 40px;
-                    box-shadow:0 20px 60px rgba(0,0,0,0.15);text-align:center;
+        <div style="background:white;border-radius:12px;padding:48px 40px;
+                    border:1px solid #e8e8e8;text-align:center;
                     margin-top:60px;">
-            <div style="font-size:48px;margin-bottom:8px;">🔍</div>
-            <div style="font-size:24px;font-weight:700;color:#6C5CE7;margin-bottom:4px;">ClueAI</div>
-            <div style="font-size:14px;color:#636E72;margin-bottom:32px;">跨境电商评论分析平台</div>
+            <div style="font-size:24px;font-weight:700;color:#202020;margin-bottom:4px;
+                        font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">ClueAI</div>
+            <div style="font-size:14px;color:#4d4d4d;margin-bottom:32px;">跨境电商评论分析平台</div>
         </div>
         """, unsafe_allow_html=True)
 

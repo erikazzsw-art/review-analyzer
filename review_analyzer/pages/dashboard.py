@@ -44,10 +44,10 @@ def _render_metric_cards(product: dict) -> None:
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        invalid_note = f"<div style='font-size:11px;color:#FF6B6B;margin-top:2px;'>无效 {unrec} 条</div>" if unrec > 0 else ""
+        invalid_note = f"<div style='font-size:11px;color:#e74c3c;margin-top:2px;'>无效 {unrec} 条</div>" if unrec > 0 else ""
         st.markdown(f"""
         <div class="metric-card purple">
-            <div class="metric-icon">💬</div>
+            <div class="metric-icon">◆</div>
             <div class="metric-val">{valid:,}</div>
             <div class="metric-label">有效评论</div>
             {invalid_note}
@@ -56,7 +56,7 @@ def _render_metric_cards(product: dict) -> None:
     with col2:
         st.markdown(f"""
         <div class="metric-card green">
-            <div class="metric-icon">😊</div>
+            <div class="metric-icon">▲</div>
             <div class="metric-val">{pos_rate}</div>
             <div class="metric-label">正面率</div>
         </div>
@@ -64,7 +64,7 @@ def _render_metric_cards(product: dict) -> None:
     with col3:
         st.markdown(f"""
         <div class="metric-card red">
-            <div class="metric-icon">😟</div>
+            <div class="metric-icon">▼</div>
             <div class="metric-val">{neg_rate}</div>
             <div class="metric-label">负面率</div>
         </div>
@@ -72,7 +72,7 @@ def _render_metric_cards(product: dict) -> None:
     with col4:
         st.markdown(f"""
         <div class="metric-card yellow">
-            <div class="metric-icon">⭐</div>
+            <div class="metric-icon">★</div>
             <div class="metric-val">—</div>
             <div class="metric-label">平均评分</div>
         </div>
@@ -102,11 +102,11 @@ def _render_charts(product: dict, idx: int) -> None:
 
             fig = go.Figure()
             fig.add_trace(go.Bar(name="正面率", x=labels, y=pos_rates,
-                                 marker_color="#00B894", marker_cornerradius=8))
+                                 marker_color="#2ecc71", marker_cornerradius=8))
             fig.add_trace(go.Bar(name="负面率", x=labels, y=neg_rates,
-                                 marker_color="#FF6B6B", marker_cornerradius=8))
+                                 marker_color="#e74c3c", marker_cornerradius=8))
             fig.update_layout(
-                title="📈 情感趋势（按批次）",
+                title="情感趋势（按批次）",
                 barmode="group",
                 height=280,
                 margin=dict(l=20, r=20, t=40, b=20),
@@ -114,6 +114,7 @@ def _render_charts(product: dict, idx: int) -> None:
                 yaxis=dict(range=[0, 100], ticksuffix="%"),
                 plot_bgcolor="white",
                 paper_bgcolor="white",
+                font=dict(family="Inter, system-ui, sans-serif"),
             )
             st.plotly_chart(fig, use_container_width=True, key=f"trend_{idx}")
         else:
@@ -127,9 +128,9 @@ def _render_charts(product: dict, idx: int) -> None:
             if ratings:
                 from collections import Counter
                 rating_counts = Counter(ratings)
-                stars = ["⭐1", "⭐2", "⭐3", "⭐4", "⭐5"]
+                stars = ["1★", "2★", "3★", "4★", "5★"]
                 counts = [rating_counts.get(i, 0) for i in range(1, 6)]
-                colors = ["#FF6B6B", "#FDCB6E", "#74B9FF", "#A29BFE", "#00B894"]
+                colors = ["#e74c3c", "#f39c12", "#3498db", "#816729", "#2ecc71"]
 
                 fig = go.Figure(go.Bar(
                     x=stars, y=counts,
@@ -137,11 +138,12 @@ def _render_charts(product: dict, idx: int) -> None:
                     marker_cornerradius=8,
                 ))
                 fig.update_layout(
-                    title="📊 评分分布",
+                    title="评分分布",
                     height=280,
                     margin=dict(l=20, r=20, t=40, b=20),
                     plot_bgcolor="white",
                     paper_bgcolor="white",
+                    font=dict(family="Inter, system-ui, sans-serif"),
                 )
                 st.plotly_chart(fig, use_container_width=True, key=f"dist_{idx}")
             else:
@@ -156,7 +158,7 @@ def _render_batch_table(product: dict) -> None:
     if not sessions:
         return
 
-    st.markdown("**🕐 批次记录**")
+    st.markdown("**批次记录**")
     for s in sessions:
         total = s.get("total_reviews", 0)
         pos = s.get("positive_count", 0)
@@ -195,7 +197,7 @@ def _render_action_card(product: dict) -> None:
 
     is_danger = neg_rate > 25 or pos_rate < 55
     card_class = "action-card danger" if is_danger else "action-card"
-    title = "🚨 行动建议（需关注）" if is_danger else "💡 行动建议"
+    title = "行动建议（需关注）" if is_danger else "行动建议"
 
     suggestions = []
     if pos_rate >= 70:
@@ -210,7 +212,7 @@ def _render_action_card(product: dict) -> None:
 
     items_html = ""
     for text in suggestions:
-        items_html += f'<div style="font-size:14px;padding:8px 0;border-bottom:1px solid rgba(108,92,231,0.1);">• {text}</div>'
+        items_html += f'<div style="font-size:14px;padding:8px 0;border-bottom:1px solid #e8e8e8;">• {text}</div>'
 
     st.markdown(f"""
     <div class="{card_class}">
@@ -228,11 +230,9 @@ def render_dashboard() -> None:
 
     # 页头
     st.markdown("""
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-        <div>
-            <div style="font-size:22px;font-weight:700;">仪表盘</div>
-            <div style="font-size:14px;color:#636E72;margin-top:2px;">按产品维度查看评论分析全貌</div>
-        </div>
+    <div style="margin-bottom:32px;">
+        <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">仪表盘</div>
+        <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">按产品维度查看评论分析全貌</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -246,14 +246,13 @@ def render_dashboard() -> None:
     with col_sort:
         st.button("排序：最近更新", key="dash_sort", use_container_width=True)
     with col_count:
-        st.markdown(f'<div style="font-size:13px;color:#636E72;padding-top:8px;">共 {len(products)} 个产品</div>',
+        st.markdown(f'<div style="font-size:13px;color:#828282;padding-top:8px;">共 {len(products)} 个产品</div>',
                     unsafe_allow_html=True)
 
     if not products:
         st.markdown("""
-        <div style="text-align:center;padding:60px 0;color:#636E72;">
-            <div style="font-size:48px;margin-bottom:16px;">📊</div>
-            <div style="font-size:18px;font-weight:600;margin-bottom:8px;">暂无产品数据</div>
+        <div style="text-align:center;padding:80px 0;color:#4d4d4d;">
+            <div style="font-size:28px;font-weight:700;color:#202020;margin-bottom:8px;font-family:'Montserrat',system-ui,sans-serif;">暂无产品数据</div>
             <div style="font-size:14px;">前往「上传用户评论」页面上传评论文件，开始分析</div>
         </div>
         """, unsafe_allow_html=True)

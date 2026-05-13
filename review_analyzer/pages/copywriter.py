@@ -107,16 +107,17 @@ def render_copywriter() -> None:
         return
 
     st.markdown("""
-    <div style="margin-bottom:24px;">
-        <div style="font-size:22px;font-weight:700;">生成宣传文案 & 选品依据</div>
-        <div style="font-size:14px;color:#636E72;margin-top:2px;">基于真实用户评论，AI 生成产品宣传语和选品洞察</div>
+    <div style="margin-bottom:32px;">
+        <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">生成宣传文案</div>
+        <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">基于真实用户评论，AI 生成产品宣传语和选品洞察</div>
     </div>
     """, unsafe_allow_html=True)
 
     # ① 选择产品和分析记录
     st.markdown("""
-    <div class="settings-section">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">① 选择产品和分析记录</h3>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">1</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">选择产品和分析记录</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -178,8 +179,9 @@ def render_copywriter() -> None:
 
     # ② 选择投放平台
     st.markdown("""
-    <div class="settings-section">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">② 选择投放平台</h3>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">2</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">选择投放平台</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -200,10 +202,11 @@ def render_copywriter() -> None:
 
     # ③ 自定义产品功能点
     st.markdown("""
-    <div class="settings-section">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">③ 自定义产品功能点（选填）</h3>
-        <p style="font-size:13px;color:#636E72;margin-bottom:10px;">填写产品核心卖点，系统将结合评论分析结果生成更精准的文案</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">3</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">自定义产品功能点（选填）</span>
     </div>
+    <p style="font-size:13px;color:#4d4d4d;margin-bottom:10px;">填写产品核心卖点，系统将结合评论分析结果生成更精准的文案</p>
     """, unsafe_allow_html=True)
 
     feature_points = st.text_area(
@@ -217,8 +220,9 @@ def render_copywriter() -> None:
 
     # ④ 选择生成内容
     st.markdown("""
-    <div class="settings-section">
-        <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">④ 选择生成内容</h3>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">4</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">选择生成内容</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -258,9 +262,9 @@ def render_copywriter() -> None:
 
         if gen_ad_copy:
             st.markdown(f"""
-            <div style="padding:10px 14px;background:#F0EEFF;border-radius:8px;font-size:12px;
-                        color:#636E72;line-height:1.6;border:1px solid #E0DCFF;margin-bottom:16px;">
-                📋 <strong>{rules['name']}</strong>：{rules['guidelines']}
+            <div style="padding:12px 16px;background:#fff0eb;border-radius:8px;font-size:12px;
+                        color:#4d4d4d;line-height:1.6;border:1px solid #ffd6c4;margin-bottom:16px;">
+                <strong style="color:#ff682c;">{rules['name']}</strong>：{rules['guidelines']}
             </div>
             """, unsafe_allow_html=True)
 
@@ -331,15 +335,15 @@ def render_copywriter() -> None:
                 badge = '<span class="compliance-badge pass">✓ 合规</span>' if is_compliant else '<span class="compliance-badge warn">⚠ 有风险</span>'
 
                 st.markdown(f"""
-                <div style="font-size:14px;line-height:1.8;padding:14px 16px;background:#fff;
-                            border-radius:10px;border:1px solid #E8EAF0;margin:8px 0;">
+                <div style="font-size:14px;line-height:1.8;padding:14px 16px;background:#f9f9f9;
+                            border-radius:8px;border:1px solid #e8e8e8;margin:8px 0;border-left:3px solid #ff682c;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                        <span style="font-size:12px;color:#636E72;">{char_count} / {ad_type['limit']} 字符</span>
+                        <span style="font-size:12px;color:#828282;">{char_count} / {ad_type['limit']} 字符</span>
                         {badge}
                     </div>
-                    <strong style="color:#2D3436;">{en_text}</strong>
-                    <div style="border-top:1px dashed #E8EAF0;margin-top:8px;padding-top:8px;
-                                font-size:12px;color:#636E72;">
+                    <strong style="color:#202020;">{en_text}</strong>
+                    <div style="border-top:1px dashed #e8e8e8;margin-top:8px;padding-top:8px;
+                                font-size:12px;color:#4d4d4d;">
                         中文参考：{zh_text}
                     </div>
                 </div>
@@ -389,18 +393,18 @@ def render_copywriter() -> None:
             features = ideal.get("features", [])
             summary = ideal.get("summary", "")
 
-            features_html = " ".join(f'<span class="tag tag-topic">{f}</span>' for f in features)
+            features_html = " ".join(f'<span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;margin:2px;background:#fff0eb;color:#ff682c;">{f}</span>' for f in features)
             st.markdown(f"""
-            <div class="settings-section" style="border-left:4px solid #00B894;">
+            <div style="background:#f9f9f9;border-radius:8px;padding:24px;border:1px solid #e8e8e8;border-left:4px solid #2ecc71;margin-top:12px;">
                 <div style="margin-bottom:12px;">{features_html}</div>
-                <div style="font-size:14px;line-height:1.9;color:#2D3436;">
+                <div style="font-size:14px;line-height:1.9;color:#202020;">
                     {summary}
                 </div>
-                <div style="margin-top:12px;font-size:13px;color:#636E72;">
-                    价格预期：{ideal.get('price_range', '—')} ｜
-                    物流要求：{ideal.get('logistics', '—')} ｜
-                    包装期望：{ideal.get('packaging', '—')} ｜
-                    售后要求：{ideal.get('service', '—')}
+                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e8e8e8;font-size:13px;color:#4d4d4d;display:flex;gap:16px;flex-wrap:wrap;">
+                    <span>💰 价格预期：<strong>{ideal.get('price_range', '—')}</strong></span>
+                    <span>🚚 物流要求：<strong>{ideal.get('logistics', '—')}</strong></span>
+                    <span>📦 包装期望：<strong>{ideal.get('packaging', '—')}</strong></span>
+                    <span>🛎️ 售后要求：<strong>{ideal.get('service', '—')}</strong></span>
                 </div>
             </div>
             """, unsafe_allow_html=True)

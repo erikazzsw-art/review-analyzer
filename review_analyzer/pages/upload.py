@@ -46,8 +46,8 @@ def render_upload() -> None:
     # 页头
     st.markdown("""
     <div style="margin-bottom:24px;">
-        <div style="font-size:22px;font-weight:700;">上传用户评论</div>
-        <div style="font-size:14px;color:#636E72;margin-top:2px;">填写产品信息 → 上传评论文件 → AI 自动分析</div>
+        <div style="font-size:22px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;">上传用户评论</div>
+        <div style="font-size:14px;color:#4d4d4d;margin-top:4px;">填写产品信息 → 上传评论文件 → AI 自动分析</div>
     </div>
     """, unsafe_allow_html=True)
 
