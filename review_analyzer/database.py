@@ -1,92 +1,22 @@
 from __future__ import annotations
 
-import os
-import sqlite3
+import psycopg2
+import psycopg2.extras
+import streamlit as st
 from typing import Optional
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "data", "review_analyzer.db")
 
-
-def _ensure_db_dir() -> None:
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-
-
-def get_connection() -> sqlite3.Connection:
-    _ensure_db_dir()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
+def get_connection():
+    """获取 Supabase PostgreSQL 连接"""
+    db_url = st.secrets["database"]["url"]
+    conn = psycopg2.connect(db_url)
+    conn.autocommit = False
     return conn
 
 
 def init_db() -> None:
-    with get_connection() as conn:
-        conn.executescript("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL,
-                api_key_encrypted TEXT,
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            );
-
-            CREATE TABLE IF NOT EXISTS comments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                product_id TEXT NOT NULL,
-                version TEXT NOT NULL DEFAULT 'V1',
-                content TEXT NOT NULL,
-                rating INTEGER,
-                date TEXT,
-                reviewer TEXT,
-                source TEXT,
-                content_hash TEXT,
-                sentiment TEXT,
-                category TEXT,
-                priority TEXT,
-                reason TEXT,
-                improvement TEXT,
-                issue_tag TEXT DEFAULT '',
-                highlight_tag TEXT DEFAULT '',
-                is_processed INTEGER NOT NULL DEFAULT 0,
-                session_id INTEGER,
-                FOREIGN KEY (user_id) REFERENCES users(id),
-                FOREIGN KEY (session_id) REFERENCES sessions(id)
-            );
-
-            CREATE TABLE IF NOT EXISTS sessions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                product_id TEXT NOT NULL,
-                version TEXT NOT NULL DEFAULT 'V1',
-                auto_title TEXT,
-                custom_title TEXT,
-                date_range_start TEXT,
-                date_range_end TEXT,
-                total_reviews INTEGER DEFAULT 0,
-                positive_count INTEGER DEFAULT 0,
-                negative_count INTEGER DEFAULT 0,
-                category TEXT,
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            );
-
-            CREATE TABLE IF NOT EXISTS settings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                key TEXT NOT NULL,
-                value TEXT,
-                FOREIGN KEY (user_id) REFERENCES users(id),
-                UNIQUE(user_id, key)
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
-            CREATE INDEX IF NOT EXISTS idx_comments_product_id ON comments(user_id, product_id);
-            CREATE INDEX IF NOT EXISTS idx_comments_session_id ON comments(session_id);
-            CREATE INDEX IF NOT EXISTS idx_comments_hash ON comments(user_id, content_hash);
-            CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
-            CREATE INDEX IF NOT EXISTS idx_settings_user_key ON settings(user_id, key);
-        """)
+    """在 Supabase 上表已通过 SQL 脚本创建，此函数仅做兼容保留。"""
+    pass
 
 
 # ============================================================
@@ -95,53 +25,64 @@ def init_db() -> None:
 
 def create_user(username: str, password_hash: str) -> int:
     with get_connection() as conn:
-        cursor = conn.execute(
-            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-            (username, password_hash),
-        )
-        conn.commit()
-        return cursor.lastrowid
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id",
+                (username, password_hash),
+            )
+            user_id = cur.fetchone()[0]
+            conn.commit()
+            return user_id
 
 
 def get_user_by_username(username: str) -> Optional[dict]:
     with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM users WHERE username = ?",
-            (username,),
-        ).fetchone()
-        return dict(row) if row else None
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+            row = cur.fetchone()
+            return dict(row) if row else None
 
 
 def get_user_by_id(user_id: int) -> Optional[dict]:
     with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM users WHERE id = ?",
-            (user_id,),
-        ).fetchone()
-        return dict(row) if row else None
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
 
 
 def update_user_api_key(user_id: int, api_key_encrypted: str) -> None:
     with get_connection() as conn:
-        conn.execute(
-            "UPDATE users SET api_key_encrypted = ? WHERE id = ?",
-            (api_key_encrypted, user_id),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET api_key_encrypted = %s WHERE id = %s",
+                (api_key_encrypted, user_id),
+            )
+            conn.commit()
 
 
 def delete_user(user_id: int) -> None:
     with get_connection() as conn:
-        conn.execute("DELETE FROM settings WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM comments WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM settings WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM comments WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM sessions WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            conn.commit()
 
 
 # ============================================================
 # Comments CRUD
 # ============================================================
+
+_COMMENT_FIELDS = (
+    "user_id, product_id, version, content, rating, date, "
+    "reviewer, source, content_hash, sentiment, category, "
+    "priority, reason, improvement, issue_tag, highlight_tag, "
+    "is_processed, session_id"
+)
+_COMMENT_PLACEHOLDERS = ", ".join(["%s"] * 18)
+
 
 def _comment_values(user_id: int, comment: dict) -> list:
     return [
@@ -166,35 +107,30 @@ def _comment_values(user_id: int, comment: dict) -> list:
     ]
 
 
-_COMMENT_FIELDS = (
-    "user_id, product_id, version, content, rating, date, "
-    "reviewer, source, content_hash, sentiment, category, "
-    "priority, reason, improvement, issue_tag, highlight_tag, "
-    "is_processed, session_id"
-)
-_COMMENT_PLACEHOLDERS = ", ".join(["?"] * 18)
-
-
 def add_comment(user_id: int, comment: dict) -> int:
     values = _comment_values(user_id, comment)
     with get_connection() as conn:
-        cursor = conn.execute(
-            f"INSERT INTO comments ({_COMMENT_FIELDS}) VALUES ({_COMMENT_PLACEHOLDERS})",
-            values,
-        )
-        conn.commit()
-        return cursor.lastrowid
+        with conn.cursor() as cur:
+            cur.execute(
+                f"INSERT INTO comments ({_COMMENT_FIELDS}) VALUES ({_COMMENT_PLACEHOLDERS}) RETURNING id",
+                values,
+            )
+            comment_id = cur.fetchone()[0]
+            conn.commit()
+            return comment_id
 
 
 def add_comments_batch(user_id: int, comments: list[dict]) -> int:
     rows = [_comment_values(user_id, c) for c in comments]
     with get_connection() as conn:
-        conn.executemany(
-            f"INSERT INTO comments ({_COMMENT_FIELDS}) VALUES ({_COMMENT_PLACEHOLDERS})",
-            rows,
-        )
-        conn.commit()
-        return len(rows)
+        with conn.cursor() as cur:
+            psycopg2.extras.execute_batch(
+                cur,
+                f"INSERT INTO comments ({_COMMENT_FIELDS}) VALUES ({_COMMENT_PLACEHOLDERS})",
+                rows,
+            )
+            conn.commit()
+            return len(rows)
 
 
 def get_comments(
@@ -203,79 +139,86 @@ def get_comments(
     session_id: Optional[int] = None,
     version: Optional[str] = None,
 ) -> list[dict]:
-    query = "SELECT * FROM comments WHERE user_id = ?"
+    query = "SELECT * FROM comments WHERE user_id = %s"
     params: list = [user_id]
     if product_id is not None:
-        query += " AND product_id = ?"
+        query += " AND product_id = %s"
         params.append(product_id)
     if session_id is not None:
-        query += " AND session_id = ?"
+        query += " AND session_id = %s"
         params.append(session_id)
     if version is not None:
-        query += " AND version = ?"
+        query += " AND version = %s"
         params.append(version)
     query += " ORDER BY id DESC"
     with get_connection() as conn:
-        rows = conn.execute(query, params).fetchall()
-        return [dict(r) for r in rows]
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(query, params)
+            return [dict(r) for r in cur.fetchall()]
 
 
 def get_comment_by_id(user_id: int, comment_id: int) -> Optional[dict]:
     with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM comments WHERE id = ? AND user_id = ?",
-            (comment_id, user_id),
-        ).fetchone()
-        return dict(row) if row else None
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM comments WHERE id = %s AND user_id = %s",
+                (comment_id, user_id),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
 
 
 def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> None:
     with get_connection() as conn:
-        conn.execute(
-            """UPDATE comments
-               SET sentiment = ?, category = ?, priority = ?, reason = ?,
-                   improvement = ?, issue_tag = ?, highlight_tag = ?, is_processed = 1
-               WHERE id = ? AND user_id = ?""",
-            (
-                analysis.get("sentiment"),
-                analysis.get("category"),
-                analysis.get("priority"),
-                analysis.get("reason"),
-                analysis.get("improvement"),
-                analysis.get("issue_tag", ""),
-                analysis.get("highlight_tag", ""),
-                comment_id,
-                user_id,
-            ),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE comments
+                   SET sentiment = %s, category = %s, priority = %s, reason = %s,
+                       improvement = %s, issue_tag = %s, highlight_tag = %s, is_processed = 1
+                   WHERE id = %s AND user_id = %s""",
+                (
+                    analysis.get("sentiment"),
+                    analysis.get("category"),
+                    analysis.get("priority"),
+                    analysis.get("reason"),
+                    analysis.get("improvement"),
+                    analysis.get("issue_tag", ""),
+                    analysis.get("highlight_tag", ""),
+                    comment_id,
+                    user_id,
+                ),
+            )
+            conn.commit()
 
 
 def delete_comment(user_id: int, comment_id: int) -> None:
     with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM comments WHERE id = ? AND user_id = ?",
-            (comment_id, user_id),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM comments WHERE id = %s AND user_id = %s",
+                (comment_id, user_id),
+            )
+            conn.commit()
 
 
 def delete_comments_by_session(user_id: int, session_id: int) -> None:
     with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM comments WHERE session_id = ? AND user_id = ?",
-            (session_id, user_id),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM comments WHERE session_id = %s AND user_id = %s",
+                (session_id, user_id),
+            )
+            conn.commit()
 
 
 def get_existing_hashes(user_id: int, product_id: str) -> set[str]:
     with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT content_hash FROM comments WHERE user_id = ? AND product_id = ? AND content_hash IS NOT NULL",
-            (user_id, product_id),
-        ).fetchall()
-        return {r["content_hash"] for r in rows}
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT content_hash FROM comments WHERE user_id = %s AND product_id = %s AND content_hash IS NOT NULL",
+                (user_id, product_id),
+            )
+            return {r[0] for r in cur.fetchall()}
 
 
 def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
@@ -290,13 +233,15 @@ def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
             SELECT sentiment,
                    ROW_NUMBER() OVER (PARTITION BY content_hash ORDER BY id DESC) AS rn
             FROM comments
-            WHERE user_id = ? AND product_id = ? AND content_hash IS NOT NULL
-        )
+            WHERE user_id = %s AND product_id = %s AND content_hash IS NOT NULL
+        ) sub
         WHERE rn = 1
     """
     with get_connection() as conn:
-        row = conn.execute(sql, (user_id, product_id)).fetchone()
-        return dict(row) if row else {"total_reviews": 0, "positive_count": 0, "negative_count": 0, "unrecognizable_count": 0}
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, (user_id, product_id))
+            row = cur.fetchone()
+            return dict(row) if row else {"total_reviews": 0, "positive_count": 0, "negative_count": 0, "unrecognizable_count": 0}
 
 
 def get_comments_deduped(user_id: int, product_id: str) -> list[dict]:
@@ -306,23 +251,25 @@ def get_comments_deduped(user_id: int, product_id: str) -> list[dict]:
             SELECT *,
                    ROW_NUMBER() OVER (PARTITION BY content_hash ORDER BY id DESC) AS rn
             FROM comments
-            WHERE user_id = ? AND product_id = ? AND content_hash IS NOT NULL
-        )
+            WHERE user_id = %s AND product_id = %s AND content_hash IS NOT NULL
+        ) sub
         WHERE rn = 1
         ORDER BY id DESC
     """
     with get_connection() as conn:
-        rows = conn.execute(sql, (user_id, product_id)).fetchall()
-        return [dict(r) for r in rows]
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, (user_id, product_id))
+            return [dict(r) for r in cur.fetchall()]
 
 
 def get_unprocessed_comments(user_id: int, session_id: int) -> list[dict]:
     with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM comments WHERE user_id = ? AND session_id = ? AND is_processed = 0",
-            (user_id, session_id),
-        ).fetchall()
-        return [dict(r) for r in rows]
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM comments WHERE user_id = %s AND session_id = %s AND is_processed = 0",
+                (user_id, session_id),
+            )
+            return [dict(r) for r in cur.fetchall()]
 
 
 # ============================================================
@@ -331,58 +278,64 @@ def get_unprocessed_comments(user_id: int, session_id: int) -> list[dict]:
 
 def create_session(user_id: int, session_data: dict) -> int:
     with get_connection() as conn:
-        cursor = conn.execute(
-            """INSERT INTO sessions
-               (user_id, product_id, version, auto_title, custom_title,
-                date_range_start, date_range_end, total_reviews,
-                positive_count, negative_count, category)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                user_id,
-                session_data.get("product_id"),
-                session_data.get("version", "V1"),
-                session_data.get("auto_title"),
-                session_data.get("custom_title"),
-                session_data.get("date_range_start"),
-                session_data.get("date_range_end"),
-                session_data.get("total_reviews", 0),
-                session_data.get("positive_count", 0),
-                session_data.get("negative_count", 0),
-                session_data.get("category"),
-            ),
-        )
-        conn.commit()
-        return cursor.lastrowid
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO sessions
+                   (user_id, product_id, version, auto_title, custom_title,
+                    date_range_start, date_range_end, total_reviews,
+                    positive_count, negative_count, category)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                (
+                    user_id,
+                    session_data.get("product_id"),
+                    session_data.get("version", "V1"),
+                    session_data.get("auto_title"),
+                    session_data.get("custom_title"),
+                    session_data.get("date_range_start"),
+                    session_data.get("date_range_end"),
+                    session_data.get("total_reviews", 0),
+                    session_data.get("positive_count", 0),
+                    session_data.get("negative_count", 0),
+                    session_data.get("category"),
+                ),
+            )
+            session_id = cur.fetchone()[0]
+            conn.commit()
+            return session_id
 
 
 def get_sessions(user_id: int, product_id: Optional[str] = None) -> list[dict]:
-    query = "SELECT * FROM sessions WHERE user_id = ?"
+    query = "SELECT * FROM sessions WHERE user_id = %s"
     params: list = [user_id]
     if product_id is not None:
-        query += " AND product_id = ?"
+        query += " AND product_id = %s"
         params.append(product_id)
     query += " ORDER BY created_at DESC"
     with get_connection() as conn:
-        rows = conn.execute(query, params).fetchall()
-        return [dict(r) for r in rows]
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(query, params)
+            return [dict(r) for r in cur.fetchall()]
 
 
 def get_session_by_id(user_id: int, session_id: int) -> Optional[dict]:
     with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM sessions WHERE id = ? AND user_id = ?",
-            (session_id, user_id),
-        ).fetchone()
-        return dict(row) if row else None
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM sessions WHERE id = %s AND user_id = %s",
+                (session_id, user_id),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
 
 
 def update_session_title(user_id: int, session_id: int, custom_title: str) -> None:
     with get_connection() as conn:
-        conn.execute(
-            "UPDATE sessions SET custom_title = ? WHERE id = ? AND user_id = ?",
-            (custom_title, session_id, user_id),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE sessions SET custom_title = %s WHERE id = %s AND user_id = %s",
+                (custom_title, session_id, user_id),
+            )
+            conn.commit()
 
 
 def update_session_stats(
@@ -393,47 +346,48 @@ def update_session_stats(
     negative_count: int,
 ) -> None:
     with get_connection() as conn:
-        conn.execute(
-            """UPDATE sessions
-               SET total_reviews = ?, positive_count = ?, negative_count = ?
-               WHERE id = ? AND user_id = ?""",
-            (total_reviews, positive_count, negative_count, session_id, user_id),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE sessions
+                   SET total_reviews = %s, positive_count = %s, negative_count = %s
+                   WHERE id = %s AND user_id = %s""",
+                (total_reviews, positive_count, negative_count, session_id, user_id),
+            )
+            conn.commit()
 
 
 def delete_session(user_id: int, session_id: int) -> None:
     with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM comments WHERE session_id = ? AND user_id = ?",
-            (session_id, user_id),
-        )
-        conn.execute(
-            "DELETE FROM sessions WHERE id = ? AND user_id = ?",
-            (session_id, user_id),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM comments WHERE session_id = %s AND user_id = %s",
+                (session_id, user_id),
+            )
+            cur.execute(
+                "DELETE FROM sessions WHERE id = %s AND user_id = %s",
+                (session_id, user_id),
+            )
+            conn.commit()
 
 
 def delete_product(user_id: int, product_id: str) -> None:
     with get_connection() as conn:
-        session_ids = [
-            row[0] for row in conn.execute(
-                "SELECT id FROM sessions WHERE user_id = ? AND product_id = ?",
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM sessions WHERE user_id = %s AND product_id = %s",
                 (user_id, product_id),
-            ).fetchall()
-        ]
-        if session_ids:
-            placeholders = ",".join("?" * len(session_ids))
-            conn.execute(
-                f"DELETE FROM comments WHERE user_id = ? AND session_id IN ({placeholders})",
-                [user_id] + session_ids,
             )
-            conn.execute(
-                f"DELETE FROM sessions WHERE user_id = ? AND id IN ({placeholders})",
-                [user_id] + session_ids,
-            )
-        conn.commit()
+            session_ids = [row[0] for row in cur.fetchall()]
+            if session_ids:
+                cur.execute(
+                    "DELETE FROM comments WHERE user_id = %s AND session_id = ANY(%s)",
+                    (user_id, session_ids),
+                )
+                cur.execute(
+                    "DELETE FROM sessions WHERE user_id = %s AND id = ANY(%s)",
+                    (user_id, session_ids),
+                )
+            conn.commit()
 
 
 # ============================================================
@@ -442,36 +396,41 @@ def delete_product(user_id: int, product_id: str) -> None:
 
 def get_setting(user_id: int, key: str) -> Optional[str]:
     with get_connection() as conn:
-        row = conn.execute(
-            "SELECT value FROM settings WHERE user_id = ? AND key = ?",
-            (user_id, key),
-        ).fetchone()
-        return row["value"] if row else None
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT value FROM settings WHERE user_id = %s AND key = %s",
+                (user_id, key),
+            )
+            row = cur.fetchone()
+            return row["value"] if row else None
 
 
 def set_setting(user_id: int, key: str, value: str) -> None:
     with get_connection() as conn:
-        conn.execute(
-            """INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?)
-               ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value""",
-            (user_id, key, value),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO settings (user_id, key, value) VALUES (%s, %s, %s)
+                   ON CONFLICT(user_id, key) DO UPDATE SET value = EXCLUDED.value""",
+                (user_id, key, value),
+            )
+            conn.commit()
 
 
 def get_all_settings(user_id: int) -> dict[str, str]:
     with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT key, value FROM settings WHERE user_id = ?",
-            (user_id,),
-        ).fetchall()
-        return {r["key"]: r["value"] for r in rows}
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT key, value FROM settings WHERE user_id = %s",
+                (user_id,),
+            )
+            return {r["key"]: r["value"] for r in cur.fetchall()}
 
 
 def delete_setting(user_id: int, key: str) -> None:
     with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM settings WHERE user_id = ? AND key = ?",
-            (user_id, key),
-        )
-        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM settings WHERE user_id = %s AND key = %s",
+                (user_id, key),
+            )
+            conn.commit()

@@ -377,12 +377,15 @@ def check_duplicates(
     Returns:
         dict with keys: new_count, duplicate_count, duplicates (list[dict]).
     """
+    import psycopg2.extras
     with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT content_hash FROM comments "
-            "WHERE user_id = ? AND product_id = ? AND version = ? AND content_hash IS NOT NULL",
-            (user_id, product_id, version),
-        ).fetchall()
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT content_hash FROM comments "
+                "WHERE user_id = %s AND product_id = %s AND version = %s AND content_hash IS NOT NULL",
+                (user_id, product_id, version),
+            )
+            rows = cur.fetchall()
     existing_hashes: set[str] = {r["content_hash"] for r in rows}
 
     duplicates: list[dict] = []
