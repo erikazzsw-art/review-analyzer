@@ -10,8 +10,12 @@ import streamlit as st
 def get_connection():
     """获取 Supabase PostgreSQL 连接"""
     db_url = st.secrets["database"]["url"]
-    conn = psycopg2.connect(db_url)
-    return conn
+    try:
+        conn = psycopg2.connect(db_url, connect_timeout=10)
+        return conn
+    except psycopg2.OperationalError:
+        st.error("⚠️ 数据库连接失败，请稍后重试。如持续出现此问题，请联系管理员检查数据库状态。")
+        st.stop()
 
 
 def init_db() -> None:
