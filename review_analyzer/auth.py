@@ -1,4 +1,9 @@
+from __future__ import annotations
+
 import os
+import random
+import string
+from datetime import datetime, timedelta, timezone
 
 import bcrypt
 from cryptography.fernet import Fernet, InvalidToken
@@ -9,9 +14,15 @@ from review_analyzer.database import (
     create_user,
     get_user_by_username,
     get_user_by_id,
+    get_user_by_email,
     update_user_api_key,
+    update_user_password,
+    create_reset_token,
+    get_valid_reset_token,
+    mark_token_used,
     init_db,
 )
+from review_analyzer.mailer import send_reset_code
 
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
@@ -54,7 +65,7 @@ def decrypt_api_key(encrypted_key: str) -> str:
 # 注册 / 登录
 # ============================================================
 
-def register(username: str, password: str) -> tuple[bool, str]:
+def register(username: str, password: str, email: str = "") -> tuple[bool, str]:
     if len(username.strip()) < 2:
         return False, "用户名至少 2 个字符"
     if len(password) < 6:
@@ -62,7 +73,7 @@ def register(username: str, password: str) -> tuple[bool, str]:
     if get_user_by_username(username.strip()):
         return False, "用户名已存在"
     password_hash = hash_password(password)
-    user_id = create_user(username.strip(), password_hash)
+    user_id = create_user(username.strip(), password_hash, email.strip())
     _set_session(user_id, username.strip())
     return True, "注册成功"
 
@@ -80,6 +91,36 @@ def login(username: str, password: str) -> tuple[bool, str]:
 def logout() -> None:
     for key in ["user_id", "username", "is_logged_in"]:
         st.session_state.pop(key, None)
+
+
+# ============================================================
+# 密码重置
+# ============================================================
+
+def request_password_reset(email: str) -> tuple[bool, str]:
+    user = get_user_by_email(email.strip())
+    if not user:
+        # 不暴露邮箱是否存在
+        return True, "如果该邮箱已注册，验证码将发送到你的邮箱"
+    code = "".join(random.choices(string.digits, k=6))
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
+    create_reset_token(email.strip(), code, expires_at)
+    send_reset_code(email.strip(), code)
+    return True, "如果该邮箱已注册，验证码将发送到你的邮箱"
+
+
+def confirm_password_reset(email: str, code: str, new_password: str) -> tuple[bool, str]:
+    if len(new_password) < 6:
+        return False, "密码至少 6 个字符"
+    token_row = get_valid_reset_token(email.strip(), code.strip())
+    if not token_row:
+        return False, "验证码无效或已过期"
+    user = get_user_by_email(email.strip())
+    if not user:
+        return False, "用户不存在"
+    mark_token_used(token_row["id"])
+    update_user_password(user["id"], hash_password(new_password))
+    return True, "密码重置成功，请用新密码登录"
 
 
 # ============================================================

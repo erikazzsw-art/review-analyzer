@@ -27,13 +27,13 @@ def init_db() -> None:
 # Users CRUD
 # ============================================================
 
-def create_user(username: str, password_hash: str) -> int:
+def create_user(username: str, password_hash: str, email: str = "") -> int:
     conn = get_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id",
-                (username, password_hash),
+                "INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s) RETURNING id",
+                (username, password_hash, email or None),
             )
             user_id = cur.fetchone()[0]
             conn.commit()
@@ -517,5 +517,71 @@ def delete_setting(user_id: int, key: str) -> None:
                 (user_id, key),
             )
             conn.commit()
+    finally:
+        conn.close()
+
+
+# ============================================================
+# Password Reset
+# ============================================================
+
+def get_user_by_email(email: str) -> Optional[dict]:
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def create_reset_token(email: str, token: str, expires_at: str) -> None:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO password_reset_tokens (email, token, expires_at) VALUES (%s, %s, %s)",
+                (email, token, expires_at),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def get_valid_reset_token(email: str, token: str) -> Optional[dict]:
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT * FROM password_reset_tokens
+                   WHERE email = %s AND token = %s AND used = FALSE AND expires_at > NOW()
+                   ORDER BY id DESC LIMIT 1""",
+                (email, token),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def mark_token_used(token_id: int) -> None:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE password_reset_tokens SET used = TRUE WHERE id = %s", (token_id,))
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def update_user_password(user_id: int, password_hash: str) -> None:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_id))
+            conn.commit()
+    finally:
+        conn.close()
     finally:
         conn.close()

@@ -62,3 +62,15 @@ CREATE INDEX IF NOT EXISTS idx_comments_session_id ON comments(session_id);
 CREATE INDEX IF NOT EXISTS idx_comments_hash ON comments(user_id, content_hash);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_settings_user_key ON settings(user_id, key);
+
+-- 忘记密码功能（2026-05-15）
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    email TEXT NOT NULL,
+    token TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS idx_reset_tokens_email ON password_reset_tokens(email);
