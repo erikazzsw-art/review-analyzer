@@ -583,5 +583,3 @@ def update_user_password(user_id: int, password_hash: str) -> None:
             conn.commit()
     finally:
         conn.close()
-    finally:
-        conn.close()
