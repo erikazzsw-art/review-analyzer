@@ -100,8 +100,7 @@ def logout() -> None:
 def request_password_reset(email: str) -> tuple[bool, str]:
     user = get_user_by_email(email.strip())
     if not user:
-        # 不暴露邮箱是否存在
-        return True, "如果该邮箱已注册，验证码将发送到你的邮箱"
+        return False, "该邮箱未注册，请先注册账号或使用正确的注册邮箱"
     code = "".join(random.choices(string.digits, k=6))
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
     create_reset_token(email.strip(), code, expires_at)
