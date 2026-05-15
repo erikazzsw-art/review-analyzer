@@ -8,7 +8,7 @@ def send_reset_code(to_email: str, code: str) -> bool:
     resend.api_key = st.secrets["resend"]["api_key"]
     try:
         resend.Emails.send({
-            "from": "ClueAI <noreply@clueai.app>",
+            "from": "ClueAI <onboarding@resend.dev>",
             "to": [to_email],
             "subject": "ClueAI 密码重置验证码",
             "html": f"""
