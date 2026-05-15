@@ -4,7 +4,7 @@ import resend
 import streamlit as st
 
 
-def send_reset_code(to_email: str, code: str) -> bool:
+def send_reset_code(to_email: str, code: str) -> tuple[bool, str]:
     resend.api_key = st.secrets["resend"]["api_key"]
     try:
         resend.Emails.send({
@@ -19,6 +19,6 @@ def send_reset_code(to_email: str, code: str) -> bool:
             <p>如非本人操作，请忽略此邮件。</p>
             """,
         })
-        return True
-    except Exception:
-        return False
+        return True, ""
+    except Exception as e:
+        return False, str(e)
