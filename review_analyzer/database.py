@@ -338,8 +338,8 @@ def create_session(user_id: int, session_data: dict) -> int:
                 """INSERT INTO sessions
                    (user_id, product_id, version, auto_title, custom_title,
                     date_range_start, date_range_end, total_reviews,
-                    positive_count, negative_count, category)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                    positive_count, negative_count, category, prompt_version)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                 (
                     user_id,
                     session_data.get("product_id"),
@@ -352,6 +352,7 @@ def create_session(user_id: int, session_data: dict) -> int:
                     session_data.get("positive_count", 0),
                     session_data.get("negative_count", 0),
                     session_data.get("category"),
+                    session_data.get("prompt_version"),
                 ),
             )
             session_id = cur.fetchone()[0]

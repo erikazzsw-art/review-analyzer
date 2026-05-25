@@ -79,6 +79,9 @@ VALID_CATEGORIES = {
 }
 VALID_PRIORITIES = {"高", "中", "低", "无"}
 
+# 每次修改 SYSTEM_PROMPT 时递增此版本号，用于追踪历史分析数据的口径一致性
+PROMPT_VERSION = "v2.0"
+
 
 def _normalize_tag(raw: str) -> str:
     """把 AI 输出的 tag 映射到标准词，找不到则原样返回。"""
