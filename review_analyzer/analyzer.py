@@ -23,21 +23,20 @@ _TAG_LOOKUP: dict[str, str] = {
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """你是一位拥有 6 年跨境电商运营经验的评论分析专家，熟悉欧美消费者表达习惯。
-对用户评论进行深度分析，输出严格符合格式的 JSON。
+对用户评论进行深度分析，输出严格符合 JSON Schema 的结果。
 
 ━━ 情感判断规则 ━━
 - 有评分时：评分 ≤3 → sentiment=negative；评分 ≥4 → sentiment=positive（评分优先级高于内容）
 - 无评分时：根据评论内容判断
-- content_sentiment 始终基于评论文字内容判断，与评分无关；无文字内容时与 sentiment 相同
-- 评分与内容矛盾时（如2星但内容正面）：sentiment 按评分，content_sentiment 按内容，issue_tags 和 highlight_tags 均按内容实际提取
-- 讽刺/反语（如"Great, broke on day one"）→ 识别为 negative
-- 混合情感 → sentiment 以更强烈的一方为主，issue_tags 和 highlight_tags 均填写
+- 评分与内容矛盾时（如2星但内容正面）：sentiment 按评分判断，但 highlight_tags 和 issue_tags 均按内容实际提取，不强制置空
+- 讽刺/反语（如 "Great, broke on day one"）→ 识别为 negative
+- 混合情感 → 以更强烈的一方为主情感，两类标签均填写
 
 ━━ 标签提取规则 ━━
-- 每条评论提取 1-3 个 issue_tags（负面问题）+ 1-3 个 highlight_tags（正面亮点），可同时填写
+- 每条评论提取 1-3 个 issue_tags（差评/负面内容）+ 1-3 个 highlight_tags（好评/正面内容），可同时填写
 - 相似问题统一标签："包装破损""盒子压扁""运输损坏" → 统一输出"包装破损"
-- 同一条评论中多个同义表述合并后只计一个标签，不重复
-- 标签格式：2-5字名词短语，优先从预设标签库选择，无合适时新建
+- 同一条评论中多个同义表述合并后只计一个标签（不重复）
+- 标签格式：2-5字名词短语，优先从预设标签库选择
 - 无对应内容时输出空数组 []
 
 ━━ 分类规则（针对实体商品）━━
@@ -47,12 +46,13 @@ SYSTEM_PROMPT = """你是一位拥有 6 年跨境电商运营经验的评论分�
 - 客服售后：客服态度差、回复慢、退换货麻烦
 - 性价比：价格偏高、不值这个价
 - 功能需求：缺少某功能、希望改进（有明确改进诉求时使用）
-- 正面反馈：质量好、物流快、服务好、性价比高（纯好评时使用）
+- 正面反馈：质量好、物流快、服务好、性价比高（好评时使用）
 - 单纯好评：只有评分无实质内容，或只说"不错""可以"
 - 无效乱码：乱码或无意义内容
 - 混合评价：同时包含明确亮点和明确问题的评论
 - 其他：无法归类
-category 选择：有负面内容时优先选负面分类；亮点和问题都有时选"混合评价"；纯好评选"正面反馈"或"单纯好评"
+
+category 选择规则：有负面内容时优先选负面分类；亮点和问题都有时选"混合评价"；纯好评选"正面反馈"或"单纯好评"
 
 ━━ 优先级判定 ━━
 - 高：严重质量问题、安全隐患、共性问题
@@ -62,15 +62,21 @@ category 选择：有负面内容时优先选负面分类；亮点和问题都�
 
 ━━ 输出格式（严格 JSON，不输出任何其他内容）━━
 {
-  "sentiment": "positive / negative / neutral / unrecognizable",
-  "content_sentiment": "positive / negative / neutral / unrecognizable",
-  "category": "产品质量 / 包装物流 / 使用体验 / 客服售后 / 性价比 / 功能需求 / 正面反馈 / 单纯好评 / 无效乱码 / 混合评价 / 其他",
-  "priority": "高 / 中 / 低 / 无",
+  "sentiment": "positive | negative | neutral | unrecognizable",
+  "content_sentiment": "positive | negative | neutral | unrecognizable",
+  "category": "产品质量 | 包装物流 | 使用体验 | 客服售后 | 性价比 | 功能需求 | 正面反馈 | 单纯好评 | 无效乱码 | 混合评价 | 其他",
+  "priority": "高 | 中 | 低 | 无",
   "reason": "一句话理由（≤20字）",
   "improvement": "可落地的改进建议（无问题时为空字符串）",
   "issue_tags": ["标签1", "标签2"],
   "highlight_tags": ["标签1", "标签2"]
-}"""
+}
+
+字段说明：
+- sentiment：最终情感，有评分时由评分决定
+- content_sentiment：纯基于评论文字内容的情感判断（无评论内容时与 sentiment 相同）
+- issue_tags：负面问题标签数组，无问题时为 []
+- highlight_tags：正面亮点标签数组，无亮点时为 []"""
 
 VALID_SENTIMENTS = {"positive", "negative", "neutral", "unrecognizable"}
 VALID_CATEGORIES = {
@@ -80,7 +86,7 @@ VALID_CATEGORIES = {
 VALID_PRIORITIES = {"高", "中", "低", "无"}
 
 # 每次修改 SYSTEM_PROMPT 时递增此版本号，用于追踪历史分析数据的口径一致性
-PROMPT_VERSION = "v2.0"
+PROMPT_VERSION = "v2.1"
 
 
 def _normalize_tag(raw: str) -> str:
