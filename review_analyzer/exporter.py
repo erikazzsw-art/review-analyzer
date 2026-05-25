@@ -17,8 +17,8 @@ def _build_filename(session: dict, ext: str) -> str:
     product_id = session.get("product_id", "UNKNOWN")
     version = session.get("version", "V1")
 
-    start = session.get("date_range_start", "")
-    end = session.get("date_range_end", "")
+    start = str(session.get("date_range_start", "") or "")
+    end = str(session.get("date_range_end", "") or "")
     if start and end:
         date_range = f"{start.replace('-', '')}~{end.replace('-', '')}"
     else:
@@ -43,8 +43,8 @@ def _build_summary_data(session: dict) -> list[list[str]]:
         ["产品编号", session.get("product_id", "")],
         ["版本", session.get("version", "")],
         ["产品类目", session.get("category", "")],
-        ["分析时间段", f"{session.get('date_range_start', '')} ~ {session.get('date_range_end', '')}"],
-        ["创建时间", session.get("created_at", "")],
+        ["分析时间段", f"{str(session.get('date_range_start', '') or '')} ~ {str(session.get('date_range_end', '') or '')}"],
+        ["创建时间", str(session.get("created_at", ""))[:19]],
         ["总评论数", str(total)],
         ["正面评论数", str(pos)],
         ["正面率", pos_rate],
