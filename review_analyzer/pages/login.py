@@ -41,10 +41,12 @@ def render_login_page() -> None:
                         st.error("请输入邮箱")
                     else:
                         ok, msg = request_password_reset(reset_email)
-                        st.session_state["reset_email"] = reset_email
-                        st.session_state["reset_step"] = "input_code"
-                        st.success(msg)
-                        st.rerun()
+                        if ok:
+                            st.session_state["reset_email"] = reset_email
+                            st.session_state["reset_step"] = "input_code"
+                            st.rerun()
+                        else:
+                            st.error(msg)
             if st.button("← 返回登录", key="back_from_email"):
                 st.session_state.pop("reset_step", None)
                 st.rerun()
