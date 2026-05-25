@@ -259,39 +259,41 @@ def render_results() -> None:
         st.warning("请先登录")
         return
 
-    sessions = get_sessions(user_id)
-    if not sessions:
-        st.markdown("""
-        <div style="text-align:center;padding:60px 0;color:#4d4d4d;">
-            <div style="font-size:28px;font-weight:700;color:#202020;margin-bottom:8px;font-family:'Montserrat',system-ui,sans-serif;">暂无分析结果</div>
-            <div style="font-size:14px;">前往「上传用户评论」页面上传文件并分析</div>
-        </div>
-        """, unsafe_allow_html=True)
-        return
-
-    # 顶部产品搜索框（始终显示）
     view_session_id = st.session_state.get("view_session_id")
     show_all_data = False
+
     if view_session_id:
-        # 从历史记录跳转过来，显示返回按钮
-        target_session = get_session_by_id(user_id, view_session_id)
-        if target_session:
-            col_back, col_info = st.columns([1, 5])
-            with col_back:
-                if st.button("← 返回搜索", key="back_to_search"):
-                    st.session_state.pop("view_session_id", None)
-                    st.rerun()
-            with col_info:
-                st.caption(f"当前查看：{target_session.get('product_id')} · {target_session.get('version')}")
+        # 分析完成后直接跳转：只查这一条 session，跳过全量 get_sessions
+        session = get_session_by_id(user_id, view_session_id)
+        if not session:
+            st.session_state.pop("view_session_id", None)
+            st.error("未找到该分析记录")
+            return
         session_id = view_session_id
+        col_back, col_info = st.columns([1, 5])
+        with col_back:
+            if st.button("← 返回列表", key="back_to_search"):
+                st.session_state.pop("view_session_id", None)
+                st.rerun()
+        with col_info:
+            st.caption(f"当前查看：{session.get('product_id')} · {session.get('version')}")
     else:
+        sessions = get_sessions(user_id)
+        if not sessions:
+            st.markdown("""
+            <div style="text-align:center;padding:60px 0;color:#4d4d4d;">
+                <div style="font-size:28px;font-weight:700;color:#202020;margin-bottom:8px;font-family:'Montserrat',system-ui,sans-serif;">暂无分析结果</div>
+                <div style="font-size:14px;">前往「上传用户评论」页面上传文件并分析</div>
+            </div>
+            """, unsafe_allow_html=True)
+            return
         session_id, show_all_data = _render_product_search(user_id)
 
-    if not session_id:
-        st.info("请选择一个产品查看分析结果")
-        return
+        if not session_id:
+            st.info("请选择一个产品查看分析结果")
+            return
 
-    session = get_session_by_id(user_id, session_id)
+        session = get_session_by_id(user_id, session_id)
     if not session:
         st.error("未找到该分析记录")
         return
@@ -349,12 +351,14 @@ def render_results() -> None:
 
     invalid_note = f" · 无效评论 {unrecognizable_count} 条（不参与统计）" if unrecognizable_count > 0 else ""
     data_scope = "全部数据" if show_all_data else session.get('version', '')
+    prompt_ver = session.get("prompt_version") or "v1.x"
     st.markdown(f"""
     <div style="margin-bottom:24px;">
         <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">分析结果</div>
         <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">
             {session.get('product_id', '')} · {data_scope}
             {(' · ' + date_range) if date_range else ''} · {valid_total:,} 条有效评论{invalid_note}
+            · <span style="color:#828282;font-size:12px;">Prompt {prompt_ver}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -609,6 +613,17 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
         if version2:
             # 跨版本对比：版本1最近N天 vs 版本2最近N天
             v2_sessions = [s for s in all_sessions if s["version"] == version2]
+
+            # 检查两组 session 的 Prompt 版本是否一致
+            v1_prompt_versions = set(s.get("prompt_version") or "v1.x" for s in v1_sessions)
+            v2_prompt_versions = set(s.get("prompt_version") or "v1.x" for s in v2_sessions)
+            all_prompt_versions = v1_prompt_versions | v2_prompt_versions
+            if len(all_prompt_versions) > 1:
+                st.warning(
+                    f"注意：两个版本使用了不同的 Prompt 版本（{', '.join(sorted(all_prompt_versions))}），"
+                    "标签体系和分类口径可能不一致，环比数据仅供参考。"
+                )
+
             v2_comments = []
             for s in v2_sessions:
                 v2_comments.extend(get_comments(user_id, session_id=s["id"]))
@@ -633,6 +648,13 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
             label_prev = f"{version2} 最近{days}天（{v2_max - timedelta(days=days-1)}~{v2_max}）"
         else:
             # 同版本时间环比：当期 vs 上期
+            # 检查同版本内是否跨越了不同 Prompt 版本
+            v1_prompt_versions = set(s.get("prompt_version") or "v1.x" for s in v1_sessions)
+            if len(v1_prompt_versions) > 1:
+                st.warning(
+                    f"注意：该版本的历史数据包含不同 Prompt 版本（{', '.join(sorted(v1_prompt_versions))}），"
+                    "当期与上期的分类口径可能不一致，环比数据仅供参考。"
+                )
             current_start = v1_max - timedelta(days=days - 1)
             prev_end = current_start - timedelta(days=1)
             prev_start = prev_end - timedelta(days=days - 1)

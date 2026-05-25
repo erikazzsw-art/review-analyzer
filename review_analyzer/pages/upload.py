@@ -18,7 +18,7 @@ from review_analyzer.database import (
     update_session_stats,
 )
 from review_analyzer.parser import parse_file
-from review_analyzer.analyzer import analyze_batch, get_api_key
+from review_analyzer.analyzer import analyze_batch, get_api_key, PROMPT_VERSION
 from review_analyzer.notifier import auto_notify_after_analysis
 
 
@@ -264,6 +264,7 @@ def render_upload() -> None:
             "positive_count": 0,
             "negative_count": 0,
             "category": info.get("category"),
+            "prompt_version": PROMPT_VERSION,
         }
         session_id = create_session(user_id, session_data)
 
@@ -351,7 +352,8 @@ def render_upload() -> None:
         st.session_state["view_session_id"] = session_id
         st.session_state["current_page"] = "results"
         st.session_state["upload_step"] = 1
-        # 清理临时数据
-        for key in ["upload_df", "upload_df_clean", "upload_info"]:
+        # 清理临时数据和旧的时间筛选 state
+        for key in ["upload_df", "upload_df_clean", "upload_info",
+                    "time_filter_option", "time_filter_start", "time_filter_end"]:
             st.session_state.pop(key, None)
         st.rerun()
