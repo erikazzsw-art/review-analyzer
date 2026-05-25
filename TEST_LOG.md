@@ -43,6 +43,7 @@
 | 2026-05-13 | 推送设置页规则区域排版凌乱，标题层级不清晰 | 规则行改为单行紧凑布局，标题分级为 L1 编号徽章 + L2 彩色圆点分类（问题红/环比蓝/亮点绿/其他灰） |
 | 2026-05-13 | 分析结果页 emoji 图标和紫色配色与新风格不匹配 | 指标卡图标改为几何符号，图表配色统一为绿/红/橙，标题改为编号徽章风格 |
 | 2026-05-13 | 数据库迁移：SQLite → Supabase PostgreSQL（详见下方专项记录） | 最终方案：psycopg2-binary + packages.txt(libpq-dev) + 同步 review_analyzer/ 目录下的依赖文件 |
+| 2026-05-25 | AI 返回的 issue_tag / highlight_tag 存在同义词变体（如"packaging damage"和"包装损坏"被算作两个不同标签），导致 TOP10 统计被稀释 | config.py 新增 TAG_NORMALIZE_MAP（标准词→变体映射表，覆盖 8 个类目中英文同义词），analyzer.py 新增 _normalize_tag / _normalize_tag_field，在 _validate_result 写库前将所有 tag 变体统一映射到标准词；找不到映射的新词原样保留，不丢失新问题信号 |
 
 ---
 
@@ -72,3 +73,62 @@
 
 ### 关键教训
 > Streamlit Cloud 的依赖文件查找规则：以 app 入口文件所在目录为基准，优先读取该目录下的 `requirements.txt` 和 `packages.txt`。如果 app 入口不在仓库根目录，根目录的依赖文件会被忽略。
+
+---
+
+## 专项记录：psycopg2.OperationalError 数据库连接失败（2026-05-14）
+
+### 问题现象
+打开 https://clueai-reviewlens.streamlit.app/ 登录时报错：
+```
+psycopg2.OperationalError
+File "database.py", line 13, in get_connection
+    conn = psycopg2.connect(db_url)
+```
+
+### 排查过程
+
+#### 排查 1：Supabase 项目是否暂停？
+- 检查结果：项目正常运行，排除此原因
+
+#### 排查 2：Python 版本兼容性
+- 发现错误日志中 Python 版本为 **3.14**（`/home/adminuser/venv/lib/python3.14/`）
+- Python 3.14 是 pre-release 版本，psycopg2-binary 可能未完全适配
+- 修复：创建 `runtime.txt` 固定 `python-3.11.0`
+- 结果：部署成功但仍连接失败
+
+#### 排查 3：连接字符串配置错误（根本原因）
+- Streamlit Cloud Secrets 中配置的是**直连地址**（端口 5432）：
+  ```
+  postgresql://postgres:Zhangxi%405764047@db.xxx.supabase.co:5432/postgres
+  ```
+- Supabase 直连地址对外部 IP 有限制，Streamlit Cloud 的 IP 不在允许范围内
+- 需要改用 **Connection Pooling 地址**（端口 6543）：
+  ```
+  postgresql://postgres.inpgrbjwtpxgwungghnz:Zhangxi%405764047@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres
+  ```
+
+### 最终解决方案
+
+1. **Streamlit Cloud Secrets 改为 Pooler 连接字符串**：
+   ```toml
+   [database]
+   url = "postgresql://postgres.inpgrbjwtpxgwungghnz:Zhangxi%405764047@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
+   ```
+2. **添加 `runtime.txt`**：固定 Python 3.11，避免 3.14 兼容性问题
+3. **`database.py` 改进**：添加 `connect_timeout=10`、`sslmode="require"`、具体错误信息显示
+
+### 关键知识点
+
+| 项目 | 直连（Direct） | 连接池（Pooler） |
+|------|---------------|-----------------|
+| 端口 | 5432 | 6543 |
+| 用户名 | `postgres` | `postgres.[project-ref]` |
+| 主机 | `db.[ref].supabase.co` | `aws-[region].pooler.supabase.com` |
+| 外部访问 | 受 IP 限制 | 无限制，推荐用于云部署 |
+| 密码中有 `@` | 必须编码为 `%40` | 必须编码为 `%40` |
+
+### 关键教训
+> 1. Supabase 直连地址（5432）对外部 IP 有网络限制，云平台部署（Streamlit Cloud、Vercel 等）必须使用 Pooler 连接字符串（6543）
+> 2. 数据库密码中的特殊字符（`@`、`#`、`%` 等）必须进行 URL 编码
+> 3. `runtime.txt` 可以固定 Streamlit Cloud 的 Python 版本，避免自动升级到不稳定版本

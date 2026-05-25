@@ -11,7 +11,14 @@ from typing import Optional
 
 from openai import AuthenticationError, OpenAI
 
-from .config import CATEGORY_TAGS, DEFAULT_CATEGORY
+from .config import CATEGORY_TAGS, DEFAULT_CATEGORY, TAG_NORMALIZE_MAP
+
+# 反向查找表：变体 → 标准词（在模块加载时构建一次）
+_TAG_LOOKUP: dict[str, str] = {
+    variant.lower(): standard
+    for standard, variants in TAG_NORMALIZE_MAP.items()
+    for variant in variants
+}
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +70,20 @@ VALID_CATEGORIES = {
     "功能需求", "正面反馈", "单纯好评", "无效乱码", "其他",
 }
 VALID_PRIORITIES = {"高", "中", "低", "无"}
+
+
+def _normalize_tag(raw: str) -> str:
+    """把 AI 输出的 tag 映射到标准词，找不到则原样返回。"""
+    return _TAG_LOOKUP.get(raw.strip().lower(), raw.strip())
+
+
+def _normalize_tag_field(raw: str) -> str:
+    """处理逗号分隔的多个 tag，每个都归一化。"""
+    if not raw:
+        return ""
+    return ",".join(
+        _normalize_tag(t) for t in raw.split(",") if t.strip()
+    )
 
 
 def classify_sentiment_by_rating(rating: Optional[int]) -> Optional[str]:
@@ -195,8 +216,8 @@ def _validate_result(result: dict) -> dict:
         "priority": priority,
         "reason": str(result.get("reason", "")),
         "improvement": str(result.get("improvement", "")),
-        "issue_tag": str(result.get("issue_tag", "")),
-        "highlight_tag": str(result.get("highlight_tag", "")),
+        "issue_tag": _normalize_tag_field(str(result.get("issue_tag", ""))),
+        "highlight_tag": _normalize_tag_field(str(result.get("highlight_tag", ""))),
     }
 
 
