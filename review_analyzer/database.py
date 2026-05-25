@@ -154,11 +154,16 @@ def add_comments_batch(user_id: int, comments: list[dict]) -> int:
                 rows,
             )
             conn.commit()
+            get_comments.clear()
+            get_existing_hashes.clear()
+            get_comments_deduped.clear()
+            get_product_stats_deduped.clear()
             return len(rows)
     finally:
         conn.close()
 
 
+@st.cache_data(ttl=30)
 def get_comments(
     user_id: int,
     product_id: Optional[str] = None,
@@ -223,6 +228,9 @@ def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> No
                 ),
             )
             conn.commit()
+            get_comments.clear()
+            get_comments_deduped.clear()
+            get_product_stats_deduped.clear()
     finally:
         conn.close()
 
@@ -253,6 +261,7 @@ def delete_comments_by_session(user_id: int, session_id: int) -> None:
         conn.close()
 
 
+@st.cache_data(ttl=30)
 def get_existing_hashes(user_id: int, product_id: str) -> set[str]:
     conn = get_connection()
     try:
@@ -266,6 +275,7 @@ def get_existing_hashes(user_id: int, product_id: str) -> set[str]:
         conn.close()
 
 
+@st.cache_data(ttl=30)
 def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
     """按 content_hash 去重后统计产品级指标。"""
     sql = """
@@ -292,6 +302,7 @@ def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
         conn.close()
 
 
+@st.cache_data(ttl=30)
 def get_comments_deduped(user_id: int, product_id: str) -> list[dict]:
     """按 content_hash 去重，保留最新一条记录。"""
     sql = """
@@ -357,11 +368,13 @@ def create_session(user_id: int, session_data: dict) -> int:
             )
             session_id = cur.fetchone()[0]
             conn.commit()
+            get_sessions.clear()
             return session_id
     finally:
         conn.close()
 
 
+@st.cache_data(ttl=30)
 def get_sessions(user_id: int, product_id: Optional[str] = None) -> list[dict]:
     query = "SELECT * FROM sessions WHERE user_id = %s"
     params: list = [user_id]
@@ -378,6 +391,7 @@ def get_sessions(user_id: int, product_id: Optional[str] = None) -> list[dict]:
         conn.close()
 
 
+@st.cache_data(ttl=30)
 def get_session_by_id(user_id: int, session_id: int) -> Optional[dict]:
     conn = get_connection()
     try:
@@ -401,6 +415,8 @@ def update_session_title(user_id: int, session_id: int, custom_title: str) -> No
                 (custom_title, session_id, user_id),
             )
             conn.commit()
+            get_sessions.clear()
+            get_session_by_id.clear()
     finally:
         conn.close()
 
@@ -422,6 +438,8 @@ def update_session_stats(
                 (total_reviews, positive_count, negative_count, session_id, user_id),
             )
             conn.commit()
+            get_sessions.clear()
+            get_session_by_id.clear()
     finally:
         conn.close()
 
@@ -439,6 +457,11 @@ def delete_session(user_id: int, session_id: int) -> None:
                 (session_id, user_id),
             )
             conn.commit()
+            get_sessions.clear()
+            get_session_by_id.clear()
+            get_comments.clear()
+            get_comments_deduped.clear()
+            get_product_stats_deduped.clear()
     finally:
         conn.close()
 
@@ -462,6 +485,12 @@ def delete_product(user_id: int, product_id: str) -> None:
                     (user_id, sid),
                 )
             conn.commit()
+            get_sessions.clear()
+            get_session_by_id.clear()
+            get_comments.clear()
+            get_comments_deduped.clear()
+            get_product_stats_deduped.clear()
+            get_existing_hashes.clear()
     finally:
         conn.close()
 
@@ -470,6 +499,7 @@ def delete_product(user_id: int, product_id: str) -> None:
 # Settings CRUD
 # ============================================================
 
+@st.cache_data(ttl=30)
 def get_setting(user_id: int, key: str) -> Optional[str]:
     conn = get_connection()
     try:
@@ -494,10 +524,13 @@ def set_setting(user_id: int, key: str, value: str) -> None:
                 (user_id, key, value),
             )
             conn.commit()
+            get_setting.clear()
+            get_all_settings.clear()
     finally:
         conn.close()
 
 
+@st.cache_data(ttl=30)
 def get_all_settings(user_id: int) -> dict[str, str]:
     conn = get_connection()
     try:
