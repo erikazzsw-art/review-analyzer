@@ -43,6 +43,7 @@
 | 2026-05-13 | 推送设置页规则区域排版凌乱，标题层级不清晰 | 规则行改为单行紧凑布局，标题分级为 L1 编号徽章 + L2 彩色圆点分类（问题红/环比蓝/亮点绿/其他灰） |
 | 2026-05-13 | 分析结果页 emoji 图标和紫色配色与新风格不匹配 | 指标卡图标改为几何符号，图表配色统一为绿/红/橙，标题改为编号徽章风格 |
 | 2026-05-13 | 数据库迁移：SQLite → Supabase PostgreSQL（详见下方专项记录） | 最终方案：psycopg2-binary + packages.txt(libpq-dev) + 同步 review_analyzer/ 目录下的依赖文件 |
+| 2026-05-25 | 邮箱验证码找回密码功能始终失败（详见下方专项记录） | 最终方案：Resend SDK + 验证自有域名 clueai-reviewlens.com，修复 login.py 发送失败静默跳转 bug |
 | 2026-05-25 | AI 返回的 issue_tag / highlight_tag 存在同义词变体（如"packaging damage"和"包装损坏"被算作两个不同标签），导致 TOP10 统计被稀释 | config.py 新增 TAG_NORMALIZE_MAP（标准词→变体映射表，覆盖 8 个类目中英文同义词），analyzer.py 新增 _normalize_tag / _normalize_tag_field，在 _validate_result 写库前将所有 tag 变体统一映射到标准词；找不到映射的新词原样保留，不丢失新问题信号 |
 | 2026-05-25 | Settings 页面已有环比规则配置 UI（负面率环比、问题占比环比、亮点环比），但 notifier.py 的 check_global_rules() 完全未实现这些逻辑，导致用户配置后永远不触发 | 新增 _get_prev_neg_rate() / _get_prev_top_issues() 辅助函数查询历史批次；check_global_rules() 补全三条环比规则：负面率环比突增、问题占比环比突增、亮点环比变化；should_notify() 签名同步增加 user_id / session_id 参数，透传给规则引擎 |
 
@@ -133,3 +134,50 @@ File "database.py", line 13, in get_connection
 > 1. Supabase 直连地址（5432）对外部 IP 有网络限制，云平台部署（Streamlit Cloud、Vercel 等）必须使用 Pooler 连接字符串（6543）
 > 2. 数据库密码中的特殊字符（`@`、`#`、`%` 等）必须进行 URL 编码
 > 3. `runtime.txt` 可以固定 Streamlit Cloud 的 Python 版本，避免自动升级到不稳定版本
+
+---
+
+## 专项记录：邮箱验证码找回密码功能修复（2026-05-25）
+
+### 问题背景
+找回密码功能上线后，用户始终无法收到验证码。输入邮箱点击"发送验证码"后页面跳转到验证码输入界面，但验证码从未实际送达，导致重置密码永远失败。
+
+### 排查过程
+
+#### 排查 1：发现 login.py 静默吞错 bug（代码层面）
+- **现象**：发送验证码无论成功失败，页面都跳转到验证码输入界面，用户无任何错误提示
+- **根本原因**：`login.py` 第 43-47 行完全忽略了 `request_password_reset()` 的 `ok` 返回值，直接无条件设置 `reset_step = "input_code"` 并 `st.rerun()`
+- **修复**：改为先判断 `ok`，只有发送成功才跳转；失败时用 `st.error(msg)` 显示具体错误
+
+#### 排查 2：Gmail SMTP 被云平台 IP 封锁（根本原因）
+- **现象**：修复静默 bug 后，错误信息暴露为 `source IP address not allowed`
+- **原因**：上一版本（commit `8fe55d2`）将发件方式从 Resend 改成了 Gmail SMTP，但 Gmail 对云服务器 IP 段有封锁，Streamlit Cloud 的出站 IP 不被允许
+- **排查 Resend 当初为何放弃**：git 历史显示当时用的是 `onboarding@resend.dev`（Resend 测试地址），该地址只能向已在 Resend 后台验证的邮箱发送，所以普通用户收不到
+- **结论**：Resend 本身没问题，问题是发件域名未验证
+
+#### 排查 3：Resend 域名验证失败（DNS 配置问题）
+- **现象**：Resend 后台域名 `clueai-reviewlens.com` 状态为 Failed
+- **错误**：`Invalid DKIM: The record value is incorrect`
+- **原因**：阿里云 DNS 中已有 `resend._domainkey` 的 TXT 记录，但填写的值不正确
+- **修复**：在阿里云 DNS 控制台更新该 TXT 记录为 Resend 提供的正确值；SPF 和 MX 记录此前已验证通过
+- **结果**：DKIM 验证通过，域名状态变为 Active
+
+### 最终解决方案
+
+1. **mailer.py 切回 Resend SDK**，发件人改为 `noreply@clueai-reviewlens.com`
+2. **login.py 修复静默 bug**：发送失败时展示 `st.error(msg)`，不跳转
+3. **Resend 后台验证域名**：修正阿里云 DNS 中 DKIM TXT 记录值，点击 Restart 重新验证
+4. **Streamlit Cloud Secrets** 已有 `[resend]` api_key，无需修改
+
+### 关键知识点
+
+| 发件方案 | 限制 |
+|---------|------|
+| Gmail SMTP | 云服务器 IP 被封，无法在 Streamlit Cloud 使用 |
+| Resend（测试地址 onboarding@resend.dev） | 只能发给已在 Resend 后台验证的邮箱 |
+| Resend（验证自有域名） | 无限制，可发任意收件人，推荐方案 |
+
+### 关键教训
+> 1. 云平台部署的邮件发送必须使用事务性邮件服务（Resend、SendGrid 等），不能用 Gmail SMTP——云服务器 IP 会被 Google 封锁
+> 2. Resend 免费版需验证发件域名（自有域名），才能向任意收件人发送；使用测试地址 `onboarding@resend.dev` 只能发给已验证邮箱
+> 3. 邮件发送结果必须检查返回值，发送失败应明确告知用户，不能静默跳转
