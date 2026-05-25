@@ -154,9 +154,11 @@ def _get_top_issues(comments: list[dict], sentiment_type: str) -> list[dict]:
     for c in pool:
         raw = c.get(tag_field, "")
         if raw:
+            seen_in_comment: set[str] = set()
             for tag in raw.split(","):
                 tag = tag.strip()
-                if tag:
+                if tag and tag not in seen_in_comment:
+                    seen_in_comment.add(tag)
                     tag_counter[tag] += 1
 
     return [

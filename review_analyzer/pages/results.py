@@ -21,9 +21,11 @@ def _get_top_tags(comments: list[dict], tag_field: str, pool_size: int) -> list[
     for c in comments:
         tags = c.get(tag_field, "")
         if tags:
+            seen_in_comment: set[str] = set()
             for tag in tags.split(","):
                 tag = tag.strip()
-                if tag:
+                if tag and tag not in seen_in_comment:
+                    seen_in_comment.add(tag)
                     tag_counter[tag] += 1
 
     top10 = tag_counter.most_common(10)
@@ -223,7 +225,7 @@ def _render_product_search(user_id: int) -> tuple[int | None, bool]:
             # 显示各条上传记录
             for s in product_sessions:
                 title = s.get("custom_title") or s.get("auto_title") or s["version"]
-                created = s.get("created_at", "")[:16]
+                created = (s.get("created_at") or "")[:16]
                 total = s.get("total_reviews", 0)
                 is_selected = (view_mode == "record" and
                                st.session_state.get("selected_record_id") == s["id"])
@@ -320,6 +322,24 @@ def render_results() -> None:
     pos_rate = pos_count / valid_total * 100 if valid_total > 0 else 0
     neg_rate = neg_count / valid_total * 100 if valid_total > 0 else 0
 
+    # 内容版正负率（基于 content_sentiment，有评分也按文字判断）
+    has_content_sentiment = any(c.get("content_sentiment") for c in comments)
+    if has_content_sentiment:
+        content_valid = [c for c in comments if c.get("content_sentiment") not in ("unrecognizable", None, "")]
+        content_valid_total = len(content_valid)
+        content_pos_count = sum(1 for c in content_valid if c.get("content_sentiment") == "positive")
+        content_neg_count = sum(1 for c in content_valid if c.get("content_sentiment") == "negative")
+        content_pos_rate = content_pos_count / content_valid_total * 100 if content_valid_total > 0 else 0
+        content_neg_rate = content_neg_count / content_valid_total * 100 if content_valid_total > 0 else 0
+    else:
+        content_valid_total = 0
+        content_pos_rate = content_neg_rate = 0.0
+
+    # 判断是否同时有评分和评论内容（决定是否展示双版本）
+    has_rating = any(c.get("rating") for c in comments)
+    has_text_content = any(c.get("content", "").strip() for c in comments)
+    show_dual_rates = has_rating and has_text_content and has_content_sentiment
+
     date_range = ""
     if filter_label != "全部":
         date_range = filter_label
@@ -393,6 +413,32 @@ def render_results() -> None:
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
+
+    # 双版本正负率对比（仅在同时有评分和评论文字时展示）
+    if show_dual_rates:
+        st.markdown("""
+        <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:#4d4d4d;">情感率双维度对比</div>
+        """, unsafe_allow_html=True)
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            st.markdown(f"""
+            <div style="background:#f8f9fa;border-radius:10px;padding:14px 18px;border-left:4px solid #6c63ff;">
+                <div style="font-size:12px;color:#828282;margin-bottom:6px;">评分计算版（基于星级）</div>
+                <span style="color:#2ecc71;font-weight:700;font-size:15px;">正面 {pos_rate:.1f}%</span>
+                <span style="color:#828282;margin:0 8px;">·</span>
+                <span style="color:#e74c3c;font-weight:700;font-size:15px;">负面 {neg_rate:.1f}%</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with rc2:
+            st.markdown(f"""
+            <div style="background:#f8f9fa;border-radius:10px;padding:14px 18px;border-left:4px solid #ff682c;">
+                <div style="font-size:12px;color:#828282;margin-bottom:6px;">内容分析版（更真实反映产品口碑）</div>
+                <span style="color:#2ecc71;font-weight:700;font-size:15px;">正面 {content_pos_rate:.1f}%</span>
+                <span style="color:#828282;margin:0 8px;">·</span>
+                <span style="color:#e74c3c;font-weight:700;font-size:15px;">负面 {content_neg_rate:.1f}%</span>
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
 
     # 图表：情感分布 + 关键词云
     col_chart1, col_chart2 = st.columns([1.2, 0.8])
@@ -737,7 +783,10 @@ def _render_top_table(top_items: list[dict], prefix: str, all_comments: list[dic
 
         # 原文展开面板
         if st.session_state.get(f"show_source_{prefix}_{item['rank']}", False):
-            source_comments = [c for c in pool_comments if item["tag"] in (c.get(tag_field) or "")][:20]
+            source_comments = [
+                c for c in pool_comments
+                if item["tag"] in [t.strip() for t in (c.get(tag_field) or "").split(",")]
+            ][:20]
             if source_comments:
                 st.markdown(f"""
                 <div class="source-panel">

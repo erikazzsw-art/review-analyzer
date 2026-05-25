@@ -74,3 +74,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     used BOOLEAN NOT NULL DEFAULT FALSE
 );
 CREATE INDEX IF NOT EXISTS idx_reset_tokens_email ON password_reset_tokens(email);
+
+-- V2 升级：新增 content_sentiment 字段（2026-05-25）
+-- content_sentiment 基于评论文字内容判断，与评分无关，用于双版本正负率对比
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS content_sentiment TEXT;

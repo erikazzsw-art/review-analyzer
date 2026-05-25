@@ -22,52 +22,60 @@ _TAG_LOOKUP: dict[str, str] = {
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """你是一位拥有 6 年跨境电商运营经验的评论分析专家。你的任务是对用户评论进行深度分析，输出结构化 JSON。
+SYSTEM_PROMPT = """你是一位拥有 6 年跨境电商运营经验的评论分析专家，熟悉欧美消费者表达习惯。
+对用户评论进行深度分析，输出严格符合格式的 JSON。
 
-## 核心能力
-- 理解差评背后的本质问题（包装、物流、安装、质量、功能、客服）
-- 好评也提取亮点标签
-- 输出必须是可落地的改进建议（不是空话套话）
+━━ 情感判断规则 ━━
+- 有评分时：评分 ≤3 → sentiment=negative；评分 ≥4 → sentiment=positive（评分优先级高于内容）
+- 无评分时：根据评论内容判断
+- content_sentiment 始终基于评论文字内容判断，与评分无关；无文字内容时与 sentiment 相同
+- 评分与内容矛盾时（如2星但内容正面）：sentiment 按评分，content_sentiment 按内容，issue_tags 和 highlight_tags 均按内容实际提取
+- 讽刺/反语（如"Great, broke on day one"）→ 识别为 negative
+- 混合情感 → sentiment 以更强烈的一方为主，issue_tags 和 highlight_tags 均填写
 
-## 标签标准化约束
-- 相似问题统一用同一标签（"包装破损""盒子压扁""运输损坏" → 统一输出"包装破损"）
-- 每条评论最多 2 个标签，逗号分隔
-- 优先从预设标签库选择，没有合适的再新建
-- 标签必须是 2-5 字名词短语
+━━ 标签提取规则 ━━
+- 每条评论提取 1-3 个 issue_tags（负面问题）+ 1-3 个 highlight_tags（正面亮点），可同时填写
+- 相似问题统一标签："包装破损""盒子压扁""运输损坏" → 统一输出"包装破损"
+- 同一条评论中多个同义表述合并后只计一个标签，不重复
+- 标签格式：2-5字名词短语，优先从预设标签库选择，无合适时新建
+- 无对应内容时输出空数组 []
 
-## 分类规则（针对实体商品）
-- 产品质量：材质差、做工粗糙、尺寸偏差、颜色差异、功能失效、不耐用、异味等
+━━ 分类规则（针对实体商品）━━
+- 产品质量：材质差、做工粗糙、尺寸偏差、颜色差异、功能失效、不耐用、异味
 - 包装物流：包装破损、物流慢、配送问题
 - 使用体验：安装困难、操作复杂、设计不合理、使用不方便
 - 客服售后：客服态度差、回复慢、退换货麻烦
 - 性价比：价格偏高、不值这个价
-- 功能需求：缺少某功能、希望改进（差评时使用）
-- 正面反馈：质量好、物流快、服务好、性价比高（好评时使用）
+- 功能需求：缺少某功能、希望改进（有明确改进诉求时使用）
+- 正面反馈：质量好、物流快、服务好、性价比高（纯好评时使用）
 - 单纯好评：只有评分无实质内容，或只说"不错""可以"
 - 无效乱码：乱码或无意义内容
+- 混合评价：同时包含明确亮点和明确问题的评论
 - 其他：无法归类
+category 选择：有负面内容时优先选负面分类；亮点和问题都有时选"混合评价"；纯好评选"正面反馈"或"单纯好评"
 
-## 优先级判定
-- 高：严重质量问题、安全隐患、大量用户反馈的共性问题
-- 中：影响使用体验但不致命的问题
-- 低：个别用户的主观偏好、轻微瑕疵
+━━ 优先级判定 ━━
+- 高：严重质量问题、安全隐患、共性问题
+- 中：影响使用但不致命的问题
+- 低：个别主观偏好、轻微瑕疵
 - 无：好评或无效内容
 
-## 输出格式（严格 JSON）
+━━ 输出格式（严格 JSON，不输出任何其他内容）━━
 {
   "sentiment": "positive / negative / neutral / unrecognizable",
-  "category": "产品质量 / 包装物流 / 使用体验 / 客服售后 / 性价比 / 功能需求 / 正面反馈 / 单纯好评 / 无效乱码 / 其他",
+  "content_sentiment": "positive / negative / neutral / unrecognizable",
+  "category": "产品质量 / 包装物流 / 使用体验 / 客服售后 / 性价比 / 功能需求 / 正面反馈 / 单纯好评 / 无效乱码 / 混合评价 / 其他",
   "priority": "高 / 中 / 低 / 无",
-  "reason": "一句话理由",
-  "improvement": "可落地的改进建议",
-  "issue_tag": "差评时填写，好评时为空字符串",
-  "highlight_tag": "好评时填写，差评时为空字符串"
+  "reason": "一句话理由（≤20字）",
+  "improvement": "可落地的改进建议（无问题时为空字符串）",
+  "issue_tags": ["标签1", "标签2"],
+  "highlight_tags": ["标签1", "标签2"]
 }"""
 
 VALID_SENTIMENTS = {"positive", "negative", "neutral", "unrecognizable"}
 VALID_CATEGORIES = {
     "产品质量", "包装物流", "使用体验", "客服售后", "性价比",
-    "功能需求", "正面反馈", "单纯好评", "无效乱码", "其他",
+    "功能需求", "正面反馈", "单纯好评", "无效乱码", "混合评价", "其他",
 }
 VALID_PRIORITIES = {"高", "中", "低", "无"}
 
@@ -188,7 +196,7 @@ def _call_deepseek_api(prompt: str, api_key: str) -> dict:
             {"role": "user", "content": prompt},
         ],
         temperature=0.1,
-        max_tokens=500,
+        max_tokens=600,
         response_format={"type": "json_object"},
     )
 
@@ -202,6 +210,10 @@ def _validate_result(result: dict) -> dict:
     if sentiment not in VALID_SENTIMENTS:
         sentiment = "unrecognizable"
 
+    content_sentiment = result.get("content_sentiment", sentiment)
+    if content_sentiment not in VALID_SENTIMENTS:
+        content_sentiment = sentiment
+
     category = result.get("category", "其他")
     if category not in VALID_CATEGORIES:
         category = "其他"
@@ -210,14 +222,28 @@ def _validate_result(result: dict) -> dict:
     if priority not in VALID_PRIORITIES:
         priority = "无"
 
+    def _parse_tags(raw) -> str:
+        if isinstance(raw, list):
+            tags = [_normalize_tag(str(t)) for t in raw if str(t).strip()]
+        else:
+            tags = [_normalize_tag(t) for t in str(raw).split(",") if t.strip()]
+        seen: set[str] = set()
+        unique = []
+        for t in tags:
+            if t and t not in seen:
+                seen.add(t)
+                unique.append(t)
+        return ",".join(unique[:3])
+
     return {
         "sentiment": sentiment,
+        "content_sentiment": content_sentiment,
         "category": category,
         "priority": priority,
         "reason": str(result.get("reason", "")),
         "improvement": str(result.get("improvement", "")),
-        "issue_tag": _normalize_tag_field(str(result.get("issue_tag", ""))),
-        "highlight_tag": _normalize_tag_field(str(result.get("highlight_tag", ""))),
+        "issue_tag": _parse_tags(result.get("issue_tags", result.get("issue_tag", []))),
+        "highlight_tag": _parse_tags(result.get("highlight_tags", result.get("highlight_tag", []))),
     }
 
 
@@ -225,6 +251,7 @@ def _make_unrecognizable() -> dict:
     """生成一条 unrecognizable 默认结果。"""
     return {
         "sentiment": "unrecognizable",
+        "content_sentiment": "unrecognizable",
         "category": "无效乱码",
         "priority": "无",
         "reason": "分析失败",
@@ -388,9 +415,11 @@ def extract_tags_from_comments(
         if not raw_tags:
             continue
 
+        seen_in_comment: set[str] = set()
         for tag in raw_tags.split(","):
             tag = tag.strip()
-            if tag:
+            if tag and tag not in seen_in_comment:
+                seen_in_comment.add(tag)
                 tag_counts[tag] = tag_counts.get(tag, 0) + 1
 
     total = has_content_count if has_content_count > 0 else 1

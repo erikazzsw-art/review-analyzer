@@ -96,11 +96,11 @@ def delete_user(user_id: int) -> None:
 
 _COMMENT_FIELDS = (
     "user_id, product_id, version, content, rating, date, "
-    "reviewer, source, content_hash, sentiment, category, "
+    "reviewer, source, content_hash, sentiment, content_sentiment, category, "
     "priority, reason, improvement, issue_tag, highlight_tag, "
     "is_processed, session_id"
 )
-_COMMENT_PLACEHOLDERS = ", ".join(["%s"] * 18)
+_COMMENT_PLACEHOLDERS = ", ".join(["%s"] * 19)
 
 
 def _comment_values(user_id: int, comment: dict) -> list:
@@ -115,6 +115,7 @@ def _comment_values(user_id: int, comment: dict) -> list:
         comment.get("source"),
         comment.get("content_hash"),
         comment.get("sentiment"),
+        comment.get("content_sentiment", comment.get("sentiment")),
         comment.get("category"),
         comment.get("priority"),
         comment.get("reason"),
@@ -205,11 +206,12 @@ def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> No
         with conn.cursor() as cur:
             cur.execute(
                 """UPDATE comments
-                   SET sentiment = %s, category = %s, priority = %s, reason = %s,
+                   SET sentiment = %s, content_sentiment = %s, category = %s, priority = %s, reason = %s,
                        improvement = %s, issue_tag = %s, highlight_tag = %s, is_processed = 1
                    WHERE id = %s AND user_id = %s""",
                 (
                     analysis.get("sentiment"),
+                    analysis.get("content_sentiment", analysis.get("sentiment")),
                     analysis.get("category"),
                     analysis.get("priority"),
                     analysis.get("reason"),

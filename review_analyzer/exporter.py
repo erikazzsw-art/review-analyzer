@@ -95,9 +95,11 @@ def _build_top10_data(
         raw_tags = c.get(tag_field, "")
         if not raw_tags:
             continue
+        seen_in_comment: set[str] = set()
         for tag in raw_tags.split(","):
             tag = tag.strip()
-            if tag:
+            if tag and tag not in seen_in_comment:
+                seen_in_comment.add(tag)
                 tag_counter[tag] += 1
                 if tag not in tag_sources:
                     tag_sources[tag] = []

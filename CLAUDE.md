@@ -29,6 +29,19 @@ This file provides guidance to Claude Code when working with code in this reposi
 | 添加错误处理 | `docs/error-handling.md` |
 | 处理文件编码/解析 | `docs/file-guide.md` |
 
+## 文档自动更新规则（强制）
+
+每次任务完成后，**必须**按下表更新对应文档，无需用户提醒：
+
+| 触发动作 | 必须更新的文档 | 更新内容 |
+|---------|-------------|---------|
+| Bug 修复完成 | `TEST_LOG.md` | 在修复记录表追加一行：日期、问题描述、解决方案 |
+| 新功能 / 需求变更 | `plan.md` | 在需求变更日志对应日期下追加条目（格式见文件顶部规范） |
+| 新功能 / 需求变更 | `业务场景与用户洞察.md` | 在对应章节补充新的业务需求、用户洞察或核心逻辑 |
+| 模块任务完成 | `PROGRESS.md` | 将对应任务的 `[ ]` 改为 `[x]`，然后运行 `python3 update_progress.py` |
+
+**执行顺序**：先更新文档，再提交 Git。文档更新和代码提交合并为同一个 commit。
+
 ## Git 工作流与进度追踪
 
 - 项目进度文件：`PROGRESS.md`（8个模块，checkbox 驱动）
