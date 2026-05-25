@@ -253,45 +253,48 @@ def render_upload() -> None:
         </div>
         """, unsafe_allow_html=True)
 
-        # 创建 session
-        session_data = {
-            "product_id": info.get("product_id"),
-            "version": info.get("version", "V1"),
-            "auto_title": f"{datetime.now().strftime('%Y-%m-%d')} | {info.get('product_id')} | {len(df)}条",
-            "date_range_start": info.get("date_start"),
-            "date_range_end": info.get("date_end"),
-            "total_reviews": len(df),
-            "positive_count": 0,
-            "negative_count": 0,
-            "category": info.get("category"),
-            "prompt_version": PROMPT_VERSION,
-        }
-        session_id = create_session(user_id, session_data)
-
-        # 准备评论数据
-        comments_to_insert = []
-        for _, row in df.iterrows():
-            content = str(row.get("content", "")) if pd.notna(row.get("content")) else ""
-            rating_val = row.get("rating") if pd.notna(row.get("rating")) else None
-            date_val = str(row.get("date", "")) if pd.notna(row.get("date")) else ""
-            reviewer_val = str(row.get("reviewer", "")) if pd.notna(row.get("reviewer")) else ""
-            source_val = str(row.get("source", "")) if pd.notna(row.get("source")) else ""
-            raw_data_val = str(row.get("raw_data", "")) if pd.notna(row.get("raw_data")) else ""
-            hash_parts = [content, str(rating_val or ""), date_val, reviewer_val, source_val, raw_data_val]
-            comment = {
+        # 用 session_state 保证 create_session + add_comments_batch 只执行一次
+        # Streamlit 脚本在分析期间可能因 WebSocket 心跳被重新执行
+        session_id = st.session_state.get("analyzing_session_id")
+        if session_id is None:
+            session_data = {
                 "product_id": info.get("product_id"),
                 "version": info.get("version", "V1"),
-                "content": content,
-                "rating": rating_val,
-                "date": date_val,
-                "reviewer": reviewer_val if reviewer_val else None,
-                "source": info.get("platform"),
-                "content_hash": hashlib.md5("|".join(hash_parts).encode()).hexdigest(),
-                "session_id": session_id,
+                "auto_title": f"{datetime.now().strftime('%Y-%m-%d')} | {info.get('product_id')} | {len(df)}条",
+                "date_range_start": info.get("date_start"),
+                "date_range_end": info.get("date_end"),
+                "total_reviews": len(df),
+                "positive_count": 0,
+                "negative_count": 0,
+                "category": info.get("category"),
+                "prompt_version": PROMPT_VERSION,
             }
-            comments_to_insert.append(comment)
+            session_id = create_session(user_id, session_data)
+            st.session_state["analyzing_session_id"] = session_id
 
-        add_comments_batch(user_id, comments_to_insert)
+            # 准备并插入评论数据（同样只做一次）
+            comments_to_insert = []
+            for _, row in df.iterrows():
+                content = str(row.get("content", "")) if pd.notna(row.get("content")) else ""
+                rating_val = row.get("rating") if pd.notna(row.get("rating")) else None
+                date_val = str(row.get("date", "")) if pd.notna(row.get("date")) else ""
+                reviewer_val = str(row.get("reviewer", "")) if pd.notna(row.get("reviewer")) else ""
+                source_val = str(row.get("source", "")) if pd.notna(row.get("source")) else ""
+                raw_data_val = str(row.get("raw_data", "")) if pd.notna(row.get("raw_data")) else ""
+                hash_parts = [content, str(rating_val or ""), date_val, reviewer_val, source_val, raw_data_val]
+                comment = {
+                    "product_id": info.get("product_id"),
+                    "version": info.get("version", "V1"),
+                    "content": content,
+                    "rating": rating_val,
+                    "date": date_val,
+                    "reviewer": reviewer_val if reviewer_val else None,
+                    "source": info.get("platform"),
+                    "content_hash": hashlib.md5("|".join(hash_parts).encode()).hexdigest(),
+                    "session_id": session_id,
+                }
+                comments_to_insert.append(comment)
+            add_comments_batch(user_id, comments_to_insert)
 
         # AI 分析
         progress_bar = st.progress(0)
@@ -352,8 +355,8 @@ def render_upload() -> None:
         st.session_state["view_session_id"] = session_id
         st.session_state["current_page"] = "results"
         st.session_state["upload_step"] = 1
-        # 清理临时数据和旧的时间筛选 state
-        for key in ["upload_df", "upload_df_clean", "upload_info",
+        # 清理临时数据、分析锁和旧的时间筛选 state
+        for key in ["upload_df", "upload_df_clean", "upload_info", "analyzing_session_id",
                     "time_filter_option", "time_filter_start", "time_filter_end"]:
             st.session_state.pop(key, None)
         st.rerun()
