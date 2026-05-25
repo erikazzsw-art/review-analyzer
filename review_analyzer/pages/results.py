@@ -204,6 +204,8 @@ def _render_product_search(user_id: int) -> tuple[int | None, bool]:
             st.session_state["selected_product_id"] = selected_product
             st.session_state.pop("selected_record_id", None)
             st.session_state["product_view_mode"] = "all"
+            st.session_state.pop("_export_bytes", None)
+            st.session_state.pop("_export_filename", None)
 
         # 获取该产品的上传记录（最近5条）
         product_sessions = [s for s in sessions if s["product_id"] == selected_product][:5]
@@ -366,18 +368,21 @@ def render_results() -> None:
     # 导出按钮
     col_export = st.columns([4, 1])
     with col_export[1]:
-        try:
-            xlsx_bytes, xlsx_filename = export_to_xlsx(session_id, user_id)
+        if st.button("📥 导出报告", key="export_report"):
+            try:
+                xlsx_bytes, xlsx_filename = export_to_xlsx(session_id, user_id)
+                st.session_state["_export_bytes"] = xlsx_bytes
+                st.session_state["_export_filename"] = xlsx_filename
+            except Exception as e:
+                st.error(f"导出失败：{e}")
+        if st.session_state.get("_export_bytes"):
             st.download_button(
-                "📥 导出报告",
-                data=xlsx_bytes,
-                file_name=xlsx_filename,
+                "📩 点击下载",
+                data=st.session_state["_export_bytes"],
+                file_name=st.session_state.get("_export_filename", "report.xlsx"),
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key="export_report",
+                key="export_download",
             )
-        except Exception as e:
-            st.button("📥 导出报告", key="export_report", disabled=True)
-            st.error(f"导出失败：{e}")
 
     # 4 指标卡片
     ratings = [c["rating"] for c in comments if c.get("rating")]
