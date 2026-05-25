@@ -1030,3 +1030,6 @@ Step 18-19  测试验证          ← 最后做
 
 #### AI 质量提升
 - **新增**：tag 归一化层 — `config.py` 新增 `TAG_NORMALIZE_MAP`，覆盖 8 个类目的中英文同义词变体（如 "packaging damage" / "包装损坏" → 统一归为"包装破损"）；`analyzer.py` 的 `_validate_result` 在写库前调用 `_normalize_tag_field` 统一 tag 词汇，解决 TOP10 统计被同义词稀释的问题；找不到映射的新词原样保留，不丢失新问题信号 — 来源：Erika
+
+#### 预警规则引擎补全
+- **修复**：`notifier.py` 的 `check_global_rules()` 补全三条环比规则实现 — Settings 页面的环比配置 UI 早已存在但逻辑从未落地。新增 `_get_prev_neg_rate()` / `_get_prev_top_issues()` 辅助函数，基于同产品历史 session 计算上期指标；补全三条规则：**负面率环比突增**（较上期上升 ≥ N 个百分点）、**问题占比环比突增**（某 tag 较上期增加 ≥ N%）、**亮点环比变化**（亮点 tag 较上期增加 ≥ N%）；`check_global_rules()` / `should_notify()` 签名增加 `user_id`/`session_id` 参数，测试文件调用点同步更新 — 来源：Erika
