@@ -508,27 +508,14 @@ def main() -> None:
 
         for page_id, (icon, label) in nav_items.items():
             is_active = st.session_state["current_page"] == page_id
-            # 历史记录作为分析结果的子菜单，缩进显示
-            if page_id == "history":
-                col_indent, col_btn = st.columns([1, 11])
-                with col_btn:
-                    if st.button(
-                        f"{icon}  {label}",
-                        key=f"nav_{page_id}",
-                        use_container_width=True,
-                        type="primary" if is_active else "secondary",
-                    ):
-                        st.session_state["current_page"] = page_id
-                        st.rerun()
-            else:
-                if st.button(
-                    f"{icon}  {label}",
-                    key=f"nav_{page_id}",
-                    use_container_width=True,
-                    type="primary" if is_active else "secondary",
-                ):
-                    st.session_state["current_page"] = page_id
-                    st.rerun()
+            if st.button(
+                f"{icon}  {label}",
+                key=f"nav_{page_id}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                st.session_state["current_page"] = page_id
+                st.rerun()
 
         st.markdown("---")
 
