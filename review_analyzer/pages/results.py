@@ -225,7 +225,8 @@ def _render_product_search(user_id: int) -> tuple[int | None, bool]:
             # 显示各条上传记录
             for s in product_sessions:
                 title = s.get("custom_title") or s.get("auto_title") or s["version"]
-                created = (s.get("created_at") or "")[:16]
+                _ca = s.get("created_at")
+                created = str(_ca)[:16] if _ca is not None else ""
                 total = s.get("total_reviews", 0)
                 is_selected = (view_mode == "record" and
                                st.session_state.get("selected_record_id") == s["id"])
