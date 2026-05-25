@@ -1055,7 +1055,7 @@ Report"""
             {"sentiment": "negative", "issue_tag": "安装困难", "content": "hard"} for _ in range(10)
         ]
         rules = {"issue_pct_enabled": True, "issue_pct_threshold": 5, "neg_rate_enabled": True, "neg_rate_threshold": 25}
-        triggered = check_global_rules(session_data, comments, rules)
+        triggered = check_global_rules(0, 0, session_data, comments, rules)
         assert len(triggered) >= 1, "规则应被触发"
         record("E.5", "推送规则引擎触发", "PASS", f"触发 {len(triggered)} 条规则")
     except Exception as e:

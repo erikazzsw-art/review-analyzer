@@ -7,7 +7,7 @@ import json
 import logging
 import time
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import requests
@@ -165,7 +165,51 @@ def _get_top_issues(comments: list[dict], sentiment_type: str) -> list[dict]:
     ]
 
 
+def _get_prev_neg_rate(
+    user_id: int,
+    product_id: str,
+    current_session_id: int,
+    window_days: int,
+) -> Optional[float]:
+    """取上一批次的负面率，无历史数据时返回 None。"""
+    sessions = get_sessions(user_id, product_id)
+    cutoff = datetime.now() - timedelta(days=window_days)
+    for s in sessions:
+        if s["id"] == current_session_id:
+            continue
+        created = s.get("created_at")
+        if created and created < cutoff:
+            break
+        total = s.get("total_reviews") or 1
+        neg = s.get("negative_count") or 0
+        return neg / total * 100
+    return None
+
+
+def _get_prev_top_issues(
+    user_id: int,
+    product_id: str,
+    current_session_id: int,
+    window_days: int,
+    sentiment_type: str,
+) -> list[dict]:
+    """取上一批次的 TOP 标签列表，无历史数据时返回空列表。"""
+    sessions = get_sessions(user_id, product_id)
+    cutoff = datetime.now() - timedelta(days=window_days)
+    for s in sessions:
+        if s["id"] == current_session_id:
+            continue
+        created = s.get("created_at")
+        if created and created < cutoff:
+            break
+        prev_comments = get_comments(user_id, session_id=s["id"])
+        return _get_top_issues(prev_comments, sentiment_type)
+    return []
+
+
 def check_global_rules(
+    user_id: int,
+    session_id: int,
     session_data: dict,
     comments: list[dict],
     rules_config: dict,
@@ -211,6 +255,59 @@ def check_global_rules(
                 "rule": "亮点通知",
                 "detail": f"以下亮点占比超过 {threshold}%：{details}",
             })
+
+    product_id = session_data.get("product_id", "")
+
+    # 负面率环比突增
+    if rules_config.get("neg_rate_compare_enabled", False):
+        threshold = rules_config.get("neg_rate_compare_threshold", 5)
+        window = int(rules_config.get("neg_rate_compare_window", "30"))
+        prev_rate = _get_prev_neg_rate(user_id, product_id, session_id, window)
+        if prev_rate is not None:
+            delta = neg_rate - prev_rate
+            if delta >= threshold:
+                triggered.append({
+                    "rule": "负面率环比告警",
+                    "detail": f"负面率 {neg_rate:.1f}%，较上期 {prev_rate:.1f}% 上升 {delta:.1f} 个百分点",
+                })
+
+    # 问题占比环比突增
+    if rules_config.get("issue_compare_enabled", False):
+        threshold = rules_config.get("issue_compare_threshold", 3)
+        window = int(rules_config.get("issue_compare_window", "30"))
+        top_issues = _get_top_issues(comments, "negative")
+        prev_issues = _get_prev_top_issues(user_id, product_id, session_id, window, "negative")
+        if prev_issues:
+            prev_map = {i["tag"]: i["pct"] for i in prev_issues}
+            spikes = [
+                f"「{i['tag']}」+{i['pct'] - prev_map.get(i['tag'], 0):.1f}%"
+                for i in top_issues
+                if i["pct"] - prev_map.get(i["tag"], 0) >= threshold
+            ]
+            if spikes:
+                triggered.append({
+                    "rule": "问题占比环比告警",
+                    "detail": f"以下问题较上期明显增加：{', '.join(spikes[:3])}",
+                })
+
+    # 亮点环比变化
+    if rules_config.get("highlight_compare_enabled", False):
+        threshold = rules_config.get("highlight_compare_threshold", 5)
+        window = int(rules_config.get("highlight_compare_window", "30"))
+        top_highlights_cur = _get_top_issues(comments, "positive")
+        prev_highlights = _get_prev_top_issues(user_id, product_id, session_id, window, "positive")
+        if prev_highlights:
+            prev_map = {i["tag"]: i["pct"] for i in prev_highlights}
+            spikes = [
+                f"「{i['tag']}」+{i['pct'] - prev_map.get(i['tag'], 0):.1f}%"
+                for i in top_highlights_cur
+                if i["pct"] - prev_map.get(i["tag"], 0) >= threshold
+            ]
+            if spikes:
+                triggered.append({
+                    "rule": "亮点环比通知",
+                    "detail": f"以下亮点较上期明显增加：{', '.join(spikes[:3])}",
+                })
 
     return triggered
 
@@ -270,6 +367,8 @@ def check_product_rules(
 
 
 def should_notify(
+    user_id: int,
+    session_id: int,
     session_data: dict,
     comments: list[dict],
     rules_config: dict,
@@ -286,7 +385,7 @@ def should_notify(
         triggered.append({"rule": "新批次自动推送", "detail": "分析完成自动推送摘要"})
 
     # 全局规则
-    triggered.extend(check_global_rules(session_data, comments, rules_config))
+    triggered.extend(check_global_rules(user_id, session_id, session_data, comments, rules_config))
 
     # 产品级规则
     product_id = session_data.get("product_id", "")
@@ -326,7 +425,7 @@ def auto_notify_after_analysis(
     rules_config = settings.get("rules", {})
     product_rules = settings.get("product_rules", [])
 
-    should_push, triggered = should_notify(session, comments, rules_config, product_rules)
+    should_push, triggered = should_notify(user_id, session_id, session, comments, rules_config, product_rules)
     if not should_push:
         return None
 
