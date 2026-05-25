@@ -535,11 +535,6 @@ def render_results() -> None:
     # 环比分析（优化7）
     _render_comparison_section(session, user_id)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # 历史分析记录（优化5+8）
-    _render_history_section(user_id, session_id)
-
     # 底部浮动操作栏
     _render_floating_bar(session_id, user_id, top_issues, top_highlights)
 
@@ -999,3 +994,21 @@ def _render_history_section(user_id: int, current_session_id: int) -> None:
 
         st.markdown("<hr style='border:none;border-top:1px solid #e8e8e8;margin:8px 0;'>",
                     unsafe_allow_html=True)
+
+
+def render_history() -> None:
+    """历史分析记录独立页面"""
+    from review_analyzer.auth import get_current_user_id
+    user_id = get_current_user_id()
+    if not user_id:
+        st.warning("请先登录")
+        return
+
+    st.markdown("""
+    <div style="margin-bottom:24px;">
+        <div style="font-size:22px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;">历史分析记录</div>
+        <div style="font-size:14px;color:#4d4d4d;margin-top:4px;">查看、导出或删除历史分析批次</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    _render_history_section(user_id, current_session_id=-1)

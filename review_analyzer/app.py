@@ -14,7 +14,7 @@ from review_analyzer.pages.landing import render_landing_page
 from review_analyzer.pages.trial import render_trial_page
 from review_analyzer.pages.dashboard import render_dashboard
 from review_analyzer.pages.upload import render_upload
-from review_analyzer.pages.results import render_results
+from review_analyzer.pages.results import render_results, render_history
 from review_analyzer.pages.copywriter import render_copywriter
 from review_analyzer.pages.settings import render_settings
 
@@ -489,6 +489,7 @@ def main() -> None:
             "dashboard": ("📊", "仪表盘"),
             "upload": ("📤", "上传评论"),
             "results": ("📋", "分析结果"),
+            "history": ("🕘", "历史记录"),
             "copywriter": ("✍️", "宣传文案"),
             "settings": ("⚙️", "推送设置"),
         }
@@ -496,6 +497,7 @@ def main() -> None:
             "dashboard": ("📊", "Dashboard"),
             "upload": ("📤", "Upload"),
             "results": ("📋", "Results"),
+            "history": ("🕘", "History"),
             "copywriter": ("✍️", "Copywriter"),
             "settings": ("⚙️", "Settings"),
         }
@@ -506,14 +508,27 @@ def main() -> None:
 
         for page_id, (icon, label) in nav_items.items():
             is_active = st.session_state["current_page"] == page_id
-            if st.button(
-                f"{icon}  {label}",
-                key=f"nav_{page_id}",
-                use_container_width=True,
-                type="primary" if is_active else "secondary",
-            ):
-                st.session_state["current_page"] = page_id
-                st.rerun()
+            # 历史记录作为分析结果的子菜单，缩进显示
+            if page_id == "history":
+                col_indent, col_btn = st.columns([1, 11])
+                with col_btn:
+                    if st.button(
+                        f"{icon}  {label}",
+                        key=f"nav_{page_id}",
+                        use_container_width=True,
+                        type="primary" if is_active else "secondary",
+                    ):
+                        st.session_state["current_page"] = page_id
+                        st.rerun()
+            else:
+                if st.button(
+                    f"{icon}  {label}",
+                    key=f"nav_{page_id}",
+                    use_container_width=True,
+                    type="primary" if is_active else "secondary",
+                ):
+                    st.session_state["current_page"] = page_id
+                    st.rerun()
 
         st.markdown("---")
 
@@ -554,6 +569,8 @@ def main() -> None:
         render_upload()
     elif page == "results":
         render_results()
+    elif page == "history":
+        render_history()
     elif page == "copywriter":
         render_copywriter()
     elif page == "settings":
