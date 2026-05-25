@@ -149,104 +149,79 @@ def _apply_time_filter(comments: list[dict], session: dict, user_id: int) -> tup
 
 
 def _render_product_search(user_id: int) -> tuple[int | None, bool]:
-    """顶部产品搜索框 — 输入产品编码搜索并切换查看不同产品的分析结果。
+    """顶部产品选择框 — 单一 selectbox 支持搜索+下拉，切换查看不同产品的分析结果。
     返回 (session_id, show_all_data): show_all_data=True 表示展示该产品全部数据。
     """
     sessions = get_sessions(user_id)
     if not sessions:
         return None, False
 
-    # 收集所有产品编码
     all_product_ids = list(dict.fromkeys(s["product_id"] for s in sessions))
 
     st.markdown("""
-    <div style="margin-bottom:16px;padding:16px 20px;background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb;">
-        <div style="font-size:13px;font-weight:600;color:#4d4d4d;margin-bottom:8px;">🔍 选择分析产品</div>
+    <div style="display:flex;align-items:center;gap:10px;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
+        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">◎</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">选择分析产品</span>
+    </div>
     """, unsafe_allow_html=True)
 
-    search_input = st.text_input(
-        "搜索产品编码",
-        placeholder="输入产品编码搜索...",
-        key="product_search_input",
+    # 确定默认选中产品
+    current_product = st.session_state.get("selected_product_id") or all_product_ids[0]
+    if current_product not in all_product_ids:
+        current_product = all_product_ids[0]
+
+    # 单一 selectbox：右侧下拉箭头 + 输入可搜索
+    selected_product = st.selectbox(
+        "选择产品",
+        all_product_ids,
+        index=all_product_ids.index(current_product),
+        key="product_select_box",
         label_visibility="collapsed",
     )
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    if selected_product != st.session_state.get("selected_product_id"):
+        st.session_state["selected_product_id"] = selected_product
+        st.session_state.pop("selected_record_id", None)
+        st.session_state["product_view_mode"] = "all"
 
-    # 根据搜索词过滤产品
-    if search_input:
-        matched_products = [pid for pid in all_product_ids if search_input.lower() in pid.lower()]
-    else:
-        matched_products = all_product_ids
+    # 该产品的上传批次（最近5条）
+    product_sessions = [s for s in sessions if s["product_id"] == selected_product][:5]
 
-    if not matched_products and search_input:
-        st.caption("未找到匹配的产品编码")
-        return sessions[0]["id"], False
+    if product_sessions:
+        st.caption(f"点击可查看单次上传数据，默认展示全部批次合并结果")
 
-    # 确定当前选中的产品
-    current_product = st.session_state.get("selected_product_id")
-    if current_product and current_product not in matched_products:
-        current_product = None
-    if not current_product and matched_products:
-        current_product = matched_products[0]
+        view_mode = st.session_state.get("product_view_mode", "all")
 
-    # 显示匹配的产品列表供选择
-    if matched_products:
-        selected_product = st.selectbox(
-            "选择产品",
-            matched_products,
-            index=matched_products.index(current_product) if current_product in matched_products else 0,
-            key="product_select_box",
-            label_visibility="collapsed",
-        )
+        col_all, col_sep = st.columns([2, 4])
+        with col_all:
+            btn_type = "primary" if view_mode == "all" else "secondary"
+            if st.button("📊 全部数据", key="view_all_data", type=btn_type):
+                st.session_state["product_view_mode"] = "all"
+                st.session_state.pop("selected_record_id", None)
+                st.rerun()
 
-        if selected_product != st.session_state.get("selected_product_id"):
-            st.session_state["selected_product_id"] = selected_product
-            st.session_state.pop("selected_record_id", None)
-            st.session_state["product_view_mode"] = "all"
+        for s in product_sessions:
+            title = s.get("custom_title") or s.get("auto_title") or s["version"]
+            _ca = s.get("created_at")
+            created = str(_ca)[:16] if _ca is not None else ""
+            total = s.get("total_reviews", 0)
+            is_selected = (view_mode == "record" and
+                           st.session_state.get("selected_record_id") == s["id"])
+            btn_type = "primary" if is_selected else "secondary"
+            if st.button(
+                f"{title} · {s['version']} · {created} · {total}条",
+                key=f"record_btn_{s['id']}",
+                type=btn_type,
+            ):
+                st.session_state["product_view_mode"] = "record"
+                st.session_state["selected_record_id"] = s["id"]
+                st.rerun()
 
-        # 获取该产品的上传记录（最近5条）
-        product_sessions = [s for s in sessions if s["product_id"] == selected_product][:5]
-
-        if product_sessions:
-            st.caption(f"最近上传记录（{selected_product}）— 点击可查看单次上传数据")
-
-            # 全部数据选项 + 各条记录
-            view_mode = st.session_state.get("product_view_mode", "all")
-
-            col_all, col_sep = st.columns([2, 4])
-            with col_all:
-                btn_type = "primary" if view_mode == "all" else "secondary"
-                if st.button("📊 全部数据", key="view_all_data", type=btn_type):
-                    st.session_state["product_view_mode"] = "all"
-                    st.session_state.pop("selected_record_id", None)
-                    st.rerun()
-
-            # 显示各条上传记录
-            for s in product_sessions:
-                title = s.get("custom_title") or s.get("auto_title") or s["version"]
-                _ca = s.get("created_at")
-                created = str(_ca)[:16] if _ca is not None else ""
-                total = s.get("total_reviews", 0)
-                is_selected = (view_mode == "record" and
-                               st.session_state.get("selected_record_id") == s["id"])
-                btn_type = "primary" if is_selected else "secondary"
-                if st.button(
-                    f"{title} · {s['version']} · {created} · {total}条",
-                    key=f"record_btn_{s['id']}",
-                    type=btn_type,
-                ):
-                    st.session_state["product_view_mode"] = "record"
-                    st.session_state["selected_record_id"] = s["id"]
-                    st.rerun()
-
-            # 返回结果
-            if view_mode == "all":
-                # 返回最新 session，但标记为展示全部数据
-                return product_sessions[0]["id"], True
-            else:
-                chosen_id = st.session_state.get("selected_record_id", product_sessions[0]["id"])
-                return chosen_id, False
+        if view_mode == "all":
+            return product_sessions[0]["id"], True
+        else:
+            chosen_id = st.session_state.get("selected_record_id", product_sessions[0]["id"])
+            return chosen_id, False
 
     if sessions:
         return sessions[0]["id"], False
@@ -270,6 +245,7 @@ def render_results() -> None:
             st.error("未找到该分析记录")
             return
         session_id = view_session_id
+        st.session_state["selected_product_id"] = session.get("product_id")
         col_back, col_info = st.columns([1, 5])
         with col_back:
             if st.button("← 返回列表", key="back_to_search"):
