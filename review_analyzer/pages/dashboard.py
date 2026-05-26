@@ -230,6 +230,24 @@ def render_dashboard() -> None:
 
     # 页头
     st.markdown("""
+    <style>
+    .product-title-btn + div button {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #6C5CE7 !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+    }
+    .product-title-btn + div button:hover {
+        color: #5a4bd1 !important;
+        text-decoration: underline !important;
+        background: none !important;
+    }
+    </style>
     <div style="margin-bottom:32px;">
         <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">仪表盘</div>
         <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">按产品维度查看评论分析全貌</div>
@@ -278,19 +296,7 @@ def render_dashboard() -> None:
                 pid = product["product_id"]
                 name = product.get("name", "")
                 label = f"{pid}  {name}" if name else pid
-                st.markdown(f"""
-                <style>
-                div[data-testid="stButton"] button[kind="secondary"]#dash_title_{idx},
-                div[data-testid="column"] button[key="dash_title_{idx}"] {{
-                    background:none;border:none;padding:0;box-shadow:none;
-                    font-size:18px;font-weight:700;color:#6C5CE7;
-                    text-align:left;cursor:pointer;
-                }}
-                div[data-testid="column"] button[key="dash_title_{idx}"]:hover {{
-                    color:#5a4bd1;text-decoration:underline;background:none;border:none;
-                }}
-                </style>
-                """, unsafe_allow_html=True)
+                st.markdown('<div class="product-title-btn"></div>', unsafe_allow_html=True)
                 if st.button(label, key=f"dash_title_{idx}", use_container_width=True):
                     st.session_state["selected_product_id"] = pid
                     st.session_state.pop("view_session_id", None)
