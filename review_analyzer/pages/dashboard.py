@@ -273,18 +273,26 @@ def render_dashboard() -> None:
     # 渲染每个产品卡片
     for idx, product in enumerate(products):
         with st.container():
-            col_title, col_view, col_pin, col_del = st.columns([4, 1, 0.7, 0.6])
+            col_title, col_pin, col_del = st.columns([5, 0.7, 0.6])
             with col_title:
+                pid = product["product_id"]
+                name = product.get("name", "")
+                label = f"{pid}  {name}" if name else pid
                 st.markdown(f"""
-                <div style="font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-                    <span style="color:#6C5CE7;">{product['product_id']}</span>
-                    <span style="color:#2D3436;">{product.get('name', '')}</span>
-                    <span class="tag tag-platform">{product.get('platform', '')}</span>
-                </div>
+                <style>
+                div[data-testid="stButton"] button[kind="secondary"]#dash_title_{idx},
+                div[data-testid="column"] button[key="dash_title_{idx}"] {{
+                    background:none;border:none;padding:0;box-shadow:none;
+                    font-size:18px;font-weight:700;color:#6C5CE7;
+                    text-align:left;cursor:pointer;
+                }}
+                div[data-testid="column"] button[key="dash_title_{idx}"]:hover {{
+                    color:#5a4bd1;text-decoration:underline;background:none;border:none;
+                }}
+                </style>
                 """, unsafe_allow_html=True)
-            with col_view:
-                if st.button("查看分析", key=f"dash_view_{idx}", use_container_width=True):
-                    st.session_state["selected_product_id"] = product["product_id"]
+                if st.button(label, key=f"dash_title_{idx}", use_container_width=True):
+                    st.session_state["selected_product_id"] = pid
                     st.session_state.pop("view_session_id", None)
                     st.session_state["current_page"] = "results"
                     st.rerun()
