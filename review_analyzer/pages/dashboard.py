@@ -303,11 +303,16 @@ def render_dashboard() -> None:
                     st.session_state["current_page"] = "results"
                     st.rerun()
             with col_pin:
-                if st.button("📌", key=f"dash_pin_{idx}", use_container_width=True):
+                pinned_list = st.session_state.get("pinned_products", [])
+                is_pinned = product["product_id"] in pinned_list
+                pin_label = "📌" if is_pinned else "☆"
+                if st.button(pin_label, key=f"dash_pin_{idx}", use_container_width=True):
                     if "pinned_products" not in st.session_state:
                         st.session_state["pinned_products"] = []
                     pid = product["product_id"]
-                    if pid not in st.session_state["pinned_products"]:
+                    if pid in st.session_state["pinned_products"]:
+                        st.session_state["pinned_products"].remove(pid)
+                    else:
                         st.session_state["pinned_products"].insert(0, pid)
                     st.rerun()
             with col_del:
