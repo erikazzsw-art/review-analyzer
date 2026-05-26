@@ -273,28 +273,28 @@ def render_dashboard() -> None:
     # 渲染每个产品卡片
     for idx, product in enumerate(products):
         with st.container():
-            col_title, col_btns = st.columns([4, 1.5])
+            col_title, col_pin, col_del = st.columns([5, 0.7, 0.6])
             with col_title:
-                st.markdown(f"""
-                <div style="font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-                    <span style="color:#6C5CE7;">{product['product_id']}</span>
-                    <span style="color:#2D3436;">{product.get('name', '')}</span>
-                    <span class="tag tag-platform">{product.get('platform', '')}</span>
-                </div>
-                """, unsafe_allow_html=True)
-            with col_btns:
-                pin_col, del_col = st.columns(2)
-                with pin_col:
-                    if st.button("📌 置顶", key=f"dash_pin_{idx}", use_container_width=True):
-                        if "pinned_products" not in st.session_state:
-                            st.session_state["pinned_products"] = []
-                        pid = product["product_id"]
-                        if pid not in st.session_state["pinned_products"]:
-                            st.session_state["pinned_products"].insert(0, pid)
-                        st.rerun()
-                with del_col:
-                    if st.button("🗑️ 删除", key=f"dash_del_{idx}", use_container_width=True):
-                        st.session_state[f"confirm_del_{idx}"] = True
+                if st.button(
+                    f"🔷 {product['product_id']}  {product.get('name', '')}",
+                    key=f"dash_title_{idx}",
+                    use_container_width=True,
+                ):
+                    st.session_state["selected_product_id"] = product["product_id"]
+                    st.session_state.pop("view_session_id", None)
+                    st.session_state["current_page"] = "results"
+                    st.rerun()
+            with col_pin:
+                if st.button("📌", key=f"dash_pin_{idx}", use_container_width=True):
+                    if "pinned_products" not in st.session_state:
+                        st.session_state["pinned_products"] = []
+                    pid = product["product_id"]
+                    if pid not in st.session_state["pinned_products"]:
+                        st.session_state["pinned_products"].insert(0, pid)
+                    st.rerun()
+            with col_del:
+                if st.button("🗑️", key=f"dash_del_{idx}", use_container_width=True):
+                    st.session_state[f"confirm_del_{idx}"] = True
 
             # 删除确认
             if st.session_state.get(f"confirm_del_{idx}"):
