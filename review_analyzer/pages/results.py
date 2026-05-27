@@ -525,121 +525,8 @@ def render_results() -> None:
     # 环比分析（优化7）
     _render_comparison_section(session, user_id)
 
-    # 版本对比
-    _render_version_compare_section(session, user_id)
-
     # 底部浮动操作栏
     _render_floating_bar(session_id, user_id, top_issues, top_highlights)
-
-
-def _save_version_notes(user_id: int, product_id: str, ver: str, notes: str, all_sessions: list[dict]) -> None:
-    s_list = [s for s in all_sessions if s["version"] == ver]
-    if s_list:
-        update_session_notes(s_list[-1]["id"], notes)
-
-
-def _render_version_compare_section(session: dict, user_id: int) -> None:
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
-        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">4</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">版本对比</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    product_id = session.get("product_id")
-    all_sessions = get_sessions(user_id, product_id=product_id)
-    versions = list(dict.fromkeys(s["version"] for s in all_sessions))
-
-    if len(versions) < 2:
-        st.info("当前产品只有一个版本，上传第二个版本数据后自动开启对比。")
-        return
-
-    col_v1, col_v2 = st.columns(2)
-    with col_v1:
-        v1 = st.selectbox("基准版本（旧）", versions, index=0, key="vc_v1")
-    with col_v2:
-        v2 = st.selectbox("对比版本（新）", [v for v in versions if v != v1], key="vc_v2")
-
-    def _get_notes(ver: str) -> str:
-        s_list = [s for s in all_sessions if s["version"] == ver]
-        return (s_list[-1].get("version_notes") or "").strip() if s_list else ""
-
-    notes_v1, notes_v2 = _get_notes(v1), _get_notes(v2)
-    with st.expander("版本升级说明（点击编辑）", expanded=bool(notes_v1 or notes_v2)):
-        col_n1, col_n2 = st.columns(2)
-        with col_n1:
-            new_notes_v1 = st.text_area(f"{v1} 升级说明", value=notes_v1, key="vc_notes_v1", height=80)
-        with col_n2:
-            new_notes_v2 = st.text_area(f"{v2} 升级说明", value=notes_v2, key="vc_notes_v2", height=80)
-        if st.button("保存说明", key="vc_save_notes"):
-            _save_version_notes(user_id, product_id, v1, new_notes_v1, all_sessions)
-            _save_version_notes(user_id, product_id, v2, new_notes_v2, all_sessions)
-            get_sessions.clear()
-            st.success("已保存")
-            st.rerun()
-
-    c1 = get_comments(user_id, product_id=product_id, version=v1)
-    c2 = get_comments(user_id, product_id=product_id, version=v2)
-    s1, s2 = _calc_sentiment_stats(c1), _calc_sentiment_stats(c2)
-
-    def _delta(new_val: float, old_val: float, lower_is_better: bool = False) -> str:
-        diff = new_val - old_val
-        if abs(diff) < 0.05:
-            return "<span style='color:#888;'>—</span>"
-        improved = (diff < 0) if lower_is_better else (diff > 0)
-        color = "#2ecc71" if improved else "#e74c3c"
-        arrow = "↓" if diff < 0 else "↑"
-        return f"<span style='color:{color};font-weight:600;'>{arrow}{abs(diff):.1f}%</span>"
-
-    st.markdown("**核心指标对比**")
-    h1, h2, h3, h4 = st.columns([2, 1.5, 1.5, 1.5])
-    for col, label in zip([h1, h2, h3, h4], ["指标", v1, v2, "变化"]):
-        col.markdown(f"**{label}**")
-
-    rows: list[tuple] = [
-        ("好评率", f"{s1['pos_rate']:.1f}%", f"{s2['pos_rate']:.1f}%",
-         _delta(s2["pos_rate"], s1["pos_rate"])),
-        ("差评率", f"{s1['neg_rate']:.1f}%", f"{s2['neg_rate']:.1f}%",
-         _delta(s2["neg_rate"], s1["neg_rate"], lower_is_better=True)),
-    ]
-    if s1["avg_rating"] and s2["avg_rating"]:
-        diff_r = s2["avg_rating"] - s1["avg_rating"]
-        color_r = "#2ecc71" if diff_r > 0.01 else ("#e74c3c" if diff_r < -0.01 else "#888")
-        arrow_r = "↑" if diff_r > 0.01 else ("↓" if diff_r < -0.01 else "—")
-        delta_r = f"<span style='color:{color_r};font-weight:600;'>{arrow_r}{abs(diff_r):.2f}</span>"
-        rows.append(("平均评分", f"{s1['avg_rating']:.1f}", f"{s2['avg_rating']:.1f}", delta_r))
-
-    for metric, val1, val2, delta in rows:
-        c_a, c_b, c_c, c_d = st.columns([2, 1.5, 1.5, 1.5])
-        c_a.write(metric); c_b.write(val1); c_c.write(val2)
-        c_d.markdown(delta, unsafe_allow_html=True)
-
-    neg1 = [c for c in c1 if c.get("sentiment") == "negative"]
-    neg2 = [c for c in c2 if c.get("sentiment") == "negative"]
-    if not neg1 and not neg2:
-        return
-
-    map1 = {i["tag"]: i["pct"] for i in _get_top_tags(neg1, "issue_tag", len(neg1))}
-    map2 = {i["tag"]: i["pct"] for i in _get_top_tags(neg2, "issue_tag", len(neg2))}
-    all_tags = list(dict.fromkeys(list(map1) + list(map2)))[:10]
-
-    st.markdown(f"**差评 TOP 问题变化（{v1} → {v2}）**")
-    h1, h2, h3, h4 = st.columns([3, 1.5, 1.5, 2])
-    for col, label in zip([h1, h2, h3, h4], ["问题标签", f"{v1}占比", f"{v2}占比", "变化"]):
-        col.markdown(f"**{label}**")
-
-    for tag in all_tags:
-        p1, p2 = map1.get(tag, 0), map2.get(tag, 0)
-        diff = p2 - p1
-        if abs(diff) < 0.05:
-            delta_str = "<span style='color:#888;'>—</span>"
-        elif diff < 0:
-            delta_str = f"<span style='color:#2ecc71;font-weight:600;'>↓{abs(diff):.1f}% 改善</span>"
-        else:
-            delta_str = f"<span style='color:#e74c3c;font-weight:600;'>↑{abs(diff):.1f}% 恶化</span>"
-        c_a, c_b, c_c, c_d = st.columns([3, 1.5, 1.5, 2])
-        c_a.write(tag); c_b.write(f"{p1:.1f}%"); c_c.write(f"{p2:.1f}%")
-        c_d.markdown(delta_str, unsafe_allow_html=True)
 
 
 def _render_comparison_section(session: dict, user_id: int) -> None:
@@ -647,7 +534,7 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
     st.markdown("""
     <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
         <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">3</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">环比分析</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">环比 / 版本对比</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -688,6 +575,27 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
             else:
                 st.info("只有一个版本，无法跨版本对比")
                 version2 = None
+
+    # 跨版本模式：版本升级说明（可展开编辑）
+    if is_cross_version and version2:
+        def _get_notes(ver: str) -> str:
+            s_list = [s for s in all_sessions if s["version"] == ver]
+            return (s_list[-1].get("version_notes") or "").strip() if s_list else ""
+        notes_v1, notes_v2 = _get_notes(version1), _get_notes(version2)
+        with st.expander("版本升级说明（点击编辑）", expanded=bool(notes_v1 or notes_v2)):
+            col_n1, col_n2 = st.columns(2)
+            with col_n1:
+                new_notes_v1 = st.text_area(f"{version1} 升级说明", value=notes_v1, key="vc_notes_v1", height=80)
+            with col_n2:
+                new_notes_v2 = st.text_area(f"{version2} 升级说明", value=notes_v2, key="vc_notes_v2", height=80)
+            if st.button("保存说明", key="vc_save_notes"):
+                for ver, notes in [(version1, new_notes_v1), (version2, new_notes_v2)]:
+                    s_list = [s for s in all_sessions if s["version"] == ver]
+                    if s_list:
+                        update_session_notes(s_list[-1]["id"], notes)
+                get_sessions.clear()
+                st.success("已保存")
+                st.rerun()
 
     if "7天" in period:
         days = 7
@@ -788,48 +696,86 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
         cur_pos, cur_neg, cur_total = _calc(current_comments)
         prev_pos, prev_neg, prev_total = _calc(prev_comments)
 
-        pos_diff = cur_pos - prev_pos
-        neg_diff = cur_neg - prev_neg
-        pos_color = "#2ecc71" if pos_diff >= 0 else "#e74c3c"
-        neg_color = "#2ecc71" if neg_diff <= 0 else "#e74c3c"
-        pos_arrow = "↑" if pos_diff >= 0 else "↓"
-        neg_arrow = "↑" if neg_diff >= 0 else "↓"
+        label_cur = label_current.split("（")[0]
+        label_prv = label_prev.split("（")[0]
 
-        st.markdown(f"""
-        <div class="compare-bar time">
-            <span style="font-weight:600;">环比结果</span>
-            <span style="font-size:12px;color:#828282;">{label_current}（{cur_total}条） vs {label_prev}（{prev_total}条）</span>
-            <span>正面率 <span style="color:#828282;text-decoration:line-through;">{prev_pos:.1f}%</span>
-            <span style="font-weight:700;color:{pos_color};">→ {cur_pos:.1f}% {pos_arrow}{abs(pos_diff):.1f}%</span></span>
-            <span>负面率 <span style="color:#828282;text-decoration:line-through;">{prev_neg:.1f}%</span>
-            <span style="font-weight:700;color:{neg_color};">→ {cur_neg:.1f}% {neg_arrow}{abs(neg_diff):.1f}%</span></span>
-        </div>
-        """, unsafe_allow_html=True)
+        # 1. 核心指标对比表
+        def _delta_html(new_val: float, old_val: float, lower_is_better: bool = False) -> str:
+            diff = new_val - old_val
+            if abs(diff) < 0.05:
+                return "<span style='color:#888;'>—</span>"
+            improved = (diff < 0) if lower_is_better else (diff > 0)
+            color = "#2ecc71" if improved else "#e74c3c"
+            arrow = "↓" if diff < 0 else "↑"
+            return f"<span style='color:{color};font-weight:600;'>{arrow}{abs(diff):.1f}%</span>"
 
-        # TOP 问题变化
+        st.markdown(f"**核心指标对比** <span style='font-size:12px;color:#828282;'>（{label_current} vs {label_prev}）</span>", unsafe_allow_html=True)
+        h1, h2, h3, h4 = st.columns([2, 1.5, 1.5, 1.5])
+        for col, label in zip([h1, h2, h3, h4], ["指标", label_cur, label_prv, "变化"]):
+            col.markdown(f"**{label}**")
+
+        metric_rows: list[tuple] = [
+            ("好评率", f"{cur_pos:.1f}%", f"{prev_pos:.1f}%", _delta_html(cur_pos, prev_pos)),
+            ("差评率", f"{cur_neg:.1f}%", f"{prev_neg:.1f}%", _delta_html(cur_neg, prev_neg, lower_is_better=True)),
+        ]
+        cur_ratings = [float(c["rating"]) for c in current_comments if c.get("rating")]
+        prev_ratings = [float(c["rating"]) for c in prev_comments if c.get("rating")]
+        if cur_ratings and prev_ratings:
+            cur_avg = sum(cur_ratings) / len(cur_ratings)
+            prev_avg = sum(prev_ratings) / len(prev_ratings)
+            diff_r = cur_avg - prev_avg
+            color_r = "#2ecc71" if diff_r > 0.01 else ("#e74c3c" if diff_r < -0.01 else "#888")
+            arrow_r = "↑" if diff_r > 0.01 else ("↓" if diff_r < -0.01 else "—")
+            delta_r = f"<span style='color:{color_r};font-weight:600;'>{arrow_r}{abs(diff_r):.2f}</span>"
+            metric_rows.append(("平均评分", f"{cur_avg:.1f}", f"{prev_avg:.1f}", delta_r))
+
+        for metric, val_cur, val_prv, delta in metric_rows:
+            c_a, c_b, c_c, c_d = st.columns([2, 1.5, 1.5, 1.5])
+            c_a.write(metric); c_b.write(val_cur); c_c.write(val_prv)
+            c_d.markdown(delta, unsafe_allow_html=True)
+
+        # 2. 产品问题 TOP 变化表
+        def _render_tag_table(cur_comments: list, prev_comments: list, tag_field: str, title: str,
+                              up_label: str, down_label: str, up_color: str, down_color: str) -> None:
+            cur_tags = _get_top_tags(cur_comments, tag_field, len(cur_comments))
+            prev_tags = _get_top_tags(prev_comments, tag_field, len(prev_comments))
+            cur_map = {i["tag"]: i["pct"] for i in cur_tags}
+            prev_map = {i["tag"]: i["pct"] for i in prev_tags}
+            all_tags = list(dict.fromkeys([i["tag"] for i in cur_tags] + [i["tag"] for i in prev_tags]))[:10]
+            if not all_tags:
+                return
+            st.markdown(f"**{title}**")
+            h1, h2, h3, h4 = st.columns([3, 1.5, 1.5, 2])
+            for col, lbl in zip([h1, h2, h3, h4], ["标签", label_cur, label_prv, "变化"]):
+                col.markdown(f"**{lbl}**")
+            for tag in all_tags:
+                p_cur, p_prv = cur_map.get(tag, 0), prev_map.get(tag, 0)
+                diff = p_cur - p_prv
+                if abs(diff) < 0.05:
+                    delta_str = "<span style='color:#888;'>—</span>"
+                elif diff > 0:
+                    delta_str = f"<span style='color:{up_color};font-weight:600;'>↑{abs(diff):.1f}% {up_label}</span>"
+                else:
+                    delta_str = f"<span style='color:{down_color};font-weight:600;'>↓{abs(diff):.1f}% {down_label}</span>"
+                c_a, c_b, c_c, c_d = st.columns([3, 1.5, 1.5, 2])
+                c_a.write(tag); c_b.write(f"{p_cur:.1f}%"); c_c.write(f"{p_prv:.1f}%")
+                c_d.markdown(delta_str, unsafe_allow_html=True)
+
         cur_neg_c = [c for c in current_comments if c.get("sentiment") == "negative"]
         prev_neg_c = [c for c in prev_comments if c.get("sentiment") == "negative"]
+        _render_tag_table(cur_neg_c, prev_neg_c, "issue_tag", "产品问题 TOP 变化",
+                          up_label="恶化", down_label="改善",
+                          up_color="#e74c3c", down_color="#2ecc71")
 
-        if cur_neg_c or prev_neg_c:
-            cur_issues = _get_top_tags(cur_neg_c, "issue_tag", len(cur_neg_c))
-            prev_issues = _get_top_tags(prev_neg_c, "issue_tag", len(prev_neg_c))
-            cur_map = {i["tag"]: i["pct"] for i in cur_issues}
-            prev_map = {i["tag"]: i["pct"] for i in prev_issues}
-            all_tags = list(dict.fromkeys([i["tag"] for i in cur_issues] + [i["tag"] for i in prev_issues]))
+        # 3. 产品亮点 TOP 变化表
+        cur_pos_c = [c for c in current_comments if c.get("sentiment") == "positive"]
+        prev_pos_c = [c for c in prev_comments if c.get("sentiment") == "positive"]
+        _render_tag_table(cur_pos_c, prev_pos_c, "highlight_tag", "产品亮点 TOP 变化",
+                          up_label="提高", down_label="降低",
+                          up_color="#2ecc71", down_color="#e74c3c")
 
-            if all_tags:
-                st.markdown("**TOP 问题环比变化**")
-                for tag in all_tags[:8]:
-                    b_pct = prev_map.get(tag, 0)
-                    t_pct = cur_map.get(tag, 0)
-                    diff = t_pct - b_pct
-                    arrow = "↑" if diff > 0 else ("↓" if diff < 0 else "—")
-                    color = "#e74c3c" if diff > 0 else "#2ecc71"
-                    st.markdown(
-                        f"- **{tag}**：{b_pct:.1f}% → {t_pct:.1f}% "
-                        f"<span style='color:{color};font-weight:600;'>{arrow}{abs(diff):.1f}%</span>",
-                        unsafe_allow_html=True,
-                    )
+        # 4. 行动建议
+        _render_action_suggestions(cur_pos, cur_neg, current_comments)
 
 
 def _render_action_suggestions(pos_rate: float, neg_rate: float, comments: list[dict]) -> None:
