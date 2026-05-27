@@ -667,21 +667,27 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
     )
 
     # 环比设置
-    col_period, col_v1, col_v2 = st.columns(3)
+    is_cross_version = compare_mode == "跨版本对比" or (isinstance(compare_mode, str) and "跨版本" in compare_mode)
+
+    if is_cross_version:
+        col_period, col_v1, col_v2 = st.columns(3)
+    else:
+        col_period, col_v1 = st.columns(2)
+
     with col_period:
         period = st.selectbox("时间粒度", ["周环比（7天）", "双周环比（14天）", "月环比（30天）"], key="compare_period")
     with col_v1:
         version1 = st.selectbox("版本 1", versions, key="compare_v1")
-    with col_v2:
-        if compare_mode == "跨版本对比" or (isinstance(compare_mode, str) and "跨版本" in compare_mode):
+
+    version2 = None
+    if is_cross_version:
+        with col_v2:
             other_versions = [v for v in versions if v != version1]
             if other_versions:
                 version2 = st.selectbox("版本 2", other_versions, key="compare_v2")
             else:
                 st.info("只有一个版本，无法跨版本对比")
                 version2 = None
-        else:
-            version2 = None
 
     if "7天" in period:
         days = 7
