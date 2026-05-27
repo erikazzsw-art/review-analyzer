@@ -108,6 +108,13 @@ def render_upload() -> None:
                 date_end = st.date_input("结束日期", value=None, key="upload_date_end",
                                          label_visibility="collapsed")
 
+        version_notes = st.text_area(
+            "版本升级说明（选填）",
+            placeholder="如：新增折叠床腿，优化包装缓冲材料",
+            key="upload_version_notes",
+            height=80,
+        )
+
         st.markdown("<br>", unsafe_allow_html=True)
         col_btn = st.columns([3, 1])
         with col_btn[1]:
@@ -129,6 +136,7 @@ def render_upload() -> None:
                         "version": version,
                         "date_start": str(date_start) if date_start else None,
                         "date_end": str(date_end) if date_end else None,
+                        "version_notes": version_notes or None,
                     }
                     st.session_state["upload_step"] = 2
                     st.rerun()

@@ -82,3 +82,7 @@ ALTER TABLE comments ADD COLUMN IF NOT EXISTS content_sentiment TEXT;
 -- V2 升级：新增 prompt_version 字段（2026-05-25）
 -- 记录生成该批次分析结果时使用的 Prompt 版本，用于环比时检测口径一致性
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS prompt_version TEXT;
+
+-- V2 升级：新增 version_notes 字段（2026-05-27）
+-- 记录每个版本的升级说明，供版本对比视图展示
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS version_notes TEXT;
