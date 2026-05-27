@@ -661,6 +661,11 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
     # 收集该产品所有版本
     versions = list(dict.fromkeys(s["version"] for s in all_sessions))
 
+    # 对比模式选择（独立一行）
+    compare_mode = "同版本" if len(versions) == 1 else st.radio(
+        "对比模式", ["同版本不同时间段", "跨版本对比"], key="compare_mode", horizontal=True
+    )
+
     # 环比设置
     col_period, col_v1, col_v2 = st.columns(3)
     with col_period:
@@ -668,9 +673,6 @@ def _render_comparison_section(session: dict, user_id: int) -> None:
     with col_v1:
         version1 = st.selectbox("版本 1", versions, key="compare_v1")
     with col_v2:
-        compare_mode = "同版本" if len(versions) == 1 else st.radio(
-            "对比模式", ["同版本不同时间段", "跨版本对比"], key="compare_mode", horizontal=True
-        )
         if compare_mode == "跨版本对比" or (isinstance(compare_mode, str) and "跨版本" in compare_mode):
             other_versions = [v for v in versions if v != version1]
             if other_versions:
