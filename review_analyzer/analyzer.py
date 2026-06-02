@@ -349,6 +349,8 @@ def analyze_batch(
     comments 中每个 dict 需包含 "content" 字段，可选 "rating" 字段。
     返回列表中每个 dict 包含原始字段 + AI 分析结果字段。
     """
+    import time
+
     total = len(comments)
     if total == 0:
         return []
@@ -372,9 +374,6 @@ def analyze_batch(
 
         with lock:
             done_count += 1
-            current = done_count
-        if progress_callback:
-            progress_callback(current, total)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
@@ -383,11 +382,20 @@ def analyze_batch(
             f.add_done_callback(on_done)
             futures.append(f)
 
-        for f in futures:
-            f.result(timeout=120)
+        # 主线程轮询进度并回调（确保 Streamlit 组件更新在主线程）
+        while done_count < total:
+            with lock:
+                current = done_count
+            if progress_callback and current > 0:
+                progress_callback(current, total)
             if auth_error:
                 executor.shutdown(wait=False, cancel_futures=True)
                 raise auth_error
+            time.sleep(0.3)
+
+        # 最后一次回调确保 100%
+        if progress_callback:
+            progress_callback(total, total)
 
     for i, r in enumerate(results):
         if r is None:
