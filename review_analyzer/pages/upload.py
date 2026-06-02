@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+import time
 from datetime import datetime
 
 import pandas as pd
@@ -252,14 +253,17 @@ def render_upload() -> None:
             return
 
         st.markdown("""
-        <div style="text-align:center;padding:40px 0;">
+        <div style="text-align:center;padding:40px 0 20px;">
             <div style="font-size:48px;margin-bottom:16px;">🔄</div>
             <div style="font-size:18px;font-weight:600;margin-bottom:8px;">AI 正在分析评论...</div>
-            <div style="font-size:14px;color:#636E72;margin-bottom:24px;">
+            <div style="font-size:14px;color:#636E72;margin-bottom:8px;">
                 正在提取产品问题与亮点，请耐心等待
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+        progress_container = st.empty()
+        status_text = st.empty()
 
         # 用 session_state 保证 create_session + add_comments_batch 只执行一次
         # Streamlit 脚本在分析期间可能因 WebSocket 心跳被重新执行
@@ -305,14 +309,41 @@ def render_upload() -> None:
             add_comments_batch(user_id, comments_to_insert)
 
         # AI 分析
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-
         unprocessed = get_unprocessed_comments(user_id, session_id)
         category_name = info.get("category", "3C电子")
 
+        analysis_start_time = time.time()
+
+        def _render_progress(percent: float, eta_text: str) -> None:
+            progress_container.markdown(f"""
+            <div style="max-width:500px;margin:0 auto 16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span style="font-size:14px;font-weight:600;color:#202020;">{percent:.0f}%</span>
+                    <span style="font-size:13px;color:#636E72;">{eta_text}</span>
+                </div>
+                <div style="background:#F0F0F0;border-radius:10px;height:12px;overflow:hidden;">
+                    <div style="background:linear-gradient(90deg,#FF8C00,#FFA500);height:100%;
+                                border-radius:10px;width:{percent}%;transition:width 0.3s ease;"></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        _render_progress(0, "预计时间计算中...")
+
         def progress_callback(current: int, total: int) -> None:
-            progress_bar.progress(current / total)
+            percent = current / total * 100
+            elapsed = time.time() - analysis_start_time
+            if current > 0:
+                avg_per_item = elapsed / current
+                remaining_items = total - current
+                eta_seconds = int(avg_per_item * remaining_items)
+                if eta_seconds >= 60:
+                    eta_text = f"预计还需 {eta_seconds // 60} 分 {eta_seconds % 60} 秒"
+                else:
+                    eta_text = f"预计还需 {eta_seconds} 秒"
+            else:
+                eta_text = "预计时间计算中..."
+            _render_progress(percent, eta_text)
             status_text.text(f"正在分析第 {current} / {total} 条评论...")
 
         results = analyze_batch(
@@ -356,10 +387,8 @@ def render_upload() -> None:
         except Exception:
             pass
 
-        progress_bar.progress(1.0)
-        status_text.text("分析完成！")
-
-        st.success("分析完成！正在跳转到结果页...")
+        _render_progress(100, "分析完成！")
+        status_text.text("分析完成！正在跳转到结果页...")
         st.session_state["view_session_id"] = session_id
         st.session_state["current_page"] = "results"
         st.session_state["upload_step"] = 1
