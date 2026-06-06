@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "version": "v1.0",
+    "description": "Aspect canonical key → 多语言 label 映射（i18n 查表）",
+    "design_reference": "docs/v4-t3-integration-plan-2026-06-06.md",
+    "industry_alignment": "Bazaarvoice Sentiments API 多语言、Shulex i18n 推断"
+  },
+  "assembly": {"zh": "组装难度", "en": "Assembly"},
+  "durability": {"zh": "耐用性", "en": "Durability"},
+  "stability": {"zh": "稳固性", "en": "Stability"},
+  "material": {"zh": "材质用料", "en": "Material"},
+  "build_quality": {"zh": "做工", "en": "Build Quality"},
+  "comfort": {"zh": "舒适度", "en": "Comfort"},
+  "size_fit": {"zh": "尺寸匹配", "en": "Size & Fit"},
+  "weight_capacity": {"zh": "承重", "en": "Weight Capacity"},
+  "ease_of_use": {"zh": "易用性", "en": "Ease of Use"},
+  "aesthetics": {"zh": "外观设计", "en": "Aesthetics"},
+  "color_accuracy": {"zh": "颜色还原度", "en": "Color Accuracy"},
+  "packaging": {"zh": "包装", "en": "Packaging"},
+  "shipping_damage": {"zh": "运输损坏", "en": "Shipping Damage"},
+  "missing_parts": {"zh": "缺件", "en": "Missing Parts"},
+  "instructions": {"zh": "说明书", "en": "Instructions"},
+  "customer_service": {"zh": "客服", "en": "Customer Service"},
+  "value_for_money": {"zh": "性价比", "en": "Value for Money"},
+  "smell": {"zh": "异味", "en": "Smell"},
+  "safety": {"zh": "安全性", "en": "Safety"},
+  "other": {"zh": "其他", "en": "Other"}
+}
