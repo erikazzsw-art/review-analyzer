@@ -1,0 +1,104 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: backend_api/Dockerfile
+    environment:
+      API_ENV: production
+      API_CORS_ORIGINS: https://clueai.com,https://www.clueai.com,https://app.clueai.com
+      API_COOKIE_DOMAIN: .clueai.com
+      API_COOKIE_SECURE: "true"
+      AES_SECRET_KEY: ${AES_SECRET_KEY}
+      DATABASE_URL: ${DATABASE_URL}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      FEISHU_WEBHOOK: ${FEISHU_WEBHOOK}
+      PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN}
+      PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT:-production}
+      PADDLE_PRICE_ID: ${PADDLE_PRICE_ID}
+      PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET}
+      REDIS_URL: redis://redis:6379/0
+      API_SESSION_SECRET: ${API_SESSION_SECRET}
+    depends_on:
+      - redis
+    expose:
+      - "8100"
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ..
+      dockerfile: workers/Dockerfile
+    environment:
+      AES_SECRET_KEY: ${AES_SECRET_KEY}
+      DATABASE_URL: ${DATABASE_URL}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      FEISHU_WEBHOOK: ${FEISHU_WEBHOOK}
+      PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN}
+      PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT:-production}
+      PADDLE_PRICE_ID: ${PADDLE_PRICE_ID}
+      PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET}
+      REDIS_URL: redis://redis:6379/0
+      API_SESSION_SECRET: ${API_SESSION_SECRET}
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://api.clueai.com
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: https://api.clueai.com
+    depends_on:
+      - api
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - frontend
+      - api
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+  streamlit:
+    profiles:
+      - legacy
+    build:
+      context: ..
+      dockerfile: backend_api/Dockerfile
+    command:
+      - streamlit
+      - run
+      - review_analyzer/app.py
+      - --server.address=0.0.0.0
+      - --server.port=8501
+    environment:
+      AES_SECRET_KEY: ${AES_SECRET_KEY}
+      DATABASE_URL: ${DATABASE_URL}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      FEISHU_WEBHOOK: ${FEISHU_WEBHOOK}
+      PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN}
+      PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT:-production}
+      PADDLE_PRICE_ID: ${PADDLE_PRICE_ID}
+      PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET}
+    expose:
+      - "8501"
+    restart: unless-stopped
+
+volumes:
+  redis_data:

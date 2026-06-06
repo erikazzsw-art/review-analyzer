@@ -1,0 +1,14 @@
+.git
+.DS_Store
+.claude
+.codex
+.rollback
+.streamlit
+frontend/node_modules
+frontend/.next
+frontend/tsconfig.tsbuildinfo
+frontend/.DS_Store
+__pycache__
+*.pyc
+*.db
+.env

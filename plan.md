@@ -79,6 +79,126 @@
 - **待办**：备案通过后执行部署流程：Streamlit + Nginx 反向代理 + SSL 证书 + 域名 A 记录解析
 - **备注**：Streamlit Cloud（clueai-reviewlens.streamlit.app）备案期间保留作为海外访问入口
 
+### 2026-06-03
+
+#### V2 商业化功能联调
+- **新增**：Ask your reviews 评论问答入口，支持从当前产品评论中检索相关原文、调用 DeepSeek 生成回答，并返回引用评论 — 来源：Erika
+- **新增**：Pro 计费墙，Free 用户添加第二个产品或使用 Ask your reviews 时提示升级 — 来源：Erika
+- **修改**：计费方案从原规划 Stripe 调整为 Paddle，新增 Paddle Checkout、Webhook、`plan` 与 `paddle_customer_id` 字段 — 来源：Erika
+- **修改**：`宣传文案`、`推送设置` 迁移到 Next.js 低频高级页，Paddle 升级入口保留在设置页并通过 `/billing/checkout` 发起 — 来源：Erika
+- **新增**：`POST /billing/webhook` 增加 Paddle 签名校验与 `custom_data.user_id` 兼容解析，保证订阅回写的安全性与兼容性 — 来源：Erika
+- **新增**：`settings` 页统一承接飞书 Webhook、DeepSeek API Key、自动推送规则和产品级规则；`copywriter` 页按平台生成文案与理想产品画像 — 来源：Erika
+- **新增**：Supabase schema 增加 pgvector `embedding vector(1536)` 字段和向量索引 — 来源：Erika
+- **修改**：Ask your reviews 从文本检索版升级为向量版 RAG：上传后生成评论 embedding，提问时生成问题 embedding，并用 pgvector 余弦相似度检索 Top-K 评论；文本检索保留为 fallback — 来源：Erika
+
+#### ClueAI V2.5 产品闭环升级规划
+- **新增**：`plan_V2.md` 作为新版本产品升级方案文档，定位从“评论分析工具”升级为“SKU 口碑改版追踪工具” — 来源：Erika
+- **新增**：产品管理页规划，支持父体产品、变体 SKU、生命周期阶段、版本、竞品、行动事项和复盘记录 — 来源：Erika
+- **新增**：角色化工作台规划，运营、产研、质检、管理者进入系统后按“今日目标”完成工作，而不是从功能菜单开始 — 来源：Erika
+- **新增**：行动中心规划，TOP 问题/亮点可一键生成运营、产研、质检跟进事项 — 来源：Erika
+- **新增**：复盘追踪规划，支持包装破损、Listing 误用、新增功能卖点等问题的持续跟踪、指标对比和完结状态 — 来源：Erika
+- **新增**：多产品、同产品、同父体变体、跨版本横向对比规划，输出问题差异和可落地建议 — 来源：Erika
+
+#### V2.5 本地实现进展
+- **新增**：`supabase_schema.sql` 本地追加 `products`、`product_variants`、`product_versions`、`action_items`、`review_trackers`、`comparison_reports` 表结构，为 V2.5-V3.1 闭环能力提供数据底座 — 来源：Erika
+- **新增**：独立 `review_analyzer/product_store.py`，新功能 CRUD 不再继续堆到 `database.py`，同时兼容旧 `product_id` 文本数据聚合 — 来源：Erika
+- **新增**：产品管理页 `review_analyzer/pages/products.py`，支持查看产品组、生命周期、版本、最大问题/亮点、变体列表，并对历史 SKU 数据做未建档兼容展示 — 来源：Erika
+- **修改**：侧边栏导航新增“产品管理”，但本次只做本地实现，不推送 GitHub、不触发部署 — 来源：Erika
+
+#### V2.6 本地实现进展
+- **新增**：上传页增加 6 个“工作目的”入口：竞品调研、新品上线监控、日常评论分析、Listing 优化、质量问题复盘、版本改版验证 — 来源：Erika
+- **新增**：上传页支持“绑定已有产品组 / 新建产品组”两种方式，并在分析开始前自动创建新产品组档案 — 来源：Erika
+- **新增**：当文件原始字段里存在 ASIN / SKU 且能匹配到已建的子变体时，系统自动绑定到对应子变体；若识别不到或出现多个变体混合，则默认只绑定到产品组 — 来源：Erika
+- **新增**：`sessions` 增加 `workflow_purpose`、`product_ref_id`、`variant_ref_id` 入库逻辑，分析结果页会按工作目的给出优先阅读提示 — 来源：Erika
+- **修改**：上传文件解析成功后，在首屏直接展示“开始分析并查看结果”入口，并在分析完成后自动打开结果页时显示承接提示，减少上传后找不到下一步的卡顿感 — 来源：Erika
+
+#### V2.7 本地实现进展
+- **新增**：独立 `review_analyzer/action_store.py` 和 `review_analyzer/pages/actions.py`，行动事项不再塞进 `database.py`，侧边栏新增“行动中心”入口 — 来源：Erika
+- **新增**：分析结果页 `TOP 10 产品问题` 每一项支持展开“创建动作”面板，可一键创建运营、产研、质检和复盘跟进事项 — 来源：Erika
+- **新增**：行动中心支持按状态 / 角色筛选，并支持 `待处理 → 处理中 → 待复盘 → 已完结` 的状态更新 — 来源：Erika
+- **备注**：当前“加入复盘追踪”先落为复盘类 action item，为 V2.8 的正式 `review_trackers` 页面做过渡，不影响后续升级 — 来源：Erika
+
+#### V2.8 本地实现进展
+- **新增**：独立 `review_analyzer/review_store.py` 和 `review_analyzer/pages/reviews.py`，侧边栏新增“复盘追踪”入口，支持查看和更新 tracker 结果 — 来源：Erika
+- **新增**：行动中心支持从 action item 一键生成正式 review tracker，并自动把原事项状态切到“待复盘” — 来源：Erika
+- **新增**：复盘页支持填写复盘评论范围、当前占比、结论状态（待复盘 / 已改善 / 未改善 / 继续跟进 / 已完结）和复盘结论 — 来源：Erika
+- **新增**：分析结果页会根据当前评论里的问题标签和产品绑定关系，提示“这批评论可用于复盘哪个问题” — 来源：Erika
+
+#### V2.9 本地实现进展
+- **新增**：独立 `review_analyzer/compare_store.py`，统一承接同产品时间、同产品版本、同父体变体、多产品横向和自定义批次的对比聚合，输出评论数、好评率、差评率、TOP 问题、TOP 亮点和代表评论 — 来源：Erika
+- **新增**：独立 `review_analyzer/pages/compare.py`，侧边栏新增“对比分析”入口，支持按产品 / 版本 / 变体 / 批次选择对比对象，并输出对比表、问题差异、亮点差异、风险对象和推荐动作 — 来源：Erika
+- **修改**：`review_analyzer/workflow_prompts.py` 增加对比类型阅读提示，帮助用户按不同场景理解时间对比、版本对比、变体对比和多产品对比 — 来源：Erika
+- **新增**：对比页已支持调用 DeepSeek 生成 AI 对比总结，基于当前对比数据补充一句话结论、风险提醒和推荐动作；接口失败时仍保留规则建议，不影响页面可用性 — 来源：Erika
+- **备注**：当前保留“规则建议 + AI 总结”双层输出，兼顾本地稳定性与经营判断可读性 — 来源：Erika
+
+#### V3.0 本地实现进展
+- **新增**：独立 `review_analyzer/workspace_store.py`，统一聚合角色视角下的今日任务、高风险 SKU、待复盘事项、团队事项概览和最近上传批次 — 来源：Erika
+- **修改**：`review_analyzer/pages/dashboard.py` 已从旧版产品长列表仪表盘改为“今日工作台”，默认展示角色切换、今日最该处理的 1-3 件事、高风险 SKU、待复盘事项和快捷入口 — 来源：Erika
+- **修改**：侧边栏首页入口文案由“仪表盘”调整为“今日工作台 / Workspace”，用户登录后优先进入角色任务视角，而不是先面对功能列表 — 来源：Erika
+- **备注**：本轮保留产品管理、行动中心、复盘追踪、对比分析作为独立深入口，首页只负责分发任务与导航，不再承载完整产品详情长页面 — 来源：Erika
+
+#### V3.1 本地实现进展
+- **新增**：独立 `review_analyzer/pages/features.py`，按“产品与数据 / 评论分析 / 竞品与研发 / 行动闭环 / 增长运营 / 系统设置”分组收纳全部功能入口 — 来源：Erika
+- **修改**：默认侧边栏导航已收敛为 6 个核心入口：今日工作台、产品管理、评论分析、行动中心、复盘追踪、全部功能 — 来源：Erika
+- **修改**：对比分析、分析结果、历史记录、宣传文案、推送设置等高级能力不再占用默认导航，改为从“全部功能”页进入 — 来源：Erika
+- **修改**：高级页面（对比分析 / 分析结果 / 历史记录 / 宣传文案 / 推送设置）打开时，侧边栏会自动把“全部功能”标为当前归属入口，降低跳转后的迷失感 — 来源：Erika
+- **新增**：全部功能页顶部补充“常用路径”快捷入口，让它不只是目录页，也能承接常见下一步动作 — 来源：Erika
+- **新增**：独立 `review_analyzer/page_shell.py`，统一核心页和高级页的页头、所属路径和常用跳转入口，减少模块拼接感，提升本地演示连贯性 — 来源：Erika
+- **修改**：登录后的全局 App Shell UI 已按 `clueai_v2_ui_prototype.html` 回调为柔和清爽的 V2 风格，统一了配色 token、圆角、阴影、按钮、侧边栏、卡片和上传区样式 — 来源：Erika
+- **新增**：全部功能页补充“演示清单”6 条典型路径，便于本地演示时快速串联工作台、上传、结果、行动、复盘和高级入口 — 来源：Erika
+- **修改**：统一页头升级为 V2 风格的柔和卡片，并给对比分析页补上空态页头和回跳入口，避免数据不足时出现“半页感” — 来源：Erika
+- **修改**：欢迎页、登录页、试用页的登录前入口已统一回调到系统内 V2 风格，入口外观、卡片层次、品牌语气和 CTA 路径保持一致 — 来源：Erika
+- **新增**：已登录状态下可通过侧边栏“预览欢迎页”进入登录前入口预览模式，并可一键返回工作台，方便本地验收欢迎页/登录页/试用页 UI — 来源：Erika
+- **备注**：当前信息架构采用“工作流优先，功能地图兜底”，既保证新用户不迷路，也保留高级用户的完整能力路径 — 来源：Erika
+
+### 2026-06-04
+
+#### 评论工作流与问评论重构
+- **修改**：一级导航重构为“今日工作台、产品管理、上传评论、评论分析、问评论、行动中心、复盘追踪、宣传文案、推送设置”，`上传评论` 固定放在 `评论分析` 上方 — 来源：Erika
+- **删除**：`全部功能` 从用户可见导航中移除，旧 `features / results / compare / history` 入口统一归一到新的 `评论分析` 容器或对应一级页 — 来源：Erika
+- **修改**：产品管理、上传评论、评论分析及其他同类页面的页头跨页快捷按钮全部移除，页面切换统一回归左侧一级导航 — 来源：Erika
+- **新增**：`评论分析` 只保留 `分析结果 / 对比分析 / 历史记录` 三个子页，并新增 `review_analyzer/pages/analysis_hub.py` 统一承接子页切换 — 来源：Erika
+- **修改**：上传完成后固定跳转到 `评论分析 > 分析结果`，并自动写入当前批次 `view_session_id` — 来源：Erika
+- **新增**：分析结果页重构为 6 段顺序模块：消费者画像、用户体验、购买动机、未被满足的需求、综合建议、评论原文 — 来源：Erika
+- **新增**：分析结果页前 5 个模块均支持“英文转中文”和模块级 XLSX 下载；`用户体验` 模块新增 `全部时间 / 30天 / 60天 / 90天 / 自定义` 时间筛选 — 来源：Erika
+- **新增**：对比分析页重构为“标准对比 + 功能点定向对比”，支持同产品时间、同产品多版本、跨产品（最多 5 个）统一矩阵式展示，并支持整页翻译与下载 — 来源：Erika
+- **新增**：`问评论` 升级为独立一级导航，页面标题固定为 `评论问答知识库`，支持先选 1-5 个产品，再基于聚合评论做 RAG 问答并显示来源产品/批次引用 — 来源：Erika
+- **修改**：`宣传文案`、`推送设置` 提升为一级导航，并固定排列在 `复盘追踪` 下方；欢迎页文案同步改为新的主链路描述 — 来源：Erika
+- **新增**：本轮补充 `translation.py`、`analysis_export.py`、`insight_engine.py` 三个服务层模块，分别承接结构化翻译、XLSX 导出和结果/对比摘要生成 — 来源：Erika
+
+#### 欢迎页本地预览重构
+- **修改**：欢迎页继续沿用当前 V2 柔和配色与字体体系，不另起新品牌色，重点从“功能堆叠”调整为“价值优先”的高级简约官网表达 — 来源：Erika
+- **新增**：欢迎页增加“新版欢迎页”本地预览分支，保留当前欢迎页作为对比基线，方便在不替换正式入口的前提下直接验收新方案 — 来源：Erika
+- **新增**：新版欢迎页采用固定 5 段结构：Hero 首屏、3 个核心价值点、产品截图说明、差异化说明、底部 CTA，文案主线改为“评论洞察 → 行动跟进 → 复盘验证” — 来源：Erika
+- **修改**：已登录侧边栏的公共预览入口拆分为“预览当前欢迎页 / 预览新版欢迎页”，复用现有 public preview 机制，不改登录前整体路由 — 来源：Erika
+
+#### 英文界面可用性校对
+- **修改**：一级导航英文命名统一定稿为 `Today's Workspace`、`Product Management`、`Upload Reviews`、`Review Analysis`、`Review Q&A`、`Action Center`、`Follow-up Tracking`、`Marketing Copy`、`Notification Settings`，替换不自然或易歧义的旧命名 — 来源：Erika
+- **新增**：新增 `review_analyzer/i18n.py` 统一承接导航、公共按钮、角色名、状态名和页面静态文案的中英切换，避免“英文导航 + 中文正文”混杂 — 来源：Erika
+- **修改**：登录前入口（欢迎页 / 登录页 / 试用页）与登录后高频页面（今日工作台、产品管理、上传评论、评论分析、问评论、行动中心、复盘追踪、宣传文案、推送设置）已补齐英文模式可用文案 — 来源：Erika
+- **修改**：`评论分析` 容器下的 `分析结果 / 对比分析 / 历史记录`、`产品管理`、`上传评论`、`宣传文案`、`推送设置` 页面已统一英文化外层 UI、筛选器、空态、按钮和关键状态提示 — 来源：Erika
+
+### 2026-06-05
+
+#### Next.js 全栈迁移规划
+- **新增**：新增迁移目标文档 `docs/nextjs-migration-target-2026-06-05.md`，明确 ClueAI 将从 Streamlit 单体页面应用升级为 `Next.js + FastAPI + Redis/RQ + Supabase` 架构 — 来源：Erika
+- **新增**：新增实施计划文档 `docs/superpowers/plans/2026-06-05-nextjs-migration-implementation-plan.md`，按 `NX-M1` 到 `NX-M8` 拆分独立模块，要求单模块独立开发、独立验收、独立回滚 — 来源：Erika
+- **修改**：前端迁移策略从“营销站优先、产品层后置观察”调整为“全系统逐步迁到 Next.js，保留 Python 业务能力并采用双栈分阶段替换” — 来源：Erika
+- **修改**：迁移原则明确为“先替换前端体验，再逐步下线 Streamlit”，禁止一次性大重构破坏现有主流程 — 来源：Erika
+- **新增**：完成 `NX-M1` 前端工程骨架，本地已搭建 `frontend/` 的 Next.js + TypeScript + Tailwind 结构，并补齐 `/ /login /register /trial /pricing /workspace` 页面骨架 — 来源：Erika
+- **新增**：完成 `NX-M2` FastAPI 骨架与认证层，本地已建立 `backend_api/`，打通 `/health /auth/register /auth/login /auth/logout /auth/password/reset/request /auth/password/reset/confirm /me`，会话改为 HttpOnly Cookie，不依赖 `st.session_state` — 来源：Erika
+- **新增**：完成 `NX-M5` 结果 / 对比 / 历史迁移，本地已补齐 `/analysis/results /analysis/compare /analysis/history` 的 URL 直达能力，并新增 `POST /compare/reports` 显式生成并保存对比报告，支持 session 直达历史上下文 — 来源：Erika
+- **新增**：完成 `NX-M8` 部署与 Streamlit 下线路径，本地已补齐 `frontend / backend_api / workers` Dockerfile、`deploy/nginx.conf`、`deploy/docker-compose.yml` 与阿里云部署说明，明确 `clueai.com / app.clueai.com / api.clueai.com` 分层和 Streamlit 回退边界 — 来源：Erika
+- **新增**：补齐 Next.js 营销站的可上线 SEO 基础，本地已为首页 / 定价 / 试用页配置独立 metadata、为登录后应用页统一 noindex、补充 `robots.txt / sitemap.xml / opengraph-image`，让 `clueai.com` 可作为独立获客入口上线 — 来源：Erika
+
+### 2026-06-06
+
+#### NX-M6 闭环迁移完成
+- **新增**：完成 `NX-M6` 问评论 / 行动中心 / 复盘追踪迁移，本地已补齐 `/qa /actions /reviews` 页面与对应 FastAPI 接口，支持 1-5 个产品聚合问评论、从结果页创建 action、从 action 生成 tracker、并在复盘页回写结果 — 来源：Erika
+- **修改**：问评论入口从单一 RAG 阅读页升级为带产品范围选择的评论问答入口，回答保留引用评论，便于运营回看证据 — 来源：Erika
+- **修改**：行动中心从“只看事项状态”升级为“结果页可直接创建 action + 行动中心继续推进 + 一键加入复盘”，打通闭环主链路 — 来源：Erika
+- **修改**：复盘追踪页从独立记录页升级为可持续更新 tracker 的结果回写页，支持复盘范围、当前占比、结论状态与复盘结论 — 来源：Erika
+
 ### 2026-05-11
 
 #### 部署环境适配
