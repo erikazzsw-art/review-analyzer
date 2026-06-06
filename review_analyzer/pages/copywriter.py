@@ -1,70 +1,71 @@
 """宣传文案页面 — 基于评论分析生成广告文案"""
 
 import json
-import os
 
 import streamlit as st
 from openai import OpenAI
 
 from review_analyzer.auth import get_current_user_id
-from review_analyzer.database import get_sessions, get_comments
 from review_analyzer.analyzer import get_api_key
+from review_analyzer.database import get_sessions, get_comments
+from review_analyzer.i18n import pick
+from review_analyzer.page_shell import render_page_header
 
 
 PLATFORM_DATA = {
     "amazon": {
-        "name": "亚马逊站内广告文案",
+        "name": {"zh": "亚马逊站内广告文案", "en": "Amazon Ad Copy"},
         "icon": "📦",
-        "label": "亚马逊站内",
+        "label": {"zh": "亚马逊站内", "en": "Amazon"},
         "sub": "Amazon Ads",
         "types": [
-            {"id": "sp", "name": "SP商品推广标题", "limit": 150},
-            {"id": "sd", "name": "SD展示型广告文案", "limit": 100},
-            {"id": "sb", "name": "SB品牌推广标语", "limit": 50},
+            {"id": "sp", "name": {"zh": "SP商品推广标题", "en": "SP Product Ad Title"}, "limit": 150},
+            {"id": "sd", "name": {"zh": "SD展示型广告文案", "en": "SD Display Ad Copy"}, "limit": 100},
+            {"id": "sb", "name": {"zh": "SB品牌推广标语", "en": "SB Brand Slogan"}, "limit": 50},
         ],
     },
     "google": {
-        "name": "谷歌广告文案",
+        "name": {"zh": "谷歌广告文案", "en": "Google Ad Copy"},
         "icon": "🔍",
-        "label": "谷歌广告",
+        "label": {"zh": "谷歌广告", "en": "Google Ads"},
         "sub": "Google Ads",
         "types": [
-            {"id": "title", "name": "广告标题", "limit": 30},
-            {"id": "desc", "name": "广告描述", "limit": 90},
-            {"id": "ext", "name": "附加信息", "limit": 25},
+            {"id": "title", "name": {"zh": "广告标题", "en": "Ad Headline"}, "limit": 30},
+            {"id": "desc", "name": {"zh": "广告描述", "en": "Ad Description"}, "limit": 90},
+            {"id": "ext", "name": {"zh": "附加信息", "en": "Extra Detail"}, "limit": 25},
         ],
     },
     "facebook": {
-        "name": "Facebook 广告文案",
+        "name": {"zh": "Facebook 广告文案", "en": "Facebook Ad Copy"},
         "icon": "👤",
-        "label": "Facebook",
+        "label": {"zh": "Facebook", "en": "Facebook"},
         "sub": "Meta Ads",
         "types": [
-            {"id": "primary", "name": "主要文案", "limit": 125},
-            {"id": "headline", "name": "标题", "limit": 40},
-            {"id": "desc", "name": "描述", "limit": 30},
+            {"id": "primary", "name": {"zh": "主要文案", "en": "Primary Copy"}, "limit": 125},
+            {"id": "headline", "name": {"zh": "标题", "en": "Headline"}, "limit": 40},
+            {"id": "desc", "name": {"zh": "描述", "en": "Description"}, "limit": 30},
         ],
     },
     "instagram": {
-        "name": "Instagram 广告文案",
+        "name": {"zh": "Instagram 广告文案", "en": "Instagram Ad Copy"},
         "icon": "📷",
-        "label": "Instagram",
+        "label": {"zh": "Instagram", "en": "Instagram"},
         "sub": "IG Ads",
         "types": [
-            {"id": "post", "name": "帖子文案", "limit": 2200},
-            {"id": "story", "name": "故事文案", "limit": 125},
-            {"id": "reels", "name": "Reels标题", "limit": 100},
+            {"id": "post", "name": {"zh": "帖子文案", "en": "Post Copy"}, "limit": 2200},
+            {"id": "story", "name": {"zh": "故事文案", "en": "Story Copy"}, "limit": 125},
+            {"id": "reels", "name": {"zh": "Reels标题", "en": "Reels Title"}, "limit": 100},
         ],
     },
     "walmart": {
-        "name": "沃尔玛站内广告文案",
+        "name": {"zh": "沃尔玛站内广告文案", "en": "Walmart Ad Copy"},
         "icon": "🏬",
-        "label": "沃尔玛站内",
+        "label": {"zh": "沃尔玛站内", "en": "Walmart"},
         "sub": "Walmart Ads",
         "types": [
-            {"id": "prodtitle", "name": "商品标题", "limit": 75},
-            {"id": "proddesc", "name": "商品描述", "limit": 150},
-            {"id": "slogan", "name": "广告标语", "limit": 80},
+            {"id": "prodtitle", "name": {"zh": "商品标题", "en": "Product Title"}, "limit": 75},
+            {"id": "proddesc", "name": {"zh": "商品描述", "en": "Product Description"}, "limit": 150},
+            {"id": "slogan", "name": {"zh": "广告标语", "en": "Ad Slogan"}, "limit": 80},
         ],
     },
 }
@@ -73,57 +74,80 @@ PLATFORM_RULES = {
     "amazon": {
         "name": "Amazon Advertising Policy",
         "prohibited": ["best", "#1", "guaranteed", "discount", "free", "cheap", "limited time", "buy now"],
-        "guidelines": "Amazon 禁止使用最高级词（best, #1）、未经验证的声明、紧迫感语言（hurry, limited time）、价格诱导词（discount, free, cheap）。",
+        "guidelines": {
+            "zh": "Amazon 禁止使用最高级词（best, #1）、未经验证的声明、紧迫感语言（hurry, limited time）、价格诱导词（discount, free, cheap）。",
+            "en": "Avoid superlatives like best or #1, unverifiable claims, urgency language, and price-led wording such as discount, free, or cheap.",
+        },
     },
     "google": {
         "name": "Google Ads Policy",
         "prohibited": ["click here", "buy now", "free", "guaranteed", "#1", "best", "lowest price"],
-        "guidelines": "Google Ads 禁止误导性声明、过度大写、标题中的感叹号、不可验证的最高级、点击诱导语言。标题不超过30字符，描述不超过90字符。",
+        "guidelines": {
+            "zh": "Google Ads 禁止误导性声明、过度大写、标题中的感叹号、不可验证的最高级、点击诱导语言。标题不超过30字符，描述不超过90字符。",
+            "en": "Avoid misleading claims, all-caps emphasis, exclamation-heavy titles, unverifiable superlatives, and clickbait phrasing. Headlines should stay within 30 characters and descriptions within 90.",
+        },
     },
     "facebook": {
         "name": "Meta (Facebook) Advertising Policy",
         "prohibited": ["you are", "your body", "weight loss", "before and after", "cure", "guaranteed results"],
-        "guidelines": "Meta 禁止针对个人属性的描述（you are, your body）、身体羞辱、健康声明、情感操纵、收入声明。避免对用户特征的第二人称断言。",
+        "guidelines": {
+            "zh": "Meta 禁止针对个人属性的描述（you are, your body）、身体羞辱、健康声明、情感操纵、收入声明。避免对用户特征的第二人称断言。",
+            "en": "Avoid personal-attribute claims, body shaming, health claims, emotional manipulation, and income claims. Do not make second-person assumptions about the audience.",
+        },
     },
     "instagram": {
         "name": "Instagram (Meta) Advertising Policy",
         "prohibited": ["you are", "your body", "weight loss", "before and after", "cure", "swipe up", "link in bio"],
-        "guidelines": "Instagram 遵循 Meta 政策：禁止个人属性声明、身体羞辱、健康声明。付费广告中避免使用 'swipe up' 和 'link in bio'。",
+        "guidelines": {
+            "zh": "Instagram 遵循 Meta 政策：禁止个人属性声明、身体羞辱、健康声明。付费广告中避免使用 'swipe up' 和 'link in bio'。",
+            "en": "Follow Meta policy: avoid personal-attribute claims, body shaming, and health claims. In paid ads, avoid phrasing like swipe up or link in bio.",
+        },
     },
     "walmart": {
         "name": "Walmart Connect Advertising Policy",
         "prohibited": ["best", "#1", "guaranteed", "discount", "free", "cheap", "lowest price"],
-        "guidelines": "Walmart Connect 禁止最高级词、未经验证的声明、价格语言（discount, free, cheap）、紧迫感策略。产品声明必须可验证。",
+        "guidelines": {
+            "zh": "Walmart Connect 禁止最高级词、未经验证的声明、价格语言（discount, free, cheap）、紧迫感策略。产品声明必须可验证。",
+            "en": "Avoid superlatives, unverifiable claims, price-led language such as discount or free, and urgency tactics. Product claims should be supportable.",
+        },
     },
 }
 
-STYLES = ["简洁专业", "幽默风趣", "情感共鸣", "数据驱动"]
+STYLES = [
+    {"zh": "简洁专业", "en": "Clear & Professional"},
+    {"zh": "幽默风趣", "en": "Playful"},
+    {"zh": "情感共鸣", "en": "Emotional"},
+    {"zh": "数据驱动", "en": "Data-Driven"},
+]
+
+
+def _copy_name(value: dict[str, str]) -> str:
+    return pick(value["zh"], value["en"])
 
 
 def render_copywriter() -> None:
     user_id = get_current_user_id()
     if not user_id:
-        st.warning("请先登录")
+        st.warning(pick("请先登录", "Please log in first."))
         return
 
-    st.markdown("""
-    <div style="margin-bottom:32px;">
-        <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">生成宣传文案</div>
-        <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">基于真实用户评论，AI 生成产品宣传语和选品洞察</div>
-    </div>
-    """, unsafe_allow_html=True)
+    render_page_header(
+        pick("宣传文案", "Marketing Copy"),
+        pick("基于真实用户评论，AI 生成产品宣传语和选品洞察。", "Generate ad copy and product-positioning insights from real customer reviews."),
+        path=pick("业务协同 / 宣传文案", "Collaboration / Marketing Copy"),
+    )
 
     # ① 选择产品和分析记录
     st.markdown("""
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
         <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">1</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">选择产品和分析记录</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">%s</span>
     </div>
-    """, unsafe_allow_html=True)
+    """ % pick("选择产品和分析记录", "Choose Product and Analysis Batches"), unsafe_allow_html=True)
 
     sessions = get_sessions(user_id)
     if not sessions:
-        st.info("暂无分析记录，请先上传评论并完成分析")
+        st.info(pick("暂无分析记录，请先上传评论并完成分析", "No analysis records yet. Upload reviews and finish an analysis first."))
         return
 
     # 获取产品列表
@@ -136,22 +160,32 @@ def render_copywriter() -> None:
 
     col1, col2 = st.columns(2)
     with col1:
-        product_options = ["请选择..."] + [f"{pid}" for pid in products.keys()]
-        selected_product = st.selectbox("产品编号 *", product_options, key="copy_product")
+        product_options = ["__placeholder__"] + [f"{pid}" for pid in products.keys()]
+        selected_product = st.selectbox(
+            pick("产品编号 *", "Product ID *"),
+            product_options,
+            key="copy_product",
+            format_func=lambda value: pick("请选择...", "Please select...") if value == "__placeholder__" else value,
+        )
     with col2:
-        version_options = ["全部版本"]
-        if selected_product != "请选择...":
+        version_options = ["__all__"]
+        if selected_product != "__placeholder__":
             versions = set(s["version"] for s in products.get(selected_product, []))
             version_options += sorted(versions)
-        selected_version = st.selectbox("版本号（选填）", version_options, key="copy_version")
+        selected_version = st.selectbox(
+            pick("版本号（选填）", "Version (Optional)"),
+            version_options,
+            key="copy_version",
+            format_func=lambda value: pick("全部版本", "All Versions") if value == "__all__" else value,
+        )
 
     # 分析记录表格
-    if selected_product != "请选择...":
+    if selected_product != "__placeholder__":
         product_sessions = products.get(selected_product, [])
-        if selected_version != "全部版本":
+        if selected_version != "__all__":
             product_sessions = [s for s in product_sessions if s["version"] == selected_version]
 
-        st.markdown("**选择分析记录：**")
+        st.markdown(f"**{pick('选择分析记录：', 'Choose Analysis Batches:')}**")
         selected_sessions = []
         for s in product_sessions:
             total = s.get("total_reviews", 0)
@@ -167,7 +201,7 @@ def render_copywriter() -> None:
                 dr = ""
                 if s.get("date_range_start") and s.get("date_range_end"):
                     dr = f"{s['date_range_start']} ~ {s['date_range_end']}"
-                st.write(dr or "—")
+                st.write(dr or pick("—", "—"))
             with col_num:
                 st.write(f"{total:,}")
             with col_rate:
@@ -181,9 +215,9 @@ def render_copywriter() -> None:
     st.markdown("""
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
         <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">2</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">选择投放平台</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">%s</span>
     </div>
-    """, unsafe_allow_html=True)
+    """ % pick("选择投放平台", "Choose Destination Platform"), unsafe_allow_html=True)
 
     if "copy_platform" not in st.session_state:
         st.session_state["copy_platform"] = "amazon"
@@ -193,7 +227,7 @@ def render_copywriter() -> None:
         with platform_cols[i]:
             is_active = st.session_state["copy_platform"] == pid
             btn_type = "primary" if is_active else "secondary"
-            if st.button(f"{pdata['icon']} {pdata['label']}", key=f"platform_{pid}",
+            if st.button(f"{pdata['icon']} {_copy_name(pdata['label'])}", key=f"platform_{pid}",
                          use_container_width=True, type=btn_type):
                 st.session_state["copy_platform"] = pid
                 st.rerun()
@@ -204,14 +238,20 @@ def render_copywriter() -> None:
     st.markdown("""
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
         <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">3</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">自定义产品功能点（选填）</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">%s</span>
     </div>
-    <p style="font-size:13px;color:#4d4d4d;margin-bottom:10px;">填写产品核心卖点，系统将结合评论分析结果生成更精准的文案</p>
-    """, unsafe_allow_html=True)
+    <p style="font-size:13px;color:#4d4d4d;margin-bottom:10px;">%s</p>
+    """ % (
+        pick("自定义产品功能点（选填）", "Custom Product Features (Optional)"),
+        pick("填写产品核心卖点，系统将结合评论分析结果生成更精准的文案", "Add core selling points so the system can generate more precise copy from your review insights."),
+    ), unsafe_allow_html=True)
 
     feature_points = st.text_area(
-        "产品功能点",
-        placeholder="例如：主动降噪、续航12小时、IPX5防水、蓝牙5.3、轻量设计仅38g...（多个功能点用逗号或换行分隔）",
+        pick("产品功能点", "Product Features"),
+        placeholder=pick(
+            "例如：主动降噪、续航12小时、IPX5防水、蓝牙5.3、轻量设计仅38g...（多个功能点用逗号或换行分隔）",
+            "e.g. active noise cancellation, 12-hour battery life, IPX5 water resistance, Bluetooth 5.3, lightweight 38g... (separate with commas or line breaks)",
+        ),
         key="copy_features",
         label_visibility="collapsed",
     )
@@ -222,19 +262,19 @@ def render_copywriter() -> None:
     st.markdown("""
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
         <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">4</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">选择生成内容</span>
+        <span style="font-size:16px;font-weight:600;color:#202020;">%s</span>
     </div>
-    """, unsafe_allow_html=True)
+    """ % pick("选择生成内容", "Choose Output Types"), unsafe_allow_html=True)
 
     col_opt1, col_opt2 = st.columns(2)
     with col_opt1:
-        gen_ad_copy = st.checkbox("平台广告文案", value=True, key="copy_gen_ad")
+        gen_ad_copy = st.checkbox(pick("平台广告文案", "Platform Ad Copy"), value=True, key="copy_gen_ad")
     with col_opt2:
-        gen_ideal_desc = st.checkbox("客户理想产品描述", value=True, key="copy_gen_ideal")
+        gen_ideal_desc = st.checkbox(pick("客户理想产品描述", "Ideal Product Profile"), value=True, key="copy_gen_ideal")
 
     col_gen = st.columns([3, 1])
     with col_gen[1]:
-        generate_clicked = st.button("🪄 生成文案", type="primary", use_container_width=True, key="copy_generate")
+        generate_clicked = st.button(pick("🪄 生成文案", "🪄 Generate Copy"), type="primary", use_container_width=True, key="copy_generate")
 
     # ⑤ 生成结果
     if generate_clicked or st.session_state.get("copy_generated"):
@@ -252,9 +292,9 @@ def render_copywriter() -> None:
         # 取 TOP 评论摘要（正面+负面各取前15条）
         pos_samples = [c["content"] for c in all_comments if c.get("sentiment") == "positive" and c.get("content")][:15]
         neg_samples = [c["content"] for c in all_comments if c.get("sentiment") == "negative" and c.get("content")][:15]
-        review_summary = "正面评论摘要:\n" + "\n".join(f"- {r[:100]}" for r in pos_samples)
+        review_summary = "Positive review summary:\n" + "\n".join(f"- {r[:100]}" for r in pos_samples)
         if neg_samples:
-            review_summary += "\n\n负面评论摘要:\n" + "\n".join(f"- {r[:100]}" for r in neg_samples)
+            review_summary += "\n\nNegative review summary:\n" + "\n".join(f"- {r[:100]}" for r in neg_samples)
 
         features_text = st.session_state.get("copy_features", "")
 
@@ -264,26 +304,26 @@ def render_copywriter() -> None:
             st.markdown(f"""
             <div style="padding:12px 16px;background:#fff0eb;border-radius:8px;font-size:12px;
                         color:#4d4d4d;line-height:1.6;border:1px solid #ffd6c4;margin-bottom:16px;">
-                <strong style="color:#ff682c;">{rules['name']}</strong>：{rules['guidelines']}
+                <strong style="color:#ff682c;">{rules['name']}</strong>: {pick(rules['guidelines']['zh'], rules['guidelines']['en'])}
             </div>
             """, unsafe_allow_html=True)
 
-            st.markdown(f"**{platform_info['name']}**")
+            st.markdown(f"**{_copy_name(platform_info['name'])}**")
 
             for ad_type in platform_info["types"]:
-                st.markdown(f"**{ad_type['name']}**（≤ {ad_type['limit']} 字符）")
+                st.markdown(f"**{_copy_name(ad_type['name'])}** ({pick('≤', '<=')} {ad_type['limit']} {pick('字符', 'chars')})")
 
                 style_key = f"style_{platform}_{ad_type['id']}"
                 if style_key not in st.session_state:
-                    st.session_state[style_key] = "简洁专业"
+                    st.session_state[style_key] = STYLES[0]["zh"]
 
                 style_cols = st.columns(4)
                 for si, style in enumerate(STYLES):
                     with style_cols[si]:
-                        btn_type = "primary" if st.session_state[style_key] == style else "secondary"
-                        if st.button(style, key=f"style_btn_{platform}_{ad_type['id']}_{si}",
+                        btn_type = "primary" if st.session_state[style_key] == style["zh"] else "secondary"
+                        if st.button(_copy_name(style), key=f"style_btn_{platform}_{ad_type['id']}_{si}",
                                      use_container_width=True, type=btn_type):
-                            st.session_state[style_key] = style
+                            st.session_state[style_key] = style["zh"]
                             if f"copy_result_{platform}_{ad_type['id']}" in st.session_state:
                                 del st.session_state[f"copy_result_{platform}_{ad_type['id']}"]
                             st.rerun()
@@ -299,7 +339,7 @@ def render_copywriter() -> None:
 
                 if need_generate and all_comments:
                     current_style = st.session_state[style_key]
-                    prompt = f"""你是跨境电商广告文案专家。根据以下用户评论分析结果，为产品生成{platform_info['name']}的{ad_type['name']}。
+                    prompt = f"""你是跨境电商广告文案专家。根据以下用户评论分析结果，为产品生成{platform_info['name']['zh']}的{ad_type['name']['zh']}。
 
 要求：
 1. 风格：{current_style}
@@ -325,33 +365,37 @@ def render_copywriter() -> None:
                         result = json.loads(resp.choices[0].message.content)
                         st.session_state[result_key] = result
                     except Exception as e:
-                        st.session_state[result_key] = {"en": f"生成失败: {e}", "zh": ""}
+                        st.session_state[result_key] = {"en": f"Generation failed: {e}", "zh": ""}
 
                 copy_result = st.session_state.get(result_key, {})
                 en_text = copy_result.get("en", "")
                 zh_text = copy_result.get("zh", "")
                 char_count = len(en_text)
                 is_compliant = not any(w in en_text.lower() for w in rules["prohibited"])
-                badge = '<span class="compliance-badge pass">✓ 合规</span>' if is_compliant else '<span class="compliance-badge warn">⚠ 有风险</span>'
+                badge = (
+                    f'<span class="compliance-badge pass">{pick("✓ 合规", "✓ Compliant")}</span>'
+                    if is_compliant
+                    else f'<span class="compliance-badge warn">{pick("⚠ 有风险", "⚠ Risk")}</span>'
+                )
 
                 st.markdown(f"""
                 <div style="font-size:14px;line-height:1.8;padding:14px 16px;background:#f9f9f9;
                             border-radius:8px;border:1px solid #e8e8e8;margin:8px 0;border-left:3px solid #ff682c;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                        <span style="font-size:12px;color:#828282;">{char_count} / {ad_type['limit']} 字符</span>
+                        <span style="font-size:12px;color:#828282;">{char_count} / {ad_type['limit']} {pick('字符', 'chars')}</span>
                         {badge}
                     </div>
                     <strong style="color:#202020;">{en_text}</strong>
                     <div style="border-top:1px dashed #e8e8e8;margin-top:8px;padding-top:8px;
                                 font-size:12px;color:#4d4d4d;">
-                        中文参考：{zh_text}
+                        {pick('中文参考：', 'Chinese Reference: ')}{zh_text}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
                 btn_cols = st.columns([4, 1])
                 with btn_cols[1]:
-                    if st.button("刷新", key=refresh_key, use_container_width=True):
+                    if st.button(pick("刷新", "Refresh"), key=refresh_key, use_container_width=True):
                         if result_key in st.session_state:
                             del st.session_state[result_key]
                         st.rerun()
@@ -359,7 +403,7 @@ def render_copywriter() -> None:
                 st.markdown("")
 
         if gen_ideal_desc:
-            st.markdown("**客户理想产品描述（选品依据）**")
+            st.markdown(f"**{pick('客户理想产品描述（选品依据）', 'Ideal Product Profile (Sourcing Reference)')}**")
 
             ideal_key = "copy_ideal_desc"
             if ideal_key not in st.session_state and all_comments:
@@ -387,7 +431,7 @@ def render_copywriter() -> None:
                     )
                     st.session_state[ideal_key] = json.loads(resp.choices[0].message.content)
                 except Exception as e:
-                    st.session_state[ideal_key] = {"summary": f"生成失败: {e}"}
+                    st.session_state[ideal_key] = {"summary": f"Generation failed: {e}"}
 
             ideal = st.session_state.get(ideal_key, {})
             features = ideal.get("features", [])
@@ -401,10 +445,10 @@ def render_copywriter() -> None:
                     {summary}
                 </div>
                 <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e8e8e8;font-size:13px;color:#4d4d4d;display:flex;gap:16px;flex-wrap:wrap;">
-                    <span>💰 价格预期：<strong>{ideal.get('price_range', '—')}</strong></span>
-                    <span>🚚 物流要求：<strong>{ideal.get('logistics', '—')}</strong></span>
-                    <span>📦 包装期望：<strong>{ideal.get('packaging', '—')}</strong></span>
-                    <span>🛎️ 售后要求：<strong>{ideal.get('service', '—')}</strong></span>
+                    <span>💰 {pick('价格预期', 'Price Expectation')}: <strong>{ideal.get('price_range', '—')}</strong></span>
+                    <span>🚚 {pick('物流要求', 'Shipping Expectation')}: <strong>{ideal.get('logistics', '—')}</strong></span>
+                    <span>📦 {pick('包装期望', 'Packaging Expectation')}: <strong>{ideal.get('packaging', '—')}</strong></span>
+                    <span>🛎️ {pick('售后要求', 'After-Sales Expectation')}: <strong>{ideal.get('service', '—')}</strong></span>
                 </div>
             </div>
             """, unsafe_allow_html=True)

@@ -7,19 +7,26 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
 
-from review_analyzer.database import init_db
 from review_analyzer.auth import is_logged_in, get_current_username, logout
+from review_analyzer.database import init_db
+from review_analyzer.i18n import nav_items, set_lang, t
 from review_analyzer.pages.login import render_login_page
 from review_analyzer.pages.landing import render_landing_page
 from review_analyzer.pages.trial import render_trial_page
 from review_analyzer.pages.dashboard import render_dashboard
+from review_analyzer.pages.products import render_products
 from review_analyzer.pages.upload import render_upload
-from review_analyzer.pages.results import render_results, render_history
+from review_analyzer.pages.analysis_hub import render_analysis_hub
+from review_analyzer.pages.actions import render_actions
+from review_analyzer.pages.reviews import render_reviews
 from review_analyzer.pages.copywriter import render_copywriter
+from review_analyzer.pages.rag_library import render_rag_library
 from review_analyzer.pages.settings import render_settings
 
+ANALYSIS_LEGACY_PAGES = {"results", "compare", "history", "features"}
+
 st.set_page_config(
-    page_title="ClueAI - 评论分析系统",
+    page_title="ClueAI - Review Analysis System",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -36,22 +43,23 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;700;800&display=swap');
 
 :root {
-    --pri: #ff682c;
-    --pri-l: #ff8f66;
-    --pri-d: #e55520;
-    --grn: #2ecc71;
-    --red: #e74c3c;
-    --yel: #f39c12;
-    --blu: #3498db;
-    --bg: #ffffff;
+    --pri: #f36f8f;
+    --pri-l: #ffd6e0;
+    --pri-d: #d94d72;
+    --grn: #4fb99f;
+    --red: #db5b63;
+    --yel: #d8963e;
+    --blu: #5e93d8;
+    --lav: #8d7be8;
+    --bg: #fffaf8;
     --card: #ffffff;
-    --card-alt: #efefef;
-    --txt: #202020;
-    --txt-l: #4d4d4d;
-    --txt-m: #828282;
-    --bdr: #e8e8e8;
-    --shd: none;
-    --r: 8px;
+    --card-alt: #fff6f7;
+    --txt: #25212a;
+    --txt-l: #6f6877;
+    --txt-m: #9b94a5;
+    --bdr: #ebe4ee;
+    --shd: 0 18px 50px rgba(79, 58, 93, 0.12);
+    --r: 22px;
     --font-body: 'Inter', system-ui, sans-serif;
     --font-heading: 'Montserrat', system-ui, sans-serif;
 }
@@ -62,6 +70,9 @@ footer {visibility: hidden;}
 [data-testid="stToolbar"] {display: none !important;}
 [data-testid="stDecoration"] {display: none !important;}
 [data-testid="stStatusWidget"] {display: none !important;}
+[data-testid="stToolbarActions"] {display: none !important;}
+div[data-testid="stStatusWidget"] {display: none !important;}
+.stApp > header [data-testid="stStatusWidget"] {display: none !important;}
 
 /* 侧边栏展开按钮 — 确保在白色背景上可见 */
 [data-testid="collapsedControl"],
@@ -111,8 +122,8 @@ h1, h2, h3 {
 
 /* 侧边栏样式 */
 [data-testid="stSidebar"] {
-    background: #f5f5f5;
-    border-right: 1px solid var(--bdr);
+    background: #fff6f7;
+    border-right: 1px solid #f2dde5;
     width: 260px !important;
 }
 
@@ -122,47 +133,63 @@ h1, h2, h3 {
 
 /* 自定义按钮 */
 .stButton > button {
-    border-radius: 20px;
-    font-weight: 500;
+    min-height: 44px;
+    border-radius: 999px;
+    font-weight: 700;
     font-size: 14px;
-    padding: 8px 20px;
-    transition: all 0.15s;
+    padding: 0 18px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     font-family: var(--font-body);
     border: 1px solid var(--bdr);
+    box-shadow: none;
 }
+.stButton > button:hover { transform: translateY(-1px); }
 
-/* 主色按钮 — ghost 风格 */
+/* 主色按钮 */
 .stButton > button[kind="primary"] {
-    background: transparent;
-    color: var(--txt);
-    border: 2px solid var(--txt);
-}
-.stButton > button[kind="primary"]:hover {
     background: var(--txt);
     color: #ffffff;
+    border-color: var(--txt);
+    box-shadow: 0 12px 24px rgba(37, 33, 42, 0.16);
+}
+.stButton > button[kind="primary"]:hover {
+    background: #1f1b24;
+    border-color: #1f1b24;
+}
+.stButton > button[kind="secondary"] {
+    background: #ffffff;
+    color: var(--txt);
+    border-color: var(--bdr);
+}
+.stButton > button[kind="secondary"]:hover {
+    background: #fff6f7;
+    border-color: #f2dde5;
 }
 
 /* 表单输入框 */
 .stTextInput > div > div > input,
 .stSelectbox > div > div,
 .stDateInput > div > div > input {
-    border: 1px solid var(--bdr);
-    border-radius: 8px;
+    border: 1.5px solid var(--bdr);
+    border-radius: 14px;
     font-size: 14px;
     font-family: var(--font-body);
+    background: #ffffff;
 }
 .stTextInput > div > div > input:focus {
-    border-color: var(--txt);
+    border-color: var(--pri);
     box-shadow: none;
 }
 
 /* 指标卡片 */
 .metric-card {
-    background: var(--card-alt);
+    background: #ffffff;
     border-radius: var(--r);
-    padding: 28px;
+    padding: 18px 18px 16px;
     position: relative;
     overflow: hidden;
+    border: 1px solid var(--bdr);
+    box-shadow: 0 12px 28px rgba(88, 69, 97, 0.07);
 }
 .metric-card::before {
     content: '';
@@ -171,15 +198,15 @@ h1, h2, h3 {
     left: 0;
     width: 4px;
     height: 100%;
-    border-radius: 4px 0 0 4px;
+    border-radius: 8px 0 0 8px;
 }
-.metric-card.purple::before { background: var(--pri); }
+.metric-card.purple::before { background: var(--lav); }
 .metric-card.green::before { background: var(--grn); }
 .metric-card.red::before { background: var(--red); }
 .metric-card.yellow::before { background: var(--yel); }
 .metric-icon { font-size: 16px; margin-bottom: 12px; color: var(--txt-m); }
-.metric-val { font-size: 32px; font-weight: 800; color: var(--txt); font-family: var(--font-heading); letter-spacing: -0.02em; }
-.metric-label { font-size: 13px; color: var(--txt-l); margin-top: 6px; font-weight: 500; }
+.metric-val { font-size: 28px; font-weight: 800; color: var(--txt); font-family: var(--font-heading); letter-spacing: -0.03em; }
+.metric-label { font-size: 12px; color: var(--txt-l); margin-top: 6px; font-weight: 700; }
 .metric-change { font-size: 12px; margin-top: 8px; display: inline-block; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
 .metric-change.up { background: #e8f8f0; color: var(--grn); }
 .metric-change.down { background: #fdeaea; color: var(--red); }
@@ -189,12 +216,12 @@ h1, h2, h3 {
 .tag-pos { background: #e8f8f0; color: var(--grn); }
 .tag-neg { background: #fdeaea; color: var(--red); }
 .tag-neu { background: #fef3e0; color: #e67e22; }
-.tag-topic { background: #fff0eb; color: var(--pri); }
-.tag-platform { background: #eef6ff; color: #2d6cdf; }
+.tag-topic { background: #ffeaf0; color: var(--pri-d); }
+.tag-platform { background: #edf4ff; color: #346eb8; }
 
 /* 环比条 */
 .compare-bar {
-    background: var(--card-alt);
+    background: #fff7fb;
     border-radius: var(--r);
     padding: 16px 20px;
     margin-bottom: 12px;
@@ -203,30 +230,35 @@ h1, h2, h3 {
     gap: 20px;
     flex-wrap: wrap;
     font-size: 14px;
+    border: 1px solid var(--bdr);
+    box-shadow: 0 10px 22px rgba(96, 63, 88, 0.06);
 }
-.compare-bar.version { border-left: 4px solid var(--pri); }
+.compare-bar.version { border-left: 4px solid var(--lav); }
 .compare-bar.time { border-left: 4px solid var(--blu); }
 
 /* 行动建议卡 */
 .action-card {
-    background: var(--card-alt);
+    background: linear-gradient(135deg, #fff4f7, #fff9ef 58%, #eef8f4);
     border-radius: var(--r);
     padding: 20px;
     margin-top: 20px;
+    border: 1px solid var(--bdr);
     border-left: 4px solid var(--pri);
+    box-shadow: 0 14px 32px rgba(94, 70, 92, 0.08);
 }
 .action-card.danger {
-    background: #fdeaea;
+    background: linear-gradient(135deg, #fff1f3, #fff8f0);
     border-left-color: var(--red);
 }
 
 /* 产品卡片 */
 .product-block {
     background: var(--card);
-    border-radius: 12px;
+    border-radius: var(--r);
     padding: 32px;
     margin-bottom: 28px;
     border: 1px solid var(--bdr);
+    box-shadow: var(--shd);
 }
 
 /* 数据表格 */
@@ -235,24 +267,24 @@ h1, h2, h3 {
     font-family: var(--font-body) !important;
 }
 .dataframe th {
-    background: #f5f5f5 !important;
+    background: #fff7fb !important;
     color: var(--txt-l) !important;
     font-weight: 600 !important;
 }
 .dataframe tr:hover td {
-    background: #f5f5f5 !important;
+    background: #fff9fc !important;
 }
 
 /* 上传区 */
 [data-testid="stFileUploader"] {
-    border: 2px dashed var(--bdr);
+    border: 1.5px dashed #e7b8c7;
     border-radius: var(--r);
     padding: 20px;
-    background: #f5f5f5;
+    background: #fff8fa;
 }
 [data-testid="stFileUploader"]:hover {
     border-color: var(--pri);
-    background: #fff0eb;
+    background: #fff2f7;
 }
 
 /* 步骤指示器 */
@@ -266,20 +298,22 @@ h1, h2, h3 {
     text-align: center;
     padding: 12px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 700;
     color: var(--txt-m);
-    background: var(--card);
-    border-bottom: 3px solid var(--bdr);
+    background: #ffffff;
+    border: 1px solid var(--bdr);
     font-family: var(--font-body);
+    border-radius: 18px;
 }
 .step-item.active {
     color: var(--txt);
-    border-bottom-color: var(--pri);
-    background: #fff0eb;
+    border-color: #ffc5d3;
+    background: #fff5f7;
 }
 .step-item.done {
     color: var(--grn);
-    border-bottom-color: var(--grn);
+    border-color: #bfe8dc;
+    background: #effaf6;
 }
 
 /* 图表卡片 */
@@ -288,6 +322,7 @@ h1, h2, h3 {
     border-radius: var(--r);
     padding: 20px;
     border: 1px solid var(--bdr);
+    box-shadow: 0 12px 28px rgba(88, 69, 97, 0.07);
 }
 
 /* 设置区块 */
@@ -297,33 +332,37 @@ h1, h2, h3 {
     padding: 24px;
     border: 1px solid var(--bdr);
     margin-bottom: 20px;
+    box-shadow: 0 12px 28px rgba(88, 69, 97, 0.07);
 }
 
 /* 平台卡片 */
 .platform-card {
-    background: #f5f5f5;
+    background: #fff;
     border: 1px solid var(--bdr);
-    border-radius: 8px;
+    border-radius: 18px;
     padding: 16px 12px;
     text-align: center;
     cursor: pointer;
     transition: all 0.15s;
+    box-shadow: 0 10px 22px rgba(88, 69, 97, 0.05);
 }
 .platform-card:hover {
     border-color: var(--pri);
-    background: #fff0eb;
+    background: #fff5f7;
 }
 .platform-card.active {
     border-color: var(--pri);
-    background: #fff0eb;
+    background: #fff5f7;
 }
 
 /* 文案卡片 */
 .copy-card {
-    background: #f5f5f5;
-    border-radius: 8px;
+    background: #ffffff;
+    border-radius: 18px;
     padding: 20px;
     margin-bottom: 14px;
+    border: 1px solid var(--bdr);
+    box-shadow: 0 12px 28px rgba(88, 69, 97, 0.06);
 }
 
 /* 合规徽章 */
@@ -342,14 +381,14 @@ h1, h2, h3 {
 /* 历史记录布局 */
 .hist-sku-item {
     padding: 10px 14px;
-    border-radius: 8px;
+    border-radius: 16px;
     cursor: pointer;
     font-size: 14px;
     transition: all 0.15s;
     margin-bottom: 4px;
 }
-.hist-sku-item:hover { background: #fff0eb; }
-.hist-sku-item.active { background: #fff0eb; color: var(--pri); font-weight: 600; }
+.hist-sku-item:hover { background: #fff5f7; }
+.hist-sku-item.active { background: #fff5f7; color: var(--pri-d); font-weight: 700; }
 
 /* 批次卡片 */
 .batch-card {
@@ -361,10 +400,11 @@ h1, h2, h3 {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    box-shadow: 0 12px 24px rgba(88, 69, 97, 0.06);
 }
 
 /* 关键词云 */
-.keyword { padding: 6px 14px; border-radius: 20px; font-size: 13px; background: #fff0eb; color: var(--pri); display: inline-block; margin: 4px; }
+.keyword { padding: 6px 14px; border-radius: 20px; font-size: 13px; background: #ffeaf0; color: var(--pri-d); display: inline-block; margin: 4px; }
 .keyword.lg { font-size: 18px; font-weight: 600; padding: 8px 18px; }
 .keyword.md { font-size: 15px; font-weight: 500; }
 .keyword.sm { font-size: 12px; }
@@ -376,8 +416,8 @@ h1, h2, h3 {
     background: var(--card);
     border-top: 2px solid var(--pri);
     padding: 12px 20px;
-    border-radius: 8px 8px 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -12px 28px rgba(88, 69, 97, 0.08);
     z-index: 5;
 }
 
@@ -389,11 +429,12 @@ h1, h2, h3 {
     border: 1px solid var(--bdr);
     margin-top: 16px;
     border-left: 4px solid var(--pri);
+    box-shadow: 0 12px 24px rgba(88, 69, 97, 0.06);
 }
 
 /* 进度条 */
 .stProgress > div > div > div {
-    background: var(--pri);
+    background: linear-gradient(90deg, var(--pri), var(--lav));
 }
 
 /* 侧边栏导航项 */
@@ -422,13 +463,32 @@ h1, h2, h3 {
 # ============================================================
 
 def main() -> None:
+    if "lang" not in st.session_state:
+        st.session_state["lang"] = "zh"
+
+    show_page = st.session_state.get("show_page", "landing")
+    is_public_preview = bool(st.session_state.get("force_public_preview"))
+
+    landing_preview_variant = str(st.session_state.get("landing_preview_variant", "current"))
+
     if not is_logged_in():
-        show_page = st.session_state.get("show_page", "landing")
+        st.session_state.pop("force_public_preview", None)
         if show_page == "login":
             render_login_page()
         elif show_page == "trial":
             render_trial_page()
         else:
+            st.session_state["landing_preview_variant"] = "refresh"
+            render_landing_page()
+        return
+
+    if is_public_preview and show_page in {"landing", "login", "trial"}:
+        if show_page == "login":
+            render_login_page()
+        elif show_page == "trial":
+            render_trial_page()
+        else:
+            st.session_state["landing_preview_variant"] = landing_preview_variant
             render_landing_page()
         return
 
@@ -452,20 +512,21 @@ def main() -> None:
     """, unsafe_allow_html=True)
 
     with st.sidebar:
-        if st.button("ClueAI", key="brand_home_btn", use_container_width=True, type="secondary"):
+        if st.button(t("brand_button"), key="brand_home_btn", use_container_width=True, type="secondary"):
+            st.session_state.pop("force_public_preview", None)
             st.session_state["current_page"] = "dashboard"
             st.rerun()
         st.markdown("""
         <style>
         [data-testid="stSidebar"] button[kind="secondary"]:first-of-type {
             font-size: 18px;
-            font-weight: 700;
-            color: #202020;
+            font-weight: 900;
+            color: #25212a;
             font-family: 'Montserrat', system-ui, sans-serif;
             letter-spacing: -0.02em;
             background: transparent;
             border: none;
-            border-bottom: 1px solid #e8e8e8;
+            border-bottom: 1px solid #ebe4ee;
             border-radius: 0;
             padding: 8px 0 16px;
             margin-bottom: 12px;
@@ -473,41 +534,41 @@ def main() -> None:
             justify-content: flex-start;
         }
         [data-testid="stSidebar"] button[kind="secondary"]:first-of-type:hover {
-            color: #ff682c;
+            color: #d94d72;
             background: transparent;
-            border-bottom: 1px solid #e8e8e8;
+            border-bottom: 1px solid #ebe4ee;
+        }
+        [data-testid="stSidebar"] button[kind="primary"] {
+            background: #ffffff !important;
+            color: #25212a !important;
+            border: 1px solid #ebe4ee !important;
+            box-shadow: 0 8px 20px rgba(96, 63, 88, 0.08) !important;
+        }
+        [data-testid="stSidebar"] button[kind="secondary"] {
+            background: transparent !important;
+            color: #6f6877 !important;
+            border: 1px solid transparent !important;
+        }
+        [data-testid="stSidebar"] button[kind="secondary"]:not(:first-of-type):hover {
+            background: #ffffff !important;
+            color: #25212a !important;
+            border-color: #ebe4ee !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
-        if "lang" not in st.session_state:
-            st.session_state["lang"] = "zh"
-
-        lang = st.session_state["lang"]
-
-        nav_items_zh = {
-            "dashboard": ("📊", "仪表盘"),
-            "upload": ("📤", "上传评论"),
-            "results": ("📋", "分析结果"),
-            "history": ("🕘", "历史记录"),
-            "copywriter": ("✍️", "宣传文案"),
-            "settings": ("⚙️", "推送设置"),
-        }
-        nav_items_en = {
-            "dashboard": ("📊", "Dashboard"),
-            "upload": ("📤", "Upload"),
-            "results": ("📋", "Results"),
-            "history": ("🕘", "History"),
-            "copywriter": ("✍️", "Copywriter"),
-            "settings": ("⚙️", "Settings"),
-        }
-        nav_items = nav_items_zh if lang == "zh" else nav_items_en
-
         if "current_page" not in st.session_state:
             st.session_state["current_page"] = "dashboard"
 
-        for page_id, (icon, label) in nav_items.items():
-            is_active = st.session_state["current_page"] == page_id
+        current_page = str(st.session_state.get("current_page", "dashboard"))
+        if current_page in ANALYSIS_LEGACY_PAGES:
+            legacy_subpage = "results" if current_page == "features" else current_page
+            st.session_state["current_page"] = "analysis"
+            st.session_state["analysis_subpage"] = legacy_subpage
+
+        for page_id, (icon, label) in nav_items().items():
+            current_page = st.session_state["current_page"]
+            is_active = current_page == page_id
             if st.button(
                 f"{icon}  {label}",
                 key=f"nav_{page_id}",
@@ -522,14 +583,14 @@ def main() -> None:
         # 语言切换
         col_lang1, col_lang2 = st.columns(2)
         with col_lang1:
-            btn_type_zh = "primary" if lang == "zh" else "secondary"
-            if st.button("中文", key="lang_zh", use_container_width=True, type=btn_type_zh):
-                st.session_state["lang"] = "zh"
+            btn_type_zh = "primary" if st.session_state["lang"] == "zh" else "secondary"
+            if st.button(t("language_zh"), key="lang_zh", use_container_width=True, type=btn_type_zh):
+                set_lang("zh")
                 st.rerun()
         with col_lang2:
-            btn_type_en = "primary" if lang == "en" else "secondary"
-            if st.button("EN", key="lang_en", use_container_width=True, type=btn_type_en):
-                st.session_state["lang"] = "en"
+            btn_type_en = "primary" if st.session_state["lang"] == "en" else "secondary"
+            if st.button(t("language_en"), key="lang_en", use_container_width=True, type=btn_type_en):
+                set_lang("en")
                 st.rerun()
 
         # 用户信息
@@ -543,8 +604,19 @@ def main() -> None:
         </div>
         """, unsafe_allow_html=True)
 
-        logout_label = "退出登录" if lang == "zh" else "Logout"
-        if st.button(logout_label, key="logout_btn"):
+        if st.button(t("preview_landing"), key="preview_public_pages_btn", use_container_width=True):
+            st.session_state["force_public_preview"] = True
+            st.session_state["show_page"] = "landing"
+            st.session_state["landing_preview_variant"] = "current"
+            st.rerun()
+
+        if st.button(t("preview_landing_new"), key="preview_public_pages_v2_btn", use_container_width=True):
+            st.session_state["force_public_preview"] = True
+            st.session_state["show_page"] = "landing"
+            st.session_state["landing_preview_variant"] = "refresh"
+            st.rerun()
+
+        if st.button(t("logout"), key="logout_btn"):
             logout()
             st.rerun()
 
@@ -552,12 +624,18 @@ def main() -> None:
     page = st.session_state.get("current_page", "dashboard")
     if page == "dashboard":
         render_dashboard()
+    elif page == "products":
+        render_products()
     elif page == "upload":
         render_upload()
-    elif page == "results":
-        render_results()
-    elif page == "history":
-        render_history()
+    elif page == "analysis":
+        render_analysis_hub()
+    elif page == "rag":
+        render_rag_library()
+    elif page == "actions":
+        render_actions()
+    elif page == "reviews":
+        render_reviews()
     elif page == "copywriter":
         render_copywriter()
     elif page == "settings":

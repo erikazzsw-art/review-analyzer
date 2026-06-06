@@ -97,7 +97,8 @@ def render_history() -> None:
                 with btn_col2:
                     if st.button("查看结果", key=f"hist_view_{s['id']}"):
                         st.session_state["view_session_id"] = s["id"]
-                        st.session_state["current_page"] = "results"
+                        st.session_state["current_page"] = "analysis"
+                        st.session_state["analysis_subpage"] = "results"
                         st.rerun()
                 with btn_col3:
                     try:

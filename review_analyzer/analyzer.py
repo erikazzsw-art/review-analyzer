@@ -458,11 +458,15 @@ def get_api_key(user_id: Optional[int] = None) -> str:
     """
     if user_id is not None:
         try:
+            from .auth import load_user_api_key
             from .database import get_setting
 
-            user_key = get_setting(user_id, "api_key")
+            user_key = load_user_api_key(user_id)
             if user_key:
                 return user_key
+            legacy_key = get_setting(user_id, "api_key")
+            if legacy_key:
+                return legacy_key
         except Exception:
             pass
 

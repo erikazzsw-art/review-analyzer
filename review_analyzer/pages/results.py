@@ -1,1071 +1,512 @@
-"""分析结果页面 — 纵向单页布局"""
+"""评论分析结果与历史记录页面。"""
 
 from __future__ import annotations
 
-import json
-from collections import Counter
-from datetime import datetime, timedelta, date as date_type
+from collections import defaultdict
+from datetime import date, datetime, timedelta
+from typing import Any
 
-import plotly.graph_objects as go
+import pandas as pd
 import streamlit as st
 
+from review_analyzer.analysis_export import export_result_module_to_xlsx
 from review_analyzer.auth import get_current_user_id
-from review_analyzer.database import get_sessions, get_comments, get_session_by_id, get_setting, delete_session, delete_product, update_session_notes
+from review_analyzer.database import delete_session, get_comments, get_session_by_id, get_sessions
 from review_analyzer.exporter import export_to_xlsx
-from review_analyzer.notifier import push_selected_items
+from review_analyzer.i18n import pick
+from review_analyzer.insight_engine import build_results_insights
+from review_analyzer.page_shell import render_page_header
+from review_analyzer.translation import translate_result_module
+from review_analyzer.workflow_prompts import get_result_focus_hint, get_workflow_purpose_label
 
 
-def _get_top_tags(comments: list[dict], tag_field: str, pool_size: int) -> list[dict]:
-    """统计 TOP10 标签"""
-    tag_counter: Counter = Counter()
-    for c in comments:
-        tags = c.get(tag_field, "")
-        if tags:
-            seen_in_comment: set[str] = set()
-            for tag in tags.split(","):
-                tag = tag.strip()
-                if tag and tag not in seen_in_comment:
-                    seen_in_comment.add(tag)
-                    tag_counter[tag] += 1
+RESULT_MODULES = [
+    ("consumer_profile", {"zh": "消费者画像", "en": "Consumer Profile"}),
+    ("user_experience", {"zh": "用户体验", "en": "User Experience"}),
+    ("purchase_motives", {"zh": "购买动机", "en": "Purchase Motives"}),
+    ("unmet_needs", {"zh": "未被满足的需求", "en": "Unmet Needs"}),
+    ("recommendations", {"zh": "综合建议", "en": "Recommendations"}),
+]
 
-    top10 = tag_counter.most_common(10)
-    result = []
-    for rank, (tag, count) in enumerate(top10, 1):
-        pct = count / pool_size * 100 if pool_size > 0 else 0
-        result.append({"rank": rank, "tag": tag, "count": count, "pct": pct})
-    return result
+TIME_MODE_OPTIONS = {
+    "all": {"zh": "全部时间", "en": "All Time"},
+    "30": {"zh": "30天", "en": "30 Days"},
+    "60": {"zh": "60天", "en": "60 Days"},
+    "90": {"zh": "90天", "en": "90 Days"},
+    "custom": {"zh": "自定义", "en": "Custom"},
+}
 
 
-def _calc_sentiment_stats(comments: list[dict]) -> dict:
-    unrecog = sum(1 for c in comments if c.get("sentiment") == "unrecognizable")
-    valid = len(comments) - unrecog
-    pos = sum(1 for c in comments if c.get("sentiment") == "positive")
-    neg = sum(1 for c in comments if c.get("sentiment") == "negative")
-    ratings = [float(c["rating"]) for c in comments if c.get("rating")]
-    return {
-        "valid": valid,
-        "pos_rate": pos / valid * 100 if valid > 0 else 0,
-        "neg_rate": neg / valid * 100 if valid > 0 else 0,
-        "avg_rating": sum(ratings) / len(ratings) if ratings else None,
-    }
-
-
-def _parse_comment_date(date_str: str) -> date_type | None:
-    """尝试解析评论日期字符串"""
-    if not date_str or not date_str.strip():
-        return None
-    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
-        try:
-            return datetime.strptime(date_str.strip(), fmt).date()
-        except ValueError:
-            continue
-    return None
-
-
-def _apply_time_filter(comments: list[dict], session: dict, user_id: int) -> tuple[list[dict], str]:
-    """时间筛选 — 返回筛选后的 comments 和筛选标签。超出当前 session 时合并同产品历史数据。"""
-    all_dates = []
-    for c in comments:
-        d = _parse_comment_date(c.get("date", ""))
-        if d:
-            all_dates.append(d)
-
-    if not all_dates:
-        return comments, "全部"
-
-    max_date = max(all_dates)
-    min_date = min(all_dates)
-
-    time_options = ["全部", "7天", "14天", "30天", "90天", "自定义"]
-    col_filter = st.columns([1, 1, 1, 1, 1, 1])
-    selected_option = st.session_state.get("time_filter_option", "全部")
-
-    for i, opt in enumerate(time_options):
-        with col_filter[i]:
-            btn_type = "primary" if selected_option == opt else "secondary"
-            if st.button(opt, key=f"time_filter_{opt}", use_container_width=True, type=btn_type):
-                st.session_state["time_filter_option"] = opt
-                if opt == "7天":
-                    st.session_state["time_filter_start"] = max_date - timedelta(days=6)
-                    st.session_state["time_filter_end"] = max_date
-                elif opt == "14天":
-                    st.session_state["time_filter_start"] = max_date - timedelta(days=13)
-                    st.session_state["time_filter_end"] = max_date
-                elif opt == "30天":
-                    st.session_state["time_filter_start"] = max_date - timedelta(days=29)
-                    st.session_state["time_filter_end"] = max_date
-                elif opt == "90天":
-                    st.session_state["time_filter_start"] = max_date - timedelta(days=89)
-                    st.session_state["time_filter_end"] = max_date
-                elif opt == "自定义":
-                    st.session_state["time_filter_start"] = min_date
-                    st.session_state["time_filter_end"] = max_date
-                st.rerun()
-
-    if selected_option == "全部":
-        return comments, "全部"
-
-    col_start, col_end = st.columns(2)
-    default_start = st.session_state.get("time_filter_start", min_date)
-    default_end = st.session_state.get("time_filter_end", max_date)
-
-    with col_start:
-        filter_start = st.date_input("开始日期", value=default_start, key="time_filter_date_start")
-    with col_end:
-        filter_end = st.date_input("结束日期", value=default_end, key="time_filter_date_end")
-
-    # 判断是否需要跨 session 合并
-    need_merge = filter_start < min_date
-    merged_comments = comments
-
-    if need_merge:
-        product_id = session.get("product_id")
-        all_sessions = get_sessions(user_id, product_id=product_id)
-        other_session_ids = [s["id"] for s in all_sessions if s["id"] != session.get("id")]
-
-        if other_session_ids:
-            extra_comments = []
-            for sid in other_session_ids:
-                extra_comments.extend(get_comments(user_id, session_id=sid))
-            # 去重（按 content_hash）
-            seen_hashes = set()
-            deduped = []
-            for c in comments + extra_comments:
-                h = c.get("content_hash", id(c))
-                if h not in seen_hashes:
-                    seen_hashes.add(h)
-                    deduped.append(c)
-            merged_comments = deduped
-        else:
-            st.warning(f"⚠️ 当前产品数据最早为 {min_date}，无更早的历史数据，无法覆盖 {filter_start} 起的时间范围。")
-
-    # 筛选评论
-    filtered = []
-    for c in merged_comments:
-        d = _parse_comment_date(c.get("date", ""))
-        if d is None:
-            continue
-        if filter_start and d < filter_start:
-            continue
-        if filter_end and d > filter_end:
-            continue
-        filtered.append(c)
-
-    if len(filtered) == 0:
-        st.warning("所选时间范围内无评论数据")
-        return comments, "全部"
-
-    if need_merge and filtered:
-        st.info(f"已合并历史数据，共 {len(filtered)} 条评论覆盖 {filter_start} ~ {filter_end}")
-
-    label = f"{filter_start} ~ {filter_end}"
-    return filtered, label
-
-
-def _render_product_search(user_id: int) -> tuple[int | None, bool]:
-    """顶部产品选择框 — 单一 selectbox 支持搜索+下拉，切换查看不同产品的分析结果。
-    返回 (session_id, show_all_data): show_all_data=True 表示展示该产品全部数据。
-    """
-    sessions = get_sessions(user_id)
-    if not sessions:
-        return None, False
-
-    all_product_ids = list(dict.fromkeys(s["product_id"] for s in sessions))
-
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
-        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">◎</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">选择分析产品</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 确定默认选中产品
-    current_product = st.session_state.get("selected_product_id") or all_product_ids[0]
-    if current_product not in all_product_ids:
-        current_product = all_product_ids[0]
-
-    # 单一 selectbox：右侧下拉箭头 + 输入可搜索
-    selected_product = st.selectbox(
-        "选择产品",
-        all_product_ids,
-        index=all_product_ids.index(current_product),
-        key="product_select_box",
-        label_visibility="collapsed",
-    )
-
-    if selected_product != st.session_state.get("selected_product_id"):
-        st.session_state["selected_product_id"] = selected_product
-        st.session_state.pop("selected_record_id", None)
-        st.session_state["product_view_mode"] = "all"
-
-    # 该产品的上传批次（最近5条）
-    product_sessions = [s for s in sessions if s["product_id"] == selected_product][:5]
-
-    if product_sessions:
-        st.caption(f"点击可查看单次上传数据，默认展示全部批次合并结果")
-
-        view_mode = st.session_state.get("product_view_mode", "all")
-
-        col_all, col_sep = st.columns([2, 4])
-        with col_all:
-            btn_type = "primary" if view_mode == "all" else "secondary"
-            if st.button("📊 全部数据", key="view_all_data", type=btn_type):
-                st.session_state["product_view_mode"] = "all"
-                st.session_state.pop("selected_record_id", None)
-                st.rerun()
-
-        for s in product_sessions:
-            title = s.get("custom_title") or s.get("auto_title") or s["version"]
-            _ca = s.get("created_at")
-            created = str(_ca)[:16] if _ca is not None else ""
-            total = s.get("total_reviews", 0)
-            is_selected = (view_mode == "record" and
-                           st.session_state.get("selected_record_id") == s["id"])
-            btn_type = "primary" if is_selected else "secondary"
-            if st.button(
-                f"{title} · {s['version']} · {created} · {total}条",
-                key=f"record_btn_{s['id']}",
-                type=btn_type,
-            ):
-                st.session_state["product_view_mode"] = "record"
-                st.session_state["selected_record_id"] = s["id"]
-                st.rerun()
-
-        if view_mode == "all":
-            return product_sessions[0]["id"], True
-        else:
-            chosen_id = st.session_state.get("selected_record_id", product_sessions[0]["id"])
-            return chosen_id, False
-
-    if sessions:
-        return sessions[0]["id"], False
-    return None, False
+def _result_module_title(module_key: str) -> str:
+    for key, labels in RESULT_MODULES:
+        if key == module_key:
+            return pick(labels["zh"], labels["en"])
+    return module_key
 
 
 def render_results() -> None:
     user_id = get_current_user_id()
     if not user_id:
-        st.warning("请先登录")
+        st.warning(pick("请先登录", "Please log in first."))
         return
 
-    view_session_id = st.session_state.get("view_session_id")
-    show_all_data = False
-
-    if view_session_id:
-        # 分析完成后直接跳转：只查这一条 session，跳过全量 get_sessions
-        session = get_session_by_id(user_id, view_session_id)
-        if not session:
-            st.session_state.pop("view_session_id", None)
-            st.error("未找到该分析记录")
-            return
-        session_id = view_session_id
-        st.session_state["selected_product_id"] = session.get("product_id")
-        col_back, col_info = st.columns([1, 5])
-        with col_back:
-            if st.button("← 返回列表", key="back_to_search"):
-                st.session_state.pop("view_session_id", None)
-                st.rerun()
-        with col_info:
-            st.caption(f"当前查看：{session.get('product_id')} · {session.get('version')}")
-    else:
-        sessions = get_sessions(user_id)
-        if not sessions:
-            st.markdown("""
-            <div style="text-align:center;padding:60px 0;color:#4d4d4d;">
-                <div style="font-size:28px;font-weight:700;color:#202020;margin-bottom:8px;font-family:'Montserrat',system-ui,sans-serif;">暂无分析结果</div>
-                <div style="font-size:14px;">前往「上传用户评论」页面上传文件并分析</div>
-            </div>
-            """, unsafe_allow_html=True)
-            return
-        session_id, show_all_data = _render_product_search(user_id)
-
-        if not session_id:
-            st.info("请选择一个产品查看分析结果")
-            return
-
-        session = get_session_by_id(user_id, session_id)
+    session = _resolve_active_session(user_id)
     if not session:
-        st.error("未找到该分析记录")
+        _render_empty_results()
         return
 
-    # 加载评论数据：全部数据模式合并该产品所有 session 的评论
-    if show_all_data:
-        product_id = session.get("product_id")
-        all_product_sessions = get_sessions(user_id, product_id=product_id)
-        comments = []
-        seen_hashes: set = set()
-        for s in all_product_sessions:
-            for c in get_comments(user_id, session_id=s["id"]):
-                h = c.get("content_hash", id(c))
-                if h not in seen_hashes:
-                    seen_hashes.add(h)
-                    comments.append(c)
-    else:
-        comments = get_comments(user_id, session_id=session_id)
+    raw_comments = get_comments(user_id, session_id=int(session["id"]))
+    if not raw_comments:
+        st.info(pick("当前批次还没有可展示的评论数据。", "There is no review data to display for this batch yet."))
+        return
 
-    # 时间筛选（优化6）
-    comments, filter_label = _apply_time_filter(comments, session, user_id)
+    filtered_comments, time_context = _filter_comments_for_results(user_id, session, raw_comments)
+    context = {
+        "product_id": str(session.get("product_id") or ""),
+        "version": str(session.get("version") or "V1"),
+        "time_label": time_context["label"],
+        "workflow_purpose": str(session.get("workflow_purpose") or ""),
+    }
+    insights = build_results_insights(user_id, filtered_comments, context)
 
-    # 页头统计 — 排除 unrecognizable
-    total = len(comments)
-    unrecognizable_count = sum(1 for c in comments if c.get("sentiment") == "unrecognizable")
-    valid_total = total - unrecognizable_count
-    pos_count = sum(1 for c in comments if c.get("sentiment") == "positive")
-    neg_count = sum(1 for c in comments if c.get("sentiment") == "negative")
-    pos_rate = pos_count / valid_total * 100 if valid_total > 0 else 0
-    neg_rate = neg_count / valid_total * 100 if valid_total > 0 else 0
+    description = (
+        f"{context['product_id']} · {context['version']} · {len(filtered_comments)} {pick('条评论', 'reviews')} · "
+        f"{time_context['label']}"
+    )
+    render_page_header(
+        pick("分析结果", "Results"),
+        description,
+        path=pick("评论分析 / 分析结果", "Review Analysis / Results"),
+    )
 
-    # 内容版正负率（基于 content_sentiment，有评分也按文字判断）
-    has_content_sentiment = any(c.get("content_sentiment") for c in comments)
-    if has_content_sentiment:
-        content_valid = [c for c in comments if c.get("content_sentiment") not in ("unrecognizable", None, "")]
-        content_valid_total = len(content_valid)
-        content_pos_count = sum(1 for c in content_valid if c.get("content_sentiment") == "positive")
-        content_neg_count = sum(1 for c in content_valid if c.get("content_sentiment") == "negative")
-        content_pos_rate = content_pos_count / content_valid_total * 100 if content_valid_total > 0 else 0
-        content_neg_rate = content_neg_count / content_valid_total * 100 if content_valid_total > 0 else 0
-    else:
-        content_valid_total = 0
-        content_pos_rate = content_neg_rate = 0.0
-
-    # 判断是否同时有评分和评论内容（决定是否展示双版本）
-    has_rating = any(c.get("rating") for c in comments)
-    has_text_content = any(c.get("content", "").strip() for c in comments)
-    show_dual_rates = has_rating and has_text_content and has_content_sentiment
-
-    date_range = ""
-    if filter_label != "全部":
-        date_range = filter_label
-    elif session.get("date_range_start") and session.get("date_range_end"):
-        date_range = f"{session['date_range_start']} ~ {session['date_range_end']}"
-
-    invalid_note = f" · 无效评论 {unrecognizable_count} 条（不参与统计）" if unrecognizable_count > 0 else ""
-    data_scope = "全部数据" if show_all_data else session.get('version', '')
-    prompt_ver = session.get("prompt_version") or "v1.x"
-    st.markdown(f"""
-    <div style="margin-bottom:24px;">
-        <div style="font-size:28px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:-0.02em;">分析结果</div>
-        <div style="font-size:14px;color:#4d4d4d;margin-top:6px;">
-            {session.get('product_id', '')} · {data_scope}
-            {(' · ' + date_range) if date_range else ''} · {valid_total:,} 条有效评论{invalid_note}
-            · <span style="color:#828282;font-size:12px;">Prompt {prompt_ver}</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 导出按钮
-    col_export = st.columns([4, 1])
-    with col_export[1]:
-        try:
-            from review_analyzer.database import get_comments as _gc
-            _gc.clear()
-            xlsx_bytes, xlsx_filename = export_to_xlsx(session_id, user_id)
-            st.download_button(
-                "📥 导出报告",
-                data=xlsx_bytes,
-                file_name=xlsx_filename,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key="export_report",
-            )
-        except Exception as e:
-            st.error(f"导出失败：{e}")
-
-    # 4 指标卡片
-    ratings = [c["rating"] for c in comments if c.get("rating")]
-    avg_rating = sum(ratings) / len(ratings) if ratings else 0
-
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card purple">
-            <div class="metric-icon">◆</div>
-            <div class="metric-val">{total:,}</div>
-            <div class="metric-label">总评论数</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col2:
-        st.markdown(f"""
-        <div class="metric-card green">
-            <div class="metric-icon">▲</div>
-            <div class="metric-val">{pos_rate:.1f}%</div>
-            <div class="metric-label">正面率</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col3:
-        st.markdown(f"""
-        <div class="metric-card red">
-            <div class="metric-icon">▼</div>
-            <div class="metric-val">{neg_rate:.1f}%</div>
-            <div class="metric-label">负面率</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col4:
-        st.markdown(f"""
-        <div class="metric-card yellow">
-            <div class="metric-icon">★</div>
-            <div class="metric-val">{avg_rating:.1f}</div>
-            <div class="metric-label">平均评分</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # 双版本正负率对比（仅在同时有评分和评论文字时展示）
-    if show_dual_rates:
-        st.markdown("""
-        <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:#4d4d4d;">情感率双维度对比</div>
-        """, unsafe_allow_html=True)
-        rc1, rc2 = st.columns(2)
-        with rc1:
-            st.markdown(f"""
-            <div style="background:#f8f9fa;border-radius:10px;padding:14px 18px;border-left:4px solid #6c63ff;">
-                <div style="font-size:12px;color:#828282;margin-bottom:6px;">评分计算版（基于星级）</div>
-                <span style="color:#2ecc71;font-weight:700;font-size:15px;">正面 {pos_rate:.1f}%</span>
-                <span style="color:#828282;margin:0 8px;">·</span>
-                <span style="color:#e74c3c;font-weight:700;font-size:15px;">负面 {neg_rate:.1f}%</span>
-            </div>
-            """, unsafe_allow_html=True)
-        with rc2:
-            st.markdown(f"""
-            <div style="background:#f8f9fa;border-radius:10px;padding:14px 18px;border-left:4px solid #ff682c;">
-                <div style="font-size:12px;color:#828282;margin-bottom:6px;">内容分析版（更真实反映产品口碑）</div>
-                <span style="color:#2ecc71;font-weight:700;font-size:15px;">正面 {content_pos_rate:.1f}%</span>
-                <span style="color:#828282;margin:0 8px;">·</span>
-                <span style="color:#e74c3c;font-weight:700;font-size:15px;">负面 {content_neg_rate:.1f}%</span>
-            </div>
-            """, unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-
-    # 图表：情感分布 + 关键词云
-    col_chart1, col_chart2 = st.columns([1.2, 0.8])
-    with col_chart1:
-        neutral_count = valid_total - pos_count - neg_count
-        fig = go.Figure(go.Pie(
-            labels=["正面", "中性", "负面"],
-            values=[pos_count, neutral_count, neg_count],
-            marker=dict(colors=["#2ecc71", "#f39c12", "#e74c3c"]),
-            hole=0.65,
-            hoverinfo="label+percent+value",
-        ))
-        fig.update_layout(
-            title="情感分布",
-            height=300,
-            margin=dict(l=20, r=20, t=40, b=20),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.15),
-            paper_bgcolor="white",
-            font=dict(family="Inter, system-ui, sans-serif"),
+    focus_hint = get_result_focus_hint(context["workflow_purpose"])
+    if context["workflow_purpose"] and focus_hint:
+        st.info(
+            pick("当前工作目的：", "Current workflow purpose: ")
+            + f"{get_workflow_purpose_label(context['workflow_purpose'])}. {focus_hint}"
         )
-        st.plotly_chart(fig, use_container_width=True, key="result_pie")
 
-    with col_chart2:
-        st.markdown("**热门关键词**")
-        all_tags = []
-        for c in comments:
-            for field in ["issue_tag", "highlight_tag"]:
-                tags = c.get(field, "")
-                if tags:
-                    all_tags.extend([t.strip() for t in tags.split(",") if t.strip()])
-
-        if all_tags:
-            tag_counts = Counter(all_tags).most_common(12)
-            keywords_html = '<div style="display:flex;flex-wrap:wrap;gap:8px;padding:16px 0;">'
-            for i, (tag, count) in enumerate(tag_counts):
-                size_class = "lg" if i < 3 else ("md" if i < 6 else "sm")
-                keywords_html += f'<span class="keyword {size_class}">{tag}</span>'
-            keywords_html += '</div>'
-            st.markdown(keywords_html, unsafe_allow_html=True)
-        else:
-            st.info("暂无关键词数据")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # 行动建议
-    _render_action_suggestions(pos_rate, neg_rate, comments)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # TOP10 产品问题
-    negative_comments = [c for c in comments if c.get("sentiment") == "negative"]
-    top_issues = _get_top_tags(negative_comments, "issue_tag", len(negative_comments))
-
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
-        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">1</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">TOP 10 产品问题</span>
-        <span style="font-size:12px;color:#828282;margin-left:4px;">勾选后可推送到飞书</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if top_issues:
-        _render_top_table(top_issues, "issue", comments, negative_comments)
-    else:
-        st.info("暂无产品问题数据")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # TOP10 产品亮点
-    positive_comments = [c for c in comments if c.get("sentiment") == "positive"]
-    top_highlights = _get_top_tags(positive_comments, "highlight_tag", len(positive_comments))
-
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
-        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">2</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">TOP 10 产品亮点</span>
-        <span style="font-size:12px;color:#828282;margin-left:4px;">勾选后可推送到飞书</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if top_highlights:
-        _render_top_table(top_highlights, "highlight", comments, positive_comments)
-    else:
-        st.info("暂无产品亮点数据")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # 环比分析（优化7）
-    _render_comparison_section(session, user_id)
-
-    # 底部浮动操作栏
-    _render_floating_bar(session_id, user_id, top_issues, top_highlights)
-
-
-def _render_comparison_section(session: dict, user_id: int) -> None:
-    """环比分析 — 支持时间粒度 + 版本筛选 + 跨 session 数据合并"""
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
-        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">3</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">环比 / 版本对比</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    product_id = session.get("product_id")
-    all_sessions = get_sessions(user_id, product_id=product_id)
-
-    if not all_sessions:
-        st.info("暂无数据，上传评论后自动生成环比分析。")
-        return
-
-    # 收集该产品所有版本
-    versions = list(dict.fromkeys(s["version"] for s in all_sessions))
-
-    # 对比模式选择（独立一行）
-    compare_mode = "同版本" if len(versions) == 1 else st.radio(
-        "对比模式", ["同版本不同时间段", "跨版本对比"], key="compare_mode", horizontal=True
+    _render_result_export(user_id, int(session["id"]))
+    _render_results_controls(user_id, session)
+    _render_consumer_profile_module(user_id, insights["consumer_profile"], context)
+    _render_user_experience_module(user_id, insights["user_experience"], context)
+    _render_standard_module(
+        user_id,
+        "purchase_motives",
+        _result_module_title("purchase_motives"),
+        insights["purchase_motives"],
+        context,
     )
-
-    # 环比设置
-    is_cross_version = compare_mode == "跨版本对比" or (isinstance(compare_mode, str) and "跨版本" in compare_mode)
-
-    if is_cross_version:
-        col_period, col_v1, col_v2 = st.columns(3)
-    else:
-        col_period, col_v1 = st.columns(2)
-
-    with col_period:
-        period = st.selectbox("时间粒度", ["周环比（7天）", "双周环比（14天）", "月环比（30天）"], key="compare_period")
-    with col_v1:
-        version1 = st.selectbox("版本 1", versions, key="compare_v1")
-
-    version2 = None
-    if is_cross_version:
-        with col_v2:
-            other_versions = [v for v in versions if v != version1]
-            if other_versions:
-                version2 = st.selectbox("版本 2", other_versions, key="compare_v2")
-            else:
-                st.info("只有一个版本，无法跨版本对比")
-                version2 = None
-
-    # 跨版本模式：版本升级说明（可展开编辑）
-    if is_cross_version and version2:
-        def _get_notes(ver: str) -> str:
-            s_list = [s for s in all_sessions if s["version"] == ver]
-            return (s_list[-1].get("version_notes") or "").strip() if s_list else ""
-        notes_v1, notes_v2 = _get_notes(version1), _get_notes(version2)
-        with st.expander("版本升级说明（点击编辑）", expanded=bool(notes_v1 or notes_v2)):
-            col_n1, col_n2 = st.columns(2)
-            with col_n1:
-                new_notes_v1 = st.text_area(f"{version1} 升级说明", value=notes_v1, key="vc_notes_v1", height=80)
-            with col_n2:
-                new_notes_v2 = st.text_area(f"{version2} 升级说明", value=notes_v2, key="vc_notes_v2", height=80)
-            if st.button("保存说明", key="vc_save_notes"):
-                for ver, notes in [(version1, new_notes_v1), (version2, new_notes_v2)]:
-                    s_list = [s for s in all_sessions if s["version"] == ver]
-                    if s_list:
-                        update_session_notes(s_list[-1]["id"], notes)
-                get_sessions.clear()
-                st.success("已保存")
-                st.rerun()
-
-    if "7天" in period:
-        days = 7
-    elif "14天" in period:
-        days = 14
-    else:
-        days = 30
-
-    if st.button("生成环比", type="primary", key="run_comparison"):
-        # 收集版本1的所有评论（跨 session）
-        v1_sessions = [s for s in all_sessions if s["version"] == version1]
-        v1_comments = []
-        for s in v1_sessions:
-            v1_comments.extend(get_comments(user_id, session_id=s["id"]))
-
-        # 按日期排序
-        v1_dated = []
-        for c in v1_comments:
-            d = _parse_comment_date(c.get("date", ""))
-            if d:
-                v1_dated.append((d, c))
-        v1_dated.sort(key=lambda x: x[0])
-
-        if not v1_dated:
-            st.warning(f"版本 {version1} 无有效日期数据")
-            return
-
-        v1_max = max(d for d, _ in v1_dated)
-
-        if version2:
-            # 跨版本对比：版本1最近N天 vs 版本2最近N天
-            v2_sessions = [s for s in all_sessions if s["version"] == version2]
-
-            # 检查两组 session 的 Prompt 版本是否一致
-            v1_prompt_versions = set(s.get("prompt_version") or "v1.x" for s in v1_sessions)
-            v2_prompt_versions = set(s.get("prompt_version") or "v1.x" for s in v2_sessions)
-            all_prompt_versions = v1_prompt_versions | v2_prompt_versions
-            if len(all_prompt_versions) > 1:
-                st.warning(
-                    f"注意：两个版本使用了不同的 Prompt 版本（{', '.join(sorted(all_prompt_versions))}），"
-                    "标签体系和分类口径可能不一致，环比数据仅供参考。"
-                )
-
-            v2_comments = []
-            for s in v2_sessions:
-                v2_comments.extend(get_comments(user_id, session_id=s["id"]))
-
-            v2_dated = []
-            for c in v2_comments:
-                d = _parse_comment_date(c.get("date", ""))
-                if d:
-                    v2_dated.append((d, c))
-            v2_dated.sort(key=lambda x: x[0])
-
-            if not v2_dated:
-                st.warning(f"版本 {version2} 无有效日期数据")
-                return
-
-            v2_max = max(d for d, _ in v2_dated)
-
-            current_comments = [c for d, c in v1_dated if d >= v1_max - timedelta(days=days - 1)]
-            prev_comments = [c for d, c in v2_dated if d >= v2_max - timedelta(days=days - 1)]
-
-            label_current = f"{version1} 最近{days}天（{v1_max - timedelta(days=days-1)}~{v1_max}）"
-            label_prev = f"{version2} 最近{days}天（{v2_max - timedelta(days=days-1)}~{v2_max}）"
-        else:
-            # 同版本时间环比：当期 vs 上期
-            # 检查同版本内是否跨越了不同 Prompt 版本
-            v1_prompt_versions = set(s.get("prompt_version") or "v1.x" for s in v1_sessions)
-            if len(v1_prompt_versions) > 1:
-                st.warning(
-                    f"注意：该版本的历史数据包含不同 Prompt 版本（{', '.join(sorted(v1_prompt_versions))}），"
-                    "当期与上期的分类口径可能不一致，环比数据仅供参考。"
-                )
-            current_start = v1_max - timedelta(days=days - 1)
-            prev_end = current_start - timedelta(days=1)
-            prev_start = prev_end - timedelta(days=days - 1)
-
-            current_comments = [c for d, c in v1_dated if d >= current_start]
-            prev_comments = [c for d, c in v1_dated if prev_start <= d <= prev_end]
-
-            label_current = f"当期（{current_start}~{v1_max}）"
-            label_prev = f"上期（{prev_start}~{prev_end}）"
-
-            if not prev_comments:
-                st.warning(f"上期（{prev_start}~{prev_end}）无数据，无法生成环比。")
-                return
-
-        # 计算指标
-        def _calc(clist):
-            t = len(clist)
-            unrec = sum(1 for c in clist if c.get("sentiment") == "unrecognizable")
-            valid = t - unrec
-            p = sum(1 for c in clist if c.get("sentiment") == "positive")
-            n = sum(1 for c in clist if c.get("sentiment") == "negative")
-            return (p / valid * 100 if valid > 0 else 0, n / valid * 100 if valid > 0 else 0, t)
-
-        cur_pos, cur_neg, cur_total = _calc(current_comments)
-        prev_pos, prev_neg, prev_total = _calc(prev_comments)
-
-        label_cur = label_current.split("（")[0]
-        label_prv = label_prev.split("（")[0]
-
-        # 1. 核心指标对比表
-        def _delta_html(new_val: float, old_val: float, lower_is_better: bool = False) -> str:
-            diff = new_val - old_val
-            if abs(diff) < 0.05:
-                return "<span style='color:#888;'>—</span>"
-            improved = (diff < 0) if lower_is_better else (diff > 0)
-            color = "#2ecc71" if improved else "#e74c3c"
-            arrow = "↓" if diff < 0 else "↑"
-            return f"<span style='color:{color};font-weight:600;'>{arrow}{abs(diff):.1f}%</span>"
-
-        st.markdown(f"**核心指标对比** <span style='font-size:12px;color:#828282;'>（{label_current} vs {label_prev}）</span>", unsafe_allow_html=True)
-        h1, h2, h3, h4 = st.columns([2, 1.5, 1.5, 1.5])
-        for col, label in zip([h1, h2, h3, h4], ["指标", label_cur, label_prv, "变化"]):
-            col.markdown(f"**{label}**")
-
-        metric_rows: list[tuple] = [
-            ("好评率", f"{cur_pos:.1f}%", f"{prev_pos:.1f}%", _delta_html(cur_pos, prev_pos)),
-            ("差评率", f"{cur_neg:.1f}%", f"{prev_neg:.1f}%", _delta_html(cur_neg, prev_neg, lower_is_better=True)),
-        ]
-        cur_ratings = [float(c["rating"]) for c in current_comments if c.get("rating")]
-        prev_ratings = [float(c["rating"]) for c in prev_comments if c.get("rating")]
-        if cur_ratings and prev_ratings:
-            cur_avg = sum(cur_ratings) / len(cur_ratings)
-            prev_avg = sum(prev_ratings) / len(prev_ratings)
-            diff_r = cur_avg - prev_avg
-            color_r = "#2ecc71" if diff_r > 0.01 else ("#e74c3c" if diff_r < -0.01 else "#888")
-            arrow_r = "↑" if diff_r > 0.01 else ("↓" if diff_r < -0.01 else "—")
-            delta_r = f"<span style='color:{color_r};font-weight:600;'>{arrow_r}{abs(diff_r):.2f}</span>"
-            metric_rows.append(("平均评分", f"{cur_avg:.1f}", f"{prev_avg:.1f}", delta_r))
-
-        for metric, val_cur, val_prv, delta in metric_rows:
-            c_a, c_b, c_c, c_d = st.columns([2, 1.5, 1.5, 1.5])
-            c_a.write(metric); c_b.write(val_cur); c_c.write(val_prv)
-            c_d.markdown(delta, unsafe_allow_html=True)
-
-        # 2. 产品问题 TOP 变化表
-        def _render_tag_table(cur_comments: list, prev_comments: list, tag_field: str, title: str,
-                              up_label: str, down_label: str, up_color: str, down_color: str) -> None:
-            cur_tags = _get_top_tags(cur_comments, tag_field, len(cur_comments))
-            prev_tags = _get_top_tags(prev_comments, tag_field, len(prev_comments))
-            cur_map = {i["tag"]: i["pct"] for i in cur_tags}
-            prev_map = {i["tag"]: i["pct"] for i in prev_tags}
-            all_tags = list(dict.fromkeys([i["tag"] for i in cur_tags] + [i["tag"] for i in prev_tags]))[:10]
-            if not all_tags:
-                return
-            st.markdown(f"**{title}**")
-            h1, h2, h3, h4 = st.columns([3, 1.5, 1.5, 2])
-            for col, lbl in zip([h1, h2, h3, h4], ["标签", label_cur, label_prv, "变化"]):
-                col.markdown(f"**{lbl}**")
-            for tag in all_tags:
-                p_cur, p_prv = cur_map.get(tag, 0), prev_map.get(tag, 0)
-                diff = p_cur - p_prv
-                if abs(diff) < 0.05:
-                    delta_str = "<span style='color:#888;'>—</span>"
-                elif diff > 0:
-                    delta_str = f"<span style='color:{up_color};font-weight:600;'>↑{abs(diff):.1f}% {up_label}</span>"
-                else:
-                    delta_str = f"<span style='color:{down_color};font-weight:600;'>↓{abs(diff):.1f}% {down_label}</span>"
-                c_a, c_b, c_c, c_d = st.columns([3, 1.5, 1.5, 2])
-                c_a.write(tag); c_b.write(f"{p_cur:.1f}%"); c_c.write(f"{p_prv:.1f}%")
-                c_d.markdown(delta_str, unsafe_allow_html=True)
-
-        cur_neg_c = [c for c in current_comments if c.get("sentiment") == "negative"]
-        prev_neg_c = [c for c in prev_comments if c.get("sentiment") == "negative"]
-        _render_tag_table(cur_neg_c, prev_neg_c, "issue_tag", "产品问题 TOP 变化",
-                          up_label="恶化", down_label="改善",
-                          up_color="#e74c3c", down_color="#2ecc71")
-
-        # 3. 产品亮点 TOP 变化表
-        cur_pos_c = [c for c in current_comments if c.get("sentiment") == "positive"]
-        prev_pos_c = [c for c in prev_comments if c.get("sentiment") == "positive"]
-        _render_tag_table(cur_pos_c, prev_pos_c, "highlight_tag", "产品亮点 TOP 变化",
-                          up_label="提高", down_label="降低",
-                          up_color="#2ecc71", down_color="#e74c3c")
-
-        # 4. 行动建议
-        _render_action_suggestions(cur_pos, cur_neg, current_comments)
-
-
-def _render_action_suggestions(pos_rate: float, neg_rate: float, comments: list[dict]) -> None:
-    """渲染行动建议（自然语言）"""
-    is_danger = neg_rate > 25 or pos_rate < 55
-    card_class = "action-card danger" if is_danger else "action-card"
-    title = "行动建议（需关注）" if is_danger else "行动建议"
-
-    suggestions = []
-    if pos_rate >= 70:
-        suggestions.append(f"正面率达到 {pos_rate:.1f}%，产品改进方向正确，建议继续保持当前策略。")
-    elif pos_rate < 55:
-        suggestions.append(f"正面率仅为 {pos_rate:.1f}%，产品口碑正在下滑，建议立即排查用户不满意的主要原因。")
-
-    if neg_rate > 25:
-        suggestions.append(f"负面率已达 {neg_rate:.1f}%，超过 25% 警戒线，建议优先处理用户反馈最集中的问题。")
-
-    negative_comments = [c for c in comments if c.get("sentiment") == "negative"]
-    top_issues = _get_top_tags(negative_comments, "issue_tag", len(negative_comments))
-    if top_issues and top_issues[0]["pct"] > 5:
-        suggestions.append(
-            f"用户反馈最集中的问题是「{top_issues[0]['tag']}」，占负面评论的 {top_issues[0]['pct']:.1f}%，建议将其列为改进优先项。")
-
-    positive_comments = [c for c in comments if c.get("sentiment") == "positive"]
-    top_highlights = _get_top_tags(positive_comments, "highlight_tag", len(positive_comments))
-    if top_highlights:
-        suggestions.append(
-            f"产品最受认可的亮点是「{top_highlights[0]['tag']}」，占正面评论的 {top_highlights[0]['pct']:.1f}%，建议在产品详情页和广告文案中重点突出。")
-
-    if not suggestions:
-        suggestions.append("产品整体表现正常，建议持续监控评论动态。")
-
-    items_html = ""
-    for i, text in enumerate(suggestions, 1):
-        items_html += f'<div style="font-size:14px;padding:10px 0;border-bottom:1px solid #e8e8e8;line-height:1.6;">{i}. {text}</div>'
-
-    st.markdown(f"""
-    <div class="{card_class}">
-        <h4 style="font-size:15px;font-weight:600;margin-bottom:12px;">{title}</h4>
-        {items_html}
-    </div>
-    """, unsafe_allow_html=True)
-
-
-def _render_top_table(top_items: list[dict], prefix: str, all_comments: list[dict],
-                      pool_comments: list[dict]) -> None:
-    """渲染 TOP10 表格"""
-    tag_field = "issue_tag" if prefix == "issue" else "highlight_tag"
-
-    # 表头
-    cols = st.columns([0.5, 0.5, 3, 1, 1, 1.5])
-    with cols[0]:
-        st.markdown("**#**")
-    with cols[1]:
-        st.markdown("")
-    with cols[2]:
-        st.markdown("**描述**")
-    with cols[3]:
-        st.markdown("**提及次数**")
-    with cols[4]:
-        st.markdown("**占比**")
-    with cols[5]:
-        st.markdown("**操作**")
-
-    for item in top_items:
-        cols = st.columns([0.5, 0.5, 3, 1, 1, 1.5])
-        with cols[0]:
-            st.checkbox("", key=f"{prefix}_chk_{item['rank']}", label_visibility="collapsed")
-        with cols[1]:
-            st.write(str(item["rank"]))
-        with cols[2]:
-            st.write(item["tag"])
-        with cols[3]:
-            st.write(f"{item['count']} 条")
-        with cols[4]:
-            st.write(f"{item['pct']:.1f}%")
-        with cols[5]:
-            if st.button("📄 查看原文", key=f"{prefix}_src_{item['rank']}"):
-                st.session_state[f"show_source_{prefix}_{item['rank']}"] = \
-                    not st.session_state.get(f"show_source_{prefix}_{item['rank']}", False)
-
-        # 原文展开面板
-        if st.session_state.get(f"show_source_{prefix}_{item['rank']}", False):
-            source_comments = [
-                c for c in pool_comments
-                if item["tag"] in [t.strip() for t in (c.get(tag_field) or "").split(",")]
-            ][:20]
-            if source_comments:
-                st.markdown(f"""
-                <div class="source-panel">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                        <h4 style="font-size:15px;font-weight:600;">📄 「{item['tag']}」— 代表性原文 TOP 20</h4>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-                for i, c in enumerate(source_comments, 1):
-                    content_preview = (c.get("content", "")[:100] + "...") if len(c.get("content", "")) > 100 else c.get("content", "")
-                    rating_str = f"⭐{c['rating']}" if c.get("rating") else "—"
-                    st.markdown(
-                        f"**{i}.** \"{content_preview}\" | {rating_str} | {c.get('date', '—')}",
-                    )
-
-
-def _render_floating_bar(session_id: int, user_id: int, top_issues: list[dict], top_highlights: list[dict]) -> None:
-    """底部浮动操作栏 — 勾选 TOP10 项后显示"""
-    selected_issues = [k for k in st.session_state if k.startswith("issue_chk_") and st.session_state[k]]
-    selected_highlights = [k for k in st.session_state if k.startswith("highlight_chk_") and st.session_state[k]]
-    total_selected = len(selected_issues) + len(selected_highlights)
-
-    if total_selected > 0:
-        st.markdown(f"""
-        <div class="float-bar">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-                <span style="font-size:14px;font-weight:600;">
-                    已选择 {total_selected} 项（问题 {len(selected_issues)} + 亮点 {len(selected_highlights)}）
-                </span>
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <span style="font-size:13px;color:#828282;">推送到：</span>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # 读取用户 Webhook 配置
-        raw_settings = get_setting(user_id, "push_settings")
-        webhook_url = ""
-        webhook_secret = ""
-        group_name = "默认群"
-        if raw_settings:
-            try:
-                push_settings = json.loads(raw_settings)
-                webhook_url = push_settings.get("webhook_url", "")
-                webhook_secret = push_settings.get("webhook_secret", "")
-                group_name = push_settings.get("webhook_group_name", "") or "默认群"
-            except json.JSONDecodeError:
-                pass
-
-        col_group, col_push, _ = st.columns([2, 1, 2])
-        with col_group:
-            st.selectbox("选择飞书群", [group_name], key="push_group_select", label_visibility="collapsed")
-        with col_push:
-            if st.button("📤 推送到飞书", type="primary", key="push_to_feishu"):
-                if not webhook_url:
-                    st.error("请先在「推送设置」页配置飞书 Webhook")
-                else:
-                    selected_tags = []
-                    for k in selected_issues:
-                        rank = int(k.replace("issue_chk_", ""))
-                        match = next((i for i in top_issues if i["rank"] == rank), None)
-                        if match:
-                            selected_tags.append(match["tag"])
-                    tag_type = "issue"
-
-                    selected_hl_tags = []
-                    for k in selected_highlights:
-                        rank = int(k.replace("highlight_chk_", ""))
-                        match = next((i for i in top_highlights if i["rank"] == rank), None)
-                        if match:
-                            selected_hl_tags.append(match["tag"])
-
-                    all_tags = selected_tags + selected_hl_tags
-                    push_type = "issue" if selected_tags and not selected_hl_tags else (
-                        "highlight" if selected_hl_tags and not selected_tags else "issue"
-                    )
-
-                    result = push_selected_items(
-                        user_id=user_id,
-                        webhook_url=webhook_url,
-                        secret=webhook_secret,
-                        session_id=session_id,
-                        selected_tags=all_tags,
-                        tag_type=push_type,
-                    )
-                    if result["ok"]:
-                        st.success("推送成功 ✓")
-                    else:
-                        st.error(f"推送失败：{result['msg']}")
-
-
-def _render_history_section(user_id: int, current_session_id: int) -> None:
-    """历史分析记录 — 整合到结果页底部，直接展示"""
-    sessions = get_sessions(user_id)
-    if not sessions:
-        return
-
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #ff682c;">
-        <span style="background:#ff682c;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">4</span>
-        <span style="font-size:16px;font-weight:600;color:#202020;">历史分析记录</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 按产品分组
-    products: dict[str, list[dict]] = {}
-    for s in sessions:
-        pid = s["product_id"]
-        if pid not in products:
-            products[pid] = []
-        products[pid].append(s)
-
-    # 产品搜索框（直接可见）
-    search_sku = st.text_input(
-        "搜索产品编号",
-        placeholder="输入 SKU 关键词快速筛选...",
-        key="hist_search_in_results",
+    _render_standard_module(
+        user_id,
+        "unmet_needs",
+        _result_module_title("unmet_needs"),
+        insights["unmet_needs"],
+        context,
     )
-
-    filtered_products = products
-    if search_sku:
-        filtered_products = {
-            pid: sess for pid, sess in products.items()
-            if search_sku.lower() in pid.lower()
-        }
-
-    if not filtered_products:
-        st.info("未找到匹配的产品")
-        return
-
-    for pid, product_sessions in filtered_products.items():
-        st.markdown(f"""
-        <div style="font-size:14px;font-weight:600;margin:16px 0 8px;padding:8px 12px;
-                    background:#f9f9f9;border-radius:8px;border:1px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;">
-            <span>{pid}（{len(product_sessions)} 个批次）</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-        for s in product_sessions:
-            total = s.get("total_reviews", 0)
-            pos = s.get("positive_count", 0)
-            pos_rate = f"{pos / total * 100:.1f}%" if total > 0 else "—"
-            title = s.get("custom_title") or s.get("auto_title") or s["version"]
-            is_current = s["id"] == current_session_id
-
-            date_range = ""
-            if s.get("date_range_start") and s.get("date_range_end"):
-                date_range = f"{s['date_range_start']} ~ {s['date_range_end']}"
-
-            current_badge = ' <span style="background:#ff682c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">当前</span>' if is_current else ""
-
-            st.markdown(f"""
-            <div style="font-size:13px;color:#4d4d4d;padding:4px 12px;">
-                {title}{current_badge} · {date_range or '—'} · {total:,} 条评论 ·
-                <span class="tag tag-pos">{pos_rate}</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-            col_view, col_export, col_del, _ = st.columns([1, 1, 1, 3])
-            with col_view:
-                if is_current:
-                    st.button("当前查看", key=f"histR_view_{s['id']}", disabled=True)
-                elif st.button("查看结果", key=f"histR_view_{s['id']}"):
-                    st.session_state["view_session_id"] = s["id"]
-                    st.rerun()
-            with col_export:
-                try:
-                    xlsx_bytes, xlsx_fn = export_to_xlsx(s["id"], user_id)
-                    st.download_button(
-                        "📥 导出",
-                        data=xlsx_bytes,
-                        file_name=xlsx_fn,
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        key=f"histR_export_{s['id']}",
-                    )
-                except Exception:
-                    st.button("📥 导出", key=f"histR_export_{s['id']}", disabled=True)
-            with col_del:
-                if st.button("🗑️ 删除", key=f"histR_del_{s['id']}"):
-                    delete_session(user_id, s["id"])
-                    if s["id"] == current_session_id:
-                        st.session_state.pop("view_session_id", None)
-                    st.rerun()
-
-        st.markdown("<hr style='border:none;border-top:1px solid #e8e8e8;margin:8px 0;'>",
-                    unsafe_allow_html=True)
+    _render_standard_module(
+        user_id,
+        "recommendations",
+        _result_module_title("recommendations"),
+        insights["recommendations"],
+        context,
+    )
+    _render_raw_reviews_section(filtered_comments)
 
 
 def render_history() -> None:
-    """历史分析记录独立页面"""
-    from review_analyzer.auth import get_current_user_id
     user_id = get_current_user_id()
     if not user_id:
-        st.warning("请先登录")
+        st.warning(pick("请先登录", "Please log in first."))
         return
 
-    st.markdown("""
-    <div style="margin-bottom:24px;">
-        <div style="font-size:22px;font-weight:700;color:#202020;font-family:'Montserrat',system-ui,sans-serif;">历史分析记录</div>
-        <div style="font-size:14px;color:#4d4d4d;margin-top:4px;">查看、导出或删除历史分析批次</div>
-    </div>
-    """, unsafe_allow_html=True)
+    render_page_header(
+        pick("历史记录", "History"),
+        pick("回看历史批次、导出结果或切换到某次分析继续阅读。", "Review past batches, export results, or reopen a previous analysis."),
+        path=pick("评论分析 / 历史记录", "Review Analysis / History"),
+    )
 
-    _render_history_section(user_id, current_session_id=-1)
+    sessions = get_sessions(user_id)
+    if not sessions:
+        st.info(pick("还没有历史分析批次。先去上传一批评论。", "There are no historical analysis batches yet. Upload a batch of reviews first."))
+        return
+
+    grouped_sessions: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for session in sessions:
+        grouped_sessions[str(session.get("product_id") or pick("未命名产品", "Untitled Product"))].append(session)
+
+    search = st.text_input(pick("搜索产品编号", "Search Product ID"), placeholder=pick("输入 SKU 或产品编号", "Enter a SKU or product ID"))
+    for product_id, product_sessions in grouped_sessions.items():
+        if search and search.lower() not in product_id.lower():
+            continue
+        st.markdown(f"### {product_id}")
+        for session in product_sessions:
+            date_range = _format_session_date_range(session)
+            total_reviews = int(session.get("total_reviews") or 0)
+            title = session.get("custom_title") or session.get("auto_title") or str(session.get("version") or "V1")
+            st.markdown(
+                f"""
+                <div class="product-block" style="padding:16px 18px;margin-bottom:10px;">
+                    <div style="font-size:16px;font-weight:700;color:#25212a;">{title}</div>
+                    <div style="font-size:13px;color:#6f6877;margin-top:6px;">
+                        {date_range} · {total_reviews} {pick('条评论', 'reviews')}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            action_cols = st.columns([1.2, 1, 1, 1.4])
+            with action_cols[0]:
+                if st.button(pick("查看结果", "View Results"), key=f"history_view_{session['id']}", use_container_width=True):
+                    st.session_state["view_session_id"] = int(session["id"])
+                    st.session_state["current_page"] = "analysis"
+                    st.session_state["analysis_subpage"] = "results"
+                    st.rerun()
+            with action_cols[1]:
+                try:
+                    xlsx_bytes, xlsx_name = export_to_xlsx(int(session["id"]), user_id)
+                    st.download_button(
+                        pick("导出", "Export"),
+                        data=xlsx_bytes,
+                        file_name=xlsx_name,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"history_export_{session['id']}",
+                        use_container_width=True,
+                    )
+                except ValueError:
+                    st.button(pick("导出", "Export"), key=f"history_export_disabled_{session['id']}", disabled=True, use_container_width=True)
+            with action_cols[2]:
+                if st.button(pick("删除", "Delete"), key=f"history_delete_{session['id']}", use_container_width=True):
+                    delete_session(user_id, int(session["id"]))
+                    if st.session_state.get("view_session_id") == int(session["id"]):
+                        st.session_state.pop("view_session_id", None)
+                    st.rerun()
+            with action_cols[3]:
+                st.caption(f"{pick('版本', 'Version')}: {session.get('version') or 'V1'}")
+
+
+def _resolve_active_session(user_id: int) -> dict[str, Any] | None:
+    view_session_id = st.session_state.get("view_session_id")
+    if view_session_id:
+        session = get_session_by_id(user_id, int(view_session_id))
+        if session:
+            return session
+
+    sessions = get_sessions(user_id)
+    if not sessions:
+        return None
+
+    product_map: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for session in sessions:
+        product_map[str(session.get("product_id") or pick("未命名产品", "Untitled Product"))].append(session)
+
+    selected_product = st.selectbox(
+        pick("选择产品", "Select Product"),
+        list(product_map.keys()),
+        key="results_selected_product",
+    )
+    selected_sessions = product_map[selected_product]
+    selected_session_id = st.selectbox(
+        pick("选择批次", "Select Batch"),
+        [int(item["id"]) for item in selected_sessions],
+        format_func=lambda value: _format_session_option(next(item for item in selected_sessions if int(item["id"]) == int(value))),
+        key="results_selected_session",
+    )
+    session = get_session_by_id(user_id, int(selected_session_id))
+    if session:
+        st.session_state["view_session_id"] = int(selected_session_id)
+    return session
+
+
+def _render_empty_results() -> None:
+    render_page_header(
+        pick("分析结果", "Results"),
+        pick("还没有可查看的分析结果，先去上传一批评论。", "There are no analysis results to view yet. Upload a batch of reviews first."),
+        path=pick("评论分析 / 分析结果", "Review Analysis / Results"),
+    )
+    st.info(pick("暂无分析结果。", "No analysis results yet."))
+
+
+def _render_result_export(user_id: int, session_id: int) -> None:
+    export_cols = st.columns([5, 1.2])
+    with export_cols[1]:
+        try:
+            xlsx_bytes, xlsx_name = export_to_xlsx(session_id, user_id)
+            st.download_button(
+                pick("下载整份结果", "Download Full Results"),
+                data=xlsx_bytes,
+                file_name=xlsx_name,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                key=f"results_export_full_{session_id}",
+            )
+        except ValueError:
+            st.button(pick("下载整份结果", "Download Full Results"), disabled=True, use_container_width=True, key=f"results_export_disabled_{session_id}")
+
+
+def _render_results_controls(user_id: int, session: dict[str, Any]) -> None:
+    current_session_id = int(session["id"])
+    sessions = get_sessions(user_id, product_id=str(session.get("product_id") or ""))
+    if len(sessions) <= 1:
+        return
+    st.caption(pick("可切换同一产品的其他历史批次查看结果。", "You can switch to other historical batches for the same product here."))
+    selected_session_id = st.selectbox(
+        pick("当前查看批次", "Current Batch"),
+        [int(item["id"]) for item in sessions],
+        index=next((index for index, item in enumerate(sessions) if int(item["id"]) == current_session_id), 0),
+        format_func=lambda value: _format_session_option(next(item for item in sessions if int(item["id"]) == int(value))),
+        key="results_control_session_switch",
+    )
+    if int(selected_session_id) != current_session_id:
+        st.session_state["view_session_id"] = int(selected_session_id)
+        st.rerun()
+
+
+def _filter_comments_for_results(
+    user_id: int,
+    session: dict[str, Any],
+    session_comments: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    date_values = [_parse_comment_date(comment.get("date")) for comment in session_comments]
+    valid_dates = [value for value in date_values if value is not None]
+    default_start = _parse_comment_date(session.get("date_range_start")) or (min(valid_dates) if valid_dates else date.today())
+    default_end = _parse_comment_date(session.get("date_range_end")) or (max(valid_dates) if valid_dates else date.today())
+
+    mode = st.selectbox(
+        pick("用户体验时间周期", "User Experience Time Range"),
+        list(TIME_MODE_OPTIONS.keys()),
+        index=4,
+        format_func=lambda value: pick(TIME_MODE_OPTIONS[value]["zh"], TIME_MODE_OPTIONS[value]["en"]),
+        key=f"results_time_mode_{session['id']}",
+    )
+
+    all_product_comments = get_comments(user_id, product_id=str(session.get("product_id") or ""))
+    all_dates = [_parse_comment_date(comment.get("date")) for comment in all_product_comments]
+    all_valid_dates = [value for value in all_dates if value is not None]
+    latest_date = max(all_valid_dates) if all_valid_dates else default_end
+
+    if mode == "all":
+        return _filter_by_date_range(all_product_comments, min(all_valid_dates, default=default_start), latest_date), {
+            "label": pick("全部时间", "All Time"),
+            "start": min(all_valid_dates, default=default_start),
+            "end": latest_date,
+        }
+    if mode in {"30", "60", "90"}:
+        days = int(mode)
+        start = latest_date - timedelta(days=days - 1)
+        return _filter_by_date_range(all_product_comments, start, latest_date), {
+            "label": f"{start} ~ {latest_date}",
+            "start": start,
+            "end": latest_date,
+        }
+
+    col1, col2 = st.columns(2)
+    with col1:
+        start = st.date_input(pick("开始日期", "Start Date"), value=default_start, key=f"results_custom_start_{session['id']}")
+    with col2:
+        end = st.date_input(pick("结束日期", "End Date"), value=default_end, key=f"results_custom_end_{session['id']}")
+    if start > end:
+        st.warning(pick("开始日期不能晚于结束日期，已自动回退到当前批次。", "The start date cannot be later than the end date. Reverted to the current batch."))
+        return session_comments, {"label": _format_session_date_range(session), "start": default_start, "end": default_end}
+    filtered = _filter_by_date_range(all_product_comments, start, end)
+    if not filtered:
+        st.warning(pick("所选时间范围内没有评论，已回退到当前批次。", "No reviews were found in the selected time range. Reverted to the current batch."))
+        return session_comments, {"label": _format_session_date_range(session), "start": default_start, "end": default_end}
+    return filtered, {"label": f"{start} ~ {end}", "start": start, "end": end}
+
+
+def _render_consumer_profile_module(
+    user_id: int,
+    payload: dict[str, Any],
+    context: dict[str, Any],
+) -> None:
+    display_payload = _resolve_display_payload(user_id, "consumer_profile", payload, context)
+    _render_module_header(user_id, "consumer_profile", _result_module_title("consumer_profile"), display_payload, context)
+    st.caption(display_payload.get("summary", ""))
+    rows = display_payload.get("rows", [])
+    if rows:
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    evidence = display_payload.get("evidence", [])
+    if evidence:
+        with st.expander(pick("查看代表性评论证据", "View Representative Review Evidence"), expanded=False):
+            for quote in evidence:
+                st.write(f"- {quote}")
+
+
+def _render_user_experience_module(
+    user_id: int,
+    payload: dict[str, Any],
+    context: dict[str, Any],
+) -> None:
+    display_payload = _resolve_display_payload(user_id, "user_experience", payload, context)
+    _render_module_header(user_id, "user_experience", _result_module_title("user_experience"), display_payload, context)
+    st.caption(display_payload.get("summary", ""))
+    col_positive, col_negative = st.columns(2, gap="large")
+    with col_positive:
+        st.markdown(f"#### {pick('正向反馈', 'Positive Feedback')}")
+        positive_rows = display_payload.get("positive", [])
+        if positive_rows:
+            st.dataframe(pd.DataFrame(positive_rows), use_container_width=True, hide_index=True)
+        else:
+            st.info(pick("暂无稳定正向反馈。", "No stable positive feedback yet."))
+    with col_negative:
+        st.markdown(f"#### {pick('负向反馈', 'Negative Feedback')}")
+        negative_rows = display_payload.get("negative", [])
+        if negative_rows:
+            st.dataframe(pd.DataFrame(negative_rows), use_container_width=True, hide_index=True)
+        else:
+            st.info(pick("暂无稳定负向反馈。", "No stable negative feedback yet."))
+
+
+def _render_standard_module(
+    user_id: int,
+    module_key: str,
+    title: str,
+    payload: dict[str, Any],
+    context: dict[str, Any],
+) -> None:
+    display_payload = _resolve_display_payload(user_id, module_key, payload, context)
+    _render_module_header(user_id, module_key, title, display_payload, context)
+    st.caption(display_payload.get("summary", ""))
+    rows = display_payload.get("rows", [])
+    if rows:
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    else:
+        st.info(pick("暂无可展示内容。", "Nothing to display yet."))
+
+
+def _render_module_header(
+    user_id: int,
+    module_key: str,
+    title: str,
+    payload: dict[str, Any],
+    context: dict[str, Any],
+) -> None:
+    cols = st.columns([6, 1.1, 1.1])
+    with cols[0]:
+        st.markdown(f"## {title}")
+    with cols[1]:
+        button_label = pick("查看英文", "View English") if _module_language(module_key) == "zh" else pick("切换中文", "View Chinese")
+        if st.button(button_label, key=f"results_translate_{module_key}", use_container_width=True):
+            st.session_state[_module_language_key(module_key)] = "en" if _module_language(module_key) == "zh" else "zh"
+            st.rerun()
+    with cols[2]:
+        try:
+            xlsx_bytes, xlsx_name = export_result_module_to_xlsx(title, payload, context)
+            st.download_button(
+                pick("下载", "Download"),
+                data=xlsx_bytes,
+                file_name=xlsx_name,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key=f"results_download_{module_key}",
+                use_container_width=True,
+            )
+        except ValueError:
+            st.button(pick("下载", "Download"), disabled=True, use_container_width=True, key=f"results_download_disabled_{module_key}")
+
+
+def _render_raw_reviews_section(comments: list[dict[str, Any]]) -> None:
+    st.markdown(f"## {pick('评论原文', 'Raw Reviews')}")
+    if not comments:
+        st.info(pick("当前范围内没有评论原文。", "There are no raw reviews in the current range."))
+        return
+
+    table_rows = []
+    for comment in comments:
+        content = str(comment.get("content") or "").strip()
+        table_rows.append(
+            {
+                pick("日期", "Date"): str(comment.get("date") or ""),
+                pick("评分", "Rating"): str(comment.get("rating") or ""),
+                pick("情感", "Sentiment"): str(comment.get("sentiment") or ""),
+                pick("分类", "Category"): str(comment.get("category") or ""),
+                pick("正向标签", "Highlight Tags"): str(comment.get("highlight_tag") or ""),
+                pick("负向标签", "Issue Tags"): str(comment.get("issue_tag") or ""),
+                pick("评论摘要", "Review Summary"): content[:120] + ("..." if len(content) > 120 else ""),
+            }
+        )
+    st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+
+    for index, comment in enumerate(comments[:30], 1):
+        with st.expander(
+            f"{pick('评论', 'Review')} {index}｜{comment.get('date') or pick('无日期', 'No Date')}｜{comment.get('sentiment') or pick('未分析', 'Not Analyzed')}",
+            expanded=False,
+        ):
+            st.write(str(comment.get("content") or ""))
+            detail_rows = [
+                (pick("评分", "Rating"), comment.get("rating") or pick("无评分", "No Rating")),
+                (pick("情感", "Sentiment"), comment.get("sentiment") or "--"),
+                (pick("内容情感", "Content Sentiment"), comment.get("content_sentiment") or "--"),
+                (pick("分类", "Category"), comment.get("category") or "--"),
+                (pick("优先级", "Priority"), comment.get("priority") or "--"),
+                (pick("正向反馈", "Positive Feedback"), comment.get("highlight_tag") or "--"),
+                (pick("负向反馈", "Negative Feedback"), comment.get("issue_tag") or "--"),
+                (pick("分析原因", "Reason"), comment.get("reason") or "--"),
+                (pick("改进建议", "Improvement Suggestion"), comment.get("improvement") or "--"),
+            ]
+            st.dataframe(pd.DataFrame(detail_rows, columns=[pick("字段", "Field"), pick("内容", "Content")]), use_container_width=True, hide_index=True)
+
+
+def _resolve_display_payload(
+    user_id: int,
+    module_key: str,
+    payload: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    if _module_language(module_key) != "zh":
+        return payload
+    cache_key = (
+        f"translated_module_payload_{module_key}_"
+        f"{context.get('product_id', '--')}_{context.get('version', '--')}_{context.get('time_label', '--')}"
+    )
+    cached_payload = st.session_state.get(cache_key)
+    if cached_payload is None:
+        cached_payload = translate_result_module(user_id, payload, "zh")
+        st.session_state[cache_key] = cached_payload
+    return cached_payload
+
+
+def _module_language(module_key: str) -> str:
+    return str(st.session_state.get(_module_language_key(module_key), "en"))
+
+
+def _module_language_key(module_key: str) -> str:
+    return f"results_module_lang_{module_key}"
+
+
+def _parse_comment_date(value: Any) -> date | None:
+    if value in (None, ""):
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _filter_by_date_range(comments: list[dict[str, Any]], start: date, end: date) -> list[dict[str, Any]]:
+    filtered = []
+    for comment in comments:
+        comment_date = _parse_comment_date(comment.get("date"))
+        if comment_date is None:
+            continue
+        if start <= comment_date <= end:
+            filtered.append(comment)
+    return filtered
+
+
+def _format_session_option(session: dict[str, Any]) -> str:
+    title = session.get("custom_title") or session.get("auto_title") or str(session.get("version") or "V1")
+    return f"{title} · {_format_session_date_range(session)}"
+
+
+def _format_session_date_range(session: dict[str, Any]) -> str:
+    start = str(session.get("date_range_start") or "")
+    end = str(session.get("date_range_end") or "")
+    if start and end:
+        return f"{start} ~ {end}"
+    return pick("当前批次", "Current Batch")

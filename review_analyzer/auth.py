@@ -91,6 +91,8 @@ def login(username: str, password: str) -> tuple[bool, str]:
 def logout() -> None:
     for key in ["user_id", "username", "is_logged_in"]:
         st.session_state.pop(key, None)
+    st.session_state["show_page"] = "landing"
+    st.session_state.pop("force_public_preview", None)
 
 
 # ============================================================
@@ -151,6 +153,9 @@ def get_current_username() -> str | None:
 # ============================================================
 
 def save_user_api_key(user_id: int, api_key: str) -> None:
+    if not api_key.strip():
+        update_user_api_key(user_id, None)
+        return
     encrypted = encrypt_api_key(api_key)
     update_user_api_key(user_id, encrypted)
 
