@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-const DEFAULT_SITE_URL = "https://clueai.com";
-const DEFAULT_APP_URL = "https://app.clueai.com";
+const DEFAULT_SITE_URL = "https://clueai-reviewlens.com";
+const DEFAULT_APP_URL = "https://app.clueai-reviewlens.com";
 const DEFAULT_OG_IMAGE_PATH = "/opengraph-image";
 
 function normalizeUrl(value: string | undefined, fallback: string): string {

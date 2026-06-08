@@ -1,0 +1,17 @@
+:root {
+  --canvas: #fffaf8;
+  --card: rgba(255, 255, 255, 0.88);
+  --ink: #25212a;
+  --soft: #6f6877;
+  --line: #ebe4ee;
+  --rose: #f36f8f;
+  --rose-soft: #fff1f5;
+  --lavender: #8d7be8;
+  --mint: #4fb99f;
+  --font-body: "Inter", "Helvetica Neue", "Segoe UI", sans-serif;
+  --font-heading: "Montserrat", "Avenir Next", "Segoe UI", sans-serif;
+  --radius-shell: 32px;
+  --radius-card: 24px;
+  --shadow-card: 0 20px 52px rgba(96, 63, 88, 0.1);
+  --shadow-glow: 0 18px 40px rgba(121, 88, 137, 0.16);
+}

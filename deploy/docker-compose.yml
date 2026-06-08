@@ -10,21 +10,14 @@ services:
     build:
       context: ..
       dockerfile: backend_api/Dockerfile
+    env_file:
+      - .env
     environment:
       API_ENV: production
-      API_CORS_ORIGINS: https://clueai.com,https://www.clueai.com,https://app.clueai.com
-      API_COOKIE_DOMAIN: .clueai.com
+      API_CORS_ORIGINS: https://clueai-reviewlens.com,https://www.clueai-reviewlens.com,https://app.clueai-reviewlens.com
+      API_COOKIE_DOMAIN: .clueai-reviewlens.com
       API_COOKIE_SECURE: "true"
-      AES_SECRET_KEY: ${AES_SECRET_KEY}
-      DATABASE_URL: ${DATABASE_URL}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
-      FEISHU_WEBHOOK: ${FEISHU_WEBHOOK}
-      PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN}
-      PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT:-production}
-      PADDLE_PRICE_ID: ${PADDLE_PRICE_ID}
-      PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET}
       REDIS_URL: redis://redis:6379/0
-      API_SESSION_SECRET: ${API_SESSION_SECRET}
     depends_on:
       - redis
     expose:
@@ -35,17 +28,10 @@ services:
     build:
       context: ..
       dockerfile: workers/Dockerfile
+    env_file:
+      - .env
     environment:
-      AES_SECRET_KEY: ${AES_SECRET_KEY}
-      DATABASE_URL: ${DATABASE_URL}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
-      FEISHU_WEBHOOK: ${FEISHU_WEBHOOK}
-      PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN}
-      PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT:-production}
-      PADDLE_PRICE_ID: ${PADDLE_PRICE_ID}
-      PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET}
       REDIS_URL: redis://redis:6379/0
-      API_SESSION_SECRET: ${API_SESSION_SECRET}
     depends_on:
       - redis
     restart: unless-stopped
@@ -55,9 +41,9 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: https://api.clueai.com
+        NEXT_PUBLIC_API_BASE_URL: https://api.clueai-reviewlens.com
     environment:
-      NEXT_PUBLIC_API_BASE_URL: https://api.clueai.com
+      NEXT_PUBLIC_API_BASE_URL: https://api.clueai-reviewlens.com
     depends_on:
       - api
     expose:
@@ -81,21 +67,14 @@ services:
     build:
       context: ..
       dockerfile: backend_api/Dockerfile
+    env_file:
+      - .env
     command:
       - streamlit
       - run
       - review_analyzer/app.py
       - --server.address=0.0.0.0
       - --server.port=8501
-    environment:
-      AES_SECRET_KEY: ${AES_SECRET_KEY}
-      DATABASE_URL: ${DATABASE_URL}
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
-      FEISHU_WEBHOOK: ${FEISHU_WEBHOOK}
-      PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN}
-      PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT:-production}
-      PADDLE_PRICE_ID: ${PADDLE_PRICE_ID}
-      PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET}
     expose:
       - "8501"
     restart: unless-stopped

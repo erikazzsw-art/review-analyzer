@@ -1,0 +1,553 @@
+import type {
+  ActionItemCreatePayload,
+  ActionItemsResponse,
+  ActionStatusUpdatePayload,
+  AnalysisCommentInput,
+  AnalysisCompareResponse,
+  AnalysisHistoryResponse,
+  AnalysisSessionResultsResponse,
+  BillingCheckoutResponse,
+  CopywriterGenerateResponse,
+  CopywriterPlatform,
+  CopywriterProduct,
+  QaAskPayload,
+  QaAskResponse,
+  QaProduct,
+  ComparisonReportCreatePayload,
+  ComparisonReportResponse,
+  ReviewTrackerCreatePayload,
+  ReviewTrackerFromActionResponse,
+  ReviewTrackerUpdatePayload,
+  ReviewTrackersResponse,
+  SettingsResponse,
+  SettingsUpdatePayload,
+  UploadJobResponse,
+} from "@/lib/api/types";
+
+const DEFAULT_API_BASE_URL = "http://127.0.0.1:8100";
+
+function getApiBaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+    process.env.API_BASE_URL?.trim() ||
+    DEFAULT_API_BASE_URL
+  );
+}
+
+type ApiError = {
+  status: number;
+  message: string;
+};
+
+async function parseError(response: Response): Promise<ApiError> {
+  let message = `Request failed with status ${response.status}.`;
+  try {
+    const payload = (await response.json()) as { detail?: string };
+    if (payload.detail) {
+      message = payload.detail;
+    }
+  } catch {}
+  return { status: response.status, message };
+}
+
+export async function submitUploadJob(params: {
+  sourceFile: File;
+  productId: string;
+  version: string;
+  workflowPurpose: string;
+  productName: string;
+  platform: string;
+  category: string;
+  dateStart: string;
+  dateEnd: string;
+  versionNotes: string;
+  productRefId?: number | null;
+  variantRefId?: number | null;
+}): Promise<UploadJobResponse> {
+  const formData = new FormData();
+  formData.append("source_file", params.sourceFile);
+  formData.append("product_id", params.productId);
+  formData.append("version", params.version);
+  formData.append("workflow_purpose", params.workflowPurpose);
+  formData.append("product_name", params.productName);
+  formData.append("platform", params.platform);
+  formData.append("category", params.category);
+  formData.append("date_start", params.dateStart);
+  formData.append("date_end", params.dateEnd);
+  formData.append("version_notes", params.versionNotes);
+  if (params.productRefId !== undefined && params.productRefId !== null) {
+    formData.append("product_ref_id", String(params.productRefId));
+  }
+  if (params.variantRefId !== undefined && params.variantRefId !== null) {
+    formData.append("variant_ref_id", String(params.variantRefId));
+  }
+
+  const response = await fetch(`${getApiBaseUrl()}/uploads`, {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as UploadJobResponse;
+}
+
+export async function fetchUploadJob(jobId: number): Promise<UploadJobResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/analysis/jobs/${jobId}`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as UploadJobResponse;
+}
+
+export async function fetchAnalysisSessionResults(
+  sessionId: number,
+): Promise<AnalysisSessionResultsResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/analysis/sessions/${sessionId}/results`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as AnalysisSessionResultsResponse;
+}
+
+export async function fetchAnalysisCompare(params?: {
+  compareType?: string;
+  sessionIds?: number[];
+  productId?: string;
+}): Promise<AnalysisCompareResponse> {
+  const search = new URLSearchParams();
+  if (params?.compareType) {
+    search.set("compare_type", params.compareType);
+  }
+  if (params?.productId) {
+    search.set("product_id", params.productId);
+  }
+  (params?.sessionIds || []).forEach((sessionId) => {
+    search.append("session_ids", String(sessionId));
+  });
+
+  const query = search.toString();
+  const response = await fetch(`${getApiBaseUrl()}/analysis/compare${query ? `?${query}` : ""}`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as AnalysisCompareResponse;
+}
+
+export async function fetchAnalysisHistory(productId?: string): Promise<AnalysisHistoryResponse> {
+  const search = new URLSearchParams();
+  if (productId) {
+    search.set("product_id", productId);
+  }
+  const query = search.toString();
+  const response = await fetch(`${getApiBaseUrl()}/analysis/history${query ? `?${query}` : ""}`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as AnalysisHistoryResponse;
+}
+
+export async function submitComparisonReport(
+  params: ComparisonReportCreatePayload,
+): Promise<ComparisonReportResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/compare/reports`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      compare_type: params.compareType,
+      session_ids: params.sessionIds,
+      product_id: params.productId ?? null,
+      focus_feature: params.focusFeature ?? null,
+      title: params.title ?? null,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as ComparisonReportResponse;
+}
+
+export async function fetchQaProducts(): Promise<QaProduct[]> {
+  const response = await fetch(`${getApiBaseUrl()}/qa/products`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as QaProduct[];
+}
+
+export async function askReviews(
+  payload: QaAskPayload,
+): Promise<QaAskResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/qa/ask`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      product_ids: payload.productIds,
+      question: payload.question,
+      top_k: payload.topK ?? 5,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as QaAskResponse;
+}
+
+export async function fetchActionItems(): Promise<ActionItemsResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/actions`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as ActionItemsResponse;
+}
+
+export async function createActionItem(
+  payload: ActionItemCreatePayload,
+): Promise<Record<string, unknown>> {
+  const response = await fetch(`${getApiBaseUrl()}/actions`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      product_id: payload.productId ?? null,
+      variant_id: payload.variantId ?? null,
+      session_id: payload.sessionId ?? null,
+      source_product_id: payload.sourceProductId ?? null,
+      source_version: payload.sourceVersion ?? null,
+      source_batch_label: payload.sourceBatchLabel ?? null,
+      title: payload.title,
+      tag_name: payload.tagName ?? null,
+      tag_type: payload.tagType ?? "issue",
+      current_pct: payload.currentPct ?? null,
+      owner_role: payload.ownerRole ?? null,
+      suggested_action: payload.suggestedAction ?? null,
+      expected_effect_batch: payload.expectedEffectBatch ?? null,
+      expected_review_at: payload.expectedReviewAt ?? null,
+      status: payload.status ?? "todo",
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as Record<string, unknown>;
+}
+
+export async function updateActionStatus(
+  actionId: number,
+  status: string,
+): Promise<Record<string, unknown>> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/${actionId}/status`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status } satisfies ActionStatusUpdatePayload),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as Record<string, unknown>;
+}
+
+export async function getActionTracker(actionId: number): Promise<Record<string, unknown> | null> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/${actionId}/tracker`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as Record<string, unknown>;
+}
+
+export async function createTrackerFromAction(
+  actionId: number,
+  payload: ReviewTrackerCreatePayload,
+): Promise<ReviewTrackerFromActionResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/${actionId}/tracker`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action_item_id: payload.actionItemId ?? null,
+      product_id: payload.productId ?? null,
+      variant_id: payload.variantId ?? null,
+      tracker_title: payload.trackerTitle,
+      tag_name: payload.tagName ?? null,
+      baseline_pct: payload.baselinePct ?? null,
+      improvement_action: payload.improvementAction ?? null,
+      effective_batch: payload.effectiveBatch ?? null,
+      review_scope: payload.reviewScope ?? null,
+      current_pct: payload.currentPct ?? null,
+      result_status: payload.resultStatus ?? "pending",
+      conclusion: payload.conclusion ?? null,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as ReviewTrackerFromActionResponse;
+}
+
+export async function fetchReviewTrackers(status?: string): Promise<ReviewTrackersResponse> {
+  const search = new URLSearchParams();
+  if (status) {
+    search.set("tracker_status", status);
+  }
+  const query = search.toString();
+  const response = await fetch(`${getApiBaseUrl()}/actions/trackers${query ? `?${query}` : ""}`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as ReviewTrackersResponse;
+}
+
+export async function updateReviewTracker(
+  trackerId: number,
+  payload: ReviewTrackerUpdatePayload,
+): Promise<Record<string, unknown>> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/trackers/${trackerId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      review_scope: payload.reviewScope ?? null,
+      current_pct: payload.currentPct ?? null,
+      result_status: payload.resultStatus,
+      conclusion: payload.conclusion ?? null,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as Record<string, unknown>;
+}
+
+export function normalizeCommentInput(
+  input: AnalysisCommentInput,
+): AnalysisCommentInput {
+  return {
+    content: input.content.trim(),
+    date: input.date.trim(),
+    rating: input.rating ?? null,
+    reviewer: input.reviewer?.trim() || null,
+    source: input.source?.trim() || null,
+    raw_data: input.raw_data ?? null,
+  };
+}
+
+export async function fetchSettings(): Promise<SettingsResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/settings`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as SettingsResponse;
+}
+
+export async function saveSettings(payload: SettingsUpdatePayload): Promise<SettingsResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/settings`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      webhook_url: payload.webhookUrl,
+      webhook_secret: payload.webhookSecret,
+      webhook_group_name: payload.webhookGroupName,
+      api_key: payload.apiKey,
+      rules: payload.rules,
+      product_rules: payload.productRules,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as SettingsResponse;
+}
+
+export async function testWebhook(payload: {
+  webhookUrl: string;
+  webhookSecret: string;
+}): Promise<Record<string, unknown>> {
+  const response = await fetch(`${getApiBaseUrl()}/settings/test-webhook`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      webhook_url: payload.webhookUrl,
+      webhook_secret: payload.webhookSecret,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as Record<string, unknown>;
+}
+
+export async function fetchCopywriterPlatforms(): Promise<CopywriterPlatform[]> {
+  const response = await fetch(`${getApiBaseUrl()}/copywriter/platforms`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as CopywriterPlatform[];
+}
+
+export async function fetchCopywriterSessions(): Promise<CopywriterProduct[]> {
+  const response = await fetch(`${getApiBaseUrl()}/copywriter/sessions`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as CopywriterProduct[];
+}
+
+export async function generateCopywriter(payload: {
+  productSessionIds: number[];
+  platform: string;
+  featuresText: string;
+  generateAdCopy: boolean;
+  generateIdealDesc: boolean;
+  styleByType: Record<string, string>;
+}): Promise<CopywriterGenerateResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/copywriter/generate`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      product_session_ids: payload.productSessionIds,
+      platform: payload.platform,
+      features_text: payload.featuresText,
+      generate_ad_copy: payload.generateAdCopy,
+      generate_ideal_desc: payload.generateIdealDesc,
+      style_by_type: payload.styleByType,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as CopywriterGenerateResponse;
+}
+
+export async function createBillingCheckout(): Promise<BillingCheckoutResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/billing/checkout`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      success_url: typeof window !== "undefined" ? `${window.location.origin}/settings?billing=success` : "",
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as BillingCheckoutResponse;
+}

@@ -15,7 +15,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend_api /app/backend_api
 COPY review_analyzer /app/review_analyzer
-COPY webhook /app/webhook
 COPY workers /app/workers
 
 CMD ["python", "-m", "workers.runner"]
