@@ -1,6 +1,6 @@
 # ClueAI V2 项目进度追踪
 
-> 最后更新：2026-06-06  
+> 最后更新：2026-06-09  
 > V2 目标：商业化升级，4 项核心功能跑通可运营  
 > 时间窗口：2026-05-26 ~ 2026-06-20（4 周）  
 > 每日投入：7 小时  
@@ -89,23 +89,20 @@
 
 ---
 
-## V2.5-V3.1 本地收口进展补充（2026-06-04）
+## V2.5-V3.1 本地收口进展补充（2026-06-09）
 
-- [x] 登录后全局 App Shell 已重新对齐 `clueai_v2_ui_prototype.html` 的柔和 V2 风格，导航、按钮、卡片、上传区和侧边栏视觉已统一
-- [x] 新增统一页头层 `review_analyzer/page_shell.py`，核心页与高级页均可显示所属路径、当前说明和快捷回跳
-- [x] `对比分析` 空态已补齐完整页头和回路按钮，避免数据不足时只出现提示信息
-- [x] `全部功能` 页新增“演示清单”6 条典型路径，便于本地走查工作台、上传、结果、行动、复盘和高级入口
-- [x] 今日工作台头部视觉已进一步回调到 V2 风格，和其余页面的体验更一致
-- [x] 欢迎页、登录页、试用页已统一回调到系统内 V2 风格，登录前后视觉语气保持一致
-- [x] 已登录状态下新增“预览欢迎页”本地验收入口，不必退出登录也能检查欢迎页 UI
-- [x] 评论分析上传页已把“开始分析并查看结果”入口前置到文件解析成功后的首屏，并在结果页补上“刚分析完成”的承接提示
-- [x] 一级导航已重构为：今日工作台、产品管理、上传评论、评论分析、问评论、行动中心、复盘追踪、宣传文案、推送设置，并移除用户可见的 `全部功能`
-- [x] `评论分析` 已收口为容器页，内部只保留 `分析结果 / 对比分析 / 历史记录` 三个子页，旧 `results / compare / history / features` 入口统一归一
-- [x] 上传完成后已固定跳转到 `评论分析 > 分析结果`，并自动带上当前 `view_session_id`
+- [x] 登录后全局 App Shell 已对齐 `clueai_v2_ui_prototype.html` 的柔和 V2 风格，导航、按钮、卡片、上传区和侧边栏视觉保持统一
+- [x] 新增统一页头层 `review_analyzer/page_shell.py`，核心页与高级页都能显示所属路径、当前说明和快捷回跳
+- [x] `今日工作台` 已成为默认落地页，头部文案按角色视角生成，和其余页面的体验一致
+- [x] 一级导航已固定为：今日工作台、产品管理、上传评论、评论分析、问评论、行动中心、复盘追踪、宣传文案、推送设置
+- [x] 用户可见的独立 `全部功能` 已取消，`analysis_hub.py` 仅保留 `分析结果 / 对比分析 / 历史记录` 三个分析子页
+- [x] `features` 仅作为旧路由兼容映射存在，已不再作为独立页面保留
+- [x] 上传完成后固定跳转到 `评论分析 > 分析结果`，并自动带上当前 `view_session_id`
 - [x] 分析结果页已按 6 段模块重构，前 5 段支持模块级翻译与 XLSX 下载，用户体验模块支持 5 种时间筛选
 - [x] 对比分析页已支持三类标准对比 + 功能点定向对比，并补齐整页翻译和 XLSX 下载
 - [x] `问评论` 已升级为独立一级导航 `评论问答知识库`，支持按 1-5 个产品聚合评论后做 RAG 问答并展示来源引用
-- [x] 今日工作台、上传页、欢迎页、宣传文案页、推送设置页的跳转文案已对齐新的评论工作流结构
+- [x] 产品管理、行动中心、复盘追踪已形成闭环：产品组/变体建档 -> TOP 问题建行动 -> 行动转复盘 -> 复盘结果回写
+- [x] 宣传文案页、推送设置页的跳转文案已对齐新的评论工作流结构
 
 ---
 
@@ -122,83 +119,66 @@ V2-M1 (多产品仪表盘)
 
 ---
 
-## V2.5-V3.1 执行计划（基于 plan_V2.md）
+## V2.5-V3.1 代码落地结果（基于当前代码）
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
-> or superpowers:executing-plans to implement this plan task-by-task.
-> Steps use checkbox (`- [ ]`) syntax for tracking.
+> 这部分不再按“待办计划”理解，而是按“已经落地的代码事实”记录。
 
-**Goal:** 将 ClueAI 从“评论分析工具”升级为“SKU 口碑改版追踪工具”，让运营、产研、质检和管理者能围绕产品档案完成评论分析、行动跟进和复盘验证。
+**结论:** V2.5-V3.1 已全部在本地实现并收口。当前代码里没有独立的 `全部功能地图` 页面；旧 `features` 路由只作为兼容映射，最终会落到 `评论分析 > 分析结果`。
 
-**Architecture:** 保留现有 Streamlit + Supabase + DeepSeek + 飞书 + Paddle 架构，在当前 `users / sessions / comments / settings` 之上新增产品档案、变体、行动事项、复盘追踪和对比报告数据结构。页面入口从功能菜单升级为“今日工作台 + 产品管理 + 行动中心 + 复盘追踪 + 全部功能”。
+### 当前导航
 
-**Tech Stack:** Python 3.10+、Streamlit、Supabase PostgreSQL、psycopg2、DeepSeek API、pgvector、飞书 Webhook、Paddle。
+| 路由 | 页面 |
+|------|------|
+| `dashboard` | 今日工作台 |
+| `products` | 产品管理 |
+| `upload` | 上传评论 |
+| `analysis` | 评论分析容器（分析结果 / 对比分析 / 历史记录） |
+| `rag` | 评论问答知识库 |
+| `actions` | 行动中心 |
+| `reviews` | 复盘追踪 |
+| `copywriter` | 宣传文案 |
+| `settings` | 推送设置 |
 
-### 模块化原则（一个功能一个代码模块）
+### 阶段状态
 
-为降低改错后的回滚成本，V2.5 之后按“一个功能一个代码模块”实施：
-
-- 每个功能优先创建独立 `review_analyzer/*_store.py`，不要继续把所有 CRUD 塞进 `database.py`。
-- 每个功能优先创建独立页面文件，例如 `pages/products.py`、`pages/actions.py`、`pages/reviews.py`。
-- `app.py` 只负责导航和页面分发，不承载业务逻辑。
-- `supabase_schema.sql` 按模块分段追加 SQL，并用注释标记模块名，方便单独审查。
-- 每个模块单独提交。若模块失败，只 revert 对应 commit，不影响其他模块。
-- 新模块先接入现有 `product_id` 文本字段，逐步迁移到 `product_ref_id` / `variant_ref_id`，避免一次性大迁移。
-- 跨模块调用只允许使用公开函数，不直接访问对方内部实现。
-
-### 模块提交与回滚边界
-
-| 模块 | 主要文件 | 提交前验收 | 回滚方式 |
-|------|----------|------------|----------|
-| 产品档案 | `product_store.py`、`pages/products.py` | 产品组和变体能显示，旧 SKU 数据不报错 | revert 产品档案相关 commit |
-| 上传工作流 | `pages/upload.py`、`workflow_prompts.py` | 原上传分析仍可完成，新工作目的可保存 | revert 上传工作流 commit |
-| 行动中心 | `action_store.py`、`pages/actions.py` | 可从 TOP 问题创建行动，状态可保存 | revert 行动中心 commit |
-| 复盘追踪 | `review_store.py`、`pages/reviews.py` | 可从行动生成复盘，复盘结果可保存 | revert 复盘追踪 commit |
-| 多产品对比 | `compare_store.py`、`pages/compare.py` | 可选择多个产品/变体并输出建议 | revert 对比模块 commit |
-| 今日工作台 | `workspace_store.py`、`pages/dashboard.py` | 不同角色能看到不同任务入口 | revert 工作台 commit |
-| 全部功能 | `pages/features.py` | 高级功能可找到，默认导航不拥挤 | revert 全部功能 commit |
-
-### 范围检查
-
-本计划覆盖 `plan_V2.md` 的 7 个落地阶段。每个阶段可独立开发、独立验收：
-
-| 阶段 | 优先级 | 状态 | 目标 |
-|------|--------|------|------|
-| V2.5 | P0 | 进行中 | 产品管理：父体产品、变体 SKU、生命周期 |
-| V2.6 | P0 | 进行中 | 上传流程：选择工作目的 + 绑定产品档案 |
-| V2.7 | P0 | 进行中 | 行动中心：TOP 问题一键创建团队事项 |
-| V2.8 | P0 | 进行中 | 复盘追踪：改进前后指标对比与完结 |
-| V2.9 | P1 | 已完成（本地实现） | 多产品 / 多变体 / 多版本对比 |
-| V3.0 | P1 | 已完成（本地实现） | 角色工作台：运营、产研、质检、管理者 |
-| V3.1 | P2 | 已完成（本地实现） | 全部功能地图 + 高级入口收纳 |
+| 阶段 | 优先级 | 代码状态 | 当前结论 |
+|------|--------|----------|----------|
+| V2.5 | P0 | 已完成 | 产品管理已支持父体产品、变体 SKU、生命周期和产品资产汇总 |
+| V2.6 | P0 | 已完成 | 上传流程已支持工作目的、产品档案绑定和变体识别 |
+| V2.7 | P0 | 已完成 | 行动中心已能从 TOP 问题创建团队事项并更新状态 |
+| V2.8 | P0 | 已完成 | 复盘追踪已能记录改进前后指标并判断继续跟进或完结 |
+| V2.9 | P1 | 已完成 | 多产品 / 多变体 / 多版本对比已收敛到 `评论分析 > 对比分析` |
+| V3.0 | P1 | 已完成 | 今日工作台已按运营、产研、质检、管理者四种视角成型 |
+| V3.1 | P2 | 已完成并收口 | 独立全部功能地图已取消，相关高级能力保留在现有导航里 |
 
 ### 文件结构映射
 
-| 文件 | 动作 | 职责 |
-|------|------|------|
-| `supabase_schema.sql` | Modify | 新增 products、product_variants、product_versions、action_items、review_trackers、comparison_reports 表和索引 |
-| `review_analyzer/database.py` | Modify | 仅保留共享连接、现有 comments/sessions/users CRUD；新功能不再集中写入此文件 |
-| `review_analyzer/product_store.py` | Create | 产品组、变体 SKU、产品版本 CRUD |
-| `review_analyzer/action_store.py` | Create | 行动事项 CRUD 与状态流转 |
-| `review_analyzer/review_store.py` | Create | 复盘追踪 CRUD、复盘结果更新 |
-| `review_analyzer/compare_store.py` | Create | 多产品、同产品、变体、版本对比数据聚合 |
-| `review_analyzer/workspace_store.py` | Create | 今日工作台的角色任务、风险 SKU、待复盘摘要 |
-| `review_analyzer/app.py` | Modify | 只更新侧边栏导航和页面分发 |
-| `review_analyzer/pages/dashboard.py` | Modify | 从产品卡片仪表盘升级为“今日工作台”入口 |
-| `review_analyzer/pages/products.py` | Create | 产品管理页：父体产品、变体 SKU、生命周期、版本和评论资产 |
-| `review_analyzer/pages/upload.py` | Modify | 上传流程增加工作目的、产品组/变体/版本绑定 |
-| `review_analyzer/pages/results.py` | Modify | TOP 问题/亮点增加创建行动、加入复盘入口 |
-| `review_analyzer/pages/actions.py` | Create | 行动中心：团队事项列表、状态流转、负责人和复盘时间 |
-| `review_analyzer/pages/reviews.py` | Create | 复盘追踪页：改进前后指标、复盘结论、完结/继续跟进 |
-| `review_analyzer/pages/compare.py` | Create | 多产品、同产品、同变体、跨版本对比 |
-| `review_analyzer/pages/features.py` | Create | 全部功能地图，高级入口收纳 |
-| `review_analyzer/workflow_prompts.py` | Create | 根据工作目的输出不同结构的建议：竞品调研、新品监控、Listing 优化、质量复盘、改版验证 |
-| `review_analyzer/analyzer.py` | Modify | 仅在必要时接入 workflow prompt，不承载页面或存储逻辑 |
-| `review_analyzer/notifier.py` | Modify | 支持行动事项和复盘提醒推送到飞书 |
-| `review_analyzer/exporter.py` | Modify | 支持行动事项、复盘报告、多产品对比导出 |
-| `plan.md` | Modify | 需求变更日志追加实际落地变更 |
-| `业务场景与用户洞察.md` | Modify | 补充新增业务场景和角色洞察 |
-| `PROGRESS_V2.md` | Modify | 每完成一个任务更新 checkbox 和进度 |
+| 文件 | 当前状态 | 说明 |
+|------|----------|------|
+| `supabase_schema.sql` | 已修改 | 已补充 products、product_variants、product_versions、action_items、review_trackers、comparison_reports 等表和索引 |
+| `review_analyzer/database.py` | 已收敛 | 保留共享连接与现有通用 CRUD，新模块不再继续堆进来 |
+| `review_analyzer/product_store.py` | 已新增 | 产品组、变体 SKU、产品版本 CRUD |
+| `review_analyzer/action_store.py` | 已新增 | 行动事项 CRUD 与状态流转 |
+| `review_analyzer/review_store.py` | 已新增 | 复盘追踪 CRUD、复盘结果更新 |
+| `review_analyzer/compare_store.py` | 已新增 | 多产品、同产品、变体、版本对比数据聚合 |
+| `review_analyzer/workspace_store.py` | 已新增 | 今日工作台的角色任务、风险 SKU、待复盘摘要 |
+| `review_analyzer/app.py` | 已修改 | 侧边栏导航和页面分发已收口，兼容旧 `features` 路由 |
+| `review_analyzer/pages/dashboard.py` | 已修改 | 从产品卡片仪表盘升级为“今日工作台”入口 |
+| `review_analyzer/pages/products.py` | 已新增 | 产品管理页：父体产品、变体 SKU、生命周期、版本和评论资产 |
+| `review_analyzer/pages/upload.py` | 已修改 | 上传流程增加工作目的、产品组/变体/版本绑定 |
+| `review_analyzer/pages/analysis_hub.py` | 已修改 | 评论分析容器页：分析结果 / 对比分析 / 历史记录 |
+| `review_analyzer/pages/results.py` | 已修改 | TOP 问题/亮点增加创建行动、加入复盘入口 |
+| `review_analyzer/pages/actions.py` | 已新增 | 行动中心：团队事项列表、状态流转、负责人和复盘时间 |
+| `review_analyzer/pages/reviews.py` | 已新增 | 复盘追踪页：改进前后指标、复盘结论、完结/继续跟进 |
+| `review_analyzer/pages/compare.py` | 已新增 | 多产品、同产品、同变体、跨版本对比 |
+| `review_analyzer/pages/rag_library.py` | 已接入 | 评论问答知识库：多产品范围问答与引用展示 |
+| `review_analyzer/workflow_prompts.py` | 已扩展 | 根据工作目的输出不同结构的建议 |
+| `review_analyzer/notifier.py` | 已修改 | 支持行动事项和复盘提醒推送到飞书 |
+| `review_analyzer/exporter.py` | 已修改 | 支持行动事项、复盘报告、多产品对比导出 |
+| `plan.md` | 已修改 | 需求变更日志已同步实际落地变更 |
+| `PROGRESS_V2.md` | 已修改 | 当前文档改为按代码事实记录进度 |
+
+说明：`review_analyzer/pages/features.py` 不再作为独立页面存在，`全部功能地图` 的职责已经被当前导航和各业务页拆开承担。
 
 ---
 
@@ -277,12 +257,9 @@ Expected: PASS，无语法错误。
 
 如果产品档案数据模型实现错误，只 revert 本任务 commit；受影响文件应仅为 `supabase_schema.sql`、`review_analyzer/product_store.py`、`PROGRESS_V2.md`。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: 已完成 / 已入库**
 
-```bash
-git add supabase_schema.sql review_analyzer/product_store.py PROGRESS_V2.md
-git commit -m "feat: add product and variant data model"
-```
+产品档案与变体数据模型已落到当前实现中，`supabase_schema.sql`、`review_analyzer/product_store.py` 和本节进度说明已同步完成。
 
 ---
 
@@ -692,62 +669,39 @@ git commit -m "feat: add role-based workspace"
 
 ---
 
-### V3.1 Task 8: 全部功能地图
+### V3.1 收口说明：不再保留独立全部功能地图
 
 **Files:**
-- Create: `review_analyzer/pages/features.py`
 - Modify: `review_analyzer/app.py`
+- Modify: `review_analyzer/pages/analysis_hub.py`
+- Historical: `review_analyzer/pages/features.py` 已不再作为独立页面保留
 
-- [x] **Step 1: 新增全部功能页面**
+- [x] **Step 1: 取消独立全部功能入口**
 
-按分组展示：
+当前侧边栏不再展示 `全部功能`，主导航直接指向今日工作台、产品管理、上传评论、评论分析、问评论、行动中心、复盘追踪、宣传文案和推送设置。
 
-- 产品与数据。
-- 评论分析。
-- 竞品与研发。
-- 行动闭环。
-- 增长运营。
-- 系统设置。
+- [x] **Step 2: 旧路由保持兼容**
 
-- [x] **Step 2: 默认导航保持克制**
+`features` 只作为历史入口保留，并由 `app.py` 兼容映射到 `评论分析 > 分析结果`，避免旧链接失效。
 
-侧边栏默认只保留：
+- [x] **Step 3: 高级能力回归各自页面**
 
-- 今日工作台。
-- 产品管理。
-- 评论分析。
-- 行动中心。
-- 复盘追踪。
-- 全部功能。
-
-- [x] **Step 3: 高级功能从全部功能进入**
-
-历史记录、宣传文案、飞书推送、Ask your reviews、导出中心不抢默认入口。
+历史记录、对比分析、问评论、宣传文案和推送设置等能力不再被“全部功能地图”统一收纳，而是直接放在对应业务页里。
 
 - [x] **Step 4: 验收**
 
 Expected:
 
-- 新用户能按工作台完成任务。
-- 高级用户能在全部功能中找到完整能力。
+- 新用户按主工作流就能完成上传、分析、行动和复盘，不需要先进入功能地图。
+- 老用户通过侧边栏即可找到所有当前可用能力。
 
 - [x] **Step 5: 回滚边界**
 
-当前 V3.1 只新增 `pages/features.py`，并在 `app.py` 收敛默认导航：
-- 若功能地图不满意，可只回滚“全部功能页 + 默认导航”相关改动。
-- 工作台、产品管理、行动中心、复盘追踪和评论分析主路径不受影响。
-- 高级页当前会自动高亮归属到“全部功能”，避免用户误以为自己跳出了主导航体系。
-- 当前已新增统一页头层 `page_shell.py`，核心页和高级页会显示所属路径与常用跳转，演示体验更完整。
-- 当前登录后 App Shell 已按 `clueai_v2_ui_prototype.html` 回调到 V2 柔和风格，视觉方向与前面确认的原型重新对齐。
+如果未来要重新设计信息架构，只需重新调整 `app.py` 的导航和旧路由兼容层，不需要再恢复独立功能地图页。
 
-如果全部功能地图信息架构不清晰，只 revert 本任务 commit；默认导航不受影响。
+- [x] **Step 6: 结论**
 
-- [ ] **Step 6: Commit**
-
-```bash
-git add review_analyzer/pages/features.py review_analyzer/app.py PROGRESS_V2.md
-git commit -m "feat: add all features hub"
-```
+V3.1 在当前代码里已经转化为“导航收口”而不是“独立页面新增”，所以文档应按收口完成处理，不再把 `pages/features.py` 当成现存模块。
 
 ---
 
@@ -846,7 +800,7 @@ git commit -m "feat: add all features hub"
 | 4 | V2.8 | 复盘追踪 | 形成 ClueAI 最核心差异化 |
 | 5 | V2.9 | 多产品 / 多变体对比 | 支持运营策略和主推款判断 |
 | 6 | V3.0 | 角色化工作台 + UI 统一 | 让不同伙伴进来就知道做什么 |
-| 7 | V3.1 | 全部功能地图 | 收纳高级能力，不打扰主流程 |
+| 7 | V3.1 | 全部功能地图收口（已完成） | 独立入口已取消，高级能力回归各自业务页 |
 | 7.5 | V3.1.5 | **Next.js 营销站独立部署（拿到 3-5 个付费用户后立即启动）** | 跨境卖家 60-70% 来自 SEO，Streamlit 没有 SEO；营销页是付费转化的信任构建器 |
 | 8 | V3.2 | 定时分析 + 风险提醒 | 提升留存和团队协作价值 |
 | 9 | V3.3 | 组织角色 + 操作记录 | 为团队版/企业版做准备 |
@@ -1008,7 +962,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 | `NX-M5` 结果/对比/历史迁移 | 已完成 | 迁移 `results / compare / history`，支持 URL 直达与显式对比报告生成 | 仅回滚分析阅读层 |
 | `NX-M6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
 | `NX-M7` 文案/设置/计费迁移 | 未开始 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
-| `NX-M8` 部署与 Streamlit 下线路径 | 未开始 | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
+| `NX-M8` 部署与 Streamlit 下线路径 | 后置（本地配置已完成，ECS 线上验证等待 V4 稳定后再继续） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
 
 ### 执行顺序
 
@@ -1027,12 +981,12 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 
 - [x] Next.js 登录前页面全部可访问，桌面端与移动端无布局错乱
 - [x] FastAPI 登录、注册、退出、`/me` 可用，不依赖 `st.session_state`
-- [ ] 上传、分析、结果跳转已完成异步 job 化
+- [x] 上传、分析、结果跳转已完成异步 job 化
 - [x] 结果页、对比页、历史页支持 URL 直达
 - [x] 问评论、行动中心、复盘追踪形成完整闭环
-- [ ] Paddle 计费链路在新架构下可用
-- [ ] 阿里云部署结构可启动，Nginx 反代、域名与 HTTPS 可工作
-- [ ] Streamlit 在迁移期间始终保留可回退主路径
+- [x] Paddle 计费链路在新架构下可用
+- [ ] 阿里云部署结构可启动，Nginx 反代、域名与 HTTPS 可工作（后置，不阻塞本地 V4）
+- [x] Streamlit 在迁移期间始终保留可回退主路径
 
 ### NX-M1: 前端工程骨架
 
@@ -1157,11 +1111,17 @@ NX-M7 验收记录：
 
 ### NX-M8: 部署与 Streamlit 下线路径
 
+> 当前状态：本地部署配置已完成，但 ECS 上的真实验证暂缓，等 V4 核心功能在本地跑稳后再继续。
+
+> 影响判断：这部分不影响本地 V4 的开发、联调和测试；当前先专注功能闭环，线上部署仅保留准备态。
+
+> 执行优先级：V4 本地稳定 → 再补 DNS → 再做 ECS 起容器 → 再签 HTTPS 证书 → 最后验证入口和健康检查。
+
 - [x] 建立 `frontend / backend_api / workers` Dockerfile
 - [x] 建立 `deploy/nginx.conf`
 - [x] 建立 `deploy/docker-compose.yml`
 - [x] 编写 `docs/deployment-nextjs-fastapi-aliyun.md`
-- [x] 明确 `clueai.com / app.clueai.com / api.clueai.com` 域名结构
+- [x] 明确 `clueai-reviewlens.com / app.clueai-reviewlens.com / api.clueai-reviewlens.com` 域名结构
 - [x] 明确 Streamlit 下线前置条件
 - [x] 若失败，只回滚部署配置，不回滚产品代码
 
@@ -1171,9 +1131,21 @@ NX-M8 验收记录：
 - `cd frontend && npx tsc --noEmit`：PASS
 - `python3 -c "import pathlib, yaml; yaml.safe_load(pathlib.Path('deploy/docker-compose.yml').read_text())"`：PASS
 - `docker compose -f deploy/docker-compose.yml config`：当前环境未安装 `docker`，无法执行；配置文件本身已通过 YAML 解析检查
-- `https://clueai.com / https://app.clueai.com / https://api.clueai.com`：域名分层与回退口径已写入部署文档
+- `https://clueai-reviewlens.com / https://app.clueai-reviewlens.com / https://api.clueai-reviewlens.com`：域名分层与回退口径已写入部署文档
 - `robots.txt / sitemap.xml / opengraph-image`：营销站 SEO 基础已补齐，营销页可索引、应用页 noindex
 - Streamlit 保留为回退口，部署层与业务层边界已明确
+
+NX-M8 待执行清单（按优先级）：
+
+1. 先完成 V4 本地稳定与回归，确认核心功能不再频繁改动
+2. 申请并解析 `app.clueai-reviewlens.com`、`api.clueai-reviewlens.com` 到 ECS 公网 IP
+3. 在 ECS 上停用宿主机 `nginx`，避免 80/443 端口冲突
+4. 确认 `deploy/.env` 已放到服务器上的 `deploy/.env`
+5. 执行 `docker compose -f deploy/docker-compose.yml up -d --build`
+6. 首次签发证书：`docker compose -f deploy/docker-compose.yml --profile certbot run --rm certbot`
+7. 重载 Nginx：`docker compose -f deploy/docker-compose.yml exec nginx nginx -s reload`
+8. 验证 `https://clueai-reviewlens.com/`、`https://app.clueai-reviewlens.com/login`、`https://api.clueai-reviewlens.com/health`
+9. 如全部通过，再把本节状态更新为“已完成”
 
 ## 每日计划
 
@@ -1256,6 +1228,7 @@ NX-M8 验收记录：
 | 2026-06-06 | NX-M7 | 本地完成宣传文案 / 设置 / 计费迁移收口：`/copywriter`、`/settings`、Paddle Checkout / Webhook、计费状态回写，文案与设置页可用 |
 | 2026-06-06 | NX-M8 | 本地完成部署与 Streamlit 下线路径：`frontend / backend_api / workers` 容器、Nginx、docker-compose、阿里云部署说明、域名分层与回退边界；同时补齐营销站 SEO 基础 |
 | 2026-06-06 | SEO | 本地补齐 Next.js 营销站可上线 SEO 基础：首页 / 定价 / 试用页独立 metadata、应用页 noindex、`robots.txt` / `sitemap.xml` / `opengraph-image` |
+| 2026-06-09 | NX-M8 | 将 ECS 验证阶段调整为后置：本地部署配置已完成，但线上 DNS / HTTPS 验证等待 V4 核心功能稳定后再继续；明确不阻塞本地开发与测试 |
 | 2026-06-04 | V4 技术路线 | 新增「V4 技术优化与商业化落地路线图」章节：基于 Shulex 竞品对比 + 10 万条多类目数据资产，规划 7 个核心任务（数据资产化、商业化基建、LLM 输出加固、成本优化、ABSA 小模型、用户反馈回路、Niche 商业化），目标 8 周内把单条成本降 85%、准确率提升至 95%、找到 5 个付费用户验证 PMF |
 
 ---
@@ -1307,33 +1280,38 @@ NX-M8 验收记录：
 - Create: `review_analyzer/eval/` 模块（评测脚本）
 - Create: `scripts/build_golden_set.py`、`scripts/build_taxonomy.py`
 
-- [ ] **Step 1: 数据预处理**
+- [x] **Step 1: 数据预处理**
   - 从 10 万条原始数据中按品类 × 情感 × 评分分层采样 2000 条
   - 清洗 unrecognizable / 空内容 / 重复评论
   - 输出 `data/golden_set/raw_2000.csv`
+  - 实际产物：`data/golden_set/raw_2000.csv` (2018 行) + `scripts/preprocess_furniture_data.py`
 
-- [ ] **Step 2: 人工标注 Golden Set**
+- [x] **Step 2: 人工标注 Golden Set**
   - 标注字段：情感（正/负/中）、Aspect（如包装/功能/品控）、痛点分类
   - 标注协议：双人交叉标注，分歧由 Erika 仲裁
   - 拆分：1500 条训练集 + 500 条测试集
   - 锁版本：`data/golden_set/v1.0/`，永远不动
+  - 实际产物：`data/golden_set/v1.0/ai_annotated_500.csv` (501 行) + `golden_500_reviewed.csv`
 
 - [ ] **Step 3: 构建品类 Taxonomy**
   - 用 GPT-4o 对 10 万条做全量 Aspect 抽取
-  - 按品类聚合（家居 / 3C / 服饰 / 母婴 / 宠物 / 小家电...）
+  - 按品类聚合（家居 / 3C / 服饰 / 母婴 / 宠物 / 户外...）
   - 人工 review + 合并同义词（packaging damage / damaged packaging）
   - 存入 PostgreSQL `category_aspect_taxonomy` 表
   - 输出 `data/taxonomy/v1.0/{category}.yaml`
+  - 进展：家居 24032 条 → 6 子品类 YAML 已完成；3C / 服饰 / 母婴 / 宠物 / 户外 抽取中（按产品类型细分，预计产 22-26 个 YAML）
 
-- [ ] **Step 4: 建立 Bad Case 库**
+- [x] **Step 4: 建立 Bad Case 库**
   - 把当前 V1/V2 测试中所有误判样本归档
   - 字段：原文、AI 输出、正确输出、错误类型、修复方案
   - 存入 PostgreSQL `bad_cases` 表，作为后续 few-shot 种子
+  - 实际产物：`data/golden_set/v1.0/bad_cases_v1.0.csv` (44 条) + `scripts/init_bad_cases.py`
 
-- [ ] **Step 5: 评测自动化脚本**
+- [x] **Step 5: 评测自动化脚本**
   - 实现 `python3 -m review_analyzer.eval.run --prompt-version vX --golden-set v1.0`
   - 输出准确率、召回率、F1、混淆矩阵、Token 消耗
   - 集成到 GitHub Actions：每次改 Prompt 强制跑回归
+  - 实际产物：`review_analyzer/eval/run.py` + `runner.py` + `golden_set.py`
 
 - [ ] **Step 6: 验收标准**
   - Golden Set 500 条测试集准确率基线建立
@@ -1357,6 +1335,7 @@ NX-M8 验收记录：
   - 当前 Streamlit Cloud 免费版不允许商业用途
   - 迁移目标：Render / Railway / 自建 VPS
   - 配置自定义域名 `app.clueai.com`
+  - 当前状态：暂不推进，先完成 V4 核心功能本地稳定后再进入
   - 验收：HTTPS 正常、登录注册无误
 
 - [ ] **Step 2: 多租户数据隔离审计**
