@@ -15,7 +15,8 @@ ALTER TABLE users ADD CONSTRAINT chk_users_plan CHECK (plan IN ('free', 'pro_ear
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 
--- 3. comments 表: 加 updated_at / deleted_at + CHECK 约束
+-- 3. comments 表: 加 created_at / updated_at / deleted_at + CHECK 约束
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 ALTER TABLE comments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 ALTER TABLE comments ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 ALTER TABLE comments DROP CONSTRAINT IF EXISTS chk_comments_rating;
@@ -38,7 +39,7 @@ ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 ALTER TABLE action_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 ALTER TABLE action_items ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 ALTER TABLE action_items DROP CONSTRAINT IF EXISTS chk_action_items_status;
-ALTER TABLE action_items ADD CONSTRAINT chk_action_items_status CHECK (status IN ('todo', 'in_progress', 'done', 'cancelled'));
+ALTER TABLE action_items ADD CONSTRAINT chk_action_items_status CHECK (status IN ('todo', 'in_progress', 'pending_review', 'done', 'cancelled'));
 
 -- 8. review_trackers 表: 加 updated_at / deleted_at
 ALTER TABLE review_trackers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
