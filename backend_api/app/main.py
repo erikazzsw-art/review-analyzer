@@ -15,6 +15,8 @@ from backend_api.app.routes.me import router as me_router
 from backend_api.app.routes.products import router as products_router
 from backend_api.app.routes.qa import router as qa_router
 from backend_api.app.routes.settings import router as settings_router
+from backend_api.app.routes.taxonomy import router as taxonomy_router
+from backend_api.app.routes.quota import router as quota_router
 from backend_api.app.routes.uploads import router as uploads_router
 from backend_api.app.routes.workspace import router as workspace_router
 
@@ -64,4 +66,6 @@ app.include_router(compare_router)
 app.include_router(actions_router)
 app.include_router(trackers_router)
 app.include_router(qa_router)
+app.include_router(quota_router)
 app.include_router(settings_router)
+app.include_router(taxonomy_router)
