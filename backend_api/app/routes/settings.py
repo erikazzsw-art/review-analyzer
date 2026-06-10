@@ -19,9 +19,10 @@ from backend_api.app.schemas.settings import (
     SettingsUpdatePayload,
 )
 from review_analyzer.auth import load_user_api_key, save_user_api_key
-from review_analyzer.database import get_setting, set_setting, update_user_plan
+from review_analyzer.database import get_setting, get_user_plan, set_setting, update_user_plan
 from review_analyzer.notifier import _test_webhook
 from review_analyzer.paddle_billing import get_checkout_html, is_billing_configured
+from review_analyzer.quota import get_all_quota_status
 
 
 router = APIRouter(tags=["settings"])
@@ -153,6 +154,22 @@ def test_webhook_route(
     return _test_webhook(webhook_url, "feishu", secret)
 
 
+@router.get("/billing")
+def get_billing_status(current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
+    """用户计费状态：当前套餐 + 各维度用量 + 是否可升级。"""
+    user_id = int(current_user["id"])
+    plan = get_user_plan(user_id)
+    quota_status = get_all_quota_status(user_id)
+    return {
+        "user_id": user_id,
+        "plan": plan,
+        "is_pro": plan in ("pro_early", "pro", "team"),
+        "quota": quota_status,
+        "upgrade_available": plan == "free",
+        "billing_configured": is_billing_configured(),
+    }
+
+
 @router.post("/billing/checkout", response_model=BillingCheckoutResponse)
 def create_billing_checkout(
     payload: BillingCheckoutPayload,
@@ -183,17 +200,49 @@ async def billing_webhook_route(request: Request) -> BillingWebhookResponse:
     if webhook_secret and not _verify_paddle_signature(raw_body, signature, webhook_secret):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Paddle signature.")
 
-    payload = BillingWebhookPayload(
-        event_type=str(body.get("event_type") or body.get("eventType") or ""),
-        customer_id=str(body.get("customer_id") or body.get("customerId") or "") or None,
-        user_id=body.get("user_id") or body.get("custom_data", {}).get("user_id") or body.get("customData", {}).get("user_id"),
-        plan=str(body.get("plan") or "pro"),
-        raw_payload=dict(body),
-        signature=signature or None,
-    )
+    event_type = str(body.get("event_type") or body.get("eventType") or "")
+    custom_data = body.get("data", {}).get("custom_data") or body.get("custom_data") or body.get("customData") or {}
+    user_id_raw = custom_data.get("user_id") or body.get("user_id")
+    customer_id = str(
+        body.get("data", {}).get("customer_id")
+        or body.get("customer_id")
+        or body.get("customerId")
+        or ""
+    ) or None
 
-    if payload.user_id is None:
+    if user_id_raw is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing user id.")
 
-    update_user_plan(int(payload.user_id), payload.plan, payload.customer_id)
-    return BillingWebhookResponse(message="Billing webhook processed.")
+    user_id = int(user_id_raw)
+
+    if event_type in ("subscription.created", "subscription.activated"):
+        update_user_plan(user_id, "pro_early", customer_id)
+    elif event_type == "subscription.updated":
+        plan = _resolve_plan_from_event(body)
+        update_user_plan(user_id, plan, customer_id)
+    elif event_type in ("subscription.canceled", "subscription.paused"):
+        update_user_plan(user_id, "free", customer_id)
+    elif event_type == "subscription.resumed":
+        update_user_plan(user_id, "pro_early", customer_id)
+    else:
+        update_user_plan(user_id, "pro_early", customer_id)
+
+    return BillingWebhookResponse(message=f"Processed {event_type}.")
+
+
+def _resolve_plan_from_event(body: dict) -> str:
+    """从 Paddle webhook data 中推断目标 plan。"""
+    data = body.get("data", {})
+    items = data.get("items") or []
+    price_id = ""
+    if items:
+        price_id = str(items[0].get("price", {}).get("id") or items[0].get("price_id") or "")
+
+    pro_price = os.getenv("PADDLE_PRICE_ID", "")
+    team_price = os.getenv("PADDLE_TEAM_PRICE_ID", "")
+
+    if team_price and price_id == team_price:
+        return "team"
+    if pro_price and price_id == pro_price:
+        return "pro_early"
+    return "pro_early"

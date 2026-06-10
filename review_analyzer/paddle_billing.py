@@ -44,4 +44,4 @@ def get_checkout_html(user_id: int, user_email: str, success_url: str) -> str:
 
 def is_pro_user(user_id: int) -> bool:
     from .database import get_user_plan
-    return get_user_plan(user_id) == "pro"
+    return get_user_plan(user_id) in ("pro_early", "pro", "team")
