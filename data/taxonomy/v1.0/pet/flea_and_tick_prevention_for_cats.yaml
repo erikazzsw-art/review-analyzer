@@ -1,0 +1,309 @@
+# Flea and Tick Prevention for Cats Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Flea and Tick Prevention for Cats
+aspect_count: 17
+aspects:
+  - key: other
+    label_zh: 其他
+    total: 773
+    positive_count: 176
+    negative_count: 589
+    neutral_count: 8
+    negative_rate: 76.2%
+    top_phrases:
+      - {phrase: "does not work", count: 58}
+      - {phrase: "doesn't work", count: 46}
+      - {phrase: "did not work", count: 28}
+      - {phrase: "Doesn't work", count: 27}
+      - {phrase: "Does not work", count: 17}
+      - {phrase: "Didn't work", count: 12}
+      - {phrase: "didn't work at all", count: 9}
+      - {phrase: "waterproof", count: 9}
+      - {phrase: "did not work at all", count: 9}
+      - {phrase: "didn't work", count: 7}
+    sample_reviews: ['PET-016580', 'PET-019577', 'PET-005002', 'PET-016612', 'PET-016612']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 389
+    positive_count: 176
+    negative_count: 212
+    neutral_count: 1
+    negative_rate: 54.5%
+    top_phrases:
+      - {phrase: "waste of money", count: 30}
+      - {phrase: "Waste of money", count: 20}
+      - {phrase: "great price", count: 9}
+      - {phrase: "waste your money", count: 9}
+      - {phrase: "wasted my money", count: 8}
+      - {phrase: "Great price", count: 8}
+      - {phrase: "Don't waste your money", count: 6}
+      - {phrase: "Save your money", count: 6}
+      - {phrase: "don't waste your money", count: 6}
+      - {phrase: "6-month supply", count: 5}
+    sample_reviews: ['PET-020710', 'PET-018344', 'PET-005019', 'PET-005540', 'PET-001090']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 365
+    positive_count: 202
+    negative_count: 161
+    neutral_count: 2
+    negative_rate: 44.1%
+    top_phrases:
+      - {phrase: "no fleas or ticks", count: 4}
+      - {phrase: "works great", count: 3}
+      - {phrase: "did not work", count: 2}
+      - {phrase: "no more fleas", count: 2}
+      - {phrase: "it works", count: 2}
+      - {phrase: "kept the fleas away", count: 2}
+      - {phrase: "trusted formula", count: 2}
+      - {phrase: "doesn't work", count: 2}
+      - {phrase: "No fleas", count: 2}
+      - {phrase: "vet quality formula", count: 2}
+    sample_reviews: ['PET-016566', 'PET-020573', 'PET-019577', 'PET-005526', 'PET-005558']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 210
+    positive_count: 176
+    negative_count: 21
+    neutral_count: 13
+    negative_rate: 10.0%
+    top_phrases:
+      - {phrase: "easy to use", count: 24}
+      - {phrase: "easy to apply", count: 19}
+      - {phrase: "easy-to-use", count: 12}
+      - {phrase: "Easy to apply", count: 11}
+      - {phrase: "Easy to use", count: 5}
+      - {phrase: "easy to put on", count: 3}
+      - {phrase: "very easy to apply", count: 2}
+      - {phrase: "fast-acting", count: 2}
+      - {phrase: "works well", count: 2}
+      - {phrase: "very simple to apply", count: 2}
+    sample_reviews: ['PET-020573', 'PET-019577', 'PET-001477', 'PET-018538', 'PET-001130']
+
+  - key: safety
+    label_zh: 安全性
+    total: 145
+    positive_count: 61
+    negative_count: 83
+    neutral_count: 1
+    negative_rate: 57.2%
+    top_phrases:
+      - {phrase: "trusted formula", count: 6}
+      - {phrase: "allergic reaction", count: 3}
+      - {phrase: "no side effects", count: 3}
+      - {phrase: "vet quality formula", count: 3}
+      - {phrase: "severe allergic reaction", count: 2}
+      - {phrase: "severe reaction", count: 2}
+      - {phrase: "lost a significant amount of hair", count: 1}
+      - {phrase: "my dog got more fleas after I put this on him", count: 1}
+      - {phrase: "caused him skin irritation", count: 1}
+      - {phrase: "got a skin rash", count: 1}
+    sample_reviews: ['PET-019490', 'PET-001480', 'PET-015922', 'PET-046336', 'PET-005509']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 119
+    positive_count: 53
+    negative_count: 63
+    neutral_count: 3
+    negative_rate: 52.9%
+    top_phrases:
+      - {phrase: "long-lasting", count: 10}
+      - {phrase: "waterproof", count: 4}
+      - {phrase: "lasts up to 30 days", count: 3}
+      - {phrase: "waterproof feature", count: 3}
+      - {phrase: "long-lasting effect", count: 2}
+      - {phrase: "Doesn't last anywhere near as long as claimed", count: 1}
+      - {phrase: "stays effective even after baths", count: 1}
+      - {phrase: "only worked for 1.5 weeks", count: 1}
+      - {phrase: "Sometimes is only after a week but then I have to wait a month for the next appl", count: 1}
+      - {phrase: "lasted longer", count: 1}
+    sample_reviews: ['PET-020685', 'PET-018538', 'PET-017959', 'PET-010163', 'PET-018021']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 70
+    positive_count: 43
+    negative_count: 23
+    neutral_count: 4
+    negative_rate: 32.9%
+    top_phrases:
+      - {phrase: "I can feel my dog thank me from the bottom of her heart", count: 1}
+      - {phrase: "cats didn't mind it", count: 1}
+      - {phrase: "Dog hated taking these", count: 1}
+      - {phrase: "doggies really appreciated", count: 1}
+      - {phrase: "works good for my indoor cat", count: 1}
+      - {phrase: "no effect keeping my indoor/outdoor cat free of fleas", count: 1}
+      - {phrase: "seems to work well", count: 1}
+      - {phrase: "Works well on my 50lbs + dog", count: 1}
+      - {phrase: "doesn't seem to bother my dog", count: 1}
+      - {phrase: "she likes it too", count: 1}
+    sample_reviews: ['PET-020710', 'PET-001130', 'PET-019733', 'PET-019664', 'PET-019383']
+
+  - key: smell
+    label_zh: 异味
+    total: 63
+    positive_count: 26
+    negative_count: 36
+    neutral_count: 1
+    negative_rate: 57.1%
+    top_phrases:
+      - {phrase: "no smell", count: 5}
+      - {phrase: "No smell", count: 4}
+      - {phrase: "smells horrible", count: 3}
+      - {phrase: "no scent", count: 2}
+      - {phrase: "smells like fish", count: 2}
+      - {phrase: "smells terrible", count: 2}
+      - {phrase: "smelled like rotten fish", count: 1}
+      - {phrase: "a bit smelly at first", count: 1}
+      - {phrase: "smells bad every time it is used", count: 1}
+      - {phrase: "smells like urine until it dries", count: 1}
+    sample_reviews: ['PET-019476', 'PET-018518', 'PET-015945', 'PET-018517', 'PET-015936']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 35
+    positive_count: 7
+    negative_count: 24
+    neutral_count: 4
+    negative_rate: 68.6%
+    top_phrases:
+      - {phrase: "pay $8:00 to return the stuff", count: 1}
+      - {phrase: "return window closes before you know if it works", count: 1}
+      - {phrase: "couldn't find my order", count: 1}
+      - {phrase: "need my refund back", count: 1}
+      - {phrase: "can't get a refund", count: 1}
+      - {phrase: "gave a refund", count: 1}
+      - {phrase: "could not return it or get my money back", count: 1}
+      - {phrase: "Would like a refund", count: 1}
+      - {phrase: "need refund", count: 1}
+      - {phrase: "should be entitled to a refund", count: 1}
+    sample_reviews: ['PET-046298', 'PET-016585', 'PET-005509', 'PET-016023', 'PET-005533']
+
+  - key: packaging
+    label_zh: 包装
+    total: 34
+    positive_count: 8
+    negative_count: 25
+    neutral_count: 1
+    negative_rate: 73.5%
+    top_phrases:
+      - {phrase: "no expiration date on the box", count: 1}
+      - {phrase: "vials didn't have anything in it, one was leaking", count: 1}
+      - {phrase: "3 medication viles but only 2 contained medication", count: 1}
+      - {phrase: "two applicators empty", count: 1}
+      - {phrase: "nothing in the containers", count: 1}
+      - {phrase: "packaging makes application simple and mess-free", count: 1}
+      - {phrase: "Package arrived leaking", count: 1}
+      - {phrase: "box was expired", count: 1}
+      - {phrase: "tubes are busted and missing fluid", count: 1}
+      - {phrase: "one missing flea pill", count: 1}
+    sample_reviews: ['PET-019476', 'PET-046298', 'PET-018572', 'PET-015940', 'PET-016512']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 15
+    positive_count: 5
+    negative_count: 10
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "here in no time", count: 1}
+      - {phrase: "My dog damaged it the box", count: 1}
+      - {phrase: "SHIPPING WAS LATE", count: 1}
+      - {phrase: "fast shipping", count: 1}
+      - {phrase: "replacement was damaged in shipping", count: 1}
+      - {phrase: "received the product quickly", count: 1}
+      - {phrase: "came the next day", count: 1}
+      - {phrase: "tubes were busted", count: 1}
+      - {phrase: "tubes came broke with little to no meds", count: 1}
+      - {phrase: "one of the tubes was opened and all crusty", count: 1}
+    sample_reviews: ['PET-016580', 'PET-016023', 'PET-016544', 'PET-018347', 'PET-003182']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 13
+    positive_count: 8
+    negative_count: 4
+    neutral_count: 1
+    negative_rate: 30.8%
+    top_phrases:
+      - {phrase: "quality product", count: 2}
+      - {phrase: "good quality", count: 2}
+      - {phrase: "Made extremely well", count: 1}
+      - {phrase: "Good quality", count: 1}
+      - {phrase: "quality", count: 1}
+      - {phrase: "quality has gone down hill", count: 1}
+      - {phrase: "ok quality", count: 1}
+      - {phrase: "muy mala calidad", count: 1}
+      - {phrase: "quality of this product", count: 1}
+      - {phrase: "little to no medication in them", count: 1}
+    sample_reviews: ['PET-019439', 'PET-018243', 'PET-017971', 'PET-000183', 'PET-016538']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 12
+    positive_count: 8
+    negative_count: 3
+    neutral_count: 1
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "specifically designed for large dogs", count: 1}
+      - {phrase: "suitable for cats over 1.5 lbs", count: 1}
+      - {phrase: "ideal for medium dogs (23-44 lbs)", count: 1}
+      - {phrase: "cat is just too fat at 13lbs", count: 1}
+      - {phrase: "specifically for large dogs", count: 1}
+      - {phrase: "pounds are broader", count: 1}
+      - {phrase: "Doesn't work on bigger cats", count: 1}
+      - {phrase: "perfect for my cat who's over 1.5 lbs", count: 1}
+      - {phrase: "decent size", count: 1}
+      - {phrase: "fit the needs of my pet", count: 1}
+    sample_reviews: ['PET-016059', 'PET-001979', 'PET-002641', 'PET-001966', 'PET-019722']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 2
+    positive_count: 0
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "does not work on dogs larger than 50lbs", count: 1}
+      - {phrase: "only works for cats under 9 lb", count: 1}
+    sample_reviews: ['PET-020712', 'PET-018267']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "easy to wash off", count: 1}
+    sample_reviews: ['PET-002906']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "fur does look a bit greasy", count: 1}
+    sample_reviews: ['PET-003083']
+
+  - key: material
+    label_zh: 材质用料
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "Ingredients same as expensive stuff", count: 1}
+    sample_reviews: ['PET-000300']

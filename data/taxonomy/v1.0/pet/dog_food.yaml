@@ -1,0 +1,299 @@
+# Dog Food Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Dog Food
+aspect_count: 16
+aspects:
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 215
+    positive_count: 178
+    negative_count: 36
+    neutral_count: 1
+    negative_rate: 16.7%
+    top_phrases:
+      - {phrase: "dogs love it", count: 6}
+      - {phrase: "Dogs love it", count: 5}
+      - {phrase: "my dog loves it", count: 5}
+      - {phrase: "My dog loves it", count: 4}
+      - {phrase: "dog loves it", count: 4}
+      - {phrase: "dogs like it", count: 3}
+      - {phrase: "they love it", count: 3}
+      - {phrase: "loves it", count: 3}
+      - {phrase: "My dog loves this food", count: 3}
+      - {phrase: "she loves it", count: 2}
+    sample_reviews: ['PET-006422', 'PET-041832', 'PET-031451', 'PET-007531', 'PET-021507']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 167
+    positive_count: 114
+    negative_count: 52
+    neutral_count: 1
+    negative_rate: 31.1%
+    top_phrases:
+      - {phrase: "made my dog sick", count: 3}
+      - {phrase: "very healthy", count: 2}
+      - {phrase: "Healthy for my dog", count: 2}
+      - {phrase: "healthy weight", count: 2}
+      - {phrase: "became very ill after eating this food", count: 1}
+      - {phrase: "doesn't have any allergies and can eat chicken just fine", count: 1}
+      - {phrase: "More nutritious than other brands", count: 1}
+      - {phrase: "Works better with my dogs digestive issues", count: 1}
+      - {phrase: "easy to digest", count: 1}
+      - {phrase: "helped maintain a healthy weight", count: 1}
+    sample_reviews: ['PET-031461', 'PET-003367', 'PET-007531', 'PET-025261', 'PET-025261']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 82
+    positive_count: 42
+    negative_count: 38
+    neutral_count: 2
+    negative_rate: 46.3%
+    top_phrases:
+      - {phrase: "good price", count: 4}
+      - {phrase: "expensive", count: 3}
+      - {phrase: "great price", count: 3}
+      - {phrase: "Expensive", count: 3}
+      - {phrase: "Too expensive", count: 2}
+      - {phrase: "Good price", count: 2}
+      - {phrase: "double the cost of the dried up mystery kibble", count: 1}
+      - {phrase: "Decent price", count: 1}
+      - {phrase: "Very expensive in Petco", count: 1}
+      - {phrase: "high-priced dog foods", count: 1}
+    sample_reviews: ['PET-025287', 'PET-032732', 'PET-032732', 'PET-000045', 'PET-022089']
+
+  - key: other
+    label_zh: 其他
+    total: 56
+    positive_count: 31
+    negative_count: 25
+    neutral_count: 0
+    negative_rate: 44.6%
+    top_phrases:
+      - {phrase: "fast delivery", count: 2}
+      - {phrase: "vet bill was over $400", count: 1}
+      - {phrase: "Amazon delivered it fast", count: 1}
+      - {phrase: "nothing is wrong with the dog food", count: 1}
+      - {phrase: "best dog food", count: 1}
+      - {phrase: "food looks completely different", count: 1}
+      - {phrase: "arrived quickly and seemed fresh", count: 1}
+      - {phrase: "best dry kibble", count: 1}
+      - {phrase: "had to throw it away", count: 1}
+      - {phrase: "beautiful fur", count: 1}
+    sample_reviews: ['PET-003367', 'PET-041812', 'PET-022089', 'PET-047468', 'PET-003724']
+
+  - key: material
+    label_zh: 材质用料
+    total: 29
+    positive_count: 22
+    negative_count: 7
+    neutral_count: 0
+    negative_rate: 24.1%
+    top_phrases:
+      - {phrase: "good ingredients", count: 2}
+      - {phrase: "Good ingredients", count: 2}
+      - {phrase: "ingredients are great", count: 2}
+      - {phrase: "ingredients", count: 2}
+      - {phrase: "high quality nutritional blend of ingredients", count: 1}
+      - {phrase: "Healthy ingredients", count: 1}
+      - {phrase: "NO CHICKEN MEAL", count: 1}
+      - {phrase: "Natural ingredients", count: 1}
+      - {phrase: "all-natural ingredients", count: 1}
+      - {phrase: "says NO CHICKEN but has CHICKEN MEAL as third ingredient", count: 1}
+    sample_reviews: ['PET-007373', 'PET-041925', 'PET-032588', 'PET-007341', 'PET-031464']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 20
+    positive_count: 1
+    negative_count: 19
+    neutral_count: 0
+    negative_rate: 95.0%
+    top_phrases:
+      - {phrase: "hole in bag", count: 1}
+      - {phrase: "Package left with hole and product spewing out on porch", count: 1}
+      - {phrase: "doesn't arrive on time", count: 1}
+      - {phrase: "two holes in the package", count: 1}
+      - {phrase: "bag came broken", count: 1}
+      - {phrase: "Shipment was full of bugs", count: 1}
+      - {phrase: "package was delivered and not lost", count: 1}
+      - {phrase: "bag ripped opened and was tapped back together", count: 1}
+      - {phrase: "shipped like that", count: 1}
+      - {phrase: "cut in the top of both bags", count: 1}
+    sample_reviews: ['PET-025244', 'PET-041878', 'PET-025283', 'PET-031589', 'PET-025253']
+
+  - key: packaging
+    label_zh: 包装
+    total: 19
+    positive_count: 5
+    negative_count: 14
+    neutral_count: 0
+    negative_rate: 73.7%
+    top_phrases:
+      - {phrase: "hole in bag", count: 1}
+      - {phrase: "box is always torn open", count: 1}
+      - {phrase: "back of the bag was cut and taped over", count: 1}
+      - {phrase: "well sealed and safely packaged", count: 1}
+      - {phrase: "packaging being split open", count: 1}
+      - {phrase: "bags come open", count: 1}
+      - {phrase: "sometimes the food is just delivered as it is not in a box then other times it c", count: 1}
+      - {phrase: "arrived opened with a poor attempt at resealing it with a piece of packing tape", count: 1}
+      - {phrase: "bags doesn't have a zipper to close it and keep it fresh", count: 1}
+      - {phrase: "no mess", count: 1}
+    sample_reviews: ['PET-025244', 'PET-025245', 'PET-005995', 'PET-025281', 'PET-031445']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 17
+    positive_count: 15
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 11.8%
+    top_phrases:
+      - {phrase: "quality", count: 2}
+      - {phrase: "quality food", count: 1}
+      - {phrase: "Good quality", count: 1}
+      - {phrase: "high quality", count: 1}
+      - {phrase: "Best quality dog food", count: 1}
+      - {phrase: "quality is excellent", count: 1}
+      - {phrase: "consistent quality", count: 1}
+      - {phrase: "Well made dog food", count: 1}
+      - {phrase: "quality is consistent", count: 1}
+      - {phrase: "Great quality", count: 1}
+    sample_reviews: ['PET-001325', 'PET-047472', 'PET-031492', 'PET-047471', 'PET-031466']
+
+  - key: smell
+    label_zh: 异味
+    total: 17
+    positive_count: 8
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 52.9%
+    top_phrases:
+      - {phrase: "doesn't smell right", count: 1}
+      - {phrase: "Rancid Weird smell from dog food when opened", count: 1}
+      - {phrase: "Great smell", count: 1}
+      - {phrase: "Doesn't have to strong of a smell", count: 1}
+      - {phrase: "doesn't have that weird smell", count: 1}
+      - {phrase: "love the smell of a newly opened bag", count: 1}
+      - {phrase: "make the dog smell", count: 1}
+      - {phrase: "strong smell", count: 1}
+      - {phrase: "smell isn't much better", count: 1}
+      - {phrase: "Descent smell from bag so may not be over processed", count: 1}
+    sample_reviews: ['PET-041928', 'PET-005990', 'PET-007471', 'PET-000792', 'PET-047470']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 17
+    positive_count: 2
+    negative_count: 15
+    neutral_count: 0
+    negative_rate: 88.2%
+    top_phrases:
+      - {phrase: "no response from seller", count: 1}
+      - {phrase: "company misrepresents this food content", count: 1}
+      - {phrase: "could not find a contact the seller link", count: 1}
+      - {phrase: "Amazon wouldn't allow us to return it", count: 1}
+      - {phrase: "never ship your product", count: 1}
+      - {phrase: "no notification of ingredient change", count: 1}
+      - {phrase: "no way to get a replacement", count: 1}
+      - {phrase: "very fast service", count: 1}
+      - {phrase: "easier to return", count: 1}
+      - {phrase: "Not eligible for replacement or refund", count: 1}
+    sample_reviews: ['PET-005990', 'PET-021508', 'PET-001258', 'PET-032600', 'PET-031449']
+
+  - key: safety
+    label_zh: 安全性
+    total: 13
+    positive_count: 3
+    negative_count: 10
+    neutral_count: 0
+    negative_rate: 76.9%
+    top_phrases:
+      - {phrase: "contaminated food", count: 1}
+      - {phrase: "almost killed my dog", count: 1}
+      - {phrase: "Made in USA", count: 1}
+      - {phrase: "Be careful with kibble", count: 1}
+      - {phrase: "caused vomit and diarrhea", count: 1}
+      - {phrase: "free from artificial preservatives, colors, and flavors", count: 1}
+      - {phrase: "toxic chemicals", count: 1}
+      - {phrase: "plastic tubing in bag", count: 1}
+      - {phrase: "bag was rotten/contaminated", count: 1}
+      - {phrase: "tummy parasite", count: 1}
+    sample_reviews: ['PET-025244', 'PET-022062', 'PET-021509', 'PET-031590', 'PET-003727']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 12
+    positive_count: 9
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "pieces looked larger", count: 1}
+      - {phrase: "kibble size is just right", count: 1}
+      - {phrase: "just the size to keep the dog bowl filled without fuss", count: 1}
+      - {phrase: "Small pieces for my dogs", count: 1}
+      - {phrase: "very small", count: 1}
+      - {phrase: "Good size", count: 1}
+      - {phrase: "size is perfect", count: 1}
+      - {phrase: "large a bag", count: 1}
+      - {phrase: "perfect size", count: 1}
+      - {phrase: "kibble is the size of peas, which is ideal for small dogs", count: 1}
+    sample_reviews: ['PET-041928', 'PET-001205', 'PET-032504', 'PET-021509', 'PET-032740']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 11
+    positive_count: 7
+    negative_count: 3
+    neutral_count: 1
+    negative_rate: 27.3%
+    top_phrases:
+      - {phrase: "easy to chew", count: 1}
+      - {phrase: "Use for afternoon snack", count: 1}
+      - {phrase: "without fuss", count: 1}
+      - {phrase: "subscription service makes things easy", count: 1}
+      - {phrase: "hard to get going up", count: 1}
+      - {phrase: "could not lift easily", count: 1}
+      - {phrase: "easy to store and pour from the large bag", count: 1}
+      - {phrase: "easy this was", count: 1}
+      - {phrase: "can't reseal this bag", count: 1}
+      - {phrase: "easy for dogs to chew", count: 1}
+    sample_reviews: ['PET-007338', 'PET-031488', 'PET-032504', 'PET-001597', 'PET-031467']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 2
+    positive_count: 2
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "last so long", count: 1}
+      - {phrase: "bag is thick for durability", count: 1}
+    sample_reviews: ['PET-000792', 'PET-001259']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 2
+    positive_count: 1
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "more pale than the original", count: 1}
+      - {phrase: "great appearance", count: 1}
+    sample_reviews: ['PET-041457', 'PET-008630']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "light weight of the bag", count: 1}
+    sample_reviews: ['PET-025286']

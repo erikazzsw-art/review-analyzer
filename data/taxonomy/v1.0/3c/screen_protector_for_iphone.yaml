@@ -1,0 +1,306 @@
+# Screen Protector for iPhone Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: Screen Protector for iPhone
+aspect_count: 17
+aspects:
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 1528
+    positive_count: 1107
+    negative_count: 407
+    neutral_count: 14
+    negative_rate: 26.6%
+    top_phrases:
+      - {phrase: "easy to install", count: 110}
+      - {phrase: "Easy to install", count: 85}
+      - {phrase: "easy to apply", count: 71}
+      - {phrase: "Easy to apply", count: 60}
+      - {phrase: "easy to put on", count: 33}
+      - {phrase: "Easy to put on", count: 28}
+      - {phrase: "Easy to use", count: 19}
+      - {phrase: "easy to use", count: 15}
+      - {phrase: "very easy to install", count: 12}
+      - {phrase: "easy installation", count: 12}
+    sample_reviews: ['3C-015327', '3C-023193', '3C-019003', '3C-004179', '3C-004179']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 1126
+    positive_count: 565
+    negative_count: 541
+    neutral_count: 20
+    negative_rate: 48.0%
+    top_phrases:
+      - {phrase: "very durable", count: 17}
+      - {phrase: "durable", count: 17}
+      - {phrase: "Durable", count: 14}
+      - {phrase: "cracked", count: 8}
+      - {phrase: "Very durable", count: 8}
+      - {phrase: "hold up well", count: 6}
+      - {phrase: "good protection", count: 6}
+      - {phrase: "great protection", count: 5}
+      - {phrase: "strong", count: 5}
+      - {phrase: "Great protection", count: 5}
+    sample_reviews: ['3C-017196', '3C-021827', '3C-042437', '3C-024272', '3C-029985']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 616
+    positive_count: 492
+    negative_count: 102
+    neutral_count: 22
+    negative_rate: 16.6%
+    top_phrases:
+      - {phrase: "Great price", count: 16}
+      - {phrase: "good price", count: 14}
+      - {phrase: "Good price", count: 14}
+      - {phrase: "Great value", count: 13}
+      - {phrase: "affordable", count: 12}
+      - {phrase: "great price", count: 11}
+      - {phrase: "Waste of money", count: 8}
+      - {phrase: "cheap", count: 7}
+      - {phrase: "inexpensive", count: 7}
+      - {phrase: "waste of money", count: 6}
+    sample_reviews: ['3C-018080', '3C-021827', '3C-041774', '3C-042082', '3C-045241']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 613
+    positive_count: 353
+    negative_count: 251
+    neutral_count: 9
+    negative_rate: 40.9%
+    top_phrases:
+      - {phrase: "Good quality", count: 37}
+      - {phrase: "good quality", count: 30}
+      - {phrase: "Great quality", count: 22}
+      - {phrase: "great quality", count: 7}
+      - {phrase: "quality", count: 7}
+      - {phrase: "Buena calidad", count: 6}
+      - {phrase: "Good product", count: 5}
+      - {phrase: "poor quality", count: 4}
+      - {phrase: "Perfect fit", count: 3}
+      - {phrase: "sturdy", count: 3}
+    sample_reviews: ['3C-017196', '3C-034605', '3C-019003', '3C-030571', '3C-025399']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 414
+    positive_count: 183
+    negative_count: 227
+    neutral_count: 4
+    negative_rate: 54.8%
+    top_phrases:
+      - {phrase: "fits perfectly", count: 8}
+      - {phrase: "perfect fit", count: 8}
+      - {phrase: "Fits perfectly", count: 7}
+      - {phrase: "Perfect fit", count: 5}
+      - {phrase: "too small", count: 3}
+      - {phrase: "fits perfect", count: 3}
+      - {phrase: "too small for my phone", count: 2}
+      - {phrase: "fit was perfect", count: 2}
+      - {phrase: "Fits great", count: 2}
+      - {phrase: "fits", count: 2}
+    sample_reviews: ['3C-039557', '3C-043618', '3C-023958', '3C-001473', '3C-041438']
+
+  - key: other
+    label_zh: 其他
+    total: 278
+    positive_count: 158
+    negative_count: 115
+    neutral_count: 5
+    negative_rate: 41.4%
+    top_phrases:
+      - {phrase: "Perfect fit", count: 4}
+      - {phrase: "fast delivery", count: 3}
+      - {phrase: "works great", count: 3}
+      - {phrase: "great product", count: 3}
+      - {phrase: "air bubbles", count: 2}
+      - {phrase: "Great screen protector", count: 2}
+      - {phrase: "camera cover cannot get bubbles out", count: 1}
+      - {phrase: "Camera lens protection is also great", count: 1}
+      - {phrase: "had to waste 2", count: 1}
+      - {phrase: "coverage was more edge to edge", count: 1}
+    sample_reviews: ['3C-015327', '3C-019003', '3C-019011', '3C-038887', '3C-039531']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 178
+    positive_count: 66
+    negative_count: 112
+    neutral_count: 0
+    negative_rate: 62.9%
+    top_phrases:
+      - {phrase: "Fast shipping", count: 6}
+      - {phrase: "fast shipping", count: 6}
+      - {phrase: "broken", count: 6}
+      - {phrase: "cracked", count: 4}
+      - {phrase: "one was broken", count: 2}
+      - {phrase: "Shipping was fast", count: 2}
+      - {phrase: "came cracked", count: 2}
+      - {phrase: "fast delivery", count: 2}
+      - {phrase: "came quickly", count: 2}
+      - {phrase: "Quick shipping", count: 2}
+    sample_reviews: ['3C-043024', '3C-015468', '3C-044425', '3C-022041', '3C-039971']
+
+  - key: packaging
+    label_zh: 包装
+    total: 172
+    positive_count: 101
+    negative_count: 63
+    neutral_count: 8
+    negative_rate: 36.6%
+    top_phrases:
+      - {phrase: "Great packaging", count: 3}
+      - {phrase: "well-packaged", count: 3}
+      - {phrase: "comes in a pack of 3", count: 2}
+      - {phrase: "Comes with everything you need", count: 2}
+      - {phrase: "difficult to open", count: 2}
+      - {phrase: "comes with everything you need", count: 2}
+      - {phrase: "Everything you needed to make a 1st attempt perfect application is all in the bo", count: 1}
+      - {phrase: "Missing cleansing cloths", count: 1}
+      - {phrase: "rest of them were all cracked too", count: 1}
+      - {phrase: "package says that is what it is for", count: 1}
+    sample_reviews: ['3C-023034', '3C-018960', '3C-025437', '3C-021571', '3C-030971']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 147
+    positive_count: 127
+    negative_count: 20
+    neutral_count: 0
+    negative_rate: 13.6%
+    top_phrases:
+      - {phrase: "looks great", count: 13}
+      - {phrase: "Looks great", count: 7}
+      - {phrase: "looks good", count: 6}
+      - {phrase: "crystal clear", count: 4}
+      - {phrase: "Looks good", count: 3}
+      - {phrase: "looks nice", count: 2}
+      - {phrase: "clear", count: 2}
+      - {phrase: "made my phone look like new", count: 2}
+      - {phrase: "Makes my IPhone look new again", count: 1}
+      - {phrase: "absolutely invisible on the phone", count: 1}
+    sample_reviews: ['3C-045241', '3C-019003', '3C-039106', '3C-001473', '3C-039531']
+
+  - key: material
+    label_zh: 材质用料
+    total: 125
+    positive_count: 73
+    negative_count: 50
+    neutral_count: 2
+    negative_rate: 40.0%
+    top_phrases:
+      - {phrase: "good material", count: 3}
+      - {phrase: "not sticky enough", count: 2}
+      - {phrase: "clear", count: 2}
+      - {phrase: "cheap glass", count: 1}
+      - {phrase: "screen quality", count: 1}
+      - {phrase: "paper thin", count: 1}
+      - {phrase: "muy buen material", count: 1}
+      - {phrase: "good glass quality", count: 1}
+      - {phrase: "Good material", count: 1}
+      - {phrase: "Nice quality glass", count: 1}
+    sample_reviews: ['3C-033802', '3C-041770', '3C-021571', '3C-039169', '3C-038888']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 39
+    positive_count: 14
+    negative_count: 23
+    neutral_count: 2
+    negative_rate: 59.0%
+    top_phrases:
+      - {phrase: "customer service help me get it resolved quickly", count: 1}
+      - {phrase: "installation video does not match product sent", count: 1}
+      - {phrase: "won’t allow me to return just the broken two", count: 1}
+      - {phrase: "no response", count: 1}
+      - {phrase: "emailed the manufacturer to send me a new pack", count: 1}
+      - {phrase: "didn't offer my a discount ONLY a refund but I would have to send back", count: 1}
+      - {phrase: "no response from manufacturer", count: 1}
+      - {phrase: "customer service is awesome", count: 1}
+      - {phrase: "no help from Ailun", count: 1}
+      - {phrase: "warranty is great", count: 1}
+    sample_reviews: ['3C-041985', '3C-020966', '3C-025429', '3C-030494', '3C-034046']
+
+  - key: sound_quality
+    label_zh: 音质
+    total: 10
+    positive_count: 8
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 20.0%
+    top_phrases:
+      - {phrase: "clarity is amazing", count: 1}
+      - {phrase: "Screen clarity is a bit duller", count: 1}
+      - {phrase: "clarity is good", count: 1}
+      - {phrase: "no distortion or streaks of light when testing camera", count: 1}
+      - {phrase: "great color and quality", count: 1}
+      - {phrase: "touch & clarity is the same as the iphone brand", count: 1}
+      - {phrase: "camera quality look a bit bad", count: 1}
+      - {phrase: "image was clear", count: 1}
+      - {phrase: "la cámara tampoco perdió calidad", count: 1}
+      - {phrase: "Lens cover didn't bring down the image clarity", count: 1}
+    sample_reviews: ['3C-022302', '3C-031095', '3C-023111', '3C-014817', '3C-042031']
+
+  - key: comfort
+    label_zh: 佩戴舒适度
+    total: 7
+    positive_count: 5
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 28.6%
+    top_phrases:
+      - {phrase: "fits perfect", count: 1}
+      - {phrase: "don't even realize it's on", count: 1}
+      - {phrase: "wish it was ever so slightly grippier in the hand", count: 1}
+      - {phrase: "makes your finger raw from swiping up", count: 1}
+      - {phrase: "feels good in my hands", count: 1}
+      - {phrase: "don't even realize I have it on", count: 1}
+      - {phrase: "light feel", count: 1}
+    sample_reviews: ['3C-022118', '3C-028721', '3C-015671', '3C-018361', '3C-024783']
+
+  - key: portability
+    label_zh: 便携性
+    total: 2
+    positive_count: 2
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "No bulky case needed", count: 1}
+      - {phrase: "light weight", count: 1}
+    sample_reviews: ['3C-030737', '3C-021728']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "larga vida a la pantalla", count: 1}
+    sample_reviews: ['3C-045218']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "Touch sensitivity is great", count: 1}
+    sample_reviews: ['3C-042821']
+
+  - key: latency
+    label_zh: 延迟
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "quick response to haptics", count: 1}
+    sample_reviews: ['3C-039343']

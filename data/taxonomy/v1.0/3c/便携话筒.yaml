@@ -1,0 +1,355 @@
+# 便携话筒 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: 便携话筒
+aspect_count: 18
+aspects:
+  - key: sound_quality
+    label_zh: 音质
+    total: 664
+    positive_count: 463
+    negative_count: 188
+    neutral_count: 13
+    negative_rate: 28.3%
+    top_phrases:
+      - {phrase: "sound quality", count: 7}
+      - {phrase: "great sound quality", count: 6}
+      - {phrase: "sound is great", count: 6}
+      - {phrase: "Good sound quality", count: 5}
+      - {phrase: "clear sound", count: 5}
+      - {phrase: "Clear sound", count: 5}
+      - {phrase: "sound quality is great", count: 4}
+      - {phrase: "very good sound quality", count: 4}
+      - {phrase: "great sound", count: 4}
+      - {phrase: "high quality sound", count: 3}
+    sample_reviews: ['3C-000970', '3C-000662', '3C-000815', '3C-000102', '3C-000116']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 503
+    positive_count: 416
+    negative_count: 77
+    neutral_count: 10
+    negative_rate: 15.3%
+    top_phrases:
+      - {phrase: "easy to use", count: 53}
+      - {phrase: "Easy to use", count: 20}
+      - {phrase: "plug and play", count: 9}
+      - {phrase: "Very easy to use", count: 8}
+      - {phrase: "super easy to use", count: 7}
+      - {phrase: "easy to set up", count: 6}
+      - {phrase: "very easy to use", count: 6}
+      - {phrase: "Super easy to use", count: 5}
+      - {phrase: "simple to use", count: 4}
+      - {phrase: "easy to connect", count: 4}
+    sample_reviews: ['3C-000479', '3C-001263', '3C-000102', '3C-000116', '3C-000116']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 318
+    positive_count: 254
+    negative_count: 55
+    neutral_count: 9
+    negative_rate: 17.3%
+    top_phrases:
+      - {phrase: "great price", count: 9}
+      - {phrase: "affordable", count: 5}
+      - {phrase: "waste of money", count: 5}
+      - {phrase: "good for the price", count: 4}
+      - {phrase: "worth the price", count: 4}
+      - {phrase: "Great quality for the price", count: 4}
+      - {phrase: "Great value", count: 4}
+      - {phrase: "good price", count: 4}
+      - {phrase: "great quality for the price", count: 4}
+      - {phrase: "You get what you pay for", count: 3}
+    sample_reviews: ['3C-000662', '3C-001251', '3C-000888', '3C-000197', '3C-001012']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 202
+    positive_count: 113
+    negative_count: 81
+    neutral_count: 8
+    negative_rate: 40.1%
+    top_phrases:
+      - {phrase: "easy to connect", count: 3}
+      - {phrase: "wireless microphone", count: 2}
+      - {phrase: "Great connectivity", count: 2}
+      - {phrase: "connects easily", count: 2}
+      - {phrase: "wireless", count: 2}
+      - {phrase: "range is good", count: 2}
+      - {phrase: "connects well", count: 2}
+      - {phrase: "microphones only work when the type C adapter is used", count: 1}
+      - {phrase: "fine even past the 65 feet", count: 1}
+      - {phrase: "works fine with just the usb c", count: 1}
+    sample_reviews: ['3C-000313', '3C-000662', '3C-000804', '3C-000102', '3C-000793']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 191
+    positive_count: 80
+    negative_count: 105
+    neutral_count: 6
+    negative_rate: 55.0%
+    top_phrases:
+      - {phrase: "Doesn't work with android devices", count: 2}
+      - {phrase: "Doesn’t work with iPhone 15, 16, or 17", count: 1}
+      - {phrase: "iPhone adapter does not work", count: 1}
+      - {phrase: "for the iPad", count: 1}
+      - {phrase: "does not work with the lightning adapter", count: 1}
+      - {phrase: "worked great for my Mac", count: 1}
+      - {phrase: "playing with them on our iPhones", count: 1}
+      - {phrase: "Not compatible with the iPhone 14 Pro and Pro Max", count: 1}
+      - {phrase: "Works great with my I-phone 15", count: 1}
+      - {phrase: "Doesn't work on latest phones at all", count: 1}
+    sample_reviews: ['3C-000723', '3C-000313', '3C-001263', '3C-000804', '3C-000939']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 183
+    positive_count: 112
+    negative_count: 70
+    neutral_count: 1
+    negative_rate: 38.3%
+    top_phrases:
+      - {phrase: "Great quality", count: 7}
+      - {phrase: "good quality", count: 6}
+      - {phrase: "buena calidad", count: 4}
+      - {phrase: "Good quality", count: 4}
+      - {phrase: "muy buena calidad", count: 4}
+      - {phrase: "quality is good", count: 3}
+      - {phrase: "Buena calidad", count: 3}
+      - {phrase: "Amazing quality", count: 2}
+      - {phrase: "very good quality", count: 2}
+      - {phrase: "Excellent quality", count: 2}
+    sample_reviews: ['3C-001104', '3C-000662', '3C-000815', '3C-001075', '3C-000582']
+
+  - key: portability
+    label_zh: 便携性
+    total: 152
+    positive_count: 143
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 5.9%
+    top_phrases:
+      - {phrase: "small", count: 10}
+      - {phrase: "portable", count: 3}
+      - {phrase: "small size", count: 3}
+      - {phrase: "size", count: 3}
+      - {phrase: "tiny", count: 3}
+      - {phrase: "perfect size", count: 2}
+      - {phrase: "Portable", count: 2}
+      - {phrase: "easy to transport", count: 2}
+      - {phrase: "very small", count: 2}
+      - {phrase: "compact and portable", count: 2}
+    sample_reviews: ['3C-000472', '3C-001075', '3C-000045', '3C-000582', '3C-000550']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 108
+    positive_count: 79
+    negative_count: 28
+    neutral_count: 1
+    negative_rate: 25.9%
+    top_phrases:
+      - {phrase: "battery life is impressive", count: 4}
+      - {phrase: "battery life", count: 3}
+      - {phrase: "battery life is great", count: 2}
+      - {phrase: "long battery life", count: 2}
+      - {phrase: "battery life is long", count: 2}
+      - {phrase: "battery lasted long", count: 1}
+      - {phrase: "battery life is pretty good", count: 1}
+      - {phrase: "Battery: 7/10 it lasts around 6 constant hours while recording", count: 1}
+      - {phrase: "Battery last a longer that expected", count: 1}
+      - {phrase: "once I needed to charge them they no longer worked", count: 1}
+    sample_reviews: ['3C-001075', '3C-000045', '3C-000582', '3C-000428', '3C-000839']
+
+  - key: packaging
+    label_zh: 包装
+    total: 78
+    positive_count: 39
+    negative_count: 36
+    neutral_count: 3
+    negative_rate: 46.2%
+    top_phrases:
+      - {phrase: "kit includes everything you need", count: 1}
+      - {phrase: "Didn’t receive a transmitter", count: 1}
+      - {phrase: "packed perfectly", count: 1}
+      - {phrase: "1st one did NOT have the phone connector included in the box", count: 1}
+      - {phrase: "packaged very well", count: 1}
+      - {phrase: "Great packaging", count: 1}
+      - {phrase: "missing the transmitter piece", count: 1}
+      - {phrase: "Straight out the box perfect", count: 1}
+      - {phrase: "case they came it fits everything really well, while still being compact", count: 1}
+      - {phrase: "extra covers for the 🎤 (sponge)", count: 1}
+    sample_reviews: ['3C-000815', '3C-001043', '3C-000222', '3C-000066', '3C-000851']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 73
+    positive_count: 14
+    negative_count: 58
+    neutral_count: 1
+    negative_rate: 79.5%
+    top_phrases:
+      - {phrase: "super windy and dusty, worked so good", count: 1}
+      - {phrase: "lighting adapter broke after about 5 uses", count: 1}
+      - {phrase: "fragile and it has zero support for the receivers body when connected to the pho", count: 1}
+      - {phrase: "don't work", count: 1}
+      - {phrase: "one mic no longer worked", count: 1}
+      - {phrase: "Stopped working", count: 1}
+      - {phrase: "used on an outdoor job site with a lot of noise", count: 1}
+      - {phrase: "click to attach it to your clothes broke", count: 1}
+      - {phrase: "mics are not sturdy", count: 1}
+      - {phrase: "STOPPED WORKING WITHIN 3 MONTHS", count: 1}
+    sample_reviews: ['3C-000662', '3C-001251', '3C-000582', '3C-000622', '3C-000317']
+
+  - key: other
+    label_zh: 其他
+    total: 67
+    positive_count: 39
+    negative_count: 27
+    neutral_count: 1
+    negative_rate: 40.3%
+    top_phrases:
+      - {phrase: "Works great", count: 2}
+      - {phrase: "Great item", count: 1}
+      - {phrase: "comes with 2 mics", count: 1}
+      - {phrase: "noise cancellation", count: 1}
+      - {phrase: "warranty application did not allow me to click microphone", count: 1}
+      - {phrase: "low volume", count: 1}
+      - {phrase: "amazing", count: 1}
+      - {phrase: "both devices' audio inputs are combined into a single channel", count: 1}
+      - {phrase: "great for just talking", count: 1}
+      - {phrase: "can't use these microphones at all", count: 1}
+    sample_reviews: ['3C-000645', '3C-000614', '3C-001278', '3C-000559', '3C-000809']
+
+  - key: charging_speed
+    label_zh: 充电速度
+    total: 59
+    positive_count: 17
+    negative_count: 35
+    neutral_count: 7
+    negative_rate: 59.3%
+    top_phrases:
+      - {phrase: "wouldn't charge", count: 2}
+      - {phrase: "easy to charge", count: 1}
+      - {phrase: "charges fast", count: 1}
+      - {phrase: "don't charge", count: 1}
+      - {phrase: "chargers they come with", count: 1}
+      - {phrase: "microphones do not charge", count: 1}
+      - {phrase: "charged this", count: 1}
+      - {phrase: "charged it for six hours", count: 1}
+      - {phrase: "Charges quick", count: 1}
+      - {phrase: "charge really fast", count: 1}
+    sample_reviews: ['3C-001167', '3C-000428', '3C-000622', '3C-000448', '3C-000561']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 52
+    positive_count: 16
+    negative_count: 32
+    neutral_count: 4
+    negative_rate: 61.5%
+    top_phrases:
+      - {phrase: "return and RE shipment was super easy ...no hassle", count: 1}
+      - {phrase: "replaced by manufacturer", count: 1}
+      - {phrase: "tried to return the item, but they said I can't", count: 1}
+      - {phrase: "support page doesn't even have a FAQ", count: 1}
+      - {phrase: "support page is a form you submit and cross your fingers", count: 1}
+      - {phrase: "submitted my request for a replacement and it arrived within a couple of days. G", count: 1}
+      - {phrase: "No response from customer support", count: 1}
+      - {phrase: "I want my money back", count: 1}
+      - {phrase: "support", count: 1}
+      - {phrase: "should be refunded", count: 1}
+    sample_reviews: ['3C-000066', '3C-000317', '3C-000763', '3C-001267', '3C-001267']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 50
+    positive_count: 46
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 8.0%
+    top_phrases:
+      - {phrase: "so cute", count: 3}
+      - {phrase: "cute", count: 2}
+      - {phrase: "love the black color", count: 1}
+      - {phrase: "Cute and small", count: 1}
+      - {phrase: "Exactly what it looks like", count: 1}
+      - {phrase: "big fluffy pom about an inch high, visually distracting", count: 1}
+      - {phrase: "Very cute", count: 1}
+      - {phrase: "looks like a very nice mic", count: 1}
+      - {phrase: "cool", count: 1}
+      - {phrase: "bright green light", count: 1}
+    sample_reviews: ['3C-000045', '3C-000550', '3C-000645', '3C-001207', '3C-000024']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 20
+    positive_count: 11
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 45.0%
+    top_phrases:
+      - {phrase: "Fast shipping", count: 2}
+      - {phrase: "Llegada rápida y puntual", count: 1}
+      - {phrase: "crack in the middle of the mic", count: 1}
+      - {phrase: "Shipped really fast", count: 1}
+      - {phrase: "tiempo de entrega en el día convenido", count: 1}
+      - {phrase: "never arrived", count: 1}
+      - {phrase: "quick shipping", count: 1}
+      - {phrase: "Great delivery", count: 1}
+      - {phrase: "DIDNT RECIVE ALL THE PARTS! Reviver missing", count: 1}
+      - {phrase: "took 2+ weeks to receive", count: 1}
+    sample_reviews: ['3C-000844', '3C-001111', '3C-000778', '3C-000504', '3C-000366']
+
+  - key: comfort
+    label_zh: 佩戴舒适度
+    total: 19
+    positive_count: 15
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 21.1%
+    top_phrases:
+      - {phrase: "clamps aren't as 360° twistable", count: 1}
+      - {phrase: "fuzzy and soft", count: 1}
+      - {phrase: "super lightweight and comfortable to wear for long periods", count: 1}
+      - {phrase: "lightweight and comfortable", count: 1}
+      - {phrase: "lavalier clip-on design, hands-free use, keeps mic secure", count: 1}
+      - {phrase: "Comfortable", count: 1}
+      - {phrase: "lightweight and easy to clip on", count: 1}
+      - {phrase: "not heavy", count: 1}
+      - {phrase: "Windscreen is really nice and soft", count: 1}
+      - {phrase: "cómodos", count: 1}
+    sample_reviews: ['3C-000847', '3C-001273', '3C-001138', '3C-000159', '3C-001301']
+
+  - key: latency
+    label_zh: 延迟
+    total: 8
+    positive_count: 5
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 37.5%
+    top_phrases:
+      - {phrase: "low latency", count: 1}
+      - {phrase: "when I walked just five feet away from my phone, my friends couldn't hear me", count: 1}
+      - {phrase: "no monitoring", count: 1}
+      - {phrase: "lag when recording music", count: 1}
+      - {phrase: "no delay", count: 1}
+      - {phrase: "Almost no latency", count: 1}
+      - {phrase: "near-zero latency", count: 1}
+      - {phrase: "no recording latencies", count: 1}
+    sample_reviews: ['3C-001138', '3C-000985', '3C-000995', '3C-000902', '3C-000001']
+
+  - key: material
+    label_zh: 材质用料
+    total: 3
+    positive_count: 0
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "metal bent", count: 1}
+      - {phrase: "cheap plastic", count: 1}
+      - {phrase: "sounds incredibly cheap", count: 1}
+    sample_reviews: ['3C-000130', '3C-001015', '3C-000217']

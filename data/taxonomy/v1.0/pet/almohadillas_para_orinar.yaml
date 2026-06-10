@@ -1,0 +1,364 @@
+# Almohadillas para orinar Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Almohadillas para orinar
+aspect_count: 18
+aspects:
+  - key: other
+    label_zh: 其他
+    total: 839
+    positive_count: 431
+    negative_count: 387
+    neutral_count: 21
+    negative_rate: 46.1%
+    top_phrases:
+      - {phrase: "very absorbent", count: 27}
+      - {phrase: "absorbent", count: 27}
+      - {phrase: "not very absorbent", count: 17}
+      - {phrase: "not absorbent", count: 13}
+      - {phrase: "leak", count: 10}
+      - {phrase: "Very absorbent", count: 10}
+      - {phrase: "absorb well", count: 9}
+      - {phrase: "work well", count: 7}
+      - {phrase: "work great", count: 7}
+      - {phrase: "leak proof", count: 6}
+    sample_reviews: ['PET-016309', 'PET-010996', 'PET-016447', 'PET-017449', 'PET-016304']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 666
+    positive_count: 454
+    negative_count: 195
+    neutral_count: 17
+    negative_rate: 29.3%
+    top_phrases:
+      - {phrase: "Great price", count: 18}
+      - {phrase: "good price", count: 15}
+      - {phrase: "waste of money", count: 14}
+      - {phrase: "Great value", count: 11}
+      - {phrase: "Good price", count: 11}
+      - {phrase: "great price", count: 10}
+      - {phrase: "great value", count: 10}
+      - {phrase: "not worth the money", count: 9}
+      - {phrase: "Good value", count: 9}
+      - {phrase: "Waste of money", count: 9}
+    sample_reviews: ['PET-016097', 'PET-016217', 'PET-002063', 'PET-004355', 'PET-016327']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 581
+    positive_count: 273
+    negative_count: 308
+    neutral_count: 0
+    negative_rate: 53.0%
+    top_phrases:
+      - {phrase: "durable", count: 15}
+      - {phrase: "very durable", count: 13}
+      - {phrase: "Durable", count: 7}
+      - {phrase: "Very durable", count: 6}
+      - {phrase: "leak proof", count: 5}
+      - {phrase: "not leak proof", count: 5}
+      - {phrase: "don't leak", count: 4}
+      - {phrase: "leaked through", count: 4}
+      - {phrase: "do not leak", count: 4}
+      - {phrase: "No leaks", count: 4}
+    sample_reviews: ['PET-010681', 'PET-012072', 'PET-018416', 'PET-005048', 'PET-002063']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 579
+    positive_count: 359
+    negative_count: 198
+    neutral_count: 22
+    negative_rate: 34.2%
+    top_phrases:
+      - {phrase: "perfect size", count: 14}
+      - {phrase: "Perfect size", count: 13}
+      - {phrase: "small", count: 11}
+      - {phrase: "good size", count: 11}
+      - {phrase: "Too small", count: 11}
+      - {phrase: "large", count: 10}
+      - {phrase: "Great size", count: 9}
+      - {phrase: "Good size", count: 7}
+      - {phrase: "size", count: 7}
+      - {phrase: "smaller than expected", count: 6}
+    sample_reviews: ['PET-016312', 'PET-018416', 'PET-019806', 'PET-016217', 'PET-018455']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 465
+    positive_count: 171
+    negative_count: 294
+    neutral_count: 0
+    negative_rate: 63.2%
+    top_phrases:
+      - {phrase: "not leak proof", count: 20}
+      - {phrase: "Good quality", count: 18}
+      - {phrase: "quality", count: 10}
+      - {phrase: "good quality", count: 10}
+      - {phrase: "leak through", count: 9}
+      - {phrase: "Great quality", count: 8}
+      - {phrase: "leak", count: 7}
+      - {phrase: "not leakproof", count: 6}
+      - {phrase: "leaks", count: 6}
+      - {phrase: "great quality", count: 5}
+    sample_reviews: ['PET-010681', 'PET-012072', 'PET-016309', 'PET-010767', 'PET-016327']
+
+  - key: material
+    label_zh: 材质用料
+    total: 443
+    positive_count: 102
+    negative_count: 330
+    neutral_count: 11
+    negative_rate: 74.5%
+    top_phrases:
+      - {phrase: "very thin", count: 26}
+      - {phrase: "thin", count: 21}
+      - {phrase: "Very thin", count: 19}
+      - {phrase: "too thin", count: 18}
+      - {phrase: "so thin", count: 7}
+      - {phrase: "Too thin", count: 7}
+      - {phrase: "paper thin", count: 6}
+      - {phrase: "Extremely thin", count: 5}
+      - {phrase: "way too thin", count: 4}
+      - {phrase: "a little thin", count: 4}
+    sample_reviews: ['PET-004355', 'PET-019735', 'PET-019432', 'PET-001386', 'PET-016698']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 354
+    positive_count: 304
+    negative_count: 48
+    neutral_count: 2
+    negative_rate: 13.6%
+    top_phrases:
+      - {phrase: "easy to use", count: 14}
+      - {phrase: "work great", count: 13}
+      - {phrase: "Works great", count: 8}
+      - {phrase: "Easy to use", count: 7}
+      - {phrase: "work well", count: 5}
+      - {phrase: "Works well", count: 5}
+      - {phrase: "works well", count: 4}
+      - {phrase: "Works perfectly", count: 3}
+      - {phrase: "Work well", count: 3}
+      - {phrase: "easy clean up", count: 2}
+    sample_reviews: ['PET-016071', 'PET-005564', 'PET-019806', 'PET-002063', 'PET-010639']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 213
+    positive_count: 172
+    negative_count: 35
+    neutral_count: 6
+    negative_rate: 16.4%
+    top_phrases:
+      - {phrase: "works perfectly", count: 2}
+      - {phrase: "My dog uses them", count: 2}
+      - {phrase: "Dog used these quiet well", count: 1}
+      - {phrase: "our small dog is using them", count: 1}
+      - {phrase: "mi mascota se tiene tranquila cuando le toca usarlos", count: 1}
+      - {phrase: "My dog came from Sydney, Australia almost 10 years ago, and was trained using pa", count: 1}
+      - {phrase: "my puppy doesn't even use them on his own", count: 1}
+      - {phrase: "Puppy has learned to use pads very quickly", count: 1}
+      - {phrase: "my 7lb dog can flood a regular pad", count: 1}
+      - {phrase: "refuses to go on any other pad", count: 1}
+    sample_reviews: ['PET-016071', 'PET-016312', 'PET-010996', 'PET-016457', 'PET-001386']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 174
+    positive_count: 128
+    negative_count: 46
+    neutral_count: 0
+    negative_rate: 26.4%
+    top_phrases:
+      - {phrase: "Easy clean up", count: 4}
+      - {phrase: "easy to clean up", count: 4}
+      - {phrase: "easy cleaning", count: 2}
+      - {phrase: "Easy to clean up", count: 2}
+      - {phrase: "easy clean up", count: 2}
+      - {phrase: "easy cleanup", count: 2}
+      - {phrase: "made cleaning up those messes much easier", count: 1}
+      - {phrase: "clean up a breeze", count: 1}
+      - {phrase: "floor has never been wet underneath", count: 1}
+      - {phrase: "No mess to clean up afterwards", count: 1}
+    sample_reviews: ['PET-005564', 'PET-010613', 'PET-016691', 'PET-016605', 'PET-005034']
+
+  - key: smell
+    label_zh: 异味
+    total: 156
+    positive_count: 96
+    negative_count: 54
+    neutral_count: 6
+    negative_rate: 34.6%
+    top_phrases:
+      - {phrase: "no smell", count: 7}
+      - {phrase: "no odor", count: 5}
+      - {phrase: "odor control", count: 4}
+      - {phrase: "no odor control", count: 3}
+      - {phrase: "don't notice a smell", count: 2}
+      - {phrase: "Odor control is good", count: 1}
+      - {phrase: "no extra smell", count: 1}
+      - {phrase: "No odor absorption", count: 1}
+      - {phrase: "excellent at controlling odor", count: 1}
+      - {phrase: "no obvious smell", count: 1}
+    sample_reviews: ['PET-005048', 'PET-010613', 'PET-016444', 'PET-016238', 'PET-010734']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 50
+    positive_count: 19
+    negative_count: 31
+    neutral_count: 0
+    negative_rate: 62.0%
+    top_phrases:
+      - {phrase: "shifts while my dog is using the pad", count: 1}
+      - {phrase: "no sticky corners to keep them in place", count: 1}
+      - {phrase: "adhesive corners, stay put", count: 1}
+      - {phrase: "slips around", count: 1}
+      - {phrase: "sturdy", count: 1}
+      - {phrase: "white tabs covering a spot of glue at the end the corners of each sheet, holding", count: 1}
+      - {phrase: "stay on the floor better", count: 1}
+      - {phrase: "doesn't slide on carpet", count: 1}
+      - {phrase: "not rolling onto floor", count: 1}
+      - {phrase: "lays flat and doesn't bunch up", count: 1}
+    sample_reviews: ['PET-010681', 'PET-010734', 'PET-001093', 'PET-016703', 'PET-001484']
+
+  - key: packaging
+    label_zh: 包装
+    total: 37
+    positive_count: 17
+    negative_count: 17
+    neutral_count: 3
+    negative_rate: 45.9%
+    top_phrases:
+      - {phrase: "Short one box of pads", count: 1}
+      - {phrase: "come in a small box. Really compacted", count: 1}
+      - {phrase: "folded a different way", count: 1}
+      - {phrase: "packaged well", count: 1}
+      - {phrase: "came packed in 3 piles instead of 2", count: 1}
+      - {phrase: "new packaging", count: 1}
+      - {phrase: "boxed so well", count: 1}
+      - {phrase: "packaged tight", count: 1}
+      - {phrase: "nicely and neatly folded and no tears", count: 1}
+      - {phrase: "Order was short one pad", count: 1}
+    sample_reviews: ['PET-019535', 'PET-011026', 'PET-005122', 'PET-016297', 'PET-018608']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 35
+    positive_count: 24
+    negative_count: 11
+    neutral_count: 0
+    negative_rate: 31.4%
+    top_phrases:
+      - {phrase: "came quickly", count: 1}
+      - {phrase: "fast shipping", count: 1}
+      - {phrase: "arrive in a timely manner", count: 1}
+      - {phrase: "came fast", count: 1}
+      - {phrase: "arrived in a timely manner", count: 1}
+      - {phrase: "completely crushed", count: 1}
+      - {phrase: "Shipping was fast", count: 1}
+      - {phrase: "no delays", count: 1}
+      - {phrase: "no tears", count: 1}
+      - {phrase: "Box got damaged because of rain", count: 1}
+    sample_reviews: ['PET-016243', 'PET-019525', 'PET-018323', 'PET-016297', 'PET-019447']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 26
+    positive_count: 19
+    negative_count: 6
+    neutral_count: 1
+    negative_rate: 23.1%
+    top_phrases:
+      - {phrase: "lighter blue", count: 1}
+      - {phrase: "color was fine bright blue and clean white", count: 1}
+      - {phrase: "white and blue like the picture shows", count: 1}
+      - {phrase: "look as they appear online", count: 1}
+      - {phrase: "design perfect", count: 1}
+      - {phrase: "Nice and clean", count: 1}
+      - {phrase: "Looks good and soft", count: 1}
+      - {phrase: "print was cute", count: 1}
+      - {phrase: "Muy bello", count: 1}
+      - {phrase: "color is basic", count: 1}
+    sample_reviews: ['PET-019546', 'PET-019362', 'PET-012114', 'PET-019447', 'PET-016072']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 18
+    positive_count: 10
+    negative_count: 6
+    neutral_count: 2
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "helps with diabetic cat", count: 1}
+      - {phrase: "older dog with back pain", count: 1}
+      - {phrase: "helpful for preventing urine drip", count: 1}
+      - {phrase: "doesn't get wet on my rabbit", count: 1}
+      - {phrase: "no le causan ni molestias ni irritacion", count: 1}
+      - {phrase: "gave me a headache and nausea", count: 1}
+      - {phrase: "puppy was licking and trying to eat this pee pad", count: 1}
+      - {phrase: "frequent tummy upsets", count: 1}
+      - {phrase: "unhealthy items for our pets", count: 1}
+      - {phrase: "Perfect for our baby after surgery", count: 1}
+    sample_reviews: ['PET-016691', 'PET-017551', 'PET-005034', 'PET-004367', 'PET-016147']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 14
+    positive_count: 5
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 64.3%
+    top_phrases:
+      - {phrase: "Amazon's service", count: 1}
+      - {phrase: "can't get a refund", count: 1}
+      - {phrase: "Amazon makes the return process very confusing", count: 1}
+      - {phrase: "auto ships item once a month with out consent", count: 1}
+      - {phrase: "seller was excellent and did a refund without a return", count: 1}
+      - {phrase: "hate to call them back again", count: 1}
+      - {phrase: "tried to report the discrepancy, but haven't heard anything", count: 1}
+      - {phrase: "replaced them with no questions asked", count: 1}
+      - {phrase: "service", count: 1}
+      - {phrase: "friendly honest neighbors", count: 1}
+    sample_reviews: ['PET-017865', 'PET-005073', 'PET-019524', 'PET-019767', 'PET-019467']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 13
+    positive_count: 5
+    negative_count: 8
+    neutral_count: 0
+    negative_rate: 61.5%
+    top_phrases:
+      - {phrase: "low capacity", count: 1}
+      - {phrase: "do not hold very much", count: 1}
+      - {phrase: "only has a light hold capacity", count: 1}
+      - {phrase: "Holds a LARGE Amount of Urine", count: 1}
+      - {phrase: "holds it all", count: 1}
+      - {phrase: "too low weight", count: 1}
+      - {phrase: "don't hold the urine", count: 1}
+      - {phrase: "hold capacity is a little less", count: 1}
+      - {phrase: "Does not hold capacity", count: 1}
+      - {phrase: "if my 16 pound dog goes on them it seeps through", count: 1}
+    sample_reviews: ['PET-010606', 'PET-016779', 'PET-016835', 'PET-010147', 'PET-016453']
+
+  - key: safety
+    label_zh: 安全性
+    total: 11
+    positive_count: 3
+    negative_count: 8
+    neutral_count: 0
+    negative_rate: 72.7%
+    top_phrases:
+      - {phrase: "safer for the parrots", count: 1}
+      - {phrase: "pet safe products", count: 1}
+      - {phrase: "Some puppies may chew and eat them", count: 1}
+      - {phrase: "Not at all safe or recommended for any pets", count: 1}
+      - {phrase: "not slip proof", count: 1}
+      - {phrase: "artificial pheromones can send my dog into heat", count: 1}
+      - {phrase: "slippery when wet", count: 1}
+      - {phrase: "POISONOUS SMELLING pet product", count: 1}
+      - {phrase: "plastic layer", count: 1}
+      - {phrase: "Great litter box safety net for an elderly cat", count: 1}
+    sample_reviews: ['PET-016367', 'PET-005336', 'PET-012142', 'PET-010792', 'PET-019541']

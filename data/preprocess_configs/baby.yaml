@@ -1,0 +1,23 @@
+# 母婴用品预处理配置 v1.0
+# 用法: python3 scripts/preprocess_reviews.py --config data/preprocess_configs/baby.yaml
+#
+# 数据源说明:
+# - baby clothing.xlsx (3780 行,8 个产品类型: 童装连体睡衣 / 围嘴 / 拍嗝巾 / 防滑袜 / 太阳帽 / Unisex-Baby / 游泳尿布 / 连身衣)
+# - baby gate.xlsx (6540 行,Baby Gate 单品类)
+
+category_label: 母婴用品
+category_slug: baby
+review_id_prefix: BABY
+source_dirs:
+  - "/Users/zhangxi/Desktop/评论分析项目/母婴"
+
+# 每子品类等比抽样上限 (≤ 3000)
+sample_per_sub: 3000
+
+# 主数据均含 product_type 列, 无需文件名 / ASIN / title 兜底
+file_to_sub: []
+asin_product_type: {}
+title_keywords: []
+
+default_split: "其他母婴"
+default_sub: "其他母婴"

@@ -1,0 +1,326 @@
+# USB C Charger Block Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: USB C Charger Block
+aspect_count: 17
+aspects:
+  - key: charging_speed
+    label_zh: 充电速度
+    total: 469
+    positive_count: 225
+    negative_count: 229
+    neutral_count: 15
+    negative_rate: 48.8%
+    top_phrases:
+      - {phrase: "fast charging", count: 19}
+      - {phrase: "Fast charging", count: 11}
+      - {phrase: "not a fast charger", count: 7}
+      - {phrase: "Charges fast", count: 6}
+      - {phrase: "charges fast", count: 4}
+      - {phrase: "Not a fast charger", count: 4}
+      - {phrase: "Charges quickly", count: 3}
+      - {phrase: "Not fast charging", count: 3}
+      - {phrase: "not fast charging", count: 3}
+      - {phrase: "Fast charger", count: 3}
+    sample_reviews: ['3C-008095', '3C-011317', '3C-004748', '3C-010942', '3C-011138']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 352
+    positive_count: 119
+    negative_count: 232
+    neutral_count: 1
+    negative_rate: 65.9%
+    top_phrases:
+      - {phrase: "Good quality", count: 8}
+      - {phrase: "good quality", count: 7}
+      - {phrase: "well made", count: 5}
+      - {phrase: "Great quality", count: 5}
+      - {phrase: "work great", count: 4}
+      - {phrase: "great quality", count: 4}
+      - {phrase: "got extremely hot", count: 2}
+      - {phrase: "One didn’t work", count: 2}
+      - {phrase: "cheaply made", count: 2}
+      - {phrase: "sturdy", count: 2}
+    sample_reviews: ['3C-004892', '3C-011117', '3C-004814', '3C-010973', '3C-002475']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 292
+    positive_count: 220
+    negative_count: 60
+    neutral_count: 12
+    negative_rate: 20.5%
+    top_phrases:
+      - {phrase: "Great value", count: 12}
+      - {phrase: "Good value", count: 8}
+      - {phrase: "Great price", count: 7}
+      - {phrase: "Good price", count: 6}
+      - {phrase: "great price", count: 6}
+      - {phrase: "good price", count: 6}
+      - {phrase: "Great deal", count: 4}
+      - {phrase: "affordable", count: 4}
+      - {phrase: "Waste of money", count: 4}
+      - {phrase: "worth the money", count: 3}
+    sample_reviews: ['3C-010954', '3C-011327', '3C-010942', '3C-004805', '3C-010883']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 224
+    positive_count: 144
+    negative_count: 77
+    neutral_count: 3
+    negative_rate: 34.4%
+    top_phrases:
+      - {phrase: "Cannot use both fire and “C” plugs at the same time", count: 1}
+      - {phrase: "different charging cords", count: 1}
+      - {phrase: "use one block for both my MacBook and iPhone or iPad", count: 1}
+      - {phrase: "would not work charging Apple Watch", count: 1}
+      - {phrase: "when paired with the right cable", count: 1}
+      - {phrase: "didn't charge my USB-C charger", count: 1}
+      - {phrase: "charge all cellphones or camera", count: 1}
+      - {phrase: "Bought for Apple Watch", count: 1}
+      - {phrase: "works well with all the different types of chargers", count: 1}
+      - {phrase: "cable is no good although it works on other devices", count: 1}
+    sample_reviews: ['3C-011327', '3C-004772', '3C-008054', '3C-002473', '3C-008144']
+
+  - key: other
+    label_zh: 其他
+    total: 201
+    positive_count: 143
+    negative_count: 57
+    neutral_count: 1
+    negative_rate: 28.4%
+    top_phrases:
+      - {phrase: "works well", count: 7}
+      - {phrase: "Works great", count: 7}
+      - {phrase: "work great", count: 5}
+      - {phrase: "Works well", count: 4}
+      - {phrase: "Work great", count: 3}
+      - {phrase: "fast shipping", count: 3}
+      - {phrase: "dual ports", count: 2}
+      - {phrase: "fire hazard", count: 2}
+      - {phrase: "Exactly what I needed", count: 2}
+      - {phrase: "Good product", count: 2}
+    sample_reviews: ['3C-011404', '3C-010891', '3C-002741', '3C-003035', '3C-004757']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 169
+    positive_count: 28
+    negative_count: 138
+    neutral_count: 3
+    negative_rate: 81.7%
+    top_phrases:
+      - {phrase: "durable", count: 7}
+      - {phrase: "stopped working", count: 6}
+      - {phrase: "neither of the two blocks worked for more than a minute or two", count: 1}
+      - {phrase: "stopped working just before eligible return date", count: 1}
+      - {phrase: "could have burnt down my house", count: 1}
+      - {phrase: "after about a month the cords literally fall out", count: 1}
+      - {phrase: "stopped working after 45 days", count: 1}
+      - {phrase: "only work for a few weeks", count: 1}
+      - {phrase: "doesn't work", count: 1}
+      - {phrase: "poor quality", count: 1}
+    sample_reviews: ['3C-002739', '3C-004772', '3C-011279', '3C-002475', '3C-010878']
+
+  - key: portability
+    label_zh: 便携性
+    total: 110
+    positive_count: 101
+    negative_count: 7
+    neutral_count: 2
+    negative_rate: 6.4%
+    top_phrases:
+      - {phrase: "saves space", count: 2}
+      - {phrase: "small", count: 2}
+      - {phrase: "Compact", count: 1}
+      - {phrase: "eliminate one of the blocks I had to carry", count: 1}
+      - {phrase: "Trip necessity", count: 1}
+      - {phrase: "for our travels", count: 1}
+      - {phrase: "don’t take up much space", count: 1}
+      - {phrase: "so handy to have dual plugs", count: 1}
+      - {phrase: "Lightweight, semi small", count: 1}
+      - {phrase: "size", count: 1}
+    sample_reviews: ['3C-008076', '3C-008054', '3C-011034', '3C-010898', '3C-011239']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 98
+    positive_count: 95
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 3.1%
+    top_phrases:
+      - {phrase: "Works great", count: 6}
+      - {phrase: "easy to use", count: 5}
+      - {phrase: "Works well", count: 4}
+      - {phrase: "works great", count: 4}
+      - {phrase: "very easy to use", count: 2}
+      - {phrase: "works very well", count: 2}
+      - {phrase: "very convenient", count: 2}
+      - {phrase: "convenient", count: 2}
+      - {phrase: "Easy. Just plug in.", count: 1}
+      - {phrase: "Simple", count: 1}
+    sample_reviews: ['3C-008076', '3C-040764', '3C-004819', '3C-011109', '3C-008031']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 54
+    positive_count: 44
+    negative_count: 10
+    neutral_count: 0
+    negative_rate: 18.5%
+    top_phrases:
+      - {phrase: "Arrived quickly", count: 4}
+      - {phrase: "Fast delivery", count: 3}
+      - {phrase: "fast shipping", count: 2}
+      - {phrase: "arrived on time", count: 2}
+      - {phrase: "Fast shipping", count: 2}
+      - {phrase: "product was undamaged", count: 1}
+      - {phrase: "came with a dead usb port", count: 1}
+      - {phrase: "arrived in perfect condition", count: 1}
+      - {phrase: "Received fast", count: 1}
+      - {phrase: "looks like it was dropped on concrete", count: 1}
+    sample_reviews: ['3C-011317', '3C-004815', '3C-011181', '3C-004757', '3C-010903']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 36
+    positive_count: 22
+    negative_count: 14
+    neutral_count: 0
+    negative_rate: 38.9%
+    top_phrases:
+      - {phrase: "cords just sit loosely in the ports", count: 1}
+      - {phrase: "Perfect connection", count: 1}
+      - {phrase: "connected every time in every socket", count: 1}
+      - {phrase: "glitches", count: 1}
+      - {phrase: "works well", count: 1}
+      - {phrase: "USB charging port sometimes works and sometimes does not", count: 1}
+      - {phrase: "only works sometimes", count: 1}
+      - {phrase: "great connection", count: 1}
+      - {phrase: "connect well", count: 1}
+      - {phrase: "doble puerto usb A y C", count: 1}
+    sample_reviews: ['3C-010878', '3C-011004', '3C-011442', '3C-010877', '3C-010999']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 21
+    positive_count: 21
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "exactly as pictured", count: 2}
+      - {phrase: "design is just what I needed", count: 1}
+      - {phrase: "Sleek looking", count: 1}
+      - {phrase: "Looks good", count: 1}
+      - {phrase: "no wires hanging", count: 1}
+      - {phrase: "look just like the apple ones", count: 1}
+      - {phrase: "2 different colors : black and White", count: 1}
+      - {phrase: "great design", count: 1}
+      - {phrase: "look good", count: 1}
+      - {phrase: "Looks & feels great", count: 1}
+    sample_reviews: ['3C-011239', '3C-040744', '3C-004795', '3C-011420', '3C-040806']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 20
+    positive_count: 7
+    negative_count: 12
+    neutral_count: 1
+    negative_rate: 60.0%
+    top_phrases:
+      - {phrase: "only support from Amazon is troubleshooting tips", count: 1}
+      - {phrase: "replacement", count: 1}
+      - {phrase: "won’t replace it", count: 1}
+      - {phrase: "huge hassle to try to return", count: 1}
+      - {phrase: "Great seller", count: 1}
+      - {phrase: "first attempt at delivery failed, no communication", count: 1}
+      - {phrase: "no product support", count: 1}
+      - {phrase: "reached out to get a replacement just for the black one still to not work", count: 1}
+      - {phrase: "cobro de la tarifa de re abastecimiento", count: 1}
+      - {phrase: "seller offered a full refund", count: 1}
+    sample_reviews: ['3C-011226', '3C-003019', '3C-011516', '3C-002472', '3C-011395']
+
+  - key: packaging
+    label_zh: 包装
+    total: 17
+    positive_count: 9
+    negative_count: 7
+    neutral_count: 1
+    negative_rate: 41.2%
+    top_phrases:
+      - {phrase: "packaged well", count: 2}
+      - {phrase: "should've came with 2 6ft cords", count: 1}
+      - {phrase: "getting devices with no electric plug", count: 1}
+      - {phrase: "package well", count: 1}
+      - {phrase: "2 pack", count: 1}
+      - {phrase: "opened the package", count: 1}
+      - {phrase: "package was already open", count: 1}
+      - {phrase: "securely packaged", count: 1}
+      - {phrase: "wrap around the box is incredibly difficult to remove", count: 1}
+      - {phrase: "came in a 2 pack", count: 1}
+    sample_reviews: ['3C-008026', '3C-011406', '3C-011577', '3C-010971', '3C-011489']
+
+  - key: sound_quality
+    label_zh: 音质
+    total: 15
+    positive_count: 0
+    negative_count: 15
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "buzzing sound", count: 2}
+      - {phrase: "make a buzzing noise", count: 2}
+      - {phrase: "make a whine with a ring noise", count: 1}
+      - {phrase: "loud buzzing noise", count: 1}
+      - {phrase: "Whining sound coming from both of them when charging", count: 1}
+      - {phrase: "loud buzzing sound", count: 1}
+      - {phrase: "chirping sound", count: 1}
+      - {phrase: "makes a buzzing/humming electrical sound", count: 1}
+      - {phrase: "makes a rhythmic chirping sound", count: 1}
+      - {phrase: "loud sound when plugged up", count: 1}
+    sample_reviews: ['3C-011045', '3C-010973', '3C-011277', '3C-003040', '3C-004817']
+
+  - key: material
+    label_zh: 材质用料
+    total: 6
+    positive_count: 2
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "plastic doesn’t feel too cheap", count: 1}
+      - {phrase: "stuff inside the block comes out", count: 1}
+      - {phrase: "cheap, hollow, plastic block", count: 1}
+      - {phrase: "cheaper plastic", count: 1}
+      - {phrase: "Buen material", count: 1}
+      - {phrase: "material", count: 1}
+    sample_reviews: ['3C-002998', '3C-011155', '3C-011401', '3C-002732', '3C-011462']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 5
+    positive_count: 0
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "ipad dies", count: 1}
+      - {phrase: "drained the rest of the power", count: 1}
+      - {phrase: "drained my battery slowly", count: 1}
+      - {phrase: "drain my wifes phone", count: 1}
+      - {phrase: "does not go up", count: 1}
+    sample_reviews: ['3C-010822', '3C-003077', '3C-008128', '3C-002743', '3C-011143']
+
+  - key: comfort
+    label_zh: 佩戴舒适度
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "Perfect fit for my fitness tracker band", count: 1}
+    sample_reviews: ['3C-002054']

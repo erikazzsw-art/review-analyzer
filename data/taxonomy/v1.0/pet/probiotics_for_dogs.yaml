@@ -1,0 +1,290 @@
+# Probiotics for Dogs Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Probiotics for Dogs
+aspect_count: 16
+aspects:
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 440
+    positive_count: 379
+    negative_count: 60
+    neutral_count: 1
+    negative_rate: 13.6%
+    top_phrases:
+      - {phrase: "Made my dog sick", count: 3}
+      - {phrase: "effective", count: 3}
+      - {phrase: "works great", count: 2}
+      - {phrase: "gave my dog diarrhea", count: 2}
+      - {phrase: "helps with stomach issues", count: 2}
+      - {phrase: "helps keep dogs digestive system doing good", count: 1}
+      - {phrase: "helps with digestive issues", count: 1}
+      - {phrase: "helped with my dog's diarrhea", count: 1}
+      - {phrase: "maintain a well balance diet", count: 1}
+      - {phrase: "back to solid poops on a consistent basis", count: 1}
+    sample_reviews: ['PET-004964', 'PET-015822', 'PET-001444', 'PET-015870', 'PET-005727']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 185
+    positive_count: 164
+    negative_count: 21
+    neutral_count: 0
+    negative_rate: 11.4%
+    top_phrases:
+      - {phrase: "dog loves it", count: 3}
+      - {phrase: "loves the taste", count: 3}
+      - {phrase: "love the taste", count: 3}
+      - {phrase: "he likes it", count: 2}
+      - {phrase: "my dog loves it", count: 2}
+      - {phrase: "Dog loved it", count: 2}
+      - {phrase: "dogs love it", count: 2}
+      - {phrase: "dog likes it", count: 2}
+      - {phrase: "likes the taste", count: 2}
+      - {phrase: "my dogs love it", count: 2}
+    sample_reviews: ['PET-001444', 'PET-018234', 'PET-005664', 'PET-005739', 'PET-020259']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 149
+    positive_count: 133
+    negative_count: 10
+    neutral_count: 6
+    negative_rate: 6.7%
+    top_phrases:
+      - {phrase: "easy to use", count: 8}
+      - {phrase: "sprinkle on his food", count: 3}
+      - {phrase: "sprinkle it on her food", count: 3}
+      - {phrase: "easy to give", count: 2}
+      - {phrase: "Easy to use", count: 2}
+      - {phrase: "super easy to mix into his food", count: 2}
+      - {phrase: "sprinkled over her food", count: 1}
+      - {phrase: "use half a packet with their main meal", count: 1}
+      - {phrase: "few days on this, along with limited diet, and pups are back to normal", count: 1}
+      - {phrase: "use a packet daily in my dogs food", count: 1}
+    sample_reviews: ['PET-001444', 'PET-015904', 'PET-020259', 'PET-015869', 'PET-020434']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 115
+    positive_count: 62
+    negative_count: 48
+    neutral_count: 5
+    negative_rate: 41.7%
+    top_phrases:
+      - {phrase: "Good price", count: 3}
+      - {phrase: "a little pricey", count: 3}
+      - {phrase: "pricey", count: 2}
+      - {phrase: "great price", count: 2}
+      - {phrase: "very over priced", count: 2}
+      - {phrase: "amount of product purchased has shrunk in size, but price increased", count: 1}
+      - {phrase: "Good ratings!! thats why I bought it", count: 1}
+      - {phrase: "expensive", count: 1}
+      - {phrase: "waste of money", count: 1}
+      - {phrase: "about the same price as the vet", count: 1}
+    sample_reviews: ['PET-020486', 'PET-015822', 'PET-005739', 'PET-020434', 'PET-015882']
+
+  - key: other
+    label_zh: 其他
+    total: 103
+    positive_count: 48
+    negative_count: 51
+    neutral_count: 4
+    negative_rate: 49.5%
+    top_phrases:
+      - {phrase: "vet recommended", count: 4}
+      - {phrase: "expiration date", count: 2}
+      - {phrase: "expired product", count: 2}
+      - {phrase: "reduced amount in the pouch", count: 1}
+      - {phrase: "rich beef broth flavor", count: 1}
+      - {phrase: "Works fast & great", count: 1}
+      - {phrase: "use when dogs are taking antibiotics or certain pain meds to help soothe their s", count: 1}
+      - {phrase: "pictures are just a bit fuzzy and enlarged", count: 1}
+      - {phrase: "more energy, better with potty training", count: 1}
+      - {phrase: "afraid to open now that Ive read reviews", count: 1}
+    sample_reviews: ['PET-005707', 'PET-018234', 'PET-020468', 'PET-015869', 'PET-005656']
+
+  - key: packaging
+    label_zh: 包装
+    total: 33
+    positive_count: 9
+    negative_count: 24
+    neutral_count: 0
+    negative_rate: 72.7%
+    top_phrases:
+      - {phrase: "packaging was crushed", count: 1}
+      - {phrase: "box was not original", count: 1}
+      - {phrase: "the bottle coloring is different, the color of the seal is different, and there ", count: 1}
+      - {phrase: "Packaging was good", count: 1}
+      - {phrase: "repackaged", count: 1}
+      - {phrase: "amazon packaging off the porch", count: 1}
+      - {phrase: "box came opened", count: 1}
+      - {phrase: "Packets missing product", count: 1}
+      - {phrase: "coloring of the box, text size, font, expiration date different", count: 1}
+      - {phrase: "box is supposed to have 30 packages and it only had 15 packages", count: 1}
+    sample_reviews: ['PET-002097', 'PET-005656', 'PET-002086', 'PET-003167', 'PET-020339']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 27
+    positive_count: 6
+    negative_count: 20
+    neutral_count: 1
+    negative_rate: 74.1%
+    top_phrases:
+      - {phrase: "No returns and no option to contact the seller or report a problem to Amazon", count: 1}
+      - {phrase: "non returnable item", count: 1}
+      - {phrase: "no returns", count: 1}
+      - {phrase: "Amazon will not let me return the product", count: 1}
+      - {phrase: "seller would not provide refund", count: 1}
+      - {phrase: "getting a refund", count: 1}
+      - {phrase: "delay in delivery", count: 1}
+      - {phrase: "Ordered 3 times, never sent", count: 1}
+      - {phrase: "third party seller", count: 1}
+      - {phrase: "vendedor muy responsable", count: 1}
+    sample_reviews: ['PET-002086', 'PET-020394', 'PET-020474', 'PET-018235', 'PET-005478']
+
+  - key: smell
+    label_zh: 异味
+    total: 20
+    positive_count: 11
+    negative_count: 7
+    neutral_count: 2
+    negative_rate: 35.0%
+    top_phrases:
+      - {phrase: "no smell", count: 2}
+      - {phrase: "pronounced beef-like scent", count: 1}
+      - {phrase: "smelled very badly", count: 1}
+      - {phrase: "does not look or smell like Purina FortiFlora", count: 1}
+      - {phrase: "doesn't smell up my fridge", count: 1}
+      - {phrase: "pungent scent of her digestive system (aka farts)", count: 1}
+      - {phrase: "smells great", count: 1}
+      - {phrase: "doesn't have a smell", count: 1}
+      - {phrase: "horrible smell", count: 1}
+      - {phrase: "smells slightly meaty and yeasty", count: 1}
+    sample_reviews: ['PET-020414', 'PET-002098', 'PET-020339', 'PET-002881', 'PET-020288']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 17
+    positive_count: 6
+    negative_count: 11
+    neutral_count: 0
+    negative_rate: 64.7%
+    top_phrases:
+      - {phrase: "shipped in a padded envelope instead of a box", count: 1}
+      - {phrase: "received products in great condition", count: 1}
+      - {phrase: "box was ripped and smooshed", count: 1}
+      - {phrase: "quick shipping", count: 1}
+      - {phrase: "Seamless delivery", count: 1}
+      - {phrase: "very bad delivery", count: 1}
+      - {phrase: "box is smashed", count: 1}
+      - {phrase: "delivery in a timely manner", count: 1}
+      - {phrase: "shipment was a mess", count: 1}
+      - {phrase: "delivered everything to the wrong address", count: 1}
+    sample_reviews: ['PET-002097', 'PET-003167', 'PET-015823', 'PET-020420', 'PET-020341']
+
+  - key: safety
+    label_zh: 安全性
+    total: 16
+    positive_count: 3
+    negative_count: 13
+    neutral_count: 0
+    negative_rate: 81.2%
+    top_phrases:
+      - {phrase: "gave her constipation for a day", count: 1}
+      - {phrase: "caused serious diarrhea", count: 1}
+      - {phrase: "ate the 20/30 of the packets", count: 1}
+      - {phrase: "vet approved", count: 1}
+      - {phrase: "adverse skin and ear problems", count: 1}
+      - {phrase: "don't want my dogs getting sick", count: 1}
+      - {phrase: "sensitivity to this causing him extreme abdominal discomfort", count: 1}
+      - {phrase: "made my dog sick", count: 1}
+      - {phrase: "Caused my Dog to have hives and redness", count: 1}
+      - {phrase: "did not trust it to give it to my dog", count: 1}
+    sample_reviews: ['PET-001444', 'PET-003158', 'PET-002088', 'PET-003128', 'PET-002053']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 11
+    positive_count: 7
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 36.4%
+    top_phrases:
+      - {phrase: "good quality", count: 1}
+      - {phrase: "good quality product", count: 1}
+      - {phrase: "Good quality", count: 1}
+      - {phrase: "Much lower quality vs the packs we got from the vet", count: 1}
+      - {phrase: "White granules", count: 1}
+      - {phrase: "Quality is great", count: 1}
+      - {phrase: "high quality", count: 1}
+      - {phrase: "quality has been consistently good", count: 1}
+      - {phrase: "quality relative to the shelf life", count: 1}
+      - {phrase: "very high quality", count: 1}
+    sample_reviews: ['PET-003128', 'PET-000781', 'PET-005652', 'PET-004980', 'PET-019341']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 5
+    positive_count: 1
+    negative_count: 3
+    neutral_count: 1
+    negative_rate: 60.0%
+    top_phrases:
+      - {phrase: "Smaller in size than last time", count: 1}
+      - {phrase: "small portions", count: 1}
+      - {phrase: "sobres súper pequeños", count: 1}
+      - {phrase: "Have to use two packs because he’s 80 lbs", count: 1}
+      - {phrase: "packets are a nice size", count: 1}
+    sample_reviews: ['PET-002900', 'PET-015886', 'PET-005709', 'PET-020400', 'PET-001525']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 4
+    positive_count: 3
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "left my dogs bowl coated and very dirty-looking, causing me to wash his bowl aft", count: 1}
+      - {phrase: "more pleasant cleaning up after her", count: 1}
+      - {phrase: "easy to clean up", count: 1}
+      - {phrase: "no messy poop", count: 1}
+    sample_reviews: ['PET-002098', 'PET-002056', 'PET-005750', 'PET-020488']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 4
+    positive_count: 3
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "keeps for a long time and doesn’t end up nothing but crumbs", count: 1}
+      - {phrase: "Been using for years on a daily basis", count: 1}
+      - {phrase: "product spoiled after 3 days", count: 1}
+      - {phrase: "Doesn't spoil", count: 1}
+    sample_reviews: ['PET-002105', 'PET-015868', 'PET-019276', 'PET-005653']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 2
+    positive_count: 2
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "color is brown so it looks like a beef product", count: 1}
+      - {phrase: "looks like real food", count: 1}
+    sample_reviews: ['PET-001521', 'PET-020288']
+
+  - key: material
+    label_zh: 材质用料
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "ingredients are legit", count: 1}
+    sample_reviews: ['PET-020263']

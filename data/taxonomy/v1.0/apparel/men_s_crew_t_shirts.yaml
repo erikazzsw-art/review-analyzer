@@ -1,0 +1,418 @@
+# Men's Crew T-Shirts Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:32:54
+sub_category: Men's Crew T-Shirts
+aspect_count: 21
+aspects:
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 1049
+    positive_count: 615
+    negative_count: 396
+    neutral_count: 38
+    negative_rate: 37.8%
+    top_phrases:
+      - {phrase: "True to size", count: 46}
+      - {phrase: "true to size", count: 38}
+      - {phrase: "fit well", count: 36}
+      - {phrase: "fit great", count: 29}
+      - {phrase: "fit perfectly", count: 14}
+      - {phrase: "fits well", count: 10}
+      - {phrase: "fit perfect", count: 10}
+      - {phrase: "Fits great", count: 10}
+      - {phrase: "Perfect fit", count: 9}
+      - {phrase: "fits perfectly", count: 8}
+    sample_reviews: ['APP-004779', 'APP-020644', 'APP-007771', 'APP-008644', 'APP-007265']
+
+  - key: material
+    label_zh: 材质用料
+    total: 859
+    positive_count: 590
+    negative_count: 245
+    neutral_count: 24
+    negative_rate: 28.5%
+    top_phrases:
+      - {phrase: "soft", count: 51}
+      - {phrase: "100% cotton", count: 26}
+      - {phrase: "very soft", count: 16}
+      - {phrase: "Soft", count: 9}
+      - {phrase: "material", count: 9}
+      - {phrase: "soft material", count: 9}
+      - {phrase: "soft fabric", count: 9}
+      - {phrase: "super soft", count: 8}
+      - {phrase: "good material", count: 8}
+      - {phrase: "suaves", count: 6}
+    sample_reviews: ['APP-004779', 'APP-007265', 'APP-006957', 'APP-004182', 'APP-008176']
+
+  - key: comfort
+    label_zh: 舒适度
+    total: 686
+    positive_count: 632
+    negative_count: 52
+    neutral_count: 2
+    negative_rate: 7.6%
+    top_phrases:
+      - {phrase: "comfortable", count: 122}
+      - {phrase: "very comfortable", count: 51}
+      - {phrase: "Comfortable", count: 40}
+      - {phrase: "soft", count: 24}
+      - {phrase: "comfy", count: 17}
+      - {phrase: "Very comfortable", count: 16}
+      - {phrase: "soft and comfortable", count: 14}
+      - {phrase: "feel great", count: 7}
+      - {phrase: "Comfy", count: 7}
+      - {phrase: "comfort", count: 6}
+    sample_reviews: ['APP-007483', 'APP-004779', 'APP-007771', 'APP-008644', 'APP-007307']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 653
+    positive_count: 553
+    negative_count: 63
+    neutral_count: 37
+    negative_rate: 9.6%
+    top_phrases:
+      - {phrase: "great price", count: 25}
+      - {phrase: "good price", count: 25}
+      - {phrase: "great value", count: 17}
+      - {phrase: "Great price", count: 12}
+      - {phrase: "Great value", count: 12}
+      - {phrase: "Good price", count: 11}
+      - {phrase: "great deal", count: 10}
+      - {phrase: "cheap", count: 10}
+      - {phrase: "good value", count: 9}
+      - {phrase: "good for the price", count: 6}
+    sample_reviews: ['APP-007771', 'APP-008650', 'APP-014034', 'APP-009575', 'APP-013766']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 642
+    positive_count: 460
+    negative_count: 174
+    neutral_count: 8
+    negative_rate: 27.1%
+    top_phrases:
+      - {phrase: "good quality", count: 56}
+      - {phrase: "Good quality", count: 55}
+      - {phrase: "Great quality", count: 24}
+      - {phrase: "quality", count: 22}
+      - {phrase: "great quality", count: 20}
+      - {phrase: "well made", count: 19}
+      - {phrase: "Well made", count: 14}
+      - {phrase: "Excellent quality", count: 12}
+      - {phrase: "Nice quality", count: 8}
+      - {phrase: "high quality", count: 7}
+    sample_reviews: ['APP-006683', 'APP-008022', 'APP-008650', 'APP-006926', 'APP-007530']
+
+  - key: cut_fit
+    label_zh: 版型
+    total: 555
+    positive_count: 360
+    negative_count: 185
+    neutral_count: 10
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "great fit", count: 27}
+      - {phrase: "Great fit", count: 24}
+      - {phrase: "fit", count: 17}
+      - {phrase: "good fit", count: 14}
+      - {phrase: "Nice fit", count: 11}
+      - {phrase: "Good fit", count: 10}
+      - {phrase: "fit well", count: 8}
+      - {phrase: "Perfect fit", count: 8}
+      - {phrase: "perfect fit", count: 7}
+      - {phrase: "Fit well", count: 5}
+    sample_reviews: ['APP-007771', 'APP-008650', 'APP-007595', 'APP-008714', 'APP-006576']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 415
+    positive_count: 228
+    negative_count: 181
+    neutral_count: 6
+    negative_rate: 43.6%
+    top_phrases:
+      - {phrase: "durable", count: 17}
+      - {phrase: "durability", count: 5}
+      - {phrase: "Durable", count: 4}
+      - {phrase: "hold up well", count: 3}
+      - {phrase: "hold their shape", count: 3}
+      - {phrase: "held up well", count: 3}
+      - {phrase: "very durable", count: 3}
+      - {phrase: "held up", count: 2}
+      - {phrase: "pretty durable", count: 2}
+      - {phrase: "don't shrink", count: 2}
+    sample_reviews: ['APP-004779', 'APP-007307', 'APP-014034', 'APP-013766', 'APP-007329']
+
+  - key: thickness
+    label_zh: 厚度
+    total: 387
+    positive_count: 166
+    negative_count: 193
+    neutral_count: 28
+    negative_rate: 49.9%
+    top_phrases:
+      - {phrase: "light weight", count: 22}
+      - {phrase: "thin", count: 21}
+      - {phrase: "very thin", count: 19}
+      - {phrase: "lightweight", count: 9}
+      - {phrase: "thick", count: 7}
+      - {phrase: "a little thin", count: 6}
+      - {phrase: "paper thin", count: 5}
+      - {phrase: "Lightweight", count: 4}
+      - {phrase: "so thin", count: 4}
+      - {phrase: "Very thin", count: 3}
+    sample_reviews: ['APP-007771', 'APP-007265', 'APP-008714', 'APP-007390', 'APP-007329']
+
+  - key: cleaning
+    label_zh: 易洗性
+    total: 339
+    positive_count: 126
+    negative_count: 202
+    neutral_count: 11
+    negative_rate: 59.6%
+    top_phrases:
+      - {phrase: "wash well", count: 6}
+      - {phrase: "after one wash", count: 4}
+      - {phrase: "shrink", count: 4}
+      - {phrase: "washes well", count: 3}
+      - {phrase: "easy to wash", count: 3}
+      - {phrase: "after a few washes", count: 3}
+      - {phrase: "no shrinkage", count: 2}
+      - {phrase: "shrink after the first wash", count: 2}
+      - {phrase: "shrinks in dryer", count: 2}
+      - {phrase: "shrinks after washing", count: 2}
+    sample_reviews: ['APP-020644', 'APP-009679', 'APP-008671', 'APP-007390', 'APP-004803']
+
+  - key: color_accuracy
+    label_zh: 颜色还原度
+    total: 265
+    positive_count: 144
+    negative_count: 120
+    neutral_count: 1
+    negative_rate: 45.3%
+    top_phrases:
+      - {phrase: "nice colors", count: 6}
+      - {phrase: "colors", count: 5}
+      - {phrase: "color", count: 5}
+      - {phrase: "love the colors", count: 3}
+      - {phrase: "colors are great", count: 3}
+      - {phrase: "liked the colors", count: 2}
+      - {phrase: "Like the colors", count: 2}
+      - {phrase: "colorfast", count: 2}
+      - {phrase: "sent wrong colors", count: 2}
+      - {phrase: "Great colors", count: 2}
+    sample_reviews: ['APP-008022', 'APP-008829', 'APP-007265', 'APP-006884', 'APP-008391']
+
+  - key: length
+    label_zh: 长度
+    total: 198
+    positive_count: 74
+    negative_count: 122
+    neutral_count: 2
+    negative_rate: 61.6%
+    top_phrases:
+      - {phrase: "too long", count: 4}
+      - {phrase: "way too long", count: 4}
+      - {phrase: "long", count: 4}
+      - {phrase: "sleeves are short", count: 4}
+      - {phrase: "sleeves are too short", count: 4}
+      - {phrase: "long enough", count: 3}
+      - {phrase: "very long", count: 3}
+      - {phrase: "kind of short", count: 2}
+      - {phrase: "sleeves are extremely short", count: 2}
+      - {phrase: "run long", count: 2}
+    sample_reviews: ['APP-007335', 'APP-004823', 'APP-011808', 'APP-013790', 'APP-014605']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 181
+    positive_count: 144
+    negative_count: 33
+    neutral_count: 4
+    negative_rate: 18.2%
+    top_phrases:
+      - {phrase: "look good", count: 13}
+      - {phrase: "look great", count: 8}
+      - {phrase: "looks good", count: 3}
+      - {phrase: "look nice", count: 3}
+      - {phrase: "good looking", count: 2}
+      - {phrase: "looks great", count: 2}
+      - {phrase: "nice shirts", count: 2}
+      - {phrase: "Look great", count: 2}
+      - {phrase: "Nice looking", count: 2}
+      - {phrase: "Nice shirts", count: 1}
+    sample_reviews: ['APP-007483', 'APP-007546', 'APP-004182', 'APP-004897', 'APP-013882']
+
+  - key: other
+    label_zh: 其他
+    total: 134
+    positive_count: 45
+    negative_count: 85
+    neutral_count: 4
+    negative_rate: 63.4%
+    top_phrases:
+      - {phrase: "fast delivery", count: 2}
+      - {phrase: "made in Bangladesh", count: 2}
+      - {phrase: "wrinkled", count: 2}
+      - {phrase: "Fast shipping", count: 2}
+      - {phrase: "tagless", count: 2}
+      - {phrase: "Fast delivery", count: 2}
+      - {phrase: "not tagless", count: 2}
+      - {phrase: "have tags but advertised as tagless", count: 1}
+      - {phrase: "shirts have tags", count: 1}
+      - {phrase: "paint stains", count: 1}
+    sample_reviews: ['APP-014567', 'APP-004955', 'APP-014581', 'APP-006929', 'APP-003880']
+
+  - key: stitching
+    label_zh: 走线/缝合
+    total: 102
+    positive_count: 13
+    negative_count: 88
+    neutral_count: 1
+    negative_rate: 86.3%
+    top_phrases:
+      - {phrase: "coming apart at the seams", count: 2}
+      - {phrase: "Bottom hem folded up after first wash", count: 1}
+      - {phrase: "curl up on me on the sewn edges", count: 1}
+      - {phrase: "neck band rolls over", count: 1}
+      - {phrase: "threads are starting to come undone", count: 1}
+      - {phrase: "oddities at the seams on the shoulders", count: 1}
+      - {phrase: "stitching coming undone, large holes in the seams, long threads hanging from the", count: 1}
+      - {phrase: "seams are twisted after washing", count: 1}
+      - {phrase: "Two shirts developed holes in around seams after drying", count: 1}
+      - {phrase: "seams are very poorly sewn and no longer have the top stitching", count: 1}
+    sample_reviews: ['APP-009679', 'APP-004787', 'APP-008176', 'APP-008458', 'APP-003895']
+
+  - key: stretchiness
+    label_zh: 弹性
+    total: 58
+    positive_count: 25
+    negative_count: 33
+    neutral_count: 0
+    negative_rate: 56.9%
+    top_phrases:
+      - {phrase: "stretchy", count: 5}
+      - {phrase: "no se estiran en la primera puesta", count: 1}
+      - {phrase: "do not stretch", count: 1}
+      - {phrase: "did not stretch out of shape", count: 1}
+      - {phrase: "fabric seems to lack sufficient stretch", count: 1}
+      - {phrase: "5% spandex significantly reduces shrinkage", count: 1}
+      - {phrase: "no stretch", count: 1}
+      - {phrase: "stretch pretty well", count: 1}
+      - {phrase: "loosen up and return to their normal size after wearing throughout the day", count: 1}
+      - {phrase: "collars stretch out easily", count: 1}
+    sample_reviews: ['APP-007630', 'APP-006598', 'APP-004875', 'APP-007545', 'APP-004881']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 54
+    positive_count: 25
+    negative_count: 28
+    neutral_count: 1
+    negative_rate: 51.9%
+    top_phrases:
+      - {phrase: "fast shipping", count: 2}
+      - {phrase: "Fast shipping", count: 2}
+      - {phrase: "one of five was damaged", count: 1}
+      - {phrase: "no llegaron completos", count: 1}
+      - {phrase: "2 pea sized holes in the side of grey shirt", count: 1}
+      - {phrase: "arrived quickly", count: 1}
+      - {phrase: "stain on one of the shirts", count: 1}
+      - {phrase: "arrived in excellent condition", count: 1}
+      - {phrase: "Shipping was fast", count: 1}
+      - {phrase: "Best delivery very fast", count: 1}
+    sample_reviews: ['APP-006701', 'APP-008061', 'APP-005444', 'APP-009725', 'APP-006720']
+
+  - key: packaging
+    label_zh: 包装
+    total: 43
+    positive_count: 14
+    negative_count: 27
+    neutral_count: 2
+    negative_rate: 62.8%
+    top_phrases:
+      - {phrase: "packaged well", count: 2}
+      - {phrase: "package states multicolor set", count: 1}
+      - {phrase: "Well Packed", count: 1}
+      - {phrase: "weird packaging just 6 tees wrapped in plastic", count: 1}
+      - {phrase: "clearly repackaged", count: 1}
+      - {phrase: "sent in a transparent plastic bag", count: 1}
+      - {phrase: "generic bag not from the manufacturer", count: 1}
+      - {phrase: "wrinkled", count: 1}
+      - {phrase: "nicely packaged and rolled", count: 1}
+      - {phrase: "one was open and kind of just thrown in the bag", count: 1}
+    sample_reviews: ['APP-008829', 'APP-008246', 'APP-006530', 'APP-008018', 'APP-007743']
+
+  - key: smell
+    label_zh: 异味
+    total: 35
+    positive_count: 5
+    negative_count: 30
+    neutral_count: 0
+    negative_rate: 85.7%
+    top_phrases:
+      - {phrase: "odd odor", count: 1}
+      - {phrase: "smell old", count: 1}
+      - {phrase: "fresh shirts", count: 1}
+      - {phrase: "shirt stink when you sweat", count: 1}
+      - {phrase: "smelly", count: 1}
+      - {phrase: "reek right out of the package", count: 1}
+      - {phrase: "molds", count: 1}
+      - {phrase: "smell bad", count: 1}
+      - {phrase: "Stinks of cigarettes", count: 1}
+      - {phrase: "formeldahyde oder that so far has not washed out", count: 1}
+    sample_reviews: ['APP-006883', 'APP-020666', 'APP-020666', 'APP-006713', 'APP-004362']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 34
+    positive_count: 12
+    negative_count: 20
+    neutral_count: 2
+    negative_rate: 58.8%
+    top_phrases:
+      - {phrase: "company was contacted numerous times, no response and no replacement", count: 1}
+      - {phrase: "replaced them", count: 1}
+      - {phrase: "quick to respond", count: 1}
+      - {phrase: "tried to call customer service and got sent to voicemail still waiting on an ema", count: 1}
+      - {phrase: "seller was quick to remedy", count: 1}
+      - {phrase: "customer service wont even respond", count: 1}
+      - {phrase: "Amazon customer service", count: 1}
+      - {phrase: "customer service for gildan doesn’t reply back", count: 1}
+      - {phrase: "great service", count: 1}
+      - {phrase: "called the 800 number ... left a message but there has been no return call", count: 1}
+    sample_reviews: ['APP-006701', 'APP-007747', 'APP-006651', 'APP-009015', 'APP-006512']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 14
+    positive_count: 9
+    negative_count: 4
+    neutral_count: 1
+    negative_rate: 28.6%
+    top_phrases:
+      - {phrase: "perfect for working out in", count: 1}
+      - {phrase: "work just fine as undershirts", count: 1}
+      - {phrase: "ironing hardly helps", count: 1}
+      - {phrase: "throw them in the washer", count: 1}
+      - {phrase: "tagless", count: 1}
+      - {phrase: "ease of use", count: 1}
+      - {phrase: "Easy to adhere htv to", count: 1}
+      - {phrase: "ideal para practicar deportes al aire libre, ir al gimnacio y para usar como rop", count: 1}
+      - {phrase: "Plan on ironing your undershirts every day", count: 1}
+      - {phrase: "don't have a tag or anything to identify front and back", count: 1}
+    sample_reviews: ['APP-011765', 'APP-006724', 'APP-014650', 'APP-009576', 'APP-007194']
+
+  - key: pattern
+    label_zh: 图案/印花
+    total: 4
+    positive_count: 2
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "Tie dyed well", count: 1}
+      - {phrase: "estampados quedan geniales", count: 1}
+      - {phrase: "no print on the inside like in the photos", count: 1}
+      - {phrase: "isn't into pattern or logo shirts", count: 1}
+    sample_reviews: ['APP-008197', 'APP-007378', 'APP-008720', 'APP-007547']

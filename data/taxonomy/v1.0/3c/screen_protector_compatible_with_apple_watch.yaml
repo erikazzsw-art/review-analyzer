@@ -1,0 +1,344 @@
+# Screen Protector Compatible with Apple Watch Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: Screen Protector Compatible with Apple Watch
+aspect_count: 18
+aspects:
+  - key: durability
+    label_zh: 耐用性
+    total: 1720
+    positive_count: 824
+    negative_count: 873
+    neutral_count: 23
+    negative_rate: 50.8%
+    top_phrases:
+      - {phrase: "durable", count: 17}
+      - {phrase: "great protection", count: 16}
+      - {phrase: "very durable", count: 13}
+      - {phrase: "cracks easily", count: 11}
+      - {phrase: "cracked", count: 10}
+      - {phrase: "Durable", count: 8}
+      - {phrase: "good protection", count: 7}
+      - {phrase: "protects the screen", count: 7}
+      - {phrase: "protect my watch", count: 7}
+      - {phrase: "Great protection", count: 7}
+    sample_reviews: ['3C-036435', '3C-004148', '3C-002317', '3C-029838', '3C-003409']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 1507
+    positive_count: 1004
+    negative_count: 491
+    neutral_count: 12
+    negative_rate: 32.6%
+    top_phrases:
+      - {phrase: "easy to install", count: 48}
+      - {phrase: "Easy to install", count: 42}
+      - {phrase: "easy to put on", count: 36}
+      - {phrase: "Easy to put on", count: 22}
+      - {phrase: "Perfect fit", count: 22}
+      - {phrase: "fits perfectly", count: 20}
+      - {phrase: "Fits perfectly", count: 18}
+      - {phrase: "Fits well", count: 14}
+      - {phrase: "easy to use", count: 11}
+      - {phrase: "fits well", count: 11}
+    sample_reviews: ['3C-038700', '3C-037381', '3C-004148', '3C-016387', '3C-002317']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 711
+    positive_count: 458
+    negative_count: 248
+    neutral_count: 5
+    negative_rate: 34.9%
+    top_phrases:
+      - {phrase: "Good quality", count: 17}
+      - {phrase: "good quality", count: 14}
+      - {phrase: "Great quality", count: 10}
+      - {phrase: "great protection", count: 8}
+      - {phrase: "great quality", count: 8}
+      - {phrase: "sturdy", count: 6}
+      - {phrase: "Buena calidad", count: 5}
+      - {phrase: "fits perfectly", count: 5}
+      - {phrase: "Poor quality", count: 5}
+      - {phrase: "Very good quality", count: 5}
+    sample_reviews: ['3C-003409', '3C-037450', '3C-029850', '3C-015849', '3C-029290']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 654
+    positive_count: 551
+    negative_count: 100
+    neutral_count: 3
+    negative_rate: 15.3%
+    top_phrases:
+      - {phrase: "looks great", count: 35}
+      - {phrase: "looks good", count: 29}
+      - {phrase: "Looks great", count: 21}
+      - {phrase: "Looks good", count: 12}
+      - {phrase: "looks nice", count: 12}
+      - {phrase: "look great", count: 8}
+      - {phrase: "look good", count: 5}
+      - {phrase: "looks very nice", count: 5}
+      - {phrase: "sleek", count: 4}
+      - {phrase: "clear", count: 4}
+    sample_reviews: ['3C-038700', '3C-037381', '3C-001511', '3C-004148', '3C-002317']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 449
+    positive_count: 348
+    negative_count: 87
+    neutral_count: 14
+    negative_rate: 19.4%
+    top_phrases:
+      - {phrase: "great price", count: 16}
+      - {phrase: "great value", count: 9}
+      - {phrase: "Great price", count: 8}
+      - {phrase: "good price", count: 7}
+      - {phrase: "Great value", count: 7}
+      - {phrase: "Waste of money", count: 6}
+      - {phrase: "inexpensive", count: 6}
+      - {phrase: "Don't waste your money", count: 5}
+      - {phrase: "good value", count: 5}
+      - {phrase: "Good value", count: 5}
+    sample_reviews: ['3C-038700', '3C-036435', '3C-001511', '3C-028959', '3C-028247']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 254
+    positive_count: 164
+    negative_count: 85
+    neutral_count: 5
+    negative_rate: 33.5%
+    top_phrases:
+      - {phrase: "fits perfectly", count: 6}
+      - {phrase: "Compatible with Apple Watch", count: 6}
+      - {phrase: "Fits perfectly", count: 5}
+      - {phrase: "fits my watch perfectly", count: 4}
+      - {phrase: "fits perfect", count: 3}
+      - {phrase: "perfect fit", count: 3}
+      - {phrase: "does not fit", count: 3}
+      - {phrase: "Perfect fit", count: 2}
+      - {phrase: "didn't fit the watch", count: 2}
+      - {phrase: "Fits perfect", count: 2}
+    sample_reviews: ['3C-037331', '3C-028777', '3C-035886', '3C-035724', '3C-015954']
+
+  - key: other
+    label_zh: 其他
+    total: 245
+    positive_count: 69
+    negative_count: 172
+    neutral_count: 4
+    negative_rate: 70.2%
+    top_phrases:
+      - {phrase: "not waterproof", count: 7}
+      - {phrase: "works great", count: 5}
+      - {phrase: "great product", count: 3}
+      - {phrase: "fits perfectly", count: 3}
+      - {phrase: "Excelente producto", count: 2}
+      - {phrase: "Perfect fit", count: 2}
+      - {phrase: "nice fit", count: 1}
+      - {phrase: "moisture trapped when swimming or washing hands", count: 1}
+      - {phrase: "sweat resistance", count: 1}
+      - {phrase: "smudges that appear on are hard to clean", count: 1}
+    sample_reviews: ['3C-028247', '3C-021834', '3C-016783', '3C-037143', '3C-020980']
+
+  - key: material
+    label_zh: 材质用料
+    total: 124
+    positive_count: 52
+    negative_count: 69
+    neutral_count: 3
+    negative_rate: 55.6%
+    top_phrases:
+      - {phrase: "cheap plastic", count: 3}
+      - {phrase: "plastic", count: 3}
+      - {phrase: "Buen material", count: 2}
+      - {phrase: "Excelente calidad", count: 2}
+      - {phrase: "material", count: 2}
+      - {phrase: "brittle", count: 2}
+      - {phrase: "tempered glass", count: 2}
+      - {phrase: "hard plastic", count: 2}
+      - {phrase: "little tiny dots from whatever type of plastic it is they used", count: 1}
+      - {phrase: "Excelente material", count: 1}
+    sample_reviews: ['3C-001511', '3C-020018', '3C-016370', '3C-027506', '3C-016806']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 114
+    positive_count: 70
+    negative_count: 44
+    neutral_count: 0
+    negative_rate: 38.6%
+    top_phrases:
+      - {phrase: "fast shipping", count: 5}
+      - {phrase: "Fast shipping", count: 4}
+      - {phrase: "fast delivery", count: 3}
+      - {phrase: "Came on time", count: 2}
+      - {phrase: "arrived quickly", count: 2}
+      - {phrase: "Fast delivery", count: 2}
+      - {phrase: "Quick delivery", count: 2}
+      - {phrase: "Arrived on time", count: 2}
+      - {phrase: "worn out and damaged when arrived", count: 1}
+      - {phrase: "received it overnight", count: 1}
+    sample_reviews: ['3C-028959', '3C-029286', '3C-029029', '3C-016891', '3C-019652']
+
+  - key: comfort
+    label_zh: 佩戴舒适度
+    total: 113
+    positive_count: 81
+    negative_count: 32
+    neutral_count: 0
+    negative_rate: 28.3%
+    top_phrases:
+      - {phrase: "fits perfectly", count: 7}
+      - {phrase: "comfortable", count: 5}
+      - {phrase: "not too bulky", count: 3}
+      - {phrase: "Fits well", count: 2}
+      - {phrase: "very uncomfortable", count: 2}
+      - {phrase: "Fits great", count: 2}
+      - {phrase: "fit perfectly", count: 2}
+      - {phrase: "fits great", count: 2}
+      - {phrase: "snug fit", count: 2}
+      - {phrase: "fits nicely", count: 2}
+    sample_reviews: ['3C-037381', '3C-030043', '3C-035903', '3C-029879', '3C-037416']
+
+  - key: packaging
+    label_zh: 包装
+    total: 65
+    positive_count: 47
+    negative_count: 12
+    neutral_count: 6
+    negative_rate: 18.5%
+    top_phrases:
+      - {phrase: "comes with 2 cases", count: 1}
+      - {phrase: "Missing one of the two protectors", count: 1}
+      - {phrase: "package said 2 pack, but only one item", count: 1}
+      - {phrase: "comes with a cleaning cloth and wipe", count: 1}
+      - {phrase: "2 covers came in the package", count: 1}
+      - {phrase: "2 pack", count: 1}
+      - {phrase: "comes with two sets", count: 1}
+      - {phrase: "nothing was wrong with packaging", count: 1}
+      - {phrase: "comes with both wet and dry wipes for application", count: 1}
+      - {phrase: "packaged perfectly", count: 1}
+    sample_reviews: ['3C-016783', '3C-016891', '3C-016118', '3C-001416', '3C-021143']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 27
+    positive_count: 11
+    negative_count: 15
+    neutral_count: 1
+    negative_rate: 55.6%
+    top_phrases:
+      - {phrase: "angry over the overall experience", count: 1}
+      - {phrase: "Can’t return as the return window closed", count: 1}
+      - {phrase: "servicio rápido", count: 1}
+      - {phrase: "refunded without requiring I return it", count: 1}
+      - {phrase: "Great service", count: 1}
+      - {phrase: "service provided by Amazon", count: 1}
+      - {phrase: "company won’t back up there product and refund it", count: 1}
+      - {phrase: "Amazon is giving me the runaround", count: 1}
+      - {phrase: "Sent a message to them about getting a replacement and haven’t heard back", count: 1}
+      - {phrase: "Contacted company and never received a response", count: 1}
+    sample_reviews: ['3C-016891', '3C-020706', '3C-038158', '3C-038695', '3C-043188']
+
+  - key: portability
+    label_zh: 便携性
+    total: 21
+    positive_count: 21
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "not bulky", count: 2}
+      - {phrase: "No added bulk", count: 1}
+      - {phrase: "Minimal impact on the overall size", count: 1}
+      - {phrase: "Isn’t too bulky", count: 1}
+      - {phrase: "light and doesn't add bulk", count: 1}
+      - {phrase: "Doesn't add bulk", count: 1}
+      - {phrase: "Not bulky at all", count: 1}
+      - {phrase: "super lightweight", count: 1}
+      - {phrase: "lightweight", count: 1}
+      - {phrase: "does not add a lot of bulk", count: 1}
+    sample_reviews: ['3C-016661', '3C-028322', '3C-041365', '3C-027433', '3C-025903']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 15
+    positive_count: 9
+    negative_count: 6
+    neutral_count: 0
+    negative_rate: 40.0%
+    top_phrases:
+      - {phrase: "sensitivity is very good", count: 1}
+      - {phrase: "doesn't change the sensitivity of the touch screen", count: 1}
+      - {phrase: "Does not effect touch sensitivity", count: 1}
+      - {phrase: "touch screen still very sensitive", count: 1}
+      - {phrase: "Touch seems responsive", count: 1}
+      - {phrase: "doesn't detect my finger sometimes", count: 1}
+      - {phrase: "touch screen won't respond", count: 1}
+      - {phrase: "Causes the watch to act erratically", count: 1}
+      - {phrase: "touch is super responsive", count: 1}
+      - {phrase: "looseness causes issues with touch recognition", count: 1}
+    sample_reviews: ['3C-019816', '3C-038058', '3C-038562', '3C-029004', '3C-028475']
+
+  - key: sound_quality
+    label_zh: 音质
+    total: 11
+    positive_count: 8
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 27.3%
+    top_phrases:
+      - {phrase: "Superb clarity", count: 1}
+      - {phrase: "clarity of the screen", count: 1}
+      - {phrase: "screen is super clear", count: 1}
+      - {phrase: "maintains the Apple Watch's vibrant display and touch sensitivity perfectly", count: 1}
+      - {phrase: "muffles the sound", count: 1}
+      - {phrase: "Screen is clear", count: 1}
+      - {phrase: "noticeable impact on the screen quality", count: 1}
+      - {phrase: "visual quality is great", count: 1}
+      - {phrase: "screen quality is nice clear", count: 1}
+      - {phrase: "screen is nice and clear", count: 1}
+    sample_reviews: ['3C-037222', '3C-019829', '3C-016527', '3C-002205', '3C-030109']
+
+  - key: latency
+    label_zh: 延迟
+    total: 5
+    positive_count: 3
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 40.0%
+    top_phrases:
+      - {phrase: "touch screen a little laggy", count: 1}
+      - {phrase: "no lag in Watch response", count: 1}
+      - {phrase: "watch won't respond to your touch", count: 1}
+      - {phrase: "doesn't have a delay on the screen", count: 1}
+      - {phrase: "no interruption or lag when touching the screen", count: 1}
+    sample_reviews: ['3C-028782', '3C-028433', '3C-038536', '3C-041890', '3C-037403']
+
+  - key: charging_speed
+    label_zh: 充电速度
+    total: 4
+    positive_count: 3
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "will not charge with it on", count: 1}
+      - {phrase: "works with charger", count: 1}
+      - {phrase: "Doesn't affect charging", count: 1}
+      - {phrase: "provides for unfettered charging", count: 1}
+    sample_reviews: ['3C-019923', '3C-044846', '3C-037167', '3C-036865']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "battery life is not good", count: 1}
+    sample_reviews: ['3C-038076']

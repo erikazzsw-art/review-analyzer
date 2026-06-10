@@ -1,0 +1,378 @@
+# Baby Gate Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:42:45
+sub_category: Baby Gate
+aspect_count: 19
+aspects:
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 1675
+    positive_count: 1186
+    negative_count: 474
+    neutral_count: 15
+    negative_rate: 28.3%
+    top_phrases:
+      - {phrase: "easy to use", count: 82}
+      - {phrase: "easy to install", count: 74}
+      - {phrase: "Easy to use", count: 24}
+      - {phrase: "Easy to install", count: 23}
+      - {phrase: "works great", count: 21}
+      - {phrase: "easy to set up", count: 20}
+      - {phrase: "very easy to install", count: 19}
+      - {phrase: "easy to open and close", count: 15}
+      - {phrase: "Works great", count: 12}
+      - {phrase: "easy to open", count: 11}
+    sample_reviews: ['BABY-005440', 'BABY-005510', 'BABY-009446', 'BABY-008749', 'BABY-007436']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 956
+    positive_count: 562
+    negative_count: 390
+    neutral_count: 4
+    negative_rate: 40.8%
+    top_phrases:
+      - {phrase: "sturdy", count: 106}
+      - {phrase: "very sturdy", count: 61}
+      - {phrase: "Very sturdy", count: 24}
+      - {phrase: "sturdy gate", count: 14}
+      - {phrase: "Sturdy", count: 11}
+      - {phrase: "super sturdy", count: 11}
+      - {phrase: "not very sturdy", count: 6}
+      - {phrase: "pretty sturdy", count: 6}
+      - {phrase: "nice and sturdy", count: 5}
+      - {phrase: "secure", count: 5}
+    sample_reviews: ['BABY-009599', 'BABY-005510', 'BABY-009446', 'BABY-007436', 'BABY-009266']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 845
+    positive_count: 443
+    negative_count: 395
+    neutral_count: 7
+    negative_rate: 46.7%
+    top_phrases:
+      - {phrase: "Great quality", count: 23}
+      - {phrase: "Good quality", count: 22}
+      - {phrase: "good quality", count: 22}
+      - {phrase: "well made", count: 17}
+      - {phrase: "great quality", count: 15}
+      - {phrase: "flimsy", count: 15}
+      - {phrase: "Sturdy", count: 14}
+      - {phrase: "sturdy", count: 13}
+      - {phrase: "Well made", count: 9}
+      - {phrase: "strong", count: 8}
+    sample_reviews: ['BABY-009599', 'BABY-006718', 'BABY-003954', 'BABY-004913', 'BABY-003967']
+
+  - key: assembly
+    label_zh: 组装难度
+    total: 788
+    positive_count: 500
+    negative_count: 261
+    neutral_count: 27
+    negative_rate: 33.1%
+    top_phrases:
+      - {phrase: "easy to install", count: 96}
+      - {phrase: "Easy to install", count: 66}
+      - {phrase: "easy to assemble", count: 32}
+      - {phrase: "easy to put together", count: 16}
+      - {phrase: "easy to set up", count: 8}
+      - {phrase: "Easy installation", count: 8}
+      - {phrase: "Easy to assemble", count: 8}
+      - {phrase: "easy installation", count: 7}
+      - {phrase: "Easy to put together", count: 7}
+      - {phrase: "Easy install", count: 7}
+    sample_reviews: ['BABY-005440', 'BABY-009446', 'BABY-006688', 'BABY-005924', 'BABY-007044']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 713
+    positive_count: 439
+    negative_count: 251
+    neutral_count: 23
+    negative_rate: 35.2%
+    top_phrases:
+      - {phrase: "fits perfectly", count: 10}
+      - {phrase: "adjustable", count: 5}
+      - {phrase: "perfect size", count: 5}
+      - {phrase: "perfect height", count: 4}
+      - {phrase: "fits well", count: 4}
+      - {phrase: "height is perfect", count: 4}
+      - {phrase: "Height is perfect", count: 3}
+      - {phrase: "too small", count: 3}
+      - {phrase: "height of this gate", count: 3}
+      - {phrase: "Fits well", count: 2}
+    sample_reviews: ['BABY-007436', 'BABY-009266', 'BABY-004669', 'BABY-008850', 'BABY-005345']
+
+  - key: safety
+    label_zh: 安全性
+    total: 585
+    positive_count: 297
+    negative_count: 284
+    neutral_count: 4
+    negative_rate: 48.5%
+    top_phrases:
+      - {phrase: "secure", count: 9}
+      - {phrase: "safe", count: 5}
+      - {phrase: "not safe", count: 4}
+      - {phrase: "doesn't lock", count: 3}
+      - {phrase: "unsafe", count: 3}
+      - {phrase: "dangerous", count: 3}
+      - {phrase: "latches securely", count: 3}
+      - {phrase: "keeps the kids off the stairs", count: 2}
+      - {phrase: "secure locking mechanism", count: 2}
+      - {phrase: "locks well", count: 2}
+    sample_reviews: ['BABY-009309', 'BABY-005510', 'BABY-003954', 'BABY-004669', 'BABY-005345']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 437
+    positive_count: 190
+    negative_count: 242
+    neutral_count: 5
+    negative_rate: 55.4%
+    top_phrases:
+      - {phrase: "very durable", count: 9}
+      - {phrase: "durable", count: 9}
+      - {phrase: "Durable", count: 4}
+      - {phrase: "durability", count: 3}
+      - {phrase: "breaks easily", count: 3}
+      - {phrase: "still going strong", count: 2}
+      - {phrase: "stood the test of time", count: 2}
+      - {phrase: "broke after 4 months", count: 2}
+      - {phrase: "held up great", count: 2}
+      - {phrase: "not very durable", count: 2}
+    sample_reviews: ['BABY-003967', 'BABY-008398', 'BABY-005820', 'BABY-007645', 'BABY-004793']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 380
+    positive_count: 341
+    negative_count: 37
+    neutral_count: 2
+    negative_rate: 9.7%
+    top_phrases:
+      - {phrase: "looks nice", count: 37}
+      - {phrase: "looks good", count: 21}
+      - {phrase: "looks great", count: 18}
+      - {phrase: "Looks great", count: 9}
+      - {phrase: "look nice", count: 7}
+      - {phrase: "Looks good", count: 7}
+      - {phrase: "Looks nice", count: 7}
+      - {phrase: "attractive", count: 6}
+      - {phrase: "Nice looking", count: 5}
+      - {phrase: "looked nice", count: 4}
+    sample_reviews: ['BABY-005440', 'BABY-009994', 'BABY-009861', 'BABY-005820', 'BABY-007645']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 345
+    positive_count: 215
+    negative_count: 122
+    neutral_count: 8
+    negative_rate: 35.4%
+    top_phrases:
+      - {phrase: "worth the money", count: 13}
+      - {phrase: "waste of money", count: 9}
+      - {phrase: "good price", count: 6}
+      - {phrase: "great value", count: 5}
+      - {phrase: "great price", count: 5}
+      - {phrase: "Not worth the money", count: 5}
+      - {phrase: "cheap", count: 5}
+      - {phrase: "worth every penny", count: 4}
+      - {phrase: "Great value", count: 4}
+      - {phrase: "Waste of money", count: 4}
+    sample_reviews: ['BABY-009309', 'BABY-005924', 'BABY-007645', 'BABY-003833', 'BABY-009051']
+
+  - key: other
+    label_zh: 其他
+    total: 237
+    positive_count: 142
+    negative_count: 86
+    neutral_count: 9
+    negative_rate: 36.3%
+    top_phrases:
+      - {phrase: "works great", count: 5}
+      - {phrase: "missing parts", count: 3}
+      - {phrase: "Works great", count: 2}
+      - {phrase: "Very versatile", count: 2}
+      - {phrase: "versatile", count: 2}
+      - {phrase: "exactly what we wanted", count: 2}
+      - {phrase: "Good gate", count: 2}
+      - {phrase: "keeps the dog out", count: 2}
+      - {phrase: "no bottom bar", count: 2}
+      - {phrase: "does the job", count: 2}
+    sample_reviews: ['BABY-005510', 'BABY-004418', 'BABY-009316', 'BABY-007411', 'BABY-009292']
+
+  - key: instructions
+    label_zh: 说明书
+    total: 203
+    positive_count: 57
+    negative_count: 118
+    neutral_count: 28
+    negative_rate: 58.1%
+    top_phrases:
+      - {phrase: "instructions are useless", count: 2}
+      - {phrase: "horrible instructions", count: 2}
+      - {phrase: "instructions are not very clear", count: 2}
+      - {phrase: "follow the directions", count: 2}
+      - {phrase: "instructions were clear", count: 2}
+      - {phrase: "No instructions included", count: 2}
+      - {phrase: "no written instructions", count: 2}
+      - {phrase: "unclear instructions", count: 2}
+      - {phrase: "followed the instructions", count: 2}
+      - {phrase: "good instructions", count: 2}
+    sample_reviews: ['BABY-009264', 'BABY-009703', 'BABY-003760', 'BABY-006975', 'BABY-007109']
+
+  - key: age_appropriate
+    label_zh: 适用年龄
+    total: 122
+    positive_count: 69
+    negative_count: 45
+    neutral_count: 8
+    negative_rate: 36.9%
+    top_phrases:
+      - {phrase: "work well for children and big dogs", count: 1}
+      - {phrase: "not suitable for dogs", count: 1}
+      - {phrase: "10 month old can open it", count: 1}
+      - {phrase: "prevent my toddler from going downstairs", count: 1}
+      - {phrase: "for our 13 month old", count: 1}
+      - {phrase: "my five pound Yorkie jumped over it", count: 1}
+      - {phrase: "for my little boy", count: 1}
+      - {phrase: "great for small dogs or kids", count: 1}
+      - {phrase: "used for my toddler", count: 1}
+      - {phrase: "works great for both my kid and my dog", count: 1}
+    sample_reviews: ['BABY-004033', 'BABY-004271', 'BABY-006642', 'BABY-006254', 'BABY-004827']
+
+  - key: material
+    label_zh: 材质用料
+    total: 114
+    positive_count: 44
+    negative_count: 66
+    neutral_count: 4
+    negative_rate: 57.9%
+    top_phrases:
+      - {phrase: "cheap materials", count: 3}
+      - {phrase: "plastic", count: 3}
+      - {phrase: "cheap plastic", count: 3}
+      - {phrase: "Good material", count: 3}
+      - {phrase: "made out of metal", count: 2}
+      - {phrase: "cheap material", count: 2}
+      - {phrase: "entire fence out of plastic", count: 1}
+      - {phrase: "plastic did not work", count: 1}
+      - {phrase: "buen material de buena calidad", count: 1}
+      - {phrase: "metal doesn't get hot in front of the fire", count: 1}
+    sample_reviews: ['BABY-009994', 'BABY-004913', 'BABY-006614', 'BABY-003833', 'BABY-004205']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 88
+    positive_count: 30
+    negative_count: 55
+    neutral_count: 3
+    negative_rate: 62.5%
+    top_phrases:
+      - {phrase: "want to return but it is past the date", count: 1}
+      - {phrase: "Easy return however", count: 1}
+      - {phrase: "Regalo, fix your quality control", count: 1}
+      - {phrase: "returning is a terrible process", count: 1}
+      - {phrase: "customer service is AWFUL", count: 1}
+      - {phrase: "good luck getting someone on the phone, all I get is the run around", count: 1}
+      - {phrase: "Regalo customer service covered replacement under warranty", count: 1}
+      - {phrase: "chatted with customer service and they confirmed that we installed it correctly", count: 1}
+      - {phrase: "return policy was pretty easy", count: 1}
+      - {phrase: "costumer service was 10/10", count: 1}
+    sample_reviews: ['BABY-009218', 'BABY-009012', 'BABY-006602', 'BABY-006184', 'BABY-007703']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 81
+    positive_count: 9
+    negative_count: 71
+    neutral_count: 1
+    negative_rate: 87.7%
+    top_phrases:
+      - {phrase: "came broken", count: 5}
+      - {phrase: "arrived broken", count: 3}
+      - {phrase: "Arrived broken", count: 3}
+      - {phrase: "fast shipping", count: 2}
+      - {phrase: "came damaged", count: 2}
+      - {phrase: "broken", count: 2}
+      - {phrase: "came slightly curved/bent", count: 1}
+      - {phrase: "Fast delivery", count: 1}
+      - {phrase: "left big holes in wall of our rented home", count: 1}
+      - {phrase: "arrived late", count: 1}
+    sample_reviews: ['BABY-003976', 'BABY-007025', 'BABY-004209', 'BABY-008158', 'BABY-004492']
+
+  - key: packaging
+    label_zh: 包装
+    total: 49
+    positive_count: 12
+    negative_count: 33
+    neutral_count: 4
+    negative_rate: 67.3%
+    top_phrases:
+      - {phrase: "packaged well", count: 3}
+      - {phrase: "box was clearly opened and the gate was dirty and used", count: 1}
+      - {phrase: "came in a zip lock bag", count: 1}
+      - {phrase: "Made in USA on the packaging", count: 1}
+      - {phrase: "original packaging was taped shut with packing tape", count: 1}
+      - {phrase: "packed great", count: 1}
+      - {phrase: "great packaging", count: 1}
+      - {phrase: "box was open", count: 1}
+      - {phrase: "Items in the box were opened", count: 1}
+      - {phrase: "packed better for shipping", count: 1}
+    sample_reviews: ['BABY-009897', 'BABY-009292', 'BABY-003976', 'BABY-009526', 'BABY-004759']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 43
+    positive_count: 30
+    negative_count: 12
+    neutral_count: 1
+    negative_rate: 27.9%
+    top_phrases:
+      - {phrase: "Light weight", count: 2}
+      - {phrase: "lightweight", count: 2}
+      - {phrase: "block our 60lb dog", count: 1}
+      - {phrase: "soportan el peso de perros del tamaño de un husky", count: 1}
+      - {phrase: "not heavy", count: 1}
+      - {phrase: "heavy and cumbersome", count: 1}
+      - {phrase: "100 lb. dogs", count: 1}
+      - {phrase: "kept my 80 lb dog", count: 1}
+      - {phrase: "works well with my 90 pound dog", count: 1}
+      - {phrase: "strong gate for medium to large dogs", count: 1}
+    sample_reviews: ['BABY-009266', 'BABY-008479', 'BABY-009091', 'BABY-004205', 'BABY-007950']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 14
+    positive_count: 10
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 28.6%
+    top_phrases:
+      - {phrase: "easy to clean", count: 3}
+      - {phrase: "not having the bottom bar makes cleaning SO much easier", count: 1}
+      - {phrase: "kitchen is staying clean", count: 1}
+      - {phrase: "super easy to clean", count: 1}
+      - {phrase: "difficult to get it clean", count: 1}
+      - {phrase: "stickers came off easier", count: 1}
+      - {phrase: "able to get the stickers off super easy", count: 1}
+      - {phrase: "adhesive residue hard to remove", count: 1}
+      - {phrase: "labels take hours to remove", count: 1}
+      - {phrase: "maintenance free", count: 1}
+    sample_reviews: ['BABY-008161', 'BABY-007954', 'BABY-004083', 'BABY-006761', 'BABY-009953']
+
+  - key: smell
+    label_zh: 异味
+    total: 4
+    positive_count: 3
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "stinks when you try to resize it", count: 1}
+      - {phrase: "no odor at all", count: 1}
+      - {phrase: "no weird smell", count: 1}
+      - {phrase: "smells minty", count: 1}
+    sample_reviews: ['BABY-009897', 'BABY-003787', 'BABY-006632', 'BABY-007526']

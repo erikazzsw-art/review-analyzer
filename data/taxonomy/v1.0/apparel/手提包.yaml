@@ -1,0 +1,408 @@
+# 手提包 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:32:54
+sub_category: 手提包
+aspect_count: 21
+aspects:
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 862
+    positive_count: 546
+    negative_count: 295
+    neutral_count: 21
+    negative_rate: 34.2%
+    top_phrases:
+      - {phrase: "perfect size", count: 33}
+      - {phrase: "Perfect size", count: 27}
+      - {phrase: "roomy", count: 17}
+      - {phrase: "smaller than expected", count: 11}
+      - {phrase: "just the right size", count: 11}
+      - {phrase: "size", count: 11}
+      - {phrase: "too small", count: 11}
+      - {phrase: "Great size", count: 10}
+      - {phrase: "spacious", count: 10}
+      - {phrase: "plenty of room", count: 7}
+    sample_reviews: ['APP-022387', 'APP-022434', 'APP-020913', 'APP-021935', 'APP-021353']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 622
+    positive_count: 581
+    negative_count: 36
+    neutral_count: 5
+    negative_rate: 5.8%
+    top_phrases:
+      - {phrase: "cute", count: 44}
+      - {phrase: "super cute", count: 17}
+      - {phrase: "Super cute", count: 14}
+      - {phrase: "very cute", count: 10}
+      - {phrase: "cute bag", count: 10}
+      - {phrase: "love the color", count: 8}
+      - {phrase: "beautiful", count: 8}
+      - {phrase: "stylish", count: 8}
+      - {phrase: "so cute", count: 7}
+      - {phrase: "Very cute", count: 7}
+    sample_reviews: ['APP-022387', 'APP-021432', 'APP-021417', 'APP-022031', 'APP-020821']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 571
+    positive_count: 404
+    negative_count: 165
+    neutral_count: 2
+    negative_rate: 28.9%
+    top_phrases:
+      - {phrase: "sturdy", count: 40}
+      - {phrase: "well made", count: 23}
+      - {phrase: "good quality", count: 19}
+      - {phrase: "Good quality", count: 13}
+      - {phrase: "Great quality", count: 12}
+      - {phrase: "great quality", count: 11}
+      - {phrase: "very well made", count: 10}
+      - {phrase: "Well made", count: 10}
+      - {phrase: "very sturdy", count: 10}
+      - {phrase: "quality", count: 9}
+    sample_reviews: ['APP-022434', 'APP-020913', 'APP-021947', 'APP-021505', 'APP-021852']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 415
+    positive_count: 355
+    negative_count: 58
+    neutral_count: 2
+    negative_rate: 14.0%
+    top_phrases:
+      - {phrase: "easy to use", count: 7}
+      - {phrase: "easy to carry", count: 7}
+      - {phrase: "Easy to carry", count: 4}
+      - {phrase: "convenient", count: 3}
+      - {phrase: "very functional", count: 3}
+      - {phrase: "lots of pockets", count: 3}
+      - {phrase: "functional", count: 3}
+      - {phrase: "works perfect", count: 2}
+      - {phrase: "Lots of pockets to keep things organized", count: 2}
+      - {phrase: "many pockets", count: 2}
+    sample_reviews: ['APP-021947', 'APP-021766', 'APP-021353', 'APP-021209', 'APP-020971']
+
+  - key: other
+    label_zh: 其他
+    total: 370
+    positive_count: 215
+    negative_count: 151
+    neutral_count: 4
+    negative_rate: 40.8%
+    top_phrases:
+      - {phrase: "spacious", count: 10}
+      - {phrase: "roomy", count: 6}
+      - {phrase: "compartments", count: 4}
+      - {phrase: "lots of pockets", count: 4}
+      - {phrase: "very spacious", count: 3}
+      - {phrase: "Lots of pockets", count: 3}
+      - {phrase: "very roomy", count: 3}
+      - {phrase: "zipped closed", count: 2}
+      - {phrase: "many compartments", count: 2}
+      - {phrase: "missing the strap", count: 2}
+    sample_reviews: ['APP-022451', 'APP-022031', 'APP-021787', 'APP-021276', 'APP-021001']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 330
+    positive_count: 231
+    negative_count: 94
+    neutral_count: 5
+    negative_rate: 28.5%
+    top_phrases:
+      - {phrase: "durable", count: 28}
+      - {phrase: "very durable", count: 16}
+      - {phrase: "very sturdy", count: 12}
+      - {phrase: "sturdy", count: 11}
+      - {phrase: "Durable", count: 7}
+      - {phrase: "durability", count: 5}
+      - {phrase: "seems durable", count: 4}
+      - {phrase: "heavy duty", count: 3}
+      - {phrase: "Sturdy", count: 3}
+      - {phrase: "durable bag", count: 2}
+    sample_reviews: ['APP-021505', 'APP-021766', 'APP-021852', 'APP-021209', 'APP-020821']
+
+  - key: material
+    label_zh: 材质用料
+    total: 302
+    positive_count: 226
+    negative_count: 66
+    neutral_count: 10
+    negative_rate: 21.9%
+    top_phrases:
+      - {phrase: "canvas", count: 8}
+      - {phrase: "lightweight", count: 6}
+      - {phrase: "material", count: 5}
+      - {phrase: "sturdy canvas", count: 5}
+      - {phrase: "fabric", count: 4}
+      - {phrase: "material is sturdy", count: 3}
+      - {phrase: "nice fabric", count: 3}
+      - {phrase: "Great material", count: 3}
+      - {phrase: "love the material", count: 3}
+      - {phrase: "thick material", count: 3}
+    sample_reviews: ['APP-022168', 'APP-021069', 'APP-021424', 'APP-021001', 'APP-021575']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 171
+    positive_count: 135
+    negative_count: 31
+    neutral_count: 5
+    negative_rate: 18.1%
+    top_phrases:
+      - {phrase: "good price", count: 4}
+      - {phrase: "not worth the money", count: 4}
+      - {phrase: "reasonably priced", count: 3}
+      - {phrase: "Great price", count: 3}
+      - {phrase: "well worth the price", count: 3}
+      - {phrase: "great purchase", count: 3}
+      - {phrase: "decent for the price", count: 3}
+      - {phrase: "worth the money", count: 3}
+      - {phrase: "good value", count: 2}
+      - {phrase: "Worth every penny", count: 2}
+    sample_reviews: ['APP-021353', 'APP-021852', 'APP-021192', 'APP-021424', 'APP-021279']
+
+  - key: color_accuracy
+    label_zh: 颜色还原度
+    total: 168
+    positive_count: 118
+    negative_count: 45
+    neutral_count: 5
+    negative_rate: 26.8%
+    top_phrases:
+      - {phrase: "color", count: 11}
+      - {phrase: "love the color", count: 9}
+      - {phrase: "Love the color", count: 7}
+      - {phrase: "color is beautiful", count: 4}
+      - {phrase: "Perfect color", count: 3}
+      - {phrase: "True to color", count: 2}
+      - {phrase: "Great color", count: 2}
+      - {phrase: "color is just as advertised", count: 2}
+      - {phrase: "true to color", count: 2}
+      - {phrase: "bag is tan, not yellow", count: 1}
+    sample_reviews: ['APP-021935', 'APP-021719', 'APP-020821', 'APP-020971', 'APP-021807']
+
+  - key: comfort
+    label_zh: 舒适度
+    total: 90
+    positive_count: 73
+    negative_count: 17
+    neutral_count: 0
+    negative_rate: 18.9%
+    top_phrases:
+      - {phrase: "comfortable", count: 5}
+      - {phrase: "comfortable to carry", count: 3}
+      - {phrase: "comfy", count: 3}
+      - {phrase: "very comfortable", count: 3}
+      - {phrase: "straps are comfortable", count: 2}
+      - {phrase: "muy cómoda", count: 2}
+      - {phrase: "lightweight", count: 2}
+      - {phrase: "love the shoulder strap", count: 1}
+      - {phrase: "cómoda", count: 1}
+      - {phrase: "Súper cómoda", count: 1}
+    sample_reviews: ['APP-020821', 'APP-021424', 'APP-021519', 'APP-020876', 'APP-022426']
+
+  - key: stitching
+    label_zh: 走线/缝合
+    total: 70
+    positive_count: 19
+    negative_count: 50
+    neutral_count: 1
+    negative_rate: 71.4%
+    top_phrases:
+      - {phrase: "heavy duty material and stitching", count: 1}
+      - {phrase: "zipper came unattached where it was sewn on", count: 1}
+      - {phrase: "zipper is kind of cheap", count: 1}
+      - {phrase: "zipper not being properly sewn", count: 1}
+      - {phrase: "stitching is well done", count: 1}
+      - {phrase: "stitching is not great", count: 1}
+      - {phrase: "loose ends", count: 1}
+      - {phrase: "Love the stitching", count: 1}
+      - {phrase: "zippers are strong", count: 1}
+      - {phrase: "stitching for the shoulder strap lasted only a few minutes", count: 1}
+    sample_reviews: ['APP-021069', 'APP-021277', 'APP-020828', 'APP-021059', 'APP-021248']
+
+  - key: cleaning
+    label_zh: 易洗性
+    total: 53
+    positive_count: 41
+    negative_count: 10
+    neutral_count: 2
+    negative_rate: 18.9%
+    top_phrases:
+      - {phrase: "easy to clean", count: 5}
+      - {phrase: "easy to wipe off", count: 2}
+      - {phrase: "Easy to wash", count: 2}
+      - {phrase: "machine washable", count: 2}
+      - {phrase: "washable", count: 2}
+      - {phrase: "easy to wash", count: 2}
+      - {phrase: "easy to wipe clean", count: 2}
+      - {phrase: "easily washable", count: 2}
+      - {phrase: "easy to keep clean", count: 1}
+      - {phrase: "super easy to clean", count: 1}
+    sample_reviews: ['APP-021575', 'APP-020933', 'APP-022490', 'APP-021374', 'APP-020857']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 34
+    positive_count: 7
+    negative_count: 27
+    neutral_count: 0
+    negative_rate: 79.4%
+    top_phrases:
+      - {phrase: "arrived dirty", count: 2}
+      - {phrase: "arrived with a stain on the strap", count: 1}
+      - {phrase: "bottom extra fabric board was bent", count: 1}
+      - {phrase: "bag appeared used", count: 1}
+      - {phrase: "came fast and on time", count: 1}
+      - {phrase: "fold in the bottom from shipping", count: 1}
+      - {phrase: "came dirty with white animal hair all over it", count: 1}
+      - {phrase: "long strap is missing", count: 1}
+      - {phrase: "inside was torn", count: 1}
+      - {phrase: "arrived with a black stain", count: 1}
+    sample_reviews: ['APP-021293', 'APP-020871', 'APP-021140', 'APP-021281', 'APP-020841']
+
+  - key: length
+    label_zh: 长度
+    total: 29
+    positive_count: 11
+    negative_count: 18
+    neutral_count: 0
+    negative_rate: 62.1%
+    top_phrases:
+      - {phrase: "strap too short", count: 2}
+      - {phrase: "strap is only about 28' long", count: 1}
+      - {phrase: "crossbody strap is too short", count: 1}
+      - {phrase: "shoulder strap was a bit longer", count: 1}
+      - {phrase: "length of straps", count: 1}
+      - {phrase: "Length is also good", count: 1}
+      - {phrase: "stripe is a little short", count: 1}
+      - {phrase: "strap length", count: 1}
+      - {phrase: "shoulder strap was longer", count: 1}
+      - {phrase: "weirdly short strap", count: 1}
+    sample_reviews: ['APP-021213', 'APP-022256', 'APP-021280', 'APP-022445', 'APP-021963']
+
+  - key: smell
+    label_zh: 异味
+    total: 27
+    positive_count: 14
+    negative_count: 13
+    neutral_count: 0
+    negative_rate: 48.1%
+    top_phrases:
+      - {phrase: "no smell", count: 3}
+      - {phrase: "doesn't like smell weird", count: 1}
+      - {phrase: "weird fishy smell", count: 1}
+      - {phrase: "smell like glue", count: 1}
+      - {phrase: "smelled dirty", count: 1}
+      - {phrase: "smelled like dog food that had been rotting", count: 1}
+      - {phrase: "bag did smell", count: 1}
+      - {phrase: "there was a smell", count: 1}
+      - {phrase: "no disturbing smell", count: 1}
+      - {phrase: "reeks of cigarette smoke", count: 1}
+    sample_reviews: ['APP-020847', 'APP-021820', 'APP-021231', 'APP-022040', 'APP-021130']
+
+  - key: cut_fit
+    label_zh: 版型
+    total: 27
+    positive_count: 12
+    negative_count: 14
+    neutral_count: 1
+    negative_rate: 51.9%
+    top_phrases:
+      - {phrase: "doesn't fit a 15in laptop", count: 1}
+      - {phrase: "not a structured bag", count: 1}
+      - {phrase: "shoulder strap is adjustable", count: 1}
+      - {phrase: "flops around", count: 1}
+      - {phrase: "long strap isn't super long where you can do cross body, but long enough to put ", count: 1}
+      - {phrase: "perfect for going in and out of a workplace setting", count: 1}
+      - {phrase: "no structure", count: 1}
+      - {phrase: "mostly flops over", count: 1}
+      - {phrase: "fits everything perfectly", count: 1}
+      - {phrase: "bag has structure to it so that it can stand upright on its own", count: 1}
+    sample_reviews: ['APP-021068', 'APP-021798', 'APP-021600', 'APP-022220', 'APP-020829']
+
+  - key: thickness
+    label_zh: 厚度
+    total: 25
+    positive_count: 20
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 20.0%
+    top_phrases:
+      - {phrase: "thick", count: 3}
+      - {phrase: "thick straps and material", count: 1}
+      - {phrase: "padding on the inside is thin", count: 1}
+      - {phrase: "thick fabric", count: 1}
+      - {phrase: "Thick fabric", count: 1}
+      - {phrase: "material thickness", count: 1}
+      - {phrase: "straps are really thick", count: 1}
+      - {phrase: "not too bulky", count: 1}
+      - {phrase: "fabric was thick", count: 1}
+      - {phrase: "fabric is thick", count: 1}
+    sample_reviews: ['APP-020867', 'APP-021059', 'APP-020966', 'APP-021811', 'APP-020909']
+
+  - key: packaging
+    label_zh: 包装
+    total: 23
+    positive_count: 3
+    negative_count: 18
+    neutral_count: 2
+    negative_rate: 78.3%
+    top_phrases:
+      - {phrase: "people who packaged my order did not check the color", count: 1}
+      - {phrase: "great right out of the packaging", count: 1}
+      - {phrase: "didn't arrive in a box, just in the clear bag", count: 1}
+      - {phrase: "securely packaged", count: 1}
+      - {phrase: "missing the shoulder strap", count: 1}
+      - {phrase: "plastic was already ripped", count: 1}
+      - {phrase: "stains on it", count: 1}
+      - {phrase: "send with just a clear bag", count: 1}
+      - {phrase: "came with no strap", count: 1}
+      - {phrase: "packaging just a clear bag", count: 1}
+    sample_reviews: ['APP-021214', 'APP-021284', 'APP-021016', 'APP-021075', 'APP-022303']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 18
+    positive_count: 7
+    negative_count: 10
+    neutral_count: 1
+    negative_rate: 55.6%
+    top_phrases:
+      - {phrase: "garbage company", count: 1}
+      - {phrase: "return has since been updated twice as delayed but received", count: 1}
+      - {phrase: "vender was very prompt on shipping", count: 1}
+      - {phrase: "supplier managed to order another one", count: 1}
+      - {phrase: "seller expedited shipment", count: 1}
+      - {phrase: "Thank you for your service", count: 1}
+      - {phrase: "trying to get a refund", count: 1}
+      - {phrase: "sent me the wrong version", count: 1}
+      - {phrase: "return process is proving to be the absolute worst", count: 1}
+      - {phrase: "contacted customer service. They are replacing it.", count: 1}
+    sample_reviews: ['APP-021220', 'APP-021230', 'APP-021368', 'APP-021943', 'APP-020936']
+
+  - key: pattern
+    label_zh: 图案/印花
+    total: 2
+    positive_count: 1
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "nursing pictures on the other side", count: 1}
+      - {phrase: "style", count: 1}
+    sample_reviews: ['APP-021038', 'APP-021201']
+
+  - key: stretchiness
+    label_zh: 弹性
+    total: 2
+    positive_count: 0
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "cup pockets are not stretchy", count: 1}
+      - {phrase: "more stretch to put drinks in", count: 1}
+    sample_reviews: ['APP-020830', 'APP-022360']

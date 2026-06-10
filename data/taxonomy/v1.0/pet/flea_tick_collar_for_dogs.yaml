@@ -1,0 +1,345 @@
+# Flea & Tick Collar For Dogs Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Flea & Tick Collar For Dogs
+aspect_count: 18
+aspects:
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 770
+    positive_count: 396
+    negative_count: 371
+    neutral_count: 3
+    negative_rate: 48.2%
+    top_phrases:
+      - {phrase: "works great", count: 5}
+      - {phrase: "no fleas or ticks", count: 4}
+      - {phrase: "doesn't work", count: 4}
+      - {phrase: "flea free", count: 4}
+      - {phrase: "does not work", count: 3}
+      - {phrase: "covered in fleas", count: 3}
+      - {phrase: "works", count: 3}
+      - {phrase: "No fleas or ticks", count: 2}
+      - {phrase: "made my dog sick", count: 2}
+      - {phrase: "dog had seizures", count: 2}
+    sample_reviews: ['PET-017359', 'PET-002018', 'PET-011874', 'PET-012214', 'PET-010374']
+
+  - key: other
+    label_zh: 其他
+    total: 539
+    positive_count: 136
+    negative_count: 391
+    neutral_count: 12
+    negative_rate: 72.5%
+    top_phrases:
+      - {phrase: "does not work", count: 20}
+      - {phrase: "doesn't work", count: 19}
+      - {phrase: "did not work", count: 10}
+      - {phrase: "not working", count: 10}
+      - {phrase: "Works great", count: 7}
+      - {phrase: "didn't work", count: 7}
+      - {phrase: "does not work at all", count: 6}
+      - {phrase: "ineffective", count: 5}
+      - {phrase: "works great", count: 5}
+      - {phrase: "do not work", count: 4}
+    sample_reviews: ['PET-017424', 'PET-010704', 'PET-005469', 'PET-011773', 'PET-017600']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 502
+    positive_count: 193
+    negative_count: 297
+    neutral_count: 12
+    negative_rate: 59.2%
+    top_phrases:
+      - {phrase: "waste of money", count: 19}
+      - {phrase: "Waste of money", count: 11}
+      - {phrase: "expensive", count: 8}
+      - {phrase: "worth the money", count: 6}
+      - {phrase: "complete waste of money", count: 5}
+      - {phrase: "Great price", count: 5}
+      - {phrase: "Worth the money", count: 5}
+      - {phrase: "worth every penny", count: 4}
+      - {phrase: "waste your money", count: 4}
+      - {phrase: "total waste of money", count: 3}
+    sample_reviews: ['PET-011925', 'PET-017424', 'PET-010744', 'PET-010720', 'PET-010664']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 411
+    positive_count: 184
+    negative_count: 219
+    neutral_count: 8
+    negative_rate: 53.3%
+    top_phrases:
+      - {phrase: "last 8 months", count: 6}
+      - {phrase: "stopped working", count: 4}
+      - {phrase: "lasts 8 months", count: 4}
+      - {phrase: "Long lasting", count: 3}
+      - {phrase: "only worked for 3 months", count: 3}
+      - {phrase: "Stopped working after 3 months", count: 2}
+      - {phrase: "last so long", count: 2}
+      - {phrase: "Worked for 1 month", count: 2}
+      - {phrase: "lasts all year", count: 2}
+      - {phrase: "lasts for 8 months", count: 2}
+    sample_reviews: ['PET-011925', 'PET-010720', 'PET-012214', 'PET-001060', 'PET-001061']
+
+  - key: safety
+    label_zh: 安全性
+    total: 207
+    positive_count: 49
+    negative_count: 153
+    neutral_count: 5
+    negative_rate: 73.9%
+    top_phrases:
+      - {phrase: "almost killed my dog", count: 3}
+      - {phrase: "allergic reaction", count: 3}
+      - {phrase: "causes seizures", count: 3}
+      - {phrase: "toxic", count: 2}
+      - {phrase: "developed a rash around her neck where the collar touched her", count: 1}
+      - {phrase: "toxicity of the collar", count: 1}
+      - {phrase: "Please monitor your pets when giving them this collar", count: 1}
+      - {phrase: "Large made my dog sick", count: 1}
+      - {phrase: "severe reaction to product", count: 1}
+      - {phrase: "Very bad for a pit bull. He shouldn’t have to suffer like this", count: 1}
+    sample_reviews: ['PET-017359', 'PET-010374', 'PET-011050', 'PET-000879', 'PET-017506']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 150
+    positive_count: 126
+    negative_count: 12
+    neutral_count: 12
+    negative_rate: 8.0%
+    top_phrases:
+      - {phrase: "easy to put on", count: 7}
+      - {phrase: "easy to use", count: 7}
+      - {phrase: "Works great", count: 6}
+      - {phrase: "Easy to put on", count: 3}
+      - {phrase: "Easy to use", count: 3}
+      - {phrase: "very easy to use", count: 3}
+      - {phrase: "works well", count: 2}
+      - {phrase: "Easy to put on pet", count: 1}
+      - {phrase: "put the collars on them", count: 1}
+      - {phrase: "using this tick collar", count: 1}
+    sample_reviews: ['PET-017870', 'PET-002018', 'PET-017930', 'PET-001061', 'PET-020215']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 127
+    positive_count: 101
+    negative_count: 24
+    neutral_count: 2
+    negative_rate: 18.9%
+    top_phrases:
+      - {phrase: "works great", count: 3}
+      - {phrase: "your fur babies are comfortable", count: 1}
+      - {phrase: "comfy enough for her", count: 1}
+      - {phrase: "dog is not bothered", count: 1}
+      - {phrase: "working great for both my fur babies", count: 1}
+      - {phrase: "used for my cat and 2 dogs for years", count: 1}
+      - {phrase: "Seemed to work well for my doggies", count: 1}
+      - {phrase: "My family will not use anything else", count: 1}
+      - {phrase: "crying in discomfort", count: 1}
+      - {phrase: "saw a flea that was weak on her", count: 1}
+    sample_reviews: ['PET-002018', 'PET-001061', 'PET-017209', 'PET-012053', 'PET-011060']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 68
+    positive_count: 13
+    negative_count: 45
+    neutral_count: 10
+    negative_rate: 66.2%
+    top_phrases:
+      - {phrase: "company's suggestion", count: 1}
+      - {phrase: "Contacted elanco refused to verify", count: 1}
+      - {phrase: "contacting Customer Service to get a replacement", count: 1}
+      - {phrase: "called Seresto and they told me to give it 2-3 MONTHS", count: 1}
+      - {phrase: "discussing options for refund with Amazon", count: 1}
+      - {phrase: "Seller is great", count: 1}
+      - {phrase: "took to long to get here", count: 1}
+      - {phrase: "called the company to see why", count: 1}
+      - {phrase: "processing the refund", count: 1}
+      - {phrase: "company was very responsive and refunded the purchase price with no issues", count: 1}
+    sample_reviews: ['PET-001060', 'PET-017464', 'PET-017232', 'PET-010031', 'PET-017800']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 63
+    positive_count: 43
+    negative_count: 17
+    neutral_count: 3
+    negative_rate: 27.0%
+    top_phrases:
+      - {phrase: "fits well", count: 2}
+      - {phrase: "fits perfectly", count: 2}
+      - {phrase: "fit perfectly", count: 2}
+      - {phrase: "Large enough for my 85 pound bully", count: 1}
+      - {phrase: "Great fit, good size", count: 1}
+      - {phrase: "no size Medium", count: 1}
+      - {phrase: "Good fit, had to cut down a little bit", count: 1}
+      - {phrase: "size for a large is excellent", count: 1}
+      - {phrase: "adjust the size", count: 1}
+      - {phrase: "wide", count: 1}
+    sample_reviews: ['PET-010397', 'PET-000879', 'PET-017506', 'PET-010853', 'PET-005211']
+
+  - key: smell
+    label_zh: 异味
+    total: 53
+    positive_count: 33
+    negative_count: 12
+    neutral_count: 8
+    negative_rate: 22.6%
+    top_phrases:
+      - {phrase: "no smell", count: 4}
+      - {phrase: "No smell", count: 3}
+      - {phrase: "odorless", count: 2}
+      - {phrase: "didn't smell the same", count: 1}
+      - {phrase: "strong smell", count: 1}
+      - {phrase: "smells a bit", count: 1}
+      - {phrase: "nice light, almost floral smell", count: 1}
+      - {phrase: "Dies not smell to bad", count: 1}
+      - {phrase: "smell is a bit strong when you open the package", count: 1}
+      - {phrase: "smell good", count: 1}
+    sample_reviews: ['PET-017424', 'PET-010374', 'PET-002010', 'PET-000879', 'PET-010742']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 43
+    positive_count: 9
+    negative_count: 33
+    neutral_count: 1
+    negative_rate: 76.7%
+    top_phrases:
+      - {phrase: "quality one or not", count: 1}
+      - {phrase: "No buckles. Cheap . Fall off", count: 1}
+      - {phrase: "fallen apart", count: 1}
+      - {phrase: "good product, quality", count: 1}
+      - {phrase: "looks like it had already been cut", count: 1}
+      - {phrase: "plastic clasps broken", count: 1}
+      - {phrase: "hit or miss, mostly miss, if they’ll work or not", count: 1}
+      - {phrase: "DEFECTIVE collar", count: 1}
+      - {phrase: "quality of the claps holding the collars on is not the same as before", count: 1}
+      - {phrase: "quality is top-notch", count: 1}
+    sample_reviews: ['PET-017232', 'PET-005635', 'PET-010931', 'PET-011794', 'PET-010394']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 32
+    positive_count: 5
+    negative_count: 27
+    neutral_count: 0
+    negative_rate: 84.4%
+    top_phrases:
+      - {phrase: "easily slipped off", count: 1}
+      - {phrase: "hard to keep on they just fall off", count: 1}
+      - {phrase: "end seems to wiggle free of the loops every so often", count: 1}
+      - {phrase: "clasp doesn't stay secure", count: 1}
+      - {phrase: "Will not stay on dogs", count: 1}
+      - {phrase: "stability of the collar", count: 1}
+      - {phrase: "stays on my active dog", count: 1}
+      - {phrase: "won’t stay on", count: 1}
+      - {phrase: "do not stay on", count: 1}
+      - {phrase: "collar can be pulled off easily by dogs wrestling", count: 1}
+    sample_reviews: ['PET-010720', 'PET-010347', 'PET-001102', 'PET-001872', 'PET-005635']
+
+  - key: packaging
+    label_zh: 包装
+    total: 29
+    positive_count: 8
+    negative_count: 20
+    neutral_count: 1
+    negative_rate: 69.0%
+    top_phrases:
+      - {phrase: "right out of the package it is too potent", count: 1}
+      - {phrase: "container came with an expiration date stamped on it with a flat lid", count: 1}
+      - {phrase: "Packaging is good", count: 1}
+      - {phrase: "Received 2 new and one expired very used (fur covered) collar", count: 1}
+      - {phrase: "container wasn’t sealed on the outside", count: 1}
+      - {phrase: "collar was in a ziploc baggie instead of sealed packaging", count: 1}
+      - {phrase: "seal on tin already broken and the plastic packet already opened", count: 1}
+      - {phrase: "packaging and description doesn't say works in 24 hours", count: 1}
+      - {phrase: "old collars in new packaging", count: 1}
+      - {phrase: "can was not sealed", count: 1}
+    sample_reviews: ['PET-010374', 'PET-010951', 'PET-010742', 'PET-010711', 'PET-010394']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 16
+    positive_count: 11
+    negative_count: 3
+    neutral_count: 2
+    negative_rate: 18.8%
+    top_phrases:
+      - {phrase: "color is amazing", count: 1}
+      - {phrase: "Well designed", count: 1}
+      - {phrase: "floury looking pattern, coated unevenly in powder", count: 1}
+      - {phrase: "pretty discreet", count: 1}
+      - {phrase: "look of the collar itself looked like a seresto collar", count: 1}
+      - {phrase: "so ugly and awkward", count: 1}
+      - {phrase: "color work great", count: 1}
+      - {phrase: "no logo printed on the collar", count: 1}
+      - {phrase: "isn't gaudy in appearance", count: 1}
+      - {phrase: "looks the same", count: 1}
+    sample_reviews: ['PET-011874', 'PET-017310', 'PET-005211', 'PET-019264', 'PET-017412']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 12
+    positive_count: 7
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 41.7%
+    top_phrases:
+      - {phrase: "seal broke", count: 1}
+      - {phrase: "received in two days", count: 1}
+      - {phrase: "broken", count: 1}
+      - {phrase: "best shipping", count: 1}
+      - {phrase: "shipping speed", count: 1}
+      - {phrase: "received used product", count: 1}
+      - {phrase: "arrived the following day", count: 1}
+      - {phrase: "expedited manner", count: 1}
+      - {phrase: "arrived on time", count: 1}
+      - {phrase: "defective source", count: 1}
+    sample_reviews: ['PET-010973', 'PET-010672', 'PET-010439', 'PET-010796', 'PET-001887']
+
+  - key: material
+    label_zh: 材质用料
+    total: 8
+    positive_count: 1
+    negative_count: 6
+    neutral_count: 1
+    negative_rate: 75.0%
+    top_phrases:
+      - {phrase: "colors did not have as much of the powder", count: 1}
+      - {phrase: "2 toxic insecticide poisons", count: 1}
+      - {phrase: "product ingredients have changed", count: 1}
+      - {phrase: "ingrediencies are slightly different", count: 1}
+      - {phrase: "gray and rubbery", count: 1}
+      - {phrase: "soft rubber collar", count: 1}
+      - {phrase: "very rough with angled portions", count: 1}
+      - {phrase: "very brittle not soft", count: 1}
+    sample_reviews: ['PET-017342', 'PET-012137', 'PET-010808', 'PET-004505', 'PET-012058']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 2
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 1
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "dogs over 100 pounds", count: 1}
+      - {phrase: "weight range is too much", count: 1}
+    sample_reviews: ['PET-017440', 'PET-004329']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "see some residue", count: 1}
+    sample_reviews: ['PET-019264']

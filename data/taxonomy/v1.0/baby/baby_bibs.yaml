@@ -1,0 +1,336 @@
+# Baby Bibs Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:42:45
+sub_category: Baby Bibs
+aspect_count: 18
+aspects:
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 281
+    positive_count: 277
+    negative_count: 3
+    neutral_count: 1
+    negative_rate: 1.1%
+    top_phrases:
+      - {phrase: "easy to clean", count: 77}
+      - {phrase: "Easy to clean", count: 29}
+      - {phrase: "super easy to clean", count: 13}
+      - {phrase: "very easy to clean", count: 8}
+      - {phrase: "Easy clean up", count: 6}
+      - {phrase: "easy to wash", count: 5}
+      - {phrase: "easy clean", count: 4}
+      - {phrase: "Super easy to clean", count: 3}
+      - {phrase: "dishwasher safe", count: 3}
+      - {phrase: "cleaning is a breeze", count: 2}
+    sample_reviews: ['BABY-001151', 'BABY-000147', 'BABY-001148', 'BABY-000941', 'BABY-000982']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 228
+    positive_count: 210
+    negative_count: 18
+    neutral_count: 0
+    negative_rate: 7.9%
+    top_phrases:
+      - {phrase: "Easy to use", count: 8}
+      - {phrase: "easy to use", count: 8}
+      - {phrase: "easy to take on and off", count: 3}
+      - {phrase: "functional", count: 3}
+      - {phrase: "catch food", count: 3}
+      - {phrase: "adjustable", count: 3}
+      - {phrase: "easy to clean", count: 3}
+      - {phrase: "catches food", count: 3}
+      - {phrase: "easy to put on", count: 3}
+      - {phrase: "catch crumbs", count: 2}
+    sample_reviews: ['BABY-001148', 'BABY-000941', 'BABY-000982', 'BABY-000919', 'BABY-003171']
+
+  - key: material
+    label_zh: 材质用料
+    total: 140
+    positive_count: 114
+    negative_count: 19
+    neutral_count: 7
+    negative_rate: 13.6%
+    top_phrases:
+      - {phrase: "soft", count: 9}
+      - {phrase: "silicone", count: 6}
+      - {phrase: "very soft", count: 4}
+      - {phrase: "material", count: 3}
+      - {phrase: "silicone bibs", count: 3}
+      - {phrase: "not 100% silicone", count: 2}
+      - {phrase: "food grade silicon", count: 2}
+      - {phrase: "waterproof", count: 2}
+      - {phrase: "soft, flexible material", count: 2}
+      - {phrase: "good material", count: 2}
+    sample_reviews: ['BABY-001045', 'BABY-003030', 'BABY-000147', 'BABY-002047', 'BABY-000941']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 110
+    positive_count: 95
+    negative_count: 15
+    neutral_count: 0
+    negative_rate: 13.6%
+    top_phrases:
+      - {phrase: "Great quality", count: 16}
+      - {phrase: "Good quality", count: 9}
+      - {phrase: "good quality", count: 5}
+      - {phrase: "quality is good", count: 4}
+      - {phrase: "Nice quality", count: 3}
+      - {phrase: "great quality", count: 3}
+      - {phrase: "Buena calidad", count: 2}
+      - {phrase: "Very good quality", count: 2}
+      - {phrase: "excelente calidad", count: 2}
+      - {phrase: "Sturdy", count: 2}
+    sample_reviews: ['BABY-001275', 'BABY-002990', 'BABY-000973', 'BABY-003171', 'BABY-001098']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 102
+    positive_count: 82
+    negative_count: 19
+    neutral_count: 1
+    negative_rate: 18.6%
+    top_phrases:
+      - {phrase: "fit well", count: 3}
+      - {phrase: "adjustable fit", count: 2}
+      - {phrase: "fits well", count: 2}
+      - {phrase: "wide enough to cover her full chest", count: 1}
+      - {phrase: "fit baby perfect", count: 1}
+      - {phrase: "coverage and length", count: 1}
+      - {phrase: "compact", count: 1}
+      - {phrase: "small gap between the bib and his neck", count: 1}
+      - {phrase: "adjustable neck closure grows with your baby", count: 1}
+      - {phrase: "Can fit my one year old and up", count: 1}
+    sample_reviews: ['BABY-000919', 'BABY-000030', 'BABY-000936', 'BABY-001121', 'BABY-003178']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 97
+    positive_count: 95
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 2.1%
+    top_phrases:
+      - {phrase: "love the colors", count: 5}
+      - {phrase: "colors", count: 3}
+      - {phrase: "so cute", count: 3}
+      - {phrase: "cute colors", count: 3}
+      - {phrase: "cute", count: 3}
+      - {phrase: "cute style", count: 2}
+      - {phrase: "super cute", count: 2}
+      - {phrase: "Super cute", count: 2}
+      - {phrase: "Colors are great", count: 2}
+      - {phrase: "colors are nice", count: 2}
+    sample_reviews: ['BABY-001045', 'BABY-001045', 'BABY-001098', 'BABY-000224', 'BABY-000950']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 66
+    positive_count: 60
+    negative_count: 4
+    neutral_count: 2
+    negative_rate: 6.1%
+    top_phrases:
+      - {phrase: "affordable", count: 3}
+      - {phrase: "great price", count: 3}
+      - {phrase: "great value", count: 2}
+      - {phrase: "amazing price", count: 2}
+      - {phrase: "Great price", count: 2}
+      - {phrase: "set of three", count: 1}
+      - {phrase: "great for the cost", count: 1}
+      - {phrase: "come in a three pack", count: 1}
+      - {phrase: "price is affordable", count: 1}
+      - {phrase: "value seems great for a pack of three", count: 1}
+    sample_reviews: ['BABY-000147', 'BABY-001098', 'BABY-003178', 'BABY-000223', 'BABY-000927']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 64
+    positive_count: 60
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 6.2%
+    top_phrases:
+      - {phrase: "durable", count: 11}
+      - {phrase: "very durable", count: 5}
+      - {phrase: "Durable", count: 5}
+      - {phrase: "durability", count: 1}
+      - {phrase: "still all as if new", count: 1}
+      - {phrase: "no se desgasta muy fácilmente", count: 1}
+      - {phrase: "reuse over and over again without staining", count: 1}
+      - {phrase: "catches everything", count: 1}
+      - {phrase: "liquid will easily spill out", count: 1}
+      - {phrase: "no wear or tear, no holes, held up well", count: 1}
+    sample_reviews: ['BABY-001151', 'BABY-000147', 'BABY-001235', 'BABY-001121', 'BABY-001227']
+
+  - key: other
+    label_zh: 其他
+    total: 63
+    positive_count: 55
+    negative_count: 8
+    neutral_count: 0
+    negative_rate: 12.7%
+    top_phrases:
+      - {phrase: "catches the food", count: 2}
+      - {phrase: "limits clean up", count: 1}
+      - {phrase: "catches food", count: 1}
+      - {phrase: "box says ornaments on it", count: 1}
+      - {phrase: "pocket helps catch food", count: 1}
+      - {phrase: "saves clothes from stains", count: 1}
+      - {phrase: "collects all the food", count: 1}
+      - {phrase: "Works great for my twins", count: 1}
+      - {phrase: "doesn't catch food", count: 1}
+      - {phrase: "waterproof layer not included", count: 1}
+    sample_reviews: ['BABY-000941', 'BABY-000941', 'BABY-000096', 'BABY-001288', 'BABY-001247']
+
+  - key: age_appropriate
+    label_zh: 适用年龄
+    total: 42
+    positive_count: 34
+    negative_count: 5
+    neutral_count: 3
+    negative_rate: 11.9%
+    top_phrases:
+      - {phrase: "wouldn't recommend them for younger babies", count: 1}
+      - {phrase: "great for starting solids", count: 1}
+      - {phrase: "great for toddlers", count: 1}
+      - {phrase: "best for babies when they are hungry", count: 1}
+      - {phrase: "Good if you have a toddler", count: 1}
+      - {phrase: "says for ages up to 72 months. No way, it's not long enough", count: 1}
+      - {phrase: "She will use these into toddler stage.", count: 1}
+      - {phrase: "good for going out to eat", count: 1}
+      - {phrase: "perfect for my little granddaughter", count: 1}
+      - {phrase: "for babies", count: 1}
+    sample_reviews: ['BABY-001148', 'BABY-000030', 'BABY-003021', 'BABY-002981', 'BABY-000965']
+
+  - key: safety
+    label_zh: 安全性
+    total: 16
+    positive_count: 7
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 56.2%
+    top_phrases:
+      - {phrase: "allergic reaction", count: 3}
+      - {phrase: "son broke out wearing them", count: 1}
+      - {phrase: "rash around his neck, and chest", count: 1}
+      - {phrase: "buttons well but not so well that it's a strangulation hazard", count: 1}
+      - {phrase: "Peace of mind", count: 1}
+      - {phrase: "BPA-free and safe for babies", count: 1}
+      - {phrase: "Allergic Reaction!", count: 1}
+      - {phrase: "hazardous for baby", count: 1}
+      - {phrase: "safe for our grandson to wear", count: 1}
+      - {phrase: "pop off easily when removing (no chance of choking)", count: 1}
+    sample_reviews: ['BABY-003030', 'BABY-002047', 'BABY-000995', 'BABY-000011', 'BABY-001195']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 12
+    positive_count: 7
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 41.7%
+    top_phrases:
+      - {phrase: "bottom portion that is meant to catch food would bend", count: 1}
+      - {phrase: "stiffer bottom tray", count: 1}
+      - {phrase: "not enough structure to bib", count: 1}
+      - {phrase: "she pulls on it enough it does come off", count: 1}
+      - {phrase: "too flimsy", count: 1}
+      - {phrase: "multiple button snaps", count: 1}
+      - {phrase: "sturdy", count: 1}
+      - {phrase: "stays open enough", count: 1}
+      - {phrase: "liquid in the pocket will spill when we try to take it off", count: 1}
+      - {phrase: "fastener is ready to secure and stays in place", count: 1}
+    sample_reviews: ['BABY-001112', 'BABY-003016', 'BABY-001063', 'BABY-000209', 'BABY-000011']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 12
+    positive_count: 9
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "a little heavy", count: 2}
+      - {phrase: "lightweight", count: 2}
+      - {phrase: "too heavy and bulky", count: 1}
+      - {phrase: "not to heavy", count: 1}
+      - {phrase: "light enough for baby to wear", count: 1}
+      - {phrase: "Not too heavy", count: 1}
+      - {phrase: "not too heavy", count: 1}
+      - {phrase: "very light weight", count: 1}
+      - {phrase: "much lighter in weight than I expected", count: 1}
+      - {phrase: "light weight", count: 1}
+    sample_reviews: ['BABY-002974', 'BABY-000912', 'BABY-003044', 'BABY-002059', 'BABY-001267']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 10
+    positive_count: 6
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 40.0%
+    top_phrases:
+      - {phrase: "delivery", count: 1}
+      - {phrase: "Came ripped", count: 1}
+      - {phrase: "arrived quickly", count: 1}
+      - {phrase: "arrived on time", count: 1}
+      - {phrase: "came dirty", count: 1}
+      - {phrase: "very short shipping time", count: 1}
+      - {phrase: "arrived on time and in good condition", count: 1}
+      - {phrase: "Came on time", count: 1}
+      - {phrase: "came damaged or was damaged with the first use", count: 1}
+      - {phrase: "super fast shipping", count: 1}
+    sample_reviews: ['BABY-001214', 'BABY-001017', 'BABY-001041', 'BABY-002992', 'BABY-000983']
+
+  - key: packaging
+    label_zh: 包装
+    total: 6
+    positive_count: 1
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 83.3%
+    top_phrases:
+      - {phrase: "used box from Ross", count: 1}
+      - {phrase: "All came well packaged", count: 1}
+      - {phrase: "came covered in a wet substance inside the package", count: 1}
+      - {phrase: "sealed package with human hair", count: 1}
+      - {phrase: "packaging says not dishwasher safe", count: 1}
+      - {phrase: "came in a Ziploc plastic bag", count: 1}
+    sample_reviews: ['BABY-000096', 'BABY-001266', 'BABY-001089', 'BABY-000914', 'BABY-000395']
+
+  - key: smell
+    label_zh: 异味
+    total: 3
+    positive_count: 2
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "don't have rubber smell", count: 1}
+      - {phrase: "odor causing", count: 1}
+      - {phrase: "no weird smell", count: 1}
+    sample_reviews: ['BABY-001087', 'BABY-000395', 'BABY-003023']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 2
+    positive_count: 1
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "company will not disclose materials", count: 1}
+      - {phrase: "Vendedor súper rápido con la entrega", count: 1}
+    sample_reviews: ['BABY-000149', 'BABY-001177']
+
+  - key: instructions
+    label_zh: 说明书
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "package says avoid using dishwasher", count: 1}
+    sample_reviews: ['BABY-002058']

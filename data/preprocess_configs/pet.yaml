@@ -1,0 +1,28 @@
+# 宠物用品预处理配置 v1.0
+# 用法: python3 scripts/preprocess_reviews.py --config data/preprocess_configs/pet.yaml
+#
+# 数据源说明:
+# - Pet Supplies_V1.xlsx (49957 行,Erika 已加 product_type 列,25 个细分产品类型)
+# - 宠物用品-淋浴喷头-B0CSF2LLS3-...xlsx (661 行,无 product_type 列,靠 file_to_sub 兜底归到 Pet Shower Head)
+
+category_label: 宠物用品
+category_slug: pet
+review_id_prefix: PET
+source_dirs:
+  - "/Users/zhangxi/Desktop/评论分析项目/宠物"
+
+# 每子品类等比抽样上限 (≤ 3000 → 总计 ≈25-30k → 抽取成本 ≈¥25-30 / 1.5h)
+sample_per_sub: 3000
+
+# 第一层: 文件名关键词
+# 主数据 Pet Supplies_V1 已含 product_type 列,会被 _resolve_product_type_column() 优先读取,
+# 此处规则仅对未含 product_type 列的文件生效 (例如淋浴喷头单品文件).
+file_to_sub:
+  - {match: ["淋浴喷头", "shower"], sub: "Pet Shower Head"}
+
+# 第二层 / 第三层兜底 (主数据走 product_type 列, 这里仅给小文件兜底)
+asin_product_type: {}
+title_keywords: []
+
+default_split: "其他宠物"
+default_sub: "其他宠物"

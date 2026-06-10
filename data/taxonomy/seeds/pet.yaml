@@ -1,0 +1,21 @@
+# 宠物用品 Aspect Taxonomy Delta 词典 v1.0
+# 设计参考: 狗主/猫主视角 + 狗床/狗粮/牵引绳/玩具/清洁 等子品类需求
+# 用途: 与 base.yaml 合并后供 extract_taxonomy_generic.py 使用
+
+extends: base.yaml
+category: pet
+category_label: 宠物用品
+
+delta_aspects:
+  # 安全 / 健康类(宠物核心)
+  - {key: safety, label_zh: 安全性}                  # 防咬/防误食
+  - {key: smell, label_zh: 异味}
+  - {key: pet_health_friendly, label_zh: 健康友好度}   # 无毒/有机
+  # 物理品质类
+  - {key: stability, label_zh: 稳固性}
+  # 适配类
+  - {key: size_fit, label_zh: 尺寸匹配}              # 体型适配
+  - {key: weight_capacity, label_zh: 承重}            # 牵引绳/抱袋
+  - {key: pet_acceptance, label_zh: 宠物接受度}        # "my dog loves it"
+  # 使用体验类
+  - {key: cleaning, label_zh: 清洁难度}

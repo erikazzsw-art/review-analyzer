@@ -1,0 +1,413 @@
+# 连衣裙 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:32:54
+sub_category: 连衣裙
+aspect_count: 21
+aspects:
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 1566
+    positive_count: 1444
+    negative_count: 114
+    neutral_count: 8
+    negative_rate: 7.3%
+    top_phrases:
+      - {phrase: "flattering", count: 38}
+      - {phrase: "beautiful dress", count: 34}
+      - {phrase: "cute", count: 34}
+      - {phrase: "beautiful", count: 31}
+      - {phrase: "gorgeous", count: 22}
+      - {phrase: "very flattering", count: 18}
+      - {phrase: "adorable", count: 16}
+      - {phrase: "Beautiful dress", count: 15}
+      - {phrase: "cute dress", count: 12}
+      - {phrase: "gorgeous dress", count: 10}
+    sample_reviews: ['APP-001269', 'APP-000597', 'APP-002029', 'APP-000434', 'APP-001634']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 1347
+    positive_count: 688
+    negative_count: 547
+    neutral_count: 112
+    negative_rate: 40.6%
+    top_phrases:
+      - {phrase: "true to size", count: 43}
+      - {phrase: "fits perfectly", count: 35}
+      - {phrase: "fits true to size", count: 25}
+      - {phrase: "runs large", count: 23}
+      - {phrase: "runs true to size", count: 21}
+      - {phrase: "fit perfectly", count: 21}
+      - {phrase: "fits great", count: 17}
+      - {phrase: "runs small", count: 16}
+      - {phrase: "tts", count: 15}
+      - {phrase: "fits well", count: 13}
+    sample_reviews: ['APP-000597', 'APP-001634', 'APP-001874', 'APP-000701', 'APP-000529']
+
+  - key: cut_fit
+    label_zh: 版型
+    total: 1342
+    positive_count: 694
+    negative_count: 588
+    neutral_count: 60
+    negative_rate: 43.8%
+    top_phrases:
+      - {phrase: "flattering", count: 33}
+      - {phrase: "very flattering", count: 13}
+      - {phrase: "fit", count: 12}
+      - {phrase: "great fit", count: 9}
+      - {phrase: "flattering cut", count: 8}
+      - {phrase: "fit is perfect", count: 8}
+      - {phrase: "flattering fit", count: 6}
+      - {phrase: "figure flattering", count: 6}
+      - {phrase: "fit is great", count: 5}
+      - {phrase: "cut is flattering", count: 5}
+    sample_reviews: ['APP-001269', 'APP-002029', 'APP-000434', 'APP-000701', 'APP-001826']
+
+  - key: material
+    label_zh: 材质用料
+    total: 893
+    positive_count: 670
+    negative_count: 170
+    neutral_count: 53
+    negative_rate: 19.0%
+    top_phrases:
+      - {phrase: "fabric", count: 37}
+      - {phrase: "soft", count: 13}
+      - {phrase: "fabric is soft", count: 8}
+      - {phrase: "soft material", count: 7}
+      - {phrase: "nice fabric", count: 7}
+      - {phrase: "fabric is very soft", count: 7}
+      - {phrase: "super soft", count: 7}
+      - {phrase: "material", count: 6}
+      - {phrase: "great material", count: 5}
+      - {phrase: "material is so soft", count: 5}
+    sample_reviews: ['APP-002029', 'APP-001634', 'APP-000701', 'APP-000938', 'APP-001668']
+
+  - key: comfort
+    label_zh: 舒适度
+    total: 595
+    positive_count: 560
+    negative_count: 34
+    neutral_count: 1
+    negative_rate: 5.7%
+    top_phrases:
+      - {phrase: "comfortable", count: 112}
+      - {phrase: "very comfortable", count: 54}
+      - {phrase: "so comfortable", count: 29}
+      - {phrase: "comfy", count: 25}
+      - {phrase: "super comfortable", count: 22}
+      - {phrase: "super comfy", count: 11}
+      - {phrase: "extremely comfortable", count: 10}
+      - {phrase: "soft and comfortable", count: 10}
+      - {phrase: "very soft", count: 7}
+      - {phrase: "incredibly comfortable", count: 7}
+    sample_reviews: ['APP-000597', 'APP-002029', 'APP-000333', 'APP-001826', 'APP-000304']
+
+  - key: length
+    label_zh: 长度
+    total: 480
+    positive_count: 225
+    negative_count: 165
+    neutral_count: 90
+    negative_rate: 34.4%
+    top_phrases:
+      - {phrase: "too short", count: 12}
+      - {phrase: "perfect length", count: 8}
+      - {phrase: "length is perfect", count: 7}
+      - {phrase: "length was perfect", count: 7}
+      - {phrase: "great length", count: 6}
+      - {phrase: "not too short", count: 6}
+      - {phrase: "too long", count: 6}
+      - {phrase: "good length", count: 4}
+      - {phrase: "length", count: 4}
+      - {phrase: "shorter than expected", count: 3}
+    sample_reviews: ['APP-001583', 'APP-000938', 'APP-000977', 'APP-000673', 'APP-000673']
+
+  - key: color_accuracy
+    label_zh: 颜色还原度
+    total: 476
+    positive_count: 326
+    negative_count: 115
+    neutral_count: 35
+    negative_rate: 24.2%
+    top_phrases:
+      - {phrase: "color", count: 15}
+      - {phrase: "love the color", count: 6}
+      - {phrase: "color is beautiful", count: 5}
+      - {phrase: "colors are great", count: 5}
+      - {phrase: "colors are beautiful", count: 4}
+      - {phrase: "beautiful color", count: 4}
+      - {phrase: "colors are gorgeous", count: 3}
+      - {phrase: "gorgeous colors", count: 3}
+      - {phrase: "great color", count: 3}
+      - {phrase: "love the colors", count: 3}
+    sample_reviews: ['APP-000304', 'APP-000977', 'APP-002274', 'APP-000875', 'APP-000212']
+
+  - key: pattern
+    label_zh: 图案/印花
+    total: 309
+    positive_count: 255
+    negative_count: 39
+    neutral_count: 15
+    negative_rate: 12.6%
+    top_phrases:
+      - {phrase: "print", count: 11}
+      - {phrase: "pattern", count: 11}
+      - {phrase: "embroidery is beautiful", count: 5}
+      - {phrase: "print is gorgeous", count: 3}
+      - {phrase: "fun print", count: 3}
+      - {phrase: "embroidery", count: 3}
+      - {phrase: "colors and print", count: 2}
+      - {phrase: "unique pattern", count: 2}
+      - {phrase: "beautiful print", count: 2}
+      - {phrase: "embroidery is lovely", count: 2}
+    sample_reviews: ['APP-001634', 'APP-000977', 'APP-000030', 'APP-000291', 'APP-000369']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 245
+    positive_count: 201
+    negative_count: 43
+    neutral_count: 1
+    negative_rate: 17.6%
+    top_phrases:
+      - {phrase: "well made", count: 28}
+      - {phrase: "great quality", count: 14}
+      - {phrase: "quality", count: 11}
+      - {phrase: "good quality", count: 8}
+      - {phrase: "very well made", count: 7}
+      - {phrase: "beautifully made", count: 6}
+      - {phrase: "well-made", count: 5}
+      - {phrase: "high quality", count: 5}
+      - {phrase: "well constructed", count: 5}
+      - {phrase: "very well-made", count: 4}
+    sample_reviews: ['APP-001668', 'APP-000835', 'APP-002144', 'APP-000465', 'APP-001194']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 157
+    positive_count: 96
+    negative_count: 58
+    neutral_count: 3
+    negative_rate: 36.9%
+    top_phrases:
+      - {phrase: "easy to wear", count: 17}
+      - {phrase: "Easy to wear", count: 3}
+      - {phrase: "easy to dress up or down", count: 3}
+      - {phrase: "easy", count: 3}
+      - {phrase: "easy to throw on", count: 3}
+      - {phrase: "easy to pull on", count: 2}
+      - {phrase: "so easy to wear", count: 2}
+      - {phrase: "easy-to-wear", count: 2}
+      - {phrase: "slips on easily", count: 2}
+      - {phrase: "easy to just throw on and go", count: 1}
+    sample_reviews: ['APP-001583', 'APP-000907', 'APP-000384', 'APP-000255', 'APP-001909']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 148
+    positive_count: 100
+    negative_count: 45
+    neutral_count: 3
+    negative_rate: 30.4%
+    top_phrases:
+      - {phrase: "great buy", count: 4}
+      - {phrase: "worth the price", count: 3}
+      - {phrase: "great price", count: 3}
+      - {phrase: "worth it", count: 2}
+      - {phrase: "got it on sale", count: 2}
+      - {phrase: "overpriced", count: 2}
+      - {phrase: "well worth it", count: 2}
+      - {phrase: "worth every penny", count: 2}
+      - {phrase: "well worth the price", count: 2}
+      - {phrase: "great price point", count: 2}
+    sample_reviews: ['APP-000351', 'APP-001122', 'APP-001092', 'APP-001139', 'APP-001909']
+
+  - key: thickness
+    label_zh: 厚度
+    total: 119
+    positive_count: 68
+    negative_count: 33
+    neutral_count: 18
+    negative_rate: 27.7%
+    top_phrases:
+      - {phrase: "thin", count: 5}
+      - {phrase: "lightweight", count: 4}
+      - {phrase: "great weight", count: 3}
+      - {phrase: "very thin", count: 2}
+      - {phrase: "not see through", count: 2}
+      - {phrase: "fabric is thin", count: 2}
+      - {phrase: "fabric was very thin", count: 2}
+      - {phrase: "fabric is thick", count: 2}
+      - {phrase: "thick fabric", count: 2}
+      - {phrase: "light enough for spring", count: 1}
+    sample_reviews: ['APP-001476', 'APP-001122', 'APP-000248', 'APP-000197', 'APP-000112']
+
+  - key: stretchiness
+    label_zh: 弹性
+    total: 93
+    positive_count: 58
+    negative_count: 29
+    neutral_count: 6
+    negative_rate: 31.2%
+    top_phrases:
+      - {phrase: "stretchy", count: 13}
+      - {phrase: "stretchy fabric", count: 5}
+      - {phrase: "no stretch", count: 3}
+      - {phrase: "has some stretch", count: 2}
+      - {phrase: "fabric is stretchy", count: 2}
+      - {phrase: "lots of stretch", count: 2}
+      - {phrase: "no chance of it stretching enough to be comfortable", count: 1}
+      - {phrase: "fabric has some give", count: 1}
+      - {phrase: "soft and stretchy", count: 1}
+      - {phrase: "no stretch at all", count: 1}
+    sample_reviews: ['APP-000846', 'APP-001267', 'APP-000112', 'APP-001068', 'APP-001846']
+
+  - key: stitching
+    label_zh: 走线/缝合
+    total: 85
+    positive_count: 25
+    negative_count: 59
+    neutral_count: 1
+    negative_rate: 69.4%
+    top_phrases:
+      - {phrase: "stitching is horrific and created an uneven hump on the back seam", count: 1}
+      - {phrase: "did not include the bra strap holders", count: 1}
+      - {phrase: "sewing and hemline is uneven", count: 1}
+      - {phrase: "zippers got stuck a lot", count: 1}
+      - {phrase: "seam that was right at the neckline", count: 1}
+      - {phrase: "embroidered collar", count: 1}
+      - {phrase: "huge rip in the decorative threading", count: 1}
+      - {phrase: "zipper is so cheap that it bubbles out", count: 1}
+      - {phrase: "buttons are a nightmare", count: 1}
+      - {phrase: "bias seams are puckery", count: 1}
+    sample_reviews: ['APP-002198', 'APP-000260', 'APP-002195', 'APP-001186', 'APP-000622']
+
+  - key: other
+    label_zh: 其他
+    total: 61
+    positive_count: 30
+    negative_count: 28
+    neutral_count: 3
+    negative_rate: 45.9%
+    top_phrases:
+      - {phrase: "has pockets", count: 8}
+      - {phrase: "pockets", count: 4}
+      - {phrase: "side pockets", count: 2}
+      - {phrase: "lack of pockets", count: 1}
+      - {phrase: "a little young for me", count: 1}
+      - {phrase: "pockets are several inches too low", count: 1}
+      - {phrase: "wrinkles", count: 1}
+      - {phrase: "offer this dress in other colors, patterns", count: 1}
+      - {phrase: "pockets are a nice touch", count: 1}
+      - {phrase: "great 4 season dress", count: 1}
+    sample_reviews: ['APP-001603', 'APP-000189', 'APP-001846', 'APP-000706', 'APP-001623']
+
+  - key: cleaning
+    label_zh: 易洗性
+    total: 57
+    positive_count: 27
+    negative_count: 26
+    neutral_count: 4
+    negative_rate: 45.6%
+    top_phrases:
+      - {phrase: "dry clean only", count: 7}
+      - {phrase: "machine washable", count: 5}
+      - {phrase: "easy to clean", count: 2}
+      - {phrase: "washes well", count: 2}
+      - {phrase: "hand washable", count: 1}
+      - {phrase: "shrinks after first wash", count: 1}
+      - {phrase: "hand wash and the tag on the seam says dry clean only", count: 1}
+      - {phrase: "doesn't wrinkle", count: 1}
+      - {phrase: "laundered this dress multiple times", count: 1}
+      - {phrase: "dry clean", count: 1}
+    sample_reviews: ['APP-001634', 'APP-000945', 'APP-000870', 'APP-000633', 'APP-000555']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 47
+    positive_count: 14
+    negative_count: 33
+    neutral_count: 0
+    negative_rate: 70.2%
+    top_phrases:
+      - {phrase: "looks like it will hold up well", count: 1}
+      - {phrase: "fading", count: 1}
+      - {phrase: "it seems like it should wear well", count: 1}
+      - {phrase: "already pilling", count: 1}
+      - {phrase: "would stretch out and degrade faster than others", count: 1}
+      - {phrase: "wrinkle easily", count: 1}
+      - {phrase: "lost its shape after a day", count: 1}
+      - {phrase: "ripped the back", count: 1}
+      - {phrase: "snagged on my fingernail", count: 1}
+      - {phrase: "dress snagged easily", count: 1}
+    sample_reviews: ['APP-000757', 'APP-001256', 'APP-001972', 'APP-001005', 'APP-002015']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 11
+    positive_count: 2
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 81.8%
+    top_phrases:
+      - {phrase: "came in the mail super wrinkled", count: 1}
+      - {phrase: "snagged upon arrival", count: 1}
+      - {phrase: "arrived dirty", count: 1}
+      - {phrase: "full of snags when it arrived", count: 1}
+      - {phrase: "shipment was super fast", count: 1}
+      - {phrase: "shipping was terrible - the dress was just dumped into a bag with no attempt to ", count: 1}
+      - {phrase: "receiving parcels from one of your carriers,laser ship and i have reported the i", count: 1}
+      - {phrase: "dirty stained dress", count: 1}
+      - {phrase: "shipping was quick", count: 1}
+      - {phrase: "arrived wrinkled", count: 1}
+    sample_reviews: ['APP-001870', 'APP-000458', 'APP-000914', 'APP-002202', 'APP-000482']
+
+  - key: packaging
+    label_zh: 包装
+    total: 11
+    positive_count: 5
+    negative_count: 6
+    neutral_count: 0
+    negative_rate: 54.5%
+    top_phrases:
+      - {phrase: "came wadded up in a ball and is a wrinkled mess", count: 1}
+      - {phrase: "flattened out in the packaging", count: 1}
+      - {phrase: "wasn't wrinkled coming out of the packaging bag", count: 1}
+      - {phrase: "came kind of wrinkled", count: 1}
+      - {phrase: "wadded up in a bag", count: 1}
+      - {phrase: "rolls up teeny-tiny for packing", count: 1}
+      - {phrase: "opened the package", count: 1}
+      - {phrase: "came wrinkled", count: 1}
+      - {phrase: "small plastic bag", count: 1}
+      - {phrase: "packs super well for traveling", count: 1}
+    sample_reviews: ['APP-002025', 'APP-000195', 'APP-001176', 'APP-002026', 'APP-000420']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 8
+    positive_count: 4
+    negative_count: 3
+    neutral_count: 1
+    negative_rate: 37.5%
+    top_phrases:
+      - {phrase: "excellent personal stylist warned me", count: 1}
+      - {phrase: "call for a price adjustment", count: 1}
+      - {phrase: "rep said they would send new dress if i send first back", count: 1}
+      - {phrase: "hassel free refund", count: 1}
+      - {phrase: "poor service", count: 1}
+      - {phrase: "great customer service", count: 1}
+      - {phrase: "have to pay the $5.95 return fee", count: 1}
+      - {phrase: "assistance from staff, which was great", count: 1}
+    sample_reviews: ['APP-001308', 'APP-000528', 'APP-000914', 'APP-001935', 'APP-001348']
+
+  - key: smell
+    label_zh: 异味
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "smell from the fabric is a bit strange", count: 1}
+    sample_reviews: ['APP-001381']

@@ -1,0 +1,322 @@
+# USB C to USB C Cable Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: USB C to USB C Cable
+aspect_count: 17
+aspects:
+  - key: build_quality
+    label_zh: 做工
+    total: 974
+    positive_count: 875
+    negative_count: 96
+    neutral_count: 3
+    negative_rate: 9.9%
+    top_phrases:
+      - {phrase: "Good quality", count: 36}
+      - {phrase: "good quality", count: 35}
+      - {phrase: "well made", count: 29}
+      - {phrase: "Great quality", count: 27}
+      - {phrase: "sturdy", count: 23}
+      - {phrase: "quality", count: 16}
+      - {phrase: "great quality", count: 16}
+      - {phrase: "Well made", count: 15}
+      - {phrase: "Excellent quality", count: 11}
+      - {phrase: "high quality", count: 10}
+    sample_reviews: ['3C-025843', '3C-029262', '3C-035233', '3C-026912', '3C-037917']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 732
+    positive_count: 505
+    negative_count: 210
+    neutral_count: 17
+    negative_rate: 28.7%
+    top_phrases:
+      - {phrase: "durable", count: 27}
+      - {phrase: "Durable", count: 19}
+      - {phrase: "very durable", count: 19}
+      - {phrase: "durability", count: 9}
+      - {phrase: "sturdy", count: 8}
+      - {phrase: "last a long time", count: 6}
+      - {phrase: "Very durable", count: 5}
+      - {phrase: "Durability", count: 4}
+      - {phrase: "seem durable", count: 4}
+      - {phrase: "stopped working", count: 4}
+    sample_reviews: ['3C-037923', '3C-025843', '3C-026030', '3C-035233', '3C-026912']
+
+  - key: charging_speed
+    label_zh: 充电速度
+    total: 489
+    positive_count: 389
+    negative_count: 95
+    neutral_count: 5
+    negative_rate: 19.4%
+    top_phrases:
+      - {phrase: "fast charging", count: 27}
+      - {phrase: "fast charge", count: 11}
+      - {phrase: "Fast charging", count: 11}
+      - {phrase: "charges fast", count: 10}
+      - {phrase: "Charges fast", count: 8}
+      - {phrase: "super fast charging", count: 7}
+      - {phrase: "charges super fast", count: 4}
+      - {phrase: "Fast", count: 4}
+      - {phrase: "carga rápida", count: 3}
+      - {phrase: "Fast charge", count: 3}
+    sample_reviews: ['3C-026030', '3C-026912', '3C-026692', '3C-035649', '3C-002208']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 379
+    positive_count: 344
+    negative_count: 27
+    neutral_count: 8
+    negative_rate: 7.1%
+    top_phrases:
+      - {phrase: "great price", count: 18}
+      - {phrase: "Great price", count: 9}
+      - {phrase: "good value", count: 9}
+      - {phrase: "good price", count: 9}
+      - {phrase: "Good price", count: 8}
+      - {phrase: "reasonable price", count: 7}
+      - {phrase: "Great value", count: 7}
+      - {phrase: "Good value", count: 7}
+      - {phrase: "great value", count: 6}
+      - {phrase: "price", count: 5}
+    sample_reviews: ['3C-035649', '3C-035517', '3C-026731', '3C-026988', '3C-029380']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 265
+    positive_count: 200
+    negative_count: 62
+    neutral_count: 3
+    negative_rate: 23.4%
+    top_phrases:
+      - {phrase: "Perfect for my iPhone", count: 2}
+      - {phrase: "for my Apple devices", count: 2}
+      - {phrase: "Works great", count: 2}
+      - {phrase: "for my iPhone 16", count: 1}
+      - {phrase: "for my Dell", count: 1}
+      - {phrase: "won't work for CarPlay", count: 1}
+      - {phrase: "usb c charge cord for new iPhones", count: 1}
+      - {phrase: "Right connections works perfectly", count: 1}
+      - {phrase: "quality C to C charging block", count: 1}
+      - {phrase: "worked perfectly for his electronics", count: 1}
+    sample_reviews: ['3C-042981', '3C-026963', '3C-035298', '3C-027218', '3C-029344']
+
+  - key: other
+    label_zh: 其他
+    total: 222
+    positive_count: 185
+    negative_count: 36
+    neutral_count: 1
+    negative_rate: 16.2%
+    top_phrases:
+      - {phrase: "length", count: 7}
+      - {phrase: "good length", count: 6}
+      - {phrase: "perfect length", count: 6}
+      - {phrase: "Good length", count: 5}
+      - {phrase: "Works great", count: 5}
+      - {phrase: "works well", count: 4}
+      - {phrase: "work great", count: 4}
+      - {phrase: "long", count: 4}
+      - {phrase: "long enough", count: 3}
+      - {phrase: "works as described", count: 3}
+    sample_reviews: ['3C-027248', '3C-027304', '3C-020421', '3C-020438', '3C-019464']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 177
+    positive_count: 111
+    negative_count: 66
+    neutral_count: 0
+    negative_rate: 37.3%
+    top_phrases:
+      - {phrase: "Works well", count: 4}
+      - {phrase: "work great", count: 4}
+      - {phrase: "work well", count: 3}
+      - {phrase: "works great", count: 3}
+      - {phrase: "works perfectly", count: 3}
+      - {phrase: "Works perfectly", count: 3}
+      - {phrase: "data transfer", count: 2}
+      - {phrase: "Works great", count: 2}
+      - {phrase: "connection is not stable", count: 1}
+      - {phrase: "keep connecting and disconnecting", count: 1}
+    sample_reviews: ['3C-003918', '3C-002208', '3C-015850', '3C-029380', '3C-020402']
+
+  - key: portability
+    label_zh: 便携性
+    total: 167
+    positive_count: 160
+    negative_count: 5
+    neutral_count: 2
+    negative_rate: 3.0%
+    top_phrases:
+      - {phrase: "perfect length", count: 6}
+      - {phrase: "Perfect length", count: 5}
+      - {phrase: "length", count: 3}
+      - {phrase: "right size", count: 2}
+      - {phrase: "good size", count: 2}
+      - {phrase: "size", count: 2}
+      - {phrase: "short cable", count: 2}
+      - {phrase: "length is perfect", count: 2}
+      - {phrase: "Short but just right to hang off a wall plug", count: 1}
+      - {phrase: "keep from having to carry the bulky charger", count: 1}
+    sample_reviews: ['3C-037917', '3C-026963', '3C-019427', '3C-037989', '3C-026689']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 117
+    positive_count: 106
+    negative_count: 11
+    neutral_count: 0
+    negative_rate: 9.4%
+    top_phrases:
+      - {phrase: "easy to use", count: 11}
+      - {phrase: "Easy to use", count: 3}
+      - {phrase: "Works great", count: 3}
+      - {phrase: "works well", count: 2}
+      - {phrase: "works as it should", count: 2}
+      - {phrase: "work great", count: 2}
+      - {phrase: "flexible", count: 2}
+      - {phrase: "does the job", count: 2}
+      - {phrase: "ease of use", count: 2}
+      - {phrase: "small but big enough for old fingers to hang onto", count: 1}
+    sample_reviews: ['3C-019427', '3C-035507', '3C-027248', '3C-038021', '3C-026640']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 115
+    positive_count: 106
+    negative_count: 6
+    neutral_count: 3
+    negative_rate: 5.2%
+    top_phrases:
+      - {phrase: "look nice", count: 5}
+      - {phrase: "red color", count: 4}
+      - {phrase: "love the color", count: 3}
+      - {phrase: "look good", count: 2}
+      - {phrase: "Exactly as pictured", count: 2}
+      - {phrase: "color", count: 2}
+      - {phrase: "Looks great", count: 2}
+      - {phrase: "Looks really nice", count: 1}
+      - {phrase: "Looks good", count: 1}
+      - {phrase: "silver color looks great and unique", count: 1}
+    sample_reviews: ['3C-026739', '3C-027538', '3C-026236', '3C-026640', '3C-026714']
+
+  - key: material
+    label_zh: 材质用料
+    total: 112
+    positive_count: 99
+    negative_count: 12
+    neutral_count: 1
+    negative_rate: 10.7%
+    top_phrases:
+      - {phrase: "quality material", count: 3}
+      - {phrase: "braided", count: 3}
+      - {phrase: "braided cables", count: 2}
+      - {phrase: "nylon braiding", count: 2}
+      - {phrase: "Nice feel", count: 2}
+      - {phrase: "braided cord feels nice", count: 2}
+      - {phrase: "love the material", count: 2}
+      - {phrase: "wrapped with a fabric", count: 1}
+      - {phrase: "braided cable is thick and feels high quality", count: 1}
+      - {phrase: "thicker", count: 1}
+    sample_reviews: ['3C-042981', '3C-003973', '3C-027003', '3C-026856', '3C-019122']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 74
+    positive_count: 67
+    negative_count: 7
+    neutral_count: 0
+    negative_rate: 9.5%
+    top_phrases:
+      - {phrase: "Fast delivery", count: 5}
+      - {phrase: "fast shipping", count: 5}
+      - {phrase: "Quick delivery", count: 5}
+      - {phrase: "Fast shipping", count: 4}
+      - {phrase: "arrived promptly", count: 3}
+      - {phrase: "arrived on time", count: 3}
+      - {phrase: "delivered on time", count: 2}
+      - {phrase: "prompt delivery", count: 2}
+      - {phrase: "arrived quickly", count: 2}
+      - {phrase: "Quick ship", count: 1}
+    sample_reviews: ['3C-027543', '3C-035649', '3C-003946', '3C-019273', '3C-026913']
+
+  - key: packaging
+    label_zh: 包装
+    total: 41
+    positive_count: 30
+    negative_count: 11
+    neutral_count: 0
+    negative_rate: 26.8%
+    top_phrases:
+      - {phrase: "packaged nicely", count: 1}
+      - {phrase: "velcro cable tie to keep things tidy", count: 1}
+      - {phrase: "opened the package I could smell", count: 1}
+      - {phrase: "the way they wrap the cord shows they care", count: 1}
+      - {phrase: "Well packaged", count: 1}
+      - {phrase: "comes with a spare", count: 1}
+      - {phrase: "loved the packaging", count: 1}
+      - {phrase: "nice reusable cable tie", count: 1}
+      - {phrase: "came in great shape", count: 1}
+      - {phrase: "Neat packaging", count: 1}
+    sample_reviews: ['3C-019136', '3C-019189', '3C-003524', '3C-025788', '3C-019516']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 39
+    positive_count: 19
+    negative_count: 18
+    neutral_count: 2
+    negative_rate: 46.2%
+    top_phrases:
+      - {phrase: "only offer a lower price cable as warranty replacement", count: 2}
+      - {phrase: "Customer Service is top notch", count: 1}
+      - {phrase: "positive experience", count: 1}
+      - {phrase: "lifetime warranty", count: 1}
+      - {phrase: "able to get a full refund", count: 1}
+      - {phrase: "Excellent customer service", count: 1}
+      - {phrase: "Too much hassle to return/replace", count: 1}
+      - {phrase: "seller reached out to me because of my review and made things right", count: 1}
+      - {phrase: "got it replaced, same issue", count: 1}
+      - {phrase: "good customer service", count: 1}
+    sample_reviews: ['3C-026731', '3C-027532', '3C-025894', '3C-027069', '3C-026687']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 5
+    positive_count: 2
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 60.0%
+    top_phrases:
+      - {phrase: "damaged the battery", count: 1}
+      - {phrase: "play for hours on end", count: 1}
+      - {phrase: "doesn't charge it over night", count: 1}
+      - {phrase: "hold a longer charge", count: 1}
+      - {phrase: "powerbank that crapped out on me", count: 1}
+    sample_reviews: ['3C-003972', '3C-027226', '3C-003982', '3C-025844', '3C-026813']
+
+  - key: comfort
+    label_zh: 佩戴舒适度
+    total: 2
+    positive_count: 1
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "fits my phone even with a case on it perfectly", count: 1}
+      - {phrase: "won't fit in the slot on my cell phone case", count: 1}
+    sample_reviews: ['3C-027091', '3C-027610']
+
+  - key: sound_quality
+    label_zh: 音质
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "sound quality of the Voiceovers has remained as high quality", count: 1}
+    sample_reviews: ['3C-027279']

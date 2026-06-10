@@ -1,0 +1,311 @@
+# Dog Multivitamin Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Dog Multivitamin
+aspect_count: 16
+aspects:
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 829
+    positive_count: 624
+    negative_count: 199
+    neutral_count: 6
+    negative_rate: 24.0%
+    top_phrases:
+      - {phrase: "My dog loves them", count: 15}
+      - {phrase: "My dogs love these", count: 12}
+      - {phrase: "My dog loves these", count: 11}
+      - {phrase: "Dogs love them", count: 9}
+      - {phrase: "My dog loves it", count: 9}
+      - {phrase: "dogs love them", count: 7}
+      - {phrase: "loves them", count: 6}
+      - {phrase: "loves these", count: 6}
+      - {phrase: "Dog loves them", count: 6}
+      - {phrase: "my dog loves them", count: 5}
+    sample_reviews: ['PET-018044', 'PET-018988', 'PET-016673', 'PET-001124', 'PET-020048']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 634
+    positive_count: 532
+    negative_count: 95
+    neutral_count: 7
+    negative_rate: 15.0%
+    top_phrases:
+      - {phrase: "made my dog sick", count: 9}
+      - {phrase: "more energetic", count: 3}
+      - {phrase: "keeping my dogs healthy", count: 2}
+      - {phrase: "good for my dog", count: 2}
+      - {phrase: "stopped scratching", count: 2}
+      - {phrase: "a lot more energy", count: 2}
+      - {phrase: "better digestion", count: 2}
+      - {phrase: "keeps him healthy", count: 2}
+      - {phrase: "healthier and happier", count: 2}
+      - {phrase: "good for them", count: 2}
+    sample_reviews: ['PET-018044', 'PET-016673', 'PET-014627', 'PET-005366', 'PET-001989']
+
+  - key: other
+    label_zh: 其他
+    total: 187
+    positive_count: 89
+    negative_count: 82
+    neutral_count: 16
+    negative_rate: 43.9%
+    top_phrases:
+      - {phrase: "covered in mold", count: 3}
+      - {phrase: "Quick delivery", count: 2}
+      - {phrase: "Fast delivery", count: 2}
+      - {phrase: "changed formula", count: 2}
+      - {phrase: "Great product", count: 2}
+      - {phrase: "Fast shipping", count: 2}
+      - {phrase: "great reviews", count: 1}
+      - {phrase: "Exactly what I ordered", count: 1}
+      - {phrase: "not sure if they have a real impact", count: 1}
+      - {phrase: "maybe better flavor/chicken", count: 1}
+    sample_reviews: ['PET-018988', 'PET-014545', 'PET-011717', 'PET-009272', 'PET-019123']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 174
+    positive_count: 145
+    negative_count: 23
+    neutral_count: 6
+    negative_rate: 13.2%
+    top_phrases:
+      - {phrase: "Easy to use", count: 4}
+      - {phrase: "easy to give", count: 2}
+      - {phrase: "powder vs treat form", count: 1}
+      - {phrase: "Bite size and easy to chew", count: 1}
+      - {phrase: "vitamin treats", count: 1}
+      - {phrase: "convenient and easy way", count: 1}
+      - {phrase: "giving them a breeze", count: 1}
+      - {phrase: "just put them on top of his regular food", count: 1}
+      - {phrase: "Easy to add to their daily routine", count: 1}
+      - {phrase: "I have to crush chewable in his food", count: 1}
+    sample_reviews: ['PET-012276', 'PET-019863', 'PET-019044', 'PET-009933', 'PET-019915']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 161
+    positive_count: 84
+    negative_count: 75
+    neutral_count: 2
+    negative_rate: 46.6%
+    top_phrases:
+      - {phrase: "worth the money", count: 3}
+      - {phrase: "waste of money", count: 3}
+      - {phrase: "Waste of money", count: 2}
+      - {phrase: "great value for the money", count: 2}
+      - {phrase: "worth the price", count: 2}
+      - {phrase: "good value for the money", count: 2}
+      - {phrase: "fair price", count: 2}
+      - {phrase: "Worth the price", count: 2}
+      - {phrase: "great value for your money", count: 2}
+      - {phrase: "price remains reasonable", count: 1}
+    sample_reviews: ['PET-012275', 'PET-018748', 'PET-005404', 'PET-019863', 'PET-011728']
+
+  - key: smell
+    label_zh: 异味
+    total: 107
+    positive_count: 36
+    negative_count: 66
+    neutral_count: 5
+    negative_rate: 61.7%
+    top_phrases:
+      - {phrase: "bad odor", count: 2}
+      - {phrase: "smell like peanut butter", count: 2}
+      - {phrase: "no bad smell", count: 1}
+      - {phrase: "does not have an off-putting smell", count: 1}
+      - {phrase: "smell of this treat", count: 1}
+      - {phrase: "smells like dry desert sand", count: 1}
+      - {phrase: "no offense smell when handling", count: 1}
+      - {phrase: "No funny smell", count: 1}
+      - {phrase: "smell good", count: 1}
+      - {phrase: "strong scent, kinda like beef jerky", count: 1}
+    sample_reviews: ['PET-019112', 'PET-012283', 'PET-010203', 'PET-018035', 'PET-001487']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 81
+    positive_count: 33
+    negative_count: 48
+    neutral_count: 0
+    negative_rate: 59.3%
+    top_phrases:
+      - {phrase: "not returnable", count: 3}
+      - {phrase: "not being able to send them back", count: 2}
+      - {phrase: "company stood by their guarantee and sent me a canister of bison flavor", count: 1}
+      - {phrase: "Seller reached out to me and offered a full refund. A+ for customer service.", count: 1}
+      - {phrase: "made things right when my boys did not like a specific flavor", count: 1}
+      - {phrase: "none returnable or refundable", count: 1}
+      - {phrase: "can't return it", count: 1}
+      - {phrase: "can't get a refund", count: 1}
+      - {phrase: "can not return", count: 1}
+      - {phrase: "manufacturer customer service said white powder is flavor additive", count: 1}
+    sample_reviews: ['PET-020790', 'PET-002113', 'PET-019123', 'PET-001485', 'PET-016941']
+
+  - key: safety
+    label_zh: 安全性
+    total: 60
+    positive_count: 11
+    negative_count: 48
+    neutral_count: 1
+    negative_rate: 80.0%
+    top_phrases:
+      - {phrase: "made my dog sick", count: 2}
+      - {phrase: "made in the USA", count: 2}
+      - {phrase: "need to take him to vet", count: 1}
+      - {phrase: "safer brand", count: 1}
+      - {phrase: "potentially causing esophageal damage", count: 1}
+      - {phrase: "no way I would ever give my dog anything that was in that container", count: 1}
+      - {phrase: "afraid to use them", count: 1}
+      - {phrase: "throwing up everywhere", count: 1}
+      - {phrase: "Way too much vitamin D", count: 1}
+      - {phrase: "made my dog extremely sick, vomiting non-stop", count: 1}
+    sample_reviews: ['PET-001989', 'PET-005414', 'PET-010203', 'PET-005095', 'PET-005423']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 50
+    positive_count: 21
+    negative_count: 29
+    neutral_count: 0
+    negative_rate: 58.0%
+    top_phrases:
+      - {phrase: "good quality", count: 3}
+      - {phrase: "quality", count: 2}
+      - {phrase: "a bit crumbly", count: 2}
+      - {phrase: "Good quality", count: 2}
+      - {phrase: "Great quality", count: 2}
+      - {phrase: "highest quality ingredients, production, packaging and final end product", count: 1}
+      - {phrase: "thick film of yellowish flour on the surface", count: 1}
+      - {phrase: "love the quality", count: 1}
+      - {phrase: "high-quality supplement", count: 1}
+      - {phrase: "broken supplements", count: 1}
+    sample_reviews: ['PET-001119', 'PET-005574', 'PET-019919', 'PET-000638', 'PET-009978']
+
+  - key: packaging
+    label_zh: 包装
+    total: 46
+    positive_count: 17
+    negative_count: 25
+    neutral_count: 4
+    negative_rate: 54.3%
+    top_phrases:
+      - {phrase: "received 5 packets instead of 30", count: 1}
+      - {phrase: "no seal", count: 1}
+      - {phrase: "highest quality packaging", count: 1}
+      - {phrase: "top to the vitamins had previously been unscrewed and the top was loose", count: 1}
+      - {phrase: "filled with powder", count: 1}
+      - {phrase: "smaller amount zip bag", count: 1}
+      - {phrase: "foil was open", count: 1}
+      - {phrase: "got more broken pieces and crumbs than actual whole pieces", count: 1}
+      - {phrase: "orange container is perfect when empty, labels come off easily", count: 1}
+      - {phrase: "packed well", count: 1}
+    sample_reviews: ['PET-004474', 'PET-001989', 'PET-001119', 'PET-005095', 'PET-009978']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 36
+    positive_count: 23
+    negative_count: 12
+    neutral_count: 1
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "good size", count: 2}
+      - {phrase: "size of the bag", count: 1}
+      - {phrase: "decently large, but not too large", count: 1}
+      - {phrase: "offered a small breed dog option", count: 1}
+      - {phrase: "not enough in there for 3 dogs", count: 1}
+      - {phrase: "nice small bite size", count: 1}
+      - {phrase: "good size for small to large dogs", count: 1}
+      - {phrase: "just the right size for a big dog", count: 1}
+      - {phrase: "good for small dogs", count: 1}
+      - {phrase: "pieces are all different sizes", count: 1}
+    sample_reviews: ['PET-011719', 'PET-011719', 'PET-009319', 'PET-019919', 'PET-019151']
+
+  - key: material
+    label_zh: 材质用料
+    total: 34
+    positive_count: 24
+    negative_count: 7
+    neutral_count: 3
+    negative_rate: 20.6%
+    top_phrases:
+      - {phrase: "ingredients", count: 2}
+      - {phrase: "grain-free", count: 2}
+      - {phrase: "great ingredients", count: 2}
+      - {phrase: "ALL-Natural supplement ingredients", count: 1}
+      - {phrase: "high quality ingredients", count: 1}
+      - {phrase: "all-natural ingredients", count: 1}
+      - {phrase: "love all the ingredients", count: 1}
+      - {phrase: "very chalky", count: 1}
+      - {phrase: "Good ingredient", count: 1}
+      - {phrase: "muy buena composición de vitaminas", count: 1}
+    sample_reviews: ['PET-001119', 'PET-003048', 'PET-002618', 'PET-012269', 'PET-012267']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 18
+    positive_count: 14
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 22.2%
+    top_phrases:
+      - {phrase: "shaped in hearts", count: 1}
+      - {phrase: "Great looking container", count: 1}
+      - {phrase: "Super cute and subtle", count: 1}
+      - {phrase: "heart shapes are cute", count: 1}
+      - {phrase: "not the regular color of a fresh treat and were somewhat grey in color", count: 1}
+      - {phrase: "shape", count: 1}
+      - {phrase: "soft heart shape vitamin with no coloring", count: 1}
+      - {phrase: "Looks appealing", count: 1}
+      - {phrase: "cute heart shape", count: 1}
+      - {phrase: "Looks different", count: 1}
+    sample_reviews: ['PET-019076', 'PET-019982', 'PET-019018', 'PET-010199', 'PET-018731']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 17
+    positive_count: 4
+    negative_count: 13
+    neutral_count: 0
+    negative_rate: 76.5%
+    top_phrases:
+      - {phrase: "No problems delivering", count: 1}
+      - {phrase: "Shipping issues", count: 1}
+      - {phrase: "arrived quickly and were packed well", count: 1}
+      - {phrase: "Half the bag arrived as crumbs", count: 1}
+      - {phrase: "arrived in crumbles", count: 1}
+      - {phrase: "crumbled crumbs inside the package", count: 1}
+      - {phrase: "black marks on the inside", count: 1}
+      - {phrase: "broken zesty paws multi vitamins all over the box", count: 1}
+      - {phrase: "chewables are crushed to powder", count: 1}
+      - {phrase: "arrived safe and sound", count: 1}
+    sample_reviews: ['PET-014545', 'PET-018598', 'PET-003048', 'PET-011670', 'PET-003006']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 5
+    positive_count: 4
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 20.0%
+    top_phrases:
+      - {phrase: "used this brand for several years", count: 1}
+      - {phrase: "Too soft for shipping", count: 1}
+      - {phrase: "been on them for years", count: 1}
+      - {phrase: "has been taking this same vitamin for at least three years", count: 1}
+      - {phrase: "lived to be 16", count: 1}
+    sample_reviews: ['PET-019897', 'PET-011670', 'PET-018167', 'PET-000481', 'PET-005591']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 2
+    positive_count: 0
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "stain, leaves behind a yellow residue", count: 1}
+      - {phrase: "stained the sofa", count: 1}
+    sample_reviews: ['PET-002941', 'PET-018168']

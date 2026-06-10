@@ -1,0 +1,22 @@
+# 母婴用品 Aspect Taxonomy Delta 词典 v1.0
+# 设计参考: 母婴用品安全性优先 + 童装/安全门栏 子品类需求
+# 用途: 与 base.yaml 合并后供 extract_taxonomy_generic.py 使用
+
+extends: base.yaml
+category: baby
+category_label: 母婴用品
+
+delta_aspects:
+  # 安全类(母婴最重要)
+  - {key: safety, label_zh: 安全性}
+  - {key: smell, label_zh: 异味}
+  # 物理品质类
+  - {key: stability, label_zh: 稳固性}
+  # 使用体验类
+  - {key: assembly, label_zh: 组装难度}
+  - {key: cleaning, label_zh: 清洁难度}              # 母婴特有: 奶瓶/座椅好清洗
+  - {key: instructions, label_zh: 说明书}
+  # 适配类
+  - {key: size_fit, label_zh: 尺寸匹配}              # 衣服/座椅
+  - {key: weight_capacity, label_zh: 承重}            # 童车/座椅
+  - {key: age_appropriate, label_zh: 适用年龄}        # 母婴特有

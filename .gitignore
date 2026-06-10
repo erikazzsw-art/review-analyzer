@@ -1,5 +1,33 @@
+# Python
 __pycache__/
 *.pyc
 *.db
+
+# Secrets / env files (绝对禁止提交，详见 CLAUDE.md「机密保护规则」)
 .env
+.env.*
+!.env.example
+review_analyzer/.env
+backend_api/.env
+deploy/.env
+deploy/.env.*
+frontend/.env
+frontend/.env.local
+frontend/.env.production
 .streamlit/secrets.toml
+
+# macOS
+.DS_Store
+
+# Build artifacts
+frontend/.next/
+frontend/node_modules/
+frontend/tsconfig.tsbuildinfo
+
+# Taxonomy 中间产物 (yaml 与 summary.md 进 git, 其余只在本地)
+data/processed/
+data/taxonomy/v1.0/*/aspect_extraction_raw.jsonl
+data/taxonomy/v1.0/*/extraction.log
+data/taxonomy/v1.0/REVIEW_SHEET.xlsx
+data/taxonomy/v1.0/.~*.xlsx
+data/taxonomy/v1.0/backup-*/

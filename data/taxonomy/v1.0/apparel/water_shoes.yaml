@@ -1,0 +1,420 @@
+# Water Shoes Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:32:54
+sub_category: Water Shoes
+aspect_count: 21
+aspects:
+  - key: comfort
+    label_zh: 舒适度
+    total: 1091
+    positive_count: 927
+    negative_count: 157
+    neutral_count: 7
+    negative_rate: 14.4%
+    top_phrases:
+      - {phrase: "comfortable", count: 155}
+      - {phrase: "very comfortable", count: 72}
+      - {phrase: "Comfortable", count: 66}
+      - {phrase: "Very comfortable", count: 65}
+      - {phrase: "comfy", count: 29}
+      - {phrase: "Comfy", count: 18}
+      - {phrase: "Super comfortable", count: 12}
+      - {phrase: "super comfortable", count: 12}
+      - {phrase: "so comfortable", count: 11}
+      - {phrase: "comfortable to wear", count: 10}
+    sample_reviews: ['APP-014308', 'APP-011339', 'APP-012357', 'APP-004486', 'APP-010446']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 959
+    positive_count: 625
+    negative_count: 308
+    neutral_count: 26
+    negative_rate: 32.1%
+    top_phrases:
+      - {phrase: "true to size", count: 39}
+      - {phrase: "fit well", count: 34}
+      - {phrase: "fit perfectly", count: 30}
+      - {phrase: "True to size", count: 27}
+      - {phrase: "Great fit", count: 22}
+      - {phrase: "fit great", count: 22}
+      - {phrase: "fit", count: 20}
+      - {phrase: "Good fit", count: 14}
+      - {phrase: "great fit", count: 12}
+      - {phrase: "Perfect fit", count: 12}
+    sample_reviews: ['APP-014308', 'APP-004486', 'APP-004449', 'APP-011324', 'APP-010757']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 638
+    positive_count: 194
+    negative_count: 435
+    neutral_count: 9
+    negative_rate: 68.2%
+    top_phrases:
+      - {phrase: "durable", count: 17}
+      - {phrase: "very durable", count: 7}
+      - {phrase: "Durable", count: 4}
+      - {phrase: "sturdy", count: 3}
+      - {phrase: "one time use", count: 3}
+      - {phrase: "not very durable", count: 3}
+      - {phrase: "held up very well", count: 3}
+      - {phrase: "fell apart after one use", count: 3}
+      - {phrase: "don't last long", count: 2}
+      - {phrase: "ripped on the first day", count: 2}
+    sample_reviews: ['APP-014309', 'APP-010446', 'APP-011157', 'APP-005068', 'APP-010757']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 440
+    positive_count: 332
+    negative_count: 88
+    neutral_count: 20
+    negative_rate: 20.0%
+    top_phrases:
+      - {phrase: "Great for the price", count: 13}
+      - {phrase: "good price", count: 12}
+      - {phrase: "great price", count: 12}
+      - {phrase: "you get what you pay for", count: 9}
+      - {phrase: "Great price", count: 8}
+      - {phrase: "cheap", count: 8}
+      - {phrase: "great value", count: 7}
+      - {phrase: "Good value", count: 6}
+      - {phrase: "Great value", count: 6}
+      - {phrase: "inexpensive", count: 6}
+    sample_reviews: ['APP-014309', 'APP-014308', 'APP-010446', 'APP-010816', 'APP-011205']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 418
+    positive_count: 202
+    negative_count: 213
+    neutral_count: 3
+    negative_rate: 51.0%
+    top_phrases:
+      - {phrase: "good quality", count: 18}
+      - {phrase: "Great quality", count: 13}
+      - {phrase: "Good quality", count: 13}
+      - {phrase: "cheaply made", count: 9}
+      - {phrase: "well made", count: 8}
+      - {phrase: "sturdy", count: 7}
+      - {phrase: "great quality", count: 6}
+      - {phrase: "Very poor quality", count: 5}
+      - {phrase: "buena calidad", count: 5}
+      - {phrase: "quality", count: 5}
+    sample_reviews: ['APP-012357', 'APP-004486', 'APP-010446', 'APP-014380', 'APP-010816']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 380
+    positive_count: 346
+    negative_count: 33
+    neutral_count: 1
+    negative_rate: 8.7%
+    top_phrases:
+      - {phrase: "easy to put on", count: 10}
+      - {phrase: "work great", count: 6}
+      - {phrase: "Works great", count: 5}
+      - {phrase: "easy to pack", count: 5}
+      - {phrase: "Easy to put on", count: 5}
+      - {phrase: "easy to slip on and off", count: 4}
+      - {phrase: "work well", count: 4}
+      - {phrase: "Easy to slip on and off", count: 4}
+      - {phrase: "Easy to wear", count: 4}
+      - {phrase: "easy on and off", count: 4}
+    sample_reviews: ['APP-014309', 'APP-004486', 'APP-004449', 'APP-005504', 'APP-003890']
+
+  - key: material
+    label_zh: 材质用料
+    total: 292
+    positive_count: 165
+    negative_count: 114
+    neutral_count: 13
+    negative_rate: 39.0%
+    top_phrases:
+      - {phrase: "lightweight", count: 18}
+      - {phrase: "light weight", count: 13}
+      - {phrase: "Light weight", count: 5}
+      - {phrase: "Lightweight", count: 4}
+      - {phrase: "light", count: 4}
+      - {phrase: "dry quickly", count: 3}
+      - {phrase: "breathable", count: 3}
+      - {phrase: "soft", count: 3}
+      - {phrase: "cheap material", count: 3}
+      - {phrase: "so light", count: 2}
+    sample_reviews: ['APP-004486', 'APP-010672', 'APP-011157', 'APP-005138', 'APP-004218']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 286
+    positive_count: 242
+    negative_count: 36
+    neutral_count: 8
+    negative_rate: 12.6%
+    top_phrases:
+      - {phrase: "cute", count: 21}
+      - {phrase: "Cute", count: 7}
+      - {phrase: "stylish", count: 7}
+      - {phrase: "super cute", count: 4}
+      - {phrase: "very cute", count: 4}
+      - {phrase: "ugly", count: 3}
+      - {phrase: "style", count: 3}
+      - {phrase: "looks great", count: 3}
+      - {phrase: "different colors", count: 3}
+      - {phrase: "look nice", count: 3}
+    sample_reviews: ['APP-012357', 'APP-014380', 'APP-012408', 'APP-011205', 'APP-010757']
+
+  - key: other
+    label_zh: 其他
+    total: 225
+    positive_count: 148
+    negative_count: 73
+    neutral_count: 4
+    negative_rate: 32.4%
+    top_phrases:
+      - {phrase: "light weight", count: 7}
+      - {phrase: "good grip", count: 5}
+      - {phrase: "good traction", count: 3}
+      - {phrase: "slip resistant", count: 3}
+      - {phrase: "non-slip", count: 3}
+      - {phrase: "lightweight", count: 3}
+      - {phrase: "great traction", count: 3}
+      - {phrase: "Lightweight", count: 2}
+      - {phrase: "fast shipping", count: 2}
+      - {phrase: "arrived on time", count: 2}
+    sample_reviews: ['APP-010446', 'APP-011205', 'APP-011205', 'APP-010876', 'APP-014313']
+
+  - key: cleaning
+    label_zh: 易洗性
+    total: 135
+    positive_count: 113
+    negative_count: 16
+    neutral_count: 6
+    negative_rate: 11.9%
+    top_phrases:
+      - {phrase: "dry quickly", count: 11}
+      - {phrase: "easy to clean", count: 9}
+      - {phrase: "dries quickly", count: 4}
+      - {phrase: "quick dry", count: 4}
+      - {phrase: "easy to rinse out", count: 2}
+      - {phrase: "dried quickly", count: 2}
+      - {phrase: "easy to wash", count: 2}
+      - {phrase: "quick drying", count: 2}
+      - {phrase: "dry quick", count: 2}
+      - {phrase: "fast drying", count: 2}
+    sample_reviews: ['APP-003890', 'APP-003854', 'APP-011314', 'APP-005322', 'APP-010954']
+
+  - key: thickness
+    label_zh: 厚度
+    total: 120
+    positive_count: 40
+    negative_count: 74
+    neutral_count: 6
+    negative_rate: 61.7%
+    top_phrases:
+      - {phrase: "thin", count: 15}
+      - {phrase: "very thin", count: 6}
+      - {phrase: "Very thin", count: 5}
+      - {phrase: "thin sole", count: 3}
+      - {phrase: "sole is thick enough", count: 2}
+      - {phrase: "Very thin bottom", count: 2}
+      - {phrase: "soles are thin", count: 2}
+      - {phrase: "Super thin", count: 2}
+      - {phrase: "very thin sole", count: 2}
+      - {phrase: "The sole is just thick enough to make sure sharp little rocks don't dig in your ", count: 1}
+    sample_reviews: ['APP-010971', 'APP-020675', 'APP-005302', 'APP-010857', 'APP-014242']
+
+  - key: color_accuracy
+    label_zh: 颜色还原度
+    total: 86
+    positive_count: 67
+    negative_count: 17
+    neutral_count: 2
+    negative_rate: 19.8%
+    top_phrases:
+      - {phrase: "color", count: 5}
+      - {phrase: "love the color", count: 5}
+      - {phrase: "color was perfect", count: 2}
+      - {phrase: "color is good", count: 2}
+      - {phrase: "colors are beautiful", count: 2}
+      - {phrase: "color is great", count: 1}
+      - {phrase: "Colors as pictured", count: 1}
+      - {phrase: "wonderful colors", count: 1}
+      - {phrase: "Justo como la imagen", count: 1}
+      - {phrase: "Vibrant colors, not faded", count: 1}
+    sample_reviews: ['APP-004218', 'APP-014313', 'APP-005476', 'APP-012439', 'APP-010292']
+
+  - key: cut_fit
+    label_zh: 版型
+    total: 79
+    positive_count: 39
+    negative_count: 39
+    neutral_count: 1
+    negative_rate: 49.4%
+    top_phrases:
+      - {phrase: "not tight , but I didn't feel like it would come off in the water", count: 1}
+      - {phrase: "slim", count: 1}
+      - {phrase: "stayed put even when I went down a tube slide", count: 1}
+      - {phrase: "no rub on the heel", count: 1}
+      - {phrase: "bien por su horma", count: 1}
+      - {phrase: "la punta del zapato muy redonda", count: 1}
+      - {phrase: "hug my feet", count: 1}
+      - {phrase: "slight slide my foot does", count: 1}
+      - {phrase: "wide toe area", count: 1}
+      - {phrase: "non slip soles", count: 1}
+    sample_reviews: ['APP-010757', 'APP-014246', 'APP-011310', 'APP-014297', 'APP-011059']
+
+  - key: stretchiness
+    label_zh: 弹性
+    total: 55
+    positive_count: 42
+    negative_count: 12
+    neutral_count: 1
+    negative_rate: 21.8%
+    top_phrases:
+      - {phrase: "flexible", count: 7}
+      - {phrase: "stretchy", count: 5}
+      - {phrase: "Flexible", count: 2}
+      - {phrase: "flexible enough", count: 2}
+      - {phrase: "so flexible", count: 1}
+      - {phrase: "Nice, stretchy material that holds the shoe on but is not too tight", count: 1}
+      - {phrase: "stretched out", count: 1}
+      - {phrase: "fabric seems more stretchy", count: 1}
+      - {phrase: "enough elastic for my swollen foot", count: 1}
+      - {phrase: "stretch out quickly", count: 1}
+    sample_reviews: ['APP-011157', 'APP-020675', 'APP-010739', 'APP-014474', 'APP-004488']
+
+  - key: stitching
+    label_zh: 走线/缝合
+    total: 42
+    positive_count: 4
+    negative_count: 38
+    neutral_count: 0
+    negative_rate: 90.5%
+    top_phrases:
+      - {phrase: "coming apart at the seams", count: 2}
+      - {phrase: "tried sewing them but didn’t work", count: 1}
+      - {phrase: "fabric seams on the inside are unfinished", count: 1}
+      - {phrase: "Cheap stitching came apart after one use", count: 1}
+      - {phrase: "tearing at the seams", count: 1}
+      - {phrase: "unsown at the trim", count: 1}
+      - {phrase: "fell apart at the seams", count: 1}
+      - {phrase: "no annoying seams", count: 1}
+      - {phrase: "threads started coming off", count: 1}
+      - {phrase: "stitching extends up and you feel it under your feet on the side", count: 1}
+    sample_reviews: ['APP-010499', 'APP-014540', 'APP-014449', 'APP-012497', 'APP-012220']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 37
+    positive_count: 14
+    negative_count: 23
+    neutral_count: 0
+    negative_rate: 62.2%
+    top_phrases:
+      - {phrase: "came fast", count: 2}
+      - {phrase: "full of sand", count: 1}
+      - {phrase: "Came quick", count: 1}
+      - {phrase: "last picture is how they arrived", count: 1}
+      - {phrase: "received a used/worn one", count: 1}
+      - {phrase: "received it broken", count: 1}
+      - {phrase: "Fast shipping", count: 1}
+      - {phrase: "huge hole on one of my shoes", count: 1}
+      - {phrase: "how this was received", count: 1}
+      - {phrase: "vienen rotos", count: 1}
+    sample_reviews: ['APP-005141', 'APP-010857', 'APP-004051', 'APP-004452', 'APP-010624']
+
+  - key: pattern
+    label_zh: 图案/印花
+    total: 18
+    positive_count: 15
+    negative_count: 2
+    neutral_count: 1
+    negative_rate: 11.1%
+    top_phrases:
+      - {phrase: "el dibujo de los zapatos estaba muy bonito", count: 1}
+      - {phrase: "so many designs to choose from", count: 1}
+      - {phrase: "print", count: 1}
+      - {phrase: "patten", count: 1}
+      - {phrase: "bright pattern", count: 1}
+      - {phrase: "pattern ones she bought didn't hold up", count: 1}
+      - {phrase: "cute pattern", count: 1}
+      - {phrase: "pictures of the sharks scuba divers and jellyfish", count: 1}
+      - {phrase: "Cute print", count: 1}
+      - {phrase: "loves the pattern", count: 1}
+    sample_reviews: ['APP-010437', 'APP-012968', 'APP-012247', 'APP-012908', 'APP-014630']
+
+  - key: smell
+    label_zh: 异味
+    total: 17
+    positive_count: 5
+    negative_count: 12
+    neutral_count: 0
+    negative_rate: 70.6%
+    top_phrases:
+      - {phrase: "dry quickly so you don't have to worry about sour smells", count: 1}
+      - {phrase: "Smells horrendous", count: 1}
+      - {phrase: "smell", count: 1}
+      - {phrase: "they stink", count: 1}
+      - {phrase: "smelling horrible", count: 1}
+      - {phrase: "no smells", count: 1}
+      - {phrase: "stunk like a sewer", count: 1}
+      - {phrase: "smelly shoe", count: 1}
+      - {phrase: "develop a bad odor", count: 1}
+      - {phrase: "without any smell", count: 1}
+    sample_reviews: ['APP-012968', 'APP-010491', 'APP-010780', 'APP-005499', 'APP-010696']
+
+  - key: packaging
+    label_zh: 包装
+    total: 17
+    positive_count: 7
+    negative_count: 8
+    neutral_count: 2
+    negative_rate: 47.1%
+    top_phrases:
+      - {phrase: "completely flat", count: 1}
+      - {phrase: "super small for travel purposes", count: 1}
+      - {phrase: "in a zlipg bad", count: 1}
+      - {phrase: "packaged very poorly", count: 1}
+      - {phrase: "came covered in dirt", count: 1}
+      - {phrase: "empaque llegó en excelentes condiciones", count: 1}
+      - {phrase: "not in original package", count: 1}
+      - {phrase: "properly wrapped", count: 1}
+      - {phrase: "opened the package", count: 1}
+      - {phrase: "vacuum sealed package", count: 1}
+    sample_reviews: ['APP-003961', 'APP-014266', 'APP-012445', 'APP-010686', 'APP-010990']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 14
+    positive_count: 3
+    negative_count: 11
+    neutral_count: 0
+    negative_rate: 78.6%
+    top_phrases:
+      - {phrase: "return and re shipped", count: 1}
+      - {phrase: "outside of the return window", count: 1}
+      - {phrase: "Amazon's honesty in crediting my return", count: 1}
+      - {phrase: "Amazon won't issue a refund", count: 1}
+      - {phrase: "repacked and sent used item", count: 1}
+      - {phrase: "Amazon also screwed up the returns", count: 1}
+      - {phrase: "Huge deal to return", count: 1}
+      - {phrase: "don't have an option to return", count: 1}
+      - {phrase: "no enviaron el correcto", count: 1}
+      - {phrase: "can't get a refund", count: 1}
+    sample_reviews: ['APP-005141', 'APP-004190', 'APP-005357', 'APP-010331', 'APP-011003']
+
+  - key: length
+    label_zh: 长度
+    total: 6
+    positive_count: 2
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "come up just under the ankles", count: 1}
+      - {phrase: "Too long", count: 1}
+      - {phrase: "true to length", count: 1}
+      - {phrase: "At least 1' too long", count: 1}
+      - {phrase: "way to long", count: 1}
+      - {phrase: "1 inch too long", count: 1}
+    sample_reviews: ['APP-005325', 'APP-010760', 'APP-010878', 'APP-004235', 'APP-014074']

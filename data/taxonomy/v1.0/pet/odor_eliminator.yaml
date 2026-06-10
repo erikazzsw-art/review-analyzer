@@ -1,0 +1,297 @@
+# Odor Eliminator Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Odor Eliminator
+aspect_count: 16
+aspects:
+  - key: smell
+    label_zh: 异味
+    total: 962
+    positive_count: 554
+    negative_count: 372
+    neutral_count: 36
+    negative_rate: 38.7%
+    top_phrases:
+      - {phrase: "smells great", count: 7}
+      - {phrase: "strong chemical smell", count: 7}
+      - {phrase: "eliminates stains and odors", count: 7}
+      - {phrase: "smells good", count: 6}
+      - {phrase: "strong smell", count: 6}
+      - {phrase: "smells horrible", count: 5}
+      - {phrase: "pleasant odor", count: 4}
+      - {phrase: "eliminates odors", count: 4}
+      - {phrase: "smells nice", count: 4}
+      - {phrase: "minty smell", count: 4}
+    sample_reviews: ['PET-004053', 'PET-042727', 'PET-008750', 'PET-008750', 'PET-042459']
+
+  - key: other
+    label_zh: 其他
+    total: 374
+    positive_count: 204
+    negative_count: 155
+    neutral_count: 15
+    negative_rate: 41.4%
+    top_phrases:
+      - {phrase: "works great", count: 7}
+      - {phrase: "works well", count: 5}
+      - {phrase: "works", count: 5}
+      - {phrase: "does not work", count: 5}
+      - {phrase: "Works well", count: 4}
+      - {phrase: "eliminates stains and odors", count: 4}
+      - {phrase: "doesn't work", count: 3}
+      - {phrase: "works very well", count: 3}
+      - {phrase: "works wonders", count: 3}
+      - {phrase: "enzyme activated", count: 3}
+    sample_reviews: ['PET-025179', 'PET-042390', 'PET-042414', 'PET-008694', 'PET-049135']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 310
+    positive_count: 225
+    negative_count: 42
+    neutral_count: 43
+    negative_rate: 13.5%
+    top_phrases:
+      - {phrase: "easy to use", count: 12}
+      - {phrase: "Easy to use", count: 8}
+      - {phrase: "works on every surface", count: 3}
+      - {phrase: "leaves no residue behind", count: 3}
+      - {phrase: "followed the instructions", count: 3}
+      - {phrase: "dries quickly", count: 3}
+      - {phrase: "works great", count: 2}
+      - {phrase: "works well", count: 2}
+      - {phrase: "works really well", count: 2}
+      - {phrase: "works on all surfaces", count: 2}
+    sample_reviews: ['PET-025179', 'PET-042729', 'PET-033097', 'PET-008731', 'PET-042321']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 220
+    positive_count: 108
+    negative_count: 108
+    neutral_count: 4
+    negative_rate: 49.1%
+    top_phrases:
+      - {phrase: "waste of money", count: 6}
+      - {phrase: "Don't waste your money", count: 4}
+      - {phrase: "worth every penny", count: 3}
+      - {phrase: "Worth every penny", count: 3}
+      - {phrase: "expensive", count: 3}
+      - {phrase: "100% satisfaction guarantee", count: 2}
+      - {phrase: "Save your money", count: 2}
+      - {phrase: "well worth the cost", count: 2}
+      - {phrase: "waste your money", count: 2}
+      - {phrase: "good price", count: 2}
+    sample_reviews: ['PET-042727', 'PET-042729', 'PET-042390', 'PET-042410', 'PET-033097']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 170
+    positive_count: 139
+    negative_count: 28
+    neutral_count: 3
+    negative_rate: 16.5%
+    top_phrases:
+      - {phrase: "removing stains", count: 3}
+      - {phrase: "removes stains", count: 2}
+      - {phrase: "leaves no residue behind", count: 2}
+      - {phrase: "cleans great", count: 2}
+      - {phrase: "cleans well", count: 2}
+      - {phrase: "eliminates stains", count: 2}
+      - {phrase: "stain was gone", count: 2}
+      - {phrase: "eliminates stains on my carpet and furniture", count: 1}
+      - {phrase: "removed stains", count: 1}
+      - {phrase: "Works very well for cleaning the carpet", count: 1}
+    sample_reviews: ['PET-047928', 'PET-025169', 'PET-047383', 'PET-049181', 'PET-006411']
+
+  - key: safety
+    label_zh: 安全性
+    total: 108
+    positive_count: 71
+    negative_count: 37
+    neutral_count: 0
+    negative_rate: 34.3%
+    top_phrases:
+      - {phrase: "safe for both pets and children", count: 14}
+      - {phrase: "certified gentle and safe", count: 6}
+      - {phrase: "safe for pets and children", count: 6}
+      - {phrase: "pet and child safe", count: 4}
+      - {phrase: "safe for pets", count: 3}
+      - {phrase: "safe for my pets and children", count: 2}
+      - {phrase: "No bad effects on my wood and carpeted floors", count: 1}
+      - {phrase: "without harming carpets or wood floors", count: 1}
+      - {phrase: "le hizo alergia a mi puppy", count: 1}
+      - {phrase: "never irritated my dog", count: 1}
+    sample_reviews: ['PET-049119', 'PET-049135', 'PET-042706', 'PET-003740', 'PET-049165']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 43
+    positive_count: 20
+    negative_count: 22
+    neutral_count: 1
+    negative_rate: 51.2%
+    top_phrases:
+      - {phrase: "my Sheppard has left the couch alone", count: 1}
+      - {phrase: "cats could tell where and didn’t reapply their own scent", count: 1}
+      - {phrase: "cats decided it would be amazing to pee on top of the spray", count: 1}
+      - {phrase: "makes potty training not so bad", count: 1}
+      - {phrase: "cat seems not to want to be in that area any more", count: 1}
+      - {phrase: "Cats had no issues with it being sprayed on their tower", count: 1}
+      - {phrase: "cats have not peed on any spot that I have used this product on", count: 1}
+      - {phrase: "cat continues to mark over the product", count: 1}
+      - {phrase: "my cats seem to appreciate it", count: 1}
+      - {phrase: "cat still didn't stop peeing where she's not supposed to", count: 1}
+    sample_reviews: ['PET-008758', 'PET-008681', 'PET-008666', 'PET-003740', 'PET-004051']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 38
+    positive_count: 24
+    negative_count: 11
+    neutral_count: 3
+    negative_rate: 28.9%
+    top_phrases:
+      - {phrase: "safe for both pets and children", count: 3}
+      - {phrase: "podria ser dañino", count: 1}
+      - {phrase: "safe when using it around my pets", count: 1}
+      - {phrase: "cat would become violently ill and start vomiting", count: 1}
+      - {phrase: "manages to take the urine smell right out", count: 1}
+      - {phrase: "Made me and my dog cough", count: 1}
+      - {phrase: "cats are sitting on top of it as we speak", count: 1}
+      - {phrase: "not safe to use", count: 1}
+      - {phrase: "worked wonders on dog pee", count: 1}
+      - {phrase: "cat has medical issues", count: 1}
+    sample_reviews: ['PET-042706', 'PET-033013', 'PET-046821', 'PET-007579', 'PET-042713']
+
+  - key: packaging
+    label_zh: 包装
+    total: 31
+    positive_count: 9
+    negative_count: 20
+    neutral_count: 2
+    negative_rate: 64.5%
+    top_phrases:
+      - {phrase: "well packaged", count: 2}
+      - {phrase: "before the package was even opened, the smell of gasoline was INCREDIBLY strong", count: 1}
+      - {phrase: "eco-friendly packaging", count: 1}
+      - {phrase: "Spray bottle had to be pumped dozens of times for a few drops", count: 1}
+      - {phrase: "ships 1 gallon of cleaner laying sideways", count: 1}
+      - {phrase: "no lid for the bottle", count: 1}
+      - {phrase: "lid doesn't seal product in", count: 1}
+      - {phrase: "wrapped in plastic and in a plastic bag", count: 1}
+      - {phrase: "bottle is a nightmare", count: 1}
+      - {phrase: "bottle came a little dented for wear but not leaking", count: 1}
+    sample_reviews: ['PET-033112', 'PET-000397', 'PET-046805', 'PET-008751', 'PET-025136']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 19
+    positive_count: 11
+    negative_count: 6
+    neutral_count: 2
+    negative_rate: 31.6%
+    top_phrases:
+      - {phrase: "100% satisfaction guarantee", count: 4}
+      - {phrase: "company/seller stands behind their product and refunded", count: 1}
+      - {phrase: "money-back guarantee", count: 1}
+      - {phrase: "No response", count: 1}
+      - {phrase: "seller was more than professional in order to solve the issue", count: 1}
+      - {phrase: "short time to return", count: 1}
+      - {phrase: "they say they will return your money if it doesn’t work", count: 1}
+      - {phrase: "refused to refund", count: 1}
+      - {phrase: "brand promises 100% satisfaction", count: 1}
+      - {phrase: "had to pay for packaging to send it back", count: 1}
+    sample_reviews: ['PET-046838', 'PET-033125', 'PET-025146', 'PET-006393', 'PET-006386']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 10
+    positive_count: 4
+    negative_count: 5
+    neutral_count: 1
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "stink still hasn't returned", count: 1}
+      - {phrase: "stubborn smells will need reapplying", count: 1}
+      - {phrase: "lasted 5 days", count: 1}
+      - {phrase: "lasts a long time", count: 1}
+      - {phrase: "lasted keeping the smell away", count: 1}
+      - {phrase: "removed the scent for a few days only", count: 1}
+      - {phrase: "haven't come back for a month", count: 1}
+      - {phrase: "worked for about a month", count: 1}
+      - {phrase: "nozzle stopped working after 1 week", count: 1}
+      - {phrase: "wears off", count: 1}
+    sample_reviews: ['PET-001596', 'PET-049087', 'PET-042686', 'PET-025148', 'PET-001336']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 9
+    positive_count: 1
+    negative_count: 8
+    neutral_count: 0
+    negative_rate: 88.9%
+    top_phrases:
+      - {phrase: "leaking all over the box", count: 1}
+      - {phrase: "only a little spilled out", count: 1}
+      - {phrase: "products spilled out all over when stored on side", count: 1}
+      - {phrase: "bottle did leak and a lot and I lost a lot of product", count: 1}
+      - {phrase: "something happened during shipping", count: 1}
+      - {phrase: "leaking contents due to improper packaging", count: 1}
+      - {phrase: "Packaged well to avoid leaking during shipping", count: 1}
+      - {phrase: "most of the product leaked out into the bag and box it was shipped in", count: 1}
+      - {phrase: "Sprayer came broken", count: 1}
+    sample_reviews: ['PET-049109', 'PET-025136', 'PET-025173', 'PET-042338', 'PET-042797']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 7
+    positive_count: 4
+    negative_count: 2
+    neutral_count: 1
+    negative_rate: 28.6%
+    top_phrases:
+      - {phrase: "Made well", count: 1}
+      - {phrase: "Great quality", count: 1}
+      - {phrase: "nozzle drips everywhere", count: 1}
+      - {phrase: "Quality is ok", count: 1}
+      - {phrase: "piss poor quality of packaging", count: 1}
+      - {phrase: "quality of the sprayer is good", count: 1}
+      - {phrase: "high quality and heavy duty", count: 1}
+    sample_reviews: ['PET-047380', 'PET-046788', 'PET-049183', 'PET-025118', 'PET-007259']
+
+  - key: material
+    label_zh: 材质用料
+    total: 3
+    positive_count: 2
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "very abrasive", count: 1}
+      - {phrase: "made with natural ingredients", count: 1}
+      - {phrase: "without damaging or discoloring the material", count: 1}
+    sample_reviews: ['PET-006388', 'PET-042408', 'PET-033191']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 3
+    positive_count: 3
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "Great size bottle", count: 1}
+      - {phrase: "32 oz bottle size is great", count: 1}
+      - {phrase: "32 oz size is quite generous", count: 1}
+    sample_reviews: ['PET-049141', 'PET-008671', 'PET-033171']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "maintained their color", count: 1}
+    sample_reviews: ['PET-042358']

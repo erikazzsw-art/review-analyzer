@@ -1,0 +1,417 @@
+# Bras for Women Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:32:54
+sub_category: Bras for Women
+aspect_count: 21
+aspects:
+  - key: comfort
+    label_zh: 舒适度
+    total: 2179
+    positive_count: 1996
+    negative_count: 176
+    neutral_count: 7
+    negative_rate: 8.1%
+    top_phrases:
+      - {phrase: "comfortable", count: 202}
+      - {phrase: "very comfortable", count: 157}
+      - {phrase: "Very comfortable", count: 154}
+      - {phrase: "so comfortable", count: 81}
+      - {phrase: "Comfortable", count: 68}
+      - {phrase: "most comfortable bra", count: 38}
+      - {phrase: "soft and comfortable", count: 32}
+      - {phrase: "comfortable bra", count: 30}
+      - {phrase: "super comfortable", count: 27}
+      - {phrase: "Super comfortable", count: 25}
+    sample_reviews: ['APP-016119', 'APP-017015', 'APP-016576', 'APP-016972', 'APP-016239']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 1699
+    positive_count: 954
+    negative_count: 682
+    neutral_count: 63
+    negative_rate: 40.1%
+    top_phrases:
+      - {phrase: "fits perfectly", count: 50}
+      - {phrase: "true to size", count: 30}
+      - {phrase: "Perfect fit", count: 29}
+      - {phrase: "fits well", count: 24}
+      - {phrase: "Great fit", count: 24}
+      - {phrase: "perfect fit", count: 23}
+      - {phrase: "fits great", count: 22}
+      - {phrase: "True to size", count: 20}
+      - {phrase: "fit", count: 17}
+      - {phrase: "Fits well", count: 15}
+    sample_reviews: ['APP-018360', 'APP-016576', 'APP-016972', 'APP-003979', 'APP-014770']
+
+  - key: cut_fit
+    label_zh: 版型
+    total: 1245
+    positive_count: 734
+    negative_count: 501
+    neutral_count: 10
+    negative_rate: 40.2%
+    top_phrases:
+      - {phrase: "supportive", count: 49}
+      - {phrase: "no support", count: 18}
+      - {phrase: "great support", count: 12}
+      - {phrase: "support", count: 11}
+      - {phrase: "wide straps", count: 9}
+      - {phrase: "fit", count: 8}
+      - {phrase: "Great support", count: 8}
+      - {phrase: "good support", count: 7}
+      - {phrase: "Love the fit", count: 7}
+      - {phrase: "Good support", count: 6}
+    sample_reviews: ['APP-017015', 'APP-016576', 'APP-016972', 'APP-016239', 'APP-016239']
+
+  - key: material
+    label_zh: 材质用料
+    total: 506
+    positive_count: 428
+    negative_count: 68
+    neutral_count: 10
+    negative_rate: 13.4%
+    top_phrases:
+      - {phrase: "soft", count: 33}
+      - {phrase: "buttery soft", count: 14}
+      - {phrase: "so soft", count: 12}
+      - {phrase: "Soft", count: 12}
+      - {phrase: "very soft", count: 12}
+      - {phrase: "material is soft", count: 10}
+      - {phrase: "soft material", count: 7}
+      - {phrase: "material", count: 7}
+      - {phrase: "soft fabric", count: 6}
+      - {phrase: "Nice material", count: 6}
+    sample_reviews: ['APP-015885', 'APP-005717', 'APP-018066', 'APP-016317', 'APP-016120']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 466
+    positive_count: 359
+    negative_count: 96
+    neutral_count: 11
+    negative_rate: 20.6%
+    top_phrases:
+      - {phrase: "flattering", count: 13}
+      - {phrase: "pretty", count: 9}
+      - {phrase: "looks great", count: 8}
+      - {phrase: "cute", count: 6}
+      - {phrase: "different colors", count: 5}
+      - {phrase: "looks good", count: 5}
+      - {phrase: "wide straps", count: 4}
+      - {phrase: "beautiful bra", count: 3}
+      - {phrase: "design", count: 3}
+      - {phrase: "Pretty", count: 3}
+    sample_reviews: ['APP-003979', 'APP-017197', 'APP-005717', 'APP-016317', 'APP-016308']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 314
+    positive_count: 258
+    negative_count: 54
+    neutral_count: 2
+    negative_rate: 17.2%
+    top_phrases:
+      - {phrase: "great price", count: 12}
+      - {phrase: "affordable", count: 12}
+      - {phrase: "Great price", count: 7}
+      - {phrase: "reasonably priced", count: 6}
+      - {phrase: "Great value", count: 5}
+      - {phrase: "price is great", count: 4}
+      - {phrase: "worth the price", count: 4}
+      - {phrase: "Good price", count: 3}
+      - {phrase: "Great buy", count: 3}
+      - {phrase: "good price", count: 3}
+    sample_reviews: ['APP-016972', 'APP-015032', 'APP-014752', 'APP-005734', 'APP-018667']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 280
+    positive_count: 198
+    negative_count: 79
+    neutral_count: 3
+    negative_rate: 28.2%
+    top_phrases:
+      - {phrase: "well made", count: 17}
+      - {phrase: "quality", count: 11}
+      - {phrase: "good quality", count: 10}
+      - {phrase: "Good quality", count: 9}
+      - {phrase: "Well made", count: 8}
+      - {phrase: "Great quality", count: 5}
+      - {phrase: "great quality", count: 5}
+      - {phrase: "buena calidad", count: 4}
+      - {phrase: "made well", count: 4}
+      - {phrase: "very well made", count: 4}
+    sample_reviews: ['APP-015032', 'APP-017197', 'APP-015818', 'APP-016120', 'APP-018721']
+
+  - key: other
+    label_zh: 其他
+    total: 192
+    positive_count: 67
+    negative_count: 118
+    neutral_count: 7
+    negative_rate: 61.5%
+    top_phrases:
+      - {phrase: "great support", count: 4}
+      - {phrase: "no support", count: 4}
+      - {phrase: "good support", count: 4}
+      - {phrase: "came with an extender", count: 3}
+      - {phrase: "coverage", count: 2}
+      - {phrase: "pads are removable", count: 2}
+      - {phrase: "removable pads", count: 2}
+      - {phrase: "straps", count: 2}
+      - {phrase: "padding", count: 2}
+      - {phrase: "Great support", count: 2}
+    sample_reviews: ['APP-018360', 'APP-004105', 'APP-015836', 'APP-005560', 'APP-014693']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 146
+    positive_count: 88
+    negative_count: 53
+    neutral_count: 5
+    negative_rate: 36.3%
+    top_phrases:
+      - {phrase: "easy to wear", count: 4}
+      - {phrase: "adjustable straps", count: 3}
+      - {phrase: "easy to adjust", count: 3}
+      - {phrase: "straps are easy to adjust", count: 3}
+      - {phrase: "removable pads", count: 2}
+      - {phrase: "like the closure", count: 2}
+      - {phrase: "straps are adjustable", count: 2}
+      - {phrase: "easy to put on", count: 2}
+      - {phrase: "no underwire", count: 1}
+      - {phrase: "a lot of work to get it on", count: 1}
+    sample_reviews: ['APP-003619', 'APP-004289', 'APP-014741', 'APP-004106', 'APP-015311']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 130
+    positive_count: 53
+    negative_count: 57
+    neutral_count: 20
+    negative_rate: 43.8%
+    top_phrases:
+      - {phrase: "durable", count: 3}
+      - {phrase: "Durable", count: 3}
+      - {phrase: "holds up well", count: 2}
+      - {phrase: "don't know yet how well it holds up", count: 1}
+      - {phrase: "only had for a week so can not say how well they will hold it", count: 1}
+      - {phrase: "over 70 washes still perfect", count: 1}
+      - {phrase: "just looking at the quality I don't expect any problems", count: 1}
+      - {phrase: "don't know yet how well it's going to hold up being washed", count: 1}
+      - {phrase: "how it holds up after a few more washes", count: 1}
+      - {phrase: "straps stay in place", count: 1}
+    sample_reviews: ['APP-003979', 'APP-015818', 'APP-017111', 'APP-005797', 'APP-017132']
+
+  - key: cleaning
+    label_zh: 易洗性
+    total: 126
+    positive_count: 52
+    negative_count: 52
+    neutral_count: 22
+    negative_rate: 41.3%
+    top_phrases:
+      - {phrase: "washes well", count: 8}
+      - {phrase: "wash well", count: 4}
+      - {phrase: "hand wash", count: 3}
+      - {phrase: "Washes well", count: 2}
+      - {phrase: "have to be hand washed", count: 1}
+      - {phrase: "washed once and the padded cup inside already has a permanent crease", count: 1}
+      - {phrase: "after washing…the pads in the bra come out", count: 1}
+      - {phrase: "washes well on delicate cycle", count: 1}
+      - {phrase: "wash and dry great", count: 1}
+      - {phrase: "avoid putting this bra in the washing machine for a normal cycle", count: 1}
+    sample_reviews: ['APP-015818', 'APP-017534', 'APP-016980', 'APP-005866', 'APP-004533']
+
+  - key: stretchiness
+    label_zh: 弹性
+    total: 122
+    positive_count: 74
+    negative_count: 43
+    neutral_count: 5
+    negative_rate: 35.2%
+    top_phrases:
+      - {phrase: "stretchy", count: 18}
+      - {phrase: "very stretchy", count: 4}
+      - {phrase: "flexible", count: 2}
+      - {phrase: "straps are wide", count: 2}
+      - {phrase: "stretchiness", count: 2}
+      - {phrase: "too stretchy", count: 2}
+      - {phrase: "Very stretchy", count: 2}
+      - {phrase: "stretchy everywhere", count: 1}
+      - {phrase: "wide comfortable straps", count: 1}
+      - {phrase: "stretches out", count: 1}
+    sample_reviews: ['APP-003979', 'APP-003674', 'APP-015244', 'APP-003906', 'APP-017629']
+
+  - key: color_accuracy
+    label_zh: 颜色还原度
+    total: 75
+    positive_count: 49
+    negative_count: 19
+    neutral_count: 7
+    negative_rate: 25.3%
+    top_phrases:
+      - {phrase: "different colors", count: 3}
+      - {phrase: "Color is perfect", count: 2}
+      - {phrase: "color", count: 2}
+      - {phrase: "every color", count: 2}
+      - {phrase: "nude but it's more of a peach color", count: 1}
+      - {phrase: "wish they had more colors", count: 1}
+      - {phrase: "Color and material are nice", count: 1}
+      - {phrase: "nude color", count: 1}
+      - {phrase: "perfect nude color", count: 1}
+      - {phrase: "colors are amazing", count: 1}
+    sample_reviews: ['APP-014702', 'APP-003699', 'APP-003872', 'APP-018622', 'APP-004244']
+
+  - key: packaging
+    label_zh: 包装
+    total: 39
+    positive_count: 17
+    negative_count: 21
+    neutral_count: 1
+    negative_rate: 53.8%
+    top_phrases:
+      - {phrase: "arrived nicely and discreetly packaged", count: 1}
+      - {phrase: "packaging of the bra", count: 1}
+      - {phrase: "package it came in is to small for the bra", count: 1}
+      - {phrase: "packaging says it", count: 1}
+      - {phrase: "packaged in box", count: 1}
+      - {phrase: "came all folded up in a box causing the padding to be all creased", count: 1}
+      - {phrase: "Empaque estaba abierto sin etiquetas de ser nuevo", count: 1}
+      - {phrase: "packaging was missing", count: 1}
+      - {phrase: "arrives boxed", count: 1}
+      - {phrase: "rolled up in the packaging", count: 1}
+    sample_reviews: ['APP-003674', 'APP-018721', 'APP-015539', 'APP-018044', 'APP-014880']
+
+  - key: thickness
+    label_zh: 厚度
+    total: 36
+    positive_count: 19
+    negative_count: 14
+    neutral_count: 3
+    negative_rate: 38.9%
+    top_phrases:
+      - {phrase: "strap is very thick and wide", count: 1}
+      - {phrase: "very thick", count: 1}
+      - {phrase: "scallops are a little thick", count: 1}
+      - {phrase: "thicker straps", count: 1}
+      - {phrase: "padding is thick", count: 1}
+      - {phrase: "thick", count: 1}
+      - {phrase: "nice and thick", count: 1}
+      - {phrase: "thicker feeling fabric", count: 1}
+      - {phrase: "muy delgados", count: 1}
+      - {phrase: "band in really thick", count: 1}
+    sample_reviews: ['APP-005734', 'APP-003906', 'APP-014702', 'APP-016067', 'APP-003874']
+
+  - key: stitching
+    label_zh: 走线/缝合
+    total: 34
+    positive_count: 10
+    negative_count: 24
+    neutral_count: 0
+    negative_rate: 70.6%
+    top_phrases:
+      - {phrase: "straps are loud and squeak", count: 1}
+      - {phrase: "bra pads are sewn in so they don't shift", count: 1}
+      - {phrase: "nipple support padding folded", count: 1}
+      - {phrase: "no seems that bother your skin", count: 1}
+      - {phrase: "no scratchy feeling threads", count: 1}
+      - {phrase: "band under cups rolls up", count: 1}
+      - {phrase: "neat, soft and well made", count: 1}
+      - {phrase: "Straps don't stay", count: 1}
+      - {phrase: "a row comes undone", count: 1}
+      - {phrase: "points where the straps attach quickly started rubbing me", count: 1}
+    sample_reviews: ['APP-016980', 'APP-017052', 'APP-018218', 'APP-005876', 'APP-003774']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 21
+    positive_count: 6
+    negative_count: 15
+    neutral_count: 0
+    negative_rate: 71.4%
+    top_phrases:
+      - {phrase: "one side of the bra came so twisted up on the straps it had what looked like per", count: 1}
+      - {phrase: "damage to the padding of the bra", count: 1}
+      - {phrase: "both of them were in opened boxes and they were both damaged", count: 1}
+      - {phrase: "padding to be all creased", count: 1}
+      - {phrase: "came with a dent in one of the cups", count: 1}
+      - {phrase: "arrives rolled up in a small box so the pads on the inside are dented", count: 1}
+      - {phrase: "cervir a tiempo", count: 1}
+      - {phrase: "quickest delivery", count: 1}
+      - {phrase: "damaged because of the product being rolled up in the packaging", count: 1}
+      - {phrase: "came 2days earlier", count: 1}
+    sample_reviews: ['APP-018580', 'APP-015539', 'APP-003610', 'APP-018799', 'APP-004097']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 21
+    positive_count: 10
+    negative_count: 10
+    neutral_count: 1
+    negative_rate: 47.6%
+    top_phrases:
+      - {phrase: "Called Amazon and they replaced them with next day delivery", count: 1}
+      - {phrase: "Easy and Free returns", count: 1}
+      - {phrase: "returning was a pain", count: 1}
+      - {phrase: "Returned with no issue", count: 1}
+      - {phrase: "not returnable", count: 1}
+      - {phrase: "return process", count: 1}
+      - {phrase: "tried twice to contact the manufacturer with no luck", count: 1}
+      - {phrase: "missed the return window", count: 1}
+      - {phrase: "they promptly sent me extension back hooks", count: 1}
+      - {phrase: "request a replacement specifying that it must be brand new", count: 1}
+    sample_reviews: ['APP-003610', 'APP-005869', 'APP-004097', 'APP-014686', 'APP-014867']
+
+  - key: smell
+    label_zh: 异味
+    total: 12
+    positive_count: 2
+    negative_count: 10
+    neutral_count: 0
+    negative_rate: 83.3%
+    top_phrases:
+      - {phrase: "smells incredibly strong of acetone", count: 1}
+      - {phrase: "SMELLED OF CIGARETTE SMOKE", count: 1}
+      - {phrase: "No weird odors", count: 1}
+      - {phrase: "getting moldy and stinky", count: 1}
+      - {phrase: "strong chemical smell", count: 1}
+      - {phrase: "no tiene aroma", count: 1}
+      - {phrase: "had deodorant stains on it", count: 1}
+      - {phrase: "smelled completely like tobacco/cigarette smoke", count: 1}
+      - {phrase: "smelt of body odor", count: 1}
+      - {phrase: "Smell like smoke", count: 1}
+    sample_reviews: ['APP-016381', 'APP-016546', 'APP-018231', 'APP-015733', 'APP-018714']
+
+  - key: length
+    label_zh: 长度
+    total: 12
+    positive_count: 3
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 75.0%
+    top_phrases:
+      - {phrase: "band area was a little longer", count: 1}
+      - {phrase: "strap length is perfect", count: 1}
+      - {phrase: "If the back of the bra was longer, it might help", count: 1}
+      - {phrase: "too short", count: 1}
+      - {phrase: "shoulder straps were too long", count: 1}
+      - {phrase: "boob to shoulder was too long", count: 1}
+      - {phrase: "straps not long enough", count: 1}
+      - {phrase: "Extender is only 1 inch added length", count: 1}
+      - {phrase: "cup felt really long", count: 1}
+      - {phrase: "length of the band", count: 1}
+    sample_reviews: ['APP-015661', 'APP-003662', 'APP-005914', 'APP-005558', 'APP-005743']
+
+  - key: pattern
+    label_zh: 图案/印花
+    total: 3
+    positive_count: 2
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "pattern through my shirts", count: 1}
+      - {phrase: "leopard pattern doesn't look cheap", count: 1}
+      - {phrase: "nice patterns", count: 1}
+    sample_reviews: ['APP-005684', 'APP-017752', 'APP-018670']

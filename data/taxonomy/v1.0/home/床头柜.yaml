@@ -1,0 +1,404 @@
+# 床头柜 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-06 09:47:44
+sub_category: 床头柜
+aspect_count: 20
+aspects:
+  - key: assembly
+    label_zh: 组装难度
+    total: 2959
+    positive_count: 2514
+    negative_count: 367
+    neutral_count: 78
+    negative_rate: 12.4%
+    top_phrases:
+      - {phrase: "easy to put together", count: 364}
+      - {phrase: "easy to assemble", count: 356}
+      - {phrase: "Easy to assemble", count: 256}
+      - {phrase: "Easy to put together", count: 168}
+      - {phrase: "very easy to put together", count: 63}
+      - {phrase: "Easy assembly", count: 61}
+      - {phrase: "very easy to assemble", count: 59}
+      - {phrase: "easy to build", count: 50}
+      - {phrase: "Easy to build", count: 36}
+      - {phrase: "Very easy to assemble", count: 34}
+    sample_reviews: ['FUR-005053', 'FUR-005051', 'FUR-005052', 'FUR-005054', 'FUR-005055']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 2568
+    positive_count: 1450
+    negative_count: 1025
+    neutral_count: 93
+    negative_rate: 39.9%
+    top_phrases:
+      - {phrase: "perfect size", count: 59}
+      - {phrase: "small", count: 44}
+      - {phrase: "Perfect size", count: 34}
+      - {phrase: "very small", count: 32}
+      - {phrase: "smaller than expected", count: 31}
+      - {phrase: "smaller than I expected", count: 25}
+      - {phrase: "Small", count: 24}
+      - {phrase: "Very small", count: 20}
+      - {phrase: "smaller than I thought", count: 17}
+      - {phrase: "too small", count: 16}
+    sample_reviews: ['FUR-005051', 'FUR-005052', 'FUR-005054', 'FUR-005058', 'FUR-005060']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 2065
+    positive_count: 1890
+    negative_count: 149
+    neutral_count: 26
+    negative_rate: 7.2%
+    top_phrases:
+      - {phrase: "cute", count: 99}
+      - {phrase: "looks great", count: 93}
+      - {phrase: "looks nice", count: 56}
+      - {phrase: "Looks great", count: 38}
+      - {phrase: "look great", count: 29}
+      - {phrase: "Cute", count: 27}
+      - {phrase: "looks good", count: 27}
+      - {phrase: "very cute", count: 23}
+      - {phrase: "super cute", count: 22}
+      - {phrase: "nice", count: 19}
+    sample_reviews: ['FUR-005054', 'FUR-005057', 'FUR-005055', 'FUR-005056', 'FUR-005064']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 1423
+    positive_count: 1033
+    negative_count: 304
+    neutral_count: 86
+    negative_rate: 21.4%
+    top_phrases:
+      - {phrase: "great price", count: 27}
+      - {phrase: "affordable", count: 23}
+      - {phrase: "great value", count: 19}
+      - {phrase: "not worth the money", count: 19}
+      - {phrase: "great for the price", count: 18}
+      - {phrase: "cheap", count: 18}
+      - {phrase: "Great value", count: 18}
+      - {phrase: "worth the money", count: 16}
+      - {phrase: "Great price", count: 15}
+      - {phrase: "good for the price", count: 14}
+    sample_reviews: ['FUR-005052', 'FUR-005057', 'FUR-005055', 'FUR-005056', 'FUR-005059']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 1323
+    positive_count: 541
+    negative_count: 756
+    neutral_count: 26
+    negative_rate: 57.1%
+    top_phrases:
+      - {phrase: "good quality", count: 41}
+      - {phrase: "Good quality", count: 34}
+      - {phrase: "cheaply made", count: 28}
+      - {phrase: "well made", count: 26}
+      - {phrase: "great quality", count: 19}
+      - {phrase: "Great quality", count: 16}
+      - {phrase: "flimsy", count: 12}
+      - {phrase: "Well made", count: 9}
+      - {phrase: "quality", count: 9}
+      - {phrase: "poor quality", count: 8}
+    sample_reviews: ['FUR-005057', 'FUR-005064', 'FUR-005062', 'FUR-005069', 'FUR-005073']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 1170
+    positive_count: 1058
+    negative_count: 103
+    neutral_count: 9
+    negative_rate: 8.8%
+    top_phrases:
+      - {phrase: "functional", count: 28}
+      - {phrase: "very functional", count: 16}
+      - {phrase: "charging station", count: 11}
+      - {phrase: "easy to move around", count: 8}
+      - {phrase: "convenient", count: 7}
+      - {phrase: "easy to move", count: 7}
+      - {phrase: "works great", count: 6}
+      - {phrase: "easy to clean", count: 6}
+      - {phrase: "very convenient", count: 6}
+      - {phrase: "lightweight", count: 5}
+    sample_reviews: ['FUR-005060', 'FUR-005063', 'FUR-005071', 'FUR-005080', 'FUR-005086']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 1084
+    positive_count: 876
+    negative_count: 199
+    neutral_count: 9
+    negative_rate: 18.4%
+    top_phrases:
+      - {phrase: "sturdy", count: 246}
+      - {phrase: "very sturdy", count: 115}
+      - {phrase: "Sturdy", count: 54}
+      - {phrase: "Very sturdy", count: 34}
+      - {phrase: "pretty sturdy", count: 31}
+      - {phrase: "stable", count: 12}
+      - {phrase: "feels sturdy", count: 9}
+      - {phrase: "sturdy enough", count: 9}
+      - {phrase: "not sturdy", count: 9}
+      - {phrase: "very stable", count: 8}
+    sample_reviews: ['FUR-005053', 'FUR-005051', 'FUR-005060', 'FUR-005062', 'FUR-005066']
+
+  - key: material
+    label_zh: 材质用料
+    total: 741
+    positive_count: 140
+    negative_count: 463
+    neutral_count: 138
+    negative_rate: 62.5%
+    top_phrases:
+      - {phrase: "fabric drawers", count: 31}
+      - {phrase: "drawers are fabric", count: 20}
+      - {phrase: "cloth drawers", count: 18}
+      - {phrase: "drawers are cloth", count: 12}
+      - {phrase: "buen material", count: 7}
+      - {phrase: "drawers are not wood", count: 5}
+      - {phrase: "drawers are made of fabric", count: 5}
+      - {phrase: "cheap material", count: 5}
+      - {phrase: "drawers are cardboard", count: 5}
+      - {phrase: "legs are plastic", count: 4}
+    sample_reviews: ['FUR-005053', 'FUR-005054', 'FUR-005057', 'FUR-005055', 'FUR-005061']
+
+  - key: missing_parts
+    label_zh: 缺件
+    total: 519
+    positive_count: 121
+    negative_count: 394
+    neutral_count: 4
+    negative_rate: 75.9%
+    top_phrases:
+      - {phrase: "missing parts", count: 20}
+      - {phrase: "no missing parts", count: 11}
+      - {phrase: "missing pieces", count: 8}
+      - {phrase: "Missing parts", count: 7}
+      - {phrase: "missing screws", count: 6}
+      - {phrase: "No missing parts", count: 5}
+      - {phrase: "no missing pieces", count: 4}
+      - {phrase: "All parts were there", count: 3}
+      - {phrase: "no hardware", count: 3}
+      - {phrase: "missing a part", count: 3}
+    sample_reviews: ['FUR-005107', 'FUR-005137', 'FUR-005143', 'FUR-005154', 'FUR-005158']
+
+  - key: instructions
+    label_zh: 说明书
+    total: 505
+    positive_count: 318
+    negative_count: 167
+    neutral_count: 20
+    negative_rate: 33.1%
+    top_phrases:
+      - {phrase: "clear instructions", count: 9}
+      - {phrase: "instructions were easy to follow", count: 9}
+      - {phrase: "good instructions", count: 6}
+      - {phrase: "no instructions", count: 6}
+      - {phrase: "directions were easy to follow", count: 5}
+      - {phrase: "instructions are clear", count: 5}
+      - {phrase: "instructions were clear", count: 5}
+      - {phrase: "Instructions were easy to follow", count: 4}
+      - {phrase: "following the instructions", count: 4}
+      - {phrase: "Instructions were clear", count: 4}
+    sample_reviews: ['FUR-005051', 'FUR-005052', 'FUR-005055', 'FUR-005056', 'FUR-005059']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 425
+    positive_count: 202
+    negative_count: 208
+    neutral_count: 15
+    negative_rate: 48.9%
+    top_phrases:
+      - {phrase: "durable", count: 15}
+      - {phrase: "resistente", count: 5}
+      - {phrase: "very durable", count: 5}
+      - {phrase: "very sturdy", count: 4}
+      - {phrase: "scratch resistant", count: 4}
+      - {phrase: "strong", count: 3}
+      - {phrase: "flimsy", count: 3}
+      - {phrase: "fuertes", count: 2}
+      - {phrase: "durability", count: 2}
+      - {phrase: "holding up very well", count: 2}
+    sample_reviews: ['FUR-005053', 'FUR-005052', 'FUR-005054', 'FUR-005058', 'FUR-005067']
+
+  - key: other
+    label_zh: 其他
+    total: 361
+    positive_count: 180
+    negative_count: 168
+    neutral_count: 13
+    negative_rate: 46.5%
+    top_phrases:
+      - {phrase: "lightweight", count: 3}
+      - {phrase: "love the lights", count: 2}
+      - {phrase: "charging station", count: 2}
+      - {phrase: "serves its purpose well", count: 2}
+      - {phrase: "extra outlets", count: 2}
+      - {phrase: "charging station installed", count: 1}
+      - {phrase: "advertise 2 plugs and 2 USB ports but need to use 1 USB port for lights", count: 1}
+      - {phrase: "incorporated charging station with USB ports and plugs", count: 1}
+      - {phrase: "perfect for devotional purposes", count: 1}
+      - {phrase: "modular", count: 1}
+    sample_reviews: ['FUR-005097', 'FUR-005143', 'FUR-005233', 'FUR-005247', 'FUR-005260']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 259
+    positive_count: 68
+    negative_count: 191
+    neutral_count: 0
+    negative_rate: 73.7%
+    top_phrases:
+      - {phrase: "came damaged", count: 8}
+      - {phrase: "arrived damaged", count: 4}
+      - {phrase: "Came broken", count: 3}
+      - {phrase: "came broken", count: 3}
+      - {phrase: "delivered quickly", count: 3}
+      - {phrase: "fast shipping", count: 3}
+      - {phrase: "Fast delivery", count: 2}
+      - {phrase: "Fast shipping", count: 2}
+      - {phrase: "Came damaged", count: 2}
+      - {phrase: "quick delivery", count: 2}
+    sample_reviews: ['FUR-005051', 'FUR-005059', 'FUR-005065', 'FUR-005083', 'FUR-005119']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 174
+    positive_count: 73
+    negative_count: 92
+    neutral_count: 9
+    negative_rate: 52.9%
+    top_phrases:
+      - {phrase: "great customer service", count: 2}
+      - {phrase: "excellent customer service", count: 2}
+      - {phrase: "manufacturer replaced it with no fuss", count: 1}
+      - {phrase: "customer service sent replacement part", count: 1}
+      - {phrase: "Seller offered me a partial refund", count: 1}
+      - {phrase: "can't get to customer support", count: 1}
+      - {phrase: "company reached out and made a sincere effort", count: 1}
+      - {phrase: "impossible to get a hold of anybody", count: 1}
+      - {phrase: "reached out to the seller and they have not yet returned my call", count: 1}
+      - {phrase: "correspondence was quick, then 2 weeks go by", count: 1}
+    sample_reviews: ['FUR-005083', 'FUR-005165', 'FUR-005192', 'FUR-005253', 'FUR-005281']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 143
+    positive_count: 63
+    negative_count: 71
+    neutral_count: 9
+    negative_rate: 49.7%
+    top_phrases:
+      - {phrase: "hold a good amount of items", count: 2}
+      - {phrase: "not for heavy storage", count: 2}
+      - {phrase: "can't put anything too heavy in them", count: 2}
+      - {phrase: "not heavy", count: 2}
+      - {phrase: "ability to hold quite a bit", count: 1}
+      - {phrase: "can fit quite a few clothes", count: 1}
+      - {phrase: "holds her electronics great", count: 1}
+      - {phrase: "each drawer can hold two reams of copy paper", count: 1}
+      - {phrase: "no para poner cosas pesadas", count: 1}
+      - {phrase: "Weight is quite light", count: 1}
+    sample_reviews: ['FUR-005053', 'FUR-005058', 'FUR-005121', 'FUR-005125', 'FUR-005144']
+
+  - key: packaging
+    label_zh: 包装
+    total: 139
+    positive_count: 93
+    negative_count: 36
+    neutral_count: 10
+    negative_rate: 25.9%
+    top_phrases:
+      - {phrase: "well packaged", count: 5}
+      - {phrase: "Well packaged", count: 3}
+      - {phrase: "poor packaging", count: 2}
+      - {phrase: "packaged well", count: 2}
+      - {phrase: "packed well", count: 2}
+      - {phrase: "open box", count: 2}
+      - {phrase: "packaged nicely", count: 2}
+      - {phrase: "well-packaged", count: 1}
+      - {phrase: "one had been repackaged and drawer front was up against hardware", count: 1}
+      - {phrase: "very well packed", count: 1}
+    sample_reviews: ['FUR-005059', 'FUR-005065', 'FUR-005095', 'FUR-005123', 'FUR-005133']
+
+  - key: color_accuracy
+    label_zh: 颜色还原度
+    total: 116
+    positive_count: 68
+    negative_count: 46
+    neutral_count: 2
+    negative_rate: 39.7%
+    top_phrases:
+      - {phrase: "color", count: 4}
+      - {phrase: "perfect color", count: 3}
+      - {phrase: "great color", count: 2}
+      - {phrase: "color is beautiful", count: 2}
+      - {phrase: "Nice color", count: 2}
+      - {phrase: "colors will not match. One dresser is much darker than the other", count: 1}
+      - {phrase: "coloration difference between the drawers and the nightstand", count: 1}
+      - {phrase: "color definitely matched the picture", count: 1}
+      - {phrase: "very dark color", count: 1}
+      - {phrase: "expected the entire shelf to be white not just the top portion", count: 1}
+    sample_reviews: ['FUR-005060', 'FUR-005061', 'FUR-005145', 'FUR-005183', 'FUR-005300']
+
+  - key: smell
+    label_zh: 异味
+    total: 59
+    positive_count: 15
+    negative_count: 42
+    neutral_count: 2
+    negative_rate: 71.2%
+    top_phrases:
+      - {phrase: "no smell", count: 2}
+      - {phrase: "weird smell", count: 2}
+      - {phrase: "doesn't have an odor", count: 1}
+      - {phrase: "small odor that has dissipated", count: 1}
+      - {phrase: "smell is STILL there", count: 1}
+      - {phrase: "no overwhelming smell", count: 1}
+      - {phrase: "no smells", count: 1}
+      - {phrase: "didn't notice any smell", count: 1}
+      - {phrase: "no weird smell upon opening", count: 1}
+      - {phrase: "No smell surprisingly", count: 1}
+    sample_reviews: ['FUR-005056', 'FUR-005092', 'FUR-005095', 'FUR-005120', 'FUR-005123']
+
+  - key: safety
+    label_zh: 安全性
+    total: 43
+    positive_count: 10
+    negative_count: 33
+    neutral_count: 0
+    negative_rate: 76.7%
+    top_phrases:
+      - {phrase: "sharp metal can cause damage to skin", count: 1}
+      - {phrase: "outlet was HOTTTT and you could smell it", count: 1}
+      - {phrase: "no stopper to prevent drawers from falling out", count: 1}
+      - {phrase: "table corner protectors (and wall attachments if you need them!)", count: 1}
+      - {phrase: "Has a stop in the back so the drawers want slide out the back", count: 1}
+      - {phrase: "no cover for the plugs", count: 1}
+      - {phrase: "toxic smell messing up hormones & endocrine system", count: 1}
+      - {phrase: "anti-tip strap", count: 1}
+      - {phrase: "No way will I put that on baby now", count: 1}
+      - {phrase: "worried about drink spills", count: 1}
+    sample_reviews: ['FUR-005154', 'FUR-005192', 'FUR-005197', 'FUR-005277', 'FUR-005305']
+
+  - key: comfort
+    label_zh: 舒适度
+    total: 19
+    positive_count: 19
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "muy cómoda", count: 2}
+      - {phrase: "cómodo", count: 2}
+      - {phrase: "cómoda", count: 2}
+      - {phrase: "convenient for elderly or those with mobility issues", count: 1}
+      - {phrase: "soft glow that creates a cozy nighttime atmosphere", count: 1}
+      - {phrase: "Muy cómoda", count: 1}
+      - {phrase: "top shelf height is very comfortable", count: 1}
+      - {phrase: "Muy cómodas", count: 1}
+      - {phrase: "Muy cómodo", count: 1}
+      - {phrase: "muy cómodo", count: 1}
+    sample_reviews: ['FUR-005505', 'FUR-005698', 'FUR-005747', 'FUR-005780', 'FUR-006066']

@@ -1,0 +1,19 @@
+# 3C 配件 Aspect Taxonomy Delta 词典 v1.0
+# 设计参考: Shulex 3C 调研 + 平板/阅读器/流媒体/充电配件/手机配件/耳机音频 等子品类需求
+# 用途: 与 base.yaml 合并后供 extract_taxonomy_generic.py 使用
+
+extends: base.yaml
+category: 3C
+category_label: 3C 配件
+
+delta_aspects:
+  # 性能体验类(3C 核心)
+  - {key: sound_quality, label_zh: 音质}              # 耳机/音箱/话筒
+  - {key: charging_speed, label_zh: 充电速度}          # 充电器/充电宝
+  - {key: battery_life, label_zh: 续航}
+  - {key: connectivity, label_zh: 连接稳定性}          # 蓝牙/Wi-Fi/USB
+  - {key: compatibility, label_zh: 兼容性}            # iOS/安卓/PC
+  - {key: latency, label_zh: 延迟}
+  # 使用体验类
+  - {key: comfort, label_zh: 佩戴舒适度}              # 耳机/手柄
+  - {key: portability, label_zh: 便携性}

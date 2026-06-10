@@ -1,0 +1,282 @@
+# Baby Non Slip Socks Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:42:45
+sub_category: Baby Non Slip Socks
+aspect_count: 15
+aspects:
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 239
+    positive_count: 174
+    negative_count: 57
+    neutral_count: 8
+    negative_rate: 23.8%
+    top_phrases:
+      - {phrase: "true to size", count: 6}
+      - {phrase: "stay on", count: 5}
+      - {phrase: "fit well", count: 5}
+      - {phrase: "Great fit", count: 3}
+      - {phrase: "fit perfectly", count: 3}
+      - {phrase: "fit perfect", count: 3}
+      - {phrase: "fit great", count: 3}
+      - {phrase: "run big", count: 2}
+      - {phrase: "Good fit", count: 2}
+      - {phrase: "great fit", count: 2}
+    sample_reviews: ['BABY-000063', 'BABY-003355', 'BABY-002169', 'BABY-002087', 'BABY-002319']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 132
+    positive_count: 105
+    negative_count: 23
+    neutral_count: 4
+    negative_rate: 17.4%
+    top_phrases:
+      - {phrase: "durable", count: 6}
+      - {phrase: "last long", count: 2}
+      - {phrase: "hold up well", count: 2}
+      - {phrase: "don't shrink", count: 2}
+      - {phrase: "stay on", count: 2}
+      - {phrase: "super durable sock", count: 1}
+      - {phrase: "Have been purchasing them since he was a baby", count: 1}
+      - {phrase: "grips on the bottom hold up for a long time", count: 1}
+      - {phrase: "grips have not left any marks on his feet after wearing them all day", count: 1}
+      - {phrase: "still to early to know", count: 1}
+    sample_reviews: ['BABY-000063', 'BABY-002326', 'BABY-003232', 'BABY-003355', 'BABY-000308']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 120
+    positive_count: 112
+    negative_count: 8
+    neutral_count: 0
+    negative_rate: 6.7%
+    top_phrases:
+      - {phrase: "Great quality", count: 24}
+      - {phrase: "Good quality", count: 13}
+      - {phrase: "good quality", count: 13}
+      - {phrase: "great quality", count: 10}
+      - {phrase: "quality is great", count: 4}
+      - {phrase: "muy buena calidad", count: 3}
+      - {phrase: "nice quality", count: 2}
+      - {phrase: "Best quality around", count: 1}
+      - {phrase: "work awesome", count: 1}
+      - {phrase: "Amazing quality", count: 1}
+    sample_reviews: ['BABY-002108', 'BABY-002116', 'BABY-002094', 'BABY-002097', 'BABY-002246']
+
+  - key: safety
+    label_zh: 安全性
+    total: 118
+    positive_count: 115
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 2.5%
+    top_phrases:
+      - {phrase: "non-slip", count: 3}
+      - {phrase: "grips on the bottom", count: 3}
+      - {phrase: "slip resistance", count: 2}
+      - {phrase: "slip resistant", count: 2}
+      - {phrase: "non slip", count: 2}
+      - {phrase: "grips on the bottom which are great because they are slip resistant", count: 1}
+      - {phrase: "would not slip when running around the house most importantly the stairs", count: 1}
+      - {phrase: "grip friendly socks", count: 1}
+      - {phrase: "grippy soles keep her from slipping", count: 1}
+      - {phrase: "really helps with grip", count: 1}
+    sample_reviews: ['BABY-000063', 'BABY-002326', 'BABY-002169', 'BABY-002319', 'BABY-000308']
+
+  - key: material
+    label_zh: 材质用料
+    total: 116
+    positive_count: 101
+    negative_count: 14
+    neutral_count: 1
+    negative_rate: 12.1%
+    top_phrases:
+      - {phrase: "soft", count: 10}
+      - {phrase: "super soft", count: 4}
+      - {phrase: "comfortable", count: 3}
+      - {phrase: "comfy", count: 3}
+      - {phrase: "Soft", count: 3}
+      - {phrase: "warm", count: 2}
+      - {phrase: "soft and comfortable", count: 2}
+      - {phrase: "thick but not too thick", count: 2}
+      - {phrase: "good thickness", count: 2}
+      - {phrase: "Very comfortable", count: 2}
+    sample_reviews: ['BABY-000063', 'BABY-003355', 'BABY-002094', 'BABY-000308', 'BABY-002313']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 93
+    positive_count: 89
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 4.3%
+    top_phrases:
+      - {phrase: "good grip", count: 5}
+      - {phrase: "great grip", count: 4}
+      - {phrase: "grip is strong", count: 2}
+      - {phrase: "stay in place", count: 2}
+      - {phrase: "help my grandson skiddadle without slipping", count: 1}
+      - {phrase: "nonslip really holds him up", count: 1}
+      - {phrase: "grip is great for walkers", count: 1}
+      - {phrase: "caminar sin resbalarse", count: 1}
+      - {phrase: "great rubber bottom", count: 1}
+      - {phrase: "runs through the house and these socks allow him to do that without slipping", count: 1}
+    sample_reviews: ['BABY-002191', 'BABY-003355', 'BABY-000116', 'BABY-002152', 'BABY-002092']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 88
+    positive_count: 83
+    negative_count: 3
+    neutral_count: 2
+    negative_rate: 3.4%
+    top_phrases:
+      - {phrase: "cute", count: 9}
+      - {phrase: "adorable", count: 2}
+      - {phrase: "variety of colors", count: 2}
+      - {phrase: "basic colors", count: 2}
+      - {phrase: "Cute colors", count: 2}
+      - {phrase: "awesome colors", count: 2}
+      - {phrase: "look great", count: 2}
+      - {phrase: "held up their color and haven't faded", count: 1}
+      - {phrase: "ankle socks so you can't really see them in sneakers", count: 1}
+      - {phrase: "Nice colors", count: 1}
+    sample_reviews: ['BABY-002099', 'BABY-000063', 'BABY-002094', 'BABY-000116', 'BABY-002097']
+
+  - key: age_appropriate
+    label_zh: 适用年龄
+    total: 70
+    positive_count: 60
+    negative_count: 7
+    neutral_count: 3
+    negative_rate: 10.0%
+    top_phrases:
+      - {phrase: "perfect for my 1 year old", count: 1}
+      - {phrase: "perfect for that crawling/walking stage", count: 1}
+      - {phrase: "for my newborn until she was about 6 months", count: 1}
+      - {phrase: "since my 3 year old started walking", count: 1}
+      - {phrase: "Perfectos para los niños", count: 1}
+      - {phrase: "Perfect for a running toddler", count: 1}
+      - {phrase: "Perfect for my 1 year old", count: 1}
+      - {phrase: "helped tremendously", count: 1}
+      - {phrase: "for your busy toddler", count: 1}
+      - {phrase: "recommend until age 5", count: 1}
+    sample_reviews: ['BABY-002169', 'BABY-000078', 'BABY-002093', 'BABY-000425', 'BABY-003378']
+
+  - key: other
+    label_zh: 其他
+    total: 66
+    positive_count: 53
+    negative_count: 12
+    neutral_count: 1
+    negative_rate: 18.2%
+    top_phrases:
+      - {phrase: "comfortable", count: 2}
+      - {phrase: "fast delivery", count: 2}
+      - {phrase: "no more sock matching or lone single socks", count: 1}
+      - {phrase: "extra heel cushion", count: 1}
+      - {phrase: "non slip works well", count: 1}
+      - {phrase: "Gripper are the best", count: 1}
+      - {phrase: "great", count: 1}
+      - {phrase: "grip on these", count: 1}
+      - {phrase: "non slip grip", count: 1}
+      - {phrase: "grip", count: 1}
+    sample_reviews: ['BABY-002087', 'BABY-000116', 'BABY-003313', 'BABY-003394', 'BABY-002105']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 49
+    positive_count: 44
+    negative_count: 4
+    neutral_count: 1
+    negative_rate: 8.2%
+    top_phrases:
+      - {phrase: "stay on", count: 2}
+      - {phrase: "comfortable", count: 2}
+      - {phrase: "easy to put on", count: 2}
+      - {phrase: "extra long tab in the back so shoes don't rub on the back of their ankles", count: 1}
+      - {phrase: "No issue with putting shoes on with these socks", count: 1}
+      - {phrase: "makes laundry a breeze", count: 1}
+      - {phrase: "Very comfy", count: 1}
+      - {phrase: "Slip grips are perfect", count: 1}
+      - {phrase: "stay on well without slipping off easily", count: 1}
+      - {phrase: "go one easy", count: 1}
+    sample_reviews: ['BABY-002147', 'BABY-002326', 'BABY-002087', 'BABY-003406', 'BABY-002240']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 44
+    positive_count: 41
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 6.8%
+    top_phrases:
+      - {phrase: "Good value", count: 2}
+      - {phrase: "worth the money", count: 2}
+      - {phrase: "Great deal", count: 2}
+      - {phrase: "Great value", count: 2}
+      - {phrase: "great value", count: 2}
+      - {phrase: "Great option for the price and how many come with", count: 1}
+      - {phrase: "great value for the money", count: 1}
+      - {phrase: "very reasonable price", count: 1}
+      - {phrase: "a bit expensive", count: 1}
+      - {phrase: "Pricing was not bad", count: 1}
+    sample_reviews: ['BABY-002147', 'BABY-003232', 'BABY-003355', 'BABY-002173', 'BABY-003364']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 15
+    positive_count: 14
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 6.7%
+    top_phrases:
+      - {phrase: "wash well", count: 4}
+      - {phrase: "Socks remain soft after washing", count: 1}
+      - {phrase: "washable", count: 1}
+      - {phrase: "lavar en lavadora y secadora miles de veces y se mantienen bien", count: 1}
+      - {phrase: "clean really well", count: 1}
+      - {phrase: "wash up great", count: 1}
+      - {phrase: "could not longer be used after the first wash", count: 1}
+      - {phrase: "wash really well", count: 1}
+      - {phrase: "Super easy to wash", count: 1}
+      - {phrase: "easy to clean", count: 1}
+    sample_reviews: ['BABY-003383', 'BABY-002311', 'BABY-002139', 'BABY-003298', 'BABY-002280']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 3
+    positive_count: 2
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "excellent service", count: 2}
+      - {phrase: "seller had been honest about the content", count: 1}
+    sample_reviews: ['BABY-002116', 'BABY-000436', 'BABY-002288']
+
+  - key: packaging
+    label_zh: 包装
+    total: 3
+    positive_count: 1
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "packaging had no label indicating the size", count: 1}
+      - {phrase: "package was not wrapped", count: 1}
+      - {phrase: "All appears to be in order in the package", count: 1}
+    sample_reviews: ['BABY-003224', 'BABY-003336', 'BABY-003218']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 3
+    positive_count: 1
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "shipping label on the exposed gift", count: 1}
+      - {phrase: "Venían dos pares rotos", count: 1}
+      - {phrase: "Shipping fast", count: 1}
+    sample_reviews: ['BABY-003336', 'BABY-002196', 'BABY-002198']

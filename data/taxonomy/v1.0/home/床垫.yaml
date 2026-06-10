@@ -1,0 +1,404 @@
+# 床垫 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-06 09:47:44
+sub_category: 床垫
+aspect_count: 20
+aspects:
+  - key: comfort
+    label_zh: 舒适度
+    total: 7087
+    positive_count: 4884
+    negative_count: 2059
+    neutral_count: 144
+    negative_rate: 29.1%
+    top_phrases:
+      - {phrase: "very comfortable", count: 347}
+      - {phrase: "comfortable", count: 286}
+      - {phrase: "Very comfortable", count: 204}
+      - {phrase: "so comfortable", count: 91}
+      - {phrase: "Comfortable", count: 84}
+      - {phrase: "super comfortable", count: 61}
+      - {phrase: "very firm", count: 50}
+      - {phrase: "comfy", count: 49}
+      - {phrase: "extremely comfortable", count: 47}
+      - {phrase: "firm", count: 43}
+    sample_reviews: ['FUR-003460', 'FUR-003460', 'FUR-003461', 'FUR-003463', 'FUR-003462']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 2496
+    positive_count: 1910
+    negative_count: 511
+    neutral_count: 75
+    negative_rate: 20.5%
+    top_phrases:
+      - {phrase: "great price", count: 58}
+      - {phrase: "Great price", count: 37}
+      - {phrase: "great value", count: 33}
+      - {phrase: "affordable", count: 33}
+      - {phrase: "Great value", count: 26}
+      - {phrase: "worth the money", count: 23}
+      - {phrase: "Great for the price", count: 22}
+      - {phrase: "worth every penny", count: 21}
+      - {phrase: "good price", count: 19}
+      - {phrase: "for the price", count: 19}
+    sample_reviews: ['FUR-003460', 'FUR-003461', 'FUR-003463', 'FUR-003462', 'FUR-003466']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 2003
+    positive_count: 945
+    negative_count: 926
+    neutral_count: 132
+    negative_rate: 46.2%
+    top_phrases:
+      - {phrase: "Perfect size", count: 12}
+      - {phrase: "fit perfectly", count: 12}
+      - {phrase: "perfect size", count: 11}
+      - {phrase: "fits perfectly", count: 10}
+      - {phrase: "true to size", count: 9}
+      - {phrase: "perfect fit", count: 9}
+      - {phrase: "thin", count: 8}
+      - {phrase: "size is perfect", count: 7}
+      - {phrase: "too thin", count: 7}
+      - {phrase: "good size", count: 6}
+    sample_reviews: ['FUR-003466', 'FUR-003465', 'FUR-003464', 'FUR-003473', 'FUR-003472']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 1348
+    positive_count: 846
+    negative_count: 495
+    neutral_count: 7
+    negative_rate: 36.7%
+    top_phrases:
+      - {phrase: "good quality", count: 73}
+      - {phrase: "great quality", count: 46}
+      - {phrase: "Great quality", count: 41}
+      - {phrase: "Good quality", count: 38}
+      - {phrase: "quality", count: 35}
+      - {phrase: "well made", count: 33}
+      - {phrase: "very good quality", count: 17}
+      - {phrase: "high quality", count: 13}
+      - {phrase: "Excellent quality", count: 11}
+      - {phrase: "very well made", count: 10}
+    sample_reviews: ['FUR-003470', 'FUR-003480', 'FUR-003476', 'FUR-003477', 'FUR-003491']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 1283
+    positive_count: 508
+    negative_count: 708
+    neutral_count: 67
+    negative_rate: 55.2%
+    top_phrases:
+      - {phrase: "durable", count: 28}
+      - {phrase: "very durable", count: 14}
+      - {phrase: "sturdy", count: 6}
+      - {phrase: "no sagging", count: 5}
+      - {phrase: "holding up very well", count: 4}
+      - {phrase: "built to last", count: 4}
+      - {phrase: "Durable", count: 4}
+      - {phrase: "held up well", count: 4}
+      - {phrase: "held up", count: 4}
+      - {phrase: "seems very durable", count: 3}
+    sample_reviews: ['FUR-003466', 'FUR-003473', 'FUR-003482', 'FUR-003476', 'FUR-003490']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 1012
+    positive_count: 925
+    negative_count: 69
+    neutral_count: 18
+    negative_rate: 6.8%
+    top_phrases:
+      - {phrase: "easy to set up", count: 55}
+      - {phrase: "Easy to set up", count: 19}
+      - {phrase: "very easy to set up", count: 11}
+      - {phrase: "easy to unpack", count: 10}
+      - {phrase: "easy to move around", count: 8}
+      - {phrase: "easy to use", count: 8}
+      - {phrase: "Easy to unpack", count: 7}
+      - {phrase: "easy to unbox", count: 6}
+      - {phrase: "lightweight", count: 6}
+      - {phrase: "easy to clean", count: 6}
+    sample_reviews: ['FUR-003461', 'FUR-003463', 'FUR-003462', 'FUR-003467', 'FUR-003471']
+
+  - key: smell
+    label_zh: 异味
+    total: 698
+    positive_count: 495
+    negative_count: 162
+    neutral_count: 41
+    negative_rate: 23.2%
+    top_phrases:
+      - {phrase: "no smell", count: 56}
+      - {phrase: "No smell", count: 23}
+      - {phrase: "no weird smell", count: 15}
+      - {phrase: "no odor", count: 13}
+      - {phrase: "no chemical smell", count: 9}
+      - {phrase: "no weird smells", count: 6}
+      - {phrase: "chemical smell", count: 6}
+      - {phrase: "no bad smell", count: 5}
+      - {phrase: "no odors", count: 5}
+      - {phrase: "No smells", count: 5}
+    sample_reviews: ['FUR-003462', 'FUR-003465', 'FUR-003464', 'FUR-003467', 'FUR-003472']
+
+  - key: material
+    label_zh: 材质用料
+    total: 686
+    positive_count: 333
+    negative_count: 320
+    neutral_count: 33
+    negative_rate: 46.6%
+    top_phrases:
+      - {phrase: "memory foam", count: 25}
+      - {phrase: "fiberglass", count: 14}
+      - {phrase: "memory foam mattress", count: 4}
+      - {phrase: "feel the springs", count: 4}
+      - {phrase: "leaking fiberglass", count: 4}
+      - {phrase: "firm mattress", count: 4}
+      - {phrase: "no springs", count: 3}
+      - {phrase: "soft material", count: 3}
+      - {phrase: "gel memory foam", count: 3}
+      - {phrase: "contains fiberglass", count: 3}
+    sample_reviews: ['FUR-003460', 'FUR-003461', 'FUR-003470', 'FUR-003468', 'FUR-003474']
+
+  - key: other
+    label_zh: 其他
+    total: 632
+    positive_count: 196
+    negative_count: 399
+    neutral_count: 37
+    negative_rate: 63.1%
+    top_phrases:
+      - {phrase: "back pain", count: 4}
+      - {phrase: "never fully expanded", count: 3}
+      - {phrase: "misleading description", count: 3}
+      - {phrase: "worst mattress I’ve ever purchased", count: 2}
+      - {phrase: "back problems", count: 2}
+      - {phrase: "noise level", count: 2}
+      - {phrase: "removable and washable cover", count: 2}
+      - {phrase: "not cooling", count: 2}
+      - {phrase: "false advertisement", count: 2}
+      - {phrase: "very firm", count: 2}
+    sample_reviews: ['FUR-003470', 'FUR-003482', 'FUR-003502', 'FUR-003504', 'FUR-003518']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 503
+    positive_count: 121
+    negative_count: 362
+    neutral_count: 20
+    negative_rate: 72.0%
+    top_phrases:
+      - {phrase: "very good customer service", count: 3}
+      - {phrase: "hard to return", count: 2}
+      - {phrase: "no response", count: 2}
+      - {phrase: "impossible to return", count: 2}
+      - {phrase: "outstanding customer service", count: 2}
+      - {phrase: "return policy", count: 2}
+      - {phrase: "reached out about stain and they fixed the issue right away, Customer service wa", count: 1}
+      - {phrase: "free old mattress pickup", count: 1}
+      - {phrase: "contacted the company, but they couldn't help me", count: 1}
+      - {phrase: "Amazon CS was super helpful", count: 1}
+    sample_reviews: ['FUR-003468', 'FUR-003501', 'FUR-003520', 'FUR-003579', 'FUR-003586']
+
+  - key: packaging
+    label_zh: 包装
+    total: 489
+    positive_count: 294
+    negative_count: 95
+    neutral_count: 100
+    negative_rate: 19.4%
+    top_phrases:
+      - {phrase: "well packaged", count: 16}
+      - {phrase: "packaged well", count: 6}
+      - {phrase: "came in a box", count: 6}
+      - {phrase: "very well packaged", count: 3}
+      - {phrase: "well-packaged", count: 3}
+      - {phrase: "good packaging", count: 3}
+      - {phrase: "vacuum sealed", count: 3}
+      - {phrase: "Well packaged", count: 3}
+      - {phrase: "Packaging was great", count: 2}
+      - {phrase: "conveniently packaged", count: 2}
+    sample_reviews: ['FUR-003474', 'FUR-003471', 'FUR-003484', 'FUR-003496', 'FUR-003493']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 440
+    positive_count: 273
+    negative_count: 158
+    neutral_count: 9
+    negative_rate: 35.9%
+    top_phrases:
+      - {phrase: "Fast shipping", count: 9}
+      - {phrase: "arrived quickly", count: 9}
+      - {phrase: "fast shipping", count: 5}
+      - {phrase: "fast delivery", count: 5}
+      - {phrase: "arrived fast", count: 4}
+      - {phrase: "quick delivery", count: 3}
+      - {phrase: "Shipping was quick", count: 3}
+      - {phrase: "shipped fast", count: 3}
+      - {phrase: "Arrived quickly", count: 3}
+      - {phrase: "came fast", count: 3}
+    sample_reviews: ['FUR-003463', 'FUR-003462', 'FUR-003464', 'FUR-003473', 'FUR-003481']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 414
+    positive_count: 172
+    negative_count: 240
+    neutral_count: 2
+    negative_rate: 58.0%
+    top_phrases:
+      - {phrase: "sturdy", count: 20}
+      - {phrase: "no edge support", count: 5}
+      - {phrase: "Sturdy", count: 5}
+      - {phrase: "stable", count: 3}
+      - {phrase: "really sturdy", count: 3}
+      - {phrase: "very sturdy", count: 3}
+      - {phrase: "very stable", count: 2}
+      - {phrase: "no noise", count: 2}
+      - {phrase: "roll to the middle", count: 2}
+      - {phrase: "edge support", count: 2}
+    sample_reviews: ['FUR-003483', 'FUR-003485', 'FUR-003527', 'FUR-003538', 'FUR-003554']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 254
+    positive_count: 199
+    negative_count: 52
+    neutral_count: 3
+    negative_rate: 20.5%
+    top_phrases:
+      - {phrase: "looks great", count: 9}
+      - {phrase: "looks good", count: 8}
+      - {phrase: "looks nice", count: 7}
+      - {phrase: "beautiful", count: 5}
+      - {phrase: "Beautiful", count: 5}
+      - {phrase: "Beautiful mattress", count: 4}
+      - {phrase: "Looks great", count: 4}
+      - {phrase: "look", count: 3}
+      - {phrase: "Looks good", count: 3}
+      - {phrase: "appearance", count: 3}
+    sample_reviews: ['FUR-003472', 'FUR-003479', 'FUR-003490', 'FUR-003503', 'FUR-003547']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 247
+    positive_count: 83
+    negative_count: 131
+    neutral_count: 33
+    negative_rate: 53.0%
+    top_phrases:
+      - {phrase: "heavy", count: 8}
+      - {phrase: "pretty heavy", count: 4}
+      - {phrase: "very heavy", count: 4}
+      - {phrase: "supportive", count: 2}
+      - {phrase: "muy pesado", count: 2}
+      - {phrase: "surprisingly light for its quality", count: 1}
+      - {phrase: "410 pounds", count: 1}
+      - {phrase: "wasn't heavy", count: 1}
+      - {phrase: "less than 180 pounds", count: 1}
+      - {phrase: "weight is heavy enough", count: 1}
+    sample_reviews: ['FUR-003471', 'FUR-003555', 'FUR-003585', 'FUR-003617', 'FUR-003626']
+
+  - key: safety
+    label_zh: 安全性
+    total: 228
+    positive_count: 47
+    negative_count: 178
+    neutral_count: 3
+    negative_rate: 78.1%
+    top_phrases:
+      - {phrase: "contains fiberglass", count: 8}
+      - {phrase: "CertiPUR-US certified", count: 6}
+      - {phrase: "leaking fiberglass", count: 4}
+      - {phrase: "fiberglass everywhere", count: 3}
+      - {phrase: "does not contain fiberglass", count: 2}
+      - {phrase: "fiberglass", count: 2}
+      - {phrase: "filled with fiberglass", count: 2}
+      - {phrase: "CertiPUR-US, safe and free from harmful chemicals", count: 1}
+      - {phrase: "CertiPUR-US certified, no harsh materials", count: 1}
+      - {phrase: "warning saying this mattress can cause cancer and reproductive harm", count: 1}
+    sample_reviews: ['FUR-003477', 'FUR-003478', 'FUR-003575', 'FUR-003583', 'FUR-003613']
+
+  - key: assembly
+    label_zh: 组装难度
+    total: 159
+    positive_count: 145
+    negative_count: 11
+    neutral_count: 3
+    negative_rate: 6.9%
+    top_phrases:
+      - {phrase: "Easy to install", count: 7}
+      - {phrase: "Easy to assemble", count: 6}
+      - {phrase: "easy to assemble", count: 5}
+      - {phrase: "easy setup", count: 5}
+      - {phrase: "easy to set up", count: 4}
+      - {phrase: "easy set up", count: 4}
+      - {phrase: "very easy to assemble", count: 3}
+      - {phrase: "Easy to put together", count: 3}
+      - {phrase: "easy to put together", count: 3}
+      - {phrase: "very easy to install", count: 3}
+    sample_reviews: ['FUR-003554', 'FUR-003585', 'FUR-003621', 'FUR-003748', 'FUR-003803']
+
+  - key: instructions
+    label_zh: 说明书
+    total: 64
+    positive_count: 29
+    negative_count: 12
+    neutral_count: 23
+    negative_rate: 18.8%
+    top_phrases:
+      - {phrase: "followed the instructions", count: 3}
+      - {phrase: "recommended to let it sit without using it for 24-48 hours in the instructions", count: 1}
+      - {phrase: "pay attention to the details in the pictures", count: 1}
+      - {phrase: "no instructions on or in the box", count: 1}
+      - {phrase: "Instructions are clear", count: 1}
+      - {phrase: "paper that will tell you how to open the mattress", count: 1}
+      - {phrase: "reading the instructions after 3 days I realized it has to be in a warm environm", count: 1}
+      - {phrase: "packaging had conflicting info", count: 1}
+      - {phrase: "waited the full 3 days as the instructions suggested", count: 1}
+      - {phrase: "instructions say it takes 72 hours to expand fully, it took much less", count: 1}
+    sample_reviews: ['FUR-003493', 'FUR-003621', 'FUR-003676', 'FUR-004777', 'FUR-012978']
+
+  - key: color_accuracy
+    label_zh: 颜色还原度
+    total: 23
+    positive_count: 6
+    negative_count: 17
+    neutral_count: 0
+    negative_rate: 73.9%
+    top_phrases:
+      - {phrase: "looks nothing like it when you buy it", count: 1}
+      - {phrase: "Pic is deceiving", count: 1}
+      - {phrase: "exactly as described", count: 1}
+      - {phrase: "color is spot on", count: 1}
+      - {phrase: "Just like the picture", count: 1}
+      - {phrase: "photos do not remotely resemble the item", count: 1}
+      - {phrase: "ad isn't accurate", count: 1}
+      - {phrase: "thickness doesn't match what's shown in the photos", count: 1}
+      - {phrase: "website says firm and their official website says medium. But it is extra firm", count: 1}
+      - {phrase: "color is very light and shows dirt easily", count: 1}
+    sample_reviews: ['FUR-004000', 'FUR-004016', 'FUR-004558', 'FUR-004626', 'FUR-004679']
+
+  - key: missing_parts
+    label_zh: 缺件
+    total: 13
+    positive_count: 0
+    negative_count: 13
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "only received one mattress", count: 1}
+      - {phrase: "me llegó solo el colchón", count: 1}
+      - {phrase: "missing pieces, covers missing too", count: 1}
+      - {phrase: "doesn't come with the cover & bag", count: 1}
+      - {phrase: "carrying case is not included", count: 1}
+      - {phrase: "part E doesn't fit into D or C", count: 1}
+      - {phrase: "ordered 2 only got 1", count: 1}
+      - {phrase: "never sent me a mattress topper", count: 1}
+      - {phrase: "came in different boxes and only one inflated all the way", count: 1}
+      - {phrase: "did not received frame", count: 1}
+    sample_reviews: ['FUR-003804', 'FUR-013963', 'FUR-014494', 'FUR-014555', 'FUR-014561']

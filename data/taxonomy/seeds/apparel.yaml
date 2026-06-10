@@ -1,0 +1,25 @@
+# 服装 Aspect Taxonomy Delta 词典 v1.0
+# 设计参考: 服装尺寸/面料/版型核心 + Shulex apparel 调研
+# 用途: 与 base.yaml 合并后供 extract_taxonomy_generic.py 使用
+
+extends: base.yaml
+category: apparel
+category_label: 服装
+
+delta_aspects:
+  # 尺寸 / 版型类(服装核心)
+  - {key: size_fit, label_zh: 尺寸匹配}              # 偏大/偏小/正合适
+  - {key: cut_fit, label_zh: 版型}                   # 修身/宽松/oversize
+  - {key: length, label_zh: 长度}                    # 衣长/裤长
+  # 面料 / 触感类
+  - {key: comfort, label_zh: 舒适度}
+  - {key: thickness, label_zh: 厚度}
+  - {key: stretchiness, label_zh: 弹性}
+  # 颜色 / 外观类
+  - {key: color_accuracy, label_zh: 颜色还原度}
+  - {key: pattern, label_zh: 图案/印花}
+  # 工艺类
+  - {key: stitching, label_zh: 走线/缝合}
+  # 异味 / 清洗类
+  - {key: smell, label_zh: 异味}
+  - {key: cleaning, label_zh: 易洗性}                # 洗后变形/掉色

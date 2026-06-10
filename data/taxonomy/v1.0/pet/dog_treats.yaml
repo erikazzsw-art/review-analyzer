@@ -1,0 +1,324 @@
+# Dog Treats Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Dog Treats
+aspect_count: 16
+aspects:
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 2113
+    positive_count: 1923
+    negative_count: 179
+    neutral_count: 11
+    negative_rate: 8.5%
+    top_phrases:
+      - {phrase: "My dog loves these", count: 79}
+      - {phrase: "My dog loves them", count: 56}
+      - {phrase: "dogs love them", count: 36}
+      - {phrase: "My dogs love these", count: 35}
+      - {phrase: "My dogs love them", count: 26}
+      - {phrase: "Dog loves them", count: 22}
+      - {phrase: "dogs love these", count: 22}
+      - {phrase: "Dogs love them", count: 21}
+      - {phrase: "loves these", count: 17}
+      - {phrase: "dog loves them", count: 15}
+    sample_reviews: ['PET-043646', 'PET-046862', 'PET-047204', 'PET-008826', 'PET-047731']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 609
+    positive_count: 378
+    negative_count: 225
+    neutral_count: 6
+    negative_rate: 36.9%
+    top_phrases:
+      - {phrase: "made my dog sick", count: 13}
+      - {phrase: "healthy", count: 10}
+      - {phrase: "Made my dog sick", count: 6}
+      - {phrase: "healthy treat", count: 5}
+      - {phrase: "made my dog throw up", count: 4}
+      - {phrase: "easy to digest", count: 3}
+      - {phrase: "healthy treats", count: 3}
+      - {phrase: "No stomach issues", count: 2}
+      - {phrase: "good for the teeth", count: 2}
+      - {phrase: "Healthy treat", count: 2}
+    sample_reviews: ['PET-046862', 'PET-003620', 'PET-005496', 'PET-006999', 'PET-005683']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 550
+    positive_count: 360
+    negative_count: 177
+    neutral_count: 13
+    negative_rate: 32.2%
+    top_phrases:
+      - {phrase: "Great price", count: 16}
+      - {phrase: "great price", count: 14}
+      - {phrase: "Good price", count: 12}
+      - {phrase: "Good value", count: 8}
+      - {phrase: "Great value", count: 8}
+      - {phrase: "great value", count: 8}
+      - {phrase: "good price", count: 6}
+      - {phrase: "expensive", count: 6}
+      - {phrase: "waste of money", count: 6}
+      - {phrase: "good value", count: 5}
+    sample_reviews: ['PET-043646', 'PET-039445', 'PET-049429', 'PET-001244', 'PET-043580']
+
+  - key: other
+    label_zh: 其他
+    total: 418
+    positive_count: 203
+    negative_count: 195
+    neutral_count: 20
+    negative_rate: 46.7%
+    top_phrases:
+      - {phrase: "made in Thailand", count: 2}
+      - {phrase: "Good product", count: 2}
+      - {phrase: "hard as rocks", count: 2}
+      - {phrase: "Arrived quickly", count: 2}
+      - {phrase: "stale", count: 2}
+      - {phrase: "made in China", count: 2}
+      - {phrase: "moths in the box", count: 2}
+      - {phrase: "Made in Thailand", count: 2}
+      - {phrase: "kabobs don't seem super hard as other brands", count: 1}
+      - {phrase: "timely delivery", count: 1}
+    sample_reviews: ['PET-039337', 'PET-034630', 'PET-048429', 'PET-045731', 'PET-029802']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 304
+    positive_count: 239
+    negative_count: 51
+    neutral_count: 14
+    negative_rate: 16.8%
+    top_phrases:
+      - {phrase: "very easy to use", count: 4}
+      - {phrase: "easy to chew", count: 4}
+      - {phrase: "Easy to use", count: 4}
+      - {phrase: "easy to use", count: 4}
+      - {phrase: "convenient", count: 3}
+      - {phrase: "easy to administer", count: 3}
+      - {phrase: "use them for training", count: 2}
+      - {phrase: "easy to break apart", count: 2}
+      - {phrase: "easy to break into smaller pieces", count: 2}
+      - {phrase: "great training tool", count: 2}
+    sample_reviews: ['PET-005683', 'PET-045731', 'PET-037091', 'PET-001244', 'PET-027630']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 298
+    positive_count: 185
+    negative_count: 93
+    neutral_count: 20
+    negative_rate: 31.2%
+    top_phrases:
+      - {phrase: "perfect size", count: 11}
+      - {phrase: "Perfect size", count: 7}
+      - {phrase: "small size", count: 6}
+      - {phrase: "perfect size for him", count: 6}
+      - {phrase: "Good size", count: 3}
+      - {phrase: "much smaller", count: 2}
+      - {phrase: "perfect size for training", count: 2}
+      - {phrase: "good size for him", count: 2}
+      - {phrase: "perfect size for her", count: 2}
+      - {phrase: "size is perfect", count: 2}
+    sample_reviews: ['PET-008826', 'PET-029675', 'PET-037091', 'PET-001244', 'PET-027630']
+
+  - key: smell
+    label_zh: 异味
+    total: 199
+    positive_count: 113
+    negative_count: 77
+    neutral_count: 9
+    negative_rate: 38.7%
+    top_phrases:
+      - {phrase: "smell great", count: 3}
+      - {phrase: "smell delicious", count: 3}
+      - {phrase: "no smell", count: 3}
+      - {phrase: "smell good", count: 3}
+      - {phrase: "bad smell", count: 2}
+      - {phrase: "smell them through the box", count: 2}
+      - {phrase: "not so delightful smell", count: 1}
+      - {phrase: "smell is quite strong and sweet", count: 1}
+      - {phrase: "smell of peanut butter", count: 1}
+      - {phrase: "Smells like birthday cake", count: 1}
+    sample_reviews: ['PET-037091', 'PET-001244', 'PET-030380', 'PET-045483', 'PET-034056']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 170
+    positive_count: 106
+    negative_count: 60
+    neutral_count: 4
+    negative_rate: 35.3%
+    top_phrases:
+      - {phrase: "last a long time", count: 4}
+      - {phrase: "lasts a long time", count: 4}
+      - {phrase: "don't last long", count: 3}
+      - {phrase: "last a while", count: 3}
+      - {phrase: "not long lasting", count: 2}
+      - {phrase: "last long", count: 2}
+      - {phrase: "long lasting", count: 2}
+      - {phrase: "don't last very long", count: 2}
+      - {phrase: "lasted longer", count: 1}
+      - {phrase: "They last our 13lb dog the same amount of time to chew as other similar treats- ", count: 1}
+    sample_reviews: ['PET-006999', 'PET-048652', 'PET-001358', 'PET-030979', 'PET-049546']
+
+  - key: safety
+    label_zh: 安全性
+    total: 169
+    positive_count: 31
+    negative_count: 137
+    neutral_count: 1
+    negative_rate: 81.1%
+    top_phrases:
+      - {phrase: "choking hazard", count: 5}
+      - {phrase: "made my dog vomit", count: 2}
+      - {phrase: "made my dog sick", count: 2}
+      - {phrase: "dogs got sick, throwing up", count: 1}
+      - {phrase: "Who knows what is in these things", count: 1}
+      - {phrase: "not made of raw hide which can be very dangerous/unsafe and unhealthy", count: 1}
+      - {phrase: "safe, choke-free alternative", count: 1}
+      - {phrase: "dog very sick from them", count: 1}
+      - {phrase: "full of preservatives that are banned in most of the rest of the world", count: 1}
+      - {phrase: "made both of our dogs sick", count: 1}
+    sample_reviews: ['PET-003620', 'PET-029802', 'PET-007012', 'PET-030954', 'PET-039541']
+
+  - key: packaging
+    label_zh: 包装
+    total: 146
+    positive_count: 38
+    negative_count: 101
+    neutral_count: 7
+    negative_rate: 69.2%
+    top_phrases:
+      - {phrase: "Packaged well", count: 2}
+      - {phrase: "non-returnable item", count: 1}
+      - {phrase: "packaged well", count: 1}
+      - {phrase: "came in a ton of little pieces", count: 1}
+      - {phrase: "giant box that saves me from having to buy so frequently", count: 1}
+      - {phrase: "package only contained 2", count: 1}
+      - {phrase: "opening this box", count: 1}
+      - {phrase: "Bag had tears in it", count: 1}
+      - {phrase: "Too many broken pieces", count: 1}
+      - {phrase: "fully sealed", count: 1}
+    sample_reviews: ['PET-002598', 'PET-034630', 'PET-047320', 'PET-033930', 'PET-008983']
+
+  - key: material
+    label_zh: 材质用料
+    total: 129
+    positive_count: 87
+    negative_count: 41
+    neutral_count: 1
+    negative_rate: 31.8%
+    top_phrases:
+      - {phrase: "soft", count: 3}
+      - {phrase: "not rawhide", count: 2}
+      - {phrase: "quality ingredients", count: 2}
+      - {phrase: "pure ingredients", count: 2}
+      - {phrase: "fresh", count: 2}
+      - {phrase: "very soft", count: 2}
+      - {phrase: "natural ingredients", count: 2}
+      - {phrase: "uniquely chicken, duck, and chicken liver", count: 1}
+      - {phrase: "I think this one is rawhide which she doesn't like", count: 1}
+      - {phrase: "only one ingredient", count: 1}
+    sample_reviews: ['PET-039337', 'PET-005832', 'PET-048652', 'PET-037143', 'PET-009088']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 118
+    positive_count: 56
+    negative_count: 62
+    neutral_count: 0
+    negative_rate: 52.5%
+    top_phrases:
+      - {phrase: "good quality", count: 4}
+      - {phrase: "quality", count: 3}
+      - {phrase: "great quality", count: 3}
+      - {phrase: "high quality", count: 2}
+      - {phrase: "well made", count: 2}
+      - {phrase: "Good quality", count: 2}
+      - {phrase: "quality of the biscuit is very good", count: 1}
+      - {phrase: "dried out, crumbly and many broken into pieces", count: 1}
+      - {phrase: "trust the quality of these Greenies", count: 1}
+      - {phrase: "It doesn't thread in and it doesn't thread out", count: 1}
+    sample_reviews: ['PET-008826', 'PET-002598', 'PET-008836', 'PET-001358', 'PET-034056']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 118
+    positive_count: 5
+    negative_count: 112
+    neutral_count: 1
+    negative_rate: 94.9%
+    top_phrases:
+      - {phrase: "broken", count: 2}
+      - {phrase: "broken in 1/2 or 1/3 pieces", count: 1}
+      - {phrase: "came all smashed", count: 1}
+      - {phrase: "BROKEN INTO PIECES", count: 1}
+      - {phrase: "broken into a million pieces", count: 1}
+      - {phrase: "fast shipping", count: 1}
+      - {phrase: "mishandled during delivery", count: 1}
+      - {phrase: "60% of the bones in the box were broken", count: 1}
+      - {phrase: "Everything broken upon delivery", count: 1}
+      - {phrase: "often come broken in the package", count: 1}
+    sample_reviews: ['PET-047674', 'PET-045586', 'PET-009154', 'PET-004192', 'PET-026647']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 66
+    positive_count: 14
+    negative_count: 49
+    neutral_count: 3
+    negative_rate: 74.2%
+    top_phrases:
+      - {phrase: "no returns", count: 2}
+      - {phrase: "customer service is fantastic", count: 1}
+      - {phrase: "no refunds", count: 1}
+      - {phrase: "charged for 3 but the package only contained 2", count: 1}
+      - {phrase: "doesn't allow returns", count: 1}
+      - {phrase: "no way to contact you", count: 1}
+      - {phrase: "customer service is top-notch and they went above and beyond", count: 1}
+      - {phrase: "refuse to let me return it", count: 1}
+      - {phrase: "looking for a refund", count: 1}
+      - {phrase: "good delivery service", count: 1}
+    sample_reviews: ['PET-030358', 'PET-047320', 'PET-008983', 'PET-045586', 'PET-045586']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 60
+    positive_count: 46
+    negative_count: 13
+    neutral_count: 1
+    negative_rate: 21.7%
+    top_phrases:
+      - {phrase: "doesn't make a mess", count: 2}
+      - {phrase: "do not leave a mess", count: 2}
+      - {phrase: "no mess", count: 2}
+      - {phrase: "don't think they do a stellar job of cleaning their teeth", count: 1}
+      - {phrase: "don't leave any mess or crumbs behind", count: 1}
+      - {phrase: "leave crumbles everywhere", count: 1}
+      - {phrase: "cleans his teeth", count: 1}
+      - {phrase: "cleaning the dog's teeth", count: 1}
+      - {phrase: "never left stains on the carpet", count: 1}
+      - {phrase: "clean your pups teeth", count: 1}
+    sample_reviews: ['PET-021049', 'PET-033712', 'PET-029797', 'PET-040104', 'PET-049335']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 30
+    positive_count: 15
+    negative_count: 14
+    neutral_count: 1
+    negative_rate: 46.7%
+    top_phrases:
+      - {phrase: "beautiful", count: 1}
+      - {phrase: "chicken is black and sweet potatos are dark brown", count: 1}
+      - {phrase: "appearance is great", count: 1}
+      - {phrase: "appearance is nice", count: 1}
+      - {phrase: "dark green", count: 1}
+      - {phrase: "darker green color for the mint flavor", count: 1}
+      - {phrase: "full of wrinkles", count: 1}
+      - {phrase: "looked like scraps", count: 1}
+      - {phrase: "Looks nothing like the photo", count: 1}
+      - {phrase: "variety in flavors is nice", count: 1}
+    sample_reviews: ['PET-049384', 'PET-008905', 'PET-003549', 'PET-023106', 'PET-006280']

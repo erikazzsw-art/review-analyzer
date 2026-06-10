@@ -1,0 +1,298 @@
+# Allergy Immune Bites Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Allergy Immune Bites
+aspect_count: 15
+aspects:
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 1538
+    positive_count: 958
+    negative_count: 561
+    neutral_count: 19
+    negative_rate: 36.5%
+    top_phrases:
+      - {phrase: "made my dog sick", count: 6}
+      - {phrase: "good for her", count: 4}
+      - {phrase: "less itching", count: 4}
+      - {phrase: "works", count: 4}
+      - {phrase: "helping", count: 4}
+      - {phrase: "helped my dog", count: 3}
+      - {phrase: "did absolutely nothing for my dog", count: 3}
+      - {phrase: "didn't help my dog", count: 2}
+      - {phrase: "did not help my dog", count: 2}
+      - {phrase: "Helps my dog", count: 2}
+    sample_reviews: ['PET-006282', 'PET-001675', 'PET-024417', 'PET-045359', 'PET-045342']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 881
+    positive_count: 664
+    negative_count: 211
+    neutral_count: 6
+    negative_rate: 24.0%
+    top_phrases:
+      - {phrase: "My dog loves them", count: 16}
+      - {phrase: "My dog loves these", count: 15}
+      - {phrase: "loves the taste", count: 11}
+      - {phrase: "my dog loves it", count: 8}
+      - {phrase: "my dog loves them", count: 7}
+      - {phrase: "My dogs love it", count: 7}
+      - {phrase: "My dog loves it", count: 7}
+      - {phrase: "dog loves them", count: 6}
+      - {phrase: "liked the taste", count: 6}
+      - {phrase: "love the taste", count: 6}
+    sample_reviews: ['PET-030331', 'PET-030722', 'PET-030081', 'PET-001679', 'PET-024481']
+
+  - key: other
+    label_zh: 其他
+    total: 378
+    positive_count: 99
+    negative_count: 235
+    neutral_count: 44
+    negative_rate: 62.2%
+    top_phrases:
+      - {phrase: "does not work", count: 5}
+      - {phrase: "doesn't work", count: 5}
+      - {phrase: "didn't work", count: 5}
+      - {phrase: "work great", count: 2}
+      - {phrase: "didn't help at all", count: 2}
+      - {phrase: "did not work at all", count: 2}
+      - {phrase: "help with itching", count: 2}
+      - {phrase: "Does not work", count: 2}
+      - {phrase: "Doesn't work", count: 2}
+      - {phrase: "fast shipping", count: 2}
+    sample_reviews: ['PET-030193', 'PET-030331', 'PET-045351', 'PET-024713', 'PET-030722']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 209
+    positive_count: 76
+    negative_count: 130
+    neutral_count: 3
+    negative_rate: 62.2%
+    top_phrases:
+      - {phrase: "waste of money", count: 17}
+      - {phrase: "Waste of money", count: 14}
+      - {phrase: "expensive", count: 4}
+      - {phrase: "Don't waste your money", count: 4}
+      - {phrase: "great price", count: 3}
+      - {phrase: "Not worth the money", count: 3}
+      - {phrase: "worth the money", count: 2}
+      - {phrase: "not worth the money", count: 2}
+      - {phrase: "not cheap", count: 2}
+      - {phrase: "Waste of Money", count: 2}
+    sample_reviews: ['PET-024713', 'PET-003563', 'PET-008398', 'PET-024429', 'PET-045461']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 139
+    positive_count: 57
+    negative_count: 77
+    neutral_count: 5
+    negative_rate: 55.4%
+    top_phrases:
+      - {phrase: "Great customer service", count: 2}
+      - {phrase: "won't let me return", count: 2}
+      - {phrase: "company very courtesy offered me a replacement or a refund", count: 1}
+      - {phrase: "return request was rejected", count: 1}
+      - {phrase: "cannot be returned", count: 1}
+      - {phrase: "customer service reached out and offered a refund or replacement", count: 1}
+      - {phrase: "company reached out to me by email asking if I wanted a refund", count: 1}
+      - {phrase: "not returnable", count: 1}
+      - {phrase: "not returnable even if unopened", count: 1}
+      - {phrase: "product was not returnable", count: 1}
+    sample_reviews: ['PET-024713', 'PET-003591', 'PET-009043', 'PET-004170', 'PET-009051']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 93
+    positive_count: 67
+    negative_count: 18
+    neutral_count: 8
+    negative_rate: 19.4%
+    top_phrases:
+      - {phrase: "Easy to give", count: 2}
+      - {phrase: "easy to give", count: 2}
+      - {phrase: "Easy to administer", count: 2}
+      - {phrase: "easy to use", count: 2}
+      - {phrase: "soft and chewable", count: 1}
+      - {phrase: "very easy to smash in her food", count: 1}
+      - {phrase: "Easy to use", count: 1}
+      - {phrase: "incredibly hard and ends up in broken fingernails", count: 1}
+      - {phrase: "took a butcher knife and pliers to open it", count: 1}
+      - {phrase: "lid does not go back on easily", count: 1}
+    sample_reviews: ['PET-001679', 'PET-045446', 'PET-030512', 'PET-045500', 'PET-007099']
+
+  - key: safety
+    label_zh: 安全性
+    total: 85
+    positive_count: 9
+    negative_count: 76
+    neutral_count: 0
+    negative_rate: 89.4%
+    top_phrases:
+      - {phrase: "lost a lot of fur and scabs from scratching", count: 1}
+      - {phrase: "side effects especially for senior dogs", count: 1}
+      - {phrase: "Not safe for human consumption", count: 1}
+      - {phrase: "made our corgi sick, vomiting, lethargic, anemia", count: 1}
+      - {phrase: "made my dog start vomiting and she had diarrhea", count: 1}
+      - {phrase: "Almost killed my 14 year old dog", count: 1}
+      - {phrase: "made my dog vomit, fever, lethargic & panting", count: 1}
+      - {phrase: "couldn’t walk within 24 hours of her first dose", count: 1}
+      - {phrase: "vomiting and wouldn’t eat anything", count: 1}
+      - {phrase: "way too strong for my dogs", count: 1}
+    sample_reviews: ['PET-045342', 'PET-003591', 'PET-029916', 'PET-007137', 'PET-004172']
+
+  - key: smell
+    label_zh: 异味
+    total: 72
+    positive_count: 24
+    negative_count: 45
+    neutral_count: 3
+    negative_rate: 62.5%
+    top_phrases:
+      - {phrase: "smell like something they love", count: 1}
+      - {phrase: "smell was a little strong", count: 1}
+      - {phrase: "corn chip smell went away", count: 1}
+      - {phrase: "STINKY LAMB", count: 1}
+      - {phrase: "don't have any type of attractive smell", count: 1}
+      - {phrase: "feet smell like corn chips", count: 1}
+      - {phrase: "smells disgusting", count: 1}
+      - {phrase: "doesn't have a foul odor", count: 1}
+      - {phrase: "slightly strong smell", count: 1}
+      - {phrase: "smell of these little love bites", count: 1}
+    sample_reviews: ['PET-030506', 'PET-030827', 'PET-001196', 'PET-007196', 'PET-029964']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 31
+    positive_count: 16
+    negative_count: 14
+    neutral_count: 1
+    negative_rate: 45.2%
+    top_phrases:
+      - {phrase: "great quality", count: 4}
+      - {phrase: "Good quality", count: 2}
+      - {phrase: "Quality of product great, soft chewable", count: 1}
+      - {phrase: "sturdy built", count: 1}
+      - {phrase: "quality is wonderful, they don't crumble", count: 1}
+      - {phrase: "Product looks bad like it’s molded", count: 1}
+      - {phrase: "very crumbly", count: 1}
+      - {phrase: "dry and crumbly, breaking up into powder", count: 1}
+      - {phrase: "excellent quality", count: 1}
+      - {phrase: "can crumble", count: 1}
+    sample_reviews: ['PET-024429', 'PET-030512', 'PET-000995', 'PET-000728', 'PET-007198']
+
+  - key: packaging
+    label_zh: 包装
+    total: 28
+    positive_count: 11
+    negative_count: 17
+    neutral_count: 0
+    negative_rate: 60.7%
+    top_phrases:
+      - {phrase: "Looks like it caught fire", count: 1}
+      - {phrase: "new opening mechanism is incredibly hard", count: 1}
+      - {phrase: "new container it came in was awful", count: 1}
+      - {phrase: "nice sturdy colorful plastic container with tight lid", count: 1}
+      - {phrase: "product expiring in a week", count: 1}
+      - {phrase: "getting the lid off takes tools", count: 1}
+      - {phrase: "Packaging is great", count: 1}
+      - {phrase: "packaging, delivery service and the product was all intact", count: 1}
+      - {phrase: "label needs an upgrade, difficult to read", count: 1}
+      - {phrase: "same number of bites but smaller jar", count: 1}
+    sample_reviews: ['PET-007151', 'PET-045500', 'PET-007099', 'PET-024288', 'PET-049500']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 25
+    positive_count: 11
+    negative_count: 13
+    neutral_count: 1
+    negative_rate: 52.0%
+    top_phrases:
+      - {phrase: "Perfect for small dogs", count: 1}
+      - {phrase: "Not Suitable for Dogs Under 10lbs", count: 1}
+      - {phrase: "smaller than before", count: 1}
+      - {phrase: "smaller", count: 1}
+      - {phrase: "just the right bite sized treat", count: 1}
+      - {phrase: "size is perfect for my two dogs", count: 1}
+      - {phrase: "A little larger than expected", count: 1}
+      - {phrase: "purchased the puppy sized ones", count: 1}
+      - {phrase: "pieces range in much smaller mis match sizes", count: 1}
+      - {phrase: "want it to be smaller", count: 1}
+    sample_reviews: ['PET-007156', 'PET-009042', 'PET-030552', 'PET-045338', 'PET-000728']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 20
+    positive_count: 7
+    negative_count: 13
+    neutral_count: 0
+    negative_rate: 65.0%
+    top_phrases:
+      - {phrase: "product arrived damaged from the inside", count: 1}
+      - {phrase: "came 18 days late", count: 1}
+      - {phrase: "came all crumbled", count: 1}
+      - {phrase: "llegada a tiempo", count: 1}
+      - {phrase: "takes forever to ship out", count: 1}
+      - {phrase: "Fast shipping", count: 1}
+      - {phrase: "came in crumbled condition", count: 1}
+      - {phrase: "fast shipping", count: 1}
+      - {phrase: "quickly they arrived", count: 1}
+      - {phrase: "took almost 3 weeks to Ship", count: 1}
+    sample_reviews: ['PET-007067', 'PET-007078', 'PET-024357', 'PET-030132', 'PET-029963']
+
+  - key: material
+    label_zh: 材质用料
+    total: 18
+    positive_count: 15
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 16.7%
+    top_phrases:
+      - {phrase: "soft", count: 1}
+      - {phrase: "covered in a white/gray powder", count: 1}
+      - {phrase: "quality ingredients", count: 1}
+      - {phrase: "Good texture", count: 1}
+      - {phrase: "bites are very soft", count: 1}
+      - {phrase: "high quality ingredients, no unnecessary fillers", count: 1}
+      - {phrase: "ingredients are great", count: 1}
+      - {phrase: "contains sugar (powdered cellulose)", count: 1}
+      - {phrase: "ingredients they use are simple & CLEAN", count: 1}
+      - {phrase: "Organic ingredients", count: 1}
+    sample_reviews: ['PET-007156', 'PET-009056', 'PET-045372', 'PET-024318', 'PET-030155']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 12
+    positive_count: 7
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 41.7%
+    top_phrases:
+      - {phrase: "cutest heart shaped", count: 1}
+      - {phrase: "Looks taste good", count: 1}
+      - {phrase: "looked old and chalky", count: 1}
+      - {phrase: "all white and discolored", count: 1}
+      - {phrase: "cute little heart shaped treats", count: 1}
+      - {phrase: "look old and dried out", count: 1}
+      - {phrase: "heart shape", count: 1}
+      - {phrase: "coat is much shinier and healthy looking", count: 1}
+      - {phrase: "heart shape of the vitamins", count: 1}
+      - {phrase: "keep her fur shiny", count: 1}
+    sample_reviews: ['PET-024288', 'PET-024711', 'PET-045406', 'PET-030654', 'PET-002587']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 4
+    positive_count: 3
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "not a long lasting solution", count: 1}
+      - {phrase: "excellent durability", count: 1}
+      - {phrase: "long lasting", count: 1}
+      - {phrase: "works great for several years", count: 1}
+    sample_reviews: ['PET-006295', 'PET-030020', 'PET-007142', 'PET-030777']

@@ -1,0 +1,273 @@
+# Unisex-Baby Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:42:45
+sub_category: Unisex-Baby
+aspect_count: 15
+aspects:
+  - key: material
+    label_zh: 材质用料
+    total: 137
+    positive_count: 123
+    negative_count: 10
+    neutral_count: 4
+    negative_rate: 7.3%
+    top_phrases:
+      - {phrase: "soft", count: 6}
+      - {phrase: "Great material", count: 4}
+      - {phrase: "Very soft", count: 3}
+      - {phrase: "Soft", count: 3}
+      - {phrase: "really soft", count: 2}
+      - {phrase: "super soft", count: 2}
+      - {phrase: "material is thin", count: 2}
+      - {phrase: "Nice material", count: 2}
+      - {phrase: "muy buena tela", count: 2}
+      - {phrase: "tela buena", count: 1}
+    sample_reviews: ['BABY-001686', 'BABY-000783', 'BABY-002496', 'BABY-002711', 'BABY-002550']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 109
+    positive_count: 86
+    negative_count: 20
+    neutral_count: 3
+    negative_rate: 18.3%
+    top_phrases:
+      - {phrase: "Perfect fit", count: 4}
+      - {phrase: "Fits great", count: 3}
+      - {phrase: "fits well", count: 3}
+      - {phrase: "true to size", count: 3}
+      - {phrase: "fits perfectly", count: 3}
+      - {phrase: "Fit perfect", count: 2}
+      - {phrase: "fit perfectly", count: 2}
+      - {phrase: "True to size", count: 2}
+      - {phrase: "part that buttons in between the legs is not as wide as most onsies", count: 1}
+      - {phrase: "too small", count: 1}
+    sample_reviews: ['BABY-002551', 'BABY-002551', 'BABY-001686', 'BABY-000181', 'BABY-000783']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 69
+    positive_count: 69
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "cute", count: 5}
+      - {phrase: "Super cute", count: 4}
+      - {phrase: "so cute", count: 3}
+      - {phrase: "adorable", count: 2}
+      - {phrase: "Hermosos", count: 2}
+      - {phrase: "clean white", count: 2}
+      - {phrase: "Fun designs", count: 1}
+      - {phrase: "soooo cuteeeee", count: 1}
+      - {phrase: "embroidery very well", count: 1}
+      - {phrase: "Cute", count: 1}
+    sample_reviews: ['BABY-001686', 'BABY-000769', 'BABY-000367', 'BABY-000787', 'BABY-002562']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 62
+    positive_count: 58
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 6.5%
+    top_phrases:
+      - {phrase: "good price", count: 3}
+      - {phrase: "great price", count: 3}
+      - {phrase: "Good value", count: 2}
+      - {phrase: "affordable", count: 2}
+      - {phrase: "great value", count: 2}
+      - {phrase: "quality and quantity for the price is great", count: 1}
+      - {phrase: "buena relación calidad precio", count: 1}
+      - {phrase: "económico", count: 1}
+      - {phrase: "Good for the price", count: 1}
+      - {phrase: "good purchase for summer", count: 1}
+    sample_reviews: ['BABY-001686', 'BABY-001551', 'BABY-000783', 'BABY-002534', 'BABY-000769']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 61
+    positive_count: 59
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 3.3%
+    top_phrases:
+      - {phrase: "Good quality", count: 8}
+      - {phrase: "good quality", count: 7}
+      - {phrase: "Great quality", count: 6}
+      - {phrase: "great quality", count: 5}
+      - {phrase: "well made", count: 3}
+      - {phrase: "buena calidad", count: 2}
+      - {phrase: "Buena calidad", count: 2}
+      - {phrase: "Awesome quality", count: 1}
+      - {phrase: "Perfect quality", count: 1}
+      - {phrase: "great under garment", count: 1}
+    sample_reviews: ['BABY-000724', 'BABY-000367', 'BABY-000701', 'BABY-002764', 'BABY-001278']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 39
+    positive_count: 37
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 5.1%
+    top_phrases:
+      - {phrase: "easy to put on", count: 3}
+      - {phrase: "layer under normal clothes perfectly", count: 1}
+      - {phrase: "snaps on bottom", count: 1}
+      - {phrase: "ease of dying", count: 1}
+      - {phrase: "functionality of the snap on buttons at the bottom", count: 1}
+      - {phrase: "easy to put on and remove", count: 1}
+      - {phrase: "easy to put on and take off", count: 1}
+      - {phrase: "easy to wear", count: 1}
+      - {phrase: "only have two snaps on the bottom instead of three", count: 1}
+      - {phrase: "Cómodos", count: 1}
+    sample_reviews: ['BABY-002551', 'BABY-000769', 'BABY-002724', 'BABY-000701', 'BABY-000692']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 27
+    positive_count: 23
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 14.8%
+    top_phrases:
+      - {phrase: "durable", count: 3}
+      - {phrase: "shrank on the first wash", count: 1}
+      - {phrase: "rip and fall apart very easily", count: 1}
+      - {phrase: "hold up well with the paint and don’t stretch out after hundreds of washes", count: 1}
+      - {phrase: "Does not experience shrinkage after wash", count: 1}
+      - {phrase: "hold up well after multiple washes", count: 1}
+      - {phrase: "kept their shape after being washed", count: 1}
+      - {phrase: "didn't shrink, fade or pill after repeat wears and washing", count: 1}
+      - {phrase: "held up to several washes", count: 1}
+      - {phrase: "don't lose their shape", count: 1}
+    sample_reviews: ['BABY-003652', 'BABY-001674', 'BABY-002534', 'BABY-000086', 'BABY-000692']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 22
+    positive_count: 20
+    negative_count: 1
+    neutral_count: 1
+    negative_rate: 4.5%
+    top_phrases:
+      - {phrase: "easy to wash", count: 2}
+      - {phrase: "wash well", count: 2}
+      - {phrase: "wash very well", count: 2}
+      - {phrase: "washes nice", count: 1}
+      - {phrase: "wash up nicely", count: 1}
+      - {phrase: "washed and dried good", count: 1}
+      - {phrase: "Great wash and wear", count: 1}
+      - {phrase: "wash up good", count: 1}
+      - {phrase: "get stains out easily", count: 1}
+      - {phrase: "washing was a breeze", count: 1}
+    sample_reviews: ['BABY-000769', 'BABY-002724', 'BABY-000787', 'BABY-000709', 'BABY-002481']
+
+  - key: other
+    label_zh: 其他
+    total: 16
+    positive_count: 12
+    negative_count: 3
+    neutral_count: 1
+    negative_rate: 18.8%
+    top_phrases:
+      - {phrase: "Llegaron menos mamelucos de los que dice la publicidad", count: 1}
+      - {phrase: "color off white vs bright white", count: 1}
+      - {phrase: "get most if not all stains out", count: 1}
+      - {phrase: "delivery time", count: 1}
+      - {phrase: "very warm for cold weather", count: 1}
+      - {phrase: "make baby onesies custom", count: 1}
+      - {phrase: "turned out great", count: 1}
+      - {phrase: "so warm", count: 1}
+      - {phrase: "Arrived on time", count: 1}
+      - {phrase: "Two onesies came stained", count: 1}
+    sample_reviews: ['BABY-000728', 'BABY-002517', 'BABY-002486', 'BABY-000685', 'BABY-000788']
+
+  - key: age_appropriate
+    label_zh: 适用年龄
+    total: 13
+    positive_count: 13
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "ami bebé le encanta", count: 1}
+      - {phrase: "básicas para bebés recién nacidos", count: 1}
+      - {phrase: "suitable for hot and cold weather", count: 1}
+      - {phrase: "on my 6 month old", count: 1}
+      - {phrase: "para niños de 2 años en adelante", count: 1}
+      - {phrase: "Excelentes para el verano", count: 1}
+      - {phrase: "for our 1 month baby boy", count: 1}
+      - {phrase: "2 & 1/2 months and 11 lbs and these 0-3 month onesies", count: 1}
+      - {phrase: "adequate para el bebe", count: 1}
+      - {phrase: "Great for new babies", count: 1}
+    sample_reviews: ['BABY-002496', 'BABY-000691', 'BABY-000141', 'BABY-001550', 'BABY-000719']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 9
+    positive_count: 6
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "timely delivery", count: 1}
+      - {phrase: "in good condition", count: 1}
+      - {phrase: "deluvered quickly", count: 1}
+      - {phrase: "only received the baby bottle", count: 1}
+      - {phrase: "package was delivered to the wrong address", count: 1}
+      - {phrase: "red stains on multiple", count: 1}
+      - {phrase: "Arrived in good condition", count: 1}
+      - {phrase: "speed in which it was shipped", count: 1}
+      - {phrase: "came three days before arrival time", count: 1}
+    sample_reviews: ['BABY-002711', 'BABY-000688', 'BABY-002529', 'BABY-002572', 'BABY-002720']
+
+  - key: packaging
+    label_zh: 包装
+    total: 3
+    positive_count: 2
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 33.3%
+    top_phrases:
+      - {phrase: "received my package in good clean condition", count: 1}
+      - {phrase: "mixture of new and old onesies were packaged together", count: 1}
+      - {phrase: "variety in the package", count: 1}
+    sample_reviews: ['BABY-002550', 'BABY-002749', 'BABY-001679']
+
+  - key: smell
+    label_zh: 异味
+    total: 3
+    positive_count: 0
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "strong odor of potpourri", count: 1}
+      - {phrase: "little smell", count: 1}
+      - {phrase: "Vino oliendo raro", count: 1}
+    sample_reviews: ['BABY-000184', 'BABY-003662', 'BABY-003713']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 2
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 1
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "started a return", count: 1}
+      - {phrase: "porquería de servicio", count: 1}
+    sample_reviews: ['BABY-002720', 'BABY-002728']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 2
+    positive_count: 2
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "very light weight", count: 1}
+      - {phrase: "light wear", count: 1}
+    sample_reviews: ['BABY-002554', 'BABY-000192']

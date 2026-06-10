@@ -1,0 +1,350 @@
+# Dog Chew Toy Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Dog Chew Toy
+aspect_count: 18
+aspects:
+  - key: durability
+    label_zh: 耐用性
+    total: 2005
+    positive_count: 698
+    negative_count: 1267
+    neutral_count: 40
+    negative_rate: 63.2%
+    top_phrases:
+      - {phrase: "durable", count: 22}
+      - {phrase: "Durable", count: 14}
+      - {phrase: "very durable", count: 12}
+      - {phrase: "Not durable", count: 12}
+      - {phrase: "not very durable", count: 9}
+      - {phrase: "not durable at all", count: 9}
+      - {phrase: "not durable", count: 8}
+      - {phrase: "didn't last long", count: 7}
+      - {phrase: "Very durable", count: 7}
+      - {phrase: "still intact", count: 7}
+    sample_reviews: ['PET-013070', 'PET-009339', 'PET-013991', 'PET-013912', 'PET-002692']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 1750
+    positive_count: 1657
+    negative_count: 84
+    neutral_count: 9
+    negative_rate: 4.8%
+    top_phrases:
+      - {phrase: "My dog loves it", count: 32}
+      - {phrase: "loves this toy", count: 24}
+      - {phrase: "my dog loves it", count: 20}
+      - {phrase: "loves it", count: 19}
+      - {phrase: "favorite toy", count: 17}
+      - {phrase: "Dog loves it", count: 17}
+      - {phrase: "dog loves it", count: 16}
+      - {phrase: "My dog loves this toy", count: 15}
+      - {phrase: "he loves it", count: 11}
+      - {phrase: "dog loves this toy", count: 9}
+    sample_reviews: ['PET-013070', 'PET-002802', 'PET-018116', 'PET-009339', 'PET-015351']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 446
+    positive_count: 186
+    negative_count: 258
+    neutral_count: 2
+    negative_rate: 57.8%
+    top_phrases:
+      - {phrase: "well made", count: 17}
+      - {phrase: "Well made", count: 12}
+      - {phrase: "Good quality", count: 12}
+      - {phrase: "good quality", count: 12}
+      - {phrase: "Great quality", count: 9}
+      - {phrase: "cheaply made", count: 8}
+      - {phrase: "poor quality", count: 7}
+      - {phrase: "high quality", count: 5}
+      - {phrase: "poorly made", count: 4}
+      - {phrase: "made well", count: 4}
+    sample_reviews: ['PET-013165', 'PET-013547', 'PET-013882', 'PET-004479', 'PET-012855']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 432
+    positive_count: 403
+    negative_count: 22
+    neutral_count: 7
+    negative_rate: 5.1%
+    top_phrases:
+      - {phrase: "cute", count: 57}
+      - {phrase: "Cute", count: 33}
+      - {phrase: "Cute toy", count: 23}
+      - {phrase: "super cute", count: 18}
+      - {phrase: "very cute", count: 14}
+      - {phrase: "cute toy", count: 13}
+      - {phrase: "adorable", count: 11}
+      - {phrase: "so cute", count: 9}
+      - {phrase: "Super cute", count: 9}
+      - {phrase: "really cute", count: 8}
+    sample_reviews: ['PET-015356', 'PET-013882', 'PET-011197', 'PET-002807', 'PET-011565']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 402
+    positive_count: 243
+    negative_count: 143
+    neutral_count: 16
+    negative_rate: 35.6%
+    top_phrases:
+      - {phrase: "waste of money", count: 17}
+      - {phrase: "Waste of money", count: 16}
+      - {phrase: "Great value", count: 9}
+      - {phrase: "great price", count: 9}
+      - {phrase: "Great price", count: 8}
+      - {phrase: "worth the money", count: 7}
+      - {phrase: "good price", count: 7}
+      - {phrase: "not worth the money", count: 6}
+      - {phrase: "Don't waste your money", count: 6}
+      - {phrase: "Save your money", count: 5}
+    sample_reviews: ['PET-018116', 'PET-015351', 'PET-013991', 'PET-014073', 'PET-015356']
+
+  - key: other
+    label_zh: 其他
+    total: 332
+    positive_count: 173
+    negative_count: 141
+    neutral_count: 18
+    negative_rate: 42.5%
+    top_phrases:
+      - {phrase: "crinkle sound", count: 6}
+      - {phrase: "has stuffing", count: 4}
+      - {phrase: "advertised as no stuffing but has stuffing", count: 2}
+      - {phrase: "squeaks", count: 2}
+      - {phrase: "no variety", count: 2}
+      - {phrase: "no stuffing", count: 2}
+      - {phrase: "crunchy sound", count: 2}
+      - {phrase: "nice crinkle sound", count: 2}
+      - {phrase: "picture is misleading", count: 2}
+      - {phrase: "crinkles and squeaks", count: 2}
+    sample_reviews: ['PET-013165', 'PET-015314', 'PET-001851', 'PET-011551', 'PET-015299']
+
+  - key: safety
+    label_zh: 安全性
+    total: 298
+    positive_count: 45
+    negative_count: 251
+    neutral_count: 2
+    negative_rate: 84.2%
+    top_phrases:
+      - {phrase: "choking hazard", count: 8}
+      - {phrase: "dog chewed off the felt portions and then tore through the other seam to get to ", count: 1}
+      - {phrase: "destroy the squeaker", count: 1}
+      - {phrase: "my dog had a hole in it, going for the squeaker", count: 1}
+      - {phrase: "Squeaker strongly secured inside", count: 1}
+      - {phrase: "possible choking hazard", count: 1}
+      - {phrase: "Plastic pieces inside are hazardous", count: 1}
+      - {phrase: "hairs come off easy", count: 1}
+      - {phrase: "squeaker easily pulled out", count: 1}
+      - {phrase: "Dog choked on the fur", count: 1}
+    sample_reviews: ['PET-013070', 'PET-013991', 'PET-013912', 'PET-002692', 'PET-004479']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 282
+    positive_count: 174
+    negative_count: 72
+    neutral_count: 36
+    negative_rate: 25.5%
+    top_phrases:
+      - {phrase: "perfect size", count: 11}
+      - {phrase: "great size", count: 6}
+      - {phrase: "Perfect size", count: 4}
+      - {phrase: "size is perfect", count: 4}
+      - {phrase: "Nice size", count: 3}
+      - {phrase: "tiny", count: 3}
+      - {phrase: "good size", count: 3}
+      - {phrase: "Great size", count: 3}
+      - {phrase: "size is great", count: 2}
+      - {phrase: "not for large dogs", count: 2}
+    sample_reviews: ['PET-002788', 'PET-009390', 'PET-013810', 'PET-002698', 'PET-014407']
+
+  - key: material
+    label_zh: 材质用料
+    total: 275
+    positive_count: 104
+    negative_count: 166
+    neutral_count: 5
+    negative_rate: 60.4%
+    top_phrases:
+      - {phrase: "soft", count: 16}
+      - {phrase: "very soft", count: 6}
+      - {phrase: "has stuffing", count: 6}
+      - {phrase: "stuffing", count: 5}
+      - {phrase: "Soft", count: 3}
+      - {phrase: "plastic inside", count: 3}
+      - {phrase: "Plastic inside", count: 2}
+      - {phrase: "soft material", count: 2}
+      - {phrase: "no stuffing", count: 2}
+      - {phrase: "crinkle material", count: 2}
+    sample_reviews: ['PET-013070', 'PET-013912', 'PET-014073', 'PET-004479', 'PET-013788']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 86
+    positive_count: 61
+    negative_count: 21
+    neutral_count: 4
+    negative_rate: 24.4%
+    top_phrases:
+      - {phrase: "no mess to clean up", count: 3}
+      - {phrase: "washes well", count: 2}
+      - {phrase: "wash it about once a week", count: 1}
+      - {phrase: "run it through the washer and it still looks like new", count: 1}
+      - {phrase: "clean up stuffing from the toys", count: 1}
+      - {phrase: "snowed stuffing all over my living room", count: 1}
+      - {phrase: "no stuffing", count: 1}
+      - {phrase: "not sure if it's easy to wash or keep clean", count: 1}
+      - {phrase: "goes thru laundry very well", count: 1}
+      - {phrase: "WASHABLE", count: 1}
+    sample_reviews: ['PET-018089', 'PET-001851', 'PET-004795', 'PET-002811', 'PET-014005']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 58
+    positive_count: 50
+    negative_count: 6
+    neutral_count: 2
+    negative_rate: 10.3%
+    top_phrases:
+      - {phrase: "easily hold them in his mouth", count: 1}
+      - {phrase: "soft and easy for her to play with", count: 1}
+      - {phrase: "easy to tote around", count: 1}
+      - {phrase: "easy for him to pick it up", count: 1}
+      - {phrase: "easy to carry", count: 1}
+      - {phrase: "able to open this duck with next to no effort", count: 1}
+      - {phrase: "easy to squeak", count: 1}
+      - {phrase: "Easy to carry", count: 1}
+      - {phrase: "Lightweight for her to easily toss around", count: 1}
+      - {phrase: "easy to find and perfectly soft enough for my puppy to make it squeak on his own", count: 1}
+    sample_reviews: ['PET-015818', 'PET-004305', 'PET-013549', 'PET-011684', 'PET-009576']
+
+  - key: smell
+    label_zh: 异味
+    total: 27
+    positive_count: 12
+    negative_count: 13
+    neutral_count: 2
+    negative_rate: 48.1%
+    top_phrases:
+      - {phrase: "doesn't smell", count: 2}
+      - {phrase: "no smell", count: 2}
+      - {phrase: "doesn't have that awful new toy smell", count: 1}
+      - {phrase: "no strange chemical odors", count: 1}
+      - {phrase: "very strong chemical odor", count: 1}
+      - {phrase: "Makes a very loud crinkle sound", count: 1}
+      - {phrase: "crunchy sound of the ears", count: 1}
+      - {phrase: "doesn't smell at all", count: 1}
+      - {phrase: "smelled awful", count: 1}
+      - {phrase: "maybe he did not like the taste", count: 1}
+    sample_reviews: ['PET-011197', 'PET-009390', 'PET-009976', 'PET-009841', 'PET-011262']
+
+  - key: packaging
+    label_zh: 包装
+    total: 25
+    positive_count: 4
+    negative_count: 18
+    neutral_count: 3
+    negative_rate: 72.0%
+    top_phrases:
+      - {phrase: "only received two of the three", count: 2}
+      - {phrase: "only received 3 instead of 4", count: 1}
+      - {phrase: "only got one in the package", count: 1}
+      - {phrase: "3 pack was open", count: 1}
+      - {phrase: "missing item", count: 1}
+      - {phrase: "opened the package", count: 1}
+      - {phrase: "packaging was good", count: 1}
+      - {phrase: "packaging did not indicate it was for aggressive chewers", count: 1}
+      - {phrase: "only two in the package", count: 1}
+      - {phrase: "incomplete orders", count: 1}
+    sample_reviews: ['PET-009835', 'PET-015226', 'PET-009919', 'PET-015371', 'PET-000887']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 21
+    positive_count: 11
+    negative_count: 9
+    neutral_count: 1
+    negative_rate: 42.9%
+    top_phrases:
+      - {phrase: "Came on time", count: 1}
+      - {phrase: "Order came when it said", count: 1}
+      - {phrase: "arrived quickly", count: 1}
+      - {phrase: "arrived on time", count: 1}
+      - {phrase: "damaged", count: 1}
+      - {phrase: "delivery was fast", count: 1}
+      - {phrase: "only recieved 1", count: 1}
+      - {phrase: "shipped and delivered fast", count: 1}
+      - {phrase: "delivered in 4 hrs", count: 1}
+      - {phrase: "toy was ripped open and missing half of the stuffed animal", count: 1}
+    sample_reviews: ['PET-011345', 'PET-015208', 'PET-013709', 'PET-002838', 'PET-012890']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 15
+    positive_count: 5
+    negative_count: 7
+    neutral_count: 3
+    negative_rate: 46.7%
+    top_phrases:
+      - {phrase: "return it (which was simple enough- Thank you!)", count: 1}
+      - {phrase: "did not receive an answer from seller", count: 1}
+      - {phrase: "did not respond when I asked", count: 1}
+      - {phrase: "The purple one was refunded, no return necessary. The blue one has to be returne", count: 1}
+      - {phrase: "no refund offered, they want the damaged bunny back", count: 1}
+      - {phrase: "contacting about a refund", count: 1}
+      - {phrase: "hoping seller provides refund or replacement", count: 1}
+      - {phrase: "They gave me a refund, which was really nice and I didn't have to return it", count: 1}
+      - {phrase: "Amazon makes it hard to write what you need to. Only canned answers.", count: 1}
+      - {phrase: "get in touch with the seller to see if it can be replaced", count: 1}
+    sample_reviews: ['PET-004226', 'PET-004796', 'PET-004792', 'PET-014112', 'PET-004254']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 11
+    positive_count: 2
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 81.8%
+    top_phrases:
+      - {phrase: "not good for pets", count: 1}
+      - {phrase: "not dog friendly", count: 1}
+      - {phrase: "Had to spend hundreds on a vet", count: 1}
+      - {phrase: "gags every time he puts his mouth on it", count: 1}
+      - {phrase: "helps with his dental health", count: 1}
+      - {phrase: "could screw her digestive system", count: 1}
+      - {phrase: "sick dog throwing up", count: 1}
+      - {phrase: "threw up twice", count: 1}
+      - {phrase: "problema con la salud del animal", count: 1}
+      - {phrase: "helps him", count: 1}
+    sample_reviews: ['PET-018105', 'PET-012807', 'PET-018117', 'PET-004232', 'PET-001934']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 5
+    positive_count: 4
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 20.0%
+    top_phrases:
+      - {phrase: "weight next to nothing", count: 1}
+      - {phrase: "Light weight", count: 1}
+      - {phrase: "too light to throw effectively", count: 1}
+      - {phrase: "Lightweight enough my new puppy carried it all around", count: 1}
+      - {phrase: "peso", count: 1}
+    sample_reviews: ['PET-009844', 'PET-014775', 'PET-014109', 'PET-013800', 'PET-014010']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "stability is great", count: 1}
+    sample_reviews: ['PET-011270']

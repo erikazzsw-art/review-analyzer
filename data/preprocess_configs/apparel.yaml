@@ -1,0 +1,29 @@
+# 服装预处理配置 v1.0
+# 用法: python3 scripts/preprocess_reviews.py --config data/preprocess_configs/apparel.yaml
+#
+# 数据源说明:
+# - clothing_v1.xlsx (17384 行,Erika 已加 product_type 列,5 个产品类型)
+# - Dresses_1/2/3.xlsx (2362 行公开数据集 schema,无 product_type 列,文件名兜底归到"连衣裙")
+# - Tops_862 / Tops_2.xlsx (1351 行公开数据集 schema,文件名兜底归到"上衣")
+# - 手提包-B0CP815WGH-...xlsx (1717 行单品文件,文件名兜底归到"手提包")
+
+category_label: 服装
+category_slug: apparel
+review_id_prefix: APP
+source_dirs:
+  - "/Users/zhangxi/Desktop/评论分析项目/服装"
+
+# 每子品类等比抽样上限 (≤ 3000)
+sample_per_sub: 3000
+
+# 文件名关键词兜底 (主数据 clothing_v1 走 product_type 列, 这里只覆盖小文件)
+file_to_sub:
+  - {match: ["dress"], sub: "连衣裙"}
+  - {match: ["top"], sub: "上衣"}
+  - {match: ["手提包", "handbag", "tote"], sub: "手提包"}
+
+asin_product_type: {}
+title_keywords: []
+
+default_split: "其他服装"
+default_sub: "其他服装"

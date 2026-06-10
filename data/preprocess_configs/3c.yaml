@@ -1,0 +1,29 @@
+# 3C 配件预处理配置 v1.0
+# 用法: python3 scripts/preprocess_reviews.py --config data/preprocess_configs/3c.yaml
+#
+# 本轮范围 (Erika 决定):
+# - Electronics Accessories_v1.xlsx (45220 行,Erika 已加 product_type 列,10 个产品类型)
+# - 3C电器-便携式话筒-B0CMJTSVRW-...xlsx (1312 行,无 product_type 列,靠 file_to_sub 兜底)
+# - Electronics 39472 行 (Kindle/Fire TV/平板) 不入本轮
+
+category_label: 3C 配件
+category_slug: 3c
+review_id_prefix: "3C"
+source_dirs:
+  - "/Users/zhangxi/Desktop/评论分析项目/3C"
+
+# 每子品类等比抽样上限 (≤ 3000)
+sample_per_sub: 3000
+
+# 第一层: 文件名关键词
+# 主数据 Electronics Accessories_v1 含 product_type 列, 由 _resolve_product_type_column 优先读取,
+# 此处规则仅对未含 product_type 列的文件生效 (便携话筒单品文件).
+file_to_sub:
+  - {match: ["话筒", "microphone"], sub: "便携话筒"}
+
+# 主数据走 product_type 列, 不需要 ASIN 映射 / title 关键词兜底
+asin_product_type: {}
+title_keywords: []
+
+default_split: "其他3C"
+default_sub: "其他3C"

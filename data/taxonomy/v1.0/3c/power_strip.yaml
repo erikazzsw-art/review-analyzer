@@ -1,0 +1,335 @@
+# Power Strip Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: Power Strip
+aspect_count: 17
+aspects:
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 959
+    positive_count: 913
+    negative_count: 42
+    neutral_count: 4
+    negative_rate: 4.4%
+    top_phrases:
+      - {phrase: "easy to use", count: 25}
+      - {phrase: "Works great", count: 23}
+      - {phrase: "works great", count: 16}
+      - {phrase: "works well", count: 15}
+      - {phrase: "very useful", count: 12}
+      - {phrase: "Works well", count: 11}
+      - {phrase: "Easy to use", count: 10}
+      - {phrase: "very convenient", count: 8}
+      - {phrase: "convenient", count: 7}
+      - {phrase: "very easy to use", count: 6}
+    sample_reviews: ['3C-008591', '3C-010342', '3C-010202', '3C-010319', '3C-013337']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 958
+    positive_count: 522
+    negative_count: 432
+    neutral_count: 4
+    negative_rate: 45.1%
+    top_phrases:
+      - {phrase: "Good quality", count: 21}
+      - {phrase: "good quality", count: 20}
+      - {phrase: "sturdy", count: 14}
+      - {phrase: "Great quality", count: 12}
+      - {phrase: "well made", count: 7}
+      - {phrase: "quality", count: 6}
+      - {phrase: "works well", count: 6}
+      - {phrase: "surge protection", count: 6}
+      - {phrase: "reliable", count: 5}
+      - {phrase: "surge protector", count: 4}
+    sample_reviews: ['3C-010342', '3C-013443', '3C-002979', '3C-005511', '3C-003219']
+
+  - key: portability
+    label_zh: 便携性
+    total: 888
+    positive_count: 857
+    negative_count: 18
+    neutral_count: 13
+    negative_rate: 2.0%
+    top_phrases:
+      - {phrase: "compact", count: 53}
+      - {phrase: "Compact", count: 20}
+      - {phrase: "long cord", count: 12}
+      - {phrase: "compact design", count: 9}
+      - {phrase: "saves space", count: 8}
+      - {phrase: "Great for travel", count: 7}
+      - {phrase: "length", count: 5}
+      - {phrase: "very compact", count: 5}
+      - {phrase: "cord length", count: 5}
+      - {phrase: "6-foot extension cord", count: 4}
+    sample_reviews: ['3C-013443', '3C-010390', '3C-010202', '3C-010132', '3C-009809']
+
+  - key: other
+    label_zh: 其他
+    total: 747
+    positive_count: 470
+    negative_count: 270
+    neutral_count: 7
+    negative_rate: 36.1%
+    top_phrases:
+      - {phrase: "cord length", count: 8}
+      - {phrase: "USB ports", count: 8}
+      - {phrase: "many outlets", count: 7}
+      - {phrase: "multiple outlets", count: 6}
+      - {phrase: "has USB ports", count: 6}
+      - {phrase: "fire hazard", count: 4}
+      - {phrase: "versatile", count: 4}
+      - {phrase: "usb ports", count: 4}
+      - {phrase: "Lots of plugs", count: 3}
+      - {phrase: "length of the cord", count: 3}
+    sample_reviews: ['3C-008591', '3C-010342', '3C-002979', '3C-010390', '3C-010260']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 657
+    positive_count: 114
+    negative_count: 537
+    neutral_count: 6
+    negative_rate: 81.7%
+    top_phrases:
+      - {phrase: "stopped working", count: 10}
+      - {phrase: "very durable", count: 8}
+      - {phrase: "durable", count: 5}
+      - {phrase: "stopped working after 3 months", count: 5}
+      - {phrase: "Durable", count: 4}
+      - {phrase: "stopped working after 8 months", count: 3}
+      - {phrase: "Stopped working after a month", count: 3}
+      - {phrase: "stopped working after 4 months", count: 3}
+      - {phrase: "Stopped working after 3 months", count: 3}
+      - {phrase: "no longer works", count: 3}
+    sample_reviews: ['3C-005511', '3C-010202', '3C-005331', '3C-008074', '3C-002624']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 436
+    positive_count: 330
+    negative_count: 95
+    neutral_count: 11
+    negative_rate: 21.8%
+    top_phrases:
+      - {phrase: "Waste of money", count: 17}
+      - {phrase: "waste of money", count: 13}
+      - {phrase: "good price", count: 11}
+      - {phrase: "great price", count: 9}
+      - {phrase: "Great value", count: 8}
+      - {phrase: "Great price", count: 8}
+      - {phrase: "worth the money", count: 5}
+      - {phrase: "cheap", count: 5}
+      - {phrase: "Don't waste your money", count: 5}
+      - {phrase: "Good purchase", count: 4}
+    sample_reviews: ['3C-013443', '3C-008888', '3C-005893', '3C-005738', '3C-010452']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 358
+    positive_count: 329
+    negative_count: 25
+    neutral_count: 4
+    negative_rate: 7.0%
+    top_phrases:
+      - {phrase: "Great design", count: 7}
+      - {phrase: "looks nice", count: 6}
+      - {phrase: "design", count: 5}
+      - {phrase: "looks great", count: 5}
+      - {phrase: "flat plug", count: 4}
+      - {phrase: "square design", count: 4}
+      - {phrase: "nice design", count: 4}
+      - {phrase: "compact design", count: 4}
+      - {phrase: "sleek", count: 3}
+      - {phrase: "3-sided design", count: 3}
+    sample_reviews: ['3C-010342', '3C-013443', '3C-013337', '3C-009809', '3C-013400']
+
+  - key: charging_speed
+    label_zh: 充电速度
+    total: 222
+    positive_count: 149
+    negative_count: 70
+    neutral_count: 3
+    negative_rate: 31.5%
+    top_phrases:
+      - {phrase: "USB charging ports", count: 4}
+      - {phrase: "charges fast", count: 3}
+      - {phrase: "charging speed", count: 3}
+      - {phrase: "charge my phone", count: 3}
+      - {phrase: "Fast charging", count: 2}
+      - {phrase: "different charging options", count: 2}
+      - {phrase: "charge my phone and tablet quickly", count: 2}
+      - {phrase: "fast charging", count: 2}
+      - {phrase: "charging is pretty fast", count: 1}
+      - {phrase: "USB and USB-C ports do not support fast charging", count: 1}
+    sample_reviews: ['3C-008591', '3C-010202', '3C-005377', '3C-010452', '3C-009590']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 134
+    positive_count: 97
+    negative_count: 36
+    neutral_count: 1
+    negative_rate: 26.9%
+    top_phrases:
+      - {phrase: "inclusion of both USB-A and USB-C", count: 1}
+      - {phrase: "more usb c ports", count: 1}
+      - {phrase: "Charges my Apple devices well", count: 1}
+      - {phrase: "regular plug ins and usb + usb-c", count: 1}
+      - {phrase: "every type of plug in needed", count: 1}
+      - {phrase: "allowing block transformer plus", count: 1}
+      - {phrase: "use usb c with it", count: 1}
+      - {phrase: "adapters fit into the outlets", count: 1}
+      - {phrase: "plug USB and USB-C power cords directly into it", count: 1}
+      - {phrase: "use it with USB ports as well as just regular I'm charging points", count: 1}
+    sample_reviews: ['3C-013443', '3C-008888', '3C-010319', '3C-013331', '3C-013185']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 56
+    positive_count: 46
+    negative_count: 10
+    neutral_count: 0
+    negative_rate: 17.9%
+    top_phrases:
+      - {phrase: "different types of charger port connections", count: 1}
+      - {phrase: "connection is secure with no loose fit", count: 1}
+      - {phrase: "working great", count: 1}
+      - {phrase: "USB-A & C and 8 electrical plugs", count: 1}
+      - {phrase: "connection is long", count: 1}
+      - {phrase: "connectivity", count: 1}
+      - {phrase: "extra ports for USB and USB c", count: 1}
+      - {phrase: "many connection inputs", count: 1}
+      - {phrase: "múltiples conexiones", count: 1}
+      - {phrase: "plug is sitting tight in a wall socket that is slightly loose no problem", count: 1}
+    sample_reviews: ['3C-010390', '3C-003243', '3C-009446', '3C-010208', '3C-005825']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 52
+    positive_count: 8
+    negative_count: 42
+    neutral_count: 2
+    negative_rate: 80.8%
+    top_phrases:
+      - {phrase: "prompt and gracious with a refund", count: 1}
+      - {phrase: "looked on the webpage for solutions. None of them worked", count: 1}
+      - {phrase: "Amazon offered me no solution", count: 1}
+      - {phrase: "seller would contact me, but I haven’t heard anything", count: 1}
+      - {phrase: "Couldn't return or reach seller. Amazon of no help.", count: 1}
+      - {phrase: "missed the return window", count: 1}
+      - {phrase: "Customer service replied ambiguously", count: 1}
+      - {phrase: "No return option", count: 1}
+      - {phrase: "maybe need to inquire if Amazon will send me a new one", count: 1}
+      - {phrase: "returning the item was easy", count: 1}
+    sample_reviews: ['3C-010132', '3C-008074', '3C-003213', '3C-003213', '3C-002507']
+
+  - key: sound_quality
+    label_zh: 音质
+    total: 45
+    positive_count: 1
+    negative_count: 44
+    neutral_count: 0
+    negative_rate: 97.8%
+    top_phrases:
+      - {phrase: "buzzing sound", count: 3}
+      - {phrase: "buzzing noise", count: 2}
+      - {phrase: "high pitched buzzing noise", count: 1}
+      - {phrase: "high pitch whistle noise", count: 1}
+      - {phrase: "high pitched buzzing sound", count: 1}
+      - {phrase: "ringing sound when turned on", count: 1}
+      - {phrase: "high pitch electrical feedback sound", count: 1}
+      - {phrase: "high-pitched humming or ringing noise", count: 1}
+      - {phrase: "high pitched chirping sound", count: 1}
+      - {phrase: "terrible hissing sound", count: 1}
+    sample_reviews: ['3C-008888', '3C-003222', '3C-005479', '3C-005352', '3C-008698']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 43
+    positive_count: 28
+    negative_count: 15
+    neutral_count: 0
+    negative_rate: 34.9%
+    top_phrases:
+      - {phrase: "on time", count: 2}
+      - {phrase: "Shipping was fast", count: 2}
+      - {phrase: "delivered in timely fashion", count: 1}
+      - {phrase: "arrived in a timely fashion", count: 1}
+      - {phrase: "Delivery was on time", count: 1}
+      - {phrase: "arrived non-functioning", count: 1}
+      - {phrase: "no issues", count: 1}
+      - {phrase: "Received a damaged item, outlet was bent so doesn’t plug in", count: 1}
+      - {phrase: "Came broken", count: 1}
+      - {phrase: "arrived as stated", count: 1}
+    sample_reviews: ['3C-008786', '3C-010322', '3C-009706', '3C-002935', '3C-005882']
+
+  - key: material
+    label_zh: 材质用料
+    total: 40
+    positive_count: 20
+    negative_count: 19
+    neutral_count: 1
+    negative_rate: 47.5%
+    top_phrases:
+      - {phrase: "cord is soft and flexible", count: 1}
+      - {phrase: "quality of the material look great", count: 1}
+      - {phrase: "Good and efficient material", count: 1}
+      - {phrase: "made from very low quality parts", count: 1}
+      - {phrase: "good quality material", count: 1}
+      - {phrase: "plastic is which and does look cheap", count: 1}
+      - {phrase: "good quality plastic material", count: 1}
+      - {phrase: "insulation feels durable", count: 1}
+      - {phrase: "Thick cord", count: 1}
+      - {phrase: "cheap plastic", count: 1}
+    sample_reviews: ['3C-008834', '3C-005543', '3C-005374', '3C-002537', '3C-002936']
+
+  - key: packaging
+    label_zh: 包装
+    total: 13
+    positive_count: 10
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 23.1%
+    top_phrases:
+      - {phrase: "well packaged", count: 1}
+      - {phrase: "packaged nicley", count: 1}
+      - {phrase: "Delivered on time and in good condition", count: 1}
+      - {phrase: "arrived with no damage to package", count: 1}
+      - {phrase: "Packaging was secure", count: 1}
+      - {phrase: "Velcro organizer", count: 1}
+      - {phrase: "velcro tie is a nice added touch", count: 1}
+      - {phrase: "Package was great", count: 1}
+      - {phrase: "packaged well", count: 1}
+      - {phrase: "packaged really well", count: 1}
+    sample_reviews: ['3C-008712', '3C-009628', '3C-002086', '3C-013343', '3C-009521']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 6
+    positive_count: 2
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "ruined my laptop battery", count: 1}
+      - {phrase: "not having to buy batteries every month", count: 1}
+      - {phrase: "doesn’t even hold a charge", count: 1}
+      - {phrase: "my phone is completely dead", count: 1}
+      - {phrase: "phone was dead 3 out of a week", count: 1}
+      - {phrase: "keeps my stuff charged", count: 1}
+    sample_reviews: ['3C-005755', '3C-013294', '3C-005461', '3C-012994', '3C-001534']
+
+  - key: comfort
+    label_zh: 佩戴舒适度
+    total: 5
+    positive_count: 5
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "comfortable", count: 1}
+      - {phrase: "Comfortable", count: 1}
+      - {phrase: "Fit well", count: 1}
+      - {phrase: "Comfortable long", count: 1}
+      - {phrase: "Very ergonomic", count: 1}
+    sample_reviews: ['3C-013324', '3C-005596', '3C-008782', '3C-009391', '3C-005732']

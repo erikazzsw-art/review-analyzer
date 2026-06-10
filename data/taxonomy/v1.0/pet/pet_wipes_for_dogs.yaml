@@ -1,0 +1,328 @@
+# Pet Wipes for Dogs Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Pet Wipes for Dogs
+aspect_count: 17
+aspects:
+  - key: smell
+    label_zh: 异味
+    total: 858
+    positive_count: 690
+    negative_count: 146
+    neutral_count: 22
+    negative_rate: 17.0%
+    top_phrases:
+      - {phrase: "smell great", count: 33}
+      - {phrase: "unscented", count: 29}
+      - {phrase: "smell good", count: 22}
+      - {phrase: "Smells good", count: 16}
+      - {phrase: "smell nice", count: 15}
+      - {phrase: "smells good", count: 13}
+      - {phrase: "smells great", count: 13}
+      - {phrase: "smell amazing", count: 12}
+      - {phrase: "smell so good", count: 12}
+      - {phrase: "Smells great", count: 7}
+    sample_reviews: ['PET-016893', 'PET-017136', 'PET-018808', 'PET-013202', 'PET-018881']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 792
+    positive_count: 700
+    negative_count: 86
+    neutral_count: 6
+    negative_rate: 10.9%
+    top_phrases:
+      - {phrase: "easy to use", count: 36}
+      - {phrase: "Easy to use", count: 32}
+      - {phrase: "work great", count: 21}
+      - {phrase: "work well", count: 15}
+      - {phrase: "Works well", count: 9}
+      - {phrase: "works well", count: 8}
+      - {phrase: "Works great", count: 6}
+      - {phrase: "gets the job done", count: 5}
+      - {phrase: "work very well", count: 5}
+      - {phrase: "works great", count: 4}
+    sample_reviews: ['PET-016893', 'PET-015777', 'PET-018651', 'PET-017149', 'PET-018813']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 334
+    positive_count: 271
+    negative_count: 62
+    neutral_count: 1
+    negative_rate: 18.6%
+    top_phrases:
+      - {phrase: "gentle", count: 8}
+      - {phrase: "sensitive skin", count: 3}
+      - {phrase: "no irritation", count: 3}
+      - {phrase: "allergic reaction", count: 3}
+      - {phrase: "non-irritating", count: 2}
+      - {phrase: "hypoallergenic", count: 2}
+      - {phrase: "no reactions", count: 2}
+      - {phrase: "Gentle on their skin", count: 2}
+      - {phrase: "don't make my dog itch", count: 2}
+      - {phrase: "gentle for sensitive skin", count: 2}
+    sample_reviews: ['PET-005160', 'PET-019240', 'PET-018814', 'PET-005624', 'PET-004951']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 310
+    positive_count: 271
+    negative_count: 36
+    neutral_count: 3
+    negative_rate: 11.6%
+    top_phrases:
+      - {phrase: "clean well", count: 6}
+      - {phrase: "cleans well", count: 5}
+      - {phrase: "Cleans well", count: 3}
+      - {phrase: "keeps them clean", count: 2}
+      - {phrase: "easy to clean my dog", count: 2}
+      - {phrase: "clean really well", count: 2}
+      - {phrase: "clean very well", count: 2}
+      - {phrase: "keep them clean", count: 2}
+      - {phrase: "clean", count: 2}
+      - {phrase: "clean good", count: 2}
+    sample_reviews: ['PET-002001', 'PET-017936', 'PET-016897', 'PET-017882', 'PET-004951']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 275
+    positive_count: 228
+    negative_count: 41
+    neutral_count: 6
+    negative_rate: 14.9%
+    top_phrases:
+      - {phrase: "he loves it", count: 2}
+      - {phrase: "my dog does not seem to mind", count: 2}
+      - {phrase: "my dog really likes", count: 2}
+      - {phrase: "My dog wasn't all that impressed with these wipes", count: 1}
+      - {phrase: "my dog likes them", count: 1}
+      - {phrase: "Love these wipes for my dog", count: 1}
+      - {phrase: "cats and dog were tolerable of the wipes", count: 1}
+      - {phrase: "great for my dog", count: 1}
+      - {phrase: "My pet now allows me to wipe their eyes", count: 1}
+      - {phrase: "He actually seemed to enjoy it", count: 1}
+    sample_reviews: ['PET-004951', 'PET-005378', 'PET-016988', 'PET-005188', 'PET-018812']
+
+  - key: other
+    label_zh: 其他
+    total: 258
+    positive_count: 140
+    negative_count: 110
+    neutral_count: 8
+    negative_rate: 42.6%
+    top_phrases:
+      - {phrase: "made in China", count: 4}
+      - {phrase: "Made in China", count: 3}
+      - {phrase: "false advertising", count: 3}
+      - {phrase: "Works well", count: 3}
+      - {phrase: "great product", count: 2}
+      - {phrase: "work great", count: 2}
+      - {phrase: "wipes are good", count: 2}
+      - {phrase: "MADE IN CHINA", count: 2}
+      - {phrase: "Work great", count: 2}
+      - {phrase: "works the best", count: 2}
+    sample_reviews: ['PET-015777', 'PET-018651', 'PET-016936', 'PET-005144', 'PET-017118']
+
+  - key: material
+    label_zh: 材质用料
+    total: 236
+    positive_count: 206
+    negative_count: 30
+    neutral_count: 0
+    negative_rate: 12.7%
+    top_phrases:
+      - {phrase: "soft", count: 12}
+      - {phrase: "very soft", count: 8}
+      - {phrase: "thick", count: 8}
+      - {phrase: "nice and thick", count: 6}
+      - {phrase: "gentle", count: 5}
+      - {phrase: "softness", count: 3}
+      - {phrase: "soft and gentle", count: 3}
+      - {phrase: "ingredients", count: 2}
+      - {phrase: "gentle ingredients", count: 2}
+      - {phrase: "all natural", count: 2}
+    sample_reviews: ['PET-018813', 'PET-018691', 'PET-005378', 'PET-017164', 'PET-016992']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 202
+    positive_count: 159
+    negative_count: 37
+    neutral_count: 6
+    negative_rate: 18.3%
+    top_phrases:
+      - {phrase: "great value", count: 5}
+      - {phrase: "Great price", count: 4}
+      - {phrase: "affordable", count: 3}
+      - {phrase: "Good price", count: 3}
+      - {phrase: "expensive", count: 3}
+      - {phrase: "Great value", count: 3}
+      - {phrase: "Good value", count: 3}
+      - {phrase: "good value for the money", count: 2}
+      - {phrase: "Good Value", count: 2}
+      - {phrase: "good value", count: 2}
+    sample_reviews: ['PET-020146', 'PET-013202', 'PET-001113', 'PET-018691', 'PET-003061']
+
+  - key: safety
+    label_zh: 安全性
+    total: 190
+    positive_count: 122
+    negative_count: 68
+    neutral_count: 0
+    negative_rate: 35.8%
+    top_phrases:
+      - {phrase: "safe", count: 4}
+      - {phrase: "not safe for cats", count: 3}
+      - {phrase: "hypoallergenic", count: 3}
+      - {phrase: "no sting", count: 2}
+      - {phrase: "Safe for my dog", count: 2}
+      - {phrase: "no irritation", count: 2}
+      - {phrase: "safe for my dog", count: 2}
+      - {phrase: "not irritating", count: 2}
+      - {phrase: "No harsh chemicals", count: 2}
+      - {phrase: "Does not seem to irritate his skin", count: 1}
+    sample_reviews: ['PET-017882', 'PET-017108', 'PET-005370', 'PET-020157', 'PET-000929']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 174
+    positive_count: 150
+    negative_count: 21
+    neutral_count: 3
+    negative_rate: 12.1%
+    top_phrases:
+      - {phrase: "good size", count: 13}
+      - {phrase: "nice size", count: 6}
+      - {phrase: "perfect size", count: 6}
+      - {phrase: "great size", count: 4}
+      - {phrase: "Perfect size", count: 4}
+      - {phrase: "size is perfect", count: 4}
+      - {phrase: "size is good", count: 3}
+      - {phrase: "large enough", count: 3}
+      - {phrase: "large size", count: 2}
+      - {phrase: "large wipes", count: 2}
+    sample_reviews: ['PET-004719', 'PET-017164', 'PET-017060', 'PET-001063', 'PET-004695']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 158
+    positive_count: 151
+    negative_count: 4
+    neutral_count: 3
+    negative_rate: 2.5%
+    top_phrases:
+      - {phrase: "durable", count: 16}
+      - {phrase: "very durable", count: 11}
+      - {phrase: "Durable", count: 7}
+      - {phrase: "strong", count: 4}
+      - {phrase: "Strong", count: 3}
+      - {phrase: "durable wipes", count: 3}
+      - {phrase: "thick and durable", count: 3}
+      - {phrase: "don't tear easily", count: 3}
+      - {phrase: "sturdy", count: 3}
+      - {phrase: "don't fall apart", count: 2}
+    sample_reviews: ['PET-017936', 'PET-005583', 'PET-018691', 'PET-005442', 'PET-011063']
+
+  - key: packaging
+    label_zh: 包装
+    total: 102
+    positive_count: 60
+    negative_count: 40
+    neutral_count: 2
+    negative_rate: 39.2%
+    top_phrases:
+      - {phrase: "Great packaging", count: 2}
+      - {phrase: "packaged well", count: 2}
+      - {phrase: "good packaging", count: 2}
+      - {phrase: "new packaging does leak making the wipes dry within days", count: 1}
+      - {phrase: "hard plastic opening", count: 1}
+      - {phrase: "cheap resealable sticker which doesn’t last long", count: 1}
+      - {phrase: "opening is too small", count: 1}
+      - {phrase: "package so that it would not dry out", count: 1}
+      - {phrase: "lid doesn't snap shut properly", count: 1}
+      - {phrase: "Doesn’t reseal after opening", count: 1}
+    sample_reviews: ['PET-018808', 'PET-001113', 'PET-001113', 'PET-016992', 'PET-015495']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 86
+    positive_count: 80
+    negative_count: 6
+    neutral_count: 0
+    negative_rate: 7.0%
+    top_phrases:
+      - {phrase: "Good quality", count: 7}
+      - {phrase: "Great quality", count: 6}
+      - {phrase: "great quality", count: 5}
+      - {phrase: "good quality", count: 5}
+      - {phrase: "quality", count: 3}
+      - {phrase: "thickness", count: 2}
+      - {phrase: "Quality product", count: 2}
+      - {phrase: "strong", count: 2}
+      - {phrase: "nice quality", count: 2}
+      - {phrase: "quality is great", count: 2}
+    sample_reviews: ['PET-020146', 'PET-002001', 'PET-017936', 'PET-016897', 'PET-013213']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 23
+    positive_count: 21
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 8.7%
+    top_phrases:
+      - {phrase: "seller contacted me and replaced my wipes with unscented wipes", count: 1}
+      - {phrase: "Great seller", count: 1}
+      - {phrase: "customer service reached out to me and offered a refund", count: 1}
+      - {phrase: "big hassle to return one item", count: 1}
+      - {phrase: "Great customer service", count: 1}
+      - {phrase: "company made it right", count: 1}
+      - {phrase: "contacted ER customer support and they sent another pack of wipes and a few othe", count: 1}
+      - {phrase: "company reached out and offered a full refund", count: 1}
+      - {phrase: "customer service I experienced was exceptional", count: 1}
+      - {phrase: "customer service reaching out to offer a refund", count: 1}
+    sample_reviews: ['PET-018613', 'PET-020162', 'PET-017892', 'PET-002688', 'PET-018887']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 7
+    positive_count: 7
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "his coat was so shiny", count: 1}
+      - {phrase: "branding", count: 1}
+      - {phrase: "fur is shiny", count: 1}
+      - {phrase: "industrial design", count: 1}
+      - {phrase: "cute product", count: 1}
+      - {phrase: "texture of the container, lid is a tactile delight", count: 1}
+      - {phrase: "design needs to match the vibe", count: 1}
+    sample_reviews: ['PET-005386', 'PET-012254', 'PET-005585', 'PET-016890', 'PET-016892']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 6
+    positive_count: 1
+    negative_count: 4
+    neutral_count: 1
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "taring a hole in 1 of the wipe packets", count: 1}
+      - {phrase: "shipping is always fast", count: 1}
+      - {phrase: "Product arrived damaged", count: 1}
+      - {phrase: "arrived with a big gash on the side of its packaging", count: 1}
+      - {phrase: "package arrived and the box seemed fine", count: 1}
+      - {phrase: "only received 1 set of 100 wipes", count: 1}
+    sample_reviews: ['PET-011074', 'PET-018713', 'PET-005599', 'PET-017077', 'PET-017096']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "weight", count: 1}
+    sample_reviews: ['PET-020024']

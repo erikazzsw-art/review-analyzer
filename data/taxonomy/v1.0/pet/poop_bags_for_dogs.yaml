@@ -1,0 +1,356 @@
+# Poop Bags for Dogs Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Poop Bags for Dogs
+aspect_count: 18
+aspects:
+  - key: durability
+    label_zh: 耐用性
+    total: 1193
+    positive_count: 1135
+    negative_count: 56
+    neutral_count: 2
+    negative_rate: 4.7%
+    top_phrases:
+      - {phrase: "sturdy", count: 59}
+      - {phrase: "durable", count: 48}
+      - {phrase: "strong", count: 43}
+      - {phrase: "Strong", count: 26}
+      - {phrase: "Sturdy", count: 23}
+      - {phrase: "Durable", count: 22}
+      - {phrase: "very sturdy", count: 19}
+      - {phrase: "very durable", count: 16}
+      - {phrase: "very strong", count: 13}
+      - {phrase: "strong bags", count: 12}
+    sample_reviews: ['PET-034867', 'PET-034463', 'PET-035469', 'PET-007747', 'PET-035192']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 983
+    positive_count: 913
+    negative_count: 66
+    neutral_count: 4
+    negative_rate: 6.7%
+    top_phrases:
+      - {phrase: "easy to open", count: 78}
+      - {phrase: "easy to use", count: 66}
+      - {phrase: "Easy to use", count: 31}
+      - {phrase: "Easy to open", count: 29}
+      - {phrase: "easy to tie", count: 14}
+      - {phrase: "work well", count: 13}
+      - {phrase: "open easily", count: 10}
+      - {phrase: "work great", count: 10}
+      - {phrase: "convenient", count: 6}
+      - {phrase: "easy to open and use", count: 5}
+    sample_reviews: ['PET-035195', 'PET-034867', 'PET-034902', 'PET-007747', 'PET-038255']
+
+  - key: smell
+    label_zh: 异味
+    total: 932
+    positive_count: 790
+    negative_count: 119
+    neutral_count: 23
+    negative_rate: 12.8%
+    top_phrases:
+      - {phrase: "lavender scent", count: 33}
+      - {phrase: "smell good", count: 28}
+      - {phrase: "scented", count: 25}
+      - {phrase: "smell great", count: 22}
+      - {phrase: "smell nice", count: 15}
+      - {phrase: "unscented", count: 15}
+      - {phrase: "smells good", count: 13}
+      - {phrase: "nice scent", count: 13}
+      - {phrase: "pleasant scent", count: 10}
+      - {phrase: "lightly scented", count: 9}
+    sample_reviews: ['PET-038223', 'PET-035636', 'PET-006124', 'PET-006124', 'PET-025759']
+
+  - key: material
+    label_zh: 材质用料
+    total: 692
+    positive_count: 604
+    negative_count: 74
+    neutral_count: 14
+    negative_rate: 10.7%
+    top_phrases:
+      - {phrase: "thick", count: 43}
+      - {phrase: "biodegradable", count: 25}
+      - {phrase: "thick enough", count: 21}
+      - {phrase: "Thick", count: 17}
+      - {phrase: "nice and thick", count: 13}
+      - {phrase: "thickness", count: 10}
+      - {phrase: "compostable", count: 9}
+      - {phrase: "thicker", count: 7}
+      - {phrase: "eco friendly", count: 7}
+      - {phrase: "thick bags", count: 6}
+    sample_reviews: ['PET-035636', 'PET-025497', 'PET-043874', 'PET-022887', 'PET-006638']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 542
+    positive_count: 498
+    negative_count: 39
+    neutral_count: 5
+    negative_rate: 7.2%
+    top_phrases:
+      - {phrase: "great value", count: 21}
+      - {phrase: "Good value", count: 20}
+      - {phrase: "good value", count: 18}
+      - {phrase: "Great value", count: 17}
+      - {phrase: "Great price", count: 15}
+      - {phrase: "great price", count: 15}
+      - {phrase: "good price", count: 14}
+      - {phrase: "Great value for the money", count: 9}
+      - {phrase: "Good price", count: 9}
+      - {phrase: "reasonable price", count: 8}
+    sample_reviews: ['PET-034867', 'PET-035469', 'PET-035636', 'PET-022925', 'PET-034486']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 511
+    positive_count: 454
+    negative_count: 53
+    neutral_count: 4
+    negative_rate: 10.4%
+    top_phrases:
+      - {phrase: "good size", count: 25}
+      - {phrase: "perfect size", count: 22}
+      - {phrase: "Good size", count: 17}
+      - {phrase: "large", count: 15}
+      - {phrase: "large enough", count: 13}
+      - {phrase: "Perfect size", count: 10}
+      - {phrase: "size", count: 6}
+      - {phrase: "great size", count: 6}
+      - {phrase: "Large", count: 5}
+      - {phrase: "just the right size", count: 5}
+    sample_reviews: ['PET-035195', 'PET-038255', 'PET-007780', 'PET-034232', 'PET-022925']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 458
+    positive_count: 433
+    negative_count: 25
+    neutral_count: 0
+    negative_rate: 5.5%
+    top_phrases:
+      - {phrase: "Good quality", count: 37}
+      - {phrase: "Great quality", count: 32}
+      - {phrase: "good quality", count: 20}
+      - {phrase: "great quality", count: 19}
+      - {phrase: "sturdy", count: 11}
+      - {phrase: "well made", count: 10}
+      - {phrase: "Excellent quality", count: 8}
+      - {phrase: "quality", count: 7}
+      - {phrase: "high quality", count: 7}
+      - {phrase: "Very good quality", count: 5}
+    sample_reviews: ['PET-038271', 'PET-038223', 'PET-007780', 'PET-025954', 'PET-034486']
+
+  - key: other
+    label_zh: 其他
+    total: 369
+    positive_count: 284
+    negative_count: 78
+    neutral_count: 7
+    negative_rate: 21.1%
+    top_phrases:
+      - {phrase: "not biodegradable", count: 7}
+      - {phrase: "biodegradable", count: 7}
+      - {phrase: "environmentally friendly", count: 5}
+      - {phrase: "better for the environment", count: 4}
+      - {phrase: "Good bags", count: 4}
+      - {phrase: "do the job", count: 3}
+      - {phrase: "eco-friendly", count: 3}
+      - {phrase: "Good product", count: 3}
+      - {phrase: "Great bags", count: 3}
+      - {phrase: "best poop bags", count: 3}
+    sample_reviews: ['PET-008843', 'PET-034443', 'PET-022288', 'PET-026009', 'PET-034447']
+
+  - key: packaging
+    label_zh: 包装
+    total: 57
+    positive_count: 29
+    negative_count: 25
+    neutral_count: 3
+    negative_rate: 43.9%
+    top_phrases:
+      - {phrase: "very well packaged", count: 2}
+      - {phrase: "came with the box dispenser", count: 1}
+      - {phrase: "package was opened and so was the box", count: 1}
+      - {phrase: "Nothing in the description, insert or packaging says that these bags are compost", count: 1}
+      - {phrase: "Big box", count: 1}
+      - {phrase: "tape was dirty and smashed down", count: 1}
+      - {phrase: "come in a big packages", count: 1}
+      - {phrase: "sticker that holds them all together", count: 1}
+      - {phrase: "First bag is always torn by the tape", count: 1}
+      - {phrase: "Arrived quickly and in perfect condition", count: 1}
+    sample_reviews: ['PET-038087', 'PET-034472', 'PET-007778', 'PET-038067', 'PET-007746']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 33
+    positive_count: 33
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "Holds a lot", count: 3}
+      - {phrase: "holds a lot", count: 2}
+      - {phrase: "hold a lot", count: 2}
+      - {phrase: "2 100+ pound dogs and these work great", count: 1}
+      - {phrase: "can carry a large amount for large dogs", count: 1}
+      - {phrase: "plenty of capacity", count: 1}
+      - {phrase: "hold a lot of waste without breakage", count: 1}
+      - {phrase: "handles it without a problem", count: 1}
+      - {phrase: "can hold a lot", count: 1}
+      - {phrase: "can hold it all", count: 1}
+    sample_reviews: ['PET-025872', 'PET-043838', 'PET-022530', 'PET-034498', 'PET-034370']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 33
+    positive_count: 33
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "earth friendly", count: 9}
+      - {phrase: "eco friendly", count: 5}
+      - {phrase: "environmentally friendly", count: 4}
+      - {phrase: "eco-friendly", count: 4}
+      - {phrase: "biodegradable", count: 2}
+      - {phrase: "compostable", count: 2}
+      - {phrase: "break down so safe for environment", count: 1}
+      - {phrase: "being gentle with the world and meeting my boy's needs", count: 1}
+      - {phrase: "earth safe", count: 1}
+      - {phrase: "bag doesn't hurt the environment", count: 1}
+    sample_reviews: ['PET-034473', 'PET-006470', 'PET-022906', 'PET-038251', 'PET-027402']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 30
+    positive_count: 25
+    negative_count: 2
+    neutral_count: 3
+    negative_rate: 6.7%
+    top_phrases:
+      - {phrase: "color is nice", count: 1}
+      - {phrase: "well-designed", count: 1}
+      - {phrase: "darker green than i thought", count: 1}
+      - {phrase: "changed design print and color", count: 1}
+      - {phrase: "As pictures", count: 1}
+      - {phrase: "aren't transparent", count: 1}
+      - {phrase: "cute design on the bag", count: 1}
+      - {phrase: "dark green color so nothing shows through", count: 1}
+      - {phrase: "can't see through them", count: 1}
+      - {phrase: "pleasing green", count: 1}
+    sample_reviews: ['PET-026130', 'PET-038254', 'PET-026183', 'PET-006084', 'PET-034136']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 25
+    positive_count: 19
+    negative_count: 6
+    neutral_count: 0
+    negative_rate: 24.0%
+    top_phrases:
+      - {phrase: "delivered quickly", count: 2}
+      - {phrase: "Super fast shipping", count: 1}
+      - {phrase: "Fast shipment", count: 1}
+      - {phrase: "Shipped fast", count: 1}
+      - {phrase: "order and delivery is always prompt", count: 1}
+      - {phrase: "arrived ahead of schedule", count: 1}
+      - {phrase: "arrived on time", count: 1}
+      - {phrase: "never arrived", count: 1}
+      - {phrase: "Amazon destroyed the box inside the shipping bag", count: 1}
+      - {phrase: "envelope tore open all the way down", count: 1}
+    sample_reviews: ['PET-025894', 'PET-035282', 'PET-022518', 'PET-022717', 'PET-038253']
+
+  - key: safety
+    label_zh: 安全性
+    total: 22
+    positive_count: 17
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 22.7%
+    top_phrases:
+      - {phrase: "keeping everything safe", count: 1}
+      - {phrase: "NO leakage", count: 1}
+      - {phrase: "made my dog break out in huge hives", count: 1}
+      - {phrase: "allergic reaction", count: 1}
+      - {phrase: "environmentally safe", count: 1}
+      - {phrase: "leak-proof", count: 1}
+      - {phrase: "no fear factor in a leak", count: 1}
+      - {phrase: "no poop on your fingers", count: 1}
+      - {phrase: "leak resistant", count: 1}
+      - {phrase: "haven't gotten poo on my hands", count: 1}
+    sample_reviews: ['PET-035206', 'PET-025814', 'PET-025768', 'PET-035100', 'PET-026141']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 21
+    positive_count: 17
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 19.0%
+    top_phrases:
+      - {phrase: "delivered on time as promised", count: 1}
+      - {phrase: "excellent company", count: 1}
+      - {phrase: "would like to return these unused, but the window has closed", count: 1}
+      - {phrase: "Great customer service", count: 1}
+      - {phrase: "free sample of potty pads that came next day", count: 1}
+      - {phrase: "very poor follow up for subscriptions", count: 1}
+      - {phrase: "great seller", count: 1}
+      - {phrase: "Happy with customer service", count: 1}
+      - {phrase: "seller was quick to correct this simple mistake", count: 1}
+      - {phrase: "customer service is amazing", count: 1}
+    sample_reviews: ['PET-044000', 'PET-034515', 'PET-035205', 'PET-038241', 'PET-043852']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 14
+    positive_count: 14
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "No mess", count: 2}
+      - {phrase: "clean cat literbox", count: 1}
+      - {phrase: "mess-free bags", count: 1}
+      - {phrase: "Easy peasy cleanup", count: 1}
+      - {phrase: "cleaning up after them so easy", count: 1}
+      - {phrase: "Great for cleaning the poop", count: 1}
+      - {phrase: "cleaning up after my dog", count: 1}
+      - {phrase: "clean litter twice daily", count: 1}
+      - {phrase: "Easy clean up with no bleed through", count: 1}
+      - {phrase: "easy clean up", count: 1}
+    sample_reviews: ['PET-022803', 'PET-034484', 'PET-035562', 'PET-027385', 'PET-026188']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 8
+    positive_count: 5
+    negative_count: 2
+    neutral_count: 1
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "my dog's poop love these", count: 1}
+      - {phrase: "Great for dogs too", count: 1}
+      - {phrase: "my dogs loves this", count: 1}
+      - {phrase: "my dog won’t take a treat after I’ve touched a bag", count: 1}
+      - {phrase: "my dogs seems to like it", count: 1}
+      - {phrase: "Dog approved", count: 1}
+      - {phrase: "Our dog like to do two poops in one walk", count: 1}
+      - {phrase: "wife didn’t like the biodegradable kind", count: 1}
+    sample_reviews: ['PET-026183', 'PET-022725', 'PET-026028', 'PET-038226', 'PET-027698']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 4
+    positive_count: 4
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "container snaps on to the leash and stays out of the way", count: 1}
+      - {phrase: "Does not slip while walking", count: 1}
+      - {phrase: "Tip resistant", count: 1}
+      - {phrase: "sturdy bags", count: 1}
+    sample_reviews: ['PET-034266', 'PET-034610', 'PET-025785', 'PET-043927']

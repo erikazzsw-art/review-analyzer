@@ -1,0 +1,324 @@
+# Pet Shower Head Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Pet Shower Head
+aspect_count: 17
+aspects:
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 512
+    positive_count: 341
+    negative_count: 164
+    neutral_count: 7
+    negative_rate: 32.0%
+    top_phrases:
+      - {phrase: "Easy to use", count: 13}
+      - {phrase: "easy to use", count: 13}
+      - {phrase: "easy to install", count: 6}
+      - {phrase: "works great", count: 6}
+      - {phrase: "works well", count: 5}
+      - {phrase: "so easy to use", count: 4}
+      - {phrase: "works", count: 3}
+      - {phrase: "Works great", count: 3}
+      - {phrase: "Simple to use", count: 2}
+      - {phrase: "easy to attach to the faucet", count: 2}
+    sample_reviews: ['PET-050113', 'PET-050094', 'PET-049918', 'PET-049918', 'PET-050070']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 152
+    positive_count: 38
+    negative_count: 113
+    neutral_count: 1
+    negative_rate: 74.3%
+    top_phrases:
+      - {phrase: "Great quality", count: 2}
+      - {phrase: "very well made", count: 2}
+      - {phrase: "cheaply made", count: 2}
+      - {phrase: "JUNK", count: 2}
+      - {phrase: "good quality", count: 2}
+      - {phrase: "water damage in my ceiling", count: 1}
+      - {phrase: "attachment to faucet is poor", count: 1}
+      - {phrase: "Water would leak out the back", count: 1}
+      - {phrase: "se rompe", count: 1}
+      - {phrase: "tiny pin hole size hole in the rubber part", count: 1}
+    sample_reviews: ['PET-050243', 'PET-049849', 'PET-049686', 'PET-049779', 'PET-050158']
+
+  - key: other
+    label_zh: 其他
+    total: 135
+    positive_count: 56
+    negative_count: 73
+    neutral_count: 6
+    negative_rate: 54.1%
+    top_phrases:
+      - {phrase: "great water pressure", count: 3}
+      - {phrase: "water pressure was a little too strong", count: 1}
+      - {phrase: "tubs pressure is too much", count: 1}
+      - {phrase: "not functional unless using on a sink", count: 1}
+      - {phrase: "does not work with the type of tub/shower diverter we have", count: 1}
+      - {phrase: "spray was extremely whimpy", count: 1}
+      - {phrase: "Saves time", count: 1}
+      - {phrase: "No cup needed", count: 1}
+      - {phrase: "need correct spout and strong water pressure", count: 1}
+      - {phrase: "water pressure too strong", count: 1}
+    sample_reviews: ['PET-050070', 'PET-050146', 'PET-049686', 'PET-049695', 'PET-049695']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 96
+    positive_count: 47
+    negative_count: 48
+    neutral_count: 1
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "Waste of money", count: 4}
+      - {phrase: "Not worth the money", count: 3}
+      - {phrase: "worth every penny", count: 3}
+      - {phrase: "waste of money", count: 2}
+      - {phrase: "not worth it", count: 2}
+      - {phrase: "Really disappointing for the price", count: 1}
+      - {phrase: "one of the most clever ideas that truly work and make life so much easier", count: 1}
+      - {phrase: "$30ish fix meets the need", count: 1}
+      - {phrase: "really affordable", count: 1}
+      - {phrase: "just order another one", count: 1}
+    sample_reviews: ['PET-050156', 'PET-050261', 'PET-049624', 'PET-050079', 'PET-050210']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 81
+    positive_count: 13
+    negative_count: 65
+    neutral_count: 3
+    negative_rate: 80.2%
+    top_phrases:
+      - {phrase: "lasted less than two months", count: 1}
+      - {phrase: "how durable it is", count: 1}
+      - {phrase: "ripped up", count: 1}
+      - {phrase: "lasted 3 dog baths before it totally fell apart", count: 1}
+      - {phrase: "after a couple washes it tore apart", count: 1}
+      - {phrase: "does not last", count: 1}
+      - {phrase: "huge bubble formed in the hose", count: 1}
+      - {phrase: "no issues with it leaking", count: 1}
+      - {phrase: "hose popped off the first time I used it", count: 1}
+      - {phrase: "blue balloon might blowup or naturally get loose", count: 1}
+    sample_reviews: ['PET-049704', 'PET-050070', 'PET-049834', 'PET-050156', 'PET-049747']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 76
+    positive_count: 47
+    negative_count: 26
+    neutral_count: 3
+    negative_rate: 34.2%
+    top_phrases:
+      - {phrase: "Fits only certain faucets", count: 1}
+      - {phrase: "fits standard bath tb nozzle", count: 1}
+      - {phrase: "Fits snug", count: 1}
+      - {phrase: "fits on any facet", count: 1}
+      - {phrase: "Fit right over even my wide kitchen sprayer faucet", count: 1}
+      - {phrase: "fits over funky tub faucet", count: 1}
+      - {phrase: "stretchy end to fit over any size faucet", count: 1}
+      - {phrase: "fits any size faucet", count: 1}
+      - {phrase: "Fits all faucets", count: 1}
+      - {phrase: "fits the tub faucet exactly how it says", count: 1}
+    sample_reviews: ['PET-050187', 'PET-049969', 'PET-050077', 'PET-049940', 'PET-049974']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 69
+    positive_count: 21
+    negative_count: 46
+    neutral_count: 2
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "does not stay on the faucet", count: 2}
+      - {phrase: "Does not stay on facut", count: 1}
+      - {phrase: "balloons up every time", count: 1}
+      - {phrase: "probably would have detached", count: 1}
+      - {phrase: "came off the first time", count: 1}
+      - {phrase: "stayed on", count: 1}
+      - {phrase: "included strap held everything in place", count: 1}
+      - {phrase: "pop off and get water everywhere", count: 1}
+      - {phrase: "slides off if you lift it above the faucet", count: 1}
+      - {phrase: "can’t blast the water through it or it will pop off", count: 1}
+    sample_reviews: ['PET-049749', 'PET-050146', 'PET-049686', 'PET-049668', 'PET-049668']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 54
+    positive_count: 50
+    negative_count: 3
+    neutral_count: 1
+    negative_rate: 5.6%
+    top_phrases:
+      - {phrase: "He didn't like it", count: 1}
+      - {phrase: "My dogs loved it", count: 1}
+      - {phrase: "Bath time is going to be much better for my dog", count: 1}
+      - {phrase: "dogs are terrified of the shower but this makes it comfortable", count: 1}
+      - {phrase: "for large husky", count: 1}
+      - {phrase: "She loved it", count: 1}
+      - {phrase: "gentle enough to not make her anxious", count: 1}
+      - {phrase: "my dog loved it", count: 1}
+      - {phrase: "my dog is not as anxious", count: 1}
+      - {phrase: "bathing him just became a joy", count: 1}
+    sample_reviews: ['PET-050113', 'PET-050094', 'PET-049835', 'PET-049925', 'PET-049969']
+
+  - key: material
+    label_zh: 材质用料
+    total: 23
+    positive_count: 7
+    negative_count: 15
+    neutral_count: 1
+    negative_rate: 65.2%
+    top_phrases:
+      - {phrase: "rubber material ripped from the plastic", count: 1}
+      - {phrase: "way too thin to withstand water pressure", count: 1}
+      - {phrase: "quality of materials is very good", count: 1}
+      - {phrase: "super flexible", count: 1}
+      - {phrase: "Hose is so stiff, not flexible", count: 1}
+      - {phrase: "material is low quality", count: 1}
+      - {phrase: "blue rubber end swells up", count: 1}
+      - {phrase: "egg crate foam pad is very sturdy", count: 1}
+      - {phrase: "Hose severed", count: 1}
+      - {phrase: "rubber doesn’t cover the faucet well", count: 1}
+    sample_reviews: ['PET-049704', 'PET-049747', 'PET-049645', 'PET-049932', 'PET-049682']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 19
+    positive_count: 17
+    negative_count: 1
+    neutral_count: 1
+    negative_rate: 5.3%
+    top_phrases:
+      - {phrase: "remove all the soap from my dogs", count: 1}
+      - {phrase: "Easy to clean and store", count: 1}
+      - {phrase: "clean up was a breeze", count: 1}
+      - {phrase: "use the hose to clean the tub", count: 1}
+      - {phrase: "perfect product for clean my tub", count: 1}
+      - {phrase: "easy to rinse your tube out", count: 1}
+      - {phrase: "gets the water under all the fur so your pup is squeaky clean", count: 1}
+      - {phrase: "doesn't make a mess", count: 1}
+      - {phrase: "washed out the shampoo really well", count: 1}
+      - {phrase: "doesn't dry too well given it's a hose", count: 1}
+    sample_reviews: ['PET-050051', 'PET-050267', 'PET-049692', 'PET-049616', 'PET-049674']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 15
+    positive_count: 4
+    negative_count: 11
+    neutral_count: 0
+    negative_rate: 73.3%
+    top_phrases:
+      - {phrase: "Got here quick", count: 1}
+      - {phrase: "came broken (the hose)", count: 1}
+      - {phrase: "Shipped and received quick", count: 1}
+      - {phrase: "Arrived quickly", count: 1}
+      - {phrase: "first package may come Broken", count: 1}
+      - {phrase: "left the box close to the gate where anyone can grab it", count: 1}
+      - {phrase: "torn box", count: 1}
+      - {phrase: "Opened it. Stretched it out and the hose tore", count: 1}
+      - {phrase: "Water began to leak", count: 1}
+      - {phrase: "shipped very fast", count: 1}
+    sample_reviews: ['PET-050113', 'PET-049788', 'PET-049848', 'PET-049976', 'PET-049984']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 14
+    positive_count: 10
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 28.6%
+    top_phrases:
+      - {phrase: "Never got my refund and it's been a month", count: 1}
+      - {phrase: "information provided was very helpful", count: 1}
+      - {phrase: "requested a refund", count: 1}
+      - {phrase: "above and beyond by sending a few extra products to help", count: 1}
+      - {phrase: "replacement works", count: 1}
+      - {phrase: "company gave run around until return policy expired", count: 1}
+      - {phrase: "able to get a refund", count: 1}
+      - {phrase: "small time frame for returns", count: 1}
+      - {phrase: "customer service is phenomenal", count: 1}
+      - {phrase: "refunded no problem", count: 1}
+    sample_reviews: ['PET-049700', 'PET-049829', 'PET-049660', 'PET-049975', 'PET-049984']
+
+  - key: safety
+    label_zh: 安全性
+    total: 10
+    positive_count: 2
+    negative_count: 8
+    neutral_count: 0
+    negative_rate: 80.0%
+    top_phrases:
+      - {phrase: "water damage in my ceiling", count: 1}
+      - {phrase: "flooded the bottom of our sink and all the way to the basement", count: 1}
+      - {phrase: "pressure backfired water into the wall", count: 1}
+      - {phrase: "shower diverter could cause problems or even poke through the slip-on but it is ", count: 1}
+      - {phrase: "safe way to bathe the kitty", count: 1}
+      - {phrase: "causes water to leak from upstairs bathroom through downstairs ceiling", count: 1}
+      - {phrase: "caused water to backflow through my faucet", count: 1}
+      - {phrase: "scared both me and my puppy", count: 1}
+      - {phrase: "pushing water back through the faucet", count: 1}
+      - {phrase: "water backed up in the rubber attachment and made a huge balloon", count: 1}
+    sample_reviews: ['PET-050243', 'PET-049769', 'PET-049644', 'PET-049679', 'PET-049653']
+
+  - key: packaging
+    label_zh: 包装
+    total: 9
+    positive_count: 4
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 55.6%
+    top_phrases:
+      - {phrase: "used the original box for storage", count: 1}
+      - {phrase: "package was in very good shape", count: 1}
+      - {phrase: "easily stored back in the box or under a bathroom sink", count: 1}
+      - {phrase: "torn box", count: 1}
+      - {phrase: "No shower cap included just for picture on box", count: 1}
+      - {phrase: "shipped me an open/used one", count: 1}
+      - {phrase: "comes with reuseable zip tie for storage", count: 1}
+      - {phrase: "Just the product box with a address sticker on it", count: 1}
+      - {phrase: "in the bottom of my box", count: 1}
+    sample_reviews: ['PET-049614', 'PET-050012', 'PET-049766', 'PET-050033', 'PET-049856']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 8
+    positive_count: 4
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "head showed several holes like a sprayer head", count: 1}
+      - {phrase: "deep sides", count: 1}
+      - {phrase: "looked great", count: 1}
+      - {phrase: "picture is deceptive", count: 1}
+      - {phrase: "advertisement pics show solid center", count: 1}
+      - {phrase: "looks great", count: 1}
+      - {phrase: "Nice", count: 1}
+      - {phrase: "looks like in someone's garage", count: 1}
+    sample_reviews: ['PET-049626', 'PET-049991', 'PET-050185', 'PET-049965', 'PET-049760']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 2
+    positive_count: 2
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "lightweight", count: 1}
+      - {phrase: "doesn't weigh too much", count: 1}
+    sample_reviews: ['PET-049851', 'PET-049681']
+
+  - key: smell
+    label_zh: 异味
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "Mold is all over", count: 1}
+    sample_reviews: ['PET-049713']

@@ -1,0 +1,307 @@
+# Baby Sun Hat Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:42:45
+sub_category: Baby Sun Hat
+aspect_count: 17
+aspects:
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 299
+    positive_count: 264
+    negative_count: 25
+    neutral_count: 10
+    negative_rate: 8.4%
+    top_phrases:
+      - {phrase: "fit perfectly", count: 8}
+      - {phrase: "adjustable", count: 8}
+      - {phrase: "Fits great", count: 5}
+      - {phrase: "Good fit", count: 3}
+      - {phrase: "fit well", count: 3}
+      - {phrase: "size adjustable", count: 2}
+      - {phrase: "fit her perfectly", count: 2}
+      - {phrase: "good coverage", count: 2}
+      - {phrase: "got the next size up", count: 2}
+      - {phrase: "a little big", count: 2}
+    sample_reviews: ['BABY-000451', 'BABY-000510', 'BABY-000457', 'BABY-000564', 'BABY-000653']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 215
+    positive_count: 212
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 1.4%
+    top_phrases:
+      - {phrase: "cute", count: 26}
+      - {phrase: "super cute", count: 12}
+      - {phrase: "Very cute", count: 6}
+      - {phrase: "very cute", count: 6}
+      - {phrase: "adorable", count: 6}
+      - {phrase: "Super cute", count: 5}
+      - {phrase: "so cute", count: 4}
+      - {phrase: "So cute", count: 3}
+      - {phrase: "Cute", count: 3}
+      - {phrase: "cute hats", count: 3}
+    sample_reviews: ['BABY-000451', 'BABY-000510', 'BABY-003168', 'BABY-000653', 'BABY-000080']
+
+  - key: material
+    label_zh: 材质用料
+    total: 133
+    positive_count: 118
+    negative_count: 15
+    neutral_count: 0
+    negative_rate: 11.3%
+    top_phrases:
+      - {phrase: "lightweight", count: 21}
+      - {phrase: "light weight", count: 7}
+      - {phrase: "Lightweight", count: 5}
+      - {phrase: "breathable", count: 4}
+      - {phrase: "Light weight", count: 3}
+      - {phrase: "thin", count: 2}
+      - {phrase: "Super lightweight", count: 2}
+      - {phrase: "lightweight and soft", count: 2}
+      - {phrase: "hat bill is flexible so you can bend it up if needed", count: 1}
+      - {phrase: "breathable, lightweight fabric", count: 1}
+    sample_reviews: ['BABY-003168', 'BABY-000172', 'BABY-000564', 'BABY-000080', 'BABY-003163']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 118
+    positive_count: 114
+    negative_count: 3
+    neutral_count: 1
+    negative_rate: 2.5%
+    top_phrases:
+      - {phrase: "adjustable", count: 5}
+      - {phrase: "easy to adjust", count: 4}
+      - {phrase: "comfortable", count: 2}
+      - {phrase: "adjustable straps", count: 2}
+      - {phrase: "light weight", count: 2}
+      - {phrase: "fold the bill up a bit to provide better vision when needed", count: 1}
+      - {phrase: "chin strap is nice for when baby wants to pull her hat off", count: 1}
+      - {phrase: "easy to get on and off", count: 1}
+      - {phrase: "back tightening straps do not work", count: 1}
+      - {phrase: "very comfortable", count: 1}
+    sample_reviews: ['BABY-003168', 'BABY-000172', 'BABY-000564', 'BABY-000653', 'BABY-000640']
+
+  - key: safety
+    label_zh: 安全性
+    total: 95
+    positive_count: 91
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 4.2%
+    top_phrases:
+      - {phrase: "great sun protection", count: 7}
+      - {phrase: "sun protection", count: 4}
+      - {phrase: "protected from the sun", count: 3}
+      - {phrase: "perfect for sun protection", count: 2}
+      - {phrase: "full coverage of his face and neck to keep him safe from the harmful sun rays", count: 1}
+      - {phrase: "blocks the sun very nicely", count: 1}
+      - {phrase: "offer a lot of protection", count: 1}
+      - {phrase: "perfect to keep the sun off the back of the neck", count: 1}
+      - {phrase: "protection from the sun and the wind", count: 1}
+      - {phrase: "Great sun protection and coverage", count: 1}
+    sample_reviews: ['BABY-000510', 'BABY-000653', 'BABY-001334', 'BABY-000461', 'BABY-000480']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 85
+    positive_count: 64
+    negative_count: 21
+    neutral_count: 0
+    negative_rate: 24.7%
+    top_phrases:
+      - {phrase: "great quality", count: 8}
+      - {phrase: "good quality", count: 8}
+      - {phrase: "Good quality", count: 5}
+      - {phrase: "Great quality", count: 4}
+      - {phrase: "quality", count: 3}
+      - {phrase: "sturdy", count: 2}
+      - {phrase: "well made", count: 2}
+      - {phrase: "Nice quality", count: 2}
+      - {phrase: "Very good quality", count: 2}
+      - {phrase: "very light weight", count: 1}
+    sample_reviews: ['BABY-000172', 'BABY-001334', 'BABY-001479', 'BABY-000082', 'BABY-000472']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 79
+    positive_count: 54
+    negative_count: 25
+    neutral_count: 0
+    negative_rate: 31.6%
+    top_phrases:
+      - {phrase: "very durable", count: 5}
+      - {phrase: "sturdy", count: 1}
+      - {phrase: "chin strap broke after one use", count: 1}
+      - {phrase: "holds up in pools or on walks", count: 1}
+      - {phrase: "first time I put this on my granddaughter and the string came apart", count: 1}
+      - {phrase: "stayed on with waves", count: 1}
+      - {phrase: "straps broke off both hats", count: 1}
+      - {phrase: "May not last past this summer", count: 1}
+      - {phrase: "fell off before the end of the second day", count: 1}
+      - {phrase: "wear these every time we go to the beach the entire time", count: 1}
+    sample_reviews: ['BABY-000172', 'BABY-000640', 'BABY-001334', 'BABY-000561', 'BABY-000606']
+
+  - key: age_appropriate
+    label_zh: 适用年龄
+    total: 79
+    positive_count: 66
+    negative_count: 4
+    neutral_count: 9
+    negative_rate: 5.1%
+    top_phrases:
+      - {phrase: "my infant great granddaughter", count: 1}
+      - {phrase: "for my two kids 3 and 5", count: 1}
+      - {phrase: "my 7 month old kept this on for an entire day", count: 1}
+      - {phrase: "size was about what the head size was for the age", count: 1}
+      - {phrase: "for my 2 and 4 year olds", count: 1}
+      - {phrase: "my toddler doesnt get annoyed with it", count: 1}
+      - {phrase: "grows with them", count: 1}
+      - {phrase: "My daughter is 3 months old and I was able to adjust it to her tiny head", count: 1}
+      - {phrase: "newborn", count: 1}
+      - {phrase: "my 2 year old definitely will not be able to wear these until 7 as advertised", count: 1}
+    sample_reviews: ['BABY-000461', 'BABY-003143', 'BABY-003466', 'BABY-001349', 'BABY-000483']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 55
+    positive_count: 50
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 9.1%
+    top_phrases:
+      - {phrase: "Great price", count: 4}
+      - {phrase: "good price", count: 3}
+      - {phrase: "Good value", count: 2}
+      - {phrase: "price is great", count: 2}
+      - {phrase: "Great product for the price", count: 2}
+      - {phrase: "Great hat and great price", count: 1}
+      - {phrase: "for the price and quality you can't beat it", count: 1}
+      - {phrase: "good buy", count: 1}
+      - {phrase: "Wroth the money", count: 1}
+      - {phrase: "great for the price", count: 1}
+    sample_reviews: ['BABY-003168', 'BABY-000172', 'BABY-000080', 'BABY-003091', 'BABY-003143']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 44
+    positive_count: 35
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 20.5%
+    top_phrases:
+      - {phrase: "stay on", count: 2}
+      - {phrase: "stays on", count: 2}
+      - {phrase: "drawstring on it holds in place well", count: 1}
+      - {phrase: "se cae muy facil", count: 1}
+      - {phrase: "not so easy that she can pull it off herself, the chin strap is great", count: 1}
+      - {phrase: "stays on his head pretty good", count: 1}
+      - {phrase: "chin strap so it won’t blow off", count: 1}
+      - {phrase: "drawstring keeps it in place", count: 1}
+      - {phrase: "don't stay on super well", count: 1}
+      - {phrase: "adjustable chin strap so it doesn't fly off in the wind", count: 1}
+    sample_reviews: ['BABY-003168', 'BABY-000457', 'BABY-000653', 'BABY-001441', 'BABY-000150']
+
+  - key: other
+    label_zh: 其他
+    total: 43
+    positive_count: 36
+    negative_count: 7
+    neutral_count: 0
+    negative_rate: 16.3%
+    top_phrases:
+      - {phrase: "great coverage", count: 2}
+      - {phrase: "wonderful sun coverage", count: 1}
+      - {phrase: "Perfect to block the sun", count: 1}
+      - {phrase: "fast shipping", count: 1}
+      - {phrase: "Needs air holes so baby’s head doesn’t get too hot", count: 1}
+      - {phrase: "Great coverage from the sun", count: 1}
+      - {phrase: "dry time was very quick", count: 1}
+      - {phrase: "wide brim really does block the sun", count: 1}
+      - {phrase: "Perfect for the outing", count: 1}
+      - {phrase: "strap was removable", count: 1}
+    sample_reviews: ['BABY-000628', 'BABY-000008', 'BABY-003081', 'BABY-003123', 'BABY-000445']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 34
+    positive_count: 33
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 2.9%
+    top_phrases:
+      - {phrase: "easy to wash", count: 5}
+      - {phrase: "easy to clean", count: 5}
+      - {phrase: "washable", count: 4}
+      - {phrase: "easily machine washable", count: 1}
+      - {phrase: "Washes very well", count: 1}
+      - {phrase: "Looks great after being washed", count: 1}
+      - {phrase: "Washable", count: 1}
+      - {phrase: "easy to wash in the machine", count: 1}
+      - {phrase: "washed them a few times and set over an upside down sauce pan to dry to preserve", count: 1}
+      - {phrase: "machine washable", count: 1}
+    sample_reviews: ['BABY-001479', 'BABY-000008', 'BABY-000561', 'BABY-000533', 'BABY-001473']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 6
+    positive_count: 2
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "Llego antes el pedido", count: 1}
+      - {phrase: "quick delivery", count: 1}
+      - {phrase: "package was ripped", count: 1}
+      - {phrase: "only got one of the two hats", count: 1}
+      - {phrase: "broken (missing a clasp)", count: 1}
+      - {phrase: "vino roto y descocido", count: 1}
+    sample_reviews: ['BABY-000617', 'BABY-000498', 'BABY-001753', 'BABY-000504', 'BABY-000486']
+
+  - key: packaging
+    label_zh: 包装
+    total: 3
+    positive_count: 1
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "Package intact", count: 1}
+      - {phrase: "only received 1 hat of the 2 pack", count: 1}
+      - {phrase: "paquete que decía que venían 2 sombreros, pero solo me llegó 1", count: 1}
+    sample_reviews: ['BABY-001315', 'BABY-001472', 'BABY-000441']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 2
+    positive_count: 0
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "no way to contact seller after the return window", count: 1}
+      - {phrase: "two days late of the return window", count: 1}
+    sample_reviews: ['BABY-000640', 'BABY-001756']
+
+  - key: smell
+    label_zh: 异味
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "smell like kerosene on the fabric", count: 1}
+    sample_reviews: ['BABY-001302']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "super light weight", count: 1}
+    sample_reviews: ['BABY-000636']

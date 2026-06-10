@@ -1,0 +1,333 @@
+# Wild Alaskan Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Wild Alaskan
+aspect_count: 17
+aspects:
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 636
+    positive_count: 468
+    negative_count: 160
+    neutral_count: 8
+    negative_rate: 25.2%
+    top_phrases:
+      - {phrase: "dogs love it", count: 18}
+      - {phrase: "My dog loves it", count: 12}
+      - {phrase: "cats love it", count: 8}
+      - {phrase: "my dog loves it", count: 8}
+      - {phrase: "My dogs love it", count: 7}
+      - {phrase: "love the taste", count: 7}
+      - {phrase: "Dogs love it", count: 7}
+      - {phrase: "dogs love this", count: 6}
+      - {phrase: "dog loves it", count: 6}
+      - {phrase: "loves the taste", count: 6}
+    sample_reviews: ['PET-013318', 'PET-013297', 'PET-013295', 'PET-012485', 'PET-012336']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 631
+    positive_count: 511
+    negative_count: 106
+    neutral_count: 14
+    negative_rate: 16.8%
+    top_phrases:
+      - {phrase: "shiny coat", count: 4}
+      - {phrase: "Made my dog sick", count: 3}
+      - {phrase: "healthy shiny coat", count: 2}
+      - {phrase: "good for them", count: 2}
+      - {phrase: "coat is so shiny", count: 2}
+      - {phrase: "scratching less", count: 2}
+      - {phrase: "made my dog sick", count: 2}
+      - {phrase: "helped with dry skin", count: 2}
+      - {phrase: "Both my dogs are scratching worse", count: 1}
+      - {phrase: "makes my kitties coats so soft", count: 1}
+    sample_reviews: ['PET-013439', 'PET-001911', 'PET-012471', 'PET-013295', 'PET-013384']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 192
+    positive_count: 105
+    negative_count: 80
+    neutral_count: 7
+    negative_rate: 41.7%
+    top_phrases:
+      - {phrase: "Easy to use", count: 7}
+      - {phrase: "easy to use", count: 4}
+      - {phrase: "pump leaks", count: 3}
+      - {phrase: "very easy to use", count: 2}
+      - {phrase: "spout which leaks everywhere", count: 1}
+      - {phrase: "very easy to squirt into the food", count: 1}
+      - {phrase: "pump dispenser doesn't work", count: 1}
+      - {phrase: "oil drops out and hardens to a sticky crud that covers the entire bottle and dri", count: 1}
+      - {phrase: "Simply add it to their wet food as directed", count: 1}
+      - {phrase: "pump did not screw on right", count: 1}
+    sample_reviews: ['PET-013334', 'PET-004629', 'PET-012520', 'PET-001077', 'PET-012459']
+
+  - key: other
+    label_zh: 其他
+    total: 153
+    positive_count: 58
+    negative_count: 81
+    neutral_count: 14
+    negative_rate: 52.9%
+    top_phrases:
+      - {phrase: "Best Salmon Oil Formula", count: 1}
+      - {phrase: "misleading", count: 1}
+      - {phrase: "really comes from Salmon", count: 1}
+      - {phrase: "not enough EPA and DHA levels per serving for vet required dosage", count: 1}
+      - {phrase: "lack of transparency with the ingredients", count: 1}
+      - {phrase: "no dietary information", count: 1}
+      - {phrase: "works good", count: 1}
+      - {phrase: "didn't see the improvement I had hoped for", count: 1}
+      - {phrase: "misleading ingredients", count: 1}
+      - {phrase: "wonder how such a sap like product can be digested well in dogs", count: 1}
+    sample_reviews: ['PET-012973', 'PET-013439', 'PET-013010', 'PET-004740', 'PET-004608']
+
+  - key: smell
+    label_zh: 异味
+    total: 147
+    positive_count: 29
+    negative_count: 108
+    neutral_count: 10
+    negative_rate: 73.5%
+    top_phrases:
+      - {phrase: "Smells horrible", count: 2}
+      - {phrase: "strong fishy odor", count: 2}
+      - {phrase: "does not smell", count: 1}
+      - {phrase: "the smell is kind of too strong", count: 1}
+      - {phrase: "was not a strong fishy smell", count: 1}
+      - {phrase: "smelled terrible", count: 1}
+      - {phrase: "smells bad", count: 1}
+      - {phrase: "stinky", count: 1}
+      - {phrase: "very sticky", count: 1}
+      - {phrase: "stink like the ocean", count: 1}
+    sample_reviews: ['PET-013297', 'PET-004629', 'PET-013010', 'PET-004740', 'PET-004577']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 135
+    positive_count: 70
+    negative_count: 61
+    neutral_count: 4
+    negative_rate: 45.2%
+    top_phrases:
+      - {phrase: "good value for the money", count: 4}
+      - {phrase: "waste of money", count: 3}
+      - {phrase: "great value", count: 2}
+      - {phrase: "worth the money", count: 2}
+      - {phrase: "great value for the money", count: 2}
+      - {phrase: "expensive", count: 2}
+      - {phrase: "good price", count: 2}
+      - {phrase: "haven't seen anything yet that would bring me to buy another bottle", count: 1}
+      - {phrase: "For the price", count: 1}
+      - {phrase: "pricey", count: 1}
+    sample_reviews: ['PET-013439', 'PET-013295', 'PET-004681', 'PET-012588', 'PET-002757']
+
+  - key: packaging
+    label_zh: 包装
+    total: 134
+    positive_count: 20
+    negative_count: 111
+    neutral_count: 3
+    negative_rate: 82.8%
+    top_phrases:
+      - {phrase: "bottle leaks", count: 3}
+      - {phrase: "bottle does leak", count: 2}
+      - {phrase: "packaging is horrible", count: 2}
+      - {phrase: "packaging is great", count: 1}
+      - {phrase: "White adhesive bottle top seal failed", count: 1}
+      - {phrase: "the pump leaks but not alot", count: 1}
+      - {phrase: "writing on the label is very hard to read", count: 1}
+      - {phrase: "bottle does leak after using the pump", count: 1}
+      - {phrase: "safety seal under the cap was not intact", count: 1}
+      - {phrase: "bottle came wrapped in vacuumed sealed plastic and still leaked inside", count: 1}
+    sample_reviews: ['PET-004629', 'PET-013345', 'PET-004740', 'PET-001082', 'PET-001409']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 63
+    positive_count: 11
+    negative_count: 51
+    neutral_count: 1
+    negative_rate: 81.0%
+    top_phrases:
+      - {phrase: "Arrived quickly", count: 2}
+      - {phrase: "leak", count: 2}
+      - {phrase: "product leaked in the seal package through shipment", count: 1}
+      - {phrase: "greasy package maybe 8 TBLS leaked out", count: 1}
+      - {phrase: "damaged and leaked everywhere upon arrival", count: 1}
+      - {phrase: "leaked inside", count: 1}
+      - {phrase: "bottle was opened and leaking", count: 1}
+      - {phrase: "se derramó", count: 1}
+      - {phrase: "oil leaking", count: 1}
+      - {phrase: "leaked and got on the packing paper, seeped into the box and onto some other ite", count: 1}
+    sample_reviews: ['PET-012670', 'PET-013345', 'PET-004577', 'PET-004565', 'PET-012635']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 59
+    positive_count: 20
+    negative_count: 36
+    neutral_count: 3
+    negative_rate: 61.0%
+    top_phrases:
+      - {phrase: "cannot return", count: 2}
+      - {phrase: "non refundable", count: 2}
+      - {phrase: "Great customer service, they refunded my cost after learning of my dissatisfacti", count: 1}
+      - {phrase: "nonrefundable", count: 1}
+      - {phrase: "customer service sent me a refund, quick to respond", count: 1}
+      - {phrase: "calling Zesty Paws they said they are updating their labels", count: 1}
+      - {phrase: "Non-returnable", count: 1}
+      - {phrase: "don't accept refunds", count: 1}
+      - {phrase: "not returnable", count: 1}
+      - {phrase: "customer service was very prompt and helpful in giving me a full refund", count: 1}
+    sample_reviews: ['PET-012485', 'PET-012336', 'PET-002738', 'PET-001082', 'PET-012610']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 50
+    positive_count: 12
+    negative_count: 38
+    neutral_count: 0
+    negative_rate: 76.0%
+    top_phrases:
+      - {phrase: "bottle leaks", count: 3}
+      - {phrase: "good quality", count: 3}
+      - {phrase: "way it is designed", count: 1}
+      - {phrase: "Pump bottle leaks constantly", count: 1}
+      - {phrase: "leaks everywhere", count: 1}
+      - {phrase: "Bottle leaks", count: 1}
+      - {phrase: "pump leaks/drips constantly", count: 1}
+      - {phrase: "Good quality", count: 1}
+      - {phrase: "container too porous", count: 1}
+      - {phrase: "5 star quality", count: 1}
+    sample_reviews: ['PET-013334', 'PET-004751', 'PET-004681', 'PET-012626', 'PET-013060']
+
+  - key: material
+    label_zh: 材质用料
+    total: 35
+    positive_count: 12
+    negative_count: 23
+    neutral_count: 0
+    negative_rate: 65.7%
+    top_phrases:
+      - {phrase: "ingredients", count: 2}
+      - {phrase: "First ingredient Is pollack oil", count: 1}
+      - {phrase: "ingredients look quality", count: 1}
+      - {phrase: "Salmon is not first ingredient", count: 1}
+      - {phrase: "Pollock oil as first ingredient instead of salmon oil", count: 1}
+      - {phrase: "texture is a true oil and not runny", count: 1}
+      - {phrase: "first ingredient is pollock oil..then salmon oil", count: 1}
+      - {phrase: "more Pollock than Salmon oil", count: 1}
+      - {phrase: "soft coat", count: 1}
+      - {phrase: "oil is great quality", count: 1}
+    sample_reviews: ['PET-012313', 'PET-002779', 'PET-046318', 'PET-004767', 'PET-001424']
+
+  - key: safety
+    label_zh: 安全性
+    total: 26
+    positive_count: 5
+    negative_count: 21
+    neutral_count: 0
+    negative_rate: 80.8%
+    top_phrases:
+      - {phrase: "safety seal under the cap was not intact", count: 1}
+      - {phrase: "orange dye in it", count: 1}
+      - {phrase: "straw part of pump was covered in something", count: 1}
+      - {phrase: "no immediate adverse reactions", count: 1}
+      - {phrase: "cat got urethral obstruction and bladder exploded", count: 1}
+      - {phrase: "got diarrhea so bad", count: 1}
+      - {phrase: "both effective and safe", count: 1}
+      - {phrase: "afraid to use it", count: 1}
+      - {phrase: "No harmful chemicals", count: 1}
+      - {phrase: "would not risk my dog’s life", count: 1}
+    sample_reviews: ['PET-012544', 'PET-004601', 'PET-002778', 'PET-013329', 'PET-001408']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 19
+    positive_count: 4
+    negative_count: 15
+    neutral_count: 0
+    negative_rate: 78.9%
+    top_phrases:
+      - {phrase: "I have to scrape it off the tile with a stiff scrub brush", count: 1}
+      - {phrase: "No mess", count: 1}
+      - {phrase: "residue did not get off the bottle or my hands", count: 1}
+      - {phrase: "pain to clean up because it's oil", count: 1}
+      - {phrase: "cleaning every surface in the apartment because of explosive diarrhea", count: 1}
+      - {phrase: "messy", count: 1}
+      - {phrase: "difficult to clean up", count: 1}
+      - {phrase: "mess to clean up before using", count: 1}
+      - {phrase: "Doesn't have to give as many baths", count: 1}
+      - {phrase: "not fun to clean up", count: 1}
+    sample_reviews: ['PET-001077', 'PET-013434', 'PET-002758', 'PET-012621', 'PET-004729']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 16
+    positive_count: 4
+    negative_count: 10
+    neutral_count: 2
+    negative_rate: 62.5%
+    top_phrases:
+      - {phrase: "Thought it’d be bigger", count: 1}
+      - {phrase: "got a 16 oz instead of 32 oz", count: 1}
+      - {phrase: "size of the bottle is just right", count: 1}
+      - {phrase: "bottle size 32 ounces too large for cat use", count: 1}
+      - {phrase: "too small", count: 1}
+      - {phrase: "Bottle not as large as I thought it would be", count: 1}
+      - {phrase: "Perfect for my dog", count: 1}
+      - {phrase: "cats are small and don’t need as much product", count: 1}
+      - {phrase: "small size should give me 2 weeks", count: 1}
+      - {phrase: "smaller than picture makes it look", count: 1}
+    sample_reviews: ['PET-012730', 'PET-013270', 'PET-012450', 'PET-001075', 'PET-004644']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 11
+    positive_count: 4
+    negative_count: 5
+    neutral_count: 2
+    negative_rate: 45.5%
+    top_phrases:
+      - {phrase: "hair looks very shiny", count: 1}
+      - {phrase: "Just like pictures show", count: 1}
+      - {phrase: "looks fine", count: 1}
+      - {phrase: "orange color", count: 1}
+      - {phrase: "so orange in color", count: 1}
+      - {phrase: "Color is oranger than other salmon oils I've bought", count: 1}
+      - {phrase: "wish it wasn't orange", count: 1}
+      - {phrase: "very bad design", count: 1}
+      - {phrase: "coat is super shiney and beautiful", count: 1}
+      - {phrase: "bright orange", count: 1}
+    sample_reviews: ['PET-012528', 'PET-012549', 'PET-012360', 'PET-004755', 'PET-001916']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 8
+    positive_count: 7
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 12.5%
+    top_phrases:
+      - {phrase: "second bottle with the exact same leaking issue", count: 1}
+      - {phrase: "has lasted a long time", count: 1}
+      - {phrase: "still works amazingly after 4 months", count: 1}
+      - {phrase: "lasts a long time", count: 1}
+      - {phrase: "Lasts a long time", count: 1}
+      - {phrase: "lasted us awhile", count: 1}
+      - {phrase: "last me two months and the old ones only lasted 1", count: 1}
+      - {phrase: "lasts me about 3 months", count: 1}
+    sample_reviews: ['PET-004751', 'PET-013288', 'PET-001412', 'PET-013057', 'PET-012540']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "bottle easily tips over", count: 1}
+    sample_reviews: ['PET-012440']

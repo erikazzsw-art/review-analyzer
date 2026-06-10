@@ -1,0 +1,284 @@
+# Ink Cartridges Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: Ink Cartridges
+aspect_count: 16
+aspects:
+  - key: value_for_money
+    label_zh: 性价比
+    total: 268
+    positive_count: 118
+    negative_count: 147
+    neutral_count: 3
+    negative_rate: 54.9%
+    top_phrases:
+      - {phrase: "Good price", count: 12}
+      - {phrase: "good price", count: 7}
+      - {phrase: "waste of money", count: 5}
+      - {phrase: "expensive", count: 5}
+      - {phrase: "Value for money", count: 4}
+      - {phrase: "Great price", count: 3}
+      - {phrase: "Waste of money", count: 3}
+      - {phrase: "Great value", count: 3}
+      - {phrase: "great price", count: 3}
+      - {phrase: "Price was good", count: 2}
+    sample_reviews: ['3C-041139', '3C-041063', '3C-003323', '3C-041269', '3C-003300']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 223
+    positive_count: 44
+    negative_count: 175
+    neutral_count: 4
+    negative_rate: 78.5%
+    top_phrases:
+      - {phrase: "dried up", count: 3}
+      - {phrase: "doesn't last long", count: 3}
+      - {phrase: "last a while", count: 2}
+      - {phrase: "last a long time", count: 2}
+      - {phrase: "lasts a long time", count: 2}
+      - {phrase: "long lasting", count: 2}
+      - {phrase: "Doesn’t last", count: 2}
+      - {phrase: "does not last long", count: 2}
+      - {phrase: "last longer", count: 2}
+      - {phrase: "cartridge is empty after a little over a month", count: 1}
+    sample_reviews: ['3C-003323', '3C-014279', '3C-003300', '3C-040967', '3C-014281']
+
+  - key: other
+    label_zh: 其他
+    total: 205
+    positive_count: 104
+    negative_count: 97
+    neutral_count: 4
+    negative_rate: 47.3%
+    top_phrases:
+      - {phrase: "print quality", count: 5}
+      - {phrase: "works great", count: 4}
+      - {phrase: "empty cartridge", count: 3}
+      - {phrase: "defective", count: 2}
+      - {phrase: "work just fine", count: 2}
+      - {phrase: "Works well", count: 2}
+      - {phrase: "good quality ink", count: 2}
+      - {phrase: "page yield", count: 1}
+      - {phrase: "just an ink cartridge", count: 1}
+      - {phrase: "Good to do business with", count: 1}
+    sample_reviews: ['3C-014066', '3C-014188', '3C-041230', '3C-040999', '3C-040999']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 168
+    positive_count: 101
+    negative_count: 65
+    neutral_count: 2
+    negative_rate: 38.7%
+    top_phrases:
+      - {phrase: "fits my printer", count: 2}
+      - {phrase: "Works just fine in my printer", count: 2}
+      - {phrase: "works great", count: 2}
+      - {phrase: "Works for my printer", count: 2}
+      - {phrase: "Fit perfect", count: 2}
+      - {phrase: "Works great", count: 2}
+      - {phrase: "works well with my printer", count: 2}
+      - {phrase: "Works just like it should", count: 1}
+      - {phrase: "on my HP Deskjet 2855e", count: 1}
+      - {phrase: "check the size against your printer requirements so they’ll fit", count: 1}
+    sample_reviews: ['3C-041139', '3C-014157', '3C-014145', '3C-002115', '3C-014281']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 88
+    positive_count: 2
+    negative_count: 84
+    neutral_count: 2
+    negative_rate: 95.5%
+    top_phrases:
+      - {phrase: "ran out seemingly instantaneously", count: 1}
+      - {phrase: "runs out very, very quickly", count: 1}
+      - {phrase: "ink only lasted a month", count: 1}
+      - {phrase: "Ink is not enough it’s can print only 10 pages finish fast", count: 1}
+      - {phrase: "doesn’t last very long at all", count: 1}
+      - {phrase: "Cartridge does not last very long", count: 1}
+      - {phrase: "23 pages before ink ran out", count: 1}
+      - {phrase: "Very Little Ink", count: 1}
+      - {phrase: "Se agotó muy rápido", count: 1}
+      - {phrase: "printed no more than 20 pages and now the cartridge is empty", count: 1}
+    sample_reviews: ['3C-014113', '3C-014137', '3C-014349', '3C-041103', '3C-014007']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 74
+    positive_count: 69
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 6.8%
+    top_phrases:
+      - {phrase: "easy to install", count: 15}
+      - {phrase: "Easy to install", count: 12}
+      - {phrase: "Easy to use", count: 3}
+      - {phrase: "easy to use", count: 2}
+      - {phrase: "mucho más comodo que otras tintas", count: 1}
+      - {phrase: "open right out of the package and it's going to work correctly every time", count: 1}
+      - {phrase: "Easy installation", count: 1}
+      - {phrase: "Convenient to order, got same day", count: 1}
+      - {phrase: "Installation is quick and easy", count: 1}
+      - {phrase: "Installation is quick and hassle-free", count: 1}
+    sample_reviews: ['3C-014355', '3C-041063', '3C-041269', '3C-014157', '3C-040940']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 69
+    positive_count: 46
+    negative_count: 22
+    neutral_count: 1
+    negative_rate: 31.9%
+    top_phrases:
+      - {phrase: "Quick delivery", count: 6}
+      - {phrase: "Fast shipping", count: 3}
+      - {phrase: "arrived at 5am. No issues", count: 1}
+      - {phrase: "shipment is fast", count: 1}
+      - {phrase: "dried up on receipt", count: 1}
+      - {phrase: "Arrived extremely fast", count: 1}
+      - {phrase: "delivered on time", count: 1}
+      - {phrase: "llegó rápido", count: 1}
+      - {phrase: "arrived open, with only one cartridge", count: 1}
+      - {phrase: "got it fast", count: 1}
+    sample_reviews: ['3C-014188', '3C-041269', '3C-014158', '3C-014157', '3C-002115']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 54
+    positive_count: 34
+    negative_count: 20
+    neutral_count: 0
+    negative_rate: 37.0%
+    top_phrases:
+      - {phrase: "Good quality", count: 7}
+      - {phrase: "good quality", count: 3}
+      - {phrase: "dried out", count: 2}
+      - {phrase: "Great quality every time", count: 1}
+      - {phrase: "Very cheap quality cartridge", count: 1}
+      - {phrase: "Product is solid", count: 1}
+      - {phrase: "No smearing, clear text as printed. Reliable ink product", count: 1}
+      - {phrase: "low quality", count: 1}
+      - {phrase: "Same quality product", count: 1}
+      - {phrase: "cartridge its defective", count: 1}
+    sample_reviews: ['3C-041242', '3C-014362', '3C-041263', '3C-040982', '3C-014152']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 38
+    positive_count: 4
+    negative_count: 30
+    neutral_count: 4
+    negative_rate: 78.9%
+    top_phrases:
+      - {phrase: "pushing the automatic shipment subscription", count: 1}
+      - {phrase: "support is abysmal", count: 1}
+      - {phrase: "restocking fee", count: 1}
+      - {phrase: "HP Ink Took My Printer Off Line", count: 1}
+      - {phrase: "Awful way to conduct business", count: 1}
+      - {phrase: "hassle of ordering", count: 1}
+      - {phrase: "quick service", count: 1}
+      - {phrase: "called and requested and received a replacement", count: 1}
+      - {phrase: "HP sent me a notice saying they were aware I was using non HP cartridges and voi", count: 1}
+      - {phrase: "can't get my money back because the window closed for a refund", count: 1}
+    sample_reviews: ['3C-041205', '3C-040936', '3C-003276', '3C-002118', '3C-003314']
+
+  - key: packaging
+    label_zh: 包装
+    total: 25
+    positive_count: 4
+    negative_count: 20
+    neutral_count: 1
+    negative_rate: 80.0%
+    top_phrases:
+      - {phrase: "arrived open", count: 1}
+      - {phrase: "Arrived in perfect condition", count: 1}
+      - {phrase: "handled with care", count: 1}
+      - {phrase: "box was all taped up", count: 1}
+      - {phrase: "packaging took a beating", count: 1}
+      - {phrase: "properly wrapped and contained", count: 1}
+      - {phrase: "HP packaging", count: 1}
+      - {phrase: "box was taped shut", count: 1}
+      - {phrase: "package for the black cartridge was torn open and the protective tape gone", count: 1}
+      - {phrase: "package had been opened", count: 1}
+    sample_reviews: ['3C-003303', '3C-040998', '3C-041125', '3C-041056', '3C-003280']
+
+  - key: material
+    label_zh: 材质用料
+    total: 10
+    positive_count: 8
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 20.0%
+    top_phrases:
+      - {phrase: "Quality ink", count: 1}
+      - {phrase: "quality of the inks", count: 1}
+      - {phrase: "ink feels very dry", count: 1}
+      - {phrase: "very good quality", count: 1}
+      - {phrase: "Color and quality good", count: 1}
+      - {phrase: "Nice ink", count: 1}
+      - {phrase: "GOOD QUALITY", count: 1}
+      - {phrase: "Cheesey plastic", count: 1}
+      - {phrase: "quality of ink", count: 1}
+      - {phrase: "Original ink", count: 1}
+    sample_reviews: ['3C-041135', '3C-014310', '3C-014217', '3C-041250', '3C-041081']
+
+  - key: sound_quality
+    label_zh: 音质
+    total: 4
+    positive_count: 2
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "colors were great", count: 1}
+      - {phrase: "Great print quality", count: 1}
+      - {phrase: "printing quality is awful", count: 1}
+      - {phrase: "print quality is just not longer lasting", count: 1}
+    sample_reviews: ['3C-014007', '3C-040984', '3C-014360', '3C-041111']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 2
+    positive_count: 2
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "black ink looks ultra impressive", count: 1}
+      - {phrase: "Diseño atractivo", count: 1}
+    sample_reviews: ['3C-014281', '3C-040979']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 2
+    positive_count: 1
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "trying to get it to connect to the network", count: 1}
+      - {phrase: "Connects perfect on the first try", count: 1}
+    sample_reviews: ['3C-001491', '3C-014154']
+
+  - key: portability
+    label_zh: 便携性
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "portable", count: 1}
+    sample_reviews: ['3C-014026']
+
+  - key: charging_speed
+    label_zh: 充电速度
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "fast charging", count: 1}
+    sample_reviews: ['3C-014026']

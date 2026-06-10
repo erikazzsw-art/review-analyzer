@@ -1,0 +1,341 @@
+# iPhone Charger Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: iPhone Charger
+aspect_count: 18
+aspects:
+  - key: charging_speed
+    label_zh: 充电速度
+    total: 1133
+    positive_count: 674
+    negative_count: 448
+    neutral_count: 11
+    negative_rate: 39.5%
+    top_phrases:
+      - {phrase: "fast charging", count: 42}
+      - {phrase: "Fast charging", count: 39}
+      - {phrase: "charges fast", count: 27}
+      - {phrase: "fast charger", count: 21}
+      - {phrase: "Charges fast", count: 17}
+      - {phrase: "fast charge", count: 15}
+      - {phrase: "charge fast", count: 14}
+      - {phrase: "fast", count: 13}
+      - {phrase: "not a fast charger", count: 11}
+      - {phrase: "Fast charger", count: 10}
+    sample_reviews: ['3C-004945', '3C-011835', '3C-009651', '3C-013917', '3C-009321']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 749
+    positive_count: 284
+    negative_count: 463
+    neutral_count: 2
+    negative_rate: 61.8%
+    top_phrases:
+      - {phrase: "Good quality", count: 18}
+      - {phrase: "Great quality", count: 14}
+      - {phrase: "good quality", count: 10}
+      - {phrase: "quality", count: 7}
+      - {phrase: "Very good quality", count: 7}
+      - {phrase: "sturdy", count: 6}
+      - {phrase: "Buena calidad", count: 6}
+      - {phrase: "quality is great", count: 6}
+      - {phrase: "Poor quality", count: 6}
+      - {phrase: "great quality", count: 5}
+    sample_reviews: ['3C-009651', '3C-012255', '3C-013180', '3C-007354', '3C-008665']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 734
+    positive_count: 145
+    negative_count: 581
+    neutral_count: 8
+    negative_rate: 79.2%
+    top_phrases:
+      - {phrase: "stopped working", count: 18}
+      - {phrase: "durable", count: 15}
+      - {phrase: "Durable", count: 5}
+      - {phrase: "stopped working after 2 months", count: 5}
+      - {phrase: "stopped working after 3 months", count: 4}
+      - {phrase: "very durable", count: 4}
+      - {phrase: "stopped working after a week", count: 4}
+      - {phrase: "stopped working within a month", count: 3}
+      - {phrase: "Stopped working after 2 months", count: 3}
+      - {phrase: "didn't last long", count: 3}
+    sample_reviews: ['3C-008339', '3C-003252', '3C-007850', '3C-006213', '3C-012255']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 608
+    positive_count: 421
+    negative_count: 166
+    neutral_count: 21
+    negative_rate: 27.3%
+    top_phrases:
+      - {phrase: "great price", count: 22}
+      - {phrase: "Great price", count: 18}
+      - {phrase: "waste of money", count: 16}
+      - {phrase: "Waste of money", count: 10}
+      - {phrase: "good price", count: 10}
+      - {phrase: "Great value", count: 10}
+      - {phrase: "good value", count: 9}
+      - {phrase: "Good price", count: 9}
+      - {phrase: "Cheap", count: 8}
+      - {phrase: "Don’t waste your money", count: 8}
+    sample_reviews: ['3C-008339', '3C-007218', '3C-012755', '3C-003252', '3C-006798']
+
+  - key: other
+    label_zh: 其他
+    total: 359
+    positive_count: 273
+    negative_count: 80
+    neutral_count: 6
+    negative_rate: 22.3%
+    top_phrases:
+      - {phrase: "long cord", count: 20}
+      - {phrase: "Works great", count: 17}
+      - {phrase: "Works well", count: 8}
+      - {phrase: "long cords", count: 7}
+      - {phrase: "work great", count: 5}
+      - {phrase: "works well", count: 5}
+      - {phrase: "length", count: 5}
+      - {phrase: "work well", count: 4}
+      - {phrase: "really long", count: 3}
+      - {phrase: "Worked great", count: 3}
+    sample_reviews: ['3C-012618', '3C-012755', '3C-007539', '3C-006078', '3C-002713']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 351
+    positive_count: 163
+    negative_count: 181
+    neutral_count: 7
+    negative_rate: 51.6%
+    top_phrases:
+      - {phrase: "exactly what I needed", count: 4}
+      - {phrase: "work great", count: 3}
+      - {phrase: "Works great", count: 2}
+      - {phrase: "Fits perfectly", count: 2}
+      - {phrase: "iPhone 16", count: 2}
+      - {phrase: "Fall out of my phone", count: 1}
+      - {phrase: "Works well with iPhone 15 Pro", count: 1}
+      - {phrase: "Compatible with iPhone 14", count: 1}
+      - {phrase: "house runs on apple products", count: 1}
+      - {phrase: "Iphone 16 works with this cable", count: 1}
+    sample_reviews: ['3C-004945', '3C-007984', '3C-010635', '3C-010752', '3C-040896']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 248
+    positive_count: 235
+    negative_count: 7
+    neutral_count: 6
+    negative_rate: 2.8%
+    top_phrases:
+      - {phrase: "Love the color", count: 13}
+      - {phrase: "love the color", count: 12}
+      - {phrase: "color", count: 6}
+      - {phrase: "cute", count: 5}
+      - {phrase: "colors", count: 5}
+      - {phrase: "different colors", count: 5}
+      - {phrase: "Cute color", count: 4}
+      - {phrase: "fun colors", count: 4}
+      - {phrase: "love the colors", count: 4}
+      - {phrase: "favorite color", count: 3}
+    sample_reviews: ['3C-007539', '3C-010635', '3C-013711', '3C-001986', '3C-007212']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 180
+    positive_count: 16
+    negative_count: 163
+    neutral_count: 1
+    negative_rate: 90.6%
+    top_phrases:
+      - {phrase: "loose connection", count: 3}
+      - {phrase: "reliable", count: 2}
+      - {phrase: "any tension at all and they fall out", count: 1}
+      - {phrase: "cord kept on slipping off", count: 1}
+      - {phrase: "cord constantly falls out of the charging port", count: 1}
+      - {phrase: "constantly disconnect at the slightest movement", count: 1}
+      - {phrase: "anytime I move it stops charging", count: 1}
+      - {phrase: "cords does not stay in my iPhone", count: 1}
+      - {phrase: "won’t stay plugged in", count: 1}
+      - {phrase: "cord falls out immediately", count: 1}
+    sample_reviews: ['3C-012848', '3C-012032', '3C-009955', '3C-006072', '3C-008815']
+
+  - key: portability
+    label_zh: 便携性
+    total: 176
+    positive_count: 170
+    negative_count: 6
+    neutral_count: 0
+    negative_rate: 3.4%
+    top_phrases:
+      - {phrase: "long cord", count: 4}
+      - {phrase: "long", count: 2}
+      - {phrase: "perfect length", count: 2}
+      - {phrase: "Great length", count: 2}
+      - {phrase: "Long cord", count: 2}
+      - {phrase: "longer cord", count: 2}
+      - {phrase: "lightweight", count: 2}
+      - {phrase: "Nice length", count: 2}
+      - {phrase: "portable", count: 2}
+      - {phrase: "length of the cord is amazing, very long", count: 1}
+    sample_reviews: ['3C-006798', '3C-006323', '3C-006078', '3C-002652', '3C-002636']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 121
+    positive_count: 94
+    negative_count: 27
+    neutral_count: 0
+    negative_rate: 22.3%
+    top_phrases:
+      - {phrase: "easy to use", count: 8}
+      - {phrase: "Works great", count: 5}
+      - {phrase: "Easy to use", count: 3}
+      - {phrase: "Works well", count: 3}
+      - {phrase: "works well", count: 3}
+      - {phrase: "Works perfectly", count: 3}
+      - {phrase: "works as expected", count: 2}
+      - {phrase: "work well", count: 2}
+      - {phrase: "easy to connect", count: 2}
+      - {phrase: "Works perfect", count: 2}
+    sample_reviews: ['3C-013917', '3C-006489', '3C-006323', '3C-012848', '3C-010661']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 95
+    positive_count: 71
+    negative_count: 22
+    neutral_count: 2
+    negative_rate: 23.2%
+    top_phrases:
+      - {phrase: "Fast delivery", count: 6}
+      - {phrase: "came fast", count: 3}
+      - {phrase: "fast shipping", count: 2}
+      - {phrase: "fast delivery", count: 2}
+      - {phrase: "came on time", count: 2}
+      - {phrase: "delivered quickly", count: 2}
+      - {phrase: "arrived on time", count: 2}
+      - {phrase: "came quickly", count: 2}
+      - {phrase: "received my chargers quickly", count: 1}
+      - {phrase: "came broken", count: 1}
+    sample_reviews: ['3C-006783', '3C-007520', '3C-012177', '3C-008492', '3C-007554']
+
+  - key: packaging
+    label_zh: 包装
+    total: 73
+    positive_count: 29
+    negative_count: 37
+    neutral_count: 7
+    negative_rate: 50.7%
+    top_phrases:
+      - {phrase: "Packaged well", count: 2}
+      - {phrase: "only got 1 cable but 2 blocks", count: 1}
+      - {phrase: "Only came with one charger and two blocks", count: 1}
+      - {phrase: "arrived nicely in a little bag", count: 1}
+      - {phrase: "threw out the box", count: 1}
+      - {phrase: "two in the package", count: 1}
+      - {phrase: "opened the package", count: 1}
+      - {phrase: "looked used upon arrival", count: 1}
+      - {phrase: "Box was clearly old, items were used and it had been obviously repacked", count: 1}
+      - {phrase: "packaged well", count: 1}
+    sample_reviews: ['3C-011696', '3C-012051', '3C-006132', '3C-008302', '3C-011866']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 50
+    positive_count: 15
+    negative_count: 31
+    neutral_count: 4
+    negative_rate: 62.0%
+    top_phrases:
+      - {phrase: "Amazon won't do anything for me", count: 1}
+      - {phrase: "great Item and seller", count: 1}
+      - {phrase: "paid for the 10 feet charger and was given the 6 feet one", count: 1}
+      - {phrase: "got the wrong package at first but he gave it to me in the end", count: 1}
+      - {phrase: "no replacement or refund offered", count: 1}
+      - {phrase: "only offered troubleshooting yourself", count: 1}
+      - {phrase: "muy puntuales", count: 1}
+      - {phrase: "Excellent service", count: 1}
+      - {phrase: "Extremely disappointed", count: 1}
+      - {phrase: "only willing to pay half the purchase", count: 1}
+    sample_reviews: ['3C-007512', '3C-005194', '3C-040531', '3C-007219', '3C-003082']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 34
+    positive_count: 13
+    negative_count: 21
+    neutral_count: 0
+    negative_rate: 61.8%
+    top_phrases:
+      - {phrase: "super long", count: 2}
+      - {phrase: "battery stays charged all day", count: 1}
+      - {phrase: "keeps the battery life going", count: 1}
+      - {phrase: "fluctuates the battery percentage", count: 1}
+      - {phrase: "Battery life last like it was a Apple charger", count: 1}
+      - {phrase: "phone has been dying a bit faster than usual", count: 1}
+      - {phrase: "stays charged for 5%", count: 1}
+      - {phrase: "gained 3% charge in 45 minutes", count: 1}
+      - {phrase: "works well with my battery life", count: 1}
+      - {phrase: "battery actually started decreasing while plugged in", count: 1}
+    sample_reviews: ['3C-008634', '3C-001528', '3C-006072', '3C-006844', '3C-013547']
+
+  - key: material
+    label_zh: 材质用料
+    total: 17
+    positive_count: 8
+    negative_count: 9
+    neutral_count: 0
+    negative_rate: 52.9%
+    top_phrases:
+      - {phrase: "cord is fairly stiff", count: 1}
+      - {phrase: "made of quality materials", count: 1}
+      - {phrase: "very flimsy", count: 1}
+      - {phrase: "Material muy básico", count: 1}
+      - {phrase: "buen material", count: 1}
+      - {phrase: "wire was quite thin", count: 1}
+      - {phrase: "Hard cords", count: 1}
+      - {phrase: "good Quality Material", count: 1}
+      - {phrase: "very durable material", count: 1}
+      - {phrase: "hecho con buen material", count: 1}
+    sample_reviews: ['3C-006798', '3C-006783', '3C-011666', '3C-013779', '3C-013973']
+
+  - key: comfort
+    label_zh: 佩戴舒适度
+    total: 4
+    positive_count: 3
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "stick out and fall out", count: 1}
+      - {phrase: "comfort of sitting where and how I please", count: 1}
+      - {phrase: "Súper comodo", count: 1}
+      - {phrase: "great fit", count: 1}
+    sample_reviews: ['3C-007079', '3C-040911', '3C-001995', '3C-006827']
+
+  - key: sound_quality
+    label_zh: 音质
+    total: 2
+    positive_count: 1
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "makes a slight buzzing sound", count: 1}
+      - {phrase: "great sound", count: 1}
+    sample_reviews: ['3C-013739', '3C-007043']
+
+  - key: latency
+    label_zh: 延迟
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "moment of delay before my phone begins receiving charge", count: 1}
+    sample_reviews: ['3C-012945']

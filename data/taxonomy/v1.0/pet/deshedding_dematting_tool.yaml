@@ -1,0 +1,340 @@
+# Deshedding Dematting Tool Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Deshedding Dematting Tool
+aspect_count: 18
+aspects:
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 2169
+    positive_count: 1912
+    negative_count: 219
+    neutral_count: 38
+    negative_rate: 10.1%
+    top_phrases:
+      - {phrase: "Works great", count: 95}
+      - {phrase: "easy to use", count: 91}
+      - {phrase: "works great", count: 66}
+      - {phrase: "Easy to use", count: 52}
+      - {phrase: "works well", count: 23}
+      - {phrase: "Works well", count: 20}
+      - {phrase: "easy to clean", count: 16}
+      - {phrase: "works really well", count: 13}
+      - {phrase: "works", count: 12}
+      - {phrase: "worked great", count: 11}
+    sample_reviews: ['PET-039742', 'PET-006192', 'PET-039733', 'PET-040200', 'PET-040306']
+
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 1525
+    positive_count: 1235
+    negative_count: 221
+    neutral_count: 69
+    negative_rate: 14.5%
+    top_phrases:
+      - {phrase: "dogs love it", count: 6}
+      - {phrase: "he loves it", count: 6}
+      - {phrase: "My cat loves it", count: 5}
+      - {phrase: "works great", count: 5}
+      - {phrase: "worked great", count: 4}
+      - {phrase: "she loves it", count: 4}
+      - {phrase: "my cat loves it", count: 4}
+      - {phrase: "He loves it", count: 4}
+      - {phrase: "my dog loves it", count: 3}
+      - {phrase: "dog loves it", count: 3}
+    sample_reviews: ['PET-039742', 'PET-039733', 'PET-040306', 'PET-039883', 'PET-040321']
+
+  - key: other
+    label_zh: 其他
+    total: 477
+    positive_count: 363
+    negative_count: 91
+    neutral_count: 23
+    negative_rate: 19.1%
+    top_phrases:
+      - {phrase: "works very well", count: 3}
+      - {phrase: "works great", count: 3}
+      - {phrase: "Works really well", count: 2}
+      - {phrase: "works well", count: 2}
+      - {phrase: "as described", count: 2}
+      - {phrase: "Very effective", count: 2}
+      - {phrase: "best brush ever", count: 2}
+      - {phrase: "amount of hair that comes off", count: 2}
+      - {phrase: "game changer", count: 2}
+      - {phrase: "easy to store", count: 2}
+    sample_reviews: ['PET-040200', 'PET-008346', 'PET-002557', 'PET-044430', 'PET-039477']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 324
+    positive_count: 299
+    negative_count: 23
+    neutral_count: 2
+    negative_rate: 7.1%
+    top_phrases:
+      - {phrase: "worth every penny", count: 10}
+      - {phrase: "great value", count: 7}
+      - {phrase: "Worth every penny", count: 7}
+      - {phrase: "good price", count: 6}
+      - {phrase: "great price", count: 6}
+      - {phrase: "Good price", count: 5}
+      - {phrase: "Great price", count: 5}
+      - {phrase: "worth the money", count: 5}
+      - {phrase: "affordable", count: 4}
+      - {phrase: "Well worth the price", count: 3}
+    sample_reviews: ['PET-006192', 'PET-023803', 'PET-023890', 'PET-028302', 'PET-044363']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 255
+    positive_count: 197
+    negative_count: 55
+    neutral_count: 3
+    negative_rate: 21.6%
+    top_phrases:
+      - {phrase: "Great quality", count: 11}
+      - {phrase: "well made", count: 10}
+      - {phrase: "Good quality", count: 9}
+      - {phrase: "good quality", count: 5}
+      - {phrase: "sturdy", count: 4}
+      - {phrase: "Well made", count: 4}
+      - {phrase: "well-made", count: 4}
+      - {phrase: "great quality", count: 3}
+      - {phrase: "very good quality", count: 3}
+      - {phrase: "Sturdy", count: 3}
+    sample_reviews: ['PET-040378', 'PET-028403', 'PET-044125', 'PET-040125', 'PET-004126']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 220
+    positive_count: 181
+    negative_count: 36
+    neutral_count: 3
+    negative_rate: 16.4%
+    top_phrases:
+      - {phrase: "easy to clean", count: 35}
+      - {phrase: "Easy to clean", count: 7}
+      - {phrase: "super easy to clean", count: 6}
+      - {phrase: "cleans easily", count: 2}
+      - {phrase: "easy to clean out", count: 2}
+      - {phrase: "very easy to clean", count: 2}
+      - {phrase: "creates a mess", count: 1}
+      - {phrase: "easier to clean off the hair from the tool", count: 1}
+      - {phrase: "90% less hair in the house", count: 1}
+      - {phrase: "sweeping my floors about 5 times a day due to dog hair down to twice", count: 1}
+    sample_reviews: ['PET-039682', 'PET-044637', 'PET-039704', 'PET-028472', 'PET-040227']
+
+  - key: safety
+    label_zh: 安全性
+    total: 164
+    positive_count: 78
+    negative_count: 82
+    neutral_count: 4
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "doesn't hurt my dog", count: 2}
+      - {phrase: "Safe", count: 2}
+      - {phrase: "without hurting my dog", count: 2}
+      - {phrase: "without hurting her", count: 2}
+      - {phrase: "does not harm the skin at all", count: 1}
+      - {phrase: "hooks have sharp edges, afraid to catch his skin", count: 1}
+      - {phrase: "can really hurt your kitty", count: 1}
+      - {phrase: "ripping your pets hair out", count: 1}
+      - {phrase: "caused her to whimper and cry because it wasn’t cutting and was just pulling her", count: 1}
+      - {phrase: "teeth don't bother our cats", count: 1}
+    sample_reviews: ['PET-006192', 'PET-040306', 'PET-023890', 'PET-040378', 'PET-004126']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 138
+    positive_count: 75
+    negative_count: 53
+    neutral_count: 10
+    negative_rate: 38.4%
+    top_phrases:
+      - {phrase: "perfect size", count: 5}
+      - {phrase: "good size", count: 4}
+      - {phrase: "Great size", count: 2}
+      - {phrase: "Size is perfect", count: 2}
+      - {phrase: "great size", count: 1}
+      - {phrase: "get the large size even if you have a small dog", count: 1}
+      - {phrase: "good size for smaller type dogs under 30 Lbs", count: 1}
+      - {phrase: "get the small sized brush, it's perfect", count: 1}
+      - {phrase: "talla l no funcionaba para mi perro pequeño", count: 1}
+      - {phrase: "wasn’t meant to be used on our shorter haired kitty", count: 1}
+    sample_reviews: ['PET-008948', 'PET-039864', 'PET-040125', 'PET-001577', 'PET-028497']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 132
+    positive_count: 114
+    negative_count: 18
+    neutral_count: 0
+    negative_rate: 13.6%
+    top_phrases:
+      - {phrase: "gets out under coat", count: 1}
+      - {phrase: "helped our dog shed her under layer of fur that was making her so hot", count: 1}
+      - {phrase: "without hurting her", count: 1}
+      - {phrase: "soft", count: 1}
+      - {phrase: "reduced hairballs", count: 1}
+      - {phrase: "never been so soft", count: 1}
+      - {phrase: "cat is good as new", count: 1}
+      - {phrase: "without making him uncomfortable", count: 1}
+      - {phrase: "winter coat removed for the 90+ weather", count: 1}
+      - {phrase: "much too rough on my dog", count: 1}
+    sample_reviews: ['PET-040227', 'PET-044340', 'PET-044328', 'PET-039786', 'PET-039725']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 95
+    positive_count: 71
+    negative_count: 22
+    neutral_count: 2
+    negative_rate: 23.2%
+    top_phrases:
+      - {phrase: "durable", count: 6}
+      - {phrase: "very durable", count: 5}
+      - {phrase: "Very durable", count: 5}
+      - {phrase: "extremely durable", count: 2}
+      - {phrase: "seems pretty durable", count: 1}
+      - {phrase: "will be gone very soon", count: 1}
+      - {phrase: "holds up well", count: 1}
+      - {phrase: "double-sided rake", count: 1}
+      - {phrase: "doesn’t break easily", count: 1}
+      - {phrase: "seams came apart after a couple uses", count: 1}
+    sample_reviews: ['PET-008948', 'PET-028403', 'PET-039982', 'PET-002184', 'PET-024178']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 86
+    positive_count: 76
+    negative_count: 6
+    neutral_count: 4
+    negative_rate: 7.0%
+    top_phrases:
+      - {phrase: "looks great", count: 2}
+      - {phrase: "coat looks great", count: 2}
+      - {phrase: "looks amazing", count: 2}
+      - {phrase: "extra wide design", count: 1}
+      - {phrase: "didn't come in the color I ordered", count: 1}
+      - {phrase: "innovative solution", count: 1}
+      - {phrase: "looked so good", count: 1}
+      - {phrase: "dogs fur is so shiny", count: 1}
+      - {phrase: "they look great", count: 1}
+      - {phrase: "doesn't look like it would work", count: 1}
+    sample_reviews: ['PET-023861', 'PET-002184', 'PET-024197', 'PET-040208', 'PET-008367']
+
+  - key: material
+    label_zh: 材质用料
+    total: 20
+    positive_count: 13
+    negative_count: 4
+    neutral_count: 3
+    negative_rate: 20.0%
+    top_phrases:
+      - {phrase: "great material", count: 1}
+      - {phrase: "The feel of the brush", count: 1}
+      - {phrase: "doesn't feel cheap", count: 1}
+      - {phrase: "metal teeth with plastic and rubber", count: 1}
+      - {phrase: "thick hair", count: 1}
+      - {phrase: "metal fingers", count: 1}
+      - {phrase: "low quality", count: 1}
+      - {phrase: "strong and sturdy metal bristles", count: 1}
+      - {phrase: "Buen material resistente", count: 1}
+      - {phrase: "Quality of material used", count: 1}
+    sample_reviews: ['PET-044618', 'PET-023891', 'PET-044109', 'PET-044668', 'PET-044379']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 16
+    positive_count: 11
+    negative_count: 4
+    neutral_count: 1
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "gracious to send me a refund without returning the item", count: 1}
+      - {phrase: "seller contacted me through Amazon to apologize and issued me a FULL REFUND", count: 1}
+      - {phrase: "Sent back", count: 1}
+      - {phrase: "Seller issued full refund", count: 1}
+      - {phrase: "good customer service by giving me a full refund", count: 1}
+      - {phrase: "received a notification from customer service. What an amazing company", count: 1}
+      - {phrase: "did get a refund from the company", count: 1}
+      - {phrase: "unable to return", count: 1}
+      - {phrase: "seller was great in getting this to me as promised", count: 1}
+      - {phrase: "company contacted me and offered me a full refund", count: 1}
+    sample_reviews: ['PET-028409', 'PET-008390', 'PET-028398', 'PET-039487', 'PET-024040']
+
+  - key: packaging
+    label_zh: 包装
+    total: 9
+    positive_count: 4
+    negative_count: 5
+    neutral_count: 0
+    negative_rate: 55.6%
+    top_phrases:
+      - {phrase: "box says 2 piece set", count: 1}
+      - {phrase: "easy open package", count: 1}
+      - {phrase: "packaging cautioned about that", count: 1}
+      - {phrase: "box is comes in is nice and sturdy", count: 1}
+      - {phrase: "all the packaging says China", count: 1}
+      - {phrase: "professional and gift-able packaging", count: 1}
+      - {phrase: "came with dog hair on glove", count: 1}
+      - {phrase: "don’t have the original packaging", count: 1}
+      - {phrase: "packaging isn't the best", count: 1}
+    sample_reviews: ['PET-028344', 'PET-040333', 'PET-023872', 'PET-024018', 'PET-002559']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 8
+    positive_count: 5
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 37.5%
+    top_phrases:
+      - {phrase: "Glove was ripped", count: 1}
+      - {phrase: "came earlier than expected", count: 1}
+      - {phrase: "fast shipping", count: 1}
+      - {phrase: "gets lost or it never ships", count: 1}
+      - {phrase: "Arrived broken", count: 1}
+      - {phrase: "arrived super quick", count: 1}
+      - {phrase: "second replacement order was recieved timely with no problems", count: 1}
+      - {phrase: "arrived promptly and in perfect condition", count: 1}
+    sample_reviews: ['PET-028398', 'PET-028377', 'PET-039994', 'PET-040377', 'PET-024077']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 7
+    positive_count: 6
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 14.3%
+    top_phrases:
+      - {phrase: "sturdy", count: 2}
+      - {phrase: "very sturdy", count: 1}
+      - {phrase: "sturdiness", count: 1}
+      - {phrase: "sturdiness of the rake and brush", count: 1}
+      - {phrase: "Very sturdy", count: 1}
+      - {phrase: "doesn't stay on", count: 1}
+    sample_reviews: ['PET-044738', 'PET-044784', 'PET-044570', 'PET-028287', 'PET-044145']
+
+  - key: smell
+    label_zh: 异味
+    total: 2
+    positive_count: 2
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "has no smell", count: 1}
+      - {phrase: "dogs smell less", count: 1}
+    sample_reviews: ['PET-008389', 'PET-024120']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "Has way more capacity than furminator", count: 1}
+    sample_reviews: ['PET-028374']

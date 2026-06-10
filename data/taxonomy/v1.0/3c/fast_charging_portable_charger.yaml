@@ -1,0 +1,313 @@
+# Fast Charging Portable Charger Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:56:42
+sub_category: Fast Charging Portable Charger
+aspect_count: 16
+aspects:
+  - key: portability
+    label_zh: 便携性
+    total: 537
+    positive_count: 499
+    negative_count: 36
+    neutral_count: 2
+    negative_rate: 6.7%
+    top_phrases:
+      - {phrase: "compact", count: 16}
+      - {phrase: "Compact", count: 11}
+      - {phrase: "small", count: 9}
+      - {phrase: "size", count: 8}
+      - {phrase: "Small", count: 8}
+      - {phrase: "lightweight", count: 7}
+      - {phrase: "portable charger", count: 6}
+      - {phrase: "small size", count: 5}
+      - {phrase: "Great size", count: 5}
+      - {phrase: "Perfect size", count: 5}
+    sample_reviews: ['3C-024566', '3C-004314', '3C-004314', '3C-002154', '3C-018388']
+
+  - key: charging_speed
+    label_zh: 充电速度
+    total: 407
+    positive_count: 319
+    negative_count: 81
+    neutral_count: 7
+    negative_rate: 19.9%
+    top_phrases:
+      - {phrase: "fast charging", count: 15}
+      - {phrase: "charges fast", count: 15}
+      - {phrase: "Fast", count: 8}
+      - {phrase: "Charges quickly", count: 7}
+      - {phrase: "charges quickly", count: 6}
+      - {phrase: "fast charger", count: 5}
+      - {phrase: "powerful", count: 5}
+      - {phrase: "Charges fast", count: 5}
+      - {phrase: "charges well", count: 4}
+      - {phrase: "fast", count: 4}
+    sample_reviews: ['3C-024566', '3C-004314', '3C-002154', '3C-018388', '3C-017570']
+
+  - key: battery_life
+    label_zh: 续航
+    total: 234
+    positive_count: 161
+    negative_count: 69
+    neutral_count: 4
+    negative_rate: 29.5%
+    top_phrases:
+      - {phrase: "Long battery life", count: 2}
+      - {phrase: "Long lasting", count: 2}
+      - {phrase: "won't hold a charge", count: 2}
+      - {phrase: "good battery life", count: 2}
+      - {phrase: "battery life", count: 2}
+      - {phrase: "Great battery life", count: 2}
+      - {phrase: "Never took a full charge after a about a month", count: 1}
+      - {phrase: "Battery capacity is phenomenal for the size", count: 1}
+      - {phrase: "doesn't silently stop charging or hold less charge over time", count: 1}
+      - {phrase: "paw print and each little finger on the paw print shows you how much battery is ", count: 1}
+    sample_reviews: ['3C-023741', '3C-018388', '3C-018382', '3C-023697', '3C-014656']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 145
+    positive_count: 126
+    negative_count: 18
+    neutral_count: 1
+    negative_rate: 12.4%
+    top_phrases:
+      - {phrase: "easy to use", count: 14}
+      - {phrase: "Easy to use", count: 8}
+      - {phrase: "convenient", count: 2}
+      - {phrase: "easy", count: 2}
+      - {phrase: "Works well", count: 2}
+      - {phrase: "very useful", count: 2}
+      - {phrase: "Works great", count: 2}
+      - {phrase: "handy", count: 2}
+      - {phrase: "instructions were not very clear", count: 1}
+      - {phrase: "parts of the paw print light", count: 1}
+    sample_reviews: ['3C-017570', '3C-014684', '3C-017592', '3C-023697', '3C-023586']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 130
+    positive_count: 107
+    negative_count: 22
+    neutral_count: 1
+    negative_rate: 16.9%
+    top_phrases:
+      - {phrase: "great price", count: 6}
+      - {phrase: "Great value", count: 3}
+      - {phrase: "Great price", count: 3}
+      - {phrase: "worth the money", count: 3}
+      - {phrase: "Good value", count: 2}
+      - {phrase: "Affordable", count: 2}
+      - {phrase: "great value", count: 2}
+      - {phrase: "Great deal", count: 2}
+      - {phrase: "Well priced", count: 2}
+      - {phrase: "well worth the money", count: 2}
+    sample_reviews: ['3C-023697', '3C-004311', '3C-033431', '3C-017489', '3C-001851']
+
+  - key: other
+    label_zh: 其他
+    total: 109
+    positive_count: 62
+    negative_count: 46
+    neutral_count: 1
+    negative_rate: 42.2%
+    top_phrases:
+      - {phrase: "Works great", count: 4}
+      - {phrase: "works great", count: 3}
+      - {phrase: "works well", count: 2}
+      - {phrase: "little flashlight", count: 2}
+      - {phrase: "safety recall", count: 2}
+      - {phrase: "fire hazard", count: 2}
+      - {phrase: "flashlight feature", count: 2}
+      - {phrase: "little paw print that tells you how much charge is left", count: 1}
+      - {phrase: "charge capacity listed on the outside", count: 1}
+      - {phrase: "included LED flashlight", count: 1}
+    sample_reviews: ['3C-002173', '3C-017592', '3C-018382', '3C-017578', '3C-024022']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 105
+    positive_count: 34
+    negative_count: 69
+    neutral_count: 2
+    negative_rate: 65.7%
+    top_phrases:
+      - {phrase: "reliable", count: 2}
+      - {phrase: "stoped taking a charge", count: 1}
+      - {phrase: "caught fire", count: 1}
+      - {phrase: "attached cable isn't replaceable if it ever wears out", count: 1}
+      - {phrase: "dependable", count: 1}
+      - {phrase: "worked fine for 2 days", count: 1}
+      - {phrase: "didn't last very long", count: 1}
+      - {phrase: "won't charge after a short time", count: 1}
+      - {phrase: "still working fine", count: 1}
+      - {phrase: "had the larger version for almost 5 years", count: 1}
+    sample_reviews: ['3C-023741', '3C-001515', '3C-004311', '3C-024570', '3C-002355']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 103
+    positive_count: 71
+    negative_count: 32
+    neutral_count: 0
+    negative_rate: 31.1%
+    top_phrases:
+      - {phrase: "Good quality", count: 3}
+      - {phrase: "well made", count: 2}
+      - {phrase: "quality is very good", count: 2}
+      - {phrase: "quality", count: 2}
+      - {phrase: "Great quality", count: 2}
+      - {phrase: "was alway hot", count: 1}
+      - {phrase: "USB C ports don't work", count: 1}
+      - {phrase: "quality of their products", count: 1}
+      - {phrase: "strong charger", count: 1}
+      - {phrase: "gets fairly hot near the top", count: 1}
+    sample_reviews: ['3C-023741', '3C-002173', '3C-018388', '3C-033552', '3C-018382']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 98
+    positive_count: 91
+    negative_count: 7
+    neutral_count: 0
+    negative_rate: 7.1%
+    top_phrases:
+      - {phrase: "cute", count: 3}
+      - {phrase: "Cute", count: 3}
+      - {phrase: "paw print", count: 3}
+      - {phrase: "smart design", count: 2}
+      - {phrase: "paw design", count: 2}
+      - {phrase: "Love the color", count: 2}
+      - {phrase: "Looks great", count: 2}
+      - {phrase: "slim design", count: 1}
+      - {phrase: "design is clean", count: 1}
+      - {phrase: "cute dog print", count: 1}
+    sample_reviews: ['3C-017592', '3C-023651', '3C-023633', '3C-023691', '3C-024542']
+
+  - key: packaging
+    label_zh: 包装
+    total: 49
+    positive_count: 9
+    negative_count: 39
+    neutral_count: 1
+    negative_rate: 79.6%
+    top_phrases:
+      - {phrase: "did not come with a charge cable as described", count: 1}
+      - {phrase: "did not come with USB-C to USB-A cable", count: 1}
+      - {phrase: "no cables in the package", count: 1}
+      - {phrase: "Dose not come with cord", count: 1}
+      - {phrase: "missing the charging cable", count: 1}
+      - {phrase: "doesn’t have a case to keep it in a good shape", count: 1}
+      - {phrase: "thought it would come with a case or dust bag", count: 1}
+      - {phrase: "came with a nice cord", count: 1}
+      - {phrase: "seal broken and rips in the packaging", count: 1}
+      - {phrase: "comes with a charger attach to it", count: 1}
+    sample_reviews: ['3C-001900', '3C-002173', '3C-001902', '3C-033668', '3C-023823']
+
+  - key: compatibility
+    label_zh: 兼容性
+    total: 48
+    positive_count: 31
+    negative_count: 17
+    neutral_count: 0
+    negative_rate: 35.4%
+    top_phrases:
+      - {phrase: "plugs into the wall with a different plug than normal", count: 1}
+      - {phrase: "None of that chargers that I have fit this instrument", count: 1}
+      - {phrase: "can be used to charge my hearing aid case", count: 1}
+      - {phrase: "compatible with a wide range of devices", count: 1}
+      - {phrase: "requires a USBc > Lightning", count: 1}
+      - {phrase: "not a lightning cable", count: 1}
+      - {phrase: "worked on my phone", count: 1}
+      - {phrase: "on my android", count: 1}
+      - {phrase: "charge a laptop", count: 1}
+      - {phrase: "does not work with iPhone 14 lightning port", count: 1}
+    sample_reviews: ['3C-002154', '3C-014684', '3C-001897', '3C-024578', '3C-004301']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 42
+    positive_count: 8
+    negative_count: 34
+    neutral_count: 0
+    negative_rate: 81.0%
+    top_phrases:
+      - {phrase: "can't get an exchange", count: 1}
+      - {phrase: "Communication", count: 1}
+      - {phrase: "should have been noted in the description", count: 1}
+      - {phrase: "no representatives available", count: 1}
+      - {phrase: "ghosted", count: 1}
+      - {phrase: "not worth the trouble to deal with the seller", count: 1}
+      - {phrase: "only get half your money back", count: 1}
+      - {phrase: "did not receive a refund or a replacement option", count: 1}
+      - {phrase: "absolutely no response", count: 1}
+      - {phrase: "great customer service for a replacement", count: 1}
+    sample_reviews: ['3C-001469', '3C-003343', '3C-002124', '3C-023585', '3C-023585']
+
+  - key: connectivity
+    label_zh: 连接稳定性
+    total: 16
+    positive_count: 8
+    negative_count: 8
+    neutral_count: 0
+    negative_rate: 50.0%
+    top_phrases:
+      - {phrase: "in/out USB-C port", count: 1}
+      - {phrase: "two charging ports for multiple devices", count: 1}
+      - {phrase: "cord that the INIU Portable Charger comes with, does not charge", count: 1}
+      - {phrase: "Dual USB-C Ports for Input and Output", count: 1}
+      - {phrase: "only have 1 usb port", count: 1}
+      - {phrase: "2x USB-C and 1x USB-A", count: 1}
+      - {phrase: "USB-A port is upside down vs most devices", count: 1}
+      - {phrase: "PD negotiation is atrocious", count: 1}
+      - {phrase: "loss over longer cable lengths", count: 1}
+      - {phrase: "wont work sometimes", count: 1}
+    sample_reviews: ['3C-023894', '3C-033356', '3C-003788', '3C-002369', '3C-017792']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 15
+    positive_count: 5
+    negative_count: 10
+    neutral_count: 0
+    negative_rate: 66.7%
+    top_phrases:
+      - {phrase: "llego en el tiempo que correspondía", count: 1}
+      - {phrase: "Defective upon arrival", count: 1}
+      - {phrase: "opened prior to delivery", count: 1}
+      - {phrase: "arrived on time", count: 1}
+      - {phrase: "Arrived on time and in good condition", count: 1}
+      - {phrase: "arrived with zero charge", count: 1}
+      - {phrase: "arrive on time", count: 1}
+      - {phrase: "received a defective one", count: 1}
+      - {phrase: "dead on arrival", count: 1}
+      - {phrase: "Took a month to get here", count: 1}
+    sample_reviews: ['3C-024022', '3C-002121', '3C-002152', '3C-017675', '3C-003459']
+
+  - key: comfort
+    label_zh: 佩戴舒适度
+    total: 5
+    positive_count: 3
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 40.0%
+    top_phrases:
+      - {phrase: "comfortable to use while using your phone", count: 1}
+      - {phrase: "less ergonomic", count: 1}
+      - {phrase: "ergonómico", count: 1}
+      - {phrase: "Very comfortable", count: 1}
+      - {phrase: "very slippery on hand", count: 1}
+    sample_reviews: ['3C-001854', '3C-001354', '3C-024053', '3C-033628', '3C-024238']
+
+  - key: material
+    label_zh: 材质用料
+    total: 4
+    positive_count: 3
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "high quality material", count: 1}
+      - {phrase: "Nice rubberized coating all over makes for easy handling", count: 1}
+      - {phrase: "outer rubber plastic shows finger prints easily", count: 1}
+      - {phrase: "soft feel to the plastic", count: 1}
+    sample_reviews: ['3C-017704', '3C-001651', '3C-033332', '3C-023963']

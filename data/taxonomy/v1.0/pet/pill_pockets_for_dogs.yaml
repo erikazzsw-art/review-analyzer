@@ -1,0 +1,320 @@
+# Pill Pockets for Dogs Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 17:28:19
+sub_category: Pill Pockets for Dogs
+aspect_count: 17
+aspects:
+  - key: pet_acceptance
+    label_zh: 宠物接受度
+    total: 611
+    positive_count: 547
+    negative_count: 63
+    neutral_count: 1
+    negative_rate: 10.3%
+    top_phrases:
+      - {phrase: "My dog loves these", count: 20}
+      - {phrase: "My dog loves them", count: 14}
+      - {phrase: "dog loves them", count: 13}
+      - {phrase: "Dogs love them", count: 10}
+      - {phrase: "My dogs love these", count: 9}
+      - {phrase: "My dogs love them", count: 8}
+      - {phrase: "loves these", count: 5}
+      - {phrase: "dog loves these", count: 5}
+      - {phrase: "my dog loves them", count: 5}
+      - {phrase: "my dogs love them", count: 4}
+    sample_reviews: ['PET-047053', 'PET-007652', 'PET-022641', 'PET-049324', 'PET-033509']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 505
+    positive_count: 479
+    negative_count: 25
+    neutral_count: 1
+    negative_rate: 5.0%
+    top_phrases:
+      - {phrase: "easy to use", count: 15}
+      - {phrase: "Easy to use", count: 10}
+      - {phrase: "lifesaver", count: 4}
+      - {phrase: "easy to mold around the pill", count: 4}
+      - {phrase: "work well", count: 4}
+      - {phrase: "Works great", count: 2}
+      - {phrase: "works perfectly", count: 2}
+      - {phrase: "easy to mold", count: 2}
+      - {phrase: "life saver", count: 2}
+      - {phrase: "easy to give medicine", count: 2}
+    sample_reviews: ['PET-047053', 'PET-007652', 'PET-022641', 'PET-049324', 'PET-033509']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 121
+    positive_count: 72
+    negative_count: 47
+    neutral_count: 2
+    negative_rate: 38.8%
+    top_phrases:
+      - {phrase: "waste of money", count: 3}
+      - {phrase: "not cheap", count: 3}
+      - {phrase: "a bit pricey", count: 3}
+      - {phrase: "too expensive", count: 2}
+      - {phrase: "Great value", count: 2}
+      - {phrase: "worth the money", count: 2}
+      - {phrase: "price is a little high", count: 1}
+      - {phrase: "Totally worth it for me", count: 1}
+      - {phrase: "Excellent price. Much less than a pet store.", count: 1}
+      - {phrase: "same price but double the pill pockets", count: 1}
+    sample_reviews: ['PET-007652', 'PET-006053', 'PET-033518', 'PET-046617', 'PET-046643']
+
+  - key: smell
+    label_zh: 异味
+    total: 77
+    positive_count: 37
+    negative_count: 39
+    neutral_count: 1
+    negative_rate: 50.6%
+    top_phrases:
+      - {phrase: "smell good", count: 2}
+      - {phrase: "smells like peanut butter", count: 1}
+      - {phrase: "they smell so great", count: 1}
+      - {phrase: "hickory flavor", count: 1}
+      - {phrase: "stinky", count: 1}
+      - {phrase: "Smelled good", count: 1}
+      - {phrase: "smell of the cheese flavored ones stink so bad", count: 1}
+      - {phrase: "smell bad", count: 1}
+      - {phrase: "Fresh", count: 1}
+      - {phrase: "smell like BBQ flavor", count: 1}
+    sample_reviews: ['PET-033509', 'PET-049399', 'PET-025429', 'PET-022147', 'PET-033516']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 69
+    positive_count: 44
+    negative_count: 15
+    neutral_count: 10
+    negative_rate: 21.7%
+    top_phrases:
+      - {phrase: "quite large", count: 2}
+      - {phrase: "Good size", count: 2}
+      - {phrase: "These are big pills too", count: 1}
+      - {phrase: "not big enough for capsules", count: 1}
+      - {phrase: "doesn't fit oblong pills", count: 1}
+      - {phrase: "only get the large ones. The small ones can be smashed a bit during travel and a", count: 1}
+      - {phrase: "fit a large pill", count: 1}
+      - {phrase: "capsule size will hold a few normal size pills", count: 1}
+      - {phrase: "The size is perfect", count: 1}
+      - {phrase: "Large enough to fit two small pills", count: 1}
+    sample_reviews: ['PET-006073', 'PET-033501', 'PET-022766', 'PET-046643', 'PET-006054']
+
+  - key: material
+    label_zh: 材质用料
+    total: 66
+    positive_count: 46
+    negative_count: 18
+    neutral_count: 2
+    negative_rate: 27.3%
+    top_phrases:
+      - {phrase: "soft", count: 12}
+      - {phrase: "super soft", count: 3}
+      - {phrase: "very malleable", count: 2}
+      - {phrase: "malleable", count: 1}
+      - {phrase: "so soft", count: 1}
+      - {phrase: "Hickory Smoke and Peanut Butter seem the most pliable", count: 1}
+      - {phrase: "soft, flexible and chewy", count: 1}
+      - {phrase: "stay soft and malleable, never get hard", count: 1}
+      - {phrase: "change to ingredients to add imitation smoke", count: 1}
+      - {phrase: "soft and quite malleable", count: 1}
+    sample_reviews: ['PET-047053', 'PET-033509', 'PET-008856', 'PET-046600', 'PET-033516']
+
+  - key: other
+    label_zh: 其他
+    total: 65
+    positive_count: 30
+    negative_count: 33
+    neutral_count: 2
+    negative_rate: 50.8%
+    top_phrases:
+      - {phrase: "moldy", count: 2}
+      - {phrase: "chicken flavor", count: 2}
+      - {phrase: "more than one flavor available", count: 1}
+      - {phrase: "Product great", count: 1}
+      - {phrase: "best compared to other pill pockets", count: 1}
+      - {phrase: "a little oily", count: 1}
+      - {phrase: "only about 22 complete pockets instead of 30", count: 1}
+      - {phrase: "moldy before expiration date", count: 1}
+      - {phrase: "leave a slight residue on your hands", count: 1}
+      - {phrase: "HARD TO FIND PRODUCTS WITHOUT CHICKEN", count: 1}
+    sample_reviews: ['PET-007652', 'PET-025619', 'PET-033594', 'PET-025425', 'PET-033493']
+
+  - key: packaging
+    label_zh: 包装
+    total: 56
+    positive_count: 8
+    negative_count: 47
+    neutral_count: 1
+    negative_rate: 83.9%
+    top_phrases:
+      - {phrase: "shipped in soft packaging", count: 2}
+      - {phrase: "Come fresh and not broken up in shipping", count: 1}
+      - {phrase: "the 'ziploc' releases after a handful of open/closes", count: 1}
+      - {phrase: "mashed together in the bag", count: 1}
+      - {phrase: "shipped in an envelope", count: 1}
+      - {phrase: "cut in the package", count: 1}
+      - {phrase: "resealable portion of the ziplock tears off the bag or breaks after multiple use", count: 1}
+      - {phrase: "resealable top of the package separates from the package", count: 1}
+      - {phrase: "packing was deficient", count: 1}
+      - {phrase: "container appears damaged", count: 1}
+    sample_reviews: ['PET-022689', 'PET-025619', 'PET-008856', 'PET-006029', 'PET-022763']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 45
+    positive_count: 3
+    negative_count: 42
+    neutral_count: 0
+    negative_rate: 93.3%
+    top_phrases:
+      - {phrase: "squished in shipping", count: 2}
+      - {phrase: "arrived smooshed", count: 1}
+      - {phrase: "shipped in an envelope and arrived smushed completely flat", count: 1}
+      - {phrase: "smashed", count: 1}
+      - {phrase: "came in a box with a case of canned dog food and it was under the heavy case", count: 1}
+      - {phrase: "sliced open", count: 1}
+      - {phrase: "large gash cut into the back of the package", count: 1}
+      - {phrase: "arrive in one big block", count: 1}
+      - {phrase: "Pill pockets are not one large, flat blob", count: 1}
+      - {phrase: "sent together with heavy items that crushed them and/or pop the bag", count: 1}
+    sample_reviews: ['PET-034716', 'PET-006029', 'PET-022763', 'PET-034720', 'PET-022772']
+
+  - key: pet_health_friendly
+    label_zh: 健康友好度
+    total: 36
+    positive_count: 15
+    negative_count: 21
+    neutral_count: 0
+    negative_rate: 58.3%
+    top_phrases:
+      - {phrase: "made dog sick", count: 1}
+      - {phrase: "HAS NO CHICKEN AND MY DOG IS HIGHLY ALLERGIC TO CHICKEN", count: 1}
+      - {phrase: "contains corn syrup", count: 1}
+      - {phrase: "don’t upset his stomach", count: 1}
+      - {phrase: "never upset my dogs' stomachs", count: 1}
+      - {phrase: "mold on them", count: 1}
+      - {phrase: "dog was puking", count: 1}
+      - {phrase: "made her upset stomach for 3 days", count: 1}
+      - {phrase: "made my dog sick", count: 1}
+      - {phrase: "rendering them toxic garbage", count: 1}
+    sample_reviews: ['PET-025429', 'PET-046638', 'PET-007726', 'PET-002387', 'PET-003753']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 20
+    positive_count: 4
+    negative_count: 16
+    neutral_count: 0
+    negative_rate: 80.0%
+    top_phrases:
+      - {phrase: "overly soft and flat", count: 1}
+      - {phrase: "dried out they broke apart", count: 1}
+      - {phrase: "rock hard", count: 1}
+      - {phrase: "good quality product", count: 1}
+      - {phrase: "seemed a little soft", count: 1}
+      - {phrase: "horrible quality control", count: 1}
+      - {phrase: "falling apart", count: 1}
+      - {phrase: "crumbles and is unusable", count: 1}
+      - {phrase: "Good Quality", count: 1}
+      - {phrase: "crumbly mess", count: 1}
+    sample_reviews: ['PET-034716', 'PET-022758', 'PET-022753', 'PET-003753', 'PET-022816']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 14
+    positive_count: 1
+    negative_count: 12
+    neutral_count: 1
+    negative_rate: 85.7%
+    top_phrases:
+      - {phrase: "stuck with my $17 purchase", count: 1}
+      - {phrase: "refused to honor their return policy", count: 1}
+      - {phrase: "canceled my subscription", count: 1}
+      - {phrase: "Tried to obtain refund but app indicated not returnable", count: 1}
+      - {phrase: "Terrible customer support", count: 1}
+      - {phrase: "nonrefundable", count: 1}
+      - {phrase: "NO RETURNS", count: 1}
+      - {phrase: "got refund", count: 1}
+      - {phrase: "Unsuccessful attempt was made to cancel", count: 1}
+      - {phrase: "won't let me return them", count: 1}
+    sample_reviews: ['PET-006042', 'PET-022816', 'PET-007654', 'PET-034964', 'PET-003765']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 8
+    positive_count: 6
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 25.0%
+    top_phrases:
+      - {phrase: "last a long time", count: 3}
+      - {phrase: "never get hard", count: 1}
+      - {phrase: "some in the past that have dried out after a while", count: 1}
+      - {phrase: "last for ever and stay fresh for a long time", count: 1}
+      - {phrase: "dry out faster than it seems like they should", count: 1}
+      - {phrase: "don't go stale over time", count: 1}
+    sample_reviews: ['PET-033626', 'PET-007761', 'PET-047981', 'PET-033587', 'PET-048314']
+
+  - key: safety
+    label_zh: 安全性
+    total: 8
+    positive_count: 0
+    negative_count: 7
+    neutral_count: 1
+    negative_rate: 87.5%
+    top_phrases:
+      - {phrase: "moldy and inedible", count: 1}
+      - {phrase: "pockets must have gone bad", count: 1}
+      - {phrase: "gave my dog diarrhea for four days", count: 1}
+      - {phrase: "be sure your dog eats & drinks after taking the pill", count: 1}
+      - {phrase: "causing him to throw up", count: 1}
+      - {phrase: "do not trust the company to deliver a safe product", count: 1}
+      - {phrase: "mold on them", count: 1}
+      - {phrase: "She died overnight", count: 1}
+    sample_reviews: ['PET-006042', 'PET-035108', 'PET-022442', 'PET-022781', 'PET-033499']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 6
+    positive_count: 6
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "not messy", count: 1}
+      - {phrase: "don't crumble or make a mess", count: 1}
+      - {phrase: "don't leave any residue on your hands", count: 1}
+      - {phrase: "way less messy than putting peanut butter on the pill", count: 1}
+      - {phrase: "clean", count: 1}
+      - {phrase: "No more mess", count: 1}
+    sample_reviews: ['PET-046600', 'PET-033614', 'PET-047065', 'PET-022703', 'PET-022716']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 5
+    positive_count: 2
+    negative_count: 3
+    neutral_count: 0
+    negative_rate: 60.0%
+    top_phrases:
+      - {phrase: "do not even have the dark pink color", count: 1}
+      - {phrase: "misshapen", count: 1}
+      - {phrase: "come in different flavors so you can switch it up", count: 1}
+      - {phrase: "most of the pockets are deformed", count: 1}
+      - {phrase: "different flavors", count: 1}
+    sample_reviews: ['PET-022753', 'PET-048298', 'PET-046568', 'PET-005998', 'PET-022192']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "can melt somewhat, making them stick together like a big ball of dough", count: 1}
+    sample_reviews: ['PET-006458']

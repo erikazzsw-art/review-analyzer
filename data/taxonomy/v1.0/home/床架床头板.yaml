@@ -1,0 +1,404 @@
+# 床架床头板 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-06 09:47:44
+sub_category: 床架床头板
+aspect_count: 20
+aspects:
+  - key: assembly
+    label_zh: 组装难度
+    total: 3021
+    positive_count: 2333
+    negative_count: 483
+    neutral_count: 205
+    negative_rate: 16.0%
+    top_phrases:
+      - {phrase: "easy to assemble", count: 281}
+      - {phrase: "easy to put together", count: 257}
+      - {phrase: "Easy to assemble", count: 160}
+      - {phrase: "Easy to put together", count: 112}
+      - {phrase: "easy to install", count: 60}
+      - {phrase: "Easy assembly", count: 38}
+      - {phrase: "easy assembly", count: 37}
+      - {phrase: "very easy to assemble", count: 37}
+      - {phrase: "very easy to put together", count: 31}
+      - {phrase: "easy to set up", count: 31}
+    sample_reviews: ['FUR-001262', 'FUR-001265', 'FUR-001266', 'FUR-001269', 'FUR-001268']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 2707
+    positive_count: 2539
+    negative_count: 153
+    neutral_count: 15
+    negative_rate: 5.7%
+    top_phrases:
+      - {phrase: "looks great", count: 143}
+      - {phrase: "Looks great", count: 85}
+      - {phrase: "beautiful", count: 76}
+      - {phrase: "looks nice", count: 50}
+      - {phrase: "cute", count: 34}
+      - {phrase: "Beautiful", count: 33}
+      - {phrase: "looks good", count: 32}
+      - {phrase: "Looks good", count: 27}
+      - {phrase: "Looks nice", count: 25}
+      - {phrase: "looks very nice", count: 20}
+    sample_reviews: ['FUR-001261', 'FUR-001263', 'FUR-001265', 'FUR-001266', 'FUR-001269']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 1696
+    positive_count: 1305
+    negative_count: 381
+    neutral_count: 10
+    negative_rate: 22.5%
+    top_phrases:
+      - {phrase: "sturdy", count: 282}
+      - {phrase: "very sturdy", count: 186}
+      - {phrase: "Sturdy", count: 71}
+      - {phrase: "Very sturdy", count: 63}
+      - {phrase: "super sturdy", count: 18}
+      - {phrase: "very stable", count: 14}
+      - {phrase: "seems sturdy", count: 14}
+      - {phrase: "pretty sturdy", count: 12}
+      - {phrase: "feels sturdy", count: 10}
+      - {phrase: "sturdy frame", count: 9}
+    sample_reviews: ['FUR-001263', 'FUR-001262', 'FUR-001265', 'FUR-001279', 'FUR-001276']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 1369
+    positive_count: 889
+    negative_count: 467
+    neutral_count: 13
+    negative_rate: 34.1%
+    top_phrases:
+      - {phrase: "good quality", count: 52}
+      - {phrase: "Good quality", count: 45}
+      - {phrase: "Great quality", count: 44}
+      - {phrase: "great quality", count: 39}
+      - {phrase: "well made", count: 35}
+      - {phrase: "quality", count: 21}
+      - {phrase: "very well made", count: 13}
+      - {phrase: "Well made", count: 13}
+      - {phrase: "well built", count: 13}
+      - {phrase: "Very good quality", count: 11}
+    sample_reviews: ['FUR-001262', 'FUR-001266', 'FUR-001273', 'FUR-001276', 'FUR-001282']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 1358
+    positive_count: 1177
+    negative_count: 151
+    neutral_count: 30
+    negative_rate: 11.1%
+    top_phrases:
+      - {phrase: "great price", count: 34}
+      - {phrase: "Great price", count: 23}
+      - {phrase: "Great for the price", count: 18}
+      - {phrase: "Great value", count: 16}
+      - {phrase: "worth the price", count: 14}
+      - {phrase: "Worth the money", count: 14}
+      - {phrase: "good price", count: 12}
+      - {phrase: "for the price", count: 12}
+      - {phrase: "affordable", count: 11}
+      - {phrase: "great value", count: 11}
+    sample_reviews: ['FUR-001263', 'FUR-001262', 'FUR-001271', 'FUR-001273', 'FUR-001276']
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 1036
+    positive_count: 594
+    negative_count: 410
+    neutral_count: 32
+    negative_rate: 39.6%
+    top_phrases:
+      - {phrase: "perfect size", count: 11}
+      - {phrase: "perfect height", count: 11}
+      - {phrase: "fits perfectly", count: 8}
+      - {phrase: "height is adjustable", count: 7}
+      - {phrase: "adjustable height", count: 5}
+      - {phrase: "fit perfect", count: 4}
+      - {phrase: "true to size", count: 4}
+      - {phrase: "fit perfectly", count: 4}
+      - {phrase: "Perfect fit", count: 4}
+      - {phrase: "fit", count: 4}
+    sample_reviews: ['FUR-001264', 'FUR-001265', 'FUR-001270', 'FUR-001267', 'FUR-001268']
+
+  - key: instructions
+    label_zh: 说明书
+    total: 622
+    positive_count: 421
+    negative_count: 160
+    neutral_count: 41
+    negative_rate: 25.7%
+    top_phrases:
+      - {phrase: "instructions were easy to follow", count: 23}
+      - {phrase: "clear instructions", count: 19}
+      - {phrase: "instructions were clear", count: 17}
+      - {phrase: "no instructions", count: 10}
+      - {phrase: "instructions are clear", count: 7}
+      - {phrase: "Easy instructions", count: 7}
+      - {phrase: "easy to follow instructions", count: 6}
+      - {phrase: "follow the instructions", count: 6}
+      - {phrase: "instructions were very clear", count: 6}
+      - {phrase: "instructions were very easy to follow", count: 5}
+    sample_reviews: ['FUR-001262', 'FUR-001265', 'FUR-001288', 'FUR-001309', 'FUR-001316']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 621
+    positive_count: 524
+    negative_count: 90
+    neutral_count: 7
+    negative_rate: 14.5%
+    top_phrases:
+      - {phrase: "easy to clean", count: 6}
+      - {phrase: "easy to use", count: 5}
+      - {phrase: "easy to lift", count: 5}
+      - {phrase: "easy to move around", count: 4}
+      - {phrase: "works great", count: 4}
+      - {phrase: "easy to move", count: 4}
+      - {phrase: "adjustable", count: 3}
+      - {phrase: "easy to install", count: 3}
+      - {phrase: "adjust the height", count: 3}
+      - {phrase: "lightweight", count: 3}
+    sample_reviews: ['FUR-001261', 'FUR-001263', 'FUR-001267', 'FUR-001274', 'FUR-001277']
+
+  - key: missing_parts
+    label_zh: 缺件
+    total: 564
+    positive_count: 167
+    negative_count: 392
+    neutral_count: 5
+    negative_rate: 69.5%
+    top_phrases:
+      - {phrase: "missing parts", count: 9}
+      - {phrase: "missing pieces", count: 7}
+      - {phrase: "no missing parts", count: 7}
+      - {phrase: "All the pieces were there", count: 3}
+      - {phrase: "Missing parts", count: 3}
+      - {phrase: "all the pieces were there", count: 3}
+      - {phrase: "Missing pieces", count: 3}
+      - {phrase: "all the parts were there", count: 3}
+      - {phrase: "No missing parts", count: 3}
+      - {phrase: "no missing pieces", count: 3}
+    sample_reviews: ['FUR-001266', 'FUR-001282', 'FUR-001288', 'FUR-001296', 'FUR-001294']
+
+  - key: material
+    label_zh: 材质用料
+    total: 464
+    positive_count: 334
+    negative_count: 110
+    neutral_count: 20
+    negative_rate: 23.7%
+    top_phrases:
+      - {phrase: "good material", count: 5}
+      - {phrase: "material", count: 5}
+      - {phrase: "buen material", count: 5}
+      - {phrase: "nice fabric", count: 4}
+      - {phrase: "Great material", count: 4}
+      - {phrase: "fabric is nice", count: 4}
+      - {phrase: "quality materials", count: 4}
+      - {phrase: "material is very soft", count: 4}
+      - {phrase: "velvet", count: 4}
+      - {phrase: "soft fabric", count: 3}
+    sample_reviews: ['FUR-001266', 'FUR-001269', 'FUR-001275', 'FUR-001281', 'FUR-001285']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 441
+    positive_count: 253
+    negative_count: 174
+    neutral_count: 14
+    negative_rate: 39.5%
+    top_phrases:
+      - {phrase: "very durable", count: 12}
+      - {phrase: "strong", count: 10}
+      - {phrase: "durable", count: 9}
+      - {phrase: "holds up well", count: 8}
+      - {phrase: "Very durable", count: 5}
+      - {phrase: "resistente", count: 5}
+      - {phrase: "fuerte", count: 4}
+      - {phrase: "very strong", count: 4}
+      - {phrase: "durability", count: 4}
+      - {phrase: "solid", count: 3}
+    sample_reviews: ['FUR-001261', 'FUR-001281', 'FUR-001291', 'FUR-001301', 'FUR-001329']
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 361
+    positive_count: 157
+    negative_count: 200
+    neutral_count: 4
+    negative_rate: 55.4%
+    top_phrases:
+      - {phrase: "arrived damaged", count: 6}
+      - {phrase: "fast shipping", count: 5}
+      - {phrase: "Fast shipping", count: 5}
+      - {phrase: "Arrived damaged", count: 4}
+      - {phrase: "fast delivery", count: 3}
+      - {phrase: "arrived on time", count: 3}
+      - {phrase: "came quickly", count: 3}
+      - {phrase: "came earlier than expected", count: 3}
+      - {phrase: "Delivered quickly", count: 2}
+      - {phrase: "came very quickly", count: 2}
+    sample_reviews: ['FUR-001272', 'FUR-001278', 'FUR-001281', 'FUR-001294', 'FUR-001303']
+
+  - key: color_accuracy
+    label_zh: 颜色还原度
+    total: 338
+    positive_count: 208
+    negative_count: 115
+    neutral_count: 15
+    negative_rate: 34.0%
+    top_phrases:
+      - {phrase: "color", count: 9}
+      - {phrase: "love the color", count: 6}
+      - {phrase: "color is perfect", count: 5}
+      - {phrase: "color is gorgeous", count: 2}
+      - {phrase: "darker than the picture", count: 2}
+      - {phrase: "color is amazing", count: 2}
+      - {phrase: "perfect color", count: 2}
+      - {phrase: "Great color", count: 2}
+      - {phrase: "color is exactly as pictured", count: 2}
+      - {phrase: "Color is spot on", count: 2}
+    sample_reviews: ['FUR-001279', 'FUR-001276', 'FUR-001284', 'FUR-001302', 'FUR-001307']
+
+  - key: other
+    label_zh: 其他
+    total: 336
+    positive_count: 180
+    negative_count: 148
+    neutral_count: 8
+    negative_rate: 44.0%
+    top_phrases:
+      - {phrase: "storage underneath", count: 5}
+      - {phrase: "storage", count: 4}
+      - {phrase: "storage space", count: 4}
+      - {phrase: "lots of storage", count: 3}
+      - {phrase: "under bed storage", count: 3}
+      - {phrase: "usb outlet doesn't work", count: 2}
+      - {phrase: "lights don't work", count: 2}
+      - {phrase: "LED lights", count: 2}
+      - {phrase: "mattress slides around", count: 2}
+      - {phrase: "charging station", count: 2}
+    sample_reviews: ['FUR-001267', 'FUR-001272', 'FUR-001287', 'FUR-001295', 'FUR-001304']
+
+  - key: comfort
+    label_zh: 舒适度
+    total: 322
+    positive_count: 290
+    negative_count: 31
+    neutral_count: 1
+    negative_rate: 9.6%
+    top_phrases:
+      - {phrase: "very comfortable", count: 20}
+      - {phrase: "comfortable", count: 18}
+      - {phrase: "soft", count: 11}
+      - {phrase: "very soft", count: 11}
+      - {phrase: "super soft", count: 8}
+      - {phrase: "Comfortable", count: 7}
+      - {phrase: "comfort", count: 5}
+      - {phrase: "cómoda", count: 5}
+      - {phrase: "nice and soft", count: 4}
+      - {phrase: "so soft", count: 4}
+    sample_reviews: ['FUR-001268', 'FUR-001274', 'FUR-001288', 'FUR-001299', 'FUR-001315']
+
+  - key: packaging
+    label_zh: 包装
+    total: 249
+    positive_count: 147
+    negative_count: 81
+    neutral_count: 21
+    negative_rate: 32.5%
+    top_phrases:
+      - {phrase: "well packaged", count: 12}
+      - {phrase: "well packed", count: 7}
+      - {phrase: "well-packaged", count: 5}
+      - {phrase: "packaged very well", count: 4}
+      - {phrase: "very well packaged", count: 4}
+      - {phrase: "packaged well", count: 3}
+      - {phrase: "packed very well", count: 3}
+      - {phrase: "Well packed", count: 3}
+      - {phrase: "great packaging", count: 3}
+      - {phrase: "neatly packed", count: 2}
+    sample_reviews: ['FUR-001261', 'FUR-001268', 'FUR-001273', 'FUR-001289', 'FUR-001292']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 237
+    positive_count: 81
+    negative_count: 144
+    neutral_count: 12
+    negative_rate: 60.8%
+    top_phrases:
+      - {phrase: "great customer service", count: 2}
+      - {phrase: "can't return", count: 2}
+      - {phrase: "Good service", count: 2}
+      - {phrase: "unable to return", count: 2}
+      - {phrase: "difficult return policy", count: 1}
+      - {phrase: "excellent customer service, quick response times, offered free replacement", count: 1}
+      - {phrase: "Excellent Customer Service", count: 1}
+      - {phrase: "no return call", count: 1}
+      - {phrase: "seller doesn't pay the return shipping charges", count: 1}
+      - {phrase: "VERY willing to work with you", count: 1}
+    sample_reviews: ['FUR-001271', 'FUR-001295', 'FUR-001293', 'FUR-001325', 'FUR-001333']
+
+  - key: safety
+    label_zh: 安全性
+    total: 98
+    positive_count: 12
+    negative_count: 84
+    neutral_count: 2
+    negative_rate: 85.7%
+    top_phrases:
+      - {phrase: "sharp corners", count: 2}
+      - {phrase: "brought bed bugs into my home", count: 1}
+      - {phrase: "headboard will fall off the wall anytime", count: 1}
+      - {phrase: "will not be putting any decorations on the shelves to prevent injury", count: 1}
+      - {phrase: "broke a few chargers on the headboard", count: 1}
+      - {phrase: "electric spark, fire safety concern", count: 1}
+      - {phrase: "freaked me out", count: 1}
+      - {phrase: "not able to secure it properly", count: 1}
+      - {phrase: "completely unsafe", count: 1}
+      - {phrase: "fiberglass shards", count: 1}
+    sample_reviews: ['FUR-001336', 'FUR-001387', 'FUR-001511', 'FUR-001567', 'FUR-001566']
+
+  - key: smell
+    label_zh: 异味
+    total: 91
+    positive_count: 37
+    negative_count: 54
+    neutral_count: 0
+    negative_rate: 59.3%
+    top_phrases:
+      - {phrase: "no smell", count: 6}
+      - {phrase: "no odor", count: 3}
+      - {phrase: "chemical smell", count: 2}
+      - {phrase: "smells bad", count: 2}
+      - {phrase: "weird smell", count: 2}
+      - {phrase: "horrible smell", count: 2}
+      - {phrase: "No smell", count: 2}
+      - {phrase: "strong chemical smell", count: 2}
+      - {phrase: "stained my wall with the adhesive", count: 1}
+      - {phrase: "No lingering chemical smells", count: 1}
+    sample_reviews: ['FUR-001272', 'FUR-001273', 'FUR-001274', 'FUR-001294', 'FUR-001307']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 84
+    positive_count: 43
+    negative_count: 36
+    neutral_count: 5
+    negative_rate: 42.9%
+    top_phrases:
+      - {phrase: "a little heavy", count: 2}
+      - {phrase: "very lightweight", count: 1}
+      - {phrase: "not too heavy", count: 1}
+      - {phrase: "too heavy and bulky for me to transport", count: 1}
+      - {phrase: "cannot support any weight at all", count: 1}
+      - {phrase: "supports my new hybrid mattress without the need for box spring", count: 1}
+      - {phrase: "weight of it is very light", count: 1}
+      - {phrase: "light enough for my husband and I to carry ourselves", count: 1}
+      - {phrase: "Much lighter than expected", count: 1}
+      - {phrase: "weight limit is not correct", count: 1}
+    sample_reviews: ['FUR-001261', 'FUR-001378', 'FUR-001584', 'FUR-001765', 'FUR-002401']

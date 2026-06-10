@@ -1,0 +1,280 @@
+# Swim Diapers Aspect Taxonomy v1.0
+# 生成时间: 2026-06-09 16:42:45
+sub_category: Swim Diapers
+aspect_count: 16
+aspects:
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 138
+    positive_count: 93
+    negative_count: 44
+    neutral_count: 1
+    negative_rate: 31.9%
+    top_phrases:
+      - {phrase: "adjustable", count: 4}
+      - {phrase: "Runs small", count: 2}
+      - {phrase: "fit great", count: 2}
+      - {phrase: "adjust the size", count: 2}
+      - {phrase: "Too small", count: 2}
+      - {phrase: "too small", count: 2}
+      - {phrase: "one size fits all", count: 2}
+      - {phrase: "multiple snaps for size adjustments and fit my daughter well", count: 1}
+      - {phrase: "muy pequeños", count: 1}
+      - {phrase: "adjustable snaps mean that you can easily fit them to whatever size your kiddo i", count: 1}
+    sample_reviews: ['BABY-000124', 'BABY-001770', 'BABY-002365', 'BABY-000333', 'BABY-003146']
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 81
+    positive_count: 67
+    negative_count: 14
+    neutral_count: 0
+    negative_rate: 17.3%
+    top_phrases:
+      - {phrase: "easy to use", count: 6}
+      - {phrase: "easy to wash", count: 2}
+      - {phrase: "Easy to use", count: 2}
+      - {phrase: "Easy to put on", count: 2}
+      - {phrase: "easy to put on", count: 2}
+      - {phrase: "extremely helpful", count: 1}
+      - {phrase: "easy to clean and wash", count: 1}
+      - {phrase: "snaps are easy to use", count: 1}
+      - {phrase: "comfortable", count: 1}
+      - {phrase: "machine washable", count: 1}
+    sample_reviews: ['BABY-000065', 'BABY-002365', 'BABY-002395', 'BABY-002438', 'BABY-000408']
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 65
+    positive_count: 65
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "cute", count: 8}
+      - {phrase: "super cute", count: 6}
+      - {phrase: "adorable", count: 3}
+      - {phrase: "Very cute", count: 3}
+      - {phrase: "Cute", count: 2}
+      - {phrase: "very cute", count: 2}
+      - {phrase: "cute designs", count: 2}
+      - {phrase: "pattern is also pretty cute", count: 1}
+      - {phrase: "Love the prints", count: 1}
+      - {phrase: "Cute!", count: 1}
+    sample_reviews: ['BABY-000124', 'BABY-000333', 'BABY-002416', 'BABY-000740', 'BABY-000127']
+
+  - key: durability
+    label_zh: 耐用性
+    total: 46
+    positive_count: 44
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 4.3%
+    top_phrases:
+      - {phrase: "durable", count: 3}
+      - {phrase: "reusable", count: 2}
+      - {phrase: "held in the 💩 really well and didn’t leak", count: 1}
+      - {phrase: "kept the diaper dry", count: 1}
+      - {phrase: "holds great", count: 1}
+      - {phrase: "son duradero", count: 1}
+      - {phrase: "used for over a year", count: 1}
+      - {phrase: "hold in liquid more than the disposable ones", count: 1}
+      - {phrase: "no chaffing or uncomfortable", count: 1}
+      - {phrase: "last multiple washes", count: 1}
+    sample_reviews: ['BABY-000065', 'BABY-000740', 'BABY-002449', 'BABY-000127', 'BABY-002329']
+
+  - key: material
+    label_zh: 材质用料
+    total: 42
+    positive_count: 38
+    negative_count: 4
+    neutral_count: 0
+    negative_rate: 9.5%
+    top_phrases:
+      - {phrase: "waterproof diaper", count: 1}
+      - {phrase: "Perfect thickness", count: 1}
+      - {phrase: "great material", count: 1}
+      - {phrase: "good material", count: 1}
+      - {phrase: "buena material", count: 1}
+      - {phrase: "great for sensitive skin babies", count: 1}
+      - {phrase: "Material", count: 1}
+      - {phrase: "Pretty thick", count: 1}
+      - {phrase: "breathable", count: 1}
+      - {phrase: "great fabric", count: 1}
+    sample_reviews: ['BABY-001523', 'BABY-002449', 'BABY-002452', 'BABY-000127', 'BABY-002329']
+
+  - key: build_quality
+    label_zh: 做工
+    total: 41
+    positive_count: 34
+    negative_count: 7
+    neutral_count: 0
+    negative_rate: 17.1%
+    top_phrases:
+      - {phrase: "quality", count: 3}
+      - {phrase: "good quality", count: 3}
+      - {phrase: "Great quality", count: 3}
+      - {phrase: "quality is great", count: 3}
+      - {phrase: "great quality", count: 3}
+      - {phrase: "muy buena calidad", count: 2}
+      - {phrase: "really good quality", count: 1}
+      - {phrase: "Horrific quality", count: 1}
+      - {phrase: "Excelente calidad", count: 1}
+      - {phrase: "cheaply made", count: 1}
+    sample_reviews: ['BABY-002347', 'BABY-002345', 'BABY-001492', 'BABY-002374', 'BABY-001522']
+
+  - key: cleaning
+    label_zh: 清洁难度
+    total: 38
+    positive_count: 36
+    negative_count: 1
+    neutral_count: 1
+    negative_rate: 2.6%
+    top_phrases:
+      - {phrase: "easy to clean", count: 6}
+      - {phrase: "easy to wash", count: 5}
+      - {phrase: "very easy to clean", count: 3}
+      - {phrase: "machine washable", count: 2}
+      - {phrase: "Easy to clean", count: 2}
+      - {phrase: "easy to clean and throw in the wash", count: 1}
+      - {phrase: "Easy to wash", count: 1}
+      - {phrase: "pop them in the washing machine after each swim and air dry them", count: 1}
+      - {phrase: "had to use oxy powder to clean", count: 1}
+      - {phrase: "dump the insides rinse it out and throw it in the wash", count: 1}
+    sample_reviews: ['BABY-000124', 'BABY-002393', 'BABY-002449', 'BABY-002452', 'BABY-002395']
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 29
+    positive_count: 26
+    negative_count: 2
+    neutral_count: 1
+    negative_rate: 6.9%
+    top_phrases:
+      - {phrase: "reusable", count: 2}
+      - {phrase: "eliminated the need for expensive disposable swim diapers", count: 1}
+      - {phrase: "much better than paying for one time use swim diapers", count: 1}
+      - {phrase: "saved us so much money", count: 1}
+      - {phrase: "saves you sooo much money compared to swim diapers you toss", count: 1}
+      - {phrase: "exempllant price", count: 1}
+      - {phrase: "price was right", count: 1}
+      - {phrase: "Way nicer than worrying whether I have the right size of disposable swim diapers", count: 1}
+      - {phrase: "saved us so much money on buying disposable diapers", count: 1}
+      - {phrase: "reusable and washable", count: 1}
+    sample_reviews: ['BABY-000124', 'BABY-002365', 'BABY-002393', 'BABY-000408', 'BABY-002345']
+
+  - key: other
+    label_zh: 其他
+    total: 25
+    positive_count: 12
+    negative_count: 12
+    neutral_count: 1
+    negative_rate: 48.0%
+    top_phrases:
+      - {phrase: "hold onto water", count: 1}
+      - {phrase: "wish it could have a pocket to insert something to absorb pee", count: 1}
+      - {phrase: "0 absorbency", count: 1}
+      - {phrase: "doesn't hold pee", count: 1}
+      - {phrase: "Leaks a TON of water once out of the pool", count: 1}
+      - {phrase: "doesn't stop the diaper from getting wet", count: 1}
+      - {phrase: "holds in #2", count: 1}
+      - {phrase: "do not hold fecal", count: 1}
+      - {phrase: "don't hold pee", count: 1}
+      - {phrase: "child didn't like wearing them", count: 1}
+    sample_reviews: ['BABY-002439', 'BABY-001523', 'BABY-002435', 'BABY-002334', 'BABY-002451']
+
+  - key: age_appropriate
+    label_zh: 适用年龄
+    total: 19
+    positive_count: 14
+    negative_count: 3
+    neutral_count: 2
+    negative_rate: 15.8%
+    top_phrases:
+      - {phrase: "since 6 months and now she is 16 months", count: 1}
+      - {phrase: "baby’s first swim", count: 1}
+      - {phrase: "adjustable snaps so they can grow with the babies", count: 1}
+      - {phrase: "Best suited for infants", count: 1}
+      - {phrase: "used them all summer (6mos-10mos)", count: 1}
+      - {phrase: "Fits my 2month old", count: 1}
+      - {phrase: "great for my 1 year old", count: 1}
+      - {phrase: "adjustable to different sizes/ages", count: 1}
+      - {phrase: "6 month old", count: 1}
+      - {phrase: "perfect for my 16months old", count: 1}
+    sample_reviews: ['BABY-003146', 'BABY-002412', 'BABY-000408', 'BABY-001697', 'BABY-002404']
+
+  - key: safety
+    label_zh: 安全性
+    total: 10
+    positive_count: 3
+    negative_count: 7
+    neutral_count: 0
+    negative_rate: 70.0%
+    top_phrases:
+      - {phrase: "Not safe", count: 1}
+      - {phrase: "not getting a rash", count: 1}
+      - {phrase: "scratch on the underside of his penis", count: 1}
+      - {phrase: "felt very secure no human waste would leak out", count: 1}
+      - {phrase: "Kept the accident inside the diaper", count: 1}
+      - {phrase: "worried it will unsnap with toddler movement or rub his skin into rash irritatio", count: 1}
+      - {phrase: "leaving my baby with a bad rash", count: 1}
+      - {phrase: "left red marks from being so tight on his legs", count: 1}
+      - {phrase: "did not keep solids in", count: 1}
+      - {phrase: "caused redness", count: 1}
+    sample_reviews: ['BABY-002439', 'BABY-000127', 'BABY-002361', 'BABY-002378', 'BABY-000339']
+
+  - key: weight_capacity
+    label_zh: 承重
+    total: 2
+    positive_count: 0
+    negative_count: 2
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "can't work up to 55lb", count: 1}
+      - {phrase: "up to 40lb but my 20lb baby fills out", count: 1}
+    sample_reviews: ['BABY-002436', 'BABY-002371']
+
+  - key: packaging
+    label_zh: 包装
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "packaged well", count: 1}
+    sample_reviews: ['BABY-002392']
+
+  - key: customer_service
+    label_zh: 客服
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "wish I could get a refund", count: 1}
+    sample_reviews: ['BABY-002400']
+
+  - key: instructions
+    label_zh: 说明书
+    total: 1
+    positive_count: 0
+    negative_count: 1
+    neutral_count: 0
+    negative_rate: 100.0%
+    top_phrases:
+      - {phrase: "wish it came with suggestions on which tabs to use based off size", count: 1}
+    sample_reviews: ['BABY-000335']
+
+  - key: stability
+    label_zh: 稳固性
+    total: 1
+    positive_count: 1
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    top_phrases:
+      - {phrase: "stayed on and snug in water", count: 1}
+    sample_reviews: ['BABY-002419']
