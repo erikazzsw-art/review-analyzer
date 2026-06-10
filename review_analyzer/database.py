@@ -763,13 +763,13 @@ def create_session(user_id: int, session_data: dict) -> int:
         conn.close()
 
 
-def update_session_notes(session_id: int, version_notes: str) -> None:
+def update_session_notes(user_id: int, session_id: int, version_notes: str) -> None:
     conn = get_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "UPDATE sessions SET version_notes = %s WHERE id = %s",
-                (version_notes, session_id),
+                "UPDATE sessions SET version_notes = %s WHERE id = %s AND user_id = %s",
+                (version_notes, session_id, user_id),
             )
             conn.commit()
     finally:
