@@ -21,7 +21,6 @@ from review_analyzer.database import get_comments, get_session_by_id, get_sessio
 from review_analyzer.insight_engine import build_results_insights
 from review_analyzer.product_store import get_product_overview_rows
 
-
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 

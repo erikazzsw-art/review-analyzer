@@ -19,7 +19,6 @@ from review_analyzer.page_shell import render_page_header
 from review_analyzer.translation import translate_result_module
 from review_analyzer.workflow_prompts import get_result_focus_hint, get_workflow_purpose_label
 
-
 RESULT_MODULES = [
     ("consumer_profile", {"zh": "消费者画像", "en": "Consumer Profile"}),
     ("user_experience", {"zh": "用户体验", "en": "User Experience"}),

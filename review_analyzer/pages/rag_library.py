@@ -3,13 +3,12 @@ from __future__ import annotations
 import streamlit as st
 
 from review_analyzer.auth import get_current_user_id
+from review_analyzer.database import get_comments
 from review_analyzer.i18n import pick, t
-from review_analyzer.page_shell import render_page_header
 from review_analyzer.paddle_billing import is_pro_user
+from review_analyzer.page_shell import render_page_header
 from review_analyzer.product_store import get_product_overview_rows
 from review_analyzer.rag import answer_question
-from review_analyzer.database import get_comments
-
 
 MAX_RAG_PRODUCTS = 5
 

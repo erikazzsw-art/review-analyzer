@@ -6,7 +6,6 @@ import hashlib
 import json
 import os
 import re
-from typing import Optional
 
 import pandas as pd
 from dateutil import parser as dateutil_parser
@@ -20,19 +19,18 @@ from review_analyzer.config import (
 )
 from review_analyzer.database import get_connection
 
-
 # ============================================================
 # Column detection
 # ============================================================
 
-def detect_columns(df: pd.DataFrame) -> dict[str, Optional[str]]:
+def detect_columns(df: pd.DataFrame) -> dict[str, str | None]:
     """自动识别 DataFrame 列名到标准字段的映射（模糊匹配）。"""
     cols_lower = {c.strip().lower(): c for c in df.columns}
 
     def _is_id_column(col_lower: str) -> bool:
         return col_lower.endswith("_id") or col_lower == "id"
 
-    def _find(aliases: list[str]) -> Optional[str]:
+    def _find(aliases: list[str]) -> str | None:
         # 第一轮：精确匹配
         for alias in aliases:
             for col_lower, col_orig in cols_lower.items():
@@ -60,7 +58,7 @@ def detect_columns(df: pd.DataFrame) -> dict[str, Optional[str]]:
 # Date normalization
 # ============================================================
 
-def _normalize_date(value: object) -> Optional[str]:
+def _normalize_date(value: object) -> str | None:
     """将任意日期格式解析为 YYYY-MM-DD 字符串。"""
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return None
@@ -159,7 +157,7 @@ def parse_walmart_format(text: str) -> list[dict]:
         # Reviewer is the first token after the date (separated by 2+ spaces)
         reviewer = re.split(r"\s{2,}", remainder)[0].strip() or None
 
-        rating: Optional[int] = None
+        rating: int | None = None
         content_start = 1
         if len(lines) > 1:
             rm = _WALMART_RATING_RE.search(lines[1])
@@ -216,8 +214,8 @@ def parse_amazon_format(text: str) -> list[dict]:
     reviews: list[dict] = []
     for idx, (date_idx, date_str) in enumerate(date_anchors):
         # 向前查找 rating（日期行前 5 行内）
-        rating: Optional[int] = None
-        reviewer: Optional[str] = None
+        rating: int | None = None
+        reviewer: str | None = None
         for j in range(date_idx - 1, max(date_idx - 6, -1), -1):
             rm = _AMAZON_RATING_RE.search(all_lines[j])
             if rm:

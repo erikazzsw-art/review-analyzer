@@ -5,7 +5,7 @@ import json
 import streamlit as st
 
 from review_analyzer.auth import get_current_user_id
-from review_analyzer.database import get_setting, set_setting, get_sessions
+from review_analyzer.database import get_sessions, get_setting, set_setting
 from review_analyzer.i18n import pick
 from review_analyzer.notifier import _test_webhook
 from review_analyzer.page_shell import render_page_header

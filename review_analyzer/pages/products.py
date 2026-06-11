@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import psycopg2
 import streamlit as st
@@ -17,7 +17,6 @@ from review_analyzer.product_store import (
     create_variant,
     get_product_overview_rows,
 )
-
 
 LIFECYCLE_LABELS = {
     "research": {"zh": "调研期", "en": "Research"},
@@ -192,7 +191,7 @@ def _ensure_selected_product(product_rows: list[dict[str, Any]]) -> None:
         st.session_state["products_selected_parent_id"] = default_product_id
 
 
-def _get_selected_product(product_rows: list[dict[str, Any]]) -> Optional[dict[str, Any]]:
+def _get_selected_product(product_rows: list[dict[str, Any]]) -> dict[str, Any] | None:
     selected_parent_id = st.session_state.get("products_selected_parent_id")
     for row in product_rows:
         if row["parent_product_id"] == selected_parent_id:

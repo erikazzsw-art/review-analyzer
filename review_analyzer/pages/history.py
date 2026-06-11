@@ -3,7 +3,7 @@
 import streamlit as st
 
 from review_analyzer.auth import get_current_user_id
-from review_analyzer.database import get_sessions, delete_session
+from review_analyzer.database import delete_session, get_sessions
 from review_analyzer.exporter import export_to_xlsx
 
 
@@ -55,7 +55,7 @@ def render_history() -> None:
         if "hist_selected_product" not in st.session_state:
             st.session_state["hist_selected_product"] = list(products.keys())[0] if products else None
 
-        for pid in products.keys():
+        for pid in products:
             if search_sku and search_sku.lower() not in pid.lower():
                 continue
             is_active = st.session_state.get("hist_selected_product") == pid

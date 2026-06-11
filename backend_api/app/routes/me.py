@@ -6,7 +6,6 @@ from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.auth import UserPayload
 from review_analyzer.database import get_user_plan
 
-
 router = APIRouter(tags=["me"])
 
 

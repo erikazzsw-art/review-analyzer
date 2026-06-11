@@ -10,11 +10,11 @@ from backend_api.app.schemas.analysis import (
     ActionItemPayload,
     ActionItemsResponse,
     ActionStatusUpdatePayload,
+    ReviewTrackerCreatePayload,
     ReviewTrackerFromActionResponse,
     ReviewTrackerPayload,
-    ReviewTrackerCreatePayload,
-    ReviewTrackerUpdatePayload,
     ReviewTrackersResponse,
+    ReviewTrackerUpdatePayload,
 )
 from review_analyzer.action_store import (
     ACTION_STATUSES,
@@ -30,7 +30,6 @@ from review_analyzer.review_store import (
     get_review_trackers,
     update_review_tracker_result,
 )
-
 
 router = APIRouter(prefix="/actions", tags=["actions"])
 trackers_router = APIRouter(prefix="/trackers", tags=["trackers"])
@@ -97,7 +96,7 @@ def create_tracker_from_action(
     if existing_tracker:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tracker already exists.")
 
-    tracker_id = create_review_tracker(
+    create_review_tracker(
         user_id,
         {
             "action_item_id": action_id,

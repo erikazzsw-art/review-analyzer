@@ -4,7 +4,6 @@ from typing import Any
 
 import streamlit as st
 
-
 DEFAULT_LANG = "zh"
 SUPPORTED_LANGS = {"zh", "en"}
 

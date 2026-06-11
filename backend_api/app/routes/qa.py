@@ -9,7 +9,6 @@ from review_analyzer.paddle_billing import is_pro_user
 from review_analyzer.product_store import get_product_overview_rows
 from review_analyzer.rag import answer_question
 
-
 router = APIRouter(prefix="/qa", tags=["qa"])
 
 MAX_QA_PRODUCTS = 5

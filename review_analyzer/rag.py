@@ -8,10 +8,9 @@ import re
 from collections import Counter
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Optional
 
-from openai import OpenAI
 from dotenv import load_dotenv
+from openai import OpenAI
 
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import (
@@ -36,7 +35,7 @@ STOP_WORDS = {
 }
 
 
-def _get_embedding_api_key(user_id: Optional[int] = None) -> str:
+def _get_embedding_api_key(user_id: int | None = None) -> str:
     if EMBEDDING_API_KEY:
         return EMBEDDING_API_KEY
     if OPENAI_API_KEY:
@@ -51,7 +50,7 @@ def _get_embedding_api_key(user_id: Optional[int] = None) -> str:
     return get_api_key(user_id)
 
 
-def generate_embedding(text: str, user_id: Optional[int] = None) -> list[float]:
+def generate_embedding(text: str, user_id: int | None = None) -> list[float]:
     """调用 OpenAI-compatible embedding API 生成向量。"""
     api_key = _get_embedding_api_key(user_id)
     client = OpenAI(
@@ -207,7 +206,7 @@ def answer_question(
     user_id: int,
     question: str,
     comments: list[dict],
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     top_k: int = DEFAULT_TOP_K,
 ) -> dict:
     """检索评论并生成回答，返回 answer + citations。"""

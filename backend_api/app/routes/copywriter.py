@@ -10,9 +10,9 @@ from openai import OpenAI
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.copywriter import (
+    CopywriterGeneratedItemPayload,
     CopywriterGenerateRequest,
     CopywriterGenerateResponse,
-    CopywriterGeneratedItemPayload,
     CopywriterIdealProfilePayload,
     CopywriterPlatformPayload,
     CopywriterProductPayload,
@@ -22,7 +22,6 @@ from backend_api.app.schemas.copywriter import (
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_comments, get_session_by_id, get_sessions
 from review_analyzer.paddle_billing import is_pro_user
-
 
 router = APIRouter(prefix="/copywriter", tags=["copywriter"])
 

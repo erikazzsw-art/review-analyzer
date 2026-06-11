@@ -7,21 +7,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
 
-from review_analyzer.auth import is_logged_in, get_current_username, logout
+from review_analyzer.auth import get_current_username, is_logged_in, logout
 from review_analyzer.database import init_db
 from review_analyzer.i18n import nav_items, set_lang, t
-from review_analyzer.pages.login import render_login_page
-from review_analyzer.pages.landing import render_landing_page
-from review_analyzer.pages.trial import render_trial_page
-from review_analyzer.pages.dashboard import render_dashboard
-from review_analyzer.pages.products import render_products
-from review_analyzer.pages.upload import render_upload
-from review_analyzer.pages.analysis_hub import render_analysis_hub
 from review_analyzer.pages.actions import render_actions
-from review_analyzer.pages.reviews import render_reviews
+from review_analyzer.pages.analysis_hub import render_analysis_hub
 from review_analyzer.pages.copywriter import render_copywriter
+from review_analyzer.pages.dashboard import render_dashboard
+from review_analyzer.pages.landing import render_landing_page
+from review_analyzer.pages.login import render_login_page
+from review_analyzer.pages.products import render_products
 from review_analyzer.pages.rag_library import render_rag_library
+from review_analyzer.pages.reviews import render_reviews
 from review_analyzer.pages.settings import render_settings
+from review_analyzer.pages.trial import render_trial_page
+from review_analyzer.pages.upload import render_upload
 
 ANALYSIS_LEGACY_PAGES = {"results", "compare", "history", "features"}
 

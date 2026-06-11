@@ -18,7 +18,7 @@ class AnalysisJobCreateRequest(BaseModel):
     version_notes: str | None = None
     product_ref_id: int | None = None
     variant_ref_id: int | None = None
-    comments: list["AnalysisCommentPayload"]
+    comments: list[AnalysisCommentPayload]
 
 
 class AnalysisCommentPayload(BaseModel):

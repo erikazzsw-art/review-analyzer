@@ -20,7 +20,6 @@ from review_analyzer.compare_store import (
     save_comparison_report,
 )
 
-
 router = APIRouter(prefix="/compare", tags=["compare"])
 
 

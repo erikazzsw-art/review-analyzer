@@ -17,7 +17,6 @@ from review_analyzer.i18n import action_status_label, pick, role_label, t
 from review_analyzer.page_shell import navigate, render_page_header
 from review_analyzer.review_store import create_review_tracker, get_review_tracker_by_action_id
 
-
 ROLE_FILTER_OPTIONS = ["全部", "运营", "产研", "质检", "复盘"]
 STATUS_FILTER_OPTIONS = ["全部", *ACTION_STATUSES]
 

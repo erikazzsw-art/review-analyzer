@@ -1,14 +1,13 @@
 """飞书推送 — Webhook 通知 + 推送规则引擎"""
 
+import base64
 import hashlib
 import hmac
-import base64
 import json
 import logging
 import time
 from collections import Counter
 from datetime import datetime, timedelta
-from typing import Optional
 
 import requests
 
@@ -172,7 +171,7 @@ def _get_prev_neg_rate(
     product_id: str,
     current_session_id: int,
     window_days: int,
-) -> Optional[float]:
+) -> float | None:
     """取上一批次的负面率，无历史数据时返回 None。"""
     sessions = get_sessions(user_id, product_id)
     cutoff = datetime.now() - timedelta(days=window_days)
@@ -400,7 +399,7 @@ def should_notify(
 def auto_notify_after_analysis(
     user_id: int,
     session_id: int,
-) -> Optional[dict]:
+) -> dict | None:
     """
     分析完成后的自动推送入口。
     读取用户设置 → 检查规则 → 触发推送。

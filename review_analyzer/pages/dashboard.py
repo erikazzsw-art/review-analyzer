@@ -12,7 +12,6 @@ from review_analyzer.i18n import get_lang, pick, role_label, t, tracker_status_l
 from review_analyzer.page_shell import navigate
 from review_analyzer.workspace_store import ROLES, get_workspace_summary
 
-
 ROLE_BADGE_COLORS = {
     "运营": ("#fff0eb", "#ff682c"),
     "产研": ("#eef6ff", "#3498db"),

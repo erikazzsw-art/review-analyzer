@@ -30,7 +30,6 @@ from review_analyzer.database import (
 )
 from review_analyzer.mailer import send_reset_code
 
-
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -68,7 +67,7 @@ def register(payload: RegisterRequest, response: Response) -> AuthResponse:
             detail="Username already exists.",
         )
 
-    if email and get_user_by_email(email):
+    if get_user_by_email(email):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already exists.",

@@ -10,13 +10,12 @@ import streamlit as st
 
 from review_analyzer.analysis_export import export_compare_page_to_xlsx
 from review_analyzer.auth import get_current_user_id
-from review_analyzer.database import get_comments, get_session_by_id, get_sessions
+from review_analyzer.database import get_comments, get_sessions
 from review_analyzer.i18n import pick
 from review_analyzer.insight_engine import build_compare_insights
 from review_analyzer.page_shell import render_page_header
 from review_analyzer.product_store import get_product_overview_rows
 from review_analyzer.translation import translate_compare_dataset
-
 
 COMPARE_TYPES = {
     "same_product_time": {"zh": "同一产品不同时间维度", "en": "Same Product Across Time"},

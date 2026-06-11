@@ -11,7 +11,6 @@ from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.settings import (
     BillingCheckoutPayload,
     BillingCheckoutResponse,
-    BillingWebhookPayload,
     BillingWebhookResponse,
     ProductRulePayload,
     PushRulePayload,
@@ -23,7 +22,6 @@ from review_analyzer.database import get_setting, get_user_plan, set_setting, up
 from review_analyzer.notifier import _test_webhook
 from review_analyzer.paddle_billing import get_checkout_html, is_billing_configured
 from review_analyzer.quota import get_all_quota_status
-
 
 router = APIRouter(tags=["settings"])
 

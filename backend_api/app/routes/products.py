@@ -8,7 +8,6 @@ from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.products import ProductsResponsePayload
 from review_analyzer.product_store import get_product_overview_rows
 
-
 router = APIRouter(prefix="/products", tags=["products"])
 
 

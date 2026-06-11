@@ -8,7 +8,6 @@ from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.workspace import WorkspaceSummaryPayload
 from review_analyzer.workspace_store import ROLES, get_workspace_summary
 
-
 router = APIRouter(prefix="/workspace", tags=["workspace"])
 
 

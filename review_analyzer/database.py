@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
 
 import psycopg2
@@ -11,7 +10,6 @@ import psycopg2.extras
 import psycopg2.pool
 import streamlit as st
 from dotenv import load_dotenv
-
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -165,13 +163,13 @@ def init_db() -> None:
 # Users CRUD
 # ============================================================
 
-def create_user(username: str, password_hash: str, email: str = "") -> int:
+def create_user(username: str, password_hash: str, email: str) -> int:
     conn = get_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s) RETURNING id",
-                (username, password_hash, email or None),
+                (username, password_hash, email),
             )
             user_id = cur.fetchone()[0]
             conn.commit()
@@ -180,7 +178,7 @@ def create_user(username: str, password_hash: str, email: str = "") -> int:
         conn.close()
 
 
-def get_user_by_username(username: str) -> Optional[dict]:
+def get_user_by_username(username: str) -> dict | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -191,7 +189,7 @@ def get_user_by_username(username: str) -> Optional[dict]:
         conn.close()
 
 
-def get_user_by_id(user_id: int) -> Optional[dict]:
+def get_user_by_id(user_id: int) -> dict | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -217,7 +215,7 @@ def get_user_plan(user_id: int) -> str:
         conn.close()
 
 
-def update_user_plan(user_id: int, plan: str, paddle_customer_id: Optional[str] = None) -> None:
+def update_user_plan(user_id: int, plan: str, paddle_customer_id: str | None = None) -> None:
     """更新用户订阅计划。"""
     conn = get_connection()
     try:
@@ -386,7 +384,7 @@ def create_upload_job(user_id: int, job_data: dict) -> int:
 
 
 @st.cache_data(ttl=15)
-def get_upload_job(user_id: int, job_id: int) -> Optional[dict]:
+def get_upload_job(user_id: int, job_id: int) -> dict | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -415,7 +413,7 @@ def update_upload_job(
         "payload_json",
         "total_rows",
     }
-    fields = [key for key in updates.keys() if key in allowed_fields]
+    fields = [key for key in updates if key in allowed_fields]
     if not fields:
         return
 
@@ -491,7 +489,7 @@ def get_comments_missing_embeddings(user_id: int, session_id: int) -> list[dict]
 def search_comments_by_embedding(
     user_id: int,
     embedding: list[float],
-    comment_ids: Optional[list[int]] = None,
+    comment_ids: list[int] | None = None,
     top_k: int = 5,
 ) -> list[dict]:
     """使用 pgvector 余弦距离检索最相关评论。"""
@@ -521,9 +519,9 @@ def search_comments_by_embedding(
 @st.cache_data(ttl=30)
 def get_comments(
     user_id: int,
-    product_id: Optional[str] = None,
-    session_id: Optional[int] = None,
-    version: Optional[str] = None,
+    product_id: str | None = None,
+    session_id: int | None = None,
+    version: str | None = None,
 ) -> list[dict]:
     query = "SELECT * FROM comments WHERE user_id = %s"
     params: list = [user_id]
@@ -546,7 +544,7 @@ def get_comments(
         conn.close()
 
 
-def get_comment_by_id(user_id: int, comment_id: int) -> Optional[dict]:
+def get_comment_by_id(user_id: int, comment_id: int) -> dict | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -777,7 +775,7 @@ def update_session_notes(user_id: int, session_id: int, version_notes: str) -> N
 
 
 @st.cache_data(ttl=30)
-def get_sessions(user_id: int, product_id: Optional[str] = None) -> list[dict]:
+def get_sessions(user_id: int, product_id: str | None = None) -> list[dict]:
     query = "SELECT * FROM sessions WHERE user_id = %s"
     params: list = [user_id]
     if product_id is not None:
@@ -794,7 +792,7 @@ def get_sessions(user_id: int, product_id: Optional[str] = None) -> list[dict]:
 
 
 @st.cache_data(ttl=30)
-def get_session_by_id(user_id: int, session_id: int) -> Optional[dict]:
+def get_session_by_id(user_id: int, session_id: int) -> dict | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -902,7 +900,7 @@ def delete_product(user_id: int, product_id: str) -> None:
 # ============================================================
 
 @st.cache_data(ttl=30)
-def get_setting(user_id: int, key: str) -> Optional[str]:
+def get_setting(user_id: int, key: str) -> str | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -963,7 +961,7 @@ def delete_setting(user_id: int, key: str) -> None:
 # Password Reset
 # ============================================================
 
-def get_user_by_email(email: str) -> Optional[dict]:
+def get_user_by_email(email: str) -> dict | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -987,7 +985,7 @@ def create_reset_token(email: str, token: str, expires_at: str) -> None:
         conn.close()
 
 
-def get_valid_reset_token(email: str, token: str) -> Optional[dict]:
+def get_valid_reset_token(email: str, token: str) -> dict | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:

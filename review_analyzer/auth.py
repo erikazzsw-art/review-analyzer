@@ -6,21 +6,21 @@ import string
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+import streamlit as st
 from cryptography.fernet import Fernet, InvalidToken
 from dotenv import load_dotenv
-import streamlit as st
 
 from review_analyzer.database import (
+    create_reset_token,
     create_user,
-    get_user_by_username,
-    get_user_by_id,
     get_user_by_email,
+    get_user_by_id,
+    get_user_by_username,
+    get_valid_reset_token,
+    init_db,
+    mark_token_used,
     update_user_api_key,
     update_user_password,
-    create_reset_token,
-    get_valid_reset_token,
-    mark_token_used,
-    init_db,
 )
 from review_analyzer.mailer import send_reset_code
 
@@ -57,8 +57,8 @@ def decrypt_api_key(encrypted_key: str) -> str:
         raise RuntimeError("AES_SECRET_KEY 未配置，无法解密 API Key")
     try:
         return _fernet.decrypt(encrypted_key.encode("utf-8")).decode("utf-8")
-    except InvalidToken:
-        raise ValueError("API Key 解密失败，密钥可能已变更")
+    except InvalidToken as err:
+        raise ValueError("API Key 解密失败，密钥可能已变更") from err
 
 
 # ============================================================
@@ -182,30 +182,28 @@ def render_auth_page() -> None:
 
     tab_login, tab_register = st.tabs(["登录", "注册"])
 
-    with tab_login:
-        with st.form("login_form"):
-            username = st.text_input("用户名", key="login_username")
-            password = st.text_input("密码", type="password", key="login_password")
-            submitted = st.form_submit_button("登录", use_container_width=True)
-            if submitted:
-                ok, msg = login(username, password)
+    with tab_login, st.form("login_form"):
+        username = st.text_input("用户名", key="login_username")
+        password = st.text_input("密码", type="password", key="login_password")
+        submitted = st.form_submit_button("登录", use_container_width=True)
+        if submitted:
+            ok, msg = login(username, password)
+            if ok:
+                st.rerun()
+            else:
+                st.error(msg)
+
+    with tab_register, st.form("register_form"):
+        new_username = st.text_input("用户名", key="reg_username")
+        new_password = st.text_input("密码", type="password", key="reg_password")
+        confirm_password = st.text_input("确认密码", type="password", key="reg_confirm")
+        submitted = st.form_submit_button("注册", use_container_width=True)
+        if submitted:
+            if new_password != confirm_password:
+                st.error("两次密码不一致")
+            else:
+                ok, msg = register(new_username, new_password)
                 if ok:
                     st.rerun()
                 else:
                     st.error(msg)
-
-    with tab_register:
-        with st.form("register_form"):
-            new_username = st.text_input("用户名", key="reg_username")
-            new_password = st.text_input("密码", type="password", key="reg_password")
-            confirm_password = st.text_input("确认密码", type="password", key="reg_confirm")
-            submitted = st.form_submit_button("注册", use_container_width=True)
-            if submitted:
-                if new_password != confirm_password:
-                    st.error("两次密码不一致")
-                else:
-                    ok, msg = register(new_username, new_password)
-                    if ok:
-                        st.rerun()
-                    else:
-                        st.error(msg)

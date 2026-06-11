@@ -9,24 +9,24 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
+from review_analyzer.analyzer import PROMPT_VERSION, analyze_batch, get_api_key
 from review_analyzer.auth import get_current_user_id
 from review_analyzer.config import CATEGORY_TAGS, DEFAULT_CATEGORY
-from review_analyzer.page_shell import render_page_header
-from review_analyzer.i18n import pick, role_label
 from review_analyzer.database import (
-    create_session,
     add_comments_batch,
+    create_session,
     get_existing_hashes,
     get_sessions,
-    get_user_product_count,
     get_unprocessed_comments,
+    get_user_product_count,
     update_comment_analysis,
     update_session_stats,
 )
-from review_analyzer.parser import parse_file
-from review_analyzer.analyzer import analyze_batch, get_api_key, PROMPT_VERSION
+from review_analyzer.i18n import pick
 from review_analyzer.notifier import auto_notify_after_analysis
 from review_analyzer.paddle_billing import is_pro_user
+from review_analyzer.page_shell import render_page_header
+from review_analyzer.parser import parse_file
 from review_analyzer.product_store import create_product, get_product_overview_rows, get_variants
 from review_analyzer.rag import embed_session_comments
 from review_analyzer.workflow_prompts import WORKFLOW_PURPOSES, get_workflow_hint, get_workflow_purpose_label
@@ -552,7 +552,7 @@ def render_upload() -> None:
                 analysis_ready_count = len(cleaned_df)
                 if analysis_ready_count > 0:
                     st.markdown(
-                        f"""
+                        """
                         <div style="background:#fff8ef;border:1px solid #ffd7a8;border-radius:18px;
                                     padding:18px 20px;margin:14px 0 18px;">
                             <div style="font-size:16px;font-weight:700;color:#202020;margin-bottom:6px;">
@@ -777,7 +777,6 @@ def render_upload() -> None:
             elif sentiment == "negative":
                 negative_count += 1
 
-        valid_count = len(unprocessed) - unrecognizable_count
         update_session_stats(user_id, session_id, len(unprocessed), positive_count, negative_count)
 
         # 自动推送（根据用户设置的规则判断）

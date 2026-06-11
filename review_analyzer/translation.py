@@ -7,7 +7,6 @@ from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
 
 from review_analyzer.analyzer import get_api_key
 
-
 LANGUAGE_LABELS = {
     "en": "English",
     "zh": "Chinese",

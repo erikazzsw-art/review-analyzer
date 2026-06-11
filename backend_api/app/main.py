@@ -6,20 +6,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend_api.app.config import get_settings
-from backend_api.app.routes.auth import router as auth_router
-from backend_api.app.routes.analysis import router as analysis_router
 from backend_api.app.routes.actions import router as actions_router
 from backend_api.app.routes.actions import trackers_router as trackers_router
+from backend_api.app.routes.analysis import router as analysis_router
+from backend_api.app.routes.auth import router as auth_router
 from backend_api.app.routes.compare import router as compare_router
 from backend_api.app.routes.me import router as me_router
 from backend_api.app.routes.products import router as products_router
 from backend_api.app.routes.qa import router as qa_router
+from backend_api.app.routes.quota import router as quota_router
 from backend_api.app.routes.settings import router as settings_router
 from backend_api.app.routes.taxonomy import router as taxonomy_router
-from backend_api.app.routes.quota import router as quota_router
 from backend_api.app.routes.uploads import router as uploads_router
 from backend_api.app.routes.workspace import router as workspace_router
-
 
 settings = get_settings()
 

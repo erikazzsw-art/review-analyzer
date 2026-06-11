@@ -15,7 +15,6 @@ from review_analyzer.review_store import (
     update_review_tracker_result,
 )
 
-
 TRACKER_FILTER_OPTIONS = ["全部", *REVIEW_TRACKER_STATUSES]
 
 

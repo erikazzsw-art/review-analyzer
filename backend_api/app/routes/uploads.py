@@ -20,7 +20,6 @@ from review_analyzer.database import (
 from review_analyzer.parser import parse_file
 from workers.jobs import enqueue_upload_job_task
 
-
 router = APIRouter(tags=["uploads"])
 
 

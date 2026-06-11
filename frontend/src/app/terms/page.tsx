@@ -9,7 +9,7 @@ export const metadata = buildMarketingMetadata({
 
 export default function TermsPage() {
   return (
-    <MarketingShell>
+    <MarketingShell title="Terms of Service" description="Service scope, responsibilities, and usage rules.">
       <article className="prose prose-sm mx-auto max-w-3xl px-4 py-12">
         <h1>用户协议</h1>
         <p className="text-muted-foreground">最后更新：2026 年 6 月 10 日</p>

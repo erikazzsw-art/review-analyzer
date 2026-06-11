@@ -5,11 +5,10 @@ from __future__ import annotations
 import io
 from collections import Counter
 from datetime import datetime
-from typing import Optional
 
 import xlsxwriter
 
-from .database import get_session_by_id, get_comments
+from .database import get_comments, get_session_by_id
 
 
 def _build_filename(session: dict, ext: str) -> str:
@@ -121,7 +120,7 @@ def _build_top10_data(
 def export_to_xlsx(
     session_id: int,
     user_id: int,
-    date_range: Optional[tuple[str, str]] = None,
+    date_range: tuple[str, str] | None = None,
 ) -> tuple[bytes, str]:
     """
     生成多 Sheet XLSX 文件。
@@ -227,7 +226,7 @@ def export_to_xlsx(
 def export_to_csv(
     session_id: int,
     user_id: int,
-    date_range: Optional[tuple[str, str]] = None,
+    date_range: tuple[str, str] | None = None,
 ) -> tuple[bytes, str]:
     """
     生成 CSV 文件（评论明细）。

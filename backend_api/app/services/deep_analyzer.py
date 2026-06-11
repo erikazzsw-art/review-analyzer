@@ -45,8 +45,16 @@ DEFAULT_MAX_WORKERS = 8
 DEFAULT_TIMEOUT_S = 30.0
 
 
-def _validate_annotation(obj: Any) -> tuple[bool, str]:
-    """后置校验 LLM 返回的 JSON 是否符合 V4-T3 schema."""
+def _validate_annotation(obj: Any, allowed_aspects: set[str] | None = None) -> tuple[bool, str]:
+    """后置校验 LLM 返回的 JSON 是否符合 V4-T3 schema.
+
+    Args:
+        obj: LLM 返回的 JSON 对象
+        allowed_aspects: 允许的 aspect key 集合（v2.4 动态注入时传入）.
+            None 时回退到硬编码 ASPECT_KEYS（v2.1/v2.3 旧行为）.
+    """
+    valid_keys = allowed_aspects if allowed_aspects else set(ASPECT_KEYS)
+
     if not isinstance(obj, dict):
         return False, "not_a_dict"
     if obj.get("sentiment") not in SENTIMENT_VALUES:
@@ -58,7 +66,7 @@ def _validate_annotation(obj: Any) -> tuple[bool, str]:
     for i, a in enumerate(aspects):
         if not isinstance(a, dict):
             return False, f"aspect[{i}]_not_a_dict"
-        if a.get("key") not in ASPECT_KEYS:
+        if a.get("key") not in valid_keys:
             return False, f"aspect[{i}].key_invalid_{a.get('key')!r}"
         if a.get("polarity") not in POLARITY_VALUES:
             return False, f"aspect[{i}].polarity_invalid"
@@ -109,8 +117,16 @@ def analyze_one(
     client: OpenAI | None = None,
     prompt_version: str = "v2.1",
     max_retries: int = 1,
+    aspects_block: str | None = None,
+    allowed_aspects: list[str] | None = None,
 ) -> dict[str, Any]:
     """对单条评论做 V4-T3 深度分析.
+
+    Args:
+        aspects_block: v2.4+ 占位符 {{ASPECTS_BLOCK}} 的渲染内容（多行字符串）.
+            None 时不替换；若模板含未替换占位符，自动用 fallback 块兜底.
+        allowed_aspects: v2.4+ 允许的 aspect key 列表（动态闭合集）.
+            None 时使用硬编码 ASPECT_KEYS（19 个家具 aspect，v2.1/v2.3 行为）.
 
     Returns:
         成功: {sentiment, aspects, pain_points, highlights, evidence_level_overall,
@@ -122,10 +138,26 @@ def analyze_one(
 
     p = load_prompt("annotate", prompt_version)
     system_prompt = p.system_prompt
+
+    if "{{ASPECTS_BLOCK}}" in system_prompt:
+        if aspects_block is None:
+            from backend_api.app.services.taxonomy_loader import (
+                get_fallback_aspects,
+                render_aspects_block,
+            )
+            logger.warning(
+                "deep_analyzer.analyze_one: prompt %s contains {{ASPECTS_BLOCK}} "
+                "but no aspects_block was provided; using fallback base block",
+                prompt_version,
+            )
+            aspects_block = render_aspects_block(get_fallback_aspects())
+        system_prompt = system_prompt.replace("{{ASPECTS_BLOCK}}", aspects_block)
+
+    allowed_set: set[str] | None = set(allowed_aspects) if allowed_aspects else None
     user_msg = _build_user_prompt(content, rating, sub_category, title)
 
     last_error = ""
-    for attempt in range(max_retries + 1):
+    for _attempt in range(max_retries + 1):
         try:
             resp = client.chat.completions.create(
                 model=MODEL,
@@ -143,7 +175,7 @@ def analyze_one(
             except json.JSONDecodeError as je:
                 last_error = f"json_decode_failed: {je}"
                 continue
-            ok, err = _validate_annotation(obj)
+            ok, err = _validate_annotation(obj, allowed_aspects=allowed_set)
             if not ok:
                 last_error = f"schema_invalid: {err}"
                 continue
@@ -164,6 +196,8 @@ def analyze_batch(
     sub_category: str = "家具家居",
     max_workers: int = DEFAULT_MAX_WORKERS,
     prompt_version: str = "v2.1",
+    aspects_block: str | None = None,
+    allowed_aspects: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """批量分析评论，与 review_analyzer.analyzer.analyze_batch 接口对齐.
 
@@ -172,6 +206,8 @@ def analyze_batch(
         sub_category: 子品类（家具家居 / 床垫 / 床架 等，影响 prompt 上下文）
         max_workers: 并发线程数
         prompt_version: prompt 版本（默认 v2.1）
+        aspects_block: v2.4+ 占位符内容（worker 端按 sub_category 查 taxonomy 后渲染传入）
+        allowed_aspects: v2.4+ 允许的 aspect key 列表（与 aspects_block 配套使用）
 
     Returns:
         list of dict, 每个元素是 analyze_one 的返回值（成功或失败）
@@ -187,6 +223,8 @@ def analyze_batch(
             title=c.get("title", ""),
             client=client,
             prompt_version=prompt_version,
+            aspects_block=aspects_block,
+            allowed_aspects=allowed_aspects,
         )
 
     with ThreadPoolExecutor(max_workers=max_workers) as ex:

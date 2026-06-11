@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any
 
-from backend_api.app.config import get_settings
-from backend_api.app.services.deep_analyzer import analyze_batch as deep_analyze_batch
 from backend_api.app.services.category_grouper import aspects_to_legacy_schema
+from backend_api.app.services.deep_analyzer import analyze_batch as deep_analyze_batch
 from backend_api.app.services.prompt_registry import DEFAULT_ANNOTATE_VERSION
-from review_analyzer.analyzer import get_api_key
+from backend_api.app.services.taxonomy_loader import (
+    render_aspects_block,
+    resolve_aspects,
+)
 from review_analyzer.database import (
     add_comments_batch,
     create_session,
@@ -26,6 +29,8 @@ from .queue import get_queue
 # 旧 review_analyzer.analyzer.analyze_batch 仍保留供 Streamlit 直接调用，不在 worker 通道使用
 PROMPT_VERSION = DEFAULT_ANNOTATE_VERSION  # "v2.1"
 ANALYZER_VERSION = "v4_deep"
+
+logger = logging.getLogger(__name__)
 
 
 def _build_comments(
@@ -139,10 +144,21 @@ def process_upload_job(user_id: int, job_id: int) -> None:
 
             # V4-T3 v2.1 深度分析（92.1% 准确率，三层架构）
             sub_category = str(payload.get("category") or "家具家居")
+            # V4-T1.5: 按 sub_category 查 category_aspect_taxonomy 注入动态 aspect 列表
+            # taxonomy 未命中（用户上传非 5 类目） → resolve_aspects 自动 fallback 通用 base 块
+            aspects, taxonomy_hit = resolve_aspects(sub_category)
+            aspects_block = render_aspects_block(aspects)
+            allowed_aspects = [a["key"] for a in aspects]
+            logger.info(
+                "upload_job %s: sub_category=%r taxonomy_hit=%s aspects_count=%d prompt=%s",
+                job_id, sub_category, taxonomy_hit, len(aspects), PROMPT_VERSION,
+            )
             v4_results = deep_analyze_batch(
                 comments=[{"content": row.get("content", ""), "rating": row.get("rating"), "title": row.get("title", "")} for row in unprocessed],
                 sub_category=sub_category,
                 prompt_version=PROMPT_VERSION,
+                aspects_block=aspects_block,
+                allowed_aspects=allowed_aspects,
             )
             _progress_callback(len(unprocessed), len(unprocessed))
             results = []

@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import psycopg2
 import psycopg2.extras
 import streamlit as st
 
-from review_analyzer.database import get_comments_deduped, get_connection, get_sessions
-
+from review_analyzer.database import get_connection, get_sessions
 
 LIFECYCLE_OPTIONS = ["research", "launch", "growth", "mature", "decline"]
 VARIANT_STATUS_OPTIONS = ["active", "paused", "clearance", "retired"]
@@ -68,7 +67,7 @@ def get_products(user_id: int) -> list[dict[str, Any]]:
 
 
 @st.cache_data(ttl=30)
-def get_product_by_id(user_id: int, product_id: int) -> Optional[dict[str, Any]]:
+def get_product_by_id(user_id: int, product_id: int) -> dict[str, Any] | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -86,7 +85,7 @@ def get_product_by_id(user_id: int, product_id: int) -> Optional[dict[str, Any]]
 
 
 @st.cache_data(ttl=30)
-def get_product_by_parent_id(user_id: int, parent_product_id: str) -> Optional[dict[str, Any]]:
+def get_product_by_parent_id(user_id: int, parent_product_id: str) -> dict[str, Any] | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -431,7 +430,7 @@ def _build_comment_stats(comments: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _get_top_tag(comments: list[dict[str, Any]], field_name: str) -> Optional[str]:
+def _get_top_tag(comments: list[dict[str, Any]], field_name: str) -> str | None:
     counter: Counter[str] = Counter()
     for comment in comments:
         tags = str(comment.get(field_name) or "")
@@ -446,7 +445,7 @@ def _get_top_tag(comments: list[dict[str, Any]], field_name: str) -> Optional[st
     return counter.most_common(1)[0][0]
 
 
-def _pick_created_at(product_row: Optional[dict[str, Any]], latest_session: Optional[dict[str, Any]]) -> Optional[datetime]:
+def _pick_created_at(product_row: dict[str, Any] | None, latest_session: dict[str, Any] | None) -> datetime | None:
     if product_row and isinstance(product_row.get("created_at"), datetime):
         return product_row["created_at"]
     if latest_session and isinstance(latest_session.get("created_at"), datetime):
@@ -454,7 +453,7 @@ def _pick_created_at(product_row: Optional[dict[str, Any]], latest_session: Opti
     return None
 
 
-def _build_session_label(latest_session: Optional[dict[str, Any]]) -> Optional[str]:
+def _build_session_label(latest_session: dict[str, Any] | None) -> str | None:
     if not latest_session:
         return None
     title = latest_session.get("custom_title") or latest_session.get("auto_title") or latest_session.get("version")
@@ -463,7 +462,7 @@ def _build_session_label(latest_session: Optional[dict[str, Any]]) -> Optional[s
     return str(title)
 
 
-def _get_pending_review_count(user_id: int, product_id: Optional[int]) -> int:
+def _get_pending_review_count(user_id: int, product_id: int | None) -> int:
     if product_id is None:
         return 0
 

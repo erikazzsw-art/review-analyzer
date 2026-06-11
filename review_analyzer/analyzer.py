@@ -6,8 +6,7 @@ import json
 import logging
 import os
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional
+from concurrent.futures import ThreadPoolExecutor
 
 from openai import AuthenticationError, OpenAI
 
@@ -103,7 +102,7 @@ def _normalize_tag_field(raw: str) -> str:
     )
 
 
-def classify_sentiment_by_rating(rating: Optional[int]) -> Optional[str]:
+def classify_sentiment_by_rating(rating: int | None) -> str | None:
     """根据评分判断情感（有评分时）"""
     if rating is None:
         return None
@@ -159,7 +158,7 @@ def filter_neutral_unrecognizable(
 def build_prompt(
     comment: str,
     category: str,
-    rating: Optional[int] = None,
+    rating: int | None = None,
 ) -> str:
     """
     构建用户 Prompt（动态注入当前类目的预设标签库）。
@@ -274,7 +273,7 @@ def analyze_comment(
     comment: str,
     category: str,
     api_key: str,
-    rating: Optional[int] = None,
+    rating: int | None = None,
 ) -> dict:
     """
     单条评论分析：构建 Prompt → 调用 API → 解析返回。
@@ -339,7 +338,7 @@ def analyze_batch(
     comments: list[dict],
     category: str,
     api_key: str,
-    progress_callback: Optional[callable] = None,
+    progress_callback: callable | None = None,
     max_workers: int = 10,
 ) -> list[dict]:
     """
@@ -355,7 +354,7 @@ def analyze_batch(
     if total == 0:
         return []
 
-    results: list[Optional[dict]] = [None] * total
+    results: list[dict | None] = [None] * total
     lock = threading.Lock()
     done_count = 0
     auth_error = None
@@ -451,7 +450,7 @@ def extract_tags_from_comments(
     return result
 
 
-def get_api_key(user_id: Optional[int] = None) -> str:
+def get_api_key(user_id: int | None = None) -> str:
     """
     获取 API Key：优先从数据库 settings 表读取用户自己的 Key，
     fallback 到 .env 系统默认 Key。

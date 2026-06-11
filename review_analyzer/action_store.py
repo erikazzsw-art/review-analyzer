@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import psycopg2
 import psycopg2.extras
 import streamlit as st
 
 from review_analyzer.database import get_connection
-
 
 ACTION_STATUSES = ["todo", "in_progress", "pending_review", "done"]
 ACTION_STATUS_LABELS = {
@@ -109,7 +108,7 @@ def update_action_status(user_id: int, action_id: int, status: str) -> None:
         conn.close()
 
 
-def get_action_item_by_id(user_id: int, action_id: int) -> Optional[dict[str, Any]]:
+def get_action_item_by_id(user_id: int, action_id: int) -> dict[str, Any] | None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:

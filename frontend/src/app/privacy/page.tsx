@@ -9,7 +9,7 @@ export const metadata = buildMarketingMetadata({
 
 export default function PrivacyPage() {
   return (
-    <MarketingShell>
+    <MarketingShell title="Privacy Policy" description="How we collect, use, and protect your data.">
       <article className="prose prose-sm mx-auto max-w-3xl px-4 py-12">
         <h1>隐私协议</h1>
         <p className="text-muted-foreground">最后更新：2026 年 6 月 10 日</p>

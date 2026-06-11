@@ -5,12 +5,11 @@ import json
 import streamlit as st
 from openai import OpenAI
 
-from review_analyzer.auth import get_current_user_id
 from review_analyzer.analyzer import get_api_key
-from review_analyzer.database import get_sessions, get_comments
+from review_analyzer.auth import get_current_user_id
+from review_analyzer.database import get_comments, get_sessions
 from review_analyzer.i18n import pick
 from review_analyzer.page_shell import render_page_header
-
 
 PLATFORM_DATA = {
     "amazon": {
@@ -160,7 +159,7 @@ def render_copywriter() -> None:
 
     col1, col2 = st.columns(2)
     with col1:
-        product_options = ["__placeholder__"] + [f"{pid}" for pid in products.keys()]
+        product_options = ["__placeholder__"] + [f"{pid}" for pid in products]
         selected_product = st.selectbox(
             pick("产品编号 *", "Product ID *"),
             product_options,

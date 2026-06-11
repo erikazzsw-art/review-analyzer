@@ -1,16 +1,15 @@
 from __future__ import annotations
 
+import json
 from collections import Counter
 from datetime import date, datetime
-import json
 from typing import Any
 
-from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
 import psycopg2.extras
+from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
 
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_comments, get_connection, get_sessions
-
 
 COMPARE_TYPE_LABELS = {
     "same_product_time": "同产品时间对比",

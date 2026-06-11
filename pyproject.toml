@@ -1,0 +1,29 @@
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults (FastAPI Depends)
+    "SIM108", # use ternary operator (readability preference)
+    "SIM105", # suppressible-exception (contextlib.suppress not always clearer)
+    "SIM117", # multiple-with-statements (readability preference)
+    "SIM102", # collapsible-if (readability preference)
+    "SIM113", # enumerate-for-loop (not always better)
+    "B905",   # zip-without-explicit-strict (Python 3.10+ preference)
+    "UP031",  # printf-string-formatting (existing code style)
+    "F509",   # percent-format-unsupported-format-character (false positives with logger)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E", "F401", "F841"]
+"review_analyzer/pages/*" = ["E402", "F841"]
