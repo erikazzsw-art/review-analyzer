@@ -553,3 +553,25 @@ export type CopywriterGenerateResponse = {
   ideal_profile: CopywriterIdealProfile | null;
   generated_at: string;
 };
+
+export type TaxonomyCategoryGroup = {
+  category_key: string;
+  category_label: string;
+  sub_categories: string[];
+};
+
+export type TaxonomyCategoriesResponse = {
+  supported_categories: TaxonomyCategoryGroup[];
+  unknown_sub_categories: string[];
+  total_sub_categories: number;
+  taxonomy_version: string;
+  notice: string | null;
+};
+
+export type SubCategoryProbeResponse = {
+  sub_category: string;
+  is_taxonomy_hit: boolean;
+  category_key: string | null;
+  category_label: string | null;
+  aspects_count: number;
+};

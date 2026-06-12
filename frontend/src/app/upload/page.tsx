@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { AppShell } from "@/components/app/app-shell";
-import { submitUploadJob, fetchUploadJob } from "@/lib/api/browser";
-import type { UploadJob } from "@/lib/api/types";
+import {
+  fetchTaxonomyCategories,
+  fetchUploadJob,
+  submitUploadJob,
+} from "@/lib/api/browser";
+import { track } from "@/lib/analytics";
+import type { TaxonomyCategoriesResponse, UploadJob } from "@/lib/api/types";
 
 const workflowPurposes = [
   "竞品调研",
@@ -41,6 +46,36 @@ function statusTone(status: UploadJob["status"]): string {
   return "bg-[#fff1f5] text-[#d94d72]";
 }
 
+function CategoryHitBanner({
+  categoryValue,
+  hit,
+  supportedCount,
+  supportedCategories,
+}: {
+  categoryValue: string;
+  hit: { categoryKey: string; categoryLabel: string } | null;
+  supportedCount: number;
+  supportedCategories: TaxonomyCategoriesResponse["supported_categories"];
+}): React.ReactNode {
+  if (hit && hit.categoryKey !== "other") {
+    return (
+      <div className="rounded-card border border-[#cbe9d8] bg-[#eef9f3] px-3 py-2 text-xs leading-5 text-[#3d8b74]">
+        ✅ <span className="font-semibold">{categoryValue}</span> 已识别为
+        <span className="mx-1 font-semibold">{hit.categoryLabel}</span>
+        品类，分析将使用该品类专属 aspect 维度。
+      </div>
+    );
+  }
+  const labels = supportedCategories.map((g) => g.category_label).join(" / ");
+  return (
+    <div className="rounded-card border border-[#f6dbb4] bg-[#fff6e6] px-3 py-2 text-xs leading-5 text-[#9a6118]">
+      ⚠️ <span className="font-semibold">{categoryValue}</span> 不在已支持的
+      {supportedCount} 个子品类中，将使用<span className="mx-1 font-semibold">通用模板</span>分析，
+      aspect 颗粒度较粗。建议改填具体子品类（已支持品类：{labels}）。
+    </div>
+  );
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -48,6 +83,7 @@ export default function UploadPage() {
   const [error, setError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const [taxonomy, setTaxonomy] = useState<TaxonomyCategoriesResponse | null>(null);
   const [form, setForm] = useState<FormState>({
     productId: "",
     productName: "",
@@ -59,6 +95,44 @@ export default function UploadPage() {
     dateEnd: "",
     versionNotes: "",
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchTaxonomyCategories()
+      .then((data) => {
+        if (!cancelled) {
+          setTaxonomy(data);
+        }
+      })
+      .catch(() => {
+        // taxonomy 拉取失败不阻断上传流程，前端仅退回到无提示状态
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const supportedSubCategories = useMemo(() => {
+    if (!taxonomy) {
+      return new Map<string, { categoryKey: string; categoryLabel: string }>();
+    }
+    const m = new Map<string, { categoryKey: string; categoryLabel: string }>();
+    for (const group of taxonomy.supported_categories) {
+      for (const sub of group.sub_categories) {
+        m.set(sub, { categoryKey: group.category_key, categoryLabel: group.category_label });
+      }
+    }
+    for (const sub of taxonomy.unknown_sub_categories) {
+      m.set(sub, { categoryKey: "other", categoryLabel: "未归类" });
+    }
+    return m;
+  }, [taxonomy]);
+
+  const categoryHit = useMemo(() => {
+    const trimmed = form.category.trim();
+    if (!trimmed) return null;
+    return supportedSubCategories.get(trimmed) ?? null;
+  }, [form.category, supportedSubCategories]);
 
   const canSubmit = useMemo(() => {
     return (
@@ -110,6 +184,12 @@ export default function UploadPage() {
 
     setError("");
     setIsSubmitting(true);
+    track("upload_start", {
+      file_type: file.name.split(".").pop(),
+      file_size_kb: Math.round(file.size / 1024),
+      category: form.category,
+      workflow_purpose: form.workflowPurpose,
+    });
     try {
       const response = await submitUploadJob({
         sourceFile: file,
@@ -124,12 +204,14 @@ export default function UploadPage() {
         versionNotes: form.versionNotes.trim(),
       });
       setJob(response.job);
+      track("upload_complete", { job_id: response.job.id });
       if (response.job.status === "done" && response.job.session_id) {
         router.push(`/analysis/results?session_id=${response.job.session_id}`);
       }
     } catch (submitError) {
       const candidate = submitError as { message?: string };
       setError(candidate.message || "上传任务创建失败");
+      track("upload_fail", { error: candidate.message || "unknown" });
     } finally {
       setIsSubmitting(false);
     }
@@ -187,14 +269,33 @@ export default function UploadPage() {
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-ink">类目</span>
+              <span className="text-sm font-semibold text-ink">
+                类目（sub_category）
+              </span>
               <input
                 value={form.category}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, category: event.target.value }))
                 }
+                list="taxonomy-sub-categories"
                 className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+                placeholder="例如：床架 / iPhone Charger / Baby Bibs"
               />
+              {taxonomy && (
+                <datalist id="taxonomy-sub-categories">
+                  {Array.from(supportedSubCategories.keys()).map((sub) => (
+                    <option key={sub} value={sub} />
+                  ))}
+                </datalist>
+              )}
+              {taxonomy && form.category.trim().length > 0 && (
+                <CategoryHitBanner
+                  categoryValue={form.category.trim()}
+                  hit={categoryHit}
+                  supportedCount={taxonomy.total_sub_categories}
+                  supportedCategories={taxonomy.supported_categories}
+                />
+              )}
             </label>
             <label className="space-y-2">
               <span className="text-sm font-semibold text-ink">版本号</span>

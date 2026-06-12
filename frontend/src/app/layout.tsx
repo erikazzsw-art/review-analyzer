@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import "@/app/globals.css";
 import { ogImagePath, siteUrl } from "@/lib/seo";
+import { AnalyticsProvider } from "@/components/app/AnalyticsProvider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -42,7 +43,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AnalyticsProvider>{children}</AnalyticsProvider>
+      </body>
     </html>
   );
 }

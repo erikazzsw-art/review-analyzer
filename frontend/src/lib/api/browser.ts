@@ -21,6 +21,8 @@ import type {
   ReviewTrackersResponse,
   SettingsResponse,
   SettingsUpdatePayload,
+  SubCategoryProbeResponse,
+  TaxonomyCategoriesResponse,
   UploadJobResponse,
 } from "@/lib/api/types";
 
@@ -550,4 +552,31 @@ export async function createBillingCheckout(): Promise<BillingCheckoutResponse> 
   }
 
   return (await response.json()) as BillingCheckoutResponse;
+}
+
+export async function fetchTaxonomyCategories(): Promise<TaxonomyCategoriesResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/taxonomy/categories`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as TaxonomyCategoriesResponse;
+}
+
+export async function probeSubCategory(name: string): Promise<SubCategoryProbeResponse> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/taxonomy/sub_category?name=${encodeURIComponent(name)}`,
+    {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as SubCategoryProbeResponse;
 }

@@ -51,15 +51,46 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
     depends_on:
       - frontend
       - api
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot_www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
     restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:latest
+    profiles:
+      - certbot
+    env_file:
+      - .env
+    volumes:
+      - certbot_www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
+    entrypoint:
+      - /bin/sh
+      - -c
+    command: >
+      certbot certonly
+      --webroot
+      --webroot-path=/var/www/certbot
+      --email "$${LETSENCRYPT_EMAIL}"
+      --agree-tos
+      --no-eff-email
+      --keep-until-expiring
+      -d clueai-reviewlens.com
+      -d www.clueai-reviewlens.com
+      -d app.clueai-reviewlens.com
+      -d api.clueai-reviewlens.com
+    restart: "no"
 
   streamlit:
     profiles:
@@ -81,3 +112,5 @@ services:
 
 volumes:
   redis_data:
+  certbot_www:
+  letsencrypt:
