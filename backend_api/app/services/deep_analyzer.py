@@ -10,10 +10,11 @@
 - 与现有 review_analyzer.analyzer.analyze_batch 接口对齐
 - 不映射回中文 11 类 category（由 category_grouper 完成）
 
-模型选型：
-- DeepSeek-V4-flash（兼容 OpenAI SDK）
-- json_object 模式 + 后置 schema 校验
-- 失败重试 1 次
+模型选型（V4-T4 Step 4: 多模型 Fallback 链路）：
+- 主：DeepSeek-V3（deepseek-chat）— 中文优势 + 成本最低
+- 备 1：OpenAI gpt-4o-mini — API 稳定性最高
+- 备 2：Qwen-Plus — 国内可用性兜底
+- 路由：llm_router.py 自动熔断切换，业务无感知
 
 成本（DeepSeek 价格: ¥1/M input + ¥8/M output）:
 - 100 条评论: ~¥0.03
@@ -23,11 +24,8 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
-
-from openai import OpenAI
 
 from backend_api.app.core.aspect_taxonomy import (
     ASPECT_KEYS,
@@ -35,14 +33,12 @@ from backend_api.app.core.aspect_taxonomy import (
     POLARITY_VALUES,
     SENTIMENT_VALUES,
 )
+from backend_api.app.services.llm_router import router_completion
 from backend_api.app.services.prompt_registry import load_prompt
 
 logger = logging.getLogger(__name__)
 
-MODEL = "deepseek-chat"
-BASE_URL = "https://api.deepseek.com"
 DEFAULT_MAX_WORKERS = 8
-DEFAULT_TIMEOUT_S = 30.0
 
 
 def _validate_annotation(obj: Any, allowed_aspects: set[str] | None = None) -> tuple[bool, str]:
@@ -95,47 +91,21 @@ def _build_user_prompt(content: str, rating: int | None, sub_category: str, titl
     )
 
 
-def _get_api_key() -> str:
-    """从 env 或 .env 文件读取 DeepSeek API key."""
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    if api_key:
-        return api_key
-    from pathlib import Path
-    env_path = Path(__file__).parent.parent.parent.parent / ".env"
-    if env_path.exists():
-        for line in env_path.read_text().splitlines():
-            if line.startswith("DEEPSEEK_API_KEY="):
-                return line.split("=", 1)[1].strip().strip('"').strip("'")
-    raise RuntimeError("DEEPSEEK_API_KEY not configured")
-
-
 def analyze_one(
     content: str,
     rating: int | None,
     sub_category: str = "家具家居",
     title: str = "",
-    client: OpenAI | None = None,
     prompt_version: str = "v2.1",
     max_retries: int = 1,
     aspects_block: str | None = None,
     allowed_aspects: list[str] | None = None,
+    client: Any = None,
 ) -> dict[str, Any]:
-    """对单条评论做 V4-T3 深度分析.
+    """对单条评论做 V4-T3 深度分析（通过 llm_router 自动 fallback）.
 
-    Args:
-        aspects_block: v2.4+ 占位符 {{ASPECTS_BLOCK}} 的渲染内容（多行字符串）.
-            None 时不替换；若模板含未替换占位符，自动用 fallback 块兜底.
-        allowed_aspects: v2.4+ 允许的 aspect key 列表（动态闭合集）.
-            None 时使用硬编码 ASPECT_KEYS（19 个家具 aspect，v2.1/v2.3 行为）.
-
-    Returns:
-        成功: {sentiment, aspects, pain_points, highlights, evidence_level_overall,
-              tokens_in, tokens_out, prompt_version}
-        失败: {error, prompt_version}
+    client 参数仅用于单元测试注入 mock，生产代码不传。
     """
-    if client is None:
-        client = OpenAI(api_key=_get_api_key(), base_url=BASE_URL, timeout=DEFAULT_TIMEOUT_S)
-
     p = load_prompt("annotate", prompt_version)
     system_prompt = p.system_prompt
 
@@ -155,20 +125,30 @@ def analyze_one(
 
     allowed_set: set[str] | None = set(allowed_aspects) if allowed_aspects else None
     user_msg = _build_user_prompt(content, rating, sub_category, title)
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_msg},
+    ]
 
     last_error = ""
     for _attempt in range(max_retries + 1):
         try:
-            resp = client.chat.completions.create(
-                model=MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_msg},
-                ],
-                response_format={"type": "json_object"},
-                temperature=0,
-                max_tokens=800,
-            )
+            if client is not None:
+                resp = client.chat.completions.create(
+                    model="test",
+                    messages=messages,
+                    response_format={"type": "json_object"},
+                    temperature=0,
+                    max_tokens=800,
+                )
+                model_name = "test"
+            else:
+                resp, model_name = router_completion(
+                    messages=messages,
+                    response_format={"type": "json_object"},
+                    temperature=0,
+                    max_tokens=800,
+                )
             raw = resp.choices[0].message.content
             try:
                 obj = json.loads(raw)
@@ -184,6 +164,7 @@ def analyze_one(
                 "tokens_in": resp.usage.prompt_tokens,
                 "tokens_out": resp.usage.completion_tokens,
                 "prompt_version": prompt_version,
+                "model_used": model_name,
             }
         except Exception as e:
             last_error = str(e)[:200]
@@ -199,20 +180,7 @@ def analyze_batch(
     aspects_block: str | None = None,
     allowed_aspects: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """批量分析评论，与 review_analyzer.analyzer.analyze_batch 接口对齐.
-
-    Args:
-        comments: list of dict with at least {content, rating, title?}
-        sub_category: 子品类（家具家居 / 床垫 / 床架 等，影响 prompt 上下文）
-        max_workers: 并发线程数
-        prompt_version: prompt 版本（默认 v2.1）
-        aspects_block: v2.4+ 占位符内容（worker 端按 sub_category 查 taxonomy 后渲染传入）
-        allowed_aspects: v2.4+ 允许的 aspect key 列表（与 aspects_block 配套使用）
-
-    Returns:
-        list of dict, 每个元素是 analyze_one 的返回值（成功或失败）
-    """
-    client = OpenAI(api_key=_get_api_key(), base_url=BASE_URL, timeout=DEFAULT_TIMEOUT_S)
+    """批量分析评论（通过 llm_router 自动 fallback）."""
     results: list[dict[str, Any] | None] = [None] * len(comments)
 
     def _process(idx: int, c: dict[str, Any]) -> tuple[int, dict[str, Any]]:
@@ -221,7 +189,6 @@ def analyze_batch(
             rating=c.get("rating"),
             sub_category=sub_category,
             title=c.get("title", ""),
-            client=client,
             prompt_version=prompt_version,
             aspects_block=aspects_block,
             allowed_aspects=allowed_aspects,

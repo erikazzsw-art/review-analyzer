@@ -6,9 +6,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend_api.app.config import get_settings
+from backend_api.app.middleware import AnalyticsMiddleware
 from backend_api.app.routes.actions import router as actions_router
 from backend_api.app.routes.actions import trackers_router as trackers_router
 from backend_api.app.routes.analysis import router as analysis_router
+from backend_api.app.routes.analytics import router as analytics_router
 from backend_api.app.routes.auth import router as auth_router
 from backend_api.app.routes.compare import router as compare_router
 from backend_api.app.routes.me import router as me_router
@@ -48,6 +50,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(AnalyticsMiddleware)
 
 
 @app.get("/health")
@@ -68,3 +71,4 @@ app.include_router(qa_router)
 app.include_router(quota_router)
 app.include_router(settings_router)
 app.include_router(taxonomy_router)
+app.include_router(analytics_router)

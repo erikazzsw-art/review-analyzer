@@ -4,7 +4,16 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from backend_api.app.services.analysis_cache import (
+    CacheResult,
+    apply_cache,
+    compute_content_hash,
+)
 from backend_api.app.services.category_grouper import aspects_to_legacy_schema
+from backend_api.app.services.clustering import (
+    cluster_reviews,
+    propagate_cluster_results,
+)
 from backend_api.app.services.deep_analyzer import analyze_batch as deep_analyze_batch
 from backend_api.app.services.prompt_registry import DEFAULT_ANNOTATE_VERSION
 from backend_api.app.services.taxonomy_loader import (
@@ -12,11 +21,17 @@ from backend_api.app.services.taxonomy_loader import (
     resolve_aspects,
 )
 from review_analyzer.database import (
+    _estimate_cost_yuan,
     add_comments_batch,
     create_session,
+    get_analyzed_by_content_hash,
+    get_analyzed_with_embeddings,
+    get_session_embeddings,
     get_unprocessed_comments,
     get_upload_job,
+    log_llm_usage_batch,
     update_comment_analysis,
+    update_comment_cluster,
     update_session_stats,
     update_upload_job,
 )
@@ -40,16 +55,18 @@ def _build_comments(
 ) -> list[dict[str, Any]]:
     comments: list[dict[str, Any]] = []
     for comment in payload_comments:
+        content = str(comment.get("content") or "")
+        rating = comment.get("rating")
         comments.append(
             {
                 "product_id": product_id,
                 "version": version,
-                "content": str(comment.get("content") or ""),
-                "rating": comment.get("rating"),
+                "content": content,
+                "rating": rating,
                 "date": comment.get("date"),
                 "reviewer": comment.get("reviewer"),
                 "source": comment.get("source"),
-                "content_hash": None,
+                "content_hash": compute_content_hash(content, rating),
             }
         )
     return comments
@@ -142,28 +159,187 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     },
                 )
 
-            # V4-T3 v2.1 深度分析（92.1% 准确率，三层架构）
             sub_category = str(payload.get("category") or "家具家居")
-            # V4-T1.5: 按 sub_category 查 category_aspect_taxonomy 注入动态 aspect 列表
-            # taxonomy 未命中（用户上传非 5 类目） → resolve_aspects 自动 fallback 通用 base 块
             aspects, taxonomy_hit = resolve_aspects(sub_category)
             aspects_block = render_aspects_block(aspects)
             allowed_aspects = [a["key"] for a in aspects]
+
+            # --- V4-T4 Step 3: 多级缓存 ---
+            # L1: 收集当前 batch 的 content_hash，查询已有分析结果
+            content_hashes = [
+                compute_content_hash(c.get("content", ""), c.get("rating"))
+                for c in unprocessed
+            ]
+            existing_analyses = get_analyzed_by_content_hash(user_id, content_hashes)
+
+            # L3 准备：查询同产品已分析+有 embedding 的历史评论
+            comments_with_emb = get_session_embeddings(user_id, session_id)
+            embeddings_available = comments_with_emb and all(
+                c.get("embedding") for c in comments_with_emb
+            )
+
+            reference_embeddings: list[list[float]] | None = None
+            reference_ids: list[int] | None = None
+            reference_results: dict[int, dict] | None = None
+
+            if embeddings_available:
+                ref_rows = get_analyzed_with_embeddings(user_id, product_id, limit=500)
+                if ref_rows:
+                    reference_embeddings = [r["embedding"] for r in ref_rows]
+                    reference_ids = [r["id"] for r in ref_rows]
+                    reference_results = {
+                        r["id"]: {"aspects_json": r["aspects_json"], "sentiment": r["sentiment"], "source_id": r["id"]}
+                        for r in ref_rows
+                    }
+
+            # 为缓存检查准备评论数据（带 embedding）
+            emb_by_id = {c["id"]: c.get("embedding") for c in (comments_with_emb or [])}
+            cache_input = []
+            for c in unprocessed:
+                cache_input.append({
+                    "id": c["id"],
+                    "content": c.get("content", ""),
+                    "rating": c.get("rating"),
+                    "embedding": emb_by_id.get(c["id"]),
+                })
+
+            cache_result: CacheResult = apply_cache(
+                comments=cache_input,
+                existing_analyses=existing_analyses,
+                reference_embeddings=reference_embeddings,
+                reference_ids=reference_ids,
+                reference_results=reference_results,
+            )
+
+            # 分离：缓存命中 vs 需要 LLM 的评论
+            need_llm = [c for c in unprocessed if c["id"] in cache_result.misses]
+            id_to_v4: dict[int, dict] = {}
+
+            # 缓存命中的评论直接用缓存结果
+            for cid, hit in cache_result.hits.items():
+                cached = hit.result
+                if isinstance(cached.get("aspects_json"), dict):
+                    id_to_v4[cid] = cached["aspects_json"]
+                else:
+                    id_to_v4[cid] = {
+                        "sentiment": cached.get("sentiment"),
+                        "aspects": cached.get("aspects", []),
+                        "pain_points": cached.get("pain_points", []),
+                        "highlights": cached.get("highlights", []),
+                        "evidence_level_overall": cached.get("evidence_level_overall", "low"),
+                        "prompt_version": cached.get("prompt_version", "cache"),
+                    }
+                id_to_v4[cid]["cache_hit_level"] = hit.level
+                id_to_v4[cid]["cache_source_id"] = hit.source_comment_id
+
             logger.info(
-                "upload_job %s: sub_category=%r taxonomy_hit=%s aspects_count=%d prompt=%s",
-                job_id, sub_category, taxonomy_hit, len(aspects), PROMPT_VERSION,
+                "upload_job %s: cache hit=%d miss=%d (stats=%s)",
+                job_id, cache_result.hit_count, cache_result.miss_count, cache_result.stats(),
             )
-            v4_results = deep_analyze_batch(
-                comments=[{"content": row.get("content", ""), "rating": row.get("rating"), "title": row.get("title", "")} for row in unprocessed],
-                sub_category=sub_category,
-                prompt_version=PROMPT_VERSION,
-                aspects_block=aspects_block,
-                allowed_aspects=allowed_aspects,
-            )
+
+            # --- 对需要 LLM 的评论走聚类+LLM 管道 ---
+            if need_llm:
+                need_llm_ids = {c["id"] for c in need_llm}
+                llm_emb_comments = [
+                    c for c in (comments_with_emb or []) if c["id"] in need_llm_ids
+                ]
+                llm_emb_available = llm_emb_comments and all(
+                    c.get("embedding") for c in llm_emb_comments
+                )
+
+                if llm_emb_available and len(llm_emb_comments) >= 10:
+                    cluster_result = cluster_reviews(
+                        comment_ids=[c["id"] for c in llm_emb_comments],
+                        embeddings=[c["embedding"] for c in llm_emb_comments],
+                    )
+                    llm_target_ids = set(cluster_result.llm_target_ids)
+                    llm_comments = [c for c in llm_emb_comments if c["id"] in llm_target_ids]
+
+                    logger.info(
+                        "upload_job %s: clustering enabled, %d→%d LLM calls (saved %d)",
+                        job_id,
+                        len(llm_emb_comments),
+                        len(llm_comments),
+                        len(llm_emb_comments) - len(llm_comments),
+                    )
+
+                    v4_llm_results = deep_analyze_batch(
+                        comments=[
+                            {"content": c.get("content", ""), "rating": c.get("rating"), "title": c.get("title", "")}
+                            for c in llm_comments
+                        ],
+                        sub_category=sub_category,
+                        prompt_version=PROMPT_VERSION,
+                        aspects_block=aspects_block,
+                        allowed_aspects=allowed_aspects,
+                    )
+
+                    v4_results = propagate_cluster_results(
+                        cluster_result, llm_comments, v4_llm_results, llm_emb_comments,
+                    )
+
+                    # 写入聚类元数据
+                    id_to_cluster = {}
+                    for label, member_ids in cluster_result.clusters.items():
+                        rep_id = next(
+                            (rid for rid in cluster_result.representatives if rid in member_ids),
+                            member_ids[0],
+                        )
+                        for mid in member_ids:
+                            id_to_cluster[mid] = (label, rep_id)
+                    for nid in cluster_result.noise_ids:
+                        id_to_cluster[nid] = (-1, nid)
+
+                    for cid, (clabel, rep_id) in id_to_cluster.items():
+                        try:
+                            update_comment_cluster(user_id, cid, clabel, rep_id)
+                        except Exception:
+                            pass
+
+                    for c, r in zip(llm_emb_comments, v4_results):
+                        id_to_v4[c["id"]] = r
+
+                    # 没 embedding 但需要 LLM 的评论
+                    emb_id_set = {c["id"] for c in llm_emb_comments}
+                    non_emb_comments = [c for c in need_llm if c["id"] not in emb_id_set]
+                    if non_emb_comments:
+                        non_emb_results = deep_analyze_batch(
+                            comments=[
+                                {"content": c.get("content", ""), "rating": c.get("rating"), "title": c.get("title", "")}
+                                for c in non_emb_comments
+                            ],
+                            sub_category=sub_category,
+                            prompt_version=PROMPT_VERSION,
+                            aspects_block=aspects_block,
+                            allowed_aspects=allowed_aspects,
+                        )
+                        for c, r in zip(non_emb_comments, non_emb_results):
+                            id_to_v4[c["id"]] = r
+                else:
+                    # Fallback: 全量走 LLM
+                    logger.info(
+                        "upload_job %s: clustering skipped for LLM batch (emb=%s, n=%d), full LLM",
+                        job_id, bool(llm_emb_available), len(need_llm),
+                    )
+                    llm_results = deep_analyze_batch(
+                        comments=[
+                            {"content": c.get("content", ""), "rating": c.get("rating"), "title": c.get("title", "")}
+                            for c in need_llm
+                        ],
+                        sub_category=sub_category,
+                        prompt_version=PROMPT_VERSION,
+                        aspects_block=aspects_block,
+                        allowed_aspects=allowed_aspects,
+                    )
+                    for c, r in zip(need_llm, llm_results):
+                        id_to_v4[c["id"]] = r
+
+            # 按 unprocessed 顺序组装最终结果
+            ordered_v4_results = [id_to_v4.get(c["id"], {"error": "no_result"}) for c in unprocessed]
+
             _progress_callback(len(unprocessed), len(unprocessed))
             results = []
-            for comment, v4 in zip(unprocessed, v4_results):
-                # V4 失败时降级为 legacy schema 占位
+            for comment, v4 in zip(unprocessed, ordered_v4_results):
                 if v4.get("error"):
                     results.append({
                         "sentiment": "unrecognizable",
@@ -176,9 +352,10 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         "highlight_tag": "",
                         "aspects_json": None,
                         "analyzer_version": ANALYZER_VERSION,
+                        "cache_hit_level": v4.get("cache_hit_level"),
+                        "cache_source_id": v4.get("cache_source_id"),
                     })
                     continue
-                # V4 → legacy schema 转换（双写）
                 legacy = aspects_to_legacy_schema(
                     aspects=v4.get("aspects", []),
                     sentiment=v4.get("sentiment", "neutral"),
@@ -193,8 +370,11 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "highlights": v4.get("highlights", []),
                     "evidence_level_overall": v4.get("evidence_level_overall"),
                     "prompt_version": v4.get("prompt_version", PROMPT_VERSION),
+                    "cluster_propagated": v4.get("cluster_propagated", False),
                 }
                 legacy["analyzer_version"] = ANALYZER_VERSION
+                legacy["cache_hit_level"] = v4.get("cache_hit_level")
+                legacy["cache_source_id"] = v4.get("cache_source_id")
                 results.append(legacy)
         else:
             results = []
@@ -216,6 +396,44 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 negative_count += 1
 
         update_session_stats(user_id, session_id, len(unprocessed), positive_count, negative_count)
+
+        # V4-T4 Step 5: 记录 LLM 用量日志
+        usage_rows: list[dict] = []
+        for comment, v4 in zip(unprocessed, ordered_v4_results):
+            if v4.get("cache_hit_level"):
+                usage_rows.append({
+                    "user_id": user_id,
+                    "session_id": session_id,
+                    "comment_id": comment["id"],
+                    "model_name": "cache",
+                    "tokens_in": 0,
+                    "tokens_out": 0,
+                    "cost_yuan": 0,
+                    "sub_category": sub_category,
+                    "cache_hit": True,
+                })
+            elif v4.get("tokens_in") or v4.get("tokens_out"):
+                usage_rows.append({
+                    "user_id": user_id,
+                    "session_id": session_id,
+                    "comment_id": comment["id"],
+                    "model_name": v4.get("model_used", "deepseek-chat"),
+                    "tokens_in": v4.get("tokens_in", 0),
+                    "tokens_out": v4.get("tokens_out", 0),
+                    "cost_yuan": _estimate_cost_yuan(
+                        v4.get("model_used", "deepseek-chat"),
+                        v4.get("tokens_in", 0),
+                        v4.get("tokens_out", 0),
+                    ),
+                    "sub_category": sub_category,
+                    "cache_hit": False,
+                })
+        if usage_rows:
+            try:
+                log_llm_usage_batch(usage_rows)
+            except Exception:
+                logger.warning("upload_job %s: failed to log LLM usage", job_id, exc_info=True)
+
         update_upload_job(
             user_id,
             job_id,

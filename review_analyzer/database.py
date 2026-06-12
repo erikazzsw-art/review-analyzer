@@ -567,6 +567,7 @@ def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> No
                    SET sentiment = %s, content_sentiment = %s, category = %s, priority = %s, reason = %s,
                        improvement = %s, issue_tag = %s, highlight_tag = %s,
                        aspects_json = %s, analyzer_version = %s,
+                       cache_hit_level = %s, cache_source_id = %s,
                        is_processed = 1
                    WHERE id = %s AND user_id = %s""",
                 (
@@ -580,6 +581,8 @@ def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> No
                     analysis.get("highlight_tag", ""),
                     json.dumps(analysis["aspects_json"], ensure_ascii=False) if analysis.get("aspects_json") else None,
                     analysis.get("analyzer_version", "legacy"),
+                    analysis.get("cache_hit_level"),
+                    analysis.get("cache_source_id"),
                     comment_id,
                     user_id,
                 ),
@@ -690,6 +693,137 @@ def get_unprocessed_comments(user_id: int, session_id: int) -> list[dict]:
                 (user_id, session_id),
             )
             return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def get_session_embeddings(user_id: int, session_id: int) -> list[dict]:
+    """获取 session 内所有带 embedding 的评论（聚类用）."""
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT id, content, rating, title, embedding::text
+                   FROM comments
+                   WHERE user_id = %s AND session_id = %s
+                     AND embedding IS NOT NULL
+                   ORDER BY id ASC""",
+                (user_id, session_id),
+            )
+            rows = []
+            for r in cur.fetchall():
+                row = dict(r)
+                emb_str = row.pop("embedding", None)
+                if emb_str:
+                    row["embedding"] = [float(x) for x in emb_str.strip("[]").split(",")]
+                else:
+                    row["embedding"] = None
+                rows.append(row)
+            return rows
+    finally:
+        conn.close()
+
+
+def update_comment_cluster(
+    user_id: int, comment_id: int, cluster_id: int, representative_id: int
+) -> None:
+    """写入单条评论的聚类结果."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE comments
+                   SET cluster_id = %s, cluster_representative_id = %s
+                   WHERE id = %s AND user_id = %s""",
+                (cluster_id, representative_id, comment_id, user_id),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+# ============================================================
+# Cache lookup (V4-T4 Step 3)
+# ============================================================
+
+
+def get_analyzed_by_content_hash(
+    user_id: int, content_hashes: list[str]
+) -> dict[str, dict]:
+    """批量按 content_hash 查找已有分析结果（L1 缓存用）.
+
+    Returns:
+        content_hash → {aspects_json, sentiment, source_id} 映射
+    """
+    if not content_hashes:
+        return {}
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT id, content_hash, sentiment, aspects_json
+                   FROM comments
+                   WHERE user_id = %s
+                     AND content_hash = ANY(%s)
+                     AND is_processed = 1
+                     AND aspects_json IS NOT NULL
+                   ORDER BY id DESC""",
+                (user_id, content_hashes),
+            )
+            result: dict[str, dict] = {}
+            for row in cur.fetchall():
+                h = row["content_hash"]
+                if h not in result:
+                    aspects_json = row["aspects_json"]
+                    if isinstance(aspects_json, str):
+                        aspects_json = json.loads(aspects_json)
+                    result[h] = {
+                        "aspects_json": aspects_json,
+                        "sentiment": row["sentiment"],
+                        "source_id": row["id"],
+                    }
+            return result
+    finally:
+        conn.close()
+
+
+def get_analyzed_with_embeddings(
+    user_id: int, product_id: str, limit: int = 500
+) -> list[dict]:
+    """查询同产品下已分析且有 embedding 的评论（L3 缓存用）.
+
+    Returns:
+        list of {id, embedding, aspects_json, sentiment}
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT id, embedding::text, aspects_json, sentiment
+                   FROM comments
+                   WHERE user_id = %s AND product_id = %s
+                     AND is_processed = 1
+                     AND aspects_json IS NOT NULL
+                     AND embedding IS NOT NULL
+                   ORDER BY id DESC
+                   LIMIT %s""",
+                (user_id, product_id, limit),
+            )
+            rows = []
+            for r in cur.fetchall():
+                row = dict(r)
+                emb_str = row.pop("embedding", None)
+                if emb_str:
+                    row["embedding"] = [
+                        float(x) for x in emb_str.strip("[]").split(",")
+                    ]
+                else:
+                    row["embedding"] = None
+                aspects_json = row.get("aspects_json")
+                if isinstance(aspects_json, str):
+                    row["aspects_json"] = json.loads(aspects_json)
+                rows.append(row)
+            return rows
     finally:
         conn.close()
 
@@ -1017,5 +1151,106 @@ def update_user_password(user_id: int, password_hash: str) -> None:
         with conn.cursor() as cur:
             cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_id))
             conn.commit()
+    finally:
+        conn.close()
+
+
+# ---------- V4-T4 Step 5: LLM 用量日志 ----------
+
+MODEL_COST_PER_MILLION: dict[str, tuple[float, float]] = {
+    "deepseek-chat": (1.0, 8.0),
+    "gpt-4o-mini": (1.05, 4.2),
+    "qwen-plus": (0.8, 2.0),
+}
+
+
+def _estimate_cost_yuan(model_name: str, tokens_in: int, tokens_out: int) -> float:
+    costs = MODEL_COST_PER_MILLION.get(model_name, (1.0, 8.0))
+    return (tokens_in * costs[0] + tokens_out * costs[1]) / 1_000_000
+
+
+def log_llm_usage(
+    user_id: int,
+    model_name: str,
+    tokens_in: int,
+    tokens_out: int,
+    session_id: int | None = None,
+    comment_id: int | None = None,
+    sub_category: str | None = None,
+    cache_hit: bool = False,
+) -> None:
+    cost = _estimate_cost_yuan(model_name, tokens_in, tokens_out) if not cache_hit else 0.0
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO llm_usage_log
+                   (user_id, session_id, comment_id, model_name, tokens_in, tokens_out,
+                    cost_yuan, sub_category, cache_hit)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (user_id, session_id, comment_id, model_name, tokens_in, tokens_out,
+                 cost, sub_category, cache_hit),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def log_llm_usage_batch(
+    rows: list[dict],
+) -> None:
+    """批量写入 LLM 用量日志（减少 DB 连接次数）."""
+    if not rows:
+        return
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            psycopg2.extras.execute_values(
+                cur,
+                """INSERT INTO llm_usage_log
+                   (user_id, session_id, comment_id, model_name, tokens_in, tokens_out,
+                    cost_yuan, sub_category, cache_hit)
+                   VALUES %s""",
+                [
+                    (
+                        r["user_id"], r.get("session_id"), r.get("comment_id"),
+                        r["model_name"], r.get("tokens_in", 0), r.get("tokens_out", 0),
+                        r.get("cost_yuan", 0), r.get("sub_category"), r.get("cache_hit", False),
+                    )
+                    for r in rows
+                ],
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def get_llm_usage_stats(
+    user_id: int | None = None,
+    days: int = 30,
+) -> list[dict]:
+    """聚合 LLM 用量统计（按用户 + 模型 + 日期）."""
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            where = "WHERE created_at >= NOW() - INTERVAL '%s days'"
+            params: list = [days]
+            if user_id is not None:
+                where += " AND user_id = %s"
+                params.append(user_id)
+            cur.execute(
+                f"""SELECT user_id, model_name, DATE(created_at) as date,
+                           COUNT(*) as call_count,
+                           SUM(tokens_in) as total_tokens_in,
+                           SUM(tokens_out) as total_tokens_out,
+                           SUM(cost_yuan) as total_cost_yuan,
+                           SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END) as cache_hits
+                    FROM llm_usage_log
+                    {where}
+                    GROUP BY user_id, model_name, DATE(created_at)
+                    ORDER BY date DESC, total_cost_yuan DESC""",
+                params,
+            )
+            return [dict(r) for r in cur.fetchall()]
     finally:
         conn.close()

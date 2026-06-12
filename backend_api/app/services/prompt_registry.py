@@ -18,7 +18,10 @@ from typing import NamedTuple
 PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 
 # 当前生产默认版本
-DEFAULT_ANNOTATE_VERSION = "v2.1"
+# v2.4 (2026-06-10): 动态 taxonomy 注入（{{ASPECTS_BLOCK}} 占位符）
+# 品类专属 aspect 替代硬编码 19 个家具 aspect；情感规则与 v2.3 完全一致
+# v2.3 (2026-06-08): 在 499 条 Golden Set 上 94.6% 准确率（v2.1 基线 92.2%）
+DEFAULT_ANNOTATE_VERSION = "v2.4"
 
 
 class PromptDef(NamedTuple):
