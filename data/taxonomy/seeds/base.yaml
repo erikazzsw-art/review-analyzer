@@ -1,0 +1,26 @@
+# 通用 Aspect Taxonomy Base 词典 v1.0
+# 设计参考: Shulex VOC + 家具家居 V1.0 实战回归
+# 用途: 跨品类共享的通用 aspect, 与各品类 delta 合并后供 extract_taxonomy_generic.py 使用
+# 加载逻辑: 品类 seed yaml 顶部声明 `extends: base.yaml`, 脚本将 base + delta 合并后构造 prompt
+
+version: v1.0
+description: "通用 base aspect, 9 个核心维度 + other 兜底"
+
+aspects:
+  # 物理品质类(跨品类通用)
+  - {key: build_quality, label_zh: 做工}
+  - {key: durability, label_zh: 耐用性}
+  - {key: material, label_zh: 材质用料}
+  # 使用体验类
+  - {key: ease_of_use, label_zh: 易用性}
+  # 外观类
+  - {key: aesthetics, label_zh: 外观设计}
+  # 物流类
+  - {key: packaging, label_zh: 包装}
+  - {key: shipping_damage, label_zh: 运输损坏}
+  # 售后类
+  - {key: customer_service, label_zh: 客服}
+  # 经济类
+  - {key: value_for_money, label_zh: 性价比}
+  # 兜底(必须始终为最后一项)
+  - {key: other, label_zh: 其他}

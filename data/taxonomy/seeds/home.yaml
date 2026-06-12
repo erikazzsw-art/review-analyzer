@@ -1,0 +1,19 @@
+# 家居家具 Aspect Taxonomy Delta 词典 v1.0
+# 设计参考: 家具家居 V1.0 实战(24032 条评论)中超出 base.yaml 的专属 aspect
+# 用途: 与 base.yaml 合并后供家居 v1.1 重抽时使用; v1.0 已抽 6 个子品类不重抽
+
+extends: base.yaml
+category: home
+category_label: 家居家具
+
+delta_aspects:
+  # 组装类(家居核心)
+  - {key: assembly, label_zh: 组装难度}
+  - {key: instructions, label_zh: 说明书}
+  # 稳固性 & 适配
+  - {key: stability, label_zh: 稳固性}
+  - {key: size_fit, label_zh: 尺寸匹配}
+  # 舒适度类
+  - {key: comfort, label_zh: 舒适度}
+  # 异味类
+  - {key: smell, label_zh: 异味}
