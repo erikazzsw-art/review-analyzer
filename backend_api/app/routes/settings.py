@@ -16,6 +16,8 @@ from backend_api.app.schemas.settings import (
     PushRulePayload,
     SettingsPayload,
     SettingsUpdatePayload,
+    SmartPushSettingsPayload,
+    SmartPushSettingsResponse,
 )
 from review_analyzer.auth import load_user_api_key, save_user_api_key
 from review_analyzer.database import get_setting, get_user_plan, set_setting, update_user_plan
@@ -244,3 +246,71 @@ def _resolve_plan_from_event(body: dict) -> str:
     if pro_price and price_id == pro_price:
         return "pro_early"
     return "pro_early"
+
+
+# ============================================================
+# V5-T3: 智能推送设置 API
+# ============================================================
+
+_DEFAULT_SMART_PUSH = {
+    "periodic_push": {"enabled": False, "frequency": "weekly", "day_of_week": "monday", "day_of_month": 1, "time": "09:00", "timezone": "Asia/Shanghai"},
+    "dept_contacts": {"qa": "", "product": "", "ops": "", "cs": "", "other": ""},
+    "escalation_rules": {"consecutive_count": 3, "top_n": 3, "pct_threshold": 10.0},
+    "dept_mapping": [],
+}
+
+
+@router.get("/settings/smart-push", response_model=SmartPushSettingsResponse)
+def get_smart_push_settings(
+    current_user: dict = Depends(get_current_user),
+) -> SmartPushSettingsResponse:
+    user_id = int(current_user["id"])
+    raw = get_setting(user_id, "push_settings")
+    settings: dict = {}
+    if raw:
+        try:
+            settings = json.loads(raw)
+        except json.JSONDecodeError:
+            settings = {}
+
+    from review_analyzer.department_router import DEFAULT_ASPECT_DEPT_MAP
+
+    periodic = {**_DEFAULT_SMART_PUSH["periodic_push"], **(settings.get("periodic_push") or {})}
+    contacts = {**_DEFAULT_SMART_PUSH["dept_contacts"], **(settings.get("dept_contacts") or {})}
+    rules = {**_DEFAULT_SMART_PUSH["escalation_rules"], **(settings.get("escalation_rules") or {})}
+
+    user_mapping = settings.get("dept_mapping") or []
+    if not user_mapping:
+        user_mapping = [{"aspect": k, "dept": v} for k, v in DEFAULT_ASPECT_DEPT_MAP.items()]
+
+    return SmartPushSettingsResponse(
+        periodic_push=periodic,
+        dept_contacts=contacts,
+        escalation_rules=rules,
+        dept_mapping=user_mapping,
+    )
+
+
+@router.patch("/settings/smart-push", response_model=SmartPushSettingsResponse)
+def patch_smart_push_settings(
+    payload: SmartPushSettingsPayload,
+    current_user: dict = Depends(get_current_user),
+) -> SmartPushSettingsResponse:
+    user_id = int(current_user["id"])
+
+    raw = get_setting(user_id, "push_settings")
+    existing: dict = {}
+    if raw:
+        try:
+            existing = json.loads(raw)
+        except json.JSONDecodeError:
+            existing = {}
+
+    existing["periodic_push"] = payload.periodic_push.model_dump()
+    existing["dept_contacts"] = payload.dept_contacts.model_dump()
+    existing["escalation_rules"] = payload.escalation_rules.model_dump()
+    existing["dept_mapping"] = [item.model_dump() for item in payload.dept_mapping]
+
+    set_setting(user_id, "push_settings", json.dumps(existing, ensure_ascii=False))
+
+    return get_smart_push_settings(current_user=current_user)

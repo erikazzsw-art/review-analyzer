@@ -81,3 +81,50 @@ class BillingWebhookPayload(BaseModel):
 class BillingWebhookResponse(BaseModel):
     ok: bool = True
     message: str
+
+
+# ============================================================
+# V5-T3: 周期推送 / 部门联系人 / 升级规则 Schemas
+# ============================================================
+
+
+class PeriodicPushPayload(BaseModel):
+    enabled: bool = False
+    frequency: str = "weekly"
+    day_of_week: str = "monday"
+    day_of_month: int = 1
+    time: str = "09:00"
+    timezone: str = "Asia/Shanghai"
+
+
+class DeptContactPayload(BaseModel):
+    qa: str = ""
+    product: str = ""
+    ops: str = ""
+    cs: str = ""
+    other: str = ""
+
+
+class EscalationRulePayload(BaseModel):
+    consecutive_count: int = 3
+    top_n: int = 3
+    pct_threshold: float = 10.0
+
+
+class DeptMappingItem(BaseModel):
+    aspect: str
+    dept: str
+
+
+class SmartPushSettingsPayload(BaseModel):
+    periodic_push: PeriodicPushPayload = Field(default_factory=PeriodicPushPayload)
+    dept_contacts: DeptContactPayload = Field(default_factory=DeptContactPayload)
+    escalation_rules: EscalationRulePayload = Field(default_factory=EscalationRulePayload)
+    dept_mapping: list[DeptMappingItem] = Field(default_factory=list)
+
+
+class SmartPushSettingsResponse(BaseModel):
+    periodic_push: PeriodicPushPayload
+    dept_contacts: DeptContactPayload
+    escalation_rules: EscalationRulePayload
+    dept_mapping: list[DeptMappingItem]
