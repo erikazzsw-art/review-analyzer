@@ -1,0 +1,137 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DEPLOY_HOST: ${{ secrets.ECS_HOST }}
+  DEPLOY_USER: ${{ secrets.ECS_USER }}
+  DEPLOY_PATH: ${{ secrets.ECS_DEPLOY_PATH }}
+
+jobs:
+  ci-gate:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ECS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          cat >> ~/.ssh/config <<EOF
+          Host ecs
+            HostName ${{ env.DEPLOY_HOST }}
+            User ${{ env.DEPLOY_USER }}
+            IdentityFile ~/.ssh/deploy_key
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Deploy
+        run: |
+          ssh ecs << 'ENDSSH'
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Tag current images for rollback
+            docker compose ps --format '{{.Image}}' | while read img; do
+              docker tag "$img" "${img}:rollback" 2>/dev/null || true
+            done
+
+            # Pull latest code
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Build and restart
+            docker compose up -d --build --remove-orphans
+
+            # Wait for services to stabilize
+            sleep 10
+          ENDSSH
+
+      - name: Health Check
+        id: healthcheck
+        run: |
+          MAX_RETRIES=5
+          RETRY_DELAY=10
+
+          # Check API health
+          for i in $(seq 1 $MAX_RETRIES); do
+            STATUS=$(ssh ecs "curl -sf -o /dev/null -w '%{http_code}' http://localhost:8100/health" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "API health check passed (attempt $i)"
+              break
+            fi
+            if [ "$i" = "$MAX_RETRIES" ]; then
+              echo "::error::API health check failed after $MAX_RETRIES attempts"
+              echo "api_healthy=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+            sleep $RETRY_DELAY
+          done
+
+          # Check frontend
+          for i in $(seq 1 $MAX_RETRIES); do
+            STATUS=$(ssh ecs "curl -sf -o /dev/null -w '%{http_code}' http://localhost:3000" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Frontend health check passed (attempt $i)"
+              break
+            fi
+            if [ "$i" = "$MAX_RETRIES" ]; then
+              echo "::error::Frontend health check failed after $MAX_RETRIES attempts"
+              echo "frontend_healthy=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+            sleep $RETRY_DELAY
+          done
+
+          echo "All health checks passed"
+
+      - name: Rollback on Failure
+        if: failure() && steps.healthcheck.outcome == 'failure'
+        run: |
+          ssh ecs << 'ENDSSH'
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            echo "Health check failed — rolling back to previous version"
+
+            # Revert git to previous commit
+            git reset --hard HEAD~1
+
+            # Rebuild with previous code
+            docker compose up -d --build --remove-orphans
+
+            sleep 10
+          ENDSSH
+
+      - name: Notify Email - Success
+        if: success()
+        run: |
+          curl -sf -X POST "https://api.resend.com/emails" \
+            -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "from": "ClueAI Deploy <deploy@clueai-reviewlens.com>",
+              "to": "${{ secrets.DEPLOY_NOTIFY_EMAIL }}",
+              "subject": "✅ 部署成功 - ClueAI",
+              "html": "<h2>部署成功</h2><p><b>分支</b>: main<br><b>提交</b>: ${{ github.sha }}<br><b>触发者</b>: ${{ github.actor }}<br><b>时间</b>: '"$(date -u '+%Y-%m-%d %H:%M UTC')"'</p>"
+            }' || echo "Email notification failed (non-critical)"
+
+      - name: Notify Email - Failure
+        if: failure()
+        run: |
+          curl -sf -X POST "https://api.resend.com/emails" \
+            -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "from": "ClueAI Deploy <deploy@clueai-reviewlens.com>",
+              "to": "${{ secrets.DEPLOY_NOTIFY_EMAIL }}",
+              "subject": "❌ 部署失败 - ClueAI",
+              "html": "<h2>部署失败</h2><p><b>分支</b>: main<br><b>提交</b>: ${{ github.sha }}<br><b>触发者</b>: ${{ github.actor }}<br><b>日志</b>: <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">查看详情</a></p>"
+            }' || echo "Email notification failed (non-critical)"
