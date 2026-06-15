@@ -11,6 +11,7 @@ from backend_api.app.routes.actions import router as actions_router
 from backend_api.app.routes.actions import trackers_router as trackers_router
 from backend_api.app.routes.analysis import router as analysis_router
 from backend_api.app.routes.analytics import router as analytics_router
+from backend_api.app.routes.asin_watchlist import router as asin_watchlist_router
 from backend_api.app.routes.auth import router as auth_router
 from backend_api.app.routes.compare import router as compare_router
 from backend_api.app.routes.feedback import router as feedback_router
@@ -76,3 +77,4 @@ app.include_router(settings_router)
 app.include_router(taxonomy_router)
 app.include_router(analytics_router)
 app.include_router(feedback_router)
+app.include_router(asin_watchlist_router)

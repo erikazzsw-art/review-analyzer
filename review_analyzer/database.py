@@ -352,8 +352,9 @@ def create_upload_job(user_id: int, job_data: dict) -> int:
                 """INSERT INTO upload_jobs
                    (user_id, status, source_filename, product_id, version, workflow_purpose,
                     product_ref_id, variant_ref_id, total_rows, processed_rows,
-                    positive_count, negative_count, session_id, error_message, payload_json)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    positive_count, negative_count, session_id, error_message, payload_json,
+                    source_channel)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                    RETURNING id""",
                 (
                     user_id,
@@ -373,6 +374,7 @@ def create_upload_job(user_id: int, job_data: dict) -> int:
                     psycopg2.extras.Json(job_data.get("payload_json"))
                     if job_data.get("payload_json") is not None
                     else None,
+                    job_data.get("source_channel", "manual"),
                 ),
             )
             job_id = int(cur.fetchone()[0])

@@ -65,6 +65,12 @@ PLAN_LIMITS: dict[str, dict[str, Any]] = {
         "limits": {"free": 500, "pro_early": 5000, "pro": 5000, "team": 5000},
         "type": "hard",
     },
+    "asin_fetch": {
+        "unit": "次",
+        "period": "daily",
+        "limits": {"free": 1, "pro_early": 10, "pro": 10, "team": 50},
+        "type": "hard",
+    },
 }
 
 _OVER_QUOTA_MESSAGES: dict[str, str] = {
@@ -77,6 +83,7 @@ _OVER_QUOTA_MESSAGES: dict[str, str] = {
     "global_rules": "Free 最多 {limit} 条全局规则，升级 Pro 解锁不限",
     "product_rules": "Free 每产品最多 {limit} 条规则，升级 Pro 解锁不限",
     "upload_rows_per_file": "Free 单文件最多 {limit} 条，请拆分上传或升级 Pro",
+    "asin_fetch": "今日 ASIN 自动拉取已用完（{used}/{limit} 次），明天再试或升级 Pro",
 }
 
 
@@ -84,6 +91,20 @@ def _current_period_start() -> date:
     """当月 1 号（UTC+8）。"""
     now = datetime.now(timezone(timedelta(hours=8)))
     return now.date().replace(day=1)
+
+
+def _current_day_start() -> date:
+    """当日（UTC+8）。"""
+    now = datetime.now(timezone(timedelta(hours=8)))
+    return now.date()
+
+
+def _period_start_for(dimension: str) -> date:
+    """根据维度的 period 类型返回对应周期起始日。"""
+    dim = PLAN_LIMITS.get(dimension)
+    if dim and dim["period"] == "daily":
+        return _current_day_start()
+    return _current_period_start()
 
 
 def _get_limit(dimension: str, plan: str) -> int:
@@ -96,7 +117,7 @@ def _get_limit(dimension: str, plan: str) -> int:
 
 def _get_used_count(user_id: int, dimension: str) -> int:
     """从 user_quota_usage 表查当期已用量。"""
-    period_start = _current_period_start()
+    period_start = _period_start_for(dimension)
     conn = get_connection()
     try:
         with conn.cursor() as cur:
@@ -138,7 +159,7 @@ def quota_check(user_id: int, dimension: str, amount: int = 1) -> tuple[bool, st
             return False, _format_message(dimension, amount, limit)
         return True, ""
 
-    if period in ("monthly", "forever"):
+    if period in ("monthly", "daily", "forever"):
         used = _get_used_count(user_id, dimension)
         if used + amount > limit:
             return False, _format_message(dimension, used, limit)
@@ -190,7 +211,7 @@ def quota_consume(user_id: int, dimension: str, amount: int = 1) -> None:
     if dim is None or dim["period"] == "per_request":
         return
 
-    period_start = _current_period_start()
+    period_start = _period_start_for(dimension)
     conn = get_connection()
     try:
         with conn.cursor() as cur:
@@ -213,7 +234,7 @@ def quota_refund(user_id: int, dimension: str, amount: int = 1) -> None:
     if dim is None or dim["period"] == "per_request":
         return
 
-    period_start = _current_period_start()
+    period_start = _period_start_for(dimension)
     conn = get_connection()
     try:
         with conn.cursor() as cur:
@@ -246,7 +267,7 @@ def get_quota_status(user_id: int, dimension: str) -> dict[str, Any]:
             "plan": plan,
         }
 
-    used = _get_used_count(user_id, dimension) if period in ("monthly", "forever") else 0
+    used = _get_used_count(user_id, dimension) if period in ("monthly", "daily", "forever") else 0
 
     return {
         "dimension": dimension,
