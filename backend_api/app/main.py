@@ -13,10 +13,12 @@ from backend_api.app.routes.analysis import router as analysis_router
 from backend_api.app.routes.analytics import router as analytics_router
 from backend_api.app.routes.auth import router as auth_router
 from backend_api.app.routes.compare import router as compare_router
+from backend_api.app.routes.feedback import router as feedback_router
 from backend_api.app.routes.me import router as me_router
 from backend_api.app.routes.products import router as products_router
 from backend_api.app.routes.qa import router as qa_router
 from backend_api.app.routes.quota import router as quota_router
+from backend_api.app.routes.scrape import router as scrape_router
 from backend_api.app.routes.settings import router as settings_router
 from backend_api.app.routes.taxonomy import router as taxonomy_router
 from backend_api.app.routes.uploads import router as uploads_router
@@ -69,6 +71,8 @@ app.include_router(actions_router)
 app.include_router(trackers_router)
 app.include_router(qa_router)
 app.include_router(quota_router)
+app.include_router(scrape_router)
 app.include_router(settings_router)
 app.include_router(taxonomy_router)
 app.include_router(analytics_router)
+app.include_router(feedback_router)
