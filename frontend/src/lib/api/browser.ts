@@ -6,10 +6,13 @@ import type {
   AnalysisCompareResponse,
   AnalysisHistoryResponse,
   AnalysisSessionResultsResponse,
+  AsinFetchResponse,
   BillingCheckoutResponse,
   CopywriterGenerateResponse,
   CopywriterPlatform,
   CopywriterProduct,
+  FeedbackCreatePayload,
+  FeedbackResponse,
   QaAskPayload,
   QaAskResponse,
   QaProduct,
@@ -21,6 +24,7 @@ import type {
   ReviewTrackersResponse,
   SettingsResponse,
   SettingsUpdatePayload,
+  SmartPushSettingsResponse,
   SubCategoryProbeResponse,
   TaxonomyCategoriesResponse,
   UploadJobResponse,
@@ -109,6 +113,31 @@ export async function fetchUploadJob(jobId: number): Promise<UploadJobResponse> 
   }
 
   return (await response.json()) as UploadJobResponse;
+}
+
+export async function fetchByAsin(params: {
+  asin: string;
+  marketplace: string;
+  productName?: string;
+  maxPages?: number;
+}): Promise<AsinFetchResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/reviews/fetch-by-asin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      asin: params.asin,
+      marketplace: params.marketplace,
+      product_name: params.productName || undefined,
+      max_pages: params.maxPages || 5,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as AsinFetchResponse;
 }
 
 export async function fetchAnalysisSessionResults(
@@ -579,4 +608,55 @@ export async function probeSubCategory(name: string): Promise<SubCategoryProbeRe
     throw await parseError(response);
   }
   return (await response.json()) as SubCategoryProbeResponse;
+}
+
+// V5-T3: Smart Push Settings API
+
+export async function fetchSmartPushSettings(): Promise<SmartPushSettingsResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/settings/smart-push`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as SmartPushSettingsResponse;
+}
+
+export async function saveSmartPushSettings(
+  payload: SmartPushSettingsResponse,
+): Promise<SmartPushSettingsResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/settings/smart-push`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as SmartPushSettingsResponse;
+}
+
+export async function submitFeedback(
+  payload: FeedbackCreatePayload,
+): Promise<FeedbackResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/feedback`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      feedback_type: payload.feedback_type,
+      mood: payload.mood,
+      message: payload.message || null,
+      page_path: payload.page_path,
+      user_agent: payload.user_agent || null,
+      metadata: payload.metadata || {},
+    }),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as FeedbackResponse;
 }

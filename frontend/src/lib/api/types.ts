@@ -152,6 +152,14 @@ export type UploadJobResponse = {
   message: string;
 };
 
+export type AsinFetchResponse = {
+  ok: boolean;
+  job_id: number;
+  asin: string;
+  marketplace: string;
+  message: string;
+};
+
 export type AnalysisResultModule = {
   summary: string;
   rows: Array<Record<string, unknown>>;
@@ -487,6 +495,42 @@ export type BillingCheckoutResponse = {
   plan: string;
 };
 
+// V5-T3: Smart Push Settings Types
+export type PeriodicPushSettings = {
+  enabled: boolean;
+  frequency: "daily" | "weekly" | "biweekly" | "monthly";
+  day_of_week: string;
+  day_of_month: number;
+  time: string;
+  timezone: string;
+};
+
+export type DeptContactSettings = {
+  qa: string;
+  product: string;
+  ops: string;
+  cs: string;
+  other: string;
+};
+
+export type EscalationRuleSettings = {
+  consecutive_count: number;
+  top_n: number;
+  pct_threshold: number;
+};
+
+export type DeptMappingItem = {
+  aspect: string;
+  dept: string;
+};
+
+export type SmartPushSettingsResponse = {
+  periodic_push: PeriodicPushSettings;
+  dept_contacts: DeptContactSettings;
+  escalation_rules: EscalationRuleSettings;
+  dept_mapping: DeptMappingItem[];
+};
+
 export type CopywriterPlatformType = {
   id: string;
   name_zh: string;
@@ -574,4 +618,26 @@ export type SubCategoryProbeResponse = {
   category_key: string | null;
   category_label: string | null;
   aspects_count: number;
+};
+
+export type FeedbackType = "bug" | "feature" | "general";
+export type FeedbackMood = "frustrated" | "idea" | "love";
+
+export type FeedbackCreatePayload = {
+  feedback_type: FeedbackType;
+  mood: FeedbackMood;
+  message?: string | null;
+  page_path: string;
+  user_agent?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type FeedbackResponse = {
+  id: number;
+  feedback_type: FeedbackType;
+  mood: FeedbackMood;
+  message: string | null;
+  page_path: string;
+  status: string;
+  created_at: string;
 };

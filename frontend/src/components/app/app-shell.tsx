@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
+
 type AppShellProps = {
   currentPath:
     | "/workspace"
@@ -97,6 +99,8 @@ export function AppShell({
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pb-16 lg:px-10">
         {children}
       </main>
+
+      <FeedbackWidget />
     </div>
   );
 }
