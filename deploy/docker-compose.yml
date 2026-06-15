@@ -36,6 +36,19 @@ services:
       - redis
     restart: unless-stopped
 
+  scheduler:
+    build:
+      context: ..
+      dockerfile: workers/Dockerfile
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    command: ["python", "-m", "workers.scheduler"]
+    depends_on:
+      - redis
+    restart: unless-stopped
+
   frontend:
     build:
       context: ../frontend
