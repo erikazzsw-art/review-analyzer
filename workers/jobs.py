@@ -444,6 +444,21 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 "negative_count": negative_count,
             },
         )
+
+        # V5-T3 Step 9: 即时推送升级——写入快照 + 升级判定
+        try:
+            _post_analysis_smart_push(
+                user_id=user_id,
+                session_id=session_id,
+                product_ref_id=product_ref_id,
+                product_id=product_id,
+                comments=unprocessed,
+                results=results,
+                positive_count=positive_count,
+                negative_count=negative_count,
+            )
+        except Exception:
+            logger.warning("upload_job %s: smart push failed (non-fatal)", job_id, exc_info=True)
     except Exception as exc:
         update_upload_job(
             user_id,
@@ -456,6 +471,189 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         raise
 
 
+def _post_analysis_smart_push(
+    user_id: int,
+    session_id: int,
+    product_ref_id: int | None,
+    product_id: str,
+    comments: list[dict],
+    results: list[dict],
+    positive_count: int,
+    negative_count: int,
+) -> None:
+    """分析完成后：写入推送快照 + 升级判定 + 触发富文本推送"""
+    import json
+    from collections import Counter
+
+    from review_analyzer.database import get_setting
+    from review_analyzer.department_router import route_issues_by_department
+    from review_analyzer.escalation import (
+        EscalationConfig,
+        check_escalations,
+        update_escalation_states,
+    )
+    from review_analyzer.notifier import send_rich_push
+    from review_analyzer.push_snapshot_store import create_push_snapshot
+
+    raw_settings = get_setting(user_id, "push_settings")
+    if not raw_settings:
+        return
+    try:
+        settings = json.loads(raw_settings)
+    except json.JSONDecodeError:
+        return
+
+    webhook_url = settings.get("webhook_url", "")
+    if not webhook_url:
+        return
+
+    total = len(comments)
+    if total == 0:
+        return
+
+    neg_count = negative_count
+    neg_rate = neg_count / total * 100
+
+    tag_counter: Counter = Counter()
+    for r in results:
+        raw_tag = r.get("issue_tag", "")
+        if raw_tag and r.get("sentiment") == "negative":
+            for tag in raw_tag.split(","):
+                tag = tag.strip()
+                if tag:
+                    tag_counter[tag] += 1
+
+    neg_pool = neg_count or 1
+    top_issues = [
+        {"tag": tag, "count": count, "pct": count / neg_pool * 100, "rank": rank}
+        for rank, (tag, count) in enumerate(tag_counter.most_common(10), 1)
+    ]
+
+    hl_counter: Counter = Counter()
+    for r in results:
+        raw_tag = r.get("highlight_tag", "")
+        if raw_tag and r.get("sentiment") == "positive":
+            for tag in raw_tag.split(","):
+                tag = tag.strip()
+                if tag:
+                    hl_counter[tag] += 1
+
+    pos_pool = positive_count or 1
+    top_highlights = [
+        {"tag": tag, "count": count, "pct": count / pos_pool * 100}
+        for tag, count in hl_counter.most_common(5)
+    ]
+
+    snapshot_id = create_push_snapshot(user_id, {
+        "product_id": product_ref_id,
+        "snapshot_type": "batch",
+        "top_issues": top_issues,
+        "top_highlights": top_highlights,
+        "summary_stats": {
+            "total_reviews": total,
+            "negative_count": neg_count,
+            "neg_rate": neg_rate,
+            "session_id": session_id,
+        },
+    })
+
+    user_dept_mapping = settings.get("dept_mapping")
+    if isinstance(user_dept_mapping, list):
+        user_dept_mapping = {item["aspect"]: item["dept"] for item in user_dept_mapping if "aspect" in item and "dept" in item}
+
+    update_escalation_states(
+        user_id, product_ref_id, snapshot_id, top_issues, user_dept_mapping
+    )
+
+    escalation_config_raw = settings.get("escalation_rules", {})
+    esc_config = EscalationConfig(
+        consecutive_count=escalation_config_raw.get("consecutive_count", 3),
+        top_n=escalation_config_raw.get("top_n", 3),
+        pct_threshold=escalation_config_raw.get("pct_threshold", 10.0),
+    )
+
+    escalation_results = check_escalations(
+        user_id, product_ref_id, top_issues, esc_config
+    )
+
+    escalation_actions: list[dict] = []
+    if escalation_results:
+        from backend_api.app.services.action_advisor import create_escalation_action
+        from review_analyzer.push_snapshot_store import get_recent_snapshots, mark_escalated
+        from scripts.aspect_taxonomy import get_aspect_label_zh
+
+        for esc in escalation_results:
+            recent = get_recent_snapshots(user_id, product_ref_id, limit=esc_config.consecutive_count)
+            pct_trend: list[float] = []
+            for snap in reversed(recent):
+                snap_issues = snap.get("top_issues") or []
+                if isinstance(snap_issues, str):
+                    snap_issues = json.loads(snap_issues)
+                for si in snap_issues:
+                    if si.get("tag") == esc.tag_name:
+                        pct_trend.append(float(si.get("pct", 0)))
+                        break
+            pct_trend.append(esc.current_pct)
+
+            sample_reviews = [
+                c.get("content", "")[:200]
+                for c, r in zip(comments, results)
+                if esc.tag_name in (r.get("issue_tag") or "")
+            ][:5]
+
+            action_id = create_escalation_action(
+                user_id=user_id,
+                product_id=product_ref_id,
+                tag_name=esc.tag_name,
+                dept=esc.dept,
+                current_pct=esc.current_pct,
+                consecutive_count=esc.consecutive_count,
+                pct_trend=pct_trend,
+                product_name=product_id,
+                sample_reviews=sample_reviews,
+            )
+
+            if action_id:
+                mark_escalated(user_id, product_ref_id, esc.tag_name, action_id)
+                escalation_actions.append({
+                    "tag_name": esc.tag_name,
+                    "tag_label": get_aspect_label_zh(esc.tag_name),
+                    "suggested_action": "已写入行动中心",
+                    "expected_timeline": "",
+                })
+
+    dept_issues = route_issues_by_department(top_issues, user_dept_mapping)
+
+    from scripts.aspect_taxonomy import get_aspect_label_zh
+    for dept_list in dept_issues.values():
+        for issue in dept_list:
+            issue["tag_label"] = get_aspect_label_zh(issue.get("tag", ""))
+    for hl in top_highlights[:3]:
+        hl["tag_label"] = get_aspect_label_zh(hl.get("tag", ""))
+
+    dept_contacts = settings.get("dept_contacts", {})
+    secret = settings.get("webhook_secret", "")
+
+    from datetime import datetime
+    period_label = datetime.now().strftime("%Y-%m-%d")
+
+    send_rich_push(
+        webhook_url=webhook_url,
+        product_name=product_id,
+        period_label=period_label,
+        dept_issues=dept_issues,
+        dept_contacts=dept_contacts,
+        escalation_results=escalation_actions or None,
+        top_highlights=top_highlights[:3],
+        secret=secret,
+    )
+
+    logger.info(
+        "upload_job: smart push done for user %d, product %s, escalations=%d",
+        user_id, product_id, len(escalation_results),
+    )
+
+
 def enqueue_upload_job_task(user_id: int, job_id: int) -> str:
     queue = get_queue()
     queued_job = queue.enqueue(
@@ -464,6 +662,97 @@ def enqueue_upload_job_task(user_id: int, job_id: int) -> str:
         job_id,
         job_id=f"upload-job-{job_id}",
         description=f"Process upload job {job_id}",
+        result_ttl=0,
+        failure_ttl=7 * 24 * 60 * 60,
+    )
+    return queued_job.id
+
+
+def process_asin_fetch_job(user_id: int, job_id: int) -> None:
+    """Worker 任务：通过 Rainforest API 拉取评论 → 存储 → 触发分析。"""
+    import asyncio
+
+    from backend_api.app.services.rainforest import RainforestError, fetch_reviews_by_asin
+    from review_analyzer.quota import quota_consume
+
+    try:
+        job = get_upload_job(user_id, job_id)
+        if not job:
+            return
+
+        payload = job.get("payload_json") or {}
+        asin = payload.get("asin", "")
+        marketplace = payload.get("marketplace", "us")
+        max_pages = payload.get("max_pages", 5)
+
+        update_upload_job(user_id, job_id, {"status": "fetching"})
+
+        loop = asyncio.new_event_loop()
+        try:
+            reviews = loop.run_until_complete(
+                fetch_reviews_by_asin(asin, marketplace=marketplace, max_pages=max_pages)
+            )
+        finally:
+            loop.close()
+
+        if not reviews:
+            update_upload_job(
+                user_id, job_id,
+                {"status": "done", "total_rows": 0, "error_message": "No reviews found for this ASIN"},
+            )
+            return
+
+        quota_consume(user_id, "asin_fetch")
+
+        comments_payload = [
+            {
+                "content": r["content"],
+                "rating": r.get("rating"),
+                "date": r.get("date", ""),
+                "reviewer": r.get("reviewer", ""),
+                "source": f"Amazon {marketplace.upper()}",
+            }
+            for r in reviews
+        ]
+
+        update_upload_job(
+            user_id, job_id,
+            {
+                "status": "queued",
+                "total_rows": len(comments_payload),
+                "payload_json": {
+                    **payload,
+                    "comments": comments_payload,
+                    "product_name": payload.get("product_name") or f"ASIN: {asin}",
+                    "platform": f"Amazon {marketplace.upper()}",
+                    "source_channel": "api",
+                },
+            },
+        )
+
+        process_upload_job(user_id, job_id)
+
+    except RainforestError as exc:
+        update_upload_job(
+            user_id, job_id,
+            {"status": "failed", "error_message": f"Rainforest API: {exc}"},
+        )
+    except Exception as exc:
+        update_upload_job(
+            user_id, job_id,
+            {"status": "failed", "error_message": str(exc)},
+        )
+        raise
+
+
+def enqueue_asin_fetch_task(user_id: int, job_id: int) -> str:
+    queue = get_queue()
+    queued_job = queue.enqueue(
+        process_asin_fetch_job,
+        user_id,
+        job_id,
+        job_id=f"asin-fetch-{job_id}",
+        description=f"Fetch reviews by ASIN (job {job_id})",
         result_ttl=0,
         failure_ttl=7 * 24 * 60 * 60,
     )
