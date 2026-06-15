@@ -42,7 +42,7 @@ export function AppShell({
           </p>
         </header>
 
-        <main className="flex flex-col gap-6 px-6 pb-16 pt-4 lg:px-10">
+        <main className="flex flex-col gap-6 px-6 pb-20 pt-4 lg:gap-8 lg:px-10">
           {children}
         </main>
       </div>

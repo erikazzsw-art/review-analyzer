@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { track } from "@/lib/analytics";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type Step = "email" | "code" | "done";
 
@@ -70,20 +72,15 @@ export function ForgotPasswordForm() {
   }
 
   const inputClassName =
-    "mt-1 w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none transition focus:border-[#8d7be8] focus:ring-2 focus:ring-[#8d7be8]/20";
-  const buttonClassName =
-    "w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 disabled:opacity-50";
+    "mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender";
 
   if (step === "done") {
     return (
       <div className="space-y-4 text-center">
         <p className="text-sm text-ink">Password reset successful.</p>
-        <Link
-          href="/login"
-          className="inline-block rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5"
-        >
-          Back to Log In
-        </Link>
+        <Button asChild className="rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
+          <Link href="/login">Back to Log In</Link>
+        </Button>
       </div>
     );
   }
@@ -98,7 +95,7 @@ export function ForgotPasswordForm() {
           <label htmlFor="reset-code" className="block text-sm font-medium text-ink">
             Verification Code
           </label>
-          <input
+          <Input
             id="reset-code"
             type="text"
             required
@@ -115,7 +112,7 @@ export function ForgotPasswordForm() {
           <label htmlFor="reset-new-password" className="block text-sm font-medium text-ink">
             New Password
           </label>
-          <input
+          <Input
             id="reset-new-password"
             type="password"
             required
@@ -132,9 +129,9 @@ export function ForgotPasswordForm() {
             {error}
           </p>
         )}
-        <button type="submit" disabled={loading} className={buttonClassName}>
+        <Button type="submit" disabled={loading} className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
           {loading ? "Resetting..." : "Reset Password"}
-        </button>
+        </Button>
         <button
           type="button"
           onClick={() => { setStep("email"); setError(""); }}
@@ -152,7 +149,7 @@ export function ForgotPasswordForm() {
         <label htmlFor="reset-email" className="block text-sm font-medium text-ink">
           Email
         </label>
-        <input
+        <Input
           id="reset-email"
           type="email"
           required
@@ -168,9 +165,9 @@ export function ForgotPasswordForm() {
           {error}
         </p>
       )}
-      <button type="submit" disabled={loading} className={buttonClassName}>
+      <Button type="submit" disabled={loading} className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
         {loading ? "Sending code..." : "Send Reset Code"}
-      </button>
+      </Button>
     </form>
   );
 }

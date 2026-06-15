@@ -4,6 +4,8 @@ import { useMemo, useRef, useState } from "react";
 
 import { createBillingCheckout, saveSettings, testWebhook } from "@/lib/api/browser";
 import type { ProductRuleSettings, PushRuleSettings, SettingsResponse } from "@/lib/api/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type SettingsPanelProps = {
   initialSettings: SettingsResponse;
@@ -139,69 +141,70 @@ export function SettingsPanel({ initialSettings }: SettingsPanelProps) {
         <div className="mt-6 space-y-4">
           <label className="block space-y-2">
             <span className="text-sm font-semibold text-ink">飞书 Webhook</span>
-            <input
+            <Input
               value={webhookUrl}
               onChange={(event) => setWebhookUrl(event.target.value)}
-              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+              className="rounded-card border-line bg-white text-sm focus-visible:ring-rose/20 focus-visible:border-rose"
               placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
             />
           </label>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block space-y-2">
               <span className="text-sm font-semibold text-ink">加签密钥</span>
-              <input
+              <Input
                 type="password"
                 value={webhookSecret}
                 onChange={(event) => setWebhookSecret(event.target.value)}
-                className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+                className="rounded-card border-line bg-white text-sm focus-visible:ring-rose/20 focus-visible:border-rose"
               />
             </label>
             <label className="block space-y-2">
               <span className="text-sm font-semibold text-ink">群名称备注</span>
-              <input
+              <Input
                 value={webhookGroupName}
                 onChange={(event) => setWebhookGroupName(event.target.value)}
-                className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+                className="rounded-card border-line bg-white text-sm focus-visible:ring-rose/20 focus-visible:border-rose"
               />
             </label>
           </div>
           <label className="block space-y-2">
             <span className="text-sm font-semibold text-ink">DeepSeek API Key</span>
-            <input
+            <Input
               type="password"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+              className="rounded-card border-line bg-white text-sm focus-visible:ring-rose/20 focus-visible:border-rose"
               placeholder="sk-..."
             />
           </label>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={handleTestWebhook}
             disabled={isTesting}
-            className="inline-flex min-h-11 items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-ink disabled:opacity-60"
+            className="min-h-11 rounded-pill border-line px-5 py-3 text-sm font-semibold text-ink"
           >
             {isTesting ? "测试中..." : "测试连接"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={handleSave}
             disabled={!canSave || isSaving}
-            className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card disabled:opacity-60"
+            className="min-h-11 rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card hover:bg-ink/90"
           >
             {isSaving ? "保存中..." : "保存设置"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={handleCheckout}
             disabled={isCheckouting}
-            className="inline-flex min-h-11 items-center justify-center rounded-pill bg-[#f36f8f] px-5 py-3 text-sm font-semibold text-white shadow-card disabled:opacity-60"
+            className="min-h-11 rounded-pill bg-rose px-5 py-3 text-sm font-semibold text-white shadow-card hover:bg-rose/90"
           >
             {isCheckouting ? "拉起支付..." : "升级到 Pro"}
-          </button>
+          </Button>
         </div>
 
         {error ? (
@@ -350,13 +353,13 @@ function RuleToggle({
         <input type="checkbox" checked={checked} onChange={(event) => onToggle(event.target.checked)} />
         {label}
       </label>
-      <input
+      <Input
         type="number"
         value={value}
         min={1}
         max={100}
         onChange={(event) => onValue(Number(event.target.value || 0))}
-        className="w-full rounded-card border border-line bg-white px-4 py-2 text-sm outline-none"
+        className="rounded-card border-line bg-white text-sm"
       />
     </div>
   );

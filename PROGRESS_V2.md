@@ -3108,3 +3108,68 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
+### V4.5-T8: 设计组件系统 — shadcn/ui 统一 UI 基建（2026-06-15 新增）
+
+**背景：** 当前前端 UI 全部手写 Tailwind className，没有统一的组件原语层（Button / Card / Dialog / Badge 等）。每次新增页面都从零搭样式，导致：1）样式不一致；2）交互细节（focus ring、disabled state、loading skeleton）遗漏；3）改主题需逐页修改。引入 shadcn/ui 作为组件基建层，统一视觉语言，提升开发效率和用户感知品质。
+
+**技术选型：** shadcn/ui（非 npm 包，代码复制到本地，完全可控） + Radix UI（无障碍基础） + class-variance-authority（变体管理） + tailwind-merge（类名去重）
+
+**现状：**
+- ✅ 已有 CSS 变量体系（globals.css: --canvas, --ink, --rose, --lavender 等）
+- ✅ 已有 Tailwind 主题扩展（tailwind.config.ts 映射 CSS 变量）
+- ✅ lucide-react 图标库已安装
+- ✅ components.json 已创建（shadcn 已初始化）
+- ✅ `frontend/src/components/ui/` 目录已建立（16+ 组件）
+- ✅ 依赖已安装：radix-ui、class-variance-authority、clsx、tailwind-merge、recharts
+
+---
+
+#### Phase 1: 初始化 shadcn/ui + 设计令牌映射（~30 min）✅ 已完成
+
+- [x] **Step 1: 安装 shadcn/ui 基础设施**
+  - 手动创建 components.json + lib/utils.ts（避免交互式 CLI）
+  - 安装依赖：class-variance-authority, clsx, tailwind-merge, tailwindcss-animate
+  - 配置 components.json 指向现有 CSS 变量体系
+- [x] **Step 2: 设计令牌桥接**
+  - 在 globals.css 中补充 shadcn 所需的 HSL 变量（background, foreground, primary, secondary 等）
+  - 映射关系：primary → rose, secondary → lavender, accent → mint, background → canvas
+  - 保留现有变量不变，新增 shadcn 兼容层
+
+#### Phase 2: 安装核心 UI 组件（~20 min）✅ 已完成
+
+- [x] **Step 3: 安装 P0 组件**
+  - Button, Card, Badge, Separator, Skeleton, Input, Textarea, Select
+- [x] **Step 4: 安装 P1 组件**
+  - Dialog, Sheet, DropdownMenu, Table, Tabs, Tooltip, Alert, Progress
+
+#### Phase 3: 业务组件迁移（~60 min）✅ 已完成
+
+- [x] **Step 5: P0 迁移 — 侧边栏 + 全局按钮**
+  - Sidebar 导航项改用 shadcn Button variant="ghost" + asChild
+  - 全局 `<button>` 统一替换为 `<Button>`（auth forms, settings, marketing）
+- [x] **Step 6: P1 迁移 — 表单输入**
+  - login-form, register-form, forgot-password-form 改用 shadcn `<Input>` + `<Button>`
+  - settings-panel 所有 input 改用 shadcn `<Input>`，按钮改用 `<Button>`
+- [x] **Step 7: P2 迁移 — 营销页 + CTA**
+  - site-header 导航链接改用 Button variant="ghost" asChild
+  - cta-row 主次按钮改用 Button + Button variant="outline"
+
+#### Phase 4: 图表组件统一（~30 min）✅ 已完成
+
+- [x] **Step 8: 安装 recharts + shadcn chart 包装**
+  - `npm install recharts`
+  - 创建 `components/ui/chart.tsx` 封装（ChartContainer + ChartTooltipContent）
+  - 图表色板通过 CSS 变量 --chart-1~5，映射 rose/lavender/mint
+
+#### Phase 5: 全局间距与呼吸感优化（~20 min）✅ 已完成
+
+- [x] **Step 9: 间距令牌统一**
+  - app-shell 大屏间距升级（lg:gap-8, pb-20）
+  - globals.css 添加 animate-in 工具类（fadeIn 0.2s ease-out）
+- [x] **Step 10: 验收**
+  - 全站 tsc --noEmit 通过 ✅
+  - next build 成功 ✅
+  - 主题色修改一处 CSS 变量 → 全站联动生效（通过 HSL 变量层实现）
+
+---
+

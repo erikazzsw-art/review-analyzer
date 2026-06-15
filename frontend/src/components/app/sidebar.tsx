@@ -18,6 +18,9 @@ import {
   X,
   User,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 type SidebarProps = {
   currentPath: string;
@@ -91,23 +94,25 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
               const isActive = item.href === currentPath;
               const Icon = item.icon;
               return (
-                <Link
+                <Button
                   key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={[
-                    "relative mb-0.5 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  variant="ghost"
+                  asChild
+                  className={cn(
+                    "relative mb-0.5 w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium",
                     isActive
-                      ? "bg-roseSoft text-ink"
-                      : "text-soft hover:bg-white/60 hover:text-ink",
-                  ].join(" ")}
-                >
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-rose" />
+                      ? "bg-roseSoft text-ink hover:bg-roseSoft"
+                      : "text-soft hover:bg-white/60 hover:text-ink"
                   )}
-                  <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
-                  {item.label}
-                </Link>
+                >
+                  <Link href={item.href} onClick={() => setMobileOpen(false)}>
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-rose" />
+                    )}
+                    <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+                    {item.label}
+                  </Link>
+                </Button>
               );
             })}
           </div>
@@ -115,7 +120,8 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
       </nav>
 
       {/* User info */}
-      <div className="border-t border-line px-4 py-4">
+      <div className="px-4 py-4">
+        <Separator className="mb-4 bg-line" />
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-lavender/10 text-lavender">
             <User size={16} />
@@ -151,13 +157,14 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
           </Link>
           <span className="font-heading text-sm font-bold text-ink">ClueAI</span>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink hover:bg-canvas"
           aria-label={mobileOpen ? "关闭菜单" : "打开菜单"}
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        </Button>
       </div>
 
       {/* Mobile overlay */}

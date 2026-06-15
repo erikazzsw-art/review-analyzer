@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
+
 const navItems = [
   { href: "/pricing", label: "Pricing" },
   { href: "/trial", label: "Try the Flow" },
@@ -28,20 +30,13 @@ export function SiteHeader() {
 
       <nav className="hidden items-center gap-3 md:flex">
         {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="rounded-pill border border-transparent px-4 py-2 text-sm font-semibold text-soft transition hover:border-line hover:bg-white/80 hover:text-ink"
-          >
-            {item.label}
-          </Link>
+          <Button key={item.href} variant="ghost" asChild className="rounded-pill px-4 py-2 text-sm font-semibold text-soft hover:border-line hover:bg-white/80 hover:text-ink">
+            <Link href={item.href}>{item.label}</Link>
+          </Button>
         ))}
-        <Link
-          href="/register"
-          className="rounded-pill bg-ink px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5"
-        >
-          Create Account
-        </Link>
+        <Button asChild className="rounded-pill bg-ink px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
+          <Link href="/register">Create Account</Link>
+        </Button>
       </nav>
     </header>
   );

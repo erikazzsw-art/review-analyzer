@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { identify, track } from "@/lib/analytics";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -59,7 +61,7 @@ export function RegisterForm() {
         <label htmlFor="reg-username" className="block text-sm font-medium text-ink">
           Username
         </label>
-        <input
+        <Input
           id="reg-username"
           type="text"
           required
@@ -67,7 +69,7 @@ export function RegisterForm() {
           maxLength={64}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none transition focus:border-[#8d7be8] focus:ring-2 focus:ring-[#8d7be8]/20"
+          className="mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender"
           placeholder="your username"
         />
       </div>
@@ -75,14 +77,14 @@ export function RegisterForm() {
         <label htmlFor="reg-email" className="block text-sm font-medium text-ink">
           Email
         </label>
-        <input
+        <Input
           id="reg-email"
           type="email"
           required
           maxLength={255}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none transition focus:border-[#8d7be8] focus:ring-2 focus:ring-[#8d7be8]/20"
+          className="mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender"
           placeholder="you@example.com"
         />
       </div>
@@ -90,7 +92,7 @@ export function RegisterForm() {
         <label htmlFor="reg-password" className="block text-sm font-medium text-ink">
           Password
         </label>
-        <input
+        <Input
           id="reg-password"
           type="password"
           required
@@ -98,7 +100,7 @@ export function RegisterForm() {
           maxLength={128}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm text-ink outline-none transition focus:border-[#8d7be8] focus:ring-2 focus:ring-[#8d7be8]/20"
+          className="mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender"
           placeholder="at least 6 characters"
         />
       </div>
@@ -107,13 +109,13 @@ export function RegisterForm() {
           {error}
         </p>
       )}
-      <button
+      <Button
         type="submit"
         disabled={loading}
-        className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 disabled:opacity-50"
+        className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90"
       >
         {loading ? "Creating account..." : "Create Account"}
-      </button>
+      </Button>
     </form>
   );
 }
