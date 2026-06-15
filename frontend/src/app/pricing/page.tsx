@@ -33,8 +33,8 @@ export default function PricingPage() {
     <div className="bg-hero-wash">
       <MarketingShell
         eyebrow="Pricing"
-        title="Price around the operating loop, not around generic AI output."
-        description="ClueAI should earn trust by helping sellers move from review evidence to action ownership and validated improvement. The pricing page should reinforce that business value."
+        title="Simple pricing that grows with your business."
+        description="Start free. Upgrade when you need multi-product workflows, review Q&A, and action tracking."
         aside={<HeroPreview />}
       >
         <CtaRow

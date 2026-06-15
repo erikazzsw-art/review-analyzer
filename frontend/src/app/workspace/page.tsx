@@ -59,8 +59,8 @@ export default async function WorkspacePage({
     return (
       <AppShell
         currentPath="/workspace"
-        title="先处理今天最影响转化和口碑的问题，再把动作推到闭环。"
-        description="今天的工作台不是功能索引，而是把风险 SKU、团队待办、待复盘事项和最近上传压缩成一个经营视角。当前页面已接到真实 API，并用 URL 参数承接角色切换。"
+        title="今日工作台"
+        description="风险 SKU、团队待办、待复盘事项和最近上传，一个经营视角看全局"
       >
         <section className="rounded-shell border border-line bg-card px-6 py-6 shadow-card backdrop-blur md:px-7">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -147,9 +147,6 @@ export default async function WorkspacePage({
               <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
                 今日最该处理的 1-3 件事
               </h3>
-              <p className="mt-2 text-sm leading-7 text-soft">
-                保留当前 Streamlit 工作台的推荐逻辑，只把阅读体验迁移到 Next.js。
-              </p>
             </div>
           </div>
 
@@ -315,12 +312,12 @@ export default async function WorkspacePage({
       return (
         <AppShell
           currentPath="/workspace"
-          title="工作台已经接到真实 API，但还需要登录态来读取你的数据。"
-          description="这一版的重点是把 Today's Workspace 从 Streamlit 的会话页迁成 URL 可直达的 Next.js 页面。等登录页在后续模块接好后，这里会直接展示当前账号的真实摘要。"
+          title="请先登录"
+          description="登录后即可查看风险 SKU、团队待办和最近上传"
         >
           <EmptyAuthState
             title="登录后查看风险 SKU、团队待办和最近上传"
-            description="当前 Next.js 页面已经依赖 FastAPI + HttpOnly Cookie 读取数据，不再依赖 `st.session_state`。"
+            description="登录后系统会自动加载你的工作台数据"
           />
         </AppShell>
       );

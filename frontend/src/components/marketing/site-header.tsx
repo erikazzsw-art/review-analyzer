@@ -21,7 +21,7 @@ export function SiteHeader() {
             ClueAI
           </strong>
           <span className="block text-xs text-soft">
-            SKU review operating system
+            Review intelligence for sellers
           </span>
         </span>
       </Link>

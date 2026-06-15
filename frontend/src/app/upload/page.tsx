@@ -225,8 +225,8 @@ export default function UploadPage() {
   return (
     <AppShell
       currentPath="/upload"
-      title="先上传评论，再让系统自动排队分析。"
-      description="这一页把上传文件、创建分析任务和轮询状态连成一条清晰的操作链。你提交后会先看到任务进入队列，完成后自动跳到结果页。"
+      title="上传评论文件"
+      description="选择文件并填写产品信息，系统将自动排队分析"
     >
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
