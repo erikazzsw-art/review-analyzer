@@ -2,22 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --canvas: #fffaf8;
-  --card: rgba(255, 255, 255, 0.88);
-  --ink: #25212a;
-  --soft: #6f6877;
-  --line: #ebe4ee;
-  --rose: #f36f8f;
-  --rose-soft: #fff1f5;
-  --lavender: #8d7be8;
-  --mint: #4fb99f;
-  --font-body: "Inter", "Helvetica Neue", "Segoe UI", sans-serif;
-  --font-heading: "Montserrat", "Avenir Next", "Segoe UI", sans-serif;
-  --radius-shell: 32px;
-  --radius-card: 24px;
-  --shadow-card: 0 20px 52px rgba(96, 63, 88, 0.1);
-  --shadow-glow: 0 18px 40px rgba(121, 88, 137, 0.16);
+@layer base {
+  :root {
+    /* === Project design tokens (original) === */
+    --canvas: #fffaf8;
+    --card: rgba(255, 255, 255, 0.88);
+    --ink: #25212a;
+    --soft: #6f6877;
+    --line: #ebe4ee;
+    --rose: #f36f8f;
+    --rose-soft: #fff1f5;
+    --lavender: #8d7be8;
+    --mint: #4fb99f;
+    --font-body: var(--font-inter, "Inter"), "Helvetica Neue", "Segoe UI", sans-serif;
+    --font-heading: var(--font-montserrat, "Montserrat"), "Avenir Next", "Segoe UI", sans-serif;
+    --radius-shell: 32px;
+    --radius-card: 24px;
+    --shadow-card: 0 20px 52px rgba(96, 63, 88, 0.1);
+    --shadow-glow: 0 18px 40px rgba(121, 88, 137, 0.16);
+
+    /* === shadcn/ui compatibility layer (HSL) === */
+    --background: 18 100% 99%;
+    --foreground: 278 12% 15%;
+    --card-bg: 0 0% 100%;
+    --card-foreground: 278 12% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 278 12% 15%;
+    --primary: 349 86% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 252 67% 70%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 300 20% 96%;
+    --muted-foreground: 280 10% 44%;
+    --accent: 163 43% 65%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 300 22% 92%;
+    --input: 300 22% 92%;
+    --ring: 349 86% 64%;
+    --radius: 0.75rem;
+
+    /* Chart palette */
+    --chart-1: 349 86% 64%;
+    --chart-2: 252 67% 70%;
+    --chart-3: 163 43% 65%;
+    --chart-4: 18 100% 70%;
+    --chart-5: 280 40% 55%;
+  }
 }
 
 * {

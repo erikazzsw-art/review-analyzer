@@ -1,8 +1,9 @@
 import Link from "next/link";
 
 import { AppShell } from "@/components/app/app-shell";
+import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { CompareReportPanel } from "@/components/analysis/compare-report-panel";
-import { getAnalysisCompare } from "@/lib/api/server";
+import { getAnalysisCompare, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import type { AnalysisCompareGroup } from "@/lib/api/types";
 
@@ -40,6 +41,7 @@ function renderCompareGroupMeta(group: AnalysisCompareGroup): string {
 export default async function AnalysisComparePage({
   searchParams,
 }: ComparePageProps) {
+  try {
   const params = searchParams ? await searchParams : undefined;
   const productId = params?.product_id?.trim();
   const compareType = params?.compare_type?.trim() || "custom";
@@ -287,4 +289,22 @@ export default async function AnalysisComparePage({
       </section>
     </AppShell>
   );
+  } catch (error) {
+    if (isApiError(error) && error.status === 401) {
+      return (
+        <AppShell
+          currentPath="/analysis/compare"
+          title="对比分析需要先登录。"
+          description="登录后可以按产品、批次和版本进行多维对比。"
+        >
+          <EmptyAuthState
+            title="登录后查看对比分析"
+            description="这里支持同一产品不同时间、多版本对比和跨产品对比，先登录再开始。"
+          />
+        </AppShell>
+      );
+    }
+
+    throw error;
+  }
 }
