@@ -7,6 +7,10 @@ import type {
   AnalysisHistoryResponse,
   AnalysisSessionResultsResponse,
   AsinFetchResponse,
+  AsinWatchlistCreatePayload,
+  AsinWatchlistItem,
+  AsinWatchlistResponse,
+  AsinWatchlistUpdatePayload,
   BillingCheckoutResponse,
   CopywriterGenerateResponse,
   CopywriterPlatform,
@@ -659,4 +663,72 @@ export async function submitFeedback(
     throw await parseError(response);
   }
   return (await response.json()) as FeedbackResponse;
+}
+
+// V5-T1: ASIN Watchlist API
+
+export async function fetchAsinWatchlist(): Promise<AsinWatchlistResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/asin-watchlist`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as AsinWatchlistResponse;
+}
+
+export async function addAsinWatchlist(
+  payload: AsinWatchlistCreatePayload,
+): Promise<AsinWatchlistItem[]> {
+  const response = await fetch(`${getApiBaseUrl()}/asin-watchlist`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as AsinWatchlistItem[];
+}
+
+export async function updateAsinWatchlistItem(
+  itemId: number,
+  payload: AsinWatchlistUpdatePayload,
+): Promise<AsinWatchlistItem> {
+  const response = await fetch(`${getApiBaseUrl()}/asin-watchlist/${itemId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as AsinWatchlistItem;
+}
+
+export async function deleteAsinWatchlistItem(itemId: number): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/asin-watchlist/${itemId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+}
+
+export async function triggerAsinFetchNow(
+  itemId: number,
+): Promise<{ job_id: string; message: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/asin-watchlist/${itemId}/fetch-now`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as { job_id: string; message: string };
 }

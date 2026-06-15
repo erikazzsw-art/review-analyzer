@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { AppShell } from "@/components/app/app-shell";
+import { AsinFetchPanel } from "@/components/upload/asin-fetch-panel";
+import { AsinWatchlistPanel } from "@/components/upload/asin-watchlist-panel";
 import {
   fetchTaxonomyCategories,
   fetchUploadJob,
@@ -11,6 +13,8 @@ import {
 } from "@/lib/api/browser";
 import { track } from "@/lib/analytics";
 import type { TaxonomyCategoriesResponse, UploadJob } from "@/lib/api/types";
+
+type UploadMode = "file" | "asin" | "watchlist";
 
 const workflowPurposes = [
   "竞品调研",
@@ -78,6 +82,7 @@ function CategoryHitBanner({
 
 export default function UploadPage() {
   const router = useRouter();
+  const [uploadMode, setUploadMode] = useState<UploadMode>("file");
   const [file, setFile] = useState<File | null>(null);
   const [job, setJob] = useState<UploadJob | null>(null);
   const [error, setError] = useState<string>("");
@@ -229,12 +234,46 @@ export default function UploadPage() {
             STEP 1
           </div>
           <h2 className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-            上传评论文件
+            导入评论
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-soft">
-            先选文件，再填产品编号与工作目的。后台会自动创建分析任务并开始处理。
+            选择文件上传或输入 ASIN 自动拉取 Amazon 评论。
           </p>
 
+          <div className="mt-5 flex gap-1 rounded-pill border border-line bg-[#f8f6f9] p-1">
+            <button
+              type="button"
+              onClick={() => setUploadMode("file")}
+              className={`flex-1 rounded-pill px-4 py-2 text-sm font-semibold transition ${uploadMode === "file" ? "bg-white text-ink shadow-sm" : "text-soft hover:text-ink"}`}
+            >
+              文件上传
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploadMode("asin")}
+              className={`flex-1 rounded-pill px-4 py-2 text-sm font-semibold transition ${uploadMode === "asin" ? "bg-white text-ink shadow-sm" : "text-soft hover:text-ink"}`}
+            >
+              ASIN 拉取
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploadMode("watchlist")}
+              className={`flex-1 rounded-pill px-4 py-2 text-sm font-semibold transition ${uploadMode === "watchlist" ? "bg-white text-ink shadow-sm" : "text-soft hover:text-ink"}`}
+            >
+              ASIN 监控
+            </button>
+          </div>
+
+          {uploadMode === "asin" ? (
+            <div className="mt-6">
+              <AsinFetchPanel />
+            </div>
+          ) : uploadMode === "watchlist" ? (
+            <div className="mt-6">
+              <AsinWatchlistPanel />
+            </div>
+          ) : (
+          <>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <label className="space-y-2">
               <span className="text-sm font-semibold text-ink">产品编号</span>
@@ -405,6 +444,8 @@ export default function UploadPage() {
               返回工作台
             </button>
           </div>
+          </>
+          )}
         </div>
 
         <div className="space-y-6">

@@ -641,3 +641,38 @@ export type FeedbackResponse = {
   status: string;
   created_at: string;
 };
+
+// V5-T1: ASIN Watchlist
+
+export type AsinWatchlistItem = {
+  id: number;
+  asin: string;
+  marketplace: string;
+  product_name: string | null;
+  product_id: number | null;
+  fetch_frequency: "daily" | "weekly" | "manual";
+  last_fetched_at: string | null;
+  last_review_count: number;
+  new_review_count: number;
+  status: "active" | "paused" | "error";
+  error_message: string | null;
+  created_at: string;
+};
+
+export type AsinWatchlistResponse = {
+  items: AsinWatchlistItem[];
+  total: number;
+  quota_used: number;
+  quota_limit: number;
+};
+
+export type AsinWatchlistCreatePayload = {
+  asins: string[];
+  marketplace: string;
+  fetch_frequency: "daily" | "weekly" | "manual";
+};
+
+export type AsinWatchlistUpdatePayload = {
+  fetch_frequency?: "daily" | "weekly" | "manual";
+  status?: "active" | "paused";
+};
