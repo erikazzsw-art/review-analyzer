@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import os
+
 import resend
-import streamlit as st
 
 
 def send_reset_code(to_email: str, code: str) -> tuple[bool, str]:
-    resend.api_key = st.secrets["resend"]["api_key"]
+    resend.api_key = os.environ["RESEND_API_KEY"]
 
     try:
         resend.Emails.send({
