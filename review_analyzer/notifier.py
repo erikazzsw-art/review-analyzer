@@ -490,3 +490,180 @@ def push_selected_items(
         return {"ok": False, "msg": "推送超时"}
     except Exception as e:
         return {"ok": False, "msg": f"推送异常: {str(e)}"}
+
+
+# ============================================================
+# V5-T3: 富文本分板块推送（post 格式 + @mention）
+# ============================================================
+
+def _build_post_body(title: str, content: list[list[dict]], secret: str = "") -> dict:
+    """构建飞书 post 富文本消息体"""
+    body: dict = {
+        "msg_type": "post",
+        "content": {
+            "post": {
+                "zh_cn": {
+                    "title": title,
+                    "content": content,
+                },
+            },
+        },
+    }
+
+    if secret:
+        timestamp = str(int(time.time()))
+        string_to_sign = f"{timestamp}\n{secret}"
+        hmac_code = hmac.new(
+            string_to_sign.encode("utf-8"),
+            msg=b"",
+            digestmod=hashlib.sha256,
+        ).digest()
+        sign = base64.b64encode(hmac_code).decode("utf-8")
+        body["timestamp"] = timestamp
+        body["sign"] = sign
+
+    return body
+
+
+def _build_dept_section(
+    dept: str,
+    dept_label: str,
+    dept_icon: str,
+    issues: list[dict],
+    contact_open_id: str | None,
+    escalated_tags: set[str] | None = None,
+) -> list[list[dict]]:
+    """构建单个部门板块的富文本行"""
+    lines: list[list[dict]] = []
+
+    header_elements: list[dict] = [
+        {"tag": "text", "text": f"\n{dept_icon} 【{dept_label}】"},
+    ]
+    if contact_open_id:
+        header_elements.append({"tag": "at", "user_id": contact_open_id})
+    lines.append(header_elements)
+
+    for i, issue in enumerate(issues, 1):
+        tag = issue.get("tag", "")
+        pct = issue.get("pct", 0)
+        tag_label = issue.get("tag_label", tag)
+
+        text = f"{i}. {tag_label} ({pct:.1f}%)"
+
+        if escalated_tags and tag in escalated_tags:
+            text += " 🔴⚡已升级"
+
+        lines.append([{"tag": "text", "text": text}])
+
+    return lines
+
+
+def build_rich_push_content(
+    product_name: str,
+    period_label: str,
+    dept_issues: dict[str, list[dict]],
+    dept_contacts: dict[str, str] | None = None,
+    escalation_results: list[dict] | None = None,
+    top_highlights: list[dict] | None = None,
+) -> tuple[str, list[list[dict]]]:
+    """
+    构建分板块富文本推送内容。
+
+    参数:
+        product_name: 产品名称/SKU
+        period_label: 时间范围标签（如 "2026-06-09 ~ 2026-06-14"）
+        dept_issues: route_issues_by_department() 的输出
+        dept_contacts: {dept: open_id} 部门联系人 open_id
+        escalation_results: 升级结果列表
+        top_highlights: 亮点 TOP 3
+
+    返回:
+        (title, content_lines) 用于 _build_post_body
+    """
+    from review_analyzer.department_router import DEPT_ICONS, DEPT_LABELS
+
+    title = f"📊 产品报告 | {product_name} | {period_label}"
+
+    contacts = dept_contacts or {}
+    escalated_tags: set[str] = set()
+    if escalation_results:
+        escalated_tags = {r.get("tag_name", "") for r in escalation_results}
+
+    content: list[list[dict]] = []
+
+    dept_order = ["qa", "product", "ops", "cs", "other"]
+    for dept in dept_order:
+        issues = dept_issues.get(dept, [])
+        if not issues:
+            continue
+
+        dept_label = DEPT_LABELS.get(dept, "其他")
+        dept_icon = DEPT_ICONS.get(dept, "📋")
+        contact_id = contacts.get(dept)
+
+        section_lines = _build_dept_section(
+            dept, dept_label, dept_icon, issues, contact_id, escalated_tags
+        )
+        content.extend(section_lines)
+
+    if escalation_results:
+        content.append([{"tag": "text", "text": "\n━━━━━━━━━━━━━━━━━━━━━"}])
+        content.append([{"tag": "text", "text": "⚡ 升级行动（已写入行动中心）："}])
+        for esc in escalation_results:
+            tag_label = esc.get("tag_label", esc.get("tag_name", ""))
+            action = esc.get("suggested_action", "")
+            timeline = esc.get("expected_timeline", "")
+            line = f"• 「{tag_label}」→ {action[:50]}"
+            if timeline:
+                line += f"，预计{timeline}"
+            content.append([{"tag": "text", "text": line}])
+
+    if top_highlights:
+        content.append([{"tag": "text", "text": "\n━━━━━━━━━━━━━━━━━━━━━"}])
+        hl_parts = []
+        for i, hl in enumerate(top_highlights[:3], 1):
+            tag_label = hl.get("tag_label", hl.get("tag", ""))
+            pct = hl.get("pct", 0)
+            hl_parts.append(f"{i}. {tag_label} ({pct:.1f}%)")
+        content.append([{"tag": "text", "text": "✅ 产品亮点 TOP 3："}])
+        content.append([{"tag": "text", "text": "  ".join(hl_parts)}])
+
+    return title, content
+
+
+def send_rich_push(
+    webhook_url: str,
+    product_name: str,
+    period_label: str,
+    dept_issues: dict[str, list[dict]],
+    dept_contacts: dict[str, str] | None = None,
+    escalation_results: list[dict] | None = None,
+    top_highlights: list[dict] | None = None,
+    secret: str = "",
+) -> dict:
+    """发送富文本分板块推送到飞书"""
+    if not webhook_url:
+        return {"ok": False, "msg": "未配置 Webhook URL"}
+
+    title, content = build_rich_push_content(
+        product_name=product_name,
+        period_label=period_label,
+        dept_issues=dept_issues,
+        dept_contacts=dept_contacts,
+        escalation_results=escalation_results,
+        top_highlights=top_highlights,
+    )
+
+    body = _build_post_body(title, content, secret)
+
+    try:
+        resp = requests.post(webhook_url, json=body, timeout=FEISHU_TIMEOUT)
+        result = resp.json()
+        if result.get("code") == 0 or result.get("StatusCode") == 0:
+            return {"ok": True, "msg": "推送成功"}
+        return {"ok": False, "msg": result.get("msg", "推送失败")}
+    except requests.Timeout:
+        return {"ok": False, "msg": "推送超时，请检查网络"}
+    except Exception as e:
+        logger.error(f"飞书富文本推送失败: {e}")
+        return {"ok": False, "msg": f"推送异常: {str(e)}"}
