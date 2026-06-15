@@ -6,7 +6,11 @@ import resend
 
 
 def send_reset_code(to_email: str, code: str) -> tuple[bool, str]:
-    resend.api_key = os.environ["RESEND_API_KEY"]
+    api_key = os.environ.get("RESEND_API_KEY", "")
+    if not api_key:
+        return False, "RESEND_API_KEY not configured"
+
+    resend.api_key = api_key
 
     try:
         resend.Emails.send({
