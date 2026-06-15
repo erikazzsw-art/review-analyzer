@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { SettingsPanel } from "@/components/settings/settings-panel";
+import { SmartPushSettingsPanel } from "@/components/settings/smart-push-settings";
 import { getSettings, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
@@ -19,6 +20,9 @@ export default async function SettingsPage() {
         description="设置页承接飞书通知、DeepSeek 密钥和 Paddle 升级入口，适合低频调整但不能缺席的系统能力。"
       >
         <SettingsPanel initialSettings={settings} />
+        <div className="mt-8 border-t pt-8">
+          <SmartPushSettingsPanel />
+        </div>
       </AppShell>
     );
   } catch (error) {
