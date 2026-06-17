@@ -3331,53 +3331,81 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 **详细方案文档：** [`AI_PIPELINE_OPTIMIZATION.md`](AI_PIPELINE_OPTIMIZATION.md)
 
+**Phase 1+2 进度：** 6/6 完成 ✅（2026-06-17）  
+**部署待办：**
+- [ ] 运行 migration 019（tsvector + GIN 索引）和 020（annotation_quality_log 表）
+- [ ] `workers/jobs.py` 接入 OPT-3 质量门控（传 embeddings 给 `propagate_cluster_results`，处理 `needs_llm` 回退）
+- [ ] `workers/jobs.py` 接入 OPT-5 抽样（分析完成后调用 `log_quality_sample()`）
+- [ ] `workers/periodic_jobs.py` 接入 OPT-6（调用 `check_escalations` 时传 `total_reviews`）
+
 ---
 
 #### Phase 1: P0 低成本高收益（1-2 天）
 
-- [x] **OPT-1: Embedding 批量调用**
+- [x] **OPT-1: Embedding 批量调用** ✅ 2026-06-17
   - 现状：`rag.py:embed_session_comments()` 逐条 HTTP 调用
   - 方案：改用 `input: list[str]` 批量接口（一次最多 2048 条）
   - 改动：`review_analyzer/rag.py` 新增 `generate_embeddings_batch()`
   - 预期：500 条 embedding 延迟从 ~15s → ~2s
   - 风险：极低，失败 fallback 回逐条
+  - **实现备注：** 批量大小 256 条/次（留余量避免超时）；`embed_session_comments` 和 `ensure_comment_embeddings` 均已改为批量调用；失败时自动降级逐条重试；新增 `_get_embedding_client()` 复用 client 实例
 
-- [x] **OPT-2: DeepSeek Prefix Caching 验证**
+- [x] **OPT-2: DeepSeek Prefix Caching 验证** ✅ 2026-06-17
   - 现状：`deep_analyzer.py` 每条评论发完整 system prompt（~2000 tokens），DeepSeek 理应自动缓存
   - 方案：检查 DeepSeek 账单 `cache_hit_tokens` 字段，确认是否命中
-  - 改动：无代码改动，纯验证。如未命中则调整 client 复用策略
+  - 改动：`llm_router.py` 新增 `_log_cache_stats()` 方法，每次成功调用自动记录 `prompt_cache_hit_tokens` 或 `cache_hit_tokens`（兼容两种 API 返回格式）
   - 风险：零
+  - **实现备注：** 日志格式 `llm_router prefix_cache: model=deepseek prompt_tokens=2100 cache_hit_tokens=2000 (95%)`；下一步可从日志中统计实际命中率，若持续为 0 则需调整并发策略（先发 1 条建缓存，再并行）
 
-- [x] **OPT-3: 聚类传播质量门控**
+- [x] **OPT-3: 聚类传播质量门控** ✅ 2026-06-17
   - 现状：`clustering.py` 对所有聚类结果无差别传播
   - 方案：簇内平均余弦相似度 < 0.88 的不传播，成员回退走 LLM
-  - 改动：`backend_api/app/services/clustering.py` 加 ~10 行 numpy 检查
+  - 改动：`backend_api/app/services/clustering.py` 新增 `_cluster_avg_cosine_similarity()` + `propagate_cluster_results` 增加 `embeddings` 和 `similarity_threshold` 参数
   - 预期：消除跨品类场景下的错误传播
   - 风险：低，最坏只是多走几次 LLM
+  - **实现备注：** 向后兼容 — `embeddings` 参数可选，不传时行为与原来一致；低质量簇成员返回 `{"needs_llm": True, "reason": "low_cluster_similarity"}`，需由 caller（`workers/jobs.py`）二次送 LLM；阈值 0.88 可通过参数调整
 
 ---
 
 #### Phase 2: P1 中等投入（3-5 天）
 
-- [x] **OPT-4: RAG Hybrid Search + Reranking**
+- [x] **OPT-4: RAG Hybrid Search + Reranking** ✅ 2026-06-17
   - 现状：向量检索 OR 文本 fallback（二选一），文本检索是简单 token overlap
   - 方案：向量 Top-20 + tsvector 全文 Top-20 → RRF merge → 取 Top-5
   - 改动：`review_analyzer/rag.py` + `database.py` + SQL migration（tsvector + GIN 索引）
   - 前置确认：Supabase 是否已启用 `zhparser` 中文分词
   - 预期：精确关键词问题命中率 ~60% → ~95%
+  - **实现备注：**
+    - 新增 `hybrid_retrieve()` + `_rrf_merge()`（RRF k=60）
+    - 新增 `search_comments_by_fulltext()` 使用 `ts_rank` + `@@ to_tsquery('simple', ...)`
+    - Migration 019: `content_tsv` 生成列（STORED）+ GIN 索引
+    - 使用 `'simple'` config（按空格/标点分词），中英文混合基本可用；若 Supabase 确认 `zhparser` 可用，只需改一行 `'simple'` → `'zhparser'`
+    - `answer_question()` 的 `retrieval_method` 从 `"vector"` 改为 `"hybrid"`
+    - Cross-Encoder reranking 暂未实现（P2 远期，当前 RRF 已足够）
 
-- [x] **OPT-5: Evaluation Pipeline 自动化**
+- [x] **OPT-5: Evaluation Pipeline 自动化** ✅ 2026-06-17
   - 现状：Golden Set 499 条，手动跑
   - 方案：CI 集成（prompt 变更触发回归）+ 线上抽样（GPT-4o 二次评判）+ 月度报告
-  - 改动：`scripts/eval_golden_set.py` + `.github/workflows/eval.yml` + migration
+  - 改动：`backend_api/app/services/quality_sampler.py` + migration 020
   - 与 V4-T3/T6 关系：T3 的质量保障自动化延伸，与 T6（用户反馈）互补
+  - **实现备注：**
+    - CI 部分已有 `.github/workflows/golden-set-regression.yml`（prompt 变更自动触发，准确率门槛 93%）
+    - 线上抽样：`quality_sampler.py` — 每 200 条抽 1 条，`judge_annotation()` 用 LLM 二次评判，结果写入 `annotation_quality_log` 表
+    - Migration 020: `annotation_quality_log` 表（user_id, comment_id, prompt_version, verdict, reason, judge_model）
+    - 月度报告 API 暂未实现（等有足够数据积累后再做 UI）
+    - 需要在 `workers/jobs.py` 的分析完成后调用 `log_quality_sample()` 接入主链路
 
-- [x] **OPT-6: 升级判定加统计显著性**
+- [x] **OPT-6: 升级判定加统计显著性** ✅ 2026-06-17
   - 现状：`escalation.py` 固定规则（连续 3 期 TOP + >10%），不考虑样本量
   - 问题：10 条评论中 2 条 = 20%，统计不显著但触发升级
   - 方案：Wilson Score Interval 置信下界，n < 30 时须下界 > 阈值才触发
-  - 改动：`review_analyzer/escalation.py` 加 ~20 行 scipy 检验
+  - 改动：`review_analyzer/escalation.py` 新增 `_wilson_lower_bound()` + `check_escalations()` 增加 `total_reviews` 参数
   - 预期：小样本误报减少 80%+
+  - **实现备注：**
+    - 纯 `math` 模块实现，不依赖 scipy
+    - z=1.96（95% 置信度），阈值 n<30 启用
+    - 向后兼容 — `total_reviews` 参数可选，不传时行为与原来一致（不做小样本过滤）
+    - 需要 caller（`workers/periodic_jobs.py`）在调用 `check_escalations()` 时传入当前期评论总数
 
 ---
 
