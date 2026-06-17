@@ -1,13 +1,11 @@
 from __future__ import annotations
 
+import threading
 from datetime import datetime, timedelta
 from typing import Any
 
-import streamlit as st
-
 from review_analyzer.action_store import get_action_items
 from review_analyzer.database import get_sessions
-from review_analyzer.i18n import pick, role_label
 from review_analyzer.product_store import get_product_overview_rows
 from review_analyzer.review_store import get_review_trackers
 from review_analyzer.workflow_prompts import get_workflow_purpose_label
@@ -15,6 +13,35 @@ from review_analyzer.workflow_prompts import get_workflow_purpose_label
 ROLES = ["运营", "产研", "质检", "管理者"]
 ACTIVE_ACTION_STATUSES = {"todo", "in_progress", "pending_review"}
 ACTIVE_TRACKER_STATUSES = {"pending", "follow_up"}
+
+_ROLE_LABELS = {
+    "运营": {"zh": "运营", "en": "Operations"},
+    "产研": {"zh": "产研", "en": "Product & R&D"},
+    "质检": {"zh": "质检", "en": "Quality Assurance"},
+    "管理者": {"zh": "管理者", "en": "Manager"},
+    "复盘": {"zh": "复盘", "en": "Follow-up"},
+    "跨团队": {"zh": "跨团队", "en": "Cross-functional"},
+}
+
+_lang_var = threading.local()
+
+
+def _set_lang(lang: str) -> None:
+    _lang_var.value = lang
+
+
+def pick(zh: str, en: str) -> str:
+    return zh if getattr(_lang_var, "value", "zh") == "zh" else en
+
+
+def role_label(value: str | None) -> str:
+    if not value:
+        return pick("未分配", "Unassigned")
+    mapping = _ROLE_LABELS.get(value)
+    if not mapping:
+        return value
+    lang = getattr(_lang_var, "value", "zh")
+    return mapping.get(lang, mapping["zh"])
 
 ROLE_INTROS = {
     "运营": {
@@ -55,8 +82,8 @@ ROLE_INTROS_EN = {
 }
 
 
-@st.cache_data(ttl=30)
 def get_workspace_summary(user_id: int, role: str, lang: str) -> dict[str, Any]:
+    _set_lang(lang)
     selected_role = role if role in ROLES else ROLES[0]
     products = get_product_overview_rows(user_id)
     actions = get_action_items(user_id)

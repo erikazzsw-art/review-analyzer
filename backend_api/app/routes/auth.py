@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 import string
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import bcrypt
 from fastapi import APIRouter, HTTPException, Response, status
@@ -18,12 +19,12 @@ from backend_api.app.schemas.auth import (
     UserPayload,
 )
 from review_analyzer.database import (
+    DatabaseConnectionUnavailable,
     create_reset_token,
     create_user,
     get_user_by_email,
     get_user_by_id,
     get_user_by_username,
-    get_user_plan,
     get_valid_reset_token,
     mark_token_used,
     update_user_password,
@@ -38,21 +39,21 @@ def _hash_password(password: str) -> str:
 
 
 def _verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+    except (AttributeError, TypeError, ValueError):
+        # 旧账号或脏数据可能写入了非 bcrypt 格式的 hash；这类情况按认证失败处理。
+        return False
 
 
-def _user_payload(user_id: int) -> UserPayload:
-    user = get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found.",
-        )
+def _user_payload(user: dict[str, Any]) -> UserPayload:
+    user_id = int(user["id"])
+    plan = str(user.get("plan") or "free").strip() or "free"
     return UserPayload(
-        id=int(user["id"]),
+        id=user_id,
         username=str(user["username"]),
         email=str(user.get("email") or ""),
-        plan=get_user_plan(int(user["id"])),
+        plan=plan,
     )
 
 
@@ -74,9 +75,15 @@ def register(payload: RegisterRequest, response: Response) -> AuthResponse:
         )
 
     user_id = create_user(username, _hash_password(payload.password), email)
+    user = get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
     set_auth_cookies(response, user_id, username)
     return AuthResponse(
-        user=_user_payload(user_id),
+        user=_user_payload(user),
         message="Registration successful.",
     )
 
@@ -84,7 +91,13 @@ def register(payload: RegisterRequest, response: Response) -> AuthResponse:
 @router.post("/login", response_model=AuthResponse)
 def login(payload: LoginRequest, response: Response) -> AuthResponse:
     username = payload.username.strip()
-    user = get_user_by_username(username)
+    try:
+        user = get_user_by_username(username)
+    except DatabaseConnectionUnavailable as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service unavailable.",
+        ) from exc
     if not user or not _verify_password(payload.password, str(user["password_hash"])):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -94,7 +107,7 @@ def login(payload: LoginRequest, response: Response) -> AuthResponse:
     user_id = int(user["id"])
     set_auth_cookies(response, user_id, str(user["username"]))
     return AuthResponse(
-        user=_user_payload(user_id),
+        user=_user_payload(user),
         message="Login successful.",
     )
 

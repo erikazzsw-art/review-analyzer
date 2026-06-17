@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+from threading import Thread
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +19,7 @@ from review_analyzer.database import (
     update_upload_job,
 )
 from review_analyzer.parser import parse_file
-from workers.jobs import enqueue_upload_job_task
+from workers.jobs import enqueue_upload_job_task, process_upload_job
 
 router = APIRouter(tags=["uploads"])
 
@@ -50,6 +51,12 @@ def _enqueue_upload_job(user_id: int, payload: dict[str, Any]) -> UploadJobRespo
 
     try:
         enqueue_upload_job_task(user_id, job_id)
+    except RuntimeError:
+        Thread(
+            target=process_upload_job,
+            args=(user_id, job_id),
+            daemon=True,
+        ).start()
     except Exception as exc:
         update_upload_job(
             user_id,
@@ -97,6 +104,11 @@ def create_uploads(
 
     try:
         parsed_df = parse_file(tmp_path, suffix.lstrip(".") or "txt")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
@@ -39,6 +40,47 @@ from backend_api.app.services.prompt_registry import load_prompt
 logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_WORKERS = 8
+
+
+def _estimate_cost(model: str, tokens_in: int, tokens_out: int) -> float:
+    """Rough cost estimation in yuan."""
+    rates = {
+        "deepseek-chat": (1.0, 8.0),
+        "gpt-4o-mini": (1.05, 4.2),
+        "qwen-plus": (0.8, 2.0),
+    }
+    r_in, r_out = rates.get(model, (1.0, 4.0))
+    return (tokens_in * r_in + tokens_out * r_out) / 1_000_000
+
+
+def _track_call(
+    user_id: int | None,
+    model: str,
+    prompt_version: str,
+    resp: Any,
+    latency_ms: int,
+    success: bool,
+    error_type: str | None,
+) -> None:
+    if user_id is None:
+        return
+    try:
+        from backend_api.app.services.analytics import track_llm_call
+        tokens_in = resp.usage.prompt_tokens if resp and resp.usage else 0
+        tokens_out = resp.usage.completion_tokens if resp and resp.usage else 0
+        track_llm_call(
+            user_id,
+            model=model,
+            prompt_version=prompt_version,
+            input_tokens=tokens_in,
+            output_tokens=tokens_out,
+            latency_ms=latency_ms,
+            cost_yuan=_estimate_cost(model, tokens_in, tokens_out),
+            success=success,
+            error_type=error_type,
+        )
+    except Exception as e:
+        logger.debug("_track_call failed (non-fatal): %s", e)
 
 
 def _validate_annotation(obj: Any, allowed_aspects: set[str] | None = None) -> tuple[bool, str]:
@@ -101,10 +143,12 @@ def analyze_one(
     aspects_block: str | None = None,
     allowed_aspects: list[str] | None = None,
     client: Any = None,
+    user_id: int | None = None,
 ) -> dict[str, Any]:
     """对单条评论做 V4-T3 深度分析（通过 llm_router 自动 fallback）.
 
     client 参数仅用于单元测试注入 mock，生产代码不传。
+    user_id 非空时自动调用 track_llm_call 记录到 analytics_events。
     """
     p = load_prompt("annotate", prompt_version)
     system_prompt = p.system_prompt
@@ -132,6 +176,7 @@ def analyze_one(
 
     last_error = ""
     for _attempt in range(max_retries + 1):
+        t0 = time.perf_counter()
         try:
             if client is not None:
                 resp = client.chat.completions.create(
@@ -149,25 +194,32 @@ def analyze_one(
                     temperature=0,
                     max_tokens=800,
                 )
+            latency_ms = int((time.perf_counter() - t0) * 1000)
             raw = resp.choices[0].message.content
             try:
                 obj = json.loads(raw)
             except json.JSONDecodeError as je:
                 last_error = f"json_decode_failed: {je}"
+                _track_call(user_id, model_name, prompt_version, resp, latency_ms, False, "json_decode")
                 continue
             ok, err = _validate_annotation(obj, allowed_aspects=allowed_set)
             if not ok:
                 last_error = f"schema_invalid: {err}"
+                _track_call(user_id, model_name, prompt_version, resp, latency_ms, False, "schema_invalid")
                 continue
+            _track_call(user_id, model_name, prompt_version, resp, latency_ms, True, None)
             return {
                 **obj,
                 "tokens_in": resp.usage.prompt_tokens,
                 "tokens_out": resp.usage.completion_tokens,
                 "prompt_version": prompt_version,
                 "model_used": model_name,
+                "latency_ms": latency_ms,
             }
         except Exception as e:
+            latency_ms = int((time.perf_counter() - t0) * 1000)
             last_error = str(e)[:200]
+            _track_call(user_id, "unknown", prompt_version, None, latency_ms, False, "exception")
     logger.warning("deep_analyzer.analyze_one failed: %s", last_error)
     return {"error": last_error, "prompt_version": prompt_version}
 
@@ -179,6 +231,8 @@ def analyze_batch(
     prompt_version: str = "v2.1",
     aspects_block: str | None = None,
     allowed_aspects: list[str] | None = None,
+    progress_callback: Any = None,
+    user_id: int | None = None,
 ) -> list[dict[str, Any]]:
     """批量分析评论（通过 llm_router 自动 fallback）."""
     results: list[dict[str, Any] | None] = [None] * len(comments)
@@ -192,12 +246,21 @@ def analyze_batch(
             prompt_version=prompt_version,
             aspects_block=aspects_block,
             allowed_aspects=allowed_aspects,
+            user_id=user_id,
         )
 
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         futures = [ex.submit(_process, i, c) for i, c in enumerate(comments)]
+        done_count = 0
+        total = len(futures)
         for fut in as_completed(futures):
             idx, result = fut.result()
             results[idx] = result
+            done_count += 1
+            if progress_callback:
+                progress_callback(done_count, total)
+
+    if progress_callback and comments:
+        progress_callback(len(comments), len(comments))
 
     return [r for r in results if r is not None]

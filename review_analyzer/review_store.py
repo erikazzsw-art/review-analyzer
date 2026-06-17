@@ -4,7 +4,6 @@ from typing import Any
 
 import psycopg2
 import psycopg2.extras
-import streamlit as st
 
 from review_analyzer.database import get_connection
 
@@ -49,13 +48,12 @@ def create_review_tracker(user_id: int, data: dict[str, Any]) -> int:
             )
             tracker_id = int(cur.fetchone()[0])
             conn.commit()
-            get_review_trackers.clear()
             return tracker_id
     finally:
         conn.close()
 
 
-@st.cache_data(ttl=30)
+
 def get_review_trackers(
     user_id: int,
     status: str | None = None,
@@ -123,7 +121,6 @@ def update_review_tracker_result(user_id: int, tracker_id: int, data: dict[str, 
                 ),
             )
             conn.commit()
-            get_review_trackers.clear()
     finally:
         conn.close()
 

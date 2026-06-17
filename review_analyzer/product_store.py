@@ -6,7 +6,6 @@ from typing import Any
 
 import psycopg2
 import psycopg2.extras
-import streamlit as st
 
 from review_analyzer.database import get_connection, get_sessions
 
@@ -41,15 +40,12 @@ def create_product(user_id: int, data: dict[str, Any]) -> int:
             )
             product_id = int(cur.fetchone()[0])
             conn.commit()
-            get_products.clear()
-            get_product_by_id.clear()
-            get_product_overview_rows.clear()
             return product_id
     finally:
         conn.close()
 
 
-@st.cache_data(ttl=30)
+
 def get_products(user_id: int) -> list[dict[str, Any]]:
     conn = get_connection()
     try:
@@ -66,7 +62,7 @@ def get_products(user_id: int) -> list[dict[str, Any]]:
         conn.close()
 
 
-@st.cache_data(ttl=30)
+
 def get_product_by_id(user_id: int, product_id: int) -> dict[str, Any] | None:
     conn = get_connection()
     try:
@@ -84,7 +80,7 @@ def get_product_by_id(user_id: int, product_id: int) -> dict[str, Any] | None:
         conn.close()
 
 
-@st.cache_data(ttl=30)
+
 def get_product_by_parent_id(user_id: int, parent_product_id: str) -> dict[str, Any] | None:
     conn = get_connection()
     try:
@@ -133,14 +129,12 @@ def create_variant(user_id: int, product_id: int, data: dict[str, Any]) -> int:
             )
             variant_id = int(cur.fetchone()[0])
             conn.commit()
-            get_variants.clear()
-            get_product_overview_rows.clear()
             return variant_id
     finally:
         conn.close()
 
 
-@st.cache_data(ttl=30)
+
 def get_variants(user_id: int, product_id: int) -> list[dict[str, Any]]:
     conn = get_connection()
     try:
@@ -160,7 +154,7 @@ def get_variants(user_id: int, product_id: int) -> list[dict[str, Any]]:
         conn.close()
 
 
-@st.cache_data(ttl=30)
+
 def get_product_versions(user_id: int, product_id: int) -> list[dict[str, Any]]:
     conn = get_connection()
     try:
@@ -210,8 +204,6 @@ def create_product_version(user_id: int, product_id: int, data: dict[str, Any]) 
             )
             version_id = int(cur.fetchone()[0])
             conn.commit()
-            get_product_versions.clear()
-            get_product_overview_rows.clear()
             return version_id
     finally:
         conn.close()
@@ -308,7 +300,7 @@ def _fetch_all_pending_review_counts(user_id: int) -> dict[int, int]:
         conn.close()
 
 
-@st.cache_data(ttl=30)
+
 def get_product_overview_rows(user_id: int) -> list[dict[str, Any]]:
     stored_products = get_products(user_id)
     sessions = get_sessions(user_id)

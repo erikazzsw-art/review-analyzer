@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from review_analyzer.i18n import get_lang
-
 WORKFLOW_PURPOSES = [
     "竞品调研",
     "新品上线监控",
@@ -77,7 +75,7 @@ COMPARISON_TYPE_FOCUS_EN = {
 
 
 def _pick_text(mapping_zh: dict[str, str], mapping_en: dict[str, str], key: str, lang: str | None = None) -> str | None:
-    selected_lang = lang or get_lang()
+    selected_lang = lang or "zh"
     if selected_lang == "en":
         return mapping_en.get(key)
     return mapping_zh.get(key)
@@ -86,7 +84,7 @@ def _pick_text(mapping_zh: dict[str, str], mapping_en: dict[str, str], key: str,
 def get_workflow_purpose_label(purpose: str | None, lang: str | None = None) -> str:
     if not purpose:
         return ""
-    selected_lang = lang or get_lang()
+    selected_lang = lang or "zh"
     label_mapping = WORKFLOW_PURPOSE_LABELS.get(purpose)
     if not label_mapping:
         return purpose

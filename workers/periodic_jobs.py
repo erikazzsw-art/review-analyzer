@@ -212,3 +212,110 @@ def enqueue_periodic_digest(user_id: int) -> str:
         failure_ttl=7 * 24 * 60 * 60,
     )
     return job.id
+
+
+# ============================================================
+# Stale Job Scanner — Worker 挂死检测 + 飞书告警
+# ============================================================
+
+STALE_THRESHOLD_MINUTES = 15
+
+
+def scan_stale_jobs() -> dict[str, Any]:
+    """扫描卡死任务：status='processing' 超过阈值未更新，标记 failed + 告警。
+
+    设计：
+    - 每 5 分钟由 scheduler 入队一次
+    - 查 upload_jobs WHERE status='processing' AND updated_at < now() - 15min
+    - 逐个标记为 failed（error_message 写明超时原因）
+    - 汇总后发飞书运维告警
+    """
+    import psycopg2
+    import psycopg2.extras
+
+    from review_analyzer.database import get_connection, update_upload_job
+
+    conn = get_connection()
+    stale_jobs: list[dict] = []
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT id, user_id, status, created_at, updated_at
+                   FROM upload_jobs
+                   WHERE status = 'processing'
+                     AND updated_at < NOW() - INTERVAL '%s minutes'""",
+                (STALE_THRESHOLD_MINUTES,),
+            )
+            stale_jobs = [dict(row) for row in cur.fetchall()]
+    finally:
+        conn.close()
+
+    if not stale_jobs:
+        logger.info("scan_stale_jobs: no stale jobs found")
+        return {"ok": True, "stale_count": 0}
+
+    for job in stale_jobs:
+        update_upload_job(
+            user_id=job["user_id"],
+            job_id=job["id"],
+            updates={
+                "status": "failed",
+                "error_message": f"Worker timeout: job stuck in processing for >{STALE_THRESHOLD_MINUTES}min",
+            },
+        )
+        logger.warning(
+            "scan_stale_jobs: marked job %d (user %d) as failed — stuck since %s",
+            job["id"], job["user_id"], job["updated_at"],
+        )
+
+    _send_stale_alert(stale_jobs)
+
+    return {"ok": True, "stale_count": len(stale_jobs), "job_ids": [j["id"] for j in stale_jobs]}
+
+
+def _send_stale_alert(stale_jobs: list[dict]) -> None:
+    """发送飞书运维告警"""
+    import os
+
+    import requests
+
+    webhook_url = os.getenv("FEISHU_OPS_WEBHOOK")
+    if not webhook_url:
+        logger.warning("scan_stale_jobs: FEISHU_OPS_WEBHOOK not set, skipping alert")
+        return
+
+    lines = [
+        "⚠️ Worker 卡死告警",
+        "",
+        f"检测到 {len(stale_jobs)} 个任务超过 {STALE_THRESHOLD_MINUTES} 分钟未完成，已自动标记为 failed：",
+        "",
+    ]
+    for job in stale_jobs[:10]:
+        lines.append(f"  - job_id={job['id']} user_id={job['user_id']} stuck since {job['updated_at']}")
+
+    if len(stale_jobs) > 10:
+        lines.append(f"  ... 共 {len(stale_jobs)} 个")
+
+    lines.append("")
+    lines.append("请检查 Worker 进程状态：docker logs clueai-worker")
+
+    body = {"msg_type": "text", "content": {"text": "\n".join(lines)}}
+
+    try:
+        resp = requests.post(webhook_url, json=body, timeout=10)
+        logger.info("scan_stale_jobs: alert sent, status=%d", resp.status_code)
+    except Exception as e:
+        logger.error("scan_stale_jobs: alert failed: %s", e)
+
+
+def enqueue_stale_job_scan() -> str:
+    """入队卡死任务扫描（由 scheduler 每 5 分钟调用）"""
+    queue = get_queue()
+    job = queue.enqueue(
+        scan_stale_jobs,
+        job_id=f"stale-scan-{datetime.now().strftime('%Y%m%d%H%M')}",
+        description="Scan for stale processing jobs",
+        result_ttl=300,
+        failure_ttl=24 * 60 * 60,
+    )
+    return job.id

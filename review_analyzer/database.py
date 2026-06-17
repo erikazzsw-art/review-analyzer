@@ -419,6 +419,7 @@ def update_upload_job(
         "session_id",
         "error_message",
         "payload_json",
+        "trace_json",
         "total_rows",
     }
     fields = [key for key in updates if key in allowed_fields]
@@ -428,7 +429,7 @@ def update_upload_job(
     assignments = []
     values: list = []
     for field in fields:
-        if field == "payload_json" and updates.get(field) is not None:
+        if field in ("payload_json", "trace_json") and updates.get(field) is not None:
             assignments.append(f"{field} = %s")
             values.append(psycopg2.extras.Json(updates[field]))
         else:
@@ -1009,6 +1010,26 @@ def update_session_stats(
                    SET total_reviews = %s, positive_count = %s, negative_count = %s
                    WHERE id = %s AND user_id = %s""",
                 (total_reviews, positive_count, negative_count, session_id, user_id),
+            )
+            conn.commit()
+            _clear_cache(get_sessions)
+            _clear_cache(get_session_by_id)
+    finally:
+        conn.close()
+
+
+def update_session_warnings(user_id: int, session_id: int, warnings: list[dict]) -> None:
+    """写入分析告警到 sessions.warnings_json（V4-T1.6 Step 3）."""
+    if not warnings:
+        return
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE sessions
+                   SET warnings_json = %s
+                   WHERE id = %s AND user_id = %s""",
+                (psycopg2.extras.Json(warnings), session_id, user_id),
             )
             conn.commit()
             _clear_cache(get_sessions)

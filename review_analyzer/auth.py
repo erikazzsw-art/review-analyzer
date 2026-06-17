@@ -6,7 +6,6 @@ import string
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
-import streamlit as st
 from cryptography.fernet import Fernet, InvalidToken
 from dotenv import load_dotenv
 
@@ -17,7 +16,6 @@ from review_analyzer.database import (
     get_user_by_id,
     get_user_by_username,
     get_valid_reset_token,
-    init_db,
     mark_token_used,
     update_user_api_key,
     update_user_password,
@@ -73,8 +71,7 @@ def register(username: str, password: str, email: str = "") -> tuple[bool, str]:
     if get_user_by_username(username.strip()):
         return False, "用户名已存在"
     password_hash = hash_password(password)
-    user_id = create_user(username.strip(), password_hash, email.strip())
-    _set_session(user_id, username.strip())
+    create_user(username.strip(), password_hash, email.strip())
     return True, "注册成功"
 
 
@@ -84,15 +81,7 @@ def login(username: str, password: str) -> tuple[bool, str]:
         return False, "用户名或密码错误"
     if not verify_password(password, user["password_hash"]):
         return False, "用户名或密码错误"
-    _set_session(user["id"], user["username"])
     return True, "登录成功"
-
-
-def logout() -> None:
-    for key in ["user_id", "username", "is_logged_in"]:
-        st.session_state.pop(key, None)
-    st.session_state["show_page"] = "landing"
-    st.session_state.pop("force_public_preview", None)
 
 
 # ============================================================
@@ -127,28 +116,6 @@ def confirm_password_reset(email: str, code: str, new_password: str) -> tuple[bo
 
 
 # ============================================================
-# Session State 管理
-# ============================================================
-
-def _set_session(user_id: int, username: str) -> None:
-    st.session_state["user_id"] = user_id
-    st.session_state["username"] = username
-    st.session_state["is_logged_in"] = True
-
-
-def is_logged_in() -> bool:
-    return st.session_state.get("is_logged_in", False)
-
-
-def get_current_user_id() -> int | None:
-    return st.session_state.get("user_id")
-
-
-def get_current_username() -> str | None:
-    return st.session_state.get("username")
-
-
-# ============================================================
 # API Key 存取（结合数据库）
 # ============================================================
 
@@ -165,45 +132,3 @@ def load_user_api_key(user_id: int) -> str | None:
     if not user or not user.get("api_key_encrypted"):
         return None
     return decrypt_api_key(user["api_key_encrypted"])
-
-
-# ============================================================
-# Streamlit 认证 UI 组件
-# ============================================================
-
-def render_auth_page() -> None:
-    init_db()
-
-    if is_logged_in():
-        return
-
-    st.title("ClueAI")
-    st.caption("跨境电商评论分析系统")
-
-    tab_login, tab_register = st.tabs(["登录", "注册"])
-
-    with tab_login, st.form("login_form"):
-        username = st.text_input("用户名", key="login_username")
-        password = st.text_input("密码", type="password", key="login_password")
-        submitted = st.form_submit_button("登录", use_container_width=True)
-        if submitted:
-            ok, msg = login(username, password)
-            if ok:
-                st.rerun()
-            else:
-                st.error(msg)
-
-    with tab_register, st.form("register_form"):
-        new_username = st.text_input("用户名", key="reg_username")
-        new_password = st.text_input("密码", type="password", key="reg_password")
-        confirm_password = st.text_input("确认密码", type="password", key="reg_confirm")
-        submitted = st.form_submit_button("注册", use_container_width=True)
-        if submitted:
-            if new_password != confirm_password:
-                st.error("两次密码不一致")
-            else:
-                ok, msg = register(new_username, new_password)
-                if ok:
-                    st.rerun()
-                else:
-                    st.error(msg)

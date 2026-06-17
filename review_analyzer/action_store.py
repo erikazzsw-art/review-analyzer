@@ -4,7 +4,6 @@ from typing import Any
 
 import psycopg2
 import psycopg2.extras
-import streamlit as st
 
 from review_analyzer.database import get_connection
 
@@ -49,13 +48,12 @@ def create_action_item(user_id: int, data: dict[str, Any]) -> int:
             )
             action_id = int(cur.fetchone()[0])
             conn.commit()
-            get_action_items.clear()
             return action_id
     finally:
         conn.close()
 
 
-@st.cache_data(ttl=30)
+
 def get_action_items(
     user_id: int,
     status: str | None = None,
@@ -103,7 +101,6 @@ def update_action_status(user_id: int, action_id: int, status: str) -> None:
                 (status, action_id, user_id),
             )
             conn.commit()
-            get_action_items.clear()
     finally:
         conn.close()
 

@@ -9,13 +9,20 @@ from backend_api.app.services.analysis_cache import (
     apply_cache,
     compute_content_hash,
 )
+from backend_api.app.services.analytics import track_analysis_complete
 from backend_api.app.services.category_grouper import aspects_to_legacy_schema
 from backend_api.app.services.clustering import (
     cluster_reviews,
     propagate_cluster_results,
 )
 from backend_api.app.services.deep_analyzer import analyze_batch as deep_analyze_batch
+from backend_api.app.services.job_trace import JobTrace
 from backend_api.app.services.prompt_registry import DEFAULT_ANNOTATE_VERSION
+from backend_api.app.services.taxonomy_coverage_monitor import (
+    build_coverage_warning,
+    compute_taxonomy_coverage,
+    format_feishu_alert,
+)
 from backend_api.app.services.taxonomy_loader import (
     render_aspects_block,
     resolve_aspects,
@@ -33,6 +40,7 @@ from review_analyzer.database import (
     update_comment_analysis,
     update_comment_cluster,
     update_session_stats,
+    update_session_warnings,
     update_upload_job,
 )
 from review_analyzer.product_store import create_product, get_product_by_parent_id
@@ -73,7 +81,9 @@ def _build_comments(
 
 
 def process_upload_job(user_id: int, job_id: int) -> None:
+    trace = JobTrace(job_id=job_id, user_id=user_id)
     try:
+        trace.begin_stage("init")
         job = get_upload_job(user_id, job_id)
         if not job:
             return
@@ -144,11 +154,16 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         )
 
         unprocessed = get_unprocessed_comments(user_id, session_id)
+        cluster_count = 0
+        trace.end_stage(meta={"review_count": len(comments_to_insert)})
+
         if unprocessed:
+            trace.begin_stage("embed")
             try:
                 embed_session_comments(user_id, session_id)
             except Exception:
                 pass
+            trace.end_stage(meta={"count": len(unprocessed)})
 
             def _progress_callback(current: int, total: int) -> None:
                 update_upload_job(
@@ -165,6 +180,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             allowed_aspects = [a["key"] for a in aspects]
 
             # --- V4-T4 Step 3: 多级缓存 ---
+            trace.begin_stage("cache")
             # L1: 收集当前 batch 的 content_hash，查询已有分析结果
             content_hashes = [
                 compute_content_hash(c.get("content", ""), c.get("rating"))
@@ -236,8 +252,14 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 "upload_job %s: cache hit=%d miss=%d (stats=%s)",
                 job_id, cache_result.hit_count, cache_result.miss_count, cache_result.stats(),
             )
+            trace.end_stage(meta={
+                "hit": cache_result.hit_count,
+                "miss": cache_result.miss_count,
+                "stats": cache_result.stats(),
+            })
 
             # --- 对需要 LLM 的评论走聚类+LLM 管道 ---
+            trace.begin_stage("llm_analysis")
             if need_llm:
                 need_llm_ids = {c["id"] for c in need_llm}
                 llm_emb_comments = [
@@ -246,12 +268,27 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 llm_emb_available = llm_emb_comments and all(
                     c.get("embedding") for c in llm_emb_comments
                 )
+                cached_count = len(cache_result.hits)
+                llm_done_count = 0
+
+                def _make_llm_progress(offset: int):
+                    def _llm_progress(current: int, total: int) -> None:
+                        nonlocal llm_done_count
+                        llm_done_count = max(llm_done_count, offset + current)
+                        _progress_callback(
+                            min(len(unprocessed), cached_count + llm_done_count),
+                            len(unprocessed),
+                        )
+
+                    return _llm_progress
 
                 if llm_emb_available and len(llm_emb_comments) >= 10:
+                    llm_progress = _make_llm_progress(0)
                     cluster_result = cluster_reviews(
                         comment_ids=[c["id"] for c in llm_emb_comments],
                         embeddings=[c["embedding"] for c in llm_emb_comments],
                     )
+                    cluster_count = len(cluster_result.clusters)
                     llm_target_ids = set(cluster_result.llm_target_ids)
                     llm_comments = [c for c in llm_emb_comments if c["id"] in llm_target_ids]
 
@@ -272,6 +309,8 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         prompt_version=PROMPT_VERSION,
                         aspects_block=aspects_block,
                         allowed_aspects=allowed_aspects,
+                        progress_callback=llm_progress,
+                        user_id=user_id,
                     )
 
                     v4_results = propagate_cluster_results(
@@ -303,6 +342,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     emb_id_set = {c["id"] for c in llm_emb_comments}
                     non_emb_comments = [c for c in need_llm if c["id"] not in emb_id_set]
                     if non_emb_comments:
+                        llm_progress = _make_llm_progress(len(v4_llm_results))
                         non_emb_results = deep_analyze_batch(
                             comments=[
                                 {"content": c.get("content", ""), "rating": c.get("rating"), "title": c.get("title", "")}
@@ -312,6 +352,8 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                             prompt_version=PROMPT_VERSION,
                             aspects_block=aspects_block,
                             allowed_aspects=allowed_aspects,
+                            progress_callback=llm_progress,
+                            user_id=user_id,
                         )
                         for c, r in zip(non_emb_comments, non_emb_results):
                             id_to_v4[c["id"]] = r
@@ -330,11 +372,17 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         prompt_version=PROMPT_VERSION,
                         aspects_block=aspects_block,
                         allowed_aspects=allowed_aspects,
+                        progress_callback=_make_llm_progress(0),
+                        user_id=user_id,
                     )
                     for c, r in zip(need_llm, llm_results):
                         id_to_v4[c["id"]] = r
 
             # 按 unprocessed 顺序组装最终结果
+            llm_count = sum(1 for v in id_to_v4.values() if not v.get("cache_hit_level"))
+            trace.end_stage(meta={"llm_calls": llm_count, "need_llm": len(need_llm) if need_llm else 0})
+
+            trace.begin_stage("post_process")
             ordered_v4_results = [id_to_v4.get(c["id"], {"error": "no_result"}) for c in unprocessed]
 
             _progress_callback(len(unprocessed), len(unprocessed))
@@ -434,6 +482,73 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             except Exception:
                 logger.warning("upload_job %s: failed to log LLM usage", job_id, exc_info=True)
 
+        # V4.5-T12 C1: 追踪分析完成事件
+        llm_call_count = sum(1 for r in usage_rows if not r.get("cache_hit"))
+        total_cost = sum(float(r.get("cost_yuan") or 0) for r in usage_rows)
+        total_latency = sum(
+            v4.get("latency_ms", 0) for v4 in ordered_v4_results if v4.get("latency_ms")
+        )
+        try:
+            track_analysis_complete(
+                user_id,
+                session_id=session_id,
+                review_count=len(unprocessed),
+                cluster_count=cluster_count,
+                llm_calls=llm_call_count,
+                total_latency_ms=total_latency,
+                total_cost_yuan=total_cost,
+            )
+        except Exception:
+            logger.warning("upload_job %s: track_analysis_complete failed (non-fatal)", job_id, exc_info=True)
+
+        trace.end_stage()
+        trace.review_count = len(unprocessed)
+        trace.llm_calls = llm_call_count
+        trace.cache_hits = len(usage_rows) - llm_call_count
+        trace.cluster_count = cluster_count
+        trace.total_cost_yuan = total_cost
+        trace.finalize()
+
+        # V4-T1.6 Step 3: Taxonomy 覆盖率监控
+        taxonomy_warnings: list[dict] = []
+        try:
+            coverage = compute_taxonomy_coverage(ordered_v4_results, sub_category=sub_category)
+            warning = build_coverage_warning(coverage)
+            if warning:
+                taxonomy_warnings.append(warning)
+                logger.warning(
+                    "upload_job %s: taxonomy coverage low — other ratio %.1f%% for '%s'",
+                    job_id, coverage["other_ratio"] * 100, sub_category,
+                )
+                try:
+                    import json as _json
+
+                    from review_analyzer.database import get_setting
+                    from review_analyzer.notifier import send_feishu_notification
+
+                    raw_settings = get_setting(user_id, "push_settings")
+                    if raw_settings:
+                        push_cfg = _json.loads(raw_settings)
+                        webhook_url = push_cfg.get("webhook_url", "")
+                        secret = push_cfg.get("secret", "")
+                        if webhook_url:
+                            alert_text = format_feishu_alert(warning, session_id, user_id)
+                            send_feishu_notification(webhook_url, alert_text, secret)
+                except Exception:
+                    logger.warning("upload_job %s: feishu taxonomy alert failed (non-fatal)", job_id, exc_info=True)
+        except Exception:
+            logger.warning("upload_job %s: taxonomy coverage check failed (non-fatal)", job_id, exc_info=True)
+
+        if taxonomy_warnings:
+            try:
+                update_session_warnings(user_id, session_id, taxonomy_warnings)
+            except Exception:
+                logger.warning("upload_job %s: update_session_warnings failed (non-fatal)", job_id, exc_info=True)
+
+        trace_dict = trace.to_dict()
+        if taxonomy_warnings:
+            trace_dict["warnings"] = taxonomy_warnings
+
         update_upload_job(
             user_id,
             job_id,
@@ -442,6 +557,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 "processed_rows": len(unprocessed),
                 "positive_count": positive_count,
                 "negative_count": negative_count,
+                "trace_json": trace_dict,
             },
         )
 
@@ -460,12 +576,14 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         except Exception:
             logger.warning("upload_job %s: smart push failed (non-fatal)", job_id, exc_info=True)
     except Exception as exc:
+        trace.finalize(error=str(exc)[:500])
         update_upload_job(
             user_id,
             job_id,
             {
                 "status": "failed",
                 "error_message": str(exc),
+                "trace_json": trace.to_dict(),
             },
         )
         raise

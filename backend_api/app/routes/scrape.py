@@ -10,7 +10,7 @@ from review_analyzer.database import (
     update_upload_job,
 )
 from review_analyzer.quota import quota_check
-from workers.jobs import enqueue_asin_fetch_task
+from workers.jobs import enqueue_asin_fetch_task, process_asin_fetch_job
 
 router = APIRouter(tags=["scrape"])
 
@@ -51,6 +51,15 @@ def fetch_by_asin(
 
     try:
         enqueue_asin_fetch_task(user_id, job_id)
+    except RuntimeError:
+        try:
+            process_asin_fetch_job(user_id, job_id)
+        except Exception as exc:
+            update_upload_job(user_id, job_id, {"status": "failed", "error_message": str(exc)})
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Worker queue is unavailable.",
+            ) from exc
     except Exception as exc:
         update_upload_job(user_id, job_id, {"status": "failed", "error_message": str(exc)})
         raise HTTPException(

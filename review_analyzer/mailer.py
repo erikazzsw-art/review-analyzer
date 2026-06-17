@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import resend
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent / ".env")
 
 
 def send_reset_code(to_email: str, code: str) -> tuple[bool, str]:
