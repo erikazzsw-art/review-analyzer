@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 MIN_BATCH_FOR_CLUSTERING = 10
 DEFAULT_MIN_CLUSTER_SIZE = 3
+PROPAGATION_SIMILARITY_THRESHOLD = 0.88
 
 
 @dataclass
@@ -117,11 +118,30 @@ def cluster_reviews(
     )
 
 
+def _cluster_avg_cosine_similarity(
+    member_indices: list[int], X: np.ndarray
+) -> float:
+    """计算簇内成员两两余弦相似度的均值。"""
+    vecs = X[member_indices]
+    norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+    norms = np.where(norms == 0, 1, norms)
+    normed = vecs / norms
+    sim_matrix = normed @ normed.T
+    n = len(member_indices)
+    if n < 2:
+        return 1.0
+    triu_sum = (sim_matrix.sum() - n) / 2
+    pairs = n * (n - 1) / 2
+    return float(triu_sum / pairs)
+
+
 def propagate_cluster_results(
     cluster_result: ClusterResult,
     llm_comments: list[dict[str, Any]],
     llm_results: list[dict[str, Any]],
     all_comments: list[dict[str, Any]],
+    embeddings: list[list[float]] | None = None,
+    similarity_threshold: float = PROPAGATION_SIMILARITY_THRESHOLD,
 ) -> list[dict[str, Any]]:
     """将 LLM 分析结果从代表评论传播到同簇成员.
 
@@ -129,11 +149,16 @@ def propagate_cluster_results(
     aspects/pain_points/highlights/evidence_level_overall，
     但 sentiment 独立由 rating 决定（在 caller 侧覆写）。
 
+    质量门控：若提供 embeddings 且簇内平均余弦相似度 < threshold，
+    该簇成员不传播，标记为需要独立 LLM 分析。
+
     Args:
         cluster_result: 聚类结果
         llm_comments: 送入 LLM 的评论列表（代表 + 噪声）
         llm_results: LLM 返回结果列表（与 llm_comments 一一对应）
         all_comments: 全部评论列表（含未送入 LLM 的成员）
+        embeddings: 与 all_comments 一一对应的向量（用于质量门控）
+        similarity_threshold: 簇内传播的最低余弦相似度阈值
 
     Returns:
         与 all_comments 一一对应的结果列表
@@ -144,6 +169,27 @@ def propagate_cluster_results(
 
     if cluster_result.skipped:
         return llm_results
+
+    # 构建 comment_id → index 映射（用于质量门控）
+    id_to_idx: dict[int, int] = {}
+    for idx, comment in enumerate(all_comments):
+        id_to_idx[int(comment["id"])] = idx
+
+    # 质量门控：标记低质量簇
+    low_quality_clusters: set[int] = set()
+    if embeddings:
+        X = np.array(embeddings, dtype=np.float32)
+        for label, member_ids in cluster_result.clusters.items():
+            member_indices = [id_to_idx[mid] for mid in member_ids if mid in id_to_idx]
+            if len(member_indices) < 2:
+                continue
+            avg_sim = _cluster_avg_cosine_similarity(member_indices, X)
+            if avg_sim < similarity_threshold:
+                low_quality_clusters.add(label)
+                logger.info(
+                    "cluster quality gate: cluster %d (size=%d) avg_sim=%.3f < %.2f, skipping propagation",
+                    label, len(member_indices), avg_sim, similarity_threshold,
+                )
 
     rep_to_cluster: dict[int, int] = {}
     for label, member_ids in cluster_result.clusters.items():
@@ -167,22 +213,25 @@ def propagate_cluster_results(
         else:
             cluster_label = member_to_cluster.get(cid)
             if cluster_label is not None:
-                rep_id = cluster_to_rep.get(cluster_label)
-                if rep_id and rep_id in id_to_result:
-                    rep_result = id_to_result[rep_id]
-                    propagated = {
-                        "sentiment": rep_result.get("sentiment"),
-                        "aspects": rep_result.get("aspects", []),
-                        "pain_points": rep_result.get("pain_points", []),
-                        "highlights": rep_result.get("highlights", []),
-                        "evidence_level_overall": rep_result.get("evidence_level_overall"),
-                        "prompt_version": rep_result.get("prompt_version"),
-                        "cluster_propagated": True,
-                        "cluster_representative_id": rep_id,
-                    }
-                    final_results.append(propagated)
+                if cluster_label in low_quality_clusters:
+                    final_results.append({"needs_llm": True, "reason": "low_cluster_similarity"})
                 else:
-                    final_results.append({"error": "cluster_rep_missing"})
+                    rep_id = cluster_to_rep.get(cluster_label)
+                    if rep_id and rep_id in id_to_result:
+                        rep_result = id_to_result[rep_id]
+                        propagated = {
+                            "sentiment": rep_result.get("sentiment"),
+                            "aspects": rep_result.get("aspects", []),
+                            "pain_points": rep_result.get("pain_points", []),
+                            "highlights": rep_result.get("highlights", []),
+                            "evidence_level_overall": rep_result.get("evidence_level_overall"),
+                            "prompt_version": rep_result.get("prompt_version"),
+                            "cluster_propagated": True,
+                            "cluster_representative_id": rep_id,
+                        }
+                        final_results.append(propagated)
+                    else:
+                        final_results.append({"error": "cluster_rep_missing"})
             else:
                 final_results.append({"error": "orphan_comment"})
 

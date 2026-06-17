@@ -157,6 +157,7 @@ class LLMRouter:
 
                 resp = client.chat.completions.create(**kwargs)
                 self._record_success(model)
+                self._log_cache_stats(model, resp)
                 return resp, model.name
             except Exception as e:
                 err_msg = f"{model.name}: {str(e)[:150]}"
@@ -167,6 +168,21 @@ class LLMRouter:
         raise RuntimeError(
             f"All LLM models exhausted. Errors: {'; '.join(errors)}"
         )
+
+    def _log_cache_stats(self, model: ModelConfig, resp: Any) -> None:
+        usage = getattr(resp, "usage", None)
+        if not usage:
+            return
+        prompt_tokens = getattr(usage, "prompt_tokens", 0)
+        cache_hit = getattr(usage, "prompt_cache_hit_tokens", None)
+        if cache_hit is None:
+            cache_hit = getattr(usage, "cache_hit_tokens", None)
+        if cache_hit:
+            logger.info(
+                "llm_router prefix_cache: model=%s prompt_tokens=%d cache_hit_tokens=%d (%.0f%%)",
+                model.name, prompt_tokens, cache_hit,
+                (cache_hit / prompt_tokens * 100) if prompt_tokens else 0,
+            )
 
     def status(self) -> dict[str, Any]:
         """返回各模型的熔断状态（用于监控/调试）."""

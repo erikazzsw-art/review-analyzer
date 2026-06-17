@@ -1,6 +1,7 @@
 """升级判定引擎 — 连续多期 TOP 问题自动升级"""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any
 
@@ -11,6 +12,20 @@ from review_analyzer.push_snapshot_store import (
     reset_escalation_count,
     upsert_escalation_state,
 )
+
+WILSON_Z = 1.96  # 95% confidence
+SMALL_SAMPLE_THRESHOLD = 30
+
+
+def _wilson_lower_bound(successes: int, total: int, z: float = WILSON_Z) -> float:
+    """Wilson Score Interval 置信下界。"""
+    if total == 0:
+        return 0.0
+    p = successes / total
+    denominator = 1 + z * z / total
+    centre = p + z * z / (2 * total)
+    spread = z * math.sqrt((p * (1 - p) + z * z / (4 * total)) / total)
+    return (centre - spread) / denominator
 
 
 @dataclass
@@ -35,6 +50,7 @@ def check_escalations(
     product_id: int | None,
     current_snapshot_issues: list[dict],
     config: EscalationConfig | None = None,
+    total_reviews: int | None = None,
 ) -> list[EscalationResult]:
     """
     检查当前快照中的 issues 是否触发升级。
@@ -44,6 +60,8 @@ def check_escalations(
     2. 对 current_snapshot_issues 中 TOP K 或占比超阈值的 tag：
        检查是否连续 N-1 期也满足条件（加上当前期 = 连续 N 期）
     3. 已升级且 action_item 未完结的 tag 不重复升级
+    4. 小样本过滤（OPT-6）：当 total_reviews < 30 时，
+       用 Wilson Score Interval 下界替代原始占比判定
     """
     if config is None:
         config = EscalationConfig()
@@ -61,10 +79,18 @@ def check_escalations(
         tag = issue.get("tag", "")
         pct = float(issue.get("pct", 0))
         rank = issue.get("rank", 999)
+        count = int(issue.get("count", 0))
 
         qualifies_current = rank <= config.top_n or pct >= config.pct_threshold
         if not qualifies_current:
             continue
+
+        # OPT-6: 小样本统计显著性检验
+        n = total_reviews if total_reviews else 0
+        if n > 0 and n < SMALL_SAMPLE_THRESHOLD and pct >= config.pct_threshold:
+            wilson_lb = _wilson_lower_bound(count, n) * 100
+            if wilson_lb < config.pct_threshold:
+                continue
 
         consecutive = 1
         for snapshot in recent_snapshots:

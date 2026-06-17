@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import math
 import os
 import re
@@ -17,10 +18,13 @@ from review_analyzer.database import (
     get_comments_missing_embeddings,
     get_setting,
     search_comments_by_embedding,
+    search_comments_by_fulltext,
     update_comment_embedding,
 )
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+logger = logging.getLogger(__name__)
 
 TOKEN_RE = re.compile(r"[\w\u4e00-\u9fff]+", re.UNICODE)
 MAX_CONTEXT_CHARS = 3600
@@ -50,19 +54,58 @@ def _get_embedding_api_key(user_id: int | None = None) -> str:
     return get_api_key(user_id)
 
 
+def _get_embedding_client(user_id: int | None = None) -> OpenAI:
+    api_key = _get_embedding_api_key(user_id)
+    return OpenAI(api_key=api_key, base_url=EMBEDDING_BASE_URL, timeout=60.0)
+
+
 def generate_embedding(text: str, user_id: int | None = None) -> list[float]:
     """调用 OpenAI-compatible embedding API 生成向量。"""
-    api_key = _get_embedding_api_key(user_id)
-    client = OpenAI(
-        api_key=api_key,
-        base_url=EMBEDDING_BASE_URL,
-        timeout=30.0,
-    )
+    client = _get_embedding_client(user_id)
     response = client.embeddings.create(
         model=EMBEDDING_MODEL,
         input=text[:8000],
     )
     return [float(value) for value in response.data[0].embedding]
+
+
+EMBEDDING_BATCH_SIZE = 256
+
+
+def generate_embeddings_batch(
+    texts: list[str], user_id: int | None = None
+) -> list[list[float]]:
+    """批量生成 embedding（一次 HTTP 最多 EMBEDDING_BATCH_SIZE 条）。
+
+    失败时 fallback 到逐条调用。
+    """
+    if not texts:
+        return []
+
+    client = _get_embedding_client(user_id)
+    all_embeddings: list[list[float]] = []
+
+    for i in range(0, len(texts), EMBEDDING_BATCH_SIZE):
+        batch = [t[:8000] for t in texts[i : i + EMBEDDING_BATCH_SIZE]]
+        try:
+            response = client.embeddings.create(model=EMBEDDING_MODEL, input=batch)
+            sorted_data = sorted(response.data, key=lambda d: d.index)
+            all_embeddings.extend(
+                [float(v) for v in item.embedding] for item in sorted_data
+            )
+        except Exception:
+            logger.warning(
+                "generate_embeddings_batch failed for chunk %d-%d, falling back to single",
+                i, i + len(batch),
+            )
+            for text in batch:
+                try:
+                    emb = generate_embedding(text, user_id)
+                    all_embeddings.append(emb)
+                except Exception:
+                    all_embeddings.append([])
+
+    return all_embeddings
 
 
 def embed_session_comments(user_id: int, session_id: int) -> dict:
@@ -71,21 +114,31 @@ def embed_session_comments(user_id: int, session_id: int) -> dict:
     if not comments:
         return {"ok": True, "embedded": 0, "total": 0, "error": ""}
 
-    embedded = 0
+    texts: list[str] = []
+    valid_comments: list[dict] = []
     for comment in comments:
         content = str(comment.get("content", "")).strip()
-        if not content:
-            continue
-        embedding = generate_embedding(content, user_id)
-        update_comment_embedding(user_id, int(comment["id"]), embedding)
-        embedded += 1
+        if content:
+            texts.append(content)
+            valid_comments.append(comment)
+
+    if not texts:
+        return {"ok": True, "embedded": 0, "total": len(comments), "error": ""}
+
+    embeddings = generate_embeddings_batch(texts, user_id)
+    embedded = 0
+    for comment, embedding in zip(valid_comments, embeddings):
+        if embedding:
+            update_comment_embedding(user_id, int(comment["id"]), embedding)
+            embedded += 1
 
     return {"ok": True, "embedded": embedded, "total": len(comments), "error": ""}
 
 
 def ensure_comment_embeddings(user_id: int, comments: list[dict]) -> int:
     """为当前问答范围内缺失 embedding 的评论按需补齐向量。"""
-    embedded = 0
+    texts: list[str] = []
+    targets: list[dict] = []
     for comment in comments:
         if comment.get("embedding") is not None:
             continue
@@ -93,9 +146,18 @@ def ensure_comment_embeddings(user_id: int, comments: list[dict]) -> int:
         comment_id = comment.get("id")
         if not content or not comment_id:
             continue
-        embedding = generate_embedding(content, user_id)
-        update_comment_embedding(user_id, int(comment_id), embedding)
-        embedded += 1
+        texts.append(content)
+        targets.append(comment)
+
+    if not texts:
+        return 0
+
+    embeddings = generate_embeddings_batch(texts, user_id)
+    embedded = 0
+    for comment, embedding in zip(targets, embeddings):
+        if embedding:
+            update_comment_embedding(user_id, int(comment["id"]), embedding)
+            embedded += 1
     return embedded
 
 
@@ -160,6 +222,50 @@ def retrieve_relevant_comments(question: str, comments: list[dict], top_k: int =
     return [comment for _, comment in scored[:top_k]]
 
 
+RRF_K = 60
+
+
+def _rrf_merge(
+    vector_results: list[dict], fulltext_results: list[dict], top_k: int = 5
+) -> list[dict]:
+    """Reciprocal Rank Fusion 合并两路检索结果。"""
+    scores: dict[int, float] = {}
+    id_to_doc: dict[int, dict] = {}
+
+    for rank, doc in enumerate(vector_results, 1):
+        doc_id = int(doc["id"])
+        scores[doc_id] = scores.get(doc_id, 0) + 1.0 / (RRF_K + rank)
+        id_to_doc[doc_id] = doc
+
+    for rank, doc in enumerate(fulltext_results, 1):
+        doc_id = int(doc["id"])
+        scores[doc_id] = scores.get(doc_id, 0) + 1.0 / (RRF_K + rank)
+        if doc_id not in id_to_doc:
+            id_to_doc[doc_id] = doc
+
+    sorted_ids = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)
+    return [id_to_doc[doc_id] for doc_id in sorted_ids[:top_k]]
+
+
+def hybrid_retrieve(
+    user_id: int,
+    question: str,
+    question_embedding: list[float],
+    comment_ids: list[int],
+    top_k: int = DEFAULT_TOP_K,
+) -> list[dict]:
+    """混合检索：向量 Top-20 + 全文 Top-20 → RRF merge → Top-K."""
+    vector_results = search_comments_by_embedding(
+        user_id, question_embedding, comment_ids=comment_ids, top_k=20
+    )
+    fulltext_results = search_comments_by_fulltext(
+        user_id, question, comment_ids=comment_ids, top_k=20
+    )
+    if not fulltext_results:
+        return vector_results[:top_k]
+    return _rrf_merge(vector_results, fulltext_results, top_k=top_k)
+
+
 def _format_context(citations: list[dict]) -> str:
     chunks = []
     used_chars = 0
@@ -216,9 +322,11 @@ def answer_question(
         ensure_comment_embeddings(user_id, comments)
         question_embedding = generate_embedding(question, user_id)
         comment_ids = [int(c["id"]) for c in comments if c.get("id")]
-        citations = search_comments_by_embedding(user_id, question_embedding, comment_ids=comment_ids, top_k=top_k)
+        citations = hybrid_retrieve(
+            user_id, question, question_embedding, comment_ids, top_k=top_k
+        )
         if citations:
-            retrieval_method = "vector"
+            retrieval_method = "hybrid"
     except Exception:
         citations = []
 

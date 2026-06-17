@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 from urllib.parse import urlparse
@@ -8,10 +9,11 @@ from urllib.parse import urlparse
 import psycopg2
 import psycopg2.extras
 import psycopg2.pool
-import streamlit as st
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+logger = logging.getLogger(__name__)
+
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 
 class DatabaseConnectionUnavailable(RuntimeError):
@@ -19,15 +21,9 @@ class DatabaseConnectionUnavailable(RuntimeError):
 
 
 def _get_database_url() -> str:
-    """优先使用本地环境变量，便于本地开发覆盖 Streamlit secrets。"""
+    """从环境变量获取数据库连接串。"""
     env_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
-    if env_url:
-        return env_url.strip()
-
-    try:
-        return str(st.secrets["database"]["url"]).strip()
-    except Exception:
-        return ""
+    return env_url.strip() if env_url else ""
 
 
 def _get_database_host(db_url: str) -> str:
@@ -38,46 +34,36 @@ def _get_database_host(db_url: str) -> str:
 def _render_connection_error(error: psycopg2.OperationalError, db_url: str) -> None:
     error_text = str(error).strip()
     host = _get_database_host(db_url)
-
-    if "could not translate host name" in error_text:
-        st.error(
-            "⚠️ 数据库连接失败：当前 Supabase 主机名无法在本机解析。"
-        )
-        st.info(
-            "请检查 3 件事：\n"
-            f"1. 当前连接主机是否正确：`{host or '未识别'}`\n"
-            "2. 到 Supabase 后台复制最新的 Connection Pooling 连接串，覆盖 `.streamlit/secrets.toml`\n"
-            "3. 本地开发时可直接在 `.env` 增加 `DATABASE_URL=...`，它会优先覆盖 Streamlit secrets"
-        )
-        return
-
-    if "connection refused" in error_text or "timeout expired" in error_text:
-        st.error("⚠️ 数据库连接失败：数据库主机可识别，但当前网络无法连通 Supabase。")
-        st.info(
-            "请优先确认：\n"
-            f"1. 当前连接主机：`{host or '未识别'}`\n"
-            "2. 本机网络是否可访问外网\n"
-            "3. Supabase 项目是否仍在运行，连接串是否为 Pooling 地址（通常是 6543 端口）"
-        )
-        return
-
-    st.error(f"⚠️ 数据库连接失败：{error_text}")
+    logger.error("Database connection failed: %s (host=%s)", error_text, host)
 
 
-@st.cache_resource
+_connection_pool = None
+
+
+def _clear_cache(func) -> None:
+    """Safely clear a cache-like function if it supports `.clear()`."""
+    clear = getattr(func, "clear", None)
+    if callable(clear):
+        clear()
+
+
 def _get_connection_pool():
-    """全局共享的 PostgreSQL 连接池，避免每次查询都重新建立 TCP+SSL 握手。"""
+    """全局共享的 PostgreSQL 连接池。"""
+    global _connection_pool
+    if _connection_pool is not None:
+        return _connection_pool
     db_url = _get_database_url()
     if not db_url:
         return None
     try:
-        return psycopg2.pool.ThreadedConnectionPool(
+        _connection_pool = psycopg2.pool.ThreadedConnectionPool(
             minconn=1,
             maxconn=10,
             dsn=db_url,
             connect_timeout=10,
             sslmode="require",
         )
+        return _connection_pool
     except psycopg2.OperationalError as e:
         _render_connection_error(e, db_url)
         return None
@@ -126,25 +112,16 @@ def get_connection():
     """从连接池借一条连接，调用方 conn.close() 时会自动归还到池。"""
     db_url = _get_database_url()
     if not db_url:
-        st.error("⚠️ 数据库连接失败：未找到数据库连接串。")
-        st.info(
-            "请在本地配置以下任一位置后重试：\n"
-            "1. `.env` 中增加 `DATABASE_URL=...`\n"
-            "2. `.streamlit/secrets.toml` 中配置 `[database] url = \"...\"`"
-        )
-        st.stop()
         raise DatabaseConnectionUnavailable("Database URL is missing.")
 
     pool = _get_connection_pool()
     if pool is None:
-        st.stop()
         raise DatabaseConnectionUnavailable("Database connection pool is unavailable.")
 
     try:
         conn = pool.getconn()
     except psycopg2.OperationalError as e:
         _render_connection_error(e, db_url)
-        st.stop()
         raise DatabaseConnectionUnavailable("Database connection failed.") from e
 
     if conn.closed:
@@ -331,10 +308,10 @@ def add_comments_batch(user_id: int, comments: list[dict]) -> int:
                 rows,
             )
             conn.commit()
-            get_comments.clear()
-            get_existing_hashes.clear()
-            get_comments_deduped.clear()
-            get_product_stats_deduped.clear()
+            _clear_cache(get_comments)
+            _clear_cache(get_existing_hashes)
+            _clear_cache(get_comments_deduped)
+            _clear_cache(get_product_stats_deduped)
             return len(rows)
     finally:
         conn.close()
@@ -348,44 +325,73 @@ def create_upload_job(user_id: int, job_data: dict) -> int:
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                """INSERT INTO upload_jobs
-                   (user_id, status, source_filename, product_id, version, workflow_purpose,
-                    product_ref_id, variant_ref_id, total_rows, processed_rows,
-                    positive_count, negative_count, session_id, error_message, payload_json,
-                    source_channel)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                   RETURNING id""",
-                (
-                    user_id,
-                    job_data.get("status", "queued"),
-                    job_data.get("source_filename"),
-                    job_data.get("product_id"),
-                    job_data.get("version", "V1"),
-                    job_data.get("workflow_purpose"),
-                    job_data.get("product_ref_id"),
-                    job_data.get("variant_ref_id"),
-                    job_data.get("total_rows", 0),
-                    job_data.get("processed_rows", 0),
-                    job_data.get("positive_count", 0),
-                    job_data.get("negative_count", 0),
-                    job_data.get("session_id"),
-                    job_data.get("error_message"),
-                    psycopg2.extras.Json(job_data.get("payload_json"))
-                    if job_data.get("payload_json") is not None
-                    else None,
-                    job_data.get("source_channel", "manual"),
-                ),
-            )
+            try:
+                cur.execute(
+                    """INSERT INTO upload_jobs
+                       (user_id, status, source_filename, product_id, version, workflow_purpose,
+                        product_ref_id, variant_ref_id, total_rows, processed_rows,
+                        positive_count, negative_count, session_id, error_message, payload_json,
+                        source_channel)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                       RETURNING id""",
+                    (
+                        user_id,
+                        job_data.get("status", "queued"),
+                        job_data.get("source_filename"),
+                        job_data.get("product_id"),
+                        job_data.get("version", "V1"),
+                        job_data.get("workflow_purpose"),
+                        job_data.get("product_ref_id"),
+                        job_data.get("variant_ref_id"),
+                        job_data.get("total_rows", 0),
+                        job_data.get("processed_rows", 0),
+                        job_data.get("positive_count", 0),
+                        job_data.get("negative_count", 0),
+                        job_data.get("session_id"),
+                        job_data.get("error_message"),
+                        psycopg2.extras.Json(job_data.get("payload_json"))
+                        if job_data.get("payload_json") is not None
+                        else None,
+                        job_data.get("source_channel", "manual"),
+                    ),
+                )
+            except psycopg2.errors.UndefinedColumn:
+                conn.rollback()
+                cur.execute(
+                    """INSERT INTO upload_jobs
+                       (user_id, status, source_filename, product_id, version, workflow_purpose,
+                        product_ref_id, variant_ref_id, total_rows, processed_rows,
+                        positive_count, negative_count, session_id, error_message, payload_json)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                       RETURNING id""",
+                    (
+                        user_id,
+                        job_data.get("status", "queued"),
+                        job_data.get("source_filename"),
+                        job_data.get("product_id"),
+                        job_data.get("version", "V1"),
+                        job_data.get("workflow_purpose"),
+                        job_data.get("product_ref_id"),
+                        job_data.get("variant_ref_id"),
+                        job_data.get("total_rows", 0),
+                        job_data.get("processed_rows", 0),
+                        job_data.get("positive_count", 0),
+                        job_data.get("negative_count", 0),
+                        job_data.get("session_id"),
+                        job_data.get("error_message"),
+                        psycopg2.extras.Json(job_data.get("payload_json"))
+                        if job_data.get("payload_json") is not None
+                        else None,
+                    ),
+                )
             job_id = int(cur.fetchone()[0])
             conn.commit()
-            get_upload_job.clear()
+            _clear_cache(get_upload_job)
             return job_id
     finally:
         conn.close()
 
 
-@st.cache_data(ttl=15)
 def get_upload_job(user_id: int, job_id: int) -> dict | None:
     conn = get_connection()
     try:
@@ -442,7 +448,7 @@ def update_upload_job(
                 values,
             )
             conn.commit()
-            get_upload_job.clear()
+            _clear_cache(get_upload_job)
     finally:
         conn.close()
 
@@ -461,8 +467,8 @@ def update_comment_embedding(user_id: int, comment_id: int, embedding: list[floa
                 (_vector_to_sql(embedding), comment_id, user_id),
             )
             conn.commit()
-            get_comments.clear()
-            get_comments_deduped.clear()
+            _clear_cache(get_comments)
+            _clear_cache(get_comments_deduped)
     finally:
         conn.close()
 
@@ -518,7 +524,43 @@ def search_comments_by_embedding(
         conn.close()
 
 
-@st.cache_data(ttl=30)
+def search_comments_by_fulltext(
+    user_id: int,
+    query_text: str,
+    comment_ids: list[int] | None = None,
+    top_k: int = 20,
+) -> list[dict]:
+    """使用 PostgreSQL tsvector 全文检索评论（OPT-4 hybrid search 组件）。"""
+    if not query_text.strip():
+        return []
+    if comment_ids is not None and not comment_ids:
+        return []
+
+    tsquery = " | ".join(query_text.strip().split())
+
+    sql = (
+        "SELECT *, ts_rank(content_tsv, to_tsquery('simple', %s)) AS ft_rank "
+        "FROM comments WHERE user_id = %s AND content_tsv @@ to_tsquery('simple', %s)"
+    )
+    params: list = [tsquery, user_id, tsquery]
+    if comment_ids is not None:
+        sql += " AND id = ANY(%s)"
+        params.append(comment_ids)
+    sql += " ORDER BY ft_rank DESC LIMIT %s"
+    params.append(top_k)
+
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, params)
+            return [dict(r) for r in cur.fetchall()]
+    except (psycopg2.errors.UndefinedColumn, psycopg2.errors.UndefinedFunction):
+        conn.rollback()
+        return []
+    finally:
+        conn.close()
+
+
 def get_comments(
     user_id: int,
     product_id: str | None = None,
@@ -590,9 +632,9 @@ def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> No
                 ),
             )
             conn.commit()
-            get_comments.clear()
-            get_comments_deduped.clear()
-            get_product_stats_deduped.clear()
+            _clear_cache(get_comments)
+            _clear_cache(get_comments_deduped)
+            _clear_cache(get_product_stats_deduped)
     finally:
         conn.close()
 
@@ -623,7 +665,6 @@ def delete_comments_by_session(user_id: int, session_id: int) -> None:
         conn.close()
 
 
-@st.cache_data(ttl=30)
 def get_existing_hashes(user_id: int, product_id: str) -> set[str]:
     conn = get_connection()
     try:
@@ -637,7 +678,6 @@ def get_existing_hashes(user_id: int, product_id: str) -> set[str]:
         conn.close()
 
 
-@st.cache_data(ttl=30)
 def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
     """按 content_hash 去重后统计产品级指标。"""
     sql = """
@@ -664,7 +704,6 @@ def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
         conn.close()
 
 
-@st.cache_data(ttl=30)
 def get_comments_deduped(user_id: int, product_id: str) -> list[dict]:
     """按 content_hash 去重，保留最新一条记录。"""
     sql = """
@@ -891,7 +930,7 @@ def create_session(user_id: int, session_data: dict) -> int:
                 )
             session_id = cur.fetchone()[0]
             conn.commit()
-            get_sessions.clear()
+            _clear_cache(get_sessions)
             return session_id
     finally:
         conn.close()
@@ -910,7 +949,6 @@ def update_session_notes(user_id: int, session_id: int, version_notes: str) -> N
         conn.close()
 
 
-@st.cache_data(ttl=30)
 def get_sessions(user_id: int, product_id: str | None = None) -> list[dict]:
     query = "SELECT * FROM sessions WHERE user_id = %s"
     params: list = [user_id]
@@ -927,7 +965,6 @@ def get_sessions(user_id: int, product_id: str | None = None) -> list[dict]:
         conn.close()
 
 
-@st.cache_data(ttl=30)
 def get_session_by_id(user_id: int, session_id: int) -> dict | None:
     conn = get_connection()
     try:
@@ -951,8 +988,8 @@ def update_session_title(user_id: int, session_id: int, custom_title: str) -> No
                 (custom_title, session_id, user_id),
             )
             conn.commit()
-            get_sessions.clear()
-            get_session_by_id.clear()
+            _clear_cache(get_sessions)
+            _clear_cache(get_session_by_id)
     finally:
         conn.close()
 
@@ -974,8 +1011,8 @@ def update_session_stats(
                 (total_reviews, positive_count, negative_count, session_id, user_id),
             )
             conn.commit()
-            get_sessions.clear()
-            get_session_by_id.clear()
+            _clear_cache(get_sessions)
+            _clear_cache(get_session_by_id)
     finally:
         conn.close()
 
@@ -993,11 +1030,11 @@ def delete_session(user_id: int, session_id: int) -> None:
                 (session_id, user_id),
             )
             conn.commit()
-            get_sessions.clear()
-            get_session_by_id.clear()
-            get_comments.clear()
-            get_comments_deduped.clear()
-            get_product_stats_deduped.clear()
+            _clear_cache(get_sessions)
+            _clear_cache(get_session_by_id)
+            _clear_cache(get_comments)
+            _clear_cache(get_comments_deduped)
+            _clear_cache(get_product_stats_deduped)
     finally:
         conn.close()
 
@@ -1021,12 +1058,12 @@ def delete_product(user_id: int, product_id: str) -> None:
                     (user_id, sid),
                 )
             conn.commit()
-            get_sessions.clear()
-            get_session_by_id.clear()
-            get_comments.clear()
-            get_comments_deduped.clear()
-            get_product_stats_deduped.clear()
-            get_existing_hashes.clear()
+            _clear_cache(get_sessions)
+            _clear_cache(get_session_by_id)
+            _clear_cache(get_comments)
+            _clear_cache(get_comments_deduped)
+            _clear_cache(get_product_stats_deduped)
+            _clear_cache(get_existing_hashes)
     finally:
         conn.close()
 
@@ -1035,7 +1072,6 @@ def delete_product(user_id: int, product_id: str) -> None:
 # Settings CRUD
 # ============================================================
 
-@st.cache_data(ttl=30)
 def get_setting(user_id: int, key: str) -> str | None:
     conn = get_connection()
     try:
@@ -1060,13 +1096,12 @@ def set_setting(user_id: int, key: str, value: str) -> None:
                 (user_id, key, value),
             )
             conn.commit()
-            get_setting.clear()
-            get_all_settings.clear()
+            _clear_cache(get_setting)
+            _clear_cache(get_all_settings)
     finally:
         conn.close()
 
 
-@st.cache_data(ttl=30)
 def get_all_settings(user_id: int) -> dict[str, str]:
     conn = get_connection()
     try:

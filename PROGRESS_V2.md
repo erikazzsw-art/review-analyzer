@@ -1567,17 +1567,48 @@ NX-M8 验收记录（Phase A）：
 
   ---
 
-  #### Step 2.0d: Streamlit 退场前迁移注意事项（提前备注，避免遗忘）
+  #### Step 2.0d: Streamlit 退场（执行计划）
 
-  > **为什么写在这里**：当前架构是「Streamlit 旧栈 + Next.js/FastAPI 新栈」双栈并行，未来某天会下线 Streamlit。下线前必须确认下面几件事都做完，否则可能丢用户数据或造成账号迁移混乱。
+  > **背景**：Next.js + FastAPI 已完全接管 prod 流量（NX-M2~M8 全部完成）。Streamlit 仅作为 legacy 残留，当前 docker-compose 中 `profiles: legacy` 不启动。本计划正式移除 Streamlit 相关代码和配置。
 
-  - [ ] **数据迁移核对**：用户、产品、评论、行动事项、复盘记录全部能在 Next.js 端完整读取（NX-M3~M7 已迁移，但需端到端回归一次）
-  - [ ] **会话切换**：旧 Streamlit `st.session_state` 登录态 → FastAPI HttpOnly Cookie 已平滑（NX-M2 已完成）
-  - [ ] **Streamlit Cloud 下线**：迁移已离开 Streamlit Cloud，目标部署是 ECS（NX-M8 已配置）；**注意：Streamlit Cloud 上仍连着同一个 Supabase 项目**，下线时要确认那边的 secrets 配置已废弃
-  - [ ] **Streamlit secrets 残留清理**：`.streamlit/secrets.toml` 在本地和 Streamlit Cloud 后台都要清空；`AES_SECRET_KEY` 一旦在 Step 2.0c 轮换后，旧 streamlit 实例如果还连着旧 key 会立刻报解密错误
-  - [ ] **域名收口**：`app.clueai-reviewlens.com` 由 Next.js 接管，旧 Streamlit URL 做 301 跳转或直接关停
-  - [ ] **`review_analyzer/.env` 处置**：Streamlit 完全下线后，本地这个 .env 文件理论上不再被任何代码加载；可以删本地文件，但保留 .gitignore 规则避免未来误提交
-  - 验收：Streamlit 关停 1 周内，所有用户都通过 Next.js 正常访问，无数据丢失，无登录态问题
+  **前置条件确认**（2026-06-16 评估）：
+
+  - [x] **数据迁移核对**：NX-M3~M7 全部完成，用户/产品/评论/行动/复盘在 Next.js 端完整可用
+  - [x] **会话切换**：FastAPI HttpOnly Cookie 已接管（NX-M2 完成）
+  - [x] **Streamlit Cloud 下线**：✅ 2026-06-16 Erika 确认已关停、secrets 已清除
+  - [x] **域名收口**：Next.js 已接管 `app.clueai-reviewlens.com`
+  - [x] **`review_analyzer/.env` 处置**：当前指向 dev 库，被 backend_api 通过 `os.environ` 加载（非 Streamlit secrets），保留
+
+  ---
+
+  **Phase 1：删除纯 Streamlit UI 层（低风险，不影响 FastAPI）** ✅ 2026-06-16
+
+  - [x] 删除 `review_analyzer/app.py`（Streamlit 主入口，19KB）
+  - [x] 删除 `review_analyzer/page_shell.py`（Streamlit 页面壳）
+  - [x] 删除 `review_analyzer/i18n.py`（纯 Streamlit UI 国际化）
+  - [x] 删除 `.streamlit/` 目录（config.toml + secrets 模板）
+  - [x] 删除 `docker-compose.yml` 中 `streamlit` 服务定义（profiles: legacy 块）
+  - [x] 删除 `test_m8_full.py`（Streamlit 迁移测试，已过时）
+
+  **Phase 2：清理共享模块中的 Streamlit 残留（需逐文件验证）** ✅ 2026-06-16
+
+  - [x] `review_analyzer/database.py`：移除 `import streamlit as st`，`@st.cache_data` 装饰器，`st.secrets` fallback，`st.error/st.info/st.stop` → logger + raise
+  - [x] `review_analyzer/product_store.py`：移除 `@st.cache_data` 装饰器及 `.clear()` 调用
+  - [x] `review_analyzer/review_store.py`：同上，移除 `@st.cache_data` 及 `.clear()` 调用
+  - [x] `review_analyzer/action_store.py`：同上，移除 `@st.cache_data` 及 `.clear()` 调用
+  - [x] `review_analyzer/auth.py`：移除所有 Streamlit UI 函数，仅保留 FastAPI 使用的纯业务逻辑
+  - [x] `review_analyzer/workspace_store.py`：移除 `i18n` 依赖，内联 `pick()`/`role_label()` 为 thread-local 实现
+  - [x] `review_analyzer/workflow_prompts.py`：移除 `get_lang()` 依赖，改为参数传入 `lang`
+
+  **Phase 3：依赖清理与验证** ✅ 2026-06-16
+
+  - [x] 从 `requirements.txt` 和 `review_analyzer/requirements.txt` 移除 `streamlit` 及 `streamlit-authenticator`
+  - [x] 运行 `python -c "from review_analyzer.database import get_user_by_id"` 验证模块可正常 import
+  - [x] 运行 `cd frontend && npm run typecheck` 确认前端无影响
+  - [x] 运行 `python3 -m ruff check backend_api/ workers/ review_analyzer/` 确认 lint 通过
+  - [x] 更新 CLAUDE.md 中 Streamlit 相关说明（标记为已移除）
+
+  验收：`backend_api` + `workers` 正常启动，所有 `from review_analyzer.*` 的 import 无 `streamlit` 依赖报错 ✅
 
   ---
 
@@ -3170,6 +3201,207 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - 全站 tsc --noEmit 通过 ✅
   - next build 成功 ✅
   - 主题色修改一处 CSS 变量 → 全站联动生效（通过 HSL 变量层实现）
+
+---
+
+### V4.5-T9: 首页改造 — 数据可视化卡片 + 闭环文案（版本1）（2026-06-16 完成）
+
+**背景：** 原首页为英文通用 SaaS 风格，缺乏产品差异化表达。需重新设计为中文闭环概念首页，突出"评论分析 → 行动推送 → 复盘验证"的产品核心价值，并以数据可视化卡片直观展示产品能力。
+
+**设计参考：** 暗色 glassmorphic 仪表板截图（仅参考布局结构和卡片形式），保持现有亮色体系（rose/lavender/mint），在呈现形式上做差异化简化。
+
+**标记：** 版本1 — 后续可能迭代优化
+
+---
+
+#### Phase 1: 布局与组件架构重构 ✅ 已完成
+
+- [x] **Step 1: MarketingShell 重构**
+  - 改为单卡片大容器布局（rounded-shell + border-line + shadow-card + backdrop-blur）
+  - 顶部区域：标题 + 副标题 + 描述 + CTA 按钮（桌面端右上角，移动端底部）
+  - 新增 `subtitle` 和 `cta` props
+  - 文件：`frontend/src/components/marketing/marketing-shell.tsx`
+
+- [x] **Step 2: HeroPreview 数据可视化卡片**
+  - 2×2 网格布局，四张数据卡片：
+    - 评论洞察：柱状图（rose→lavender 渐变色柱），展示 Top 5 问题类别
+    - 情感分布：三色横向进度条（负面/中性/正面），含评论总数
+    - 措施跟进：三项进度条（mint/lavender/rose），展示改进执行率
+    - 复盘验证：SVG 折线趋势图，展示改进前后差评率下降
+  - 全部使用内联 SVG + CSS 变量渲染，无外部图表库依赖
+  - 文件：`frontend/src/components/marketing/hero-preview.tsx`
+
+#### Phase 2: 文案与内容定义 ✅ 已完成
+
+- [x] **Step 3: 核心文案撰写**
+  - eyebrow 标签：「分析 → 行动 → 复盘」
+  - 主标题：ReviewLens
+  - 副标题：从评论洞察到产品行动的完整闭环
+  - 描述：多平台 + 多格式 + AI 分析 + 飞书推送 + 跟进落地 + 数据复盘
+  - CTA：开始使用 ↗ → /register
+  - SEO metadata 同步更新
+
+- [x] **Step 4: ValueGrid 三步闭环卡片**
+  - 卡片 1（roseSoft）：多源接入，智能分析 — 多平台多格式支持 + AI Top 10
+  - 卡片 2（lavender-soft）：精准推送，责任到人 — 飞书推送 + 责任人匹配
+  - 卡片 3（mint-soft）：数据复盘，验证闭环 — 前后对比验证改进效果
+  - 文件：`frontend/src/components/marketing/value-grid.tsx`
+
+#### Phase 3: 首页入口整合 ✅ 已完成
+
+- [x] **Step 5: page.tsx 重写**
+  - 移除旧英文 HeroSection/FeatureGrid 组件引用
+  - 组装 MarketingShell（含 HeroPreview + CTA）+ ValueGrid
+  - 文件：`frontend/src/app/page.tsx`
+
+#### Phase 4: 验收 ✅ 已完成
+
+- [x] **Step 6: 构建验证**
+  - tsc --noEmit 通过 ✅
+  - next build 成功 ✅
+  - dev server 启动后 curl 确认所有中文关键内容正常渲染 ✅
+
+---
+
+### V4.5-T10: 登录/注册独立页面改造 + 全站文案中文化（2026-06-16 完成）
+
+**背景：** 原登录/注册页面复用首页 MarketingShell 组件，视觉上不够独立，且所有文案均为英文。需改为独立全屏双栏布局（左侧产品展示 + 右侧表单），同时完成全站营销页面文案中文化。
+
+**设计参考：** Shulex 登录页截图（左右分栏布局），保持现有亮色体系（rose/lavender/mint 渐变），不使用深色主题。
+
+---
+
+#### Phase 1: AuthLayout 共享组件 ✅ 已完成
+
+- [x] **Step 1: 创建 AuthLayout 组件**
+  - 左侧：rose/lavender/mint 三色渐变背景 + Logo + 评论趋势折线图（SVG）+ 产品价值文案
+  - 右侧：纯白背景 + 表单内容区
+  - 响应式：移动端隐藏左栏，仅显示 Logo + 表单
+  - 文件：`frontend/src/components/auth/auth-layout.tsx`
+
+#### Phase 2: 页面重写 ✅ 已完成
+
+- [x] **Step 2: 登录页重写**
+  - 标题：「欢迎回来」+ 副文案「登录后进入评论分析工作台」
+  - 底部链接：忘记密码 / 去注册
+  - 文件：`frontend/src/app/login/page.tsx`
+
+- [x] **Step 3: 注册页重写**
+  - 标题：「创建账号」+ 副文案「注册后即可上传评论，获取 AI 分析洞察」
+  - 底部链接：已有账号？去登录
+  - 文件：`frontend/src/app/register/page.tsx`
+
+- [x] **Step 4: 找回密码页适配**
+  - 标题：「找回密码」+ 三步流程中文化（发送验证码 → 输入验证码+新密码 → 重置成功）
+  - 文件：`frontend/src/app/forgot-password/page.tsx`、`frontend/src/components/auth/forgot-password-form.tsx`
+
+#### Phase 3: 表单组件中文化 ✅ 已完成
+
+- [x] **Step 5: login-form.tsx 中文化**
+  - label：用户名 / 密码
+  - placeholder：请输入用户名 / 请输入密码
+  - 按钮：登 录 / 登录中...
+
+- [x] **Step 6: register-form.tsx 中文化**
+  - label：用户名 / 邮箱 / 密码
+  - placeholder：请输入用户名 / 请输入邮箱地址 / 至少 6 位字符
+  - 按钮：注 册 / 注册中...
+
+#### Phase 4: 导航栏中文化 ✅ 已完成
+
+- [x] **Step 7: site-header 更新**
+  - 品牌名：ClueAI → ReviewLens，Logo 缩写 CA → RL
+  - 副文案：Review intelligence for sellers → 评论智能分析平台
+  - 导航项：Pricing → 定价、Try the Flow → 体验流程、Log In → 登录、Create Account → 注册
+
+#### Phase 5: 验收 ✅ 已完成
+
+- [x] **Step 8: 构建验证**
+  - tsc --noEmit 通过 ✅
+  - next build 编译成功 ✅
+  - dev server 验证 /login、/register、/forgot-password、/ 四个页面中文内容正常渲染 ✅
+
+---
+
+### V4.5-T11: AI 分析链路优化（2026-06-17 新增）
+
+**背景：** V4-T4 成本优化已完成（缓存命中率 98%，100 条仅 2 条走 LLM）。本任务在此基础上进一步提升分析质量、降低延迟、增强可观测性。不破坏现有稳定性。
+
+**前置条件：** V4-T4 全部完成 ✅
+
+**详细方案文档：** [`AI_PIPELINE_OPTIMIZATION.md`](AI_PIPELINE_OPTIMIZATION.md)
+
+---
+
+#### Phase 1: P0 低成本高收益（1-2 天）
+
+- [x] **OPT-1: Embedding 批量调用**
+  - 现状：`rag.py:embed_session_comments()` 逐条 HTTP 调用
+  - 方案：改用 `input: list[str]` 批量接口（一次最多 2048 条）
+  - 改动：`review_analyzer/rag.py` 新增 `generate_embeddings_batch()`
+  - 预期：500 条 embedding 延迟从 ~15s → ~2s
+  - 风险：极低，失败 fallback 回逐条
+
+- [x] **OPT-2: DeepSeek Prefix Caching 验证**
+  - 现状：`deep_analyzer.py` 每条评论发完整 system prompt（~2000 tokens），DeepSeek 理应自动缓存
+  - 方案：检查 DeepSeek 账单 `cache_hit_tokens` 字段，确认是否命中
+  - 改动：无代码改动，纯验证。如未命中则调整 client 复用策略
+  - 风险：零
+
+- [x] **OPT-3: 聚类传播质量门控**
+  - 现状：`clustering.py` 对所有聚类结果无差别传播
+  - 方案：簇内平均余弦相似度 < 0.88 的不传播，成员回退走 LLM
+  - 改动：`backend_api/app/services/clustering.py` 加 ~10 行 numpy 检查
+  - 预期：消除跨品类场景下的错误传播
+  - 风险：低，最坏只是多走几次 LLM
+
+---
+
+#### Phase 2: P1 中等投入（3-5 天）
+
+- [x] **OPT-4: RAG Hybrid Search + Reranking**
+  - 现状：向量检索 OR 文本 fallback（二选一），文本检索是简单 token overlap
+  - 方案：向量 Top-20 + tsvector 全文 Top-20 → RRF merge → 取 Top-5
+  - 改动：`review_analyzer/rag.py` + `database.py` + SQL migration（tsvector + GIN 索引）
+  - 前置确认：Supabase 是否已启用 `zhparser` 中文分词
+  - 预期：精确关键词问题命中率 ~60% → ~95%
+
+- [x] **OPT-5: Evaluation Pipeline 自动化**
+  - 现状：Golden Set 499 条，手动跑
+  - 方案：CI 集成（prompt 变更触发回归）+ 线上抽样（GPT-4o 二次评判）+ 月度报告
+  - 改动：`scripts/eval_golden_set.py` + `.github/workflows/eval.yml` + migration
+  - 与 V4-T3/T6 关系：T3 的质量保障自动化延伸，与 T6（用户反馈）互补
+
+- [x] **OPT-6: 升级判定加统计显著性**
+  - 现状：`escalation.py` 固定规则（连续 3 期 TOP + >10%），不考虑样本量
+  - 问题：10 条评论中 2 条 = 20%，统计不显著但触发升级
+  - 方案：Wilson Score Interval 置信下界，n < 30 时须下界 > 阈值才触发
+  - 改动：`review_analyzer/escalation.py` 加 ~20 行 scipy 检验
+  - 预期：小样本误报减少 80%+
+
+---
+
+#### Phase 3: P2 远期方向（需 PMF 验证后启动）
+
+- [ ] **OPT-7: Agentic RAG（Tool-augmented 问答）**
+  - 适用：用户开始问开放式问题（"为什么差评变多了"）
+  - 方案：给 RAG LLM 加 Function Calling（search_reviews / get_stats / compare_periods）
+  - 触发条件：≥10 付费用户反馈需要开放式分析能力
+
+- [ ] **OPT-8: Self-Consistency + 主动学习**
+  - 适用：V4-T6（反馈回路）完成后
+  - 方案：歧义评论多次投票 + evidence_level=low 样本自动标记 → 扩大 bad case 发现面
+
+---
+
+#### 不适合现在做的
+
+| 方向 | 原因 |
+|------|------|
+| Multi-Agent 架构 | 当前无适用场景，任务步骤确定 |
+| Batch Prompt（多条合一次 LLM） | 缓存 98% 命中率下剩余量太小，收益 < 准确率风险 |
+| RQ → Celery 迁移 | 当前无并发瓶颈，等月活 > 50 |
+| ABSA fine-tune 小模型 | 已规划为 V4-T5，等 5 付费用户 |
 
 ---
 
