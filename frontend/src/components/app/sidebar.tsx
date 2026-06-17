@@ -3,24 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  LayoutDashboard,
-  Package,
-  Upload,
-  BarChart3,
-  GitCompareArrows,
-  Clock,
-  MessageCircleQuestion,
-  Zap,
-  RefreshCcw,
-  PenLine,
-  Bell,
   Menu,
   X,
   User,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 
 type SidebarProps = {
   currentPath: string;
@@ -32,32 +18,33 @@ const navGroups = [
   {
     title: "核心",
     items: [
-      { href: "/workspace", label: "工作台", icon: LayoutDashboard },
-      { href: "/upload", label: "上传评论", icon: Upload },
-      { href: "/analysis/results", label: "分析结果", icon: BarChart3 },
+      { href: "/workspace", label: "工作台" },
+      { href: "/upload", label: "上传评论" },
+      { href: "/analysis/results", label: "分析结果" },
     ],
   },
   {
     title: "洞察",
     items: [
-      { href: "/analysis/compare", label: "对比分析", icon: GitCompareArrows },
-      { href: "/analysis/history", label: "历史记录", icon: Clock },
-      { href: "/qa", label: "问评论", icon: MessageCircleQuestion },
+      { href: "/analysis/compare", label: "对比分析" },
+      { href: "/analysis/history", label: "历史记录" },
+      { href: "/qa", label: "问评论" },
     ],
   },
   {
     title: "行动",
     items: [
-      { href: "/actions", label: "行动中心", icon: Zap },
-      { href: "/reviews", label: "复盘追踪", icon: RefreshCcw },
-      { href: "/copywriter", label: "宣传文案", icon: PenLine },
+      { href: "/actions", label: "行动中心" },
+      { href: "/reviews", label: "复盘追踪" },
+      { href: "/copywriter", label: "宣传文案" },
     ],
   },
   {
     title: "管理",
     items: [
-      { href: "/products", label: "产品管理", icon: Package },
-      { href: "/settings", label: "推送设置", icon: Bell },
+      { href: "/products", label: "产品管理" },
+      { href: "/settings", label: "推送设置" },
+      { href: "/settings/observability", label: "可观测性" },
     ],
   },
 ];
@@ -92,27 +79,23 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
             </div>
             {group.items.map((item) => {
               const isActive = item.href === currentPath;
-              const Icon = item.icon;
               return (
-                <Button
+                <a
                   key={item.href}
-                  variant="ghost"
-                  asChild
-                  className={cn(
-                    "relative mb-0.5 w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium",
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={[
+                    "relative mb-0.5 flex w-full items-center justify-start gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-roseSoft text-ink hover:bg-roseSoft"
-                      : "text-soft hover:bg-white/60 hover:text-ink"
-                  )}
+                      : "text-soft hover:bg-white/60 hover:text-ink",
+                  ].join(" ")}
                 >
-                  <Link href={item.href} onClick={() => setMobileOpen(false)}>
-                    {isActive && (
-                      <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-rose" />
-                    )}
-                    <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
-                    {item.label}
-                  </Link>
-                </Button>
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-rose" />
+                  )}
+                  {item.label}
+                </a>
               );
             })}
           </div>
@@ -121,7 +104,7 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
 
       {/* User info */}
       <div className="px-4 py-4">
-        <Separator className="mb-4 bg-line" />
+        <div className="mb-4 h-px bg-line" />
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-lavender/10 text-lavender">
             <User size={16} />
@@ -149,22 +132,22 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
       {/* Mobile top bar */}
       <div className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-line bg-white/95 px-4 backdrop-blur md:hidden">
         <div className="flex items-center gap-2">
-          <Link
+          <a
             href="/"
             className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-[linear-gradient(135deg,#f36f8f,#8d7be8)] font-heading text-xs font-extrabold text-white"
           >
             CA
-          </Link>
+          </a>
           <span className="font-heading text-sm font-bold text-ink">ClueAI</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileOpen(!mobileOpen)}
+        <button
+          type="button"
+          onClick={() => setMobileOpen((prev) => !prev)}
           aria-label={mobileOpen ? "关闭菜单" : "打开菜单"}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-line bg-white text-ink hover:bg-roseSoft"
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </Button>
+        </button>
       </div>
 
       {/* Mobile overlay */}

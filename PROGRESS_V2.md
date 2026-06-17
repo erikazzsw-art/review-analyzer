@@ -1493,6 +1493,57 @@ NX-M8 验收记录（Phase A）：
 
 ---
 
+### V4-T1.6: Golden Set 多品类演进 + 时效性防护（持续，随新品类上线触发）
+
+**背景（2026-06-17 识别的风险）：** 当前 Golden Set v1.0 仅覆盖家具家居 6 子品类（499 条评测集），CI 回归也只验证这一个品类。如果产品新增品类（3C、宠物、母婴等），或已有品类出现新功能关键词（如"快充"），Golden Set 对这些维度是"盲测"——准确率指标无法反映真实表现。Shulex 用 20000+ tag + 运营团队持续维护解决此问题，ClueAI 需要低成本替代方案。
+
+**目标：** 让 Golden Set 评测覆盖范围随 Taxonomy 扩展同步增长，消除"新品类准确率盲区"。
+
+**前置依赖：** V4-T1 Step 3（Taxonomy 入库）✅ + V4-T1.5（Taxonomy 接入链路）✅
+
+**Files:**
+- Create: `scripts/build_golden_set_generic.py`（按品类生成 mini golden set）
+- Modify: `.github/workflows/golden-set-regression.yml`（支持多品类循环评测）
+- Modify: `review_analyzer/eval/run.py`（`--category` 参数支持）
+- Create: `backend_api/app/services/taxonomy_coverage_monitor.py`（`other` 占比告警）
+- Create: `data/golden_set/v1.1/`（多品类评测集目录）
+
+- [x] **Step 1: 品类级 mini Golden Set 生成脚本** ✅ 2026-06-17
+  - 每个新品类上线时，从该品类数据中分层采样 50-100 条
+  - 用 DeepSeek 预标注（sentiment + aspect），人工仲裁不一致样本
+  - 输出到 `data/golden_set/v1.1/{category_slug}/golden_50.csv`
+  - 成本预估：¥0.05-0.10/品类（50 条 DeepSeek 标注）
+  - 实际产物：`scripts/build_golden_set_generic.py`
+
+- [x] **Step 2: CI 多品类回归** ✅ 2026-06-17
+  - `golden-set-regression.yml` 新增 v1.1 多品类评测步骤（`--all-categories`）
+  - 每个品类独立出准确率，任一品类低于阈值即 fail
+  - 新品类阈值从 85% 起步（样本少、置信区间宽），家具家居维持 93%
+  - eval CLI 新增 `--category` 和 `--all-categories` 参数
+  - 实际产物：`review_analyzer/eval/run.py`（多品类 CLI）+ `review_analyzer/eval/golden_set.py`（v1.1 加载器）+ `.github/workflows/golden-set-regression.yml`
+
+- [x] **Step 3: `other` 占比线上监控（最低成本防御）** ✅ 2026-06-17
+  - 分析完成后统计该批次 `other` aspect 占比
+  - 阈值：单品类 `other` > 15% 触发告警（说明 taxonomy 覆盖不足）
+  - 告警方式：写入 `upload_jobs.trace_json.warnings` + `sessions.warnings_json` + 飞书推送
+  - UI 侧在分析结果页显示黄色告警横幅
+  - 实际产物：`backend_api/app/services/taxonomy_coverage_monitor.py` + `migrations/022_add_session_warnings.sql` + `workers/jobs.py`（集成）+ `frontend/src/app/analysis/results/page.tsx`（UI 展示）
+
+- [ ] **Step 4: Taxonomy 新增 → Golden Set 联动 SOP**
+  - 当 `category_aspect_taxonomy` 表新增 sub_category 时，自动创建该品类的 Golden Set TODO
+  - 每季度 review：检查 `other` 占比最高的 Top 3 品类，优先补充 golden set
+  - 文档化为 `docs/golden-set-evolution-sop.md`
+
+**验收标准：**
+- 每个已上线品类至少有 50 条 golden set 评测数据
+- CI 能按品类分别报告准确率（不再只有一个全局数字）
+- 线上 `other` 占比 > 15% 时，30 分钟内有告警通知
+- 新品类从 Taxonomy 入库到 Golden Set 就绪 ≤ 2 天
+
+**优先级建议：** Step 3（`other` 监控）实现成本最低但防御价值最大，建议第一个做；Step 1-2 在下一个新品类实际上线时触发。
+
+---
+
 ### V4-T2: 商业化基建（Week 1-3，与 T1 并行）
 
 **目标：** 让产品具备承接前 50 个付费用户的能力。
@@ -2078,8 +2129,9 @@ NX-M8 验收记录（Phase A）：
 ```
 V4-T1 (数据资产化) ──┬──► V4-T3 (LLM 输出加固) ──┬──► V4-T5 (ABSA 小模型)
                      ├──► V4-T4 (成本优化)       │
-                     └──► V4-T6 (反馈回路) ◄─────┘
-                                                  
+                     ├──► V4-T6 (反馈回路) ◄─────┘
+                     └──► V4-T1.5 (Taxonomy 接入) ──► V4-T1.6 (Golden Set 多品类演进)
+                                                          ↑ 新品类上线时触发
 V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
                        └──► (依赖 T3 + T4 完成)
 ```
@@ -3431,5 +3483,159 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 | RQ → Celery 迁移 | 当前无并发瓶颈，等月活 > 50 |
 | ABSA fine-tune 小模型 | 已规划为 V4-T5，等 5 付费用户 |
 
+#### Worker 可靠性补丁（2026-06-17 追加）
+
+- [x] **OPT-9: Stale Job 卡死检测 + 飞书告警** ✅ 2026-06-17
+  - 问题：Worker 进程 crash / OOM 后，`upload_jobs.status='processing'` 的任务永远卡死，前端无限 polling
+  - 方案：`workers/periodic_jobs.py` 新增 `scan_stale_jobs()`，scheduler 每 5 分钟调用
+  - 逻辑：查 `status='processing' AND updated_at < now() - 15min` → 标记 `failed` + 飞书运维群告警
+  - 改动：`workers/periodic_jobs.py`（新增 `scan_stale_jobs` + `_send_stale_alert` + `enqueue_stale_job_scan`）
+  - 配置：`deploy/.env` 新增 `FEISHU_OPS_WEBHOOK`（运维群 webhook，不设则跳过告警但仍标记 failed）
+  - 风险：零，只读扫描 + 标记已卡死的任务
+
 ---
 
+### V4.5-T12: 分析链路可观测性体系（方向 C）（2026-06-17 新增）
+
+**来源：** 《Agent工程师核心能力学习与实践指南》方向 C
+**前置条件：** V4.5-T11 OPT-1~6 完成 ✅ + NX-M8 部署 smoke test 通过
+**启动时间节点：** NX-M8 完成后立即启动（预计 2026-06-18~19 可开始）
+**总工期：** ~7 天
+
+**业务意义：**
+- 成本可控性：当前 LLM 调用成本仅靠 `llm_usage_log` 被动记录，无法实时感知异常消耗
+- 故障定位：worker 管道 7 个步骤串行，任一步骤延迟异常时无结构化数据定位瓶颈
+- 面试展示：维度三（评测/可观测性）是 Agent 工程师"合格→优秀"的分水岭
+
+**负面影响评估：**
+- C1-C3：纯后端，不影响用户体验，零风险
+- C4：新增前端页面，不改动现有页面，零回归风险
+- C5：告警频率需调参，过高会打扰（Redis TTL 去重兜底）
+- 整体：所有 `track_*` 调用 try/except 包裹，失败不阻塞主分析管道
+
+**关键发现：** `backend_api/app/services/analytics.py` 的 `track_llm_call()` 和 `track_analysis_complete()` 已完整实现（含参数定义），但从未被 worker 管道调用。C1 本质是"接线"，不是"建设"。
+
+---
+
+#### Step 1: C1 接通追踪（1天）
+
+- [x] `deep_analyzer.py` — `analyze_one()` 增加 `user_id` 可选参数 + 计时 + 成功/失败时调用 `track_llm_call()`
+- [x] `workers/jobs.py` — `process_upload_job()` 末尾调用 `track_analysis_complete()`
+- [x] 无需数据库迁移（写入已有 `analytics_events` 表）
+- [x] 验证：上传 10 条 → `SELECT * FROM analytics_events WHERE event_name IN ('llm_call', 'analysis_job_complete')` 有数据
+
+#### Step 2: C2 结构化 Job Trace（1天）
+
+- [x] 新建 `backend_api/app/services/job_trace.py` — `JobTrace` dataclass（step 上下文管理器 + record_decision + persist）
+- [x] `workers/jobs.py` — 各阶段用 `trace.step("embed")` 等包裹
+- [x] Migration 021: `ALTER TABLE upload_jobs ADD COLUMN trace_json JSONB`
+- [x] Trace 记录：各步耗时 + 决策元数据（是否聚类/缓存命中率/prompt 版本/fallback 事件）+ 汇总
+- [x] 验证：上传完成后 `SELECT trace_json FROM upload_jobs WHERE id = X` 有完整 JSON
+
+#### Step 3: C3 Dashboard API（2天）
+
+- [x] 新建 `backend_api/app/services/observability_queries.py` — 聚合查询
+- [x] `GET /analytics/pipeline-health`：p50/p95/p99 延迟、错误率、吞吐量
+- [x] `GET /analytics/cache-effectiveness`：L1/聚类节省比率
+- [x] `GET /analytics/model-status`：实时 `LLMRouter.status()` 熔断状态
+- [x] `GET /analytics/job-traces/{job_id}`：单任务 trace 详情
+- [x] `GET /analytics/llm-costs` 扩展：增加 `by_model` 维度
+- [x] 验证：curl 各端点返回正确 schema
+
+#### Step 4: C4 前端看板（2天）
+
+- [x] `frontend/src/app/settings/observability/page.tsx`
+- [x] 组件：cost-chart（每日成本折线）、latency-chart（p50/p95）、cache-stats-card、model-status-card
+- [x] 图表库：recharts（检查 package.json，无则引入）
+- [x] sidebar 添加"可观测性"子导航
+- [x] 验证：`npm run dev` → /settings/observability 渲染正常（TypeScript 编译通过，API 端点已验证）
+
+#### Step 5: C5 Feishu 告警（1天）
+
+- [ ] 新建 `workers/alert_checker.py` — scheduler 每 10 分钟调用
+- [ ] 告警条件：日成本 > ¥10 / 错误率 > 20%（1h 窗口）/ 熔断器 open
+- [ ] Redis 去重：`alert:{type}:{user_id}` + 1h TTL
+- [ ] 复用 `notifier.py:send_feishu_notification()`
+- [ ] `GET/PUT /analytics/alert-config` 端点
+- [ ] 验证：手动触发超限 → 飞书收到 → 1h 内不重复
+
+---
+
+### V4.5-T13: Agent 智能工作流升级（方向 A）（2026-06-17 新增）
+
+**来源：** 《Agent工程师核心能力学习与实践指南》方向 A
+**前置条件：** V4.5-T12 的 C1-C2 完成（需要 trace 数据支撑决策可观测）
+**启动时间节点：** V4.5-T12 C1-C2 完成后（预计 2026-06-20~21）
+**总工期：** ~6 天
+
+**业务意义：**
+- 智能路由：消除 `jobs.py` 中 `if len >= 10` 等硬编码，让系统根据数据特征自主决策分析策略
+- 异常自适应：差评突增时无需人工发起深度分析，系统自动检测并触发（从"被动工具"到"主动助手"）
+- Action Loop 闭环：V5-T3 已建立升级推送，但缺少"验证效果→自动关闭"，当前 action_items 只能手动关闭
+- 面试展示：维度一"能判断该用什么级别方案"+ 维度四"可暂停可恢复可审计"
+
+**负面影响评估：**
+- A1（智能路由）：确定性规则，不消耗 LLM token，可预测可测试，风险极低
+- A2（异常检测）：新增根因分析 job 会消耗额外 LLM 调用（但仅异常时触发，频率低），需要 cost alert 保护（C5 先就位）
+- A3（闭环）：自动关闭 action_item 可能误判改善（阈值 30% 较保守，可调），不影响用户主动操作
+- 整体：所有新逻辑以"增量插入"方式加入 worker 管道，不改动核心分析调用链
+
+**与现有系统的关系：**
+- A1 是 V4-T1.5 动态 taxonomy 路由的扩展（从"品类选 prompt"到"多维度选策略"）
+- A2 依赖 V4.5-T12 的 trace 数据来记录检测结果
+- A3 直接扩展 V5-T3 的 `escalation.py` + `action_store.py`（已有 80% 基础设施）
+
+---
+
+#### Step 1: A1 智能路由（2天）
+
+- [ ] 新建 `backend_api/app/services/pipeline_router.py` — `decide_pipeline()` 返回 `PipelineDecision`
+- [ ] 规则引擎（非 LLM）：品类 taxonomy 选 prompt 版本 / review_count 决定是否聚类 / 语言分布决定是否翻译 / 数量决定并发度
+- [ ] `workers/jobs.py` — 硬编码判断委托给 `decide_pipeline()`
+- [ ] C2 的 trace 自动记录决策（`trace.record_decision("pipeline_router", decision)`）
+- [ ] 验证：上传 5 条 → trace 显示 `clustering_used=false, reason="count < 10"`
+
+#### Step 2: A2 异常自适应分析（2天）
+
+- [ ] 新建 `backend_api/app/services/anomaly_detector.py` — `detect_anomalies()`
+- [ ] 三类检测：情感突变（neg_rate 偏差 >15% vs 历史均值）/ 新 aspect 发现 / 低置信度批次
+- [ ] Migration 022: `taxonomy_suggestions` 表（存新 aspect 待人工审核）
+- [ ] 情感突变 → 自动 enqueue 根因分析 job
+- [ ] `workers/jobs.py` — `_post_analysis_smart_push()` 前插入 `detect_anomalies()`
+- [ ] 验证：构造 40% 差评数据（基线 15%）→ sentiment_spike 检出 → 根因 job 入队
+
+#### Step 3: A3 Action Loop 闭环（2天）
+
+- [ ] 新建 `review_analyzer/loop_closure.py` — `check_loop_closure()`
+- [ ] 闭环逻辑：tag 占比下降 >30% → 自动 close action_item / 标记 done 但未改善 → re-escalate
+- [ ] `action_store.py` 增加 `close_action_with_evidence()` + `reescalate_action()`
+- [ ] `workers/jobs.py` — `_post_analysis_smart_push()` 中调用 `check_loop_closure()`
+- [ ] `notifier.py` — 推送增加"闭环验证结果"段落
+- [ ] 验证：创建 action_item → 上传改善数据 → 自动关闭；创建 → 标记 done → 上传未改善 → 再升级
+
+---
+
+### T12+T13 整体排期与执行策略
+
+| Phase | 预计工期 | 启动条件 | 可独立部署 |
+|-------|---------|---------|-----------|
+| C1 接通追踪 | 1天 | NX-M8 smoke test 通过 | ✅ |
+| C2 结构化 Trace | 1天 | C1 完成 | ✅ |
+| C3 Dashboard API | 2天 | C2 完成 | ✅ |
+| C4 前端看板 | 2天 | C3 完成 | ✅ |
+| C5 告警 | 1天 | C3 完成（与 C4 可并行） | ✅ |
+| A1 智能路由 | 2天 | C2 完成 | ✅ |
+| A2 异常自适应 | 2天 | A1 + C5 完成 | ✅ |
+| A3 闭环 | 2天 | A1 完成 | ✅ |
+
+**最小可展示子集（面试准备）：** C1 + C2 + C3 + A1 ≈ 6天，覆盖"可观测性 + Agent 决策"两个维度。
+
+**关键架构决策：**
+1. 不引入新框架 — 追踪用已有 `analytics_events` 表 + JSONB
+2. Fire-and-forget — 所有 `track_*` 调用绝不阻塞主管道
+3. 规则驱动路由 — `pipeline_router.py` 用确定性 if/else，零 LLM 消耗
+4. 闭环是被动的 — 跟随正常分析流程执行，不额外开定时任务
+5. Trace 存 `upload_jobs` — 一对一关联，查询简单
+6. 告警复用 Feishu webhook — 零额外配置
+
+---
