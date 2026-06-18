@@ -2,11 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { AppShell } from "@/components/app/app-shell";
 import { AsinFetchPanel } from "@/components/upload/asin-fetch-panel";
 import { AsinWatchlistPanel } from "@/components/upload/asin-watchlist-panel";
 import {
+  describeRequestError,
   fetchTaxonomyCategories,
   fetchUploadJob,
   submitUploadJob,
@@ -16,14 +18,14 @@ import type { TaxonomyCategoriesResponse, UploadJob } from "@/lib/api/types";
 
 type UploadMode = "file" | "asin" | "watchlist";
 
-const workflowPurposes = [
-  "竞品调研",
-  "新品上线监控",
-  "日常评论分析",
-  "Listing 优化",
-  "质量问题复盘",
-  "版本改版验证",
-];
+const workflowPurposeKeys = [
+  "purposeCompetitor",
+  "purposeNewProduct",
+  "purposeDaily",
+  "purposeListing",
+  "purposeQuality",
+  "purposeVersion",
+] as const;
 
 type FormState = {
   productId: string;
@@ -55,33 +57,35 @@ function CategoryHitBanner({
   hit,
   supportedCount,
   supportedCategories,
+  t,
 }: {
   categoryValue: string;
   hit: { categoryKey: string; categoryLabel: string } | null;
   supportedCount: number;
   supportedCategories: TaxonomyCategoriesResponse["supported_categories"];
+  t: (key: string) => string;
 }): React.ReactNode {
   if (hit && hit.categoryKey !== "other") {
     return (
       <div className="rounded-card border border-[#cbe9d8] bg-[#eef9f3] px-3 py-2 text-xs leading-5 text-[#3d8b74]">
-        ✅ <span className="font-semibold">{categoryValue}</span> 已识别为
+        ✅ <span className="font-semibold">{categoryValue}</span> {t("categoryHitSuccess")}
         <span className="mx-1 font-semibold">{hit.categoryLabel}</span>
-        品类，分析将使用该品类专属 aspect 维度。
+        {t("categoryHitSuffix")}
       </div>
     );
   }
   const labels = supportedCategories.map((g) => g.category_label).join(" / ");
   return (
     <div className="rounded-card border border-[#f6dbb4] bg-[#fff6e6] px-3 py-2 text-xs leading-5 text-[#9a6118]">
-      ⚠️ <span className="font-semibold">{categoryValue}</span> 不在已支持的
-      {supportedCount} 个子品类中，将使用<span className="mx-1 font-semibold">通用模板</span>分析，
-      aspect 颗粒度较粗。建议改填具体子品类（已支持品类：{labels}）。
+      ⚠️ <span className="font-semibold">{categoryValue}</span> {t("categoryHitFallback")}
+      {supportedCount} {t("categoryHitFallbackSuffix")}（{t("categoryHitSupported")}：{labels}）
     </div>
   );
 }
 
 export default function UploadPage() {
   const router = useRouter();
+  const t = useTranslations("upload");
   const [uploadMode, setUploadMode] = useState<UploadMode>("file");
   const [file, setFile] = useState<File | null>(null);
   const [job, setJob] = useState<UploadJob | null>(null);
@@ -95,7 +99,7 @@ export default function UploadPage() {
     platform: "Amazon",
     category: "家具家居",
     version: "V1",
-    workflowPurpose: "日常评论分析",
+    workflowPurpose: "purposeDaily",
     dateStart: "",
     dateEnd: "",
     versionNotes: "",
@@ -169,7 +173,7 @@ export default function UploadPage() {
         }
       } catch (pollError) {
         const candidate = pollError as { message?: string };
-        setError(candidate.message || "任务状态轮询失败");
+        setError(candidate.message || t("pollError"));
         window.clearInterval(timer);
         setIsPolling(false);
       }
@@ -183,7 +187,7 @@ export default function UploadPage() {
 
   async function handleSubmit() {
     if (!file || !canSubmit) {
-      setError("请先选择文件并补全产品编号、版本和工作目的。");
+      setError(t("validationError"));
       return;
     }
 
@@ -193,14 +197,14 @@ export default function UploadPage() {
       file_type: file.name.split(".").pop(),
       file_size_kb: Math.round(file.size / 1024),
       category: form.category,
-      workflow_purpose: form.workflowPurpose,
+      workflow_purpose: t(form.workflowPurpose),
     });
     try {
       const response = await submitUploadJob({
         sourceFile: file,
         productId: form.productId.trim(),
         version: form.version.trim(),
-        workflowPurpose: form.workflowPurpose.trim(),
+        workflowPurpose: t(form.workflowPurpose).trim(),
         productName: form.productName.trim(),
         platform: form.platform.trim(),
         category: form.category.trim(),
@@ -215,8 +219,9 @@ export default function UploadPage() {
       }
     } catch (submitError) {
       const candidate = submitError as { message?: string };
-      setError(candidate.message || "上传任务创建失败");
-      track("upload_fail", { error: candidate.message || "unknown" });
+      const detail = candidate.message || describeRequestError(submitError, "/api/uploads");
+      setError(detail);
+      track("upload_fail", { error: detail });
     } finally {
       setIsSubmitting(false);
     }
@@ -225,19 +230,19 @@ export default function UploadPage() {
   return (
     <AppShell
       currentPath="/upload"
-      title="上传评论文件"
-      description="选择文件并填写产品信息，系统将自动排队分析"
+      title={t("title")}
+      description={t("description")}
     >
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
           <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
-            STEP 1
+            {t("step1")}
           </div>
           <h2 className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-            导入评论
+            {t("importTitle")}
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-soft">
-            选择文件上传或输入 ASIN 自动拉取 Amazon 评论。
+            {t("importDesc")}
           </p>
 
           <div className="mt-5 flex gap-1 rounded-pill border border-line bg-[#f8f6f9] p-1">
@@ -246,21 +251,21 @@ export default function UploadPage() {
               onClick={() => setUploadMode("file")}
               className={`flex-1 rounded-pill px-4 py-2 text-sm font-semibold transition ${uploadMode === "file" ? "bg-white text-ink shadow-sm" : "text-soft hover:text-ink"}`}
             >
-              文件上传
+              {t("modeFile")}
             </button>
             <button
               type="button"
               onClick={() => setUploadMode("asin")}
               className={`flex-1 rounded-pill px-4 py-2 text-sm font-semibold transition ${uploadMode === "asin" ? "bg-white text-ink shadow-sm" : "text-soft hover:text-ink"}`}
             >
-              ASIN 拉取
+              {t("modeAsin")}
             </button>
             <button
               type="button"
               onClick={() => setUploadMode("watchlist")}
               className={`flex-1 rounded-pill px-4 py-2 text-sm font-semibold transition ${uploadMode === "watchlist" ? "bg-white text-ink shadow-sm" : "text-soft hover:text-ink"}`}
             >
-              ASIN 监控
+              {t("modeWatchlist")}
             </button>
           </div>
 
@@ -276,29 +281,29 @@ export default function UploadPage() {
           <>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-ink">产品编号</span>
+              <span className="text-sm font-semibold text-ink">{t("productId")}</span>
               <input
                 value={form.productId}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, productId: event.target.value }))
                 }
                 className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-                placeholder="例如：SKU-1001"
+                placeholder={t("productIdPlaceholder")}
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-ink">产品名称</span>
+              <span className="text-sm font-semibold text-ink">{t("productName")}</span>
               <input
                 value={form.productName}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, productName: event.target.value }))
                 }
                 className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-                placeholder="例如：无线蓝牙耳机"
+                placeholder={t("productNamePlaceholder")}
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-ink">平台</span>
+              <span className="text-sm font-semibold text-ink">{t("platform")}</span>
               <input
                 value={form.platform}
                 onChange={(event) =>
@@ -309,7 +314,7 @@ export default function UploadPage() {
             </label>
             <label className="space-y-2">
               <span className="text-sm font-semibold text-ink">
-                类目（sub_category）
+                {t("category")}
               </span>
               <input
                 value={form.category}
@@ -318,7 +323,7 @@ export default function UploadPage() {
                 }
                 list="taxonomy-sub-categories"
                 className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-                placeholder="例如：床架 / iPhone Charger / Baby Bibs"
+                placeholder={t("categoryPlaceholder")}
               />
               {taxonomy && (
                 <datalist id="taxonomy-sub-categories">
@@ -333,11 +338,12 @@ export default function UploadPage() {
                   hit={categoryHit}
                   supportedCount={taxonomy.total_sub_categories}
                   supportedCategories={taxonomy.supported_categories}
+                  t={t}
                 />
               )}
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-ink">版本号</span>
+              <span className="text-sm font-semibold text-ink">{t("version")}</span>
               <input
                 value={form.version}
                 onChange={(event) =>
@@ -347,7 +353,7 @@ export default function UploadPage() {
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-ink">工作目的</span>
+              <span className="text-sm font-semibold text-ink">{t("workflowPurpose")}</span>
               <select
                 value={form.workflowPurpose}
                 onChange={(event) =>
@@ -358,15 +364,15 @@ export default function UploadPage() {
                 }
                 className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
               >
-                {workflowPurposes.map((purpose) => (
-                  <option key={purpose} value={purpose}>
-                    {purpose}
+                {workflowPurposeKeys.map((key) => (
+                  <option key={key} value={key}>
+                    {t(key)}
                   </option>
                 ))}
               </select>
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-ink">开始日期</span>
+              <span className="text-sm font-semibold text-ink">{t("dateStart")}</span>
               <input
                 type="date"
                 value={form.dateStart}
@@ -377,7 +383,7 @@ export default function UploadPage() {
               />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-ink">结束日期</span>
+              <span className="text-sm font-semibold text-ink">{t("dateEnd")}</span>
               <input
                 type="date"
                 value={form.dateEnd}
@@ -390,14 +396,14 @@ export default function UploadPage() {
           </div>
 
           <label className="mt-4 block space-y-2">
-            <span className="text-sm font-semibold text-ink">版本说明</span>
+            <span className="text-sm font-semibold text-ink">{t("versionNotes")}</span>
             <textarea
               value={form.versionNotes}
               onChange={(event) =>
                 setForm((current) => ({ ...current, versionNotes: event.target.value }))
               }
               className="min-h-28 w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-              placeholder="可选，例如：本轮更新了包装与材质..."
+              placeholder={t("versionNotesPlaceholder")}
             />
           </label>
 
@@ -410,12 +416,12 @@ export default function UploadPage() {
                 className="hidden"
               />
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-ink">选择评论文件</span>
+                <span className="text-sm font-semibold text-ink">{t("selectFile")}</span>
                 <span className="text-sm leading-7 text-soft">
-                  支持 CSV、XLSX、DOCX、TXT。选择后会自动创建任务并开始分析。
+                  {t("fileHint")}
                 </span>
                 <span className="inline-flex w-fit rounded-pill bg-white px-4 py-2 text-xs font-semibold text-soft">
-                  {file ? file.name : "尚未选择文件"}
+                  {file ? file.name : t("noFile")}
                 </span>
               </div>
             </label>
@@ -434,14 +440,14 @@ export default function UploadPage() {
               disabled={isSubmitting || !canSubmit}
               className="inline-flex min-h-12 items-center justify-center rounded-pill bg-ink px-6 py-3 text-sm font-semibold text-white shadow-card transition disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "提交中..." : "上传并开始分析"}
+              {isSubmitting ? t("submitting") : t("submitButton")}
             </button>
             <button
               type="button"
               onClick={() => router.push("/workspace")}
               className="inline-flex min-h-12 items-center justify-center rounded-pill border border-line bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:bg-[#fffafb]"
             >
-              返回工作台
+              {t("backToWorkspace")}
             </button>
           </div>
           </>
@@ -451,16 +457,16 @@ export default function UploadPage() {
         <div className="space-y-6">
           <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
             <div className="inline-flex rounded-pill bg-[#eef6ff] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#4a7dc7]">
-              STEP 2
+              {t("step2")}
             </div>
             <h3 className="mt-4 font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-              任务状态
+              {t("statusTitle")}
             </h3>
             <div className="mt-4 space-y-4">
               {job ? (
                 <>
                   <div className="flex items-center justify-between rounded-card border border-line bg-white px-4 py-4">
-                    <span className="text-sm font-semibold text-ink">当前状态</span>
+                    <span className="text-sm font-semibold text-ink">{t("statusCurrent")}</span>
                     <span className={`rounded-pill px-3 py-1 text-xs font-bold ${statusTone(job.status)}`}>
                       {job.status}
                     </span>
@@ -468,7 +474,7 @@ export default function UploadPage() {
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="rounded-card border border-line bg-[#fffafb] px-4 py-4">
                       <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                        已处理
+                        {t("statusProcessed")}
                       </div>
                       <div className="mt-2 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
                         {job.processed_rows}/{job.total_rows}
@@ -476,10 +482,10 @@ export default function UploadPage() {
                     </div>
                     <div className="rounded-card border border-line bg-[#fbf9ff] px-4 py-4">
                       <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                        结果摘要
+                        {t("statusSummary")}
                       </div>
                       <div className="mt-2 text-sm leading-7 text-soft">
-                        正面 {job.positive_count} · 负面 {job.negative_count}
+                        {t("statusPositive")} {job.positive_count} · {t("statusNegative")} {job.negative_count}
                       </div>
                     </div>
                   </div>
@@ -490,17 +496,17 @@ export default function UploadPage() {
                   ) : null}
                   <div className="rounded-card border border-line bg-white px-4 py-4 text-sm leading-7 text-soft">
                     {isPolling
-                      ? "任务正在后台分析，页面会自动轮询状态。"
+                      ? t("statusPolling")
                       : job.status === "done"
-                        ? "任务已完成，正在准备跳转到结果页。"
+                        ? t("statusDone")
                         : job.status === "failed"
-                          ? "任务失败，请检查上传文件或后端日志。"
-                          : "任务已创建，等待后台开始处理。"}
+                          ? t("statusFailed")
+                          : t("statusCreated")}
                   </div>
                 </>
               ) : (
                 <div className="rounded-card border border-dashed border-line bg-[#fffafb] px-4 py-6 text-sm leading-7 text-soft">
-                  提交文件后，这里会显示任务状态、处理进度和结果摘要。
+                  {t("statusEmpty")}
                 </div>
               )}
             </div>
@@ -508,17 +514,17 @@ export default function UploadPage() {
 
           <section className="rounded-shell border border-line bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(252,246,251,0.94))] p-6 shadow-card backdrop-blur">
             <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-              这次上传会做什么
+              {t("whatHappensTitle")}
             </h3>
             <div className="mt-4 space-y-3 text-sm leading-7 text-soft">
               <div className="rounded-card border border-line bg-white px-4 py-4">
-                1. 解析文件，提取评论内容、日期和评分。
+                {t("whatHappens1")}
               </div>
               <div className="rounded-card border border-line bg-white px-4 py-4">
-                2. 创建后台 job，先进入队列，再逐条分析。
+                {t("whatHappens2")}
               </div>
               <div className="rounded-card border border-line bg-white px-4 py-4">
-                3. 分析完成后自动跳转到结果页，继续看证据和结论。
+                {t("whatHappens3")}
               </div>
             </div>
           </section>
