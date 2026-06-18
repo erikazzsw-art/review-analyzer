@@ -7,6 +7,9 @@ import {
   X,
   User,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
+
+import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 
 type SidebarProps = {
   currentPath: string;
@@ -14,43 +17,44 @@ type SidebarProps = {
   planLabel?: string;
 };
 
-const navGroups = [
-  {
-    title: "核心",
-    items: [
-      { href: "/workspace", label: "工作台" },
-      { href: "/upload", label: "上传评论" },
-      { href: "/analysis/results", label: "分析结果" },
-    ],
-  },
-  {
-    title: "洞察",
-    items: [
-      { href: "/analysis/compare", label: "对比分析" },
-      { href: "/analysis/history", label: "历史记录" },
-      { href: "/qa", label: "问评论" },
-    ],
-  },
-  {
-    title: "行动",
-    items: [
-      { href: "/actions", label: "行动中心" },
-      { href: "/reviews", label: "复盘追踪" },
-      { href: "/copywriter", label: "宣传文案" },
-    ],
-  },
-  {
-    title: "管理",
-    items: [
-      { href: "/products", label: "产品管理" },
-      { href: "/settings", label: "推送设置" },
-      { href: "/settings/observability", label: "可观测性" },
-    ],
-  },
-];
-
 export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const t = useTranslations("sidebar");
+
+  const navGroups = [
+    {
+      title: t("groupCore"),
+      items: [
+        { href: "/workspace", label: t("workspace") },
+        { href: "/upload", label: t("upload") },
+        { href: "/analysis/results", label: t("analysisResults") },
+      ],
+    },
+    {
+      title: t("groupInsight"),
+      items: [
+        { href: "/analysis/compare", label: t("compare") },
+        { href: "/analysis/history", label: t("history") },
+        { href: "/qa", label: t("askReviews") },
+      ],
+    },
+    {
+      title: t("groupAction"),
+      items: [
+        { href: "/actions", label: t("actionCenter") },
+        { href: "/reviews", label: t("reviewTracking") },
+        { href: "/copywriter", label: t("copywriter") },
+      ],
+    },
+    {
+      title: t("groupManage"),
+      items: [
+        { href: "/products", label: t("products") },
+        { href: "/settings", label: t("pushSettings") },
+        { href: "/settings/observability", label: t("observability") },
+      ],
+    },
+  ];
 
   const navContent = (
     <div className="flex h-full flex-col">
@@ -104,6 +108,9 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
 
       {/* User info */}
       <div className="px-4 py-4">
+        <div className="mb-3">
+          <LocaleSwitcher variant="sidebar" />
+        </div>
         <div className="mb-4 h-px bg-line" />
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-lavender/10 text-lavender">
