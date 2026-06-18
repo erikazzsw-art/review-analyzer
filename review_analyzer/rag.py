@@ -57,10 +57,15 @@ def _get_embedding_api_key(user_id: int | None = None) -> str:
 def _get_embedding_client(user_id: int | None = None) -> OpenAI:
     api_key = _get_embedding_api_key(user_id)
     import httpx
+    local_proxy = os.environ.get("EMBEDDING_PROXY") or None
+    http_client = httpx.Client(
+        timeout=httpx.Timeout(60.0, connect=5.0),
+        proxy=local_proxy,
+    )
     return OpenAI(
         api_key=api_key,
         base_url=EMBEDDING_BASE_URL,
-        timeout=httpx.Timeout(60.0, connect=5.0),
+        http_client=http_client,
         max_retries=0,
     )
 

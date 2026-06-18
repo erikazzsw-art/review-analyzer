@@ -9,6 +9,7 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-06-18 | 本地开发环境 embedding 代理方案优化：之前为解决代理导致全局请求卡死，一刀切清除了所有代理变量，导致 OpenAI embedding 在国内直连不通、batch失败后跳过、聚类优化失效、432条评论全部逐条走 LLM（本可优化为~150次） | 修复：`review_analyzer/rag.py` 的 `_get_embedding_client` 改为通过 `httpx.Client(proxy=...)` **单独**给 OpenAI embedding 客户端配代理（读取 `.env` 中的 `EMBEDDING_PROXY=http://127.0.0.1:7890`），不再依赖全局环境变量。DeepSeek LLM 和 Supabase DB 继续直连不受影响。生产环境（香港 ECS）不设此变量，OpenAI 直连可达 |
 | 2026-06-18 | 上传432条评论后进度条一直卡在0/432不动，持续10+分钟 | 根因：`review_analyzer/rag.py` 的 `generate_embeddings_batch` batch请求失败时回退到逐条单独调用（432条×5s超时=36分钟）。OpenAI在无代理环境下不可达，2个batch各失败后触发432次单条超时调用，embedding阶段无限期阻塞。修复：删除单条回退逻辑，batch失败直接跳过整批（填空vector），embedding是可选优化，不影响LLM分析主流程 |
 | 2026-06-18 | 分析432条评论进度卡住（`processed_rows`从28停止不动，总耗时20+分钟），根本原因是OpenAI Python SDK默认`max_retries=2`：每个LLM调用失败时SDK自动重试2次，每次最多30s，3个fallback模型（DeepSeek→OpenAI→Qwen）叠加后单条评论最坏耗时270s（30s×3次×3模型）；在代理关闭环境下DeepSeek/OpenAI各超时90s后才切Qwen，导致整体分析速度极慢并最终卡死 | 修复：在`backend_api/app/services/llm_router.py`和`review_analyzer/rag.py`的OpenAI客户端构造中加`max_retries=0`——我们自己的fallback链已经处理重试，不需要SDK层再重试，失败立即切下一个模型 |
 | 2026-06-18 | 开启 Clash（127.0.0.1:7890）时，本地前端 webpack 模式下所有页面报 `Cannot read properties of undefined (reading 'call')`，指向 `app-shell.tsx:32` 的 `<Sidebar />` 渲染 | 根因：macOS 系统代理将浏览器对 `localhost` 的 webpack chunk 请求路由到 Clash，webpack HMR 模块解析被干扰。修复：将 `frontend/package.json` 的 `dev` 脚本恢复为 `next dev --turbopack --hostname 127.0.0.1`（Turbopack 不受此影响）。注：之前 6-17 改回普通 webpack 的决策有误，Turbopack 才是 VPN 环境下的正确选择 |
