@@ -186,6 +186,7 @@ export type AnalysisSession = {
   workflow_purpose: string | null;
   product_ref_id: number | null;
   variant_ref_id: number | null;
+  warnings_json: Array<{ type?: string; severity?: string; message?: string; data?: Record<string, unknown> }> | null;
   created_at: string;
 };
 

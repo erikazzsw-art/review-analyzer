@@ -34,9 +34,12 @@ import type {
   UploadJobResponse,
 } from "@/lib/api/types";
 
-const DEFAULT_API_BASE_URL = "http://127.0.0.1:8100";
+const DEFAULT_API_BASE_URL = "/api";
 
 function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return DEFAULT_API_BASE_URL;
+  }
   return (
     process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
     process.env.API_BASE_URL?.trim() ||
@@ -48,6 +51,13 @@ type ApiError = {
   status: number;
   message: string;
 };
+
+export function describeRequestError(err: unknown, target: string): string {
+  if (err instanceof Error) {
+    return `${err.name}: ${err.message} (${target})`;
+  }
+  return `Request failed (${target})`;
+}
 
 async function parseError(response: Response): Promise<ApiError> {
   let message = `Request failed with status ${response.status}.`;

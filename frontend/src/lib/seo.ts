@@ -28,8 +28,20 @@ export const appUrl = normalizeUrl(
 
 export const ogImagePath = DEFAULT_OG_IMAGE_PATH;
 
+export function getMetadataBaseUrl(): URL {
+  try {
+    return new URL(siteUrl);
+  } catch {
+    return new URL(DEFAULT_SITE_URL);
+  }
+}
+
 export function absoluteUrl(path: string, baseUrl: string = siteUrl): string {
-  return new URL(path, baseUrl).toString();
+  try {
+    return new URL(path, baseUrl).toString();
+  } catch {
+    return new URL(path, DEFAULT_SITE_URL).toString();
+  }
 }
 
 export function buildMarketingMetadata(input: {

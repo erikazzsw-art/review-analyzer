@@ -15,7 +15,7 @@ import type {
   WorkspaceSummary,
 } from "@/lib/api/types";
 
-const DEFAULT_API_BASE_URL = "http://127.0.0.1:8100";
+const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
 
 type ApiError = {
   status: number;
