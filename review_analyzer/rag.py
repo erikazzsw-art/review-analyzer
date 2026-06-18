@@ -101,15 +101,10 @@ def generate_embeddings_batch(
             )
         except Exception:
             logger.warning(
-                "generate_embeddings_batch failed for chunk %d-%d, falling back to single",
+                "generate_embeddings_batch failed for chunk %d-%d, skipping",
                 i, i + len(batch),
             )
-            for text in batch:
-                try:
-                    emb = generate_embedding(text, user_id)
-                    all_embeddings.append(emb)
-                except Exception:
-                    all_embeddings.append([])
+            all_embeddings.extend([] for _ in batch)
 
     return all_embeddings
 
