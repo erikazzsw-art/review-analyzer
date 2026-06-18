@@ -1,43 +1,29 @@
-import { CtaRow } from "@/components/marketing/cta-row";
+import { useTranslations } from "next-intl";
+
 import { HeroPreview } from "@/components/marketing/hero-preview";
 import { MarketingShell } from "@/components/marketing/marketing-shell";
 import { ValueGrid } from "@/components/marketing/value-grid";
 import { buildMarketingMetadata } from "@/lib/seo";
 
 export const metadata = buildMarketingMetadata({
-  title: "Review analysis for cross-border sellers",
+  title: "ReviewLens — 评论分析到产品行动的完整闭环",
   description:
-    "ClueAI turns review signals into product, listing, and QA actions, then validates whether the changes worked.",
+    "支持多平台多格式评论上传，AI 自动分析输出 Top 问题与亮点，推送飞书到责任人，跟进改进落地，复盘优化效果。",
   path: "/",
 });
 
 export default function HomePage() {
+  const t = useTranslations("marketing");
+
   return (
     <div className="bg-hero-wash">
       <MarketingShell
-        eyebrow="Review insight -> action -> validation"
-        title="See what deserves your attention first, directly from your reviews."
-        description="ClueAI is built for cross-border sellers who need more than sentiment summaries. It helps turn rising review issues into product, listing, and QA actions, then uses later comments to confirm whether those changes actually worked."
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        subtitle={t("subtitle")}
+        description={t("description")}
         aside={<HeroPreview />}
-      >
-        <div className="space-y-6">
-          <div className="grid gap-3 text-sm text-soft sm:grid-cols-3">
-            <div className="rounded-card border border-line bg-white/78 px-4 py-4">
-              High-risk SKU detection
-            </div>
-            <div className="rounded-card border border-line bg-white/78 px-4 py-4">
-              Action Center handoff
-            </div>
-            <div className="rounded-card border border-line bg-white/78 px-4 py-4">
-              Follow-up validation loop
-            </div>
-          </div>
-          <CtaRow
-            primaryLabel="Create Account"
-            secondaryLabel="Try the Flow First"
-          />
-        </div>
-      </MarketingShell>
+      />
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 pb-20 lg:px-10">
         <ValueGrid />

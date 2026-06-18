@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { Button } from "@/components/ui/button";
 
 type CtaRowProps = {
@@ -12,16 +10,23 @@ type CtaRowProps = {
 export function CtaRow({
   primaryHref = "/register",
   primaryLabel,
-  secondaryHref = "/trial",
+  secondaryHref = "/login",
   secondaryLabel,
 }: CtaRowProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
-      <Button asChild className="min-h-11 rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
-        <Link href={primaryHref}>{primaryLabel}</Link>
+      <Button
+        href={primaryHref}
+        className="min-h-11 rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90"
+      >
+        {primaryLabel}
       </Button>
-      <Button variant="outline" asChild className="min-h-11 rounded-pill border-line bg-white/86 px-5 py-3 text-sm font-semibold text-ink hover:border-[#d8cfde] hover:bg-white">
-        <Link href={secondaryHref}>{secondaryLabel}</Link>
+      <Button
+        href={secondaryHref}
+        variant="outline"
+        className="min-h-11 rounded-pill border-line bg-white/86 px-5 py-3 text-sm font-semibold text-ink hover:border-[#d8cfde] hover:bg-white"
+      >
+        {secondaryLabel}
       </Button>
     </div>
   );
