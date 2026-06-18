@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AppShell } from "@/components/app/app-shell";
 import { CreateActionPanel } from "@/components/analysis/create-action-panel";
 import { getAnalysisSessionResults } from "@/lib/api/server";
+import { isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
@@ -16,27 +19,21 @@ type ResultsPageProps = {
   }>;
 };
 
-function renderModuleLabel(key: string): string {
-  const labels: Record<string, string> = {
-    consumer_profile: "消费者画像",
-    user_experience: "用户体验",
-    purchase_motives: "购买动机",
-    unmet_needs: "未被满足的需求",
-    recommendations: "综合建议",
-  };
-  return labels[key] || key;
-}
+const moduleLabelKeys: Record<string, string> = {
+  consumer_profile: "moduleConsumerProfile",
+  user_experience: "moduleUserExperience",
+  purchase_motives: "modulePurchaseMotives",
+  unmet_needs: "moduleUnmetNeeds",
+  recommendations: "moduleRecommendations",
+};
 
-function renderModuleSubtitle(key: string): string {
-  const labels: Record<string, string> = {
-    consumer_profile: "从评论里提炼当前批次的核心人群、关注点与代表性证据。",
-    user_experience: "拆出正向反馈和负向反馈，方便快速判断体验是否稳定。",
-    purchase_motives: "概括用户为什么买，以及哪些卖点正在驱动下单。",
-    unmet_needs: "聚焦还没被满足的需求，便于后续改版和运营动作。",
-    recommendations: "把前面的信号收成可执行动作。",
-  };
-  return labels[key] || "";
-}
+const moduleDescKeys: Record<string, string> = {
+  consumer_profile: "moduleConsumerProfileDesc",
+  user_experience: "moduleUserExperienceDesc",
+  purchase_motives: "modulePurchaseMotivesDesc",
+  unmet_needs: "moduleUnmetNeedsDesc",
+  recommendations: "moduleRecommendationsDesc",
+};
 
 function renderValue(value: unknown, fallback = "--"): string {
   if (value === null || value === undefined || value === "") {
@@ -45,9 +42,40 @@ function renderValue(value: unknown, fallback = "--"): string {
   return String(value);
 }
 
+function normalizeModule(
+  module: Partial<{
+    summary: unknown;
+    rows: unknown;
+    evidence: unknown;
+    positive: unknown;
+    negative: unknown;
+  }> | undefined,
+): {
+  summary: string;
+  rows: Array<Record<string, unknown>>;
+  evidence: string[];
+  positive: Array<Record<string, unknown>>;
+  negative: Array<Record<string, unknown>>;
+} {
+  return {
+    summary: renderValue(module?.summary, ""),
+    rows: Array.isArray(module?.rows) ? (module.rows as Array<Record<string, unknown>>) : [],
+    evidence: Array.isArray(module?.evidence)
+      ? (module.evidence as string[]).map((item) => renderValue(item, ""))
+      : [],
+    positive: Array.isArray(module?.positive)
+      ? (module.positive as Array<Record<string, unknown>>)
+      : [],
+    negative: Array.isArray(module?.negative)
+      ? (module.negative as Array<Record<string, unknown>>)
+      : [],
+  };
+}
+
 export default async function AnalysisResultsPage({
   searchParams,
 }: ResultsPageProps) {
+  const t = await getTranslations("analysis");
   const params = searchParams ? await searchParams : undefined;
   const sessionId = Number(params?.session_id || 0);
 
@@ -55,36 +83,65 @@ export default async function AnalysisResultsPage({
     return (
       <AppShell
         currentPath="/analysis/results"
-        title="分析结果页需要一个 session_id。"
-        description="M5 的结果页已经接到真实 API，URL 里带上 session_id 后就能直接打开对应批次。"
+        title={t("noSessionId")}
+        description={t("noSessionIdDesc")}
       >
         <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
           <p className="text-sm leading-7 text-soft">
-            请输入有效的 `session_id`，例如从上传完成后的跳转链接或历史记录页进入。
+            {t("noSessionIdHint")}
           </p>
           <Link
             href="/analysis/history"
             className="mt-5 inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card"
           >
-            去历史记录找一条
+            {t("goHistory")}
           </Link>
         </section>
       </AppShell>
     );
   }
 
-  const payload = await getAnalysisSessionResults(sessionId);
+  let payload;
+  try {
+    payload = await getAnalysisSessionResults(sessionId);
+  } catch (error: unknown) {
+    if (isApiError(error) && error.status === 401) {
+      redirect("/login");
+    }
+    return (
+      <AppShell
+        currentPath="/analysis/results"
+        title={t("loadError")}
+        description=""
+      >
+        <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
+          <p className="text-sm leading-7 text-soft">
+            {isApiError(error) && error.status === 404
+              ? t("notFound")
+              : t("loadException")}
+          </p>
+          <Link
+            href="/analysis/history"
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card"
+          >
+            {t("backHistory")}
+          </Link>
+        </section>
+      </AppShell>
+    );
+  }
+
   const context = payload.context as {
     product_id?: string;
     version?: string;
     time_label?: string;
     workflow_purpose?: string;
   };
-  const consumerProfile = payload.modules.consumer_profile;
-  const userExperience = payload.modules.user_experience;
-  const purchaseMotives = payload.modules.purchase_motives;
-  const unmetNeeds = payload.modules.unmet_needs;
-  const recommendations = payload.modules.recommendations;
+  const consumerProfile = normalizeModule(payload.modules?.consumer_profile);
+  const userExperience = normalizeModule(payload.modules?.user_experience);
+  const purchaseMotives = normalizeModule(payload.modules?.purchase_motives);
+  const unmetNeeds = normalizeModule(payload.modules?.unmet_needs);
+  const recommendations = normalizeModule(payload.modules?.recommendations);
   const actionCandidates = [
     ...(userExperience.negative || []).map((row) => ({
       label: String(row.tag || row.label || "问题"),
@@ -103,12 +160,12 @@ export default async function AnalysisResultsPage({
   return (
     <AppShell
       currentPath="/analysis/results"
-      title="结果页现在可以按 session_id 直达真实分析内容。"
-      description="这一版不再依赖页面隐式状态，结果、对比和历史都围绕 URL 和后端读取接口展开。"
+      title={t("title")}
+      description={t("description")}
     >
       <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
         <div className="inline-flex rounded-pill bg-[#eef6ff] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#4a7dc7]">
-          SESSION RESULTS
+          {t("badge")}
         </div>
         <h2 className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
           {payload.session.custom_title || payload.session.auto_title || payload.session.product_id}
@@ -118,10 +175,10 @@ export default async function AnalysisResultsPage({
             {renderValue(context.time_label)}
           </span>
           <span className="rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-soft">
-            {renderValue(context.workflow_purpose, "未设置工作目的")}
+            {renderValue(context.workflow_purpose, t("purposeNotSetLabel"))}
           </span>
           <span className="rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-soft">
-            {payload.comments.length} 条原文
+            {payload.comments.length} {t("reviews")}
           </span>
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -129,64 +186,81 @@ export default async function AnalysisResultsPage({
             href={`/analysis/compare?product_id=${encodeURIComponent(payload.session.product_id)}&session_id=${sessionId}`}
             className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card"
           >
-            去对比
+            {t("goCompare")}
           </Link>
           <Link
             href="/analysis/history"
             className="inline-flex min-h-11 items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-ink"
           >
-            回历史
+            {t("backHistory")}
           </Link>
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-4">
         <div className="rounded-card border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">总评论</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">{t("totalReviews")}</div>
           <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
             {payload.session.total_reviews}
           </div>
         </div>
         <div className="rounded-card border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">好评</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">{t("positive")}</div>
           <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-[#4b8f82]">
             {payload.session.positive_count}
           </div>
         </div>
         <div className="rounded-card border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">差评</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">{t("negative")}</div>
           <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-[#d94d72]">
             {payload.session.negative_count}
           </div>
         </div>
         <div className="rounded-card border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">工作目的</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">{t("purpose")}</div>
           <div className="mt-3 text-sm leading-7 text-ink">
-            {payload.session.workflow_purpose || "未设置"}
+            {payload.session.workflow_purpose || t("purposeNotSet")}
           </div>
         </div>
       </section>
 
+      {payload.session.warnings_json && payload.session.warnings_json.length > 0 && (
+        <section className="rounded-card border border-amber-200 bg-amber-50/80 p-4 shadow-card backdrop-blur">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 text-lg">⚠️</span>
+            <div className="space-y-1">
+              {payload.session.warnings_json.map((w: { message?: string; type?: string }, i: number) => (
+                <p key={i} className="text-sm leading-6 text-amber-900">
+                  {w.message || t("warningFallback")}
+                </p>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <CreateActionPanel
-        sessionId={sessionId}
-        productId={payload.session.product_ref_id}
-        sourceProductId={payload.session.product_id}
-        sourceVersion={payload.session.version}
-        sourceBatchLabel={payload.session.custom_title || payload.session.auto_title || payload.session.version}
-        candidates={actionCandidates}
-      />
+      sessionId={sessionId}
+      productId={payload.session.product_ref_id}
+      sourceProductId={payload.session.product_id}
+      sourceVersion={payload.session.version}
+      sourceBatchLabel={payload.session.custom_title || payload.session.auto_title || payload.session.version}
+      candidates={actionCandidates.filter(
+        (item) => item.label || item.detail || item.suggestedAction,
+      )}
+    />
 
       <section className="space-y-5">
         <article className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
           <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
-            1 · {renderModuleLabel("consumer_profile")}
+            1 · {t(moduleLabelKeys["consumer_profile"])}
           </div>
           <p className="mt-4 text-sm leading-7 text-soft">{consumerProfile.summary}</p>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {consumerProfile.rows.map((row, index) => (
               <div key={`consumer-${index}`} className="rounded-card border border-line bg-white px-4 py-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                  {renderValue(row.label || row.tag || `条目 ${index + 1}`)}
+                  {renderValue(row.label || row.tag || `#${index + 1}`)}
                 </div>
                 <div className="mt-2 text-sm leading-7 text-ink">
                   {renderValue(row.detail || row.reason || row.summary || row.value)}
@@ -197,7 +271,7 @@ export default async function AnalysisResultsPage({
           {consumerProfile.evidence.length > 0 ? (
             <div className="mt-5 rounded-card border border-line bg-[#fffafc] p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                代表性证据
+                {t("evidence")}
               </div>
               <div className="mt-3 space-y-2 text-sm leading-7 text-ink">
                 {consumerProfile.evidence.map((quote, index) => (
@@ -210,17 +284,17 @@ export default async function AnalysisResultsPage({
 
         <article className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
           <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
-            2 · {renderModuleLabel("user_experience")}
+            2 · {t(moduleLabelKeys["user_experience"])}
           </div>
           <p className="mt-4 text-sm leading-7 text-soft">{userExperience.summary}</p>
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <div className="rounded-card border border-line bg-[#f8fffc] p-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">正向反馈</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">{t("positiveFeedback")}</div>
               <div className="mt-3 space-y-3">
                 {userExperience.positive.map((row, index) => (
                   <div key={`positive-${index}`} className="rounded-card border border-line bg-white px-4 py-4">
                     <div className="text-sm font-semibold text-ink">
-                      {renderValue(row.tag || row.label || `亮点 ${index + 1}`)}
+                      {renderValue(row.tag || row.label || `#${index + 1}`)}
                     </div>
                     <div className="mt-2 text-sm leading-7 text-soft">
                       {renderValue(row.reason || row.detail || row.pct)}
@@ -228,17 +302,17 @@ export default async function AnalysisResultsPage({
                   </div>
                 ))}
                 {userExperience.positive.length === 0 ? (
-                  <div className="text-sm leading-7 text-soft">暂无稳定正向反馈。</div>
+                  <div className="text-sm leading-7 text-soft">{t("noPositive")}</div>
                 ) : null}
               </div>
             </div>
             <div className="rounded-card border border-line bg-[#fff8f9] p-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">负向反馈</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">{t("negativeFeedback")}</div>
               <div className="mt-3 space-y-3">
                 {userExperience.negative.map((row, index) => (
                   <div key={`negative-${index}`} className="rounded-card border border-line bg-white px-4 py-4">
                     <div className="text-sm font-semibold text-ink">
-                      {renderValue(row.tag || row.label || `问题 ${index + 1}`)}
+                      {renderValue(row.tag || row.label || `#${index + 1}`)}
                     </div>
                     <div className="mt-2 text-sm leading-7 text-soft">
                       {renderValue(row.reason || row.detail || row.pct)}
@@ -246,7 +320,7 @@ export default async function AnalysisResultsPage({
                   </div>
                 ))}
                 {userExperience.negative.length === 0 ? (
-                  <div className="text-sm leading-7 text-soft">暂无稳定负向反馈。</div>
+                  <div className="text-sm leading-7 text-soft">{t("noNegative")}</div>
                 ) : null}
               </div>
             </div>
@@ -256,14 +330,14 @@ export default async function AnalysisResultsPage({
         <div className="grid gap-5 xl:grid-cols-2">
           <article className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
             <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
-              3 · {renderModuleLabel("purchase_motives")}
+              3 · {t(moduleLabelKeys["purchase_motives"])}
             </div>
             <p className="mt-4 text-sm leading-7 text-soft">{purchaseMotives.summary}</p>
             <div className="mt-5 space-y-3">
               {purchaseMotives.rows.map((row, index) => (
                 <div key={`motive-${index}`} className="rounded-card border border-line bg-white px-4 py-4">
                   <div className="text-sm font-semibold text-ink">
-                    {renderValue(row.label || row.tag || `动机 ${index + 1}`)}
+                    {renderValue(row.label || row.tag || `#${index + 1}`)}
                   </div>
                   <div className="mt-2 text-sm leading-7 text-soft">
                     {renderValue(row.detail || row.reason || row.summary || row.value)}
@@ -275,14 +349,14 @@ export default async function AnalysisResultsPage({
 
           <article className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
             <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
-              4 · {renderModuleLabel("unmet_needs")}
+              4 · {t(moduleLabelKeys["unmet_needs"])}
             </div>
             <p className="mt-4 text-sm leading-7 text-soft">{unmetNeeds.summary}</p>
             <div className="mt-5 space-y-3">
               {unmetNeeds.rows.map((row, index) => (
                 <div key={`need-${index}`} className="rounded-card border border-line bg-white px-4 py-4">
                   <div className="text-sm font-semibold text-ink">
-                    {renderValue(row.label || row.tag || `需求 ${index + 1}`)}
+                    {renderValue(row.label || row.tag || `#${index + 1}`)}
                   </div>
                   <div className="mt-2 text-sm leading-7 text-soft">
                     {renderValue(row.detail || row.reason || row.summary || row.value)}
@@ -295,14 +369,14 @@ export default async function AnalysisResultsPage({
 
         <article className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
           <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
-            5 · {renderModuleLabel("recommendations")}
+            5 · {t(moduleLabelKeys["recommendations"])}
           </div>
           <p className="mt-4 text-sm leading-7 text-soft">{recommendations.summary}</p>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {recommendations.rows.map((row, index) => (
               <div key={`recommend-${index}`} className="rounded-card border border-line bg-white px-4 py-4">
                 <div className="text-sm font-semibold text-ink">
-                  {renderValue(row.label || row.tag || row.title || `建议 ${index + 1}`)}
+                  {renderValue(row.label || row.tag || row.title || `#${index + 1}`)}
                 </div>
                 <div className="mt-2 text-sm leading-7 text-soft">
                   {renderValue(row.detail || row.reason || row.summary || row.value)}
@@ -313,7 +387,7 @@ export default async function AnalysisResultsPage({
           {recommendations.evidence.length > 0 ? (
             <div className="mt-5 rounded-card border border-line bg-[#fffafc] p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                建议依据
+                {t("recommendBasis")}
               </div>
               <div className="mt-3 space-y-2 text-sm leading-7 text-ink">
                 {recommendations.evidence.map((quote, index) => (
@@ -327,22 +401,22 @@ export default async function AnalysisResultsPage({
 
       <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
         <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
-          6 · 评论原文
+          6 · {t("rawReviews")}
         </div>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-              评论原文
+              {t("rawReviews")}
             </h3>
             <p className="mt-2 text-sm leading-7 text-soft">
-              结果页保留原始评论明细，便于从结论回到证据。
+              {t("rawReviewsDesc")}
             </p>
           </div>
           <Link
             href={`/analysis/compare?product_id=${encodeURIComponent(payload.session.product_id)}`}
             className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card"
           >
-            去看对比
+            {t("goCompareDetail")}
           </Link>
         </div>
 
@@ -351,7 +425,7 @@ export default async function AnalysisResultsPage({
             payload.comments.slice(0, 24).map((comment, index) => (
               <div key={String(comment.id ?? index)} className="rounded-card border border-line bg-white px-4 py-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                  {renderValue(comment.date, "无日期")} · {renderValue(comment.sentiment, "未分析")}
+                  {renderValue(comment.date, t("noDate"))} · {renderValue(comment.sentiment, t("noSentiment"))}
                 </div>
                 <div className="mt-2 text-sm leading-7 text-ink">
                   {renderValue(comment.content, "")}
@@ -360,7 +434,7 @@ export default async function AnalysisResultsPage({
             ))
           ) : (
             <div className="rounded-card border border-dashed border-line bg-[#fffafb] px-5 py-6 text-sm leading-7 text-soft">
-              当前批次没有可展示的评论原文。
+              {t("noReviews")}
             </div>
           )}
         </div>
