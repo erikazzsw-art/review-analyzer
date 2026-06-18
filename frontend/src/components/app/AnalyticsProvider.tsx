@@ -5,14 +5,27 @@ import { usePathname } from "next/navigation";
 import { initAnalytics, trackPageView } from "@/lib/analytics";
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  let pathname = "/";
+  try {
+    pathname = usePathname();
+  } catch {
+    pathname = "/";
+  }
 
   useEffect(() => {
-    initAnalytics();
+    try {
+      initAnalytics();
+    } catch {
+      // Analytics should never block rendering.
+    }
   }, []);
 
   useEffect(() => {
-    trackPageView(pathname);
+    try {
+      trackPageView(pathname);
+    } catch {
+      // Ignore analytics failures.
+    }
   }, [pathname]);
 
   return <>{children}</>;
