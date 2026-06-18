@@ -134,6 +134,7 @@
     "noFile": "No file selected",
     "submitButton": "Upload & Start Analysis",
     "submitting": "Submitting...",
+    "submittedAnalyzing": "Submitted, analyzing...",
     "backToWorkspace": "Back to Workspace",
     "validationError": "Please select a file and fill in Product ID, Version, and Purpose.",
     "statusTitle": "Task Status",

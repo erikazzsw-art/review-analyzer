@@ -152,6 +152,8 @@ export default function UploadPage() {
     );
   }, [file, form.productId, form.version, form.workflowPurpose]);
 
+  const jobInProgress = !!job && (job.status === "queued" || job.status === "processing");
+
   useEffect(() => {
     if (!job || job.status === "done" || job.status === "failed") {
       return;
@@ -437,10 +439,10 @@ export default function UploadPage() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting || !canSubmit}
+              disabled={isSubmitting || !canSubmit || jobInProgress}
               className="inline-flex min-h-12 items-center justify-center rounded-pill bg-ink px-6 py-3 text-sm font-semibold text-white shadow-card transition disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? t("submitting") : t("submitButton")}
+              {isSubmitting ? t("submitting") : jobInProgress ? t("submittedAnalyzing") : t("submitButton")}
             </button>
             <button
               type="button"
