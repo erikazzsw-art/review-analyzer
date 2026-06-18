@@ -24,6 +24,7 @@ class AnalysisSessionPayload(BaseModel):
     workflow_purpose: str | None = None
     product_ref_id: int | None = None
     variant_ref_id: int | None = None
+    warnings_json: list[dict[str, Any]] | None = None
     created_at: datetime
 
 

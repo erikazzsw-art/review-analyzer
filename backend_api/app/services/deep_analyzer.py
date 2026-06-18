@@ -39,7 +39,7 @@ from backend_api.app.services.prompt_registry import load_prompt
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MAX_WORKERS = 8
+DEFAULT_MAX_WORKERS = 4
 
 
 def _estimate_cost(model: str, tokens_in: int, tokens_out: int) -> float:
