@@ -1,26 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Montserrat } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 import "@/app/globals.css";
-import { ogImagePath, siteUrl } from "@/lib/seo";
+import { getMetadataBaseUrl, ogImagePath } from "@/lib/seo";
 import { AnalyticsProvider } from "@/components/app/AnalyticsProvider";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["700", "800"],
-  variable: "--font-montserrat",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: getMetadataBaseUrl(),
   title: {
     default: "ClueAI",
     template: "%s | ClueAI",
@@ -51,15 +38,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="zh" className={`${inter.variable} ${montserrat.variable}`}>
+    <html lang={locale}>
+      <head>
+        <meta
+          httpEquiv="Cache-Control"
+          content="no-store, no-cache, must-revalidate, proxy-revalidate"
+        />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
+      </head>
       <body>
-        <AnalyticsProvider>{children}</AnalyticsProvider>
+        <NextIntlClientProvider messages={messages}>
+          <AnalyticsProvider>{children}</AnalyticsProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

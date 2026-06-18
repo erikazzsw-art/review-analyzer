@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "predev": "bash ../scripts/check_frontend_port.sh",
+    "dev": "http_proxy= https_proxy= HTTP_PROXY= HTTPS_PROXY= next dev --turbopack --hostname 127.0.0.1",
+    "dev:single": "bash ../scripts/start_frontend_single.sh",
+    "rebuild:local": "bash ../scripts/rebuild_frontend_local.sh",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"
@@ -21,6 +24,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "0.454.0",
     "next": "^15.0.0",
+    "next-intl": "^4.13.0",
     "posthog-js": "^1.386.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
