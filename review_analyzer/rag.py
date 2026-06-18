@@ -56,7 +56,13 @@ def _get_embedding_api_key(user_id: int | None = None) -> str:
 
 def _get_embedding_client(user_id: int | None = None) -> OpenAI:
     api_key = _get_embedding_api_key(user_id)
-    return OpenAI(api_key=api_key, base_url=EMBEDDING_BASE_URL, timeout=60.0)
+    import httpx
+    return OpenAI(
+        api_key=api_key,
+        base_url=EMBEDDING_BASE_URL,
+        timeout=httpx.Timeout(60.0, connect=5.0),
+        max_retries=0,
+    )
 
 
 def generate_embedding(text: str, user_id: int | None = None) -> list[float]:

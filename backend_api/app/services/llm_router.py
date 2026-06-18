@@ -88,7 +88,13 @@ class LLMRouter:
         api_key = os.getenv(model.api_key_env)
         if not api_key:
             return None
-        client = OpenAI(api_key=api_key, base_url=model.base_url, timeout=model.timeout)
+        import httpx
+        client = OpenAI(
+            api_key=api_key,
+            base_url=model.base_url,
+            timeout=httpx.Timeout(model.timeout, connect=5.0),
+            max_retries=0,
+        )
         self._clients[model.name] = client
         return client
 

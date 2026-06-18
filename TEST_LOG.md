@@ -9,6 +9,36 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-06-18 | 分析432条评论进度卡住（`processed_rows`从28停止不动，总耗时20+分钟），根本原因是OpenAI Python SDK默认`max_retries=2`：每个LLM调用失败时SDK自动重试2次，每次最多30s，3个fallback模型（DeepSeek→OpenAI→Qwen）叠加后单条评论最坏耗时270s（30s×3次×3模型）；在代理关闭环境下DeepSeek/OpenAI各超时90s后才切Qwen，导致整体分析速度极慢并最终卡死 | 修复：在`backend_api/app/services/llm_router.py`和`review_analyzer/rag.py`的OpenAI客户端构造中加`max_retries=0`——我们自己的fallback链已经处理重试，不需要SDK层再重试，失败立即切下一个模型 |
+| 2026-06-18 | 开启 Clash（127.0.0.1:7890）时，本地前端 webpack 模式下所有页面报 `Cannot read properties of undefined (reading 'call')`，指向 `app-shell.tsx:32` 的 `<Sidebar />` 渲染 | 根因：macOS 系统代理将浏览器对 `localhost` 的 webpack chunk 请求路由到 Clash，webpack HMR 模块解析被干扰。修复：将 `frontend/package.json` 的 `dev` 脚本恢复为 `next dev --turbopack --hostname 127.0.0.1`（Turbopack 不受此影响）。注：之前 6-17 改回普通 webpack 的决策有误，Turbopack 才是 VPN 环境下的正确选择 |
+| 2026-06-18 | 点击登录按钮后页面无反应，按钮几秒后恢复原状，用户需反复点击。Network 显示 login → 200，workspace RSC → 200（耗时 16s），但页面始终停在登录表单 | 根因：`router.push(“/workspace”)` 使用 Next.js 软导航，需先下载目标页 RSC payload 才跳转；workspace SSR 调后端数据慢（16s），期间用户看不到任何导航反馈，`finally { setLoading(false) }` 又会让按钮恢复。修复：将 `login-form.tsx` 的跳转从 `router.push` 改为 `window.location.href = “/workspace”`（硬跳转，浏览器立即导航），并移除成功路径的 `setLoading(false)` 保持按钮为”登录中...”直到页面卸载 |
+| 2026-06-18 | 登录后 workspace 首次加载 16 秒，上传评论时报 `500: Database connection pool is unavailable`，分析 job 卡在 `processing` / `processed_rows=0` 永不完成 | 根因：后端 uvicorn 进程启动时继承了 shell 的 `http_proxy` / `https_proxy` 环境变量（指向 Clash 127.0.0.1:7890）。OpenAI embedding 客户端（`api.openai.com`）的 socket connect 被代理黑洞 — Python 3.14/macOS 上 `timeout=60.0` 无法正确限制 connect 阶段，导致 3 个分析守护线程全部永久挂死在 `sock_connect`。修复：1) 重启后端时显式清除所有代理变量；2) 在 `review_analyzer/rag.py` 和 `backend_api/app/services/llm_router.py` 中将 OpenAI 客户端 timeout 改为 `httpx.Timeout(60.0, connect=5.0)`，确保网络不通时 5 秒快速失败。已将 3 个卡住的 job 标记为 failed |
+| 2026-06-18 | 端到端测试报错 `UndefinedColumn: column "title" does not exist` — `review_analyzer/database.py` 的 `get_session_embeddings` 查询引用了 comments 表不存在的 title 列 | 修复：从 `get_session_embeddings` 的 SELECT 语句中移除 `title` 字段，只查询 `id, content, rating, embedding::text` |
+| 2026-06-18 | 端到端测试报错 `UndefinedColumn: column "cache_hit_level" of relation "comments" does not exist` — migration 014 未在 dev 数据库执行成功（Supabase statement_timeout 限制无法 ALTER TABLE） | 修复：将 `review_analyzer/database.py` 的 `update_comment_analysis` 改为优雅降级 — 有 cache_hit_level 数据时尝试写入含缓存字段的 SQL，若列不存在则自动回退到不含缓存字段的基础 SQL |
+| 2026-06-18 | `http://127.0.0.1:3000/upload` 无限 307 重定向循环，页面无法打开 | 根因：`next-intl` middleware（v4.13）在 `localePrefix: "never"` 配置下既做了内部 rewrite（→ `/zh/upload`）又发了外部 redirect（→ `/upload`），形成死循环。页面路由结构（`src/app/upload/page.tsx`）没有 `[locale]` 动态段，rewrite 目标无法匹配。修复：将 `frontend/src/middleware.ts` 从 `next-intl createMiddleware` 替换为简单的 NextResponse.next() + NEXT_LOCALE cookie 设置，去掉 locale 路由重写。需重启 dev server 才生效（Turbopack 不热更新 middleware） |
+| 2026-06-18 | 登录进入系统后几秒报 Runtime Error：`Module lucide-react/dist/esm/icons/layout-dashboard.js was instantiated because it was required from sidebar.tsx, but the module factory is not available` | 根因：`sidebar.tsx` 之前使用过 `LayoutDashboard` 图标（已在历史修改中移除），但浏览器 HTTP 缓存仍持有旧的 Turbopack 模块图 chunk，新旧模块引用冲突。修复：`Cmd+Shift+R` 硬刷新清除浏览器缓存（非代码问题） |
+| 2026-06-17 | 本地链路频繁报错，用户希望有一个真正的”一键重建”入口，避免再靠手动清进程、删缓存、猜端口来排障 | 新增 [`scripts/rebuild_frontend_local.sh`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/scripts/rebuild_frontend_local.sh)，会先检查 `3000` 监听、读取 `frontend/.env.local`、探测 `8000` 健康状态，再清空 `.next`、关闭当前工作区旧前端实例并重启 `next dev`；同时在 [`frontend/package.json`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/package.json) 暴露 `npm run rebuild:local`，并把用法补进 [`前端启动停止操作规范.md`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/前端启动停止操作规范.md) |
+| 2026-06-17 | 前端环境虽然已重装，但登录页点击后仍然报 hydration mismatch，DevTools 里还能看到 `page.js` 从 disk cache 命中，说明浏览器仍在拿旧 bundle | 将 [`frontend/next.config.ts`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/next.config.ts) 的开发环境静态资源策略从“无 headers”升级为 `no-store, no-cache, must-revalidate, proxy-revalidate`，并同步设置 `Pragma: no-cache` / `Expires: 0`；目标是让 `/_next/static` 和字体资源在 dev 模式下彻底不走缓存，避免旧 `page.js` 继续和新服务端渲染打架 |
+| 2026-06-17 | 登录页在浏览器里一直出现服务端/客户端文本不一致，截图中 `Username` 和 `用户名` 交替出现，导致无法稳定进入系统，且历史上还反复出现过类似的旧 bundle / 旧进程问题 | 本轮确认真正的根因不是登录表单文本本身，而是前端开发环境把 `/_next/static` 资源设置成了长缓存，导致浏览器持续拿到旧的客户端 bundle；先在 [`frontend/next.config.ts`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/next.config.ts) 中将该缓存策略限制到 production 环境，开发环境返回空 headers，避免旧 JS 继续覆盖最新代码；同时新增 [`scripts/rollback_frontend_hydration_fix.sh`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/scripts/rollback_frontend_hydration_fix.sh)，可一键把本次前端修复相关文件回滚到 `HEAD`，作为这次大修的安全回滚点 |
+| 2026-06-17 | 用户登录后进入 `/workspace` 仍然报 `Cannot read properties of undefined (reading 'call')`，刷新首页也无法稳定恢复，说明问题还没有真正收口 | 本轮先做了前端运行时排查和减法式定位：确认 `frontend/` 下的 dev server 仍在 `3000` 监听，重启后类型检查通过，但浏览器里的 runtime error 依旧指向 [`frontend/src/components/app/app-shell.tsx`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/src/components/app/app-shell.tsx) 第 32 行的 `<Sidebar currentPath={currentPath} />`；因此我临时把 [`frontend/src/components/app/sidebar.tsx`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/src/components/app/sidebar.tsx) 里的 `Button asChild`、图标依赖和 `Separator` 全部拆平成原生元素，尝试排除客户端包装层 / HMR 状态问题，但页面报错依旧存在，说明根因大概率还在 `AppShell` 这条渲染链的其他客户端子树或 dev server 缓存状态 |
+| 2026-06-17 | 仅有单点接口测试还不够，`/auth/login` 和 `/workspace/summary` 串起来以后还要确认登录态 cookie 真能把用户带进工作台 | 新增 [`backend_api/tests/test_login_workspace_chain.py`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/backend_api/tests/test_login_workspace_chain.py)，真实走一次登录接口后再访问 `/workspace/summary`，验证认证 cookie、`get_current_user()` 和工作台兜底层可以连续工作，防止“各自通过、串起来失败”的回归 |
+| 2026-06-17 | “Login failed (500)” 表象已经收口，但为了彻底避免以后再复发，需要把真正的脆弱点收紧到后端接口层，而不是只靠前端降级兜底 | 在 [`backend_api/app/routes/workspace.py`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/backend_api/app/routes/workspace.py) 为 `/workspace/summary` 增加统一规范化层，对 `intro`、`metrics`、`today_tasks`、`risk_products`、`pending_trackers`、`role_action_summary`、`recent_sessions` 的缺失或脏字段全部补默认值；新增 [`backend_api/tests/test_workspace_routes.py`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/backend_api/tests/test_workspace_routes.py) 回归测试，验证上游返回 `None`、错误类型或字符串数字时接口仍能稳定返回 200，避免登录后首屏再次因脏数据崩溃 |
+| 2026-06-17 | 上传评论后分析进度一直停在 0，点击分析结果页又容易直接报错 | 上传链路补上逐步进度回写：`backend_api/app/services/deep_analyzer.py` 新增 `progress_callback`，`workers/jobs.py` 按缓存命中 + LLM 实际完成数持续更新 `processed_rows`；结果页则在 [`frontend/src/app/analysis/results/page.tsx`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/src/app/analysis/results/page.tsx) 增加模块归一化和候选项过滤，避免脏数据把整页渲染拖垮 |
+| 2026-06-17 | 登录接口本身已经恢复，但用户登录后进入 `/workspace` 时前端运行时崩溃，浏览器报 `Cannot read properties of undefined (reading 'call')`，导致看起来像“登录失败” | 先修后端登录链路的脆弱点：`backend_api/app/routes/auth.py` 为 `bcrypt.checkpw()` 增加异常兜底，旧/脏 `password_hash` 统一按 401 处理，并把数据库不可用显式转成 503；随后为了保证用户能先登录进系统，临时把 [`frontend/src/app/workspace/page.tsx`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/src/app/workspace/page.tsx) 降级成稳定落地页，避免工作台复杂渲染链再次把登录后的跳转页炸掉；同时对 [`frontend/src/components/app/sidebar.tsx`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/src/components/app/sidebar.tsx) 做了更稳的 `Link` 渲染收口，并补充了登录路由回归测试，最终让用户能够稳定登录进入系统 |
+| 2026-06-17 | 网站已经恢复正常访问，需要把这次补充加固和修改痕迹补进测试记录，避免后续只看到“能打开”却看不到具体改了什么 | 本次补充修改集中在启动与缓存层：[`frontend/package.json`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/package.json) 的 `dev` 脚本绑定 `127.0.0.1`，[`frontend/src/app/layout.tsx`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/src/app/layout.tsx) 增加 `no-store` / `no-cache` / `Expires: 0` 头，[`scripts/check_frontend_port.sh`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/scripts/check_frontend_port.sh) 增强旧进程提示；复测后网站可正常打开 |
+| 2026-06-17 | 需要把前端启动/停止的正确操作单独沉淀成可见文档，避免以后再次因为旧实例残留或误关窗口而重复踩坑 | 新增根目录文档 [`前端启动停止操作规范.md`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/前端启动停止操作规范.md)，把启动前检查、正确启动/停止方式、常见误操作和这次问题结论整理成可直接照做的步骤 |
+| 2026-06-17 | 启动前端时增加端口守卫后，脚本成功识别到当前 `3000` 监听进程并确认其 cwd 为本仓库 `frontend/`，证明残留的不是别的项目而是当前工作区的前端实例 | [`scripts/check_frontend_port.sh`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/scripts/check_frontend_port.sh) 已可用：若 `3000` 端口被占用，会输出 PID/cwd/exec 并阻止再次启动；结合 `~/.zsh_history` 中的 `cd frontend` + `npm run dev`，可以把根因稳定归因为“手动启动后的会话未结束” |
+| 2026-06-17 | 本地前端 `npm run dev` 反复遇到旧实例残留时缺少启动前告警，容易直接撞上 `3000` 端口的后台 `next dev` | 新增 [`scripts/check_frontend_port.sh`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/scripts/check_frontend_port.sh)，并接入 [`frontend/package.json`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/package.json) 的 `predev`：启动前检测 `3000` 是否已有监听进程，若已有则输出 PID/cwd 并阻止再次启动；结合 shell 历史与当前进程确认，残留实例更像是之前手动启动后的会话未结束，而不是项目自启动 |
+| 2026-06-17 | 本地 `http://localhost:3000/` 页面持续返回 `Internal Server Error`，上传评论后也曾出现 `Request failed with status 500` / `Failed to fetch`；排查后确认上传链路与首页 SSR 是两个独立问题 | 本次只做排查和代码记录，不继续推进新修复；期间已经加入上传任务兼容回退、前端 dev 启动参数调整、AnalyticsProvider 容错等修改，详见下方“本次排查记录” |
+| 2026-06-17 | 补充确认：`http://localhost:3000/` 在重新用当前工作区启动 `npm run dev` 后已恢复正常访问；此前 500 的直接触发条件更像是浏览器命中的前端实例处在旧进程/旧构建状态，首页 SSR 的 metadata URL 链路又缺少兜底，导致该状态一旦异常就直接暴露为 500 | 在 [`frontend/src/lib/seo.ts`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/src/lib/seo.ts) 新增 `getMetadataBaseUrl()` 和 `absoluteUrl()` 回退；在 [`frontend/src/app/layout.tsx`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/frontend/src/app/layout.tsx) 用安全 `metadataBase` 替代顶层 `new URL(siteUrl)`；随后重启前端服务并复测首页返回 200 |
+| 2026-06-16 | 端口检查脚本第一次运行时报 `grep` 将 `--port` 识别成参数，导致自检脚本误报失败 | 在 `scripts/check_port_migration.sh` 的 `grep` 调用中增加 `--`，让模式字符串按普通正则处理；随后脚本复测通过 |
+| 2026-06-16 | 端口迁移后缺少可重复执行的自动检查入口，容易只改配置不验证最终运行态 | 新增 `scripts/check_port_migration.sh`，只检查运行时相关文件中的 `8000` / `3000` 是否一致；并把脚本写入 [`docs/PORT_MIGRATION_CHECKLIST.md`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/docs/PORT_MIGRATION_CHECKLIST.md)、[`CLAUDE.md`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/CLAUDE.md) 和 [`CODEX.md`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/CODEX.md) 作为强提醒 |
+| 2026-06-16 | 端口迁移和部署配置容易再次混淆，修改时缺少统一检查入口，容易遗漏 `8100` / `8000` / `3000` 的运行时差异 | 新增 [`docs/PORT_MIGRATION_CHECKLIST.md`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/docs/PORT_MIGRATION_CHECKLIST.md)；并在 [`CLAUDE.md`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/CLAUDE.md) 中加入修改端口/环境变量/部署链路前必须先读清单的强提醒 |
+| 2026-06-16 | 后端本地开发、Docker Compose、Nginx 与前端默认 API 地址存在 `8100` / `8000` 混用，导致本地 `3000 -> 8000`、容器内 `frontend -> api`、以及健康检查链路容易错位 | 统一后端默认端口为 `8000`：更新 `backend_api/Dockerfile`、`deploy/docker-compose.yml`、`deploy/nginx.conf`、`frontend/src/lib/api/server.ts`、`frontend/src/lib/api/browser.ts`，并在部署文档中注明后端 `8000` / 前端 `3000` 的固定分工 |
+| 2026-06-16 | 本地前端 `/api/*` 重写与本地实际后端端口不一致，登录请求会打到错误地址，表现为点击后没反应或长时间无反馈 | 将 `frontend/next.config.ts` 和 `frontend/src/lib/api/server.ts` 的默认 API 地址统一为 `http://127.0.0.1:8000`，与本地后端实际监听端口一致。注：`.env.local` 无需设置 `NEXT_PUBLIC_API_BASE_URL`，代码默认值已正确 |
+| 2026-06-16 | 登录页与注册页在请求进行中缺少重复提交保护，用户可能在网络慢或首个请求未返回时连续点击，造成“点多次才成功”的误感知 | 在 `frontend/src/components/auth/login-form.tsx` 和 `frontend/src/components/auth/register-form.tsx` 的提交入口加入 `loading` 保护，避免重复提交 |
+| 2026-06-16 | 登录/注册成功后前端还要额外请求一次 `/api/me` 才跳转，导致成功反馈延迟，放大“要点几次才进去”的体感 | 登录/注册表单直接使用 `/api/auth/*` 返回的 `user` 数据完成 `identify` 和跳转，移除额外的 `/api/me` 往返 |
+| 2026-06-16 | 审查阶段新增根目录审查计划文档，明确先审查后修复、每次修改必须记录 bug / 修复 / 测试结果 | 新增 [`CODE_REVIEW_PLAN.md`](/Users/zhangxi/Desktop/Claude%20Code/评论分析_Web_系统/CODE_REVIEW_PLAN.md) 作为标准审查流程说明 |
 | 2026-05-07 | Streamlit Cloud 启动报错 `ModuleNotFoundError: No module named 'review_analyzer'` | app.py 顶部加入 `sys.path.insert(0, parent_dir)` 将仓库根目录加入路径 |
 | 2026-05-07 | 上传 xlsx 文件报错 `parse_file() missing 1 required positional argument: 'file_type'` | upload.py 改为先写临时文件、提取扩展名，再调用 `parse_file(tmp_path, file_type)` |
 | 2026-05-07 | 上传 xlsx 后 `review_id` 被误识别为评论内容，真正的 `review_text` 被塞入 raw_data | parser.py 列名匹配改为优先精确匹配，子串匹配时排除 `_id` 结尾的列 |
@@ -71,6 +101,86 @@
 | 2026-06-15 | 本地 dev server 开 VPN 后所有页面报 "Cannot read properties of undefined (reading 'call')" | webpack chunk 加载被 VPN 干扰，dev 脚本切换为 `next dev --turbopack`；生产构建不受影响 |
 | 2026-06-15 | FeedbackWidget hydration mismatch：服务端渲染 "反馈"、客户端渲染 "Feedback" | `layout.tsx` 的 `<html lang>` 从 `"en"` 改为 `"zh"`，与 `getLocale()` 服务端默认值一致 |
 | 2026-06-15 | Turbopack 模式启动报 "Cannot find module 'tailwindcss-animate'" | `npm install tailwindcss-animate` 补装缺失依赖 |
+| 2026-06-16 | 本地登录报 500，`psycopg2.ProgrammingError: invalid dsn: invalid connection option "DATABASE_URL"` | 根因：(1) `database.py` 的 `load_dotenv` 路径指向了根目录 `.env` 而非 `review_analyzer/.env`，已修正路径；(2) `.env` 文件中 DATABASE_URL 值前多了一个 `DATABASE_URL=` 前缀导致 DSN 格式错误，由 Erika 手动删除多余前缀后修复 |
+
+---
+
+## 本次排查记录：前端首页 500 与上传链路兼容处理（2026-06-17）
+
+### 问题背景
+
+用户反馈 `http://localhost:3000/` 无法正常打开，浏览器直接显示 `Internal Server Error`。此前上传评论文件时，还出现过 `Request failed with status 500` 和 `Failed to fetch`。本轮目标是先追查问题根因并保留操作记录，不再继续扩大修复范围。
+
+### 已做修改
+
+| 文件 | 改动内容 | 目的 |
+|------|---------|------|
+| `frontend/package.json` | 将 `dev` 脚本从 `next dev --turbopack` 改为普通 `next dev`，同时继续清空 `http_proxy/https_proxy/HTTP_PROXY/HTTPS_PROXY` | ~~降低 Turbopack 相关运行时不稳定因素，避免本地代理环境干扰 dev server~~ **[2026-06-18 修正]** 此决策有误——真正被代理干扰的是 webpack 而非 Turbopack。已在 6-18 恢复为 `next dev --turbopack`，详见上方修复记录 |
+| `frontend/src/components/app/AnalyticsProvider.tsx` | 给 `usePathname()`、`initAnalytics()`、`trackPageView()` 增加容错包裹；任一埋点失败都不再阻断页面渲染 | 避免全局 Analytics 组件在 SSR / hydration 阶段把首页拖成 500 |
+| `backend_api/app/routes/uploads.py` | 上传解析失败时将 `ValueError` 映射为 HTTP 400；入队失败时若是 `RuntimeError`，改为用后台线程直接执行 `process_upload_job()` | 防止上传接口在解析或队列不可用时直接 500/503 |
+| `backend_api/app/routes/scrape.py` | ASIN 拉取入口同样增加 `RuntimeError` 回退，队列不可用时直接执行 `process_asin_fetch_job()` | 让两个上传/拉取入口在本地无 `rq` 环境下保持一致行为 |
+| `review_analyzer/database.py` | 增加 `_clear_cache()` 安全兜底，替代多处直接调用 `.clear()` 的写法 | 修复上传 job 落库后调用 `get_upload_job.clear()` 导致的 `AttributeError`，这是本轮复现到的上传 500 根因 |
+
+### 复现与排查结果
+
+1. 先在浏览器里复现了首页 `Internal Server Error`。
+2. 用本地脚本直接调用上传路由，复现到 `500`。
+3. 进一步调用同一路由源码，定位到 `review_analyzer/database.py:create_upload_job()` 里对普通函数执行 `get_upload_job.clear()`，触发 `AttributeError: 'function' object has no attribute 'clear'`。
+4. 修完后再次复测，发现当前环境缺少 `rq`，上传任务会退回到 `503 Worker queue is unavailable.`，因此又补了线程级同步回退。
+5. 随后又把前端首页 SSR 侧的 analytics 全局组件加了保护，但浏览器截图显示首页仍然报 `Internal Server Error`，说明前端还有别的运行时问题未解决。
+
+### 复测结论
+
+- 上传链路的一个明确 500 根因已经确认：`get_upload_job.clear()` 的错误调用。
+- `rq` 缺失会导致任务队列不可用，因此又加了同步回退，避免本地开发环境直接 503。
+- 首页 `Internal Server Error` 仍未彻底解决，当前只能确认它不再是上面那个上传 500 同一个问题。
+- 本次按用户要求先停止继续修复，保留记录，方便后续从这里继续。
+
+### 本次登录 500 的根因与防复发
+
+1. `login` 请求本身并不是最终根因，真正阻断用户进入系统的是 `/workspace` 页面在客户端渲染时崩溃，错误表现为 `Cannot read properties of undefined (reading 'call')`。
+2. 后端登录链路本身也存在脆弱点：如果数据库里出现非 bcrypt 格式的旧 `password_hash`，原来的 `bcrypt.checkpw()` 会直接抛异常；我已把它改成统一返回 401，避免坏数据把接口炸成 500。
+3. 为了保证“先能登录进系统”，我把工作台页面临时降级成稳定落地页，并收紧了 `Sidebar` 的链接渲染方式，先把登录后的跳转链路稳定住。
+4. 防复发建议：
+   - 遇到“登录失败”时，先区分是认证接口失败还是登录后页面崩溃，不要把两者混为一谈。
+   - 任何会渲染在登录后首屏的客户端组件，都要优先保持最小可用，并对 `undefined` 数据做兜底。
+   - 密码校验、数据库连接、路由跳转三处都要有明确错误边界，坏数据应返回 401/503，而不是 500。
+   - 新增或恢复工作台复杂内容时，建议分块恢复并为每一块保留回归测试，避免单个子组件再次拖垮整个登录后的落地页。
+
+### 补充复盘：首页恢复打开后的根因确认
+
+1. 重新使用当前工作区执行 `cd frontend && npm run dev` 后，`http://localhost:3000/` 已恢复为 200 并正常渲染首页。
+2. 这说明之前的 500 并不是首页静态代码缺失或构建失败，而是浏览器命中的前端服务状态不对，更接近旧进程/旧构建产物在提供响应。
+3. 为降低同类问题再次出现的概率，我把首页 metadata 链路做了防御性加固：
+   - `frontend/src/app/layout.tsx` 不再直接在顶层执行 `new URL(siteUrl)`
+   - `frontend/src/lib/seo.ts` 在 `metadataBase` 和绝对 URL 生成时都增加了兜底回退
+4. 从现象和代码改动一起看，最稳妥的结论是：旧前端实例是最初 `Internal Server Error` 的直接暴露面，而 metadata 链路的脆弱性放大了这个问题；重启到最新代码后页面恢复正常。
+
+### 本次补充加固
+
+这次为了降低同类问题再次出现的概率，我没有去改业务页面内容，而是把前端启动和缓存相关的地方做了最小化加固：
+
+1. `frontend/package.json`
+   - 将 `dev` 改为 `next dev --hostname 127.0.0.1`
+   - 目的：让本地开发服务明确绑定到回环地址，减少外部网络环境或异常绑定带来的干扰
+2. `frontend/src/app/layout.tsx`
+   - 在 `<head>` 中加入 `Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate`
+   - 同时补充 `Pragma: no-cache` 和 `Expires: 0`
+   - 目的：降低浏览器或代理缓存到旧前端状态的概率
+3. `scripts/check_frontend_port.sh`
+   - 增强了端口占用时的提示，除了 PID 之外，还会显示 `cwd` 和 `exec`
+   - 如果发现监听进程就是当前仓库的 `frontend/`，会明确提醒先停掉旧实例再启动新服务
+
+这几项改动已经和前面的排查结论一起写入 `TEST_LOG.md`，方便后面回看时能一眼看出“改了什么”和“为什么这么改”。
+
+### 根因判断
+
+1. 现场现象说明问题不是“页面本身无法编译”，因为 `npm run dev` 重新用当前工作区启动后，`http://localhost:3000/` 立即恢复 200。
+2. 端口 `3000` 上当时确实存在一个 `node` 进程在监听，且它的工作目录是当前 `frontend/`，说明问题更接近“前端开发实例状态异常”而不是“访问了别的项目”。
+3. 首页 metadata 代码原先依赖顶层 `new URL(siteUrl)` 和 `absoluteUrl()` 的默认行为，虽然默认配置正常时可用，但缺少显式兜底，容易把运行时状态问题放大成整页 500。
+4. 因此，这次真正起作用的修复分两层：
+   - 启动层：用当前工作区重新拉起前端，确保浏览器访问的是最新实例
+   - 代码层：给 metadataBase / absoluteUrl 增加回退，降低同类状态异常再次把首页拖成 500 的概率
 
 ---
 
