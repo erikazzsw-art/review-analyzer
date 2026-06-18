@@ -2,13 +2,25 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { identify, track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+type AuthResponse = {
+  user: {
+    id: number;
+    username: string;
+    email?: string;
+    plan?: string;
+  };
+};
+
 export function RegisterForm() {
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +29,9 @@ export function RegisterForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) {
+      return;
+    }
     setError("");
     setLoading(true);
     track("signup_click", { page: "/register" });
@@ -35,21 +50,18 @@ export function RegisterForm() {
         return;
       }
 
-      const meRes = await fetch("/api/me", { credentials: "include" });
-      if (meRes.ok) {
-        const me = await meRes.json();
-        identify(String(me.id), {
-          username: me.username,
-          email: me.email,
-          plan: me.plan,
-          signup_date: new Date().toISOString(),
-        });
-      }
+      const payload = (await res.json()) as AuthResponse;
+      identify(String(payload.user.id), {
+        username: payload.user.username,
+        email: payload.user.email,
+        plan: payload.user.plan ?? "free",
+        signup_date: new Date().toISOString(),
+      });
 
       track("signup_complete", { method: "email" });
       router.push("/workspace");
     } catch {
-      setError("Network error. Please try again.");
+      setError(tCommon("networkError"));
     } finally {
       setLoading(false);
     }
@@ -59,7 +71,7 @@ export function RegisterForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="reg-username" className="block text-sm font-medium text-ink">
-          Username
+          {t("username")}
         </label>
         <Input
           id="reg-username"
@@ -70,12 +82,12 @@ export function RegisterForm() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender"
-          placeholder="your username"
+          placeholder={t("usernamePlaceholder")}
         />
       </div>
       <div>
         <label htmlFor="reg-email" className="block text-sm font-medium text-ink">
-          Email
+          {t("email")}
         </label>
         <Input
           id="reg-email"
@@ -85,12 +97,12 @@ export function RegisterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender"
-          placeholder="you@example.com"
+          placeholder={t("emailPlaceholder")}
         />
       </div>
       <div>
         <label htmlFor="reg-password" className="block text-sm font-medium text-ink">
-          Password
+          {t("password")}
         </label>
         <Input
           id="reg-password"
@@ -101,7 +113,7 @@ export function RegisterForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender"
-          placeholder="at least 6 characters"
+          placeholder={t("passwordHint")}
         />
       </div>
       {error && (
@@ -114,7 +126,7 @@ export function RegisterForm() {
         disabled={loading}
         className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90"
       >
-        {loading ? "Creating account..." : "Create Account"}
+        {loading ? t("registerLoading") : t("registerButton")}
       </Button>
     </form>
   );

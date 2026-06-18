@@ -1,14 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { identify, track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+type AuthResponse = {
+  user: {
+    id: number;
+    username: string;
+    email?: string;
+    plan?: string;
+  };
+};
+
 export function LoginForm() {
-  const router = useRouter();
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,6 +26,9 @@ export function LoginForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) {
+      return;
+    }
     setError("");
     setLoading(true);
 
@@ -29,23 +42,23 @@ export function LoginForm() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setError(data?.detail || `Login failed (${res.status})`);
+        setError(data?.detail || `${t("loginFailed")} (${res.status})`);
         track("login_fail", { reason: data?.detail || "unknown" });
+        setLoading(false);
         return;
       }
 
-      const meRes = await fetch("/api/me", { credentials: "include" });
-      if (meRes.ok) {
-        const me = await meRes.json();
-        identify(String(me.id), { username: me.username, plan: me.plan });
-      }
+      const payload = (await res.json()) as AuthResponse;
+      identify(String(payload.user.id), {
+        username: payload.user.username,
+        plan: payload.user.plan ?? "free",
+      });
 
       track("login_success", { method: "email" });
-      router.push("/workspace");
+      window.location.href = "/workspace";
     } catch {
-      setError("Network error. Please try again.");
+      setError(tCommon("networkError"));
       track("login_fail", { reason: "network_error" });
-    } finally {
       setLoading(false);
     }
   }
@@ -54,7 +67,7 @@ export function LoginForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="login-username" className="block text-sm font-medium text-ink">
-          Username
+          {t("username")}
         </label>
         <Input
           id="login-username"
@@ -65,12 +78,12 @@ export function LoginForm() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender"
-          placeholder="your username"
+          placeholder={t("usernamePlaceholder")}
         />
       </div>
       <div>
         <label htmlFor="login-password" className="block text-sm font-medium text-ink">
-          Password
+          {t("password")}
         </label>
         <Input
           id="login-password"
@@ -81,7 +94,7 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender"
-          placeholder="your password"
+          placeholder={t("passwordPlaceholder")}
         />
       </div>
       {error && (
@@ -94,7 +107,7 @@ export function LoginForm() {
         disabled={loading}
         className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90"
       >
-        {loading ? "Logging in..." : "Log In"}
+        {loading ? t("loginLoading") : t("loginButton")}
       </Button>
     </form>
   );

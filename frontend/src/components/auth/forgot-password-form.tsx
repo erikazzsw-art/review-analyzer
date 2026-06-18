@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 type Step = "email" | "code" | "done";
 
 export function ForgotPasswordForm() {
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -38,7 +40,7 @@ export function ForgotPasswordForm() {
       track("password_reset_request", { step: "code_sent" });
       setStep("code");
     } catch {
-      setError("Network error. Please try again.");
+      setError(tCommon("networkError"));
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ export function ForgotPasswordForm() {
       track("password_reset_confirm", { step: "success" });
       setStep("done");
     } catch {
-      setError("Network error. Please try again.");
+      setError(tCommon("networkError"));
     } finally {
       setLoading(false);
     }
@@ -77,9 +79,9 @@ export function ForgotPasswordForm() {
   if (step === "done") {
     return (
       <div className="space-y-4 text-center">
-        <p className="text-sm text-ink">Password reset successful.</p>
-        <Button asChild className="rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
-          <Link href="/login">Back to Log In</Link>
+        <p className="text-sm text-ink">{t("resetSent")}</p>
+        <Button href="/login" className="rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
+          {t("goLogin")}
         </Button>
       </div>
     );
@@ -89,11 +91,11 @@ export function ForgotPasswordForm() {
     return (
       <form onSubmit={handleConfirmReset} className="space-y-4">
         <p className="text-sm text-soft">
-          A 6-digit code has been sent to <span className="font-medium text-ink">{email}</span>.
+          {t("codeSentTo")} <span className="font-medium text-ink">{email}</span>
         </p>
         <div>
           <label htmlFor="reset-code" className="block text-sm font-medium text-ink">
-            Verification Code
+            {t("codeLabel")}
           </label>
           <Input
             id="reset-code"
@@ -104,13 +106,13 @@ export function ForgotPasswordForm() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             className={inputClassName}
-            placeholder="6-digit code"
+            placeholder={t("codePlaceholder")}
             autoComplete="one-time-code"
           />
         </div>
         <div>
           <label htmlFor="reset-new-password" className="block text-sm font-medium text-ink">
-            New Password
+            {t("password")}
           </label>
           <Input
             id="reset-new-password"
@@ -121,7 +123,7 @@ export function ForgotPasswordForm() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             className={inputClassName}
-            placeholder="at least 6 characters"
+            placeholder={t("passwordHint")}
           />
         </div>
         {error && (
@@ -130,14 +132,14 @@ export function ForgotPasswordForm() {
           </p>
         )}
         <Button type="submit" disabled={loading} className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
-          {loading ? "Resetting..." : "Reset Password"}
+          {loading ? t("confirmingReset") : t("confirmReset")}
         </Button>
         <button
           type="button"
           onClick={() => { setStep("email"); setError(""); }}
           className="w-full text-center text-sm text-soft hover:text-ink"
         >
-          Use a different email
+          {t("useOtherEmail")}
         </button>
       </form>
     );
@@ -147,7 +149,7 @@ export function ForgotPasswordForm() {
     <form onSubmit={handleRequestCode} className="space-y-4">
       <div>
         <label htmlFor="reset-email" className="block text-sm font-medium text-ink">
-          Email
+          {t("email")}
         </label>
         <Input
           id="reset-email"
@@ -157,7 +159,7 @@ export function ForgotPasswordForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className={inputClassName}
-          placeholder="you@example.com"
+          placeholder={t("emailPlaceholder")}
         />
       </div>
       {error && (
@@ -166,7 +168,7 @@ export function ForgotPasswordForm() {
         </p>
       )}
       <Button type="submit" disabled={loading} className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
-        {loading ? "Sending code..." : "Send Reset Code"}
+        {loading ? t("sendingResetLink") : t("sendResetLink")}
       </Button>
     </form>
   );

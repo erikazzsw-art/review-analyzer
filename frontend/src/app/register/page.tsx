@@ -1,32 +1,39 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { RegisterForm } from "@/components/auth/register-form";
-import { HeroPreview } from "@/components/marketing/hero-preview";
-import { MarketingShell } from "@/components/marketing/marketing-shell";
+import { AuthLayout } from "@/components/auth/auth-layout";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Create Account | ClueAI",
-  description: "Create a ClueAI account and start with the review workspace.",
+  title: "注册 | ReviewLens",
+  description: "创建 ReviewLens 账号，开始智能评论分析。",
 });
 
 export default function RegisterPage() {
+  const t = useTranslations("auth");
+
   return (
-    <MarketingShell
-      eyebrow="Create account"
-      title="Start with one batch of reviews and make the next decision clearer."
-      description="Create your account to access the full review workspace."
-      aside={<HeroPreview />}
-    >
-      <div className="space-y-4">
+    <AuthLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-[-0.02em] text-ink">
+            {t("registerTitle")}
+          </h1>
+          <p className="mt-2 text-sm text-soft">
+            {t("registerSubtitle")}
+          </p>
+        </div>
+
         <RegisterForm />
+
         <p className="text-center text-sm text-soft">
-          Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-ink hover:underline">
-            Log in
+          {t("hasAccount")}
+          <Link href="/login" className="ml-1 font-semibold text-ink hover:underline">
+            {t("goLogin")}
           </Link>
         </p>
       </div>
-    </MarketingShell>
+    </AuthLayout>
   );
 }
