@@ -133,6 +133,7 @@ def _call_llm(client: OpenAI, system_prompt: str, row: pd.Series) -> dict[str, A
 def evaluate(
     prompt_version: str = "v2.1",
     golden_set_version: str = "v1.0",
+    category: str | None = None,
     max_workers: int = MAX_WORKERS,
     progress_callback: Any = None,
 ) -> EvalResult:
@@ -141,6 +142,7 @@ def evaluate(
     Args:
         prompt_version: backend_api/app/prompts/annotate_v{version}.md
         golden_set_version: data/golden_set/{version}/
+        category: 品类子目录名（仅 v1.1+ 适用，如 'pet', '3c'）
         max_workers: 并发线程数
         progress_callback: 可选回调 (done, total) → None
 
@@ -148,7 +150,7 @@ def evaluate(
         EvalResult 含准确率 / token / 成本指标
     """
     prompt_def = load_prompt("annotate", prompt_version)
-    df = load_golden_set(golden_set_version)
+    df = load_golden_set(golden_set_version, category=category)
     n = len(df)
     if n == 0:
         raise RuntimeError(f"Golden Set {golden_set_version} 为空，无法评测")

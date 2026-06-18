@@ -57,11 +57,15 @@ def _get_connection_pool():
         return None
     try:
         _connection_pool = psycopg2.pool.ThreadedConnectionPool(
-            minconn=1,
-            maxconn=10,
+            minconn=2,
+            maxconn=20,
             dsn=db_url,
             connect_timeout=10,
             sslmode="require",
+            keepalives=1,
+            keepalives_idle=30,
+            keepalives_interval=5,
+            keepalives_count=3,
         )
         return _connection_pool
     except psycopg2.OperationalError as e:
@@ -607,31 +611,48 @@ def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> No
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                """UPDATE comments
+            base_sql = """UPDATE comments
                    SET sentiment = %s, content_sentiment = %s, category = %s, priority = %s, reason = %s,
                        improvement = %s, issue_tag = %s, highlight_tag = %s,
                        aspects_json = %s, analyzer_version = %s,
-                       cache_hit_level = %s, cache_source_id = %s,
                        is_processed = 1
-                   WHERE id = %s AND user_id = %s""",
-                (
-                    analysis.get("sentiment"),
-                    analysis.get("content_sentiment", analysis.get("sentiment")),
-                    analysis.get("category"),
-                    analysis.get("priority"),
-                    analysis.get("reason"),
-                    analysis.get("improvement"),
-                    analysis.get("issue_tag", ""),
-                    analysis.get("highlight_tag", ""),
-                    json.dumps(analysis["aspects_json"], ensure_ascii=False) if analysis.get("aspects_json") else None,
-                    analysis.get("analyzer_version", "legacy"),
-                    analysis.get("cache_hit_level"),
-                    analysis.get("cache_source_id"),
-                    comment_id,
-                    user_id,
-                ),
+                   WHERE id = %s AND user_id = %s"""
+            base_params = (
+                analysis.get("sentiment"),
+                analysis.get("content_sentiment", analysis.get("sentiment")),
+                analysis.get("category"),
+                analysis.get("priority"),
+                analysis.get("reason"),
+                analysis.get("improvement"),
+                analysis.get("issue_tag", ""),
+                analysis.get("highlight_tag", ""),
+                json.dumps(analysis["aspects_json"], ensure_ascii=False) if analysis.get("aspects_json") else None,
+                analysis.get("analyzer_version", "legacy"),
+                comment_id,
+                user_id,
             )
+            if analysis.get("cache_hit_level") is not None:
+                try:
+                    cur.execute(
+                        """UPDATE comments
+                           SET sentiment = %s, content_sentiment = %s, category = %s, priority = %s, reason = %s,
+                               improvement = %s, issue_tag = %s, highlight_tag = %s,
+                               aspects_json = %s, analyzer_version = %s,
+                               cache_hit_level = %s, cache_source_id = %s,
+                               is_processed = 1
+                           WHERE id = %s AND user_id = %s""",
+                        base_params[:-2] + (
+                            analysis.get("cache_hit_level"),
+                            analysis.get("cache_source_id"),
+                            comment_id,
+                            user_id,
+                        ),
+                    )
+                except Exception:
+                    conn.rollback()
+                    cur.execute(base_sql, base_params)
+            else:
+                cur.execute(base_sql, base_params)
             conn.commit()
             _clear_cache(get_comments)
             _clear_cache(get_comments_deduped)
@@ -745,7 +766,7 @@ def get_session_embeddings(user_id: int, session_id: int) -> list[dict]:
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """SELECT id, content, rating, title, embedding::text
+                """SELECT id, content, rating, embedding::text
                    FROM comments
                    WHERE user_id = %s AND session_id = %s
                      AND embedding IS NOT NULL
