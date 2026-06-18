@@ -21,9 +21,9 @@ services:
     depends_on:
       - redis
     expose:
-      - "8100"
+      - "8000"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -63,7 +63,7 @@ services:
         NEXT_PUBLIC_API_BASE_URL: https://api.clueai-reviewlens.com
     environment:
       NEXT_PUBLIC_API_BASE_URL: https://api.clueai-reviewlens.com
-      API_BASE_URL: http://api:8100
+      API_BASE_URL: http://api:8000
     depends_on:
       - api
     expose:
@@ -118,23 +118,6 @@ services:
       -d api.clueai-reviewlens.com
     restart: "no"
 
-  streamlit:
-    profiles:
-      - legacy
-    build:
-      context: ..
-      dockerfile: backend_api/Dockerfile
-    env_file:
-      - .env
-    command:
-      - streamlit
-      - run
-      - review_analyzer/app.py
-      - --server.address=0.0.0.0
-      - --server.port=8501
-    expose:
-      - "8501"
-    restart: unless-stopped
 
 volumes:
   redis_data:

@@ -17,5 +17,5 @@ COPY backend_api /app/backend_api
 COPY review_analyzer /app/review_analyzer
 COPY workers /app/workers
 
-EXPOSE 8100
-CMD ["uvicorn", "backend_api.app.main:app", "--host", "0.0.0.0", "--port", "8100"]
+EXPOSE 8000
+CMD ["uvicorn", "backend_api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
