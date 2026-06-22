@@ -46,7 +46,10 @@ def get_session_results(
     return AnalysisSessionResultsPayload(
         session=_session_payload(session),
         context=context,
-        modules={key: AnalysisResultModulePayload(**value) for key, value in modules.items()},
+        modules={
+            key: AnalysisResultModulePayload(**value) if isinstance(value, dict) else AnalysisResultModulePayload(summary=str(value))
+            for key, value in modules.items()
+        },
         comments=comments,
         generated_at=datetime.utcnow(),
     )
