@@ -38,6 +38,9 @@ def _render_connection_error(error: psycopg2.OperationalError, db_url: str) -> N
 
 
 _connection_pool = None
+_pool_creation_failed = False
+_pool_last_attempt = 0.0
+_POOL_RETRY_INTERVAL = 10.0  # 连接池创建失败后 10 秒才允许重试
 
 
 def _clear_cache(func) -> None:
@@ -48,17 +51,24 @@ def _clear_cache(func) -> None:
 
 
 def _get_connection_pool():
-    """全局共享的 PostgreSQL 连接池。"""
-    global _connection_pool
+    """全局共享的 PostgreSQL 连接池，创建失败后定期重试。"""
+    global _connection_pool, _pool_creation_failed, _pool_last_attempt
     if _connection_pool is not None:
         return _connection_pool
+
+    import time
+    now = time.time()
+    if _pool_creation_failed and (now - _pool_last_attempt) < _POOL_RETRY_INTERVAL:
+        return None
+
     db_url = _get_database_url()
     if not db_url:
         return None
     try:
+        _pool_last_attempt = now
         _connection_pool = psycopg2.pool.ThreadedConnectionPool(
             minconn=2,
-            maxconn=20,
+            maxconn=50,
             dsn=db_url,
             connect_timeout=10,
             sslmode="require",
@@ -67,8 +77,10 @@ def _get_connection_pool():
             keepalives_interval=5,
             keepalives_count=3,
         )
+        _pool_creation_failed = False
         return _connection_pool
     except psycopg2.OperationalError as e:
+        _pool_creation_failed = True
         _render_connection_error(e, db_url)
         return None
 
@@ -124,13 +136,23 @@ def get_connection():
 
     try:
         conn = pool.getconn()
-    except psycopg2.OperationalError as e:
+    except (psycopg2.OperationalError, psycopg2.pool.PoolError) as e:
         _render_connection_error(e, db_url)
         raise DatabaseConnectionUnavailable("Database connection failed.") from e
 
     if conn.closed:
         pool.putconn(conn, close=True)
         conn = pool.getconn()
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+    except Exception:
+        pool.putconn(conn, close=True)
+        try:
+            conn = pool.getconn()
+        except (psycopg2.OperationalError, psycopg2.pool.PoolError) as e:
+            raise DatabaseConnectionUnavailable("Database connection failed.") from e
 
     return _PooledConnection(conn, pool)
 
