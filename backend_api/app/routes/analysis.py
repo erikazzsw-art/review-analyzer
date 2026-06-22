@@ -38,6 +38,8 @@ def get_session_results(
         )
 
     comments = get_comments(user_id, session_id=session_id)
+    for c in comments:
+        c.pop("embedding", None)
     context = _build_results_context(session)
     modules = build_results_insights(user_id, comments, context)
 
