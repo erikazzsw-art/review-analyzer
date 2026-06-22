@@ -9,6 +9,7 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-06-22 | 分析结果页数据不稳定 + 页面过于简陋：1) LLM (DeepSeek) 返回 JSON 字段不完整时 `merged.update()` 整体覆盖 heuristic 有效值导致模块显示为空；2) heuristic fallback 数据太模板化无信息量；3) 页面没有图表、icon、色彩区分，不像成品 SaaS；4) 缺少翻译、下载、inline 行动创建等交互功能 | **后端加固**：`insight_engine.py` merge 逻辑改为字段级覆盖（空值不覆盖 heuristic）+ 新增 `_validate_ai_payload` 校验 AI 输出结构 + `_normalize_tag_row` 统一字段名 + heuristic 改善为含 pos_rate/neg_rate 统计的信息性 summary + TOP 10 限制。**前端重写**：`results/page.tsx` 全面重构为 Shulex 风格表格布局（TagRow 组件含排名 + 标签名 + PctBadge + progress bar + 证据引用），5 个模块各有独立色系 + Lucide icon，TOP issue/highlight 用 CalloutCard 高亮。**交互功能**：新增 `ModuleCard` 客户端组件（每个模块含翻译 + XLSX 下载按钮），新增 `InlineActionButton` 组件（负向标签旁 Dialog 弹窗创建行动）。**新后端路由**：`POST /translate/module`（DeepSeek 翻译）、`GET /analysis/sessions/{id}/export?module=xxx`（openpyxl 生成 XLSX）。tsc + build 全通过 |
 | 2026-06-22 | 生产上传评论后分析进度永远卡在 0%（第三次出现）。**根因1（架构缺陷）**：浏览器发 `POST /api/uploads`，Next.js standalone 的 rewrite 把请求转到外网 `https://api.clueai-reviewlens.com/uploads`，绕回 nginx 再到后端——大文件上传在这条链路上不稳定，随机返回 404（HTML 错误页而非 JSON）。**根因2（Worker 数据库连接永久失败）**：Worker 容器 6 天前构建时镜像还包含 streamlit 依赖，`database.py` 的 `get_upload_job()` 触发 `NoSessionContext`；更核心的是连接池 `_get_connection_pool()` 首次创建失败后 `_connection_pool = None` 永不重试，后续每个 job 进来都立即抛 `DatabaseConnectionUnavailable` 且无法写入失败状态，job 永远卡在 `queued` | **修复1（架构级）**：在 `deploy/nginx.conf` 的前端 server 块新增 `location /api/` 直接 proxy 到 `clueai_api`，绕过 Next.js rewrite 层——浏览器 `/api/uploads` 请求不再经过 Node.js 进程，一步到位到 FastAPI。**修复2（连接池韧性）**：`review_analyzer/database.py` 的 `_get_connection_pool()` 新增重试机制——创建失败后记录时间戳，10 秒后允许再次尝试，不再"一次失败终身报废"。**部署**：`git pull && docker compose up -d --build worker && docker compose restart nginx`。**教训**：1) Next.js standalone rewrite 不适合代理大文件 POST，nginx 层应直接路由所有 API 请求；2) Worker 镜像必须随代码变更一起重建，不能只 recreate api/frontend；3) 连接池初始化必须有重试，单点失败不能永久锁死进程 |
 | 2026-06-22 | 生产登录页报 "Authentication service unavailable"（503）。根因：API 容器内 `get_user_by_username()` → `get_connection()` 连接 Supabase 失败。`db.inpgrbjwtpxgwungghnz.supabase.co` 只解析出 IPv6 地址（`2406:da18:...`），ECS Docker 网络无 IPv6 路由，连接报 "Network is unreachable"。`/health` 端点不检查数据库因此 healthcheck 通过掩盖了真实故障。排障过程中 `docker compose restart` 多次未生效，因为 restart 不重读 `.env` 文件。另外镜像内 `review_analyzer/.env`（被 `load_dotenv()` 加载）也曾包含旧的 direct connection 地址 | 修复：将 `deploy/.env` 的 `DATABASE_URL` 从 direct connection（`db.*.supabase.co:5432`）改为 Supabase pooler 端点（`aws-1-ap-southeast-1.pooler.supabase.com:6543`，有 IPv4），然后 `docker compose up -d --force-recreate api` 重建容器使新环境变量生效。教训：1) 排查 503 应第一时间看 api 容器日志而非 nginx；2) 改 `.env` 后必须 `up --force-recreate` 而非 `restart`；3) 生产 DATABASE_URL 应统一使用 pooler 端点避免 IPv6-only 问题 |
 | 2026-06-22 | 生产站点 502 Bad Gateway（复合故障，两阶段）。**阶段1**：api 容器反复崩溃重启。根因：`workers/jobs.py` 新增了对 `backend_api.app.services.taxonomy_coverage_monitor` 的 import 并提交，但该文件本身从未 `git add`，ECS 拉取后 api 容器启动即报 `ModuleNotFoundError` 崩溃循环。**阶段2**：api 修复后 502 仍持续。根因：frontend 容器已 3 天处于 `unhealthy` 状态（镜像过期，git pull 拉取了 125 个前端文件变更但未重建镜像）；nginx upstream 指向 frontend:3000，frontend 不响应则 502。附带发现：Next.js standalone 模式绑定容器 HOSTNAME（容器ID）而非 `0.0.0.0`，导致 `wget localhost:3000` 健康检查始终失败，但 Docker 内部 DNS 解析到容器实际 IP 后可达。另外 SSH 连接 ECS 超时（`KEXINIT sent` 后挂起），通过阿里云 VNC 远程连接绕过 | **阶段1修复**：本地 `git add backend_api/app/services/taxonomy_coverage_monitor.py` + commit `6f96695` + push develop，ECS `git pull && docker compose up -d --build api`，api 41 秒后 healthy。**阶段2修复**：ECS 执行 `docker compose up -d --build frontend`，重建镜像后 frontend 恢复；`docker compose exec nginx nginx -s reload` 刷新 upstream DNS；`docker compose restart nginx` 完成全链路恢复 |
@@ -370,7 +371,7 @@ File "database.py", line 13, in get_connection
 | ECS 服务器 | 阿里云 `8.210.51.242`（香港） |
 | 登录用户 | `ecs-user` |
 | SSH 密钥 | `~/.ssh/clueai-reviewlens` |
-| 仓库路径 | `~/评论分析_Web_系统/` |
+| 仓库路径 | `/opt/clueai/` |
 | 部署编排 | `deploy/docker-compose.yml` |
 | 测试域名 | `https://clueai-reviewlens.com` |
 | 分支 | `develop`（ECS 跟踪 develop） |
@@ -402,7 +403,7 @@ File "database.py", line 13, in get_connection
 | BuildKit gRPC 报错 | `docker compose build` 输出乱码 non-printable characters | 使用 `DOCKER_BUILDKIT=0 docker compose build` 禁用 BuildKit |
 | npm ci 缺失 @swc/helpers | frontend 构建阶段报 `Could not resolve @swc/helpers` | Dockerfile 多阶段构建中确保 `package-lock.json` 完整，`npm ci` 正常拉取依赖后解决 |
 | next build Module not found | `Can't resolve '@/components/auth/auth-layout'` | 该文件本地存在但未被 git 跟踪，`git add` + `git commit` + `git push` 后 ECS 重新拉取即解决（commit `116f6ee`） |
-| 仓库路径混淆 | 误以为 ECS 仓库在 `/root/review-analyzer`，多克隆了一份 | 确认实际路径为 `~/评论分析_Web_系统/`，删除多余克隆 `rm -rf ~/review-analyzer` |
+| 仓库路径混淆 | 误以为 ECS 仓库在 `/root/review-analyzer`，多克隆了一份 | 确认实际路径为 `/opt/clueai/`，删除多余克隆 `rm -rf ~/review-analyzer` |
 
 ### 最终状态
 
@@ -411,6 +412,6 @@ File "database.py", line 13, in get_connection
 ### 关键教训
 
 > 1. **本地有但 git 没跟踪的文件**会在 ECS 上缺失导致构建失败——每次新增组件后及时 `git status` 检查是否有遗漏的 untracked 文件。**已发生两次（auth-layout / taxonomy_coverage_monitor）**，建议在 CI 加 `python -c "from backend_api.app.main import app"` smoke test 作为硬防线
-> 2. **ECS 上只有一份仓库**（`~/评论分析_Web_系统/`），不要因为找不到路径就重新 clone，避免多仓库造成混乱
+> 2. **ECS 上只有一份仓库**（`/opt/clueai/`），不要因为找不到路径就重新 clone，避免多仓库造成混乱
 > 3. **BuildKit 兼容性**：阿里云 ECS 的 Docker 版本若遇到 gRPC 乱码，用 `DOCKER_BUILDKIT=0` 回退到传统构建器
 > 4. **SSH 连接限制**：ECS 安全组仅允许 IPv4 访问 22 端口，本地若走 IPv6 网络需确认连通性

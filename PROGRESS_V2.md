@@ -1288,10 +1288,15 @@ NX-M8 验收记录（Phase A）：
   - 上传页文件拖拽区 hover 高亮 + 进度可视化
   - 页面切换 skeleton screen（workspace / analysis 页数据加载时）
 
-- [ ] **Step C9: 分析结果页美化**
-  - 引入轻量图表（recharts 或 CSS-only progress bar）
-  - 模块卡片增加 icon + 色彩区分
-  - 关键结论（如 top issue）用 callout 样式高亮
+- [x] **Step C9: 分析结果页美化**（2026-06-22 完成）
+  - [x] 后端 insight_engine 数据稳定性加固（schema 校验 + 字段级 merge + heuristic 改善）
+  - [x] 模块卡片增加 icon + 色彩区分（5 个模块各有独立色系 + Lucide icon）
+  - [x] 用户体验模块 TOP 10 正负 tag + CSS progress bar + 证据引用
+  - [x] 关键结论（TOP issue / highlight）用 callout 样式高亮
+  - [x] 综合建议模块改为 numbered steps 布局
+  - [x] 每个模块增加翻译按钮（DeepSeek 翻译 API）+ XLSX 下载按钮
+  - [x] 负向标签 + 未满足需求每条旁增加「+ 行动」inline 创建按钮（Dialog 弹窗）
+  - [x] 新增后端路由：`/translate/module`、`/analysis/sessions/{id}/export`
 
 - [ ] **Step C10: 暗色模式（可选）**
   - 仅在种子用户反馈中有明确需求时执行
@@ -1332,6 +1337,7 @@ NX-M8 验收记录（Phase A）：
 | 2026-06-12 | V4.5-T5 | 新增「数据埋点与用户行为分析体系」：PostHog Cloud 注册 + Free plan + Paddle 数据源连接；前端 SDK 接入（analytics.ts + AnalyticsProvider）+ 后端 analytics_events 表 + FastAPI 中间件 + 登录/注册/上传关键事件埋点；Step 1-4 全部完成；独立深度学习文档 `数据埋点学习文档.md` |
 | 2026-06-14 | V4.5-T6 | 用户反馈浮窗组件全部完成：migration + 后端 route（含邮件通知）+ 前端 Widget（FAB+情绪+表单+中英文自适应+快捷键）+ AppShell 集成 + PostHog 埋点；已推送 develop（3 commits） |
 | 2026-06-14 | V4.5-T7 | 新增「中国大陆访问优化」计划：Phase A Cloudflare CDN + 性能优化（立即执行）；Phase B ICP 备案 + 国内节点（付费用户 ≥10 触发）|
+| 2026-06-18 | 前端测试 | 决策：当前阶段不引入前端测试框架（Vitest/Jest）。理由：快速迭代期、CI 已有 tsc+build 兜底、核心逻辑在后端。触发条件：出现复杂前端逻辑/状态机、频繁回归 bug、核心功能稳定进入维护期时引入 Vitest + React Testing Library |
 
 ---
 
@@ -1540,7 +1546,21 @@ NX-M8 验收记录（Phase A）：
 - 线上 `other` 占比 > 15% 时，30 分钟内有告警通知
 - 新品类从 Taxonomy 入库到 Golden Set 就绪 ≤ 2 天
 
-**优先级建议：** Step 3（`other` 监控）实现成本最低但防御价值最大，建议第一个做；Step 1-2 在下一个新品类实际上线时触发。
+**当前进度备注（2026-06-17）：**
+
+Step 1-3 已全部实现并通过验证。关键实施细节：
+
+1. **监控链路（Step 3）完整闭环**：`worker 分析完成 → compute_taxonomy_coverage() 计算 other 占比 → 超 15% 阈值触发 → ①写入 trace_json.warnings ②写入 sessions.warnings_json ③飞书 Webhook 推送 → 前端结果页展示黄色告警横幅`。所有异常均 non-fatal catch，不会阻塞主分析流程。
+
+2. **数据库变更**：`migrations/022_add_session_warnings.sql` 已在 dev 库（`clueai-dev`）执行。**prod 部署时需同步执行**：`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS warnings_json JSONB;`
+
+3. **Golden Set 生成脚本（Step 1）已就绪但无实际数据**：当前 `data/golden_set/v1.1/` 目录为空，因为尚未有新品类上线需求触发。下一个品类上线时执行 `python3 scripts/build_golden_set_generic.py --category "品类名" --limit 50` 即可。
+
+4. **CI 多品类评测（Step 2）已就绪但处于空跑状态**：`--all-categories` 在 v1.1 目录为空时跳过，不影响现有 v1.0 家具家居回归。当第一个品类 golden set 落地后自动生效。
+
+5. **Step 4（SOP 文档）未做**：属于流程管理类工作，等第一个新品类实际走完 Step 1 流程后再总结 SOP，避免纸上谈兵。
+
+**触发条件**：当用户上传非家具家居品类评论（如 3C、宠物），且分析结果中 `other` 占比告警频繁出现时，说明该品类需要补充 taxonomy + golden set。
 
 ---
 
@@ -3637,5 +3657,278 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 4. 闭环是被动的 — 跟随正常分析流程执行，不额外开定时任务
 5. Trace 存 `upload_jobs` — 一对一关联，查询简单
 6. 告警复用 Feishu webhook — 零额外配置
+
+---
+
+### V4.5-T14: 国际化（i18n）— 全站中英文双语 + 分析结果翻译（2026-06-18 新增）
+
+**来源：** 产品需求 — 服务中国跨境电商团队，需同时支持中文 UI 和英文用户
+**前置条件：** NX-M8 前端页面基本稳定
+**启动时间节点：** 2026-06-18
+**总工期：** ~5-7 天（Phase 1: 3-4 天，Phase 2: 2-3 天）
+
+**业务意义：**
+- 核心用户是中国跨境电商运营，但产品定位为分析英文评论
+- 部分用户英文阅读能力有限，需要中文界面 + 分析结果中文翻译
+- 支持英文 UI 可以拓展海外用户或展示给投资人/合作方
+- 参考竞品 Shulex VOC 的双语体验模式
+
+**需求核心逻辑：**
+- 欢迎页/系统内均可切换中文/英文 → UI 框架跟随语言偏好
+- 评论原文保持英文（不翻译后再分析）→ LLM 直接分析英文原文
+- 分析结果输出保持英文 → 模块级"翻译"按钮供中文用户查看中文版
+- 翻译结果缓存到 DB → 二次查看秒切换
+
+**与 Shulex VOC 的参考对比：**
+| 维度 | Shulex 做法 | 我们的做法 | 理由 |
+|------|------------|-----------|------|
+| UI 框架语言 | 跟用户偏好 | 跟用户偏好 | 一致 |
+| 分析结论语言 | 改 prompt 输出中文 | 保持英文 + 翻译按钮 | 不维护两套 prompt，对英文用户零影响 |
+| 评论原文 | 保持英文 | 保持英文 | 一致 |
+| 翻译入口 | 评论旁行内翻译图标 | 模块级翻译按钮 | 操作更简洁，符合我们模块化布局 |
+
+**负面影响评估：**
+- Phase 1（UI 双语化）：纯前端改动，不影响后端逻辑，零 API 风险
+- Phase 2（翻译功能）：新增 API 端点 + DB 表，不改动现有分析管道
+- 翻译调用 DeepSeek：成本可控（按需翻译 + 缓存，非每次分析都翻译）
+- 整体：渐进式，Phase 1 独立可部署，不依赖 Phase 2
+
+---
+
+#### Phase 1: i18n 基础设施 + UI 全局双语化
+
+**技术选型：**
+- i18n 库：`next-intl`（Next.js 15 App Router 官方推荐，支持 SSR + 中间件）
+- 语言存储：cookie `NEXT_LOCALE`（SSR 可读，middleware 可路由）
+- 文案管理：`frontend/messages/zh.json` + `frontend/messages/en.json`
+
+**任务清单：**
+
+- [x] **Step 1: 安装 next-intl + 基础配置**
+  - 安装 `next-intl` 依赖
+  - 创建 `frontend/src/i18n.ts` 配置文件
+  - 修改 `frontend/next.config.ts` 添加 i18n plugin
+  - 创建 `frontend/src/middleware.ts`（locale 检测 + cookie 读取）
+  - 修改 `frontend/src/app/layout.tsx` 包裹 `NextIntlClientProvider`
+
+- [x] **Step 2: 创建中英文翻译文件**
+  - 创建 `frontend/messages/zh.json`（从现有硬编码中文文案提取）
+  - 创建 `frontend/messages/en.json`（对应英文翻译）
+  - 涵盖：marketing、auth、upload、workspace、analysis、sidebar、common 命名空间
+
+- [x] **Step 3: 语言切换器组件**
+  - 新建 `frontend/src/components/ui/locale-switcher.tsx`
+  - 欢迎页 site-header 右上角加入语言切换器（未登录态）
+  - 系统内 sidebar 底部加入语言切换器（已登录态）
+  - 切换后写 cookie + 刷新页面使 SSR 生效
+
+- [x] **Step 4: 欢迎页 + Marketing 组件双语化**
+  - `page.tsx`（首页）：metadata + 所有文案 → `t('key')`
+  - `site-header.tsx`：导航标签
+  - `marketing-shell.tsx`：通用 shell 文案
+  - `value-grid.tsx`：三大卖点
+  - `hero-preview.tsx`：数据卡片示例文案
+  - `cta-row.tsx`：按钮文案（通过 props 传入，已动态化）
+
+- [x] **Step 5: Auth 页面双语化**
+  - `login/page.tsx` + `login-form.tsx`：标签、placeholder、按钮、链接文案
+  - `register/page.tsx` + `register-form.tsx`：同上
+  - `forgot-password/page.tsx` + `forgot-password-form.tsx`：同上
+  - 错误信息双语化（当前混用中英文）
+
+- [x] **Step 6: 系统内页面双语化**
+  - `sidebar.tsx`：导航组名（核心/洞察/行动/管理）+ 菜单项
+  - `app-shell.tsx`：通用 shell 部分
+  - `upload/page.tsx`：字段标签、提示语、状态信息、工作目的选项
+  - `workspace/page.tsx`：角色标签、指标名、任务描述、fallback 文案
+  - `analysis/results/page.tsx`：模块标签（消费者画像/用户体验/购买动机等）、指标名、按钮文案
+  - 备注：analysis results 的 LLM 输出内容不在此 Step 处理（留给 Phase 2）
+
+- [x] **Step 7: 验证与回归测试**
+  - 中文环境：所有页面显示中文，功能正常
+  - 英文环境：所有页面显示英文，功能正常
+  - 刷新后语言保持（cookie 持久化验证）
+  - `npm run typecheck` 通过
+  - `npm run build` 通过
+  - CI 通过
+
+**Phase 1 完成：2026-06-18** | 7 commits 推送到 develop (`b8f7e3c`..`fe6adc0`)
+- tsc --noEmit ✅ | next build 25 页面 ✅ | CI pending
+- 技术要点：同步 server component 用 `useTranslations`，async server component 用 `getTranslations`
+
+---
+
+#### Phase 2: 分析结果模块级翻译功能
+
+**技术方案：**
+- 翻译后端：新增 `/api/translate/module` 端点，调 DeepSeek 翻译 + 缓存
+- DB 缓存表：`translation_cache`（session_id + module_key + target_lang → 翻译 JSON）
+- 前端交互：模块顶部"翻译 / 原文"切换按钮，点击后调 API，loading 态，缓存命中秒切
+
+**任务清单：**
+
+- [ ] **Step 1: 后端翻译 API + DB 缓存表**
+  - 新增 migration：`translation_cache` 表（session_id INT, module_key TEXT, target_lang TEXT, content_json JSONB, created_at TIMESTAMPTZ, UNIQUE(session_id, module_key, target_lang)）
+  - 新增路由：`backend_api/app/routers/translate.py`
+    - `POST /api/translate/module`：接收 session_id + module_key → 调 DeepSeek 翻译 → 写缓存 → 返回翻译结果
+    - `GET /api/translate/module?session_id=X&module_key=Y&lang=zh`：优先读缓存，无缓存返回 404
+  - 翻译 prompt 设计：保持专业术语准确性，输出结构与原文 JSON 一致
+  - 复用 `review_analyzer/` 中的 DeepSeek 调用逻辑
+
+- [ ] **Step 2: 前端翻译按钮交互**
+  - 分析结果页每个模块（消费者画像/用户体验/购买动机/未满足需求/综合建议）顶部加"翻译"按钮
+  - 按钮状态：默认"翻译为中文" → 点击后 loading → 完成后变为"查看原文"
+  - 翻译结果原位替换模块内容展示
+  - 再次点击"查看原文"恢复英文内容
+  - 已缓存的翻译秒切（前端也做 state 缓存，避免重复请求）
+
+- [ ] **Step 3: 验证**
+  - 中文语言环境进入分析结果页 → 模块标签已是中文（Phase 1 覆盖）
+  - 点击"翻译为中文"按钮 → loading → 显示中文翻译内容
+  - 刷新页面后再次点击 → 秒返回（DB 缓存命中）
+  - 切换到"查看原文" → 恢复英文 LLM 输出
+  - 英文语言环境下翻译按钮不显示（或显示为"Translate to Chinese"，按需决定）
+
+---
+
+#### Phase 3: 评论证据行内翻译（可选增强，低优先级）
+
+- [ ] 评论原文 evidence 引用旁加翻译图标
+- [ ] 点击后在原文下方展示中文翻译
+- [ ] 复用 Phase 2 的翻译 API（module_key 改为 `evidence_{index}` 或批量翻译）
+
+---
+
+#### 现状审计备注（2026-06-18）
+
+**当前语言覆盖情况：**
+
+| 页面/区域 | 当前语言 | i18n 改造后 |
+|-----------|---------|------------|
+| 欢迎页（page.tsx + marketing 组件） | 全中文 | 中/英跟随偏好 |
+| site-header 导航 | 中文 | 中/英跟随偏好 |
+| login/register/forgot-password | 中文 | 中/英跟随偏好 |
+| sidebar 菜单 | 中文 | 中/英跟随偏好 |
+| upload 页面 | 中文 | 中/英跟随偏好 |
+| workspace 页面 | 中文 | 中/英跟随偏好 |
+| analysis/results 模块标签 | 中文 | 中/英跟随偏好 |
+| analysis/results LLM 输出内容 | **英文** | 保持英文 + 模块翻译按钮 |
+| metadata（HTML title） | 中英混合 | 中/英跟随偏好 |
+| 错误信息 | 中英混合 | 中/英跟随偏好 |
+
+**i18n 基础设施现状：** 零。无 next-intl / react-i18next / locale 文件。所有文案硬编码。
+
+---
+
+### V4.5-T15: 全面测试方案执行计划（2026-06-18 新增）
+
+> **目标**：建立覆盖核心链路的测试体系，保障上线质量与迭代安全。
+> **完整方案文档**：[ClueAI_ReviewLens_测试方案.md](../ClueAI_ReviewLens_测试方案.md)
+> **当前基线**：33 个测试，32 通过，1 失败（已于 2026-06-18 修复，见下方备注）
+> **工具链**：pytest + httpx（后端）/ Playwright（E2E）/ respx（mock LLM）/ Locust（性能）
+
+---
+
+#### Phase 1: 核心逻辑单元测试（本周，2 天）
+
+**目标覆盖**：认证 token 机制 + 配额系统 + LLM Router 熔断
+
+- [x] 配额系统测试补全（`backend_api/tests/test_quota.py`，22 个用例，全通过）
+- [ ] **认证 token 单元测试**（`backend_api/tests/test_auth_token.py`）
+  - Token 签名篡改 → 401
+  - Token 过期（exp < now）→ 401
+  - Refresh token 续期：access 过期 + refresh 有效 → 正常鉴权
+  - HMAC timing-safe 比较（使用 `hmac.compare_digest`）
+- [ ] **LLM Router 熔断测试**（`backend_api/tests/test_llm_router.py`）
+  - 连续 3 次失败 → 自动切换到备用模型
+  - 全部模型不可用 → 抛出 RuntimeError
+  - 冷却 60s 后恢复主模型
+
+**备注（2026-06-18）**：  
+原测试 `test_team_review_analyze_unlimited` 假设 team 套餐 `review_analyze` 不限，实际 QUOTA_TABLE.md 明确为 50000 条。已拆分为 `test_team_review_analyze_at_limit`（49000+1000=50000 → 允许）和 `test_team_review_analyze_over_limit`（49999+1000=50999 → 拒绝），两个新用例均通过。
+
+---
+
+#### Phase 2: 主链路集成测试（下周，3 天）
+
+**目标覆盖**：上传 → Worker Job → 分析结果全链路
+
+- [ ] **文件上传集成测试**（`backend_api/tests/test_uploads.py`）
+  - CSV / XLSX 正常上传 → job_id 返回 + 状态 queued
+  - Free 用户 > 500 行 → 配额拒绝（HTTP 400）
+  - Redis 不可用 → 降级为 Thread 异步执行
+  - 上传后临时文件已删除
+- [ ] **Worker Job 异常路径测试**（`backend_api/tests/test_jobs.py`）
+  - 正常 Job：queued → processing → done，session + stats 正确写入
+  - LLM 全部失败 → Job 状态标记 failed + error_message 记录
+  - 重复 content_hash → 缓存命中，不重复调用 LLM
+- [ ] **文件解析单元测试**（`backend_api/tests/test_parser.py`）
+  - 列自动识别（content / date / rating / reviewer / source）
+  - 日期格式兼容（ISO / 美式 / 中文）
+
+---
+
+#### Phase 3: 二级功能集成测试（3 天）
+
+**目标覆盖**：RAG 问答 + 对比分析 + 产品管理
+
+- [ ] **RAG 问答测试**（`backend_api/tests/test_qa.py`）
+  - Free 用户访问 → 403
+  - 空评论库 → 返回 "No review data available"
+  - 超过 5 个产品 → 400
+  - 去重逻辑（相同 content_hash 不重复展示）
+- [ ] **对比分析测试**（`backend_api/tests/test_compare.py`）
+  - 非当前用户的 session_id → 404
+  - 只有 1 个 session → 返回单组数据 + 空差异
+- [ ] **产品 CRUD 测试**（已有 `test_workspace_routes.py`，补充产品/行动/复盘场景）
+
+---
+
+#### Phase 4: E2E 端到端测试（3 天，Playwright）
+
+**启动条件**：Phase 1-3 完成，核心 API 稳定
+
+- [ ] 搭建 Playwright 测试基础设施（`frontend/e2e/` 目录 + playwright.config.ts）
+- [ ] **P0 场景**
+  - 未登录访问 → 自动重定向 `/login`
+  - 登录 → 工作台跳转 + cookie 设置
+  - 上传 CSV → job polling → 跳转分析结果页
+- [ ] **P1 场景**
+  - i18n 中/英切换无 key 缺失
+  - 配额耗尽提示升级 CTA 显示
+
+---
+
+#### Phase 5: 性能 + 可靠性测试（上线前，2 天）
+
+**启动条件**：部署到 Staging 环境后执行
+
+- [ ] **性能压测**（Locust）：50 用户并发上传，P99 < 3s，无 500
+- [ ] **可靠性注入**
+  - `docker stop redis` → Worker Thread 降级正常
+  - 数据库连接 kill → 连接池自动重建
+  - Mock LLM 全返回 500 → Job 标记 failed，用户收到提示
+
+---
+
+#### 退出标准（上线前必须满足）
+
+| 条件 | 要求 |
+|------|------|
+| P0 用例全部通过 | 100% |
+| P1 用例通过率 | ≥ 95% |
+| Golden Set 准确率 | ≥ 93%（CI 自动跑） |
+| 无已知安全漏洞 | 0 Critical / 0 High |
+| 核心模块代码覆盖率 | ≥ 80% |
+
+---
+
+#### 已知质量债务（待修复）
+
+| 文件 | 问题 | 优先级 |
+|------|------|--------|
+| `backend_api/tests/test_v24_dynamic_aspects.py` | 6 个测试用 `return` 代替 `assert`，pytest 会忽略这些断言（假通过） | P1 |
+| `backend_api/tests/test_llm_router.py` | 文件不存在，熔断逻辑完全无测试覆盖 | P0 |
+| `frontend/e2e/` | 目录不存在，UI 回归靠人眼 | P1 |
 
 ---

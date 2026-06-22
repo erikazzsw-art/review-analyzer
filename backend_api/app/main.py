@@ -15,6 +15,7 @@ from backend_api.app.routes.asin_watchlist import router as asin_watchlist_route
 from backend_api.app.routes.auth import router as auth_router
 from backend_api.app.routes.compare import router as compare_router
 from backend_api.app.routes.copywriter import router as copywriter_router
+from backend_api.app.routes.export import router as export_router
 from backend_api.app.routes.feedback import router as feedback_router
 from backend_api.app.routes.me import router as me_router
 from backend_api.app.routes.products import router as products_router
@@ -23,6 +24,7 @@ from backend_api.app.routes.quota import router as quota_router
 from backend_api.app.routes.scrape import router as scrape_router
 from backend_api.app.routes.settings import router as settings_router
 from backend_api.app.routes.taxonomy import router as taxonomy_router
+from backend_api.app.routes.translate import router as translate_router
 from backend_api.app.routes.uploads import router as uploads_router
 from backend_api.app.routes.workspace import router as workspace_router
 
@@ -80,3 +82,5 @@ app.include_router(analytics_router)
 app.include_router(feedback_router)
 app.include_router(asin_watchlist_router)
 app.include_router(copywriter_router)
+app.include_router(export_router)
+app.include_router(translate_router)

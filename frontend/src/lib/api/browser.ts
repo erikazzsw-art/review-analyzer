@@ -742,3 +742,37 @@ export async function triggerAsinFetchNow(
   }
   return (await response.json()) as { job_id: string; message: string };
 }
+
+export async function translateModule(params: {
+  sessionId: number;
+  moduleKey: string;
+  content: Record<string, unknown>;
+  targetLang?: string;
+}): Promise<{ translated: Record<string, unknown> }> {
+  const response = await fetch(`${getApiBaseUrl()}/translate/module`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: params.sessionId,
+      module_key: params.moduleKey,
+      content: params.content,
+      target_lang: params.targetLang || "zh",
+    }),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as { translated: Record<string, unknown> };
+}
+
+export async function exportModuleXlsx(sessionId: number, moduleKey: string): Promise<Blob> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/analysis/sessions/${sessionId}/export?module=${encodeURIComponent(moduleKey)}`,
+    { credentials: "include" },
+  );
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.blob();
+}

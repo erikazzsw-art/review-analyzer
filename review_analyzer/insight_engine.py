@@ -19,7 +19,17 @@ def build_results_insights(
     ai_payload = _build_ai_results_payload(user_id, comments, context)
     if ai_payload:
         merged = dict(heuristic_payload)
-        merged.update(ai_payload)
+        for key, value in ai_payload.items():
+            if key not in merged:
+                continue
+            if not isinstance(value, dict):
+                continue
+            existing = merged[key]
+            for field, field_value in value.items():
+                if field_value is None or field_value == "" or field_value == []:
+                    continue
+                existing[field] = field_value
+            merged[key] = existing
         return merged
     return heuristic_payload
 
@@ -46,21 +56,28 @@ def build_compare_insights(
 def _build_heuristic_results(comments: list[dict[str, Any]], context: dict[str, Any]) -> dict[str, dict[str, Any]]:
     positive = [comment for comment in comments if comment.get("sentiment") == "positive"]
     negative = [comment for comment in comments if comment.get("sentiment") == "negative"]
+    neutral = [comment for comment in comments if comment.get("sentiment") not in ("positive", "negative")]
     positive_tags = _top_tag_rows(positive, "highlight_tag")
     negative_tags = _top_tag_rows(negative, "issue_tag")
 
+    total = len(comments)
+    pos_rate = round(len(positive) / total * 100, 1) if total else 0.0
+    neg_rate = round(len(negative) / total * 100, 1) if total else 0.0
+
     consumer_summary = _build_consumer_profile_summary(positive_tags, negative_tags)
-    evidence = _sample_quotes(comments, limit=3)
+    evidence = _sample_quotes(comments, limit=5)
     experience_summary = (
-        "Customers mention more positive than negative product experiences in this range."
-        if len(positive) >= len(negative)
-        else "Customers mention more friction points than positive experiences in this range."
+        f"Out of {total} reviews, {pos_rate}% are positive and {neg_rate}% are negative. "
+        f"Top strength: {positive_tags[0]['tag'] if positive_tags else 'N/A'}. "
+        f"Top issue: {negative_tags[0]['tag'] if negative_tags else 'N/A'}."
     )
     purchase_summary = (
-        "Customers mainly buy for value, quality, and ease of use based on the current review set."
+        f"Based on {len(positive)} positive reviews, the main purchase drivers are: "
+        f"{', '.join(row['tag'] for row in positive_tags[:3]) or 'general product value'}."
     )
     unmet_summary = (
-        "The open needs center on the top complaints and on how the product should perform more reliably."
+        f"Based on {len(negative)} negative reviews, the key unmet needs are: "
+        f"{', '.join(row['tag'] for row in negative_tags[:3]) or 'no clear pattern'}."
     )
     recommendations = _build_recommendations(positive_tags, negative_tags, context)
 
@@ -68,24 +85,24 @@ def _build_heuristic_results(comments: list[dict[str, Any]], context: dict[str, 
         "consumer_profile": {
             "summary": consumer_summary,
             "rows": [
-                {"label": "Core audience", "detail": consumer_summary},
-                {"label": "What they care about", "detail": _join_tag_names(positive_tags[:3], negative_tags[:2])},
-                {"label": "Evidence", "detail": evidence[0] if evidence else "No representative quote found."},
+                {"label": "Review distribution", "detail": f"Positive {pos_rate}% · Negative {neg_rate}% · Neutral {round(len(neutral) / total * 100, 1) if total else 0}%"},
+                {"label": "Core audience focus", "detail": _join_tag_names(positive_tags[:3], negative_tags[:2])},
+                {"label": "Key insight", "detail": consumer_summary},
             ],
             "evidence": evidence,
         },
         "user_experience": {
             "summary": experience_summary,
-            "positive": positive_tags or [{"tag": "No clear strength", "pct": 0.0, "reason": "No stable positive tag found."}],
-            "negative": negative_tags or [{"tag": "No clear friction", "pct": 0.0, "reason": "No stable negative tag found."}],
+            "positive": positive_tags[:10] or [{"tag": "No clear strength", "pct": 0.0, "reason": "No stable positive tag found."}],
+            "negative": negative_tags[:10] or [{"tag": "No clear friction", "pct": 0.0, "reason": "No stable negative tag found."}],
         },
         "purchase_motives": {
             "summary": purchase_summary,
-            "rows": positive_tags[:5] or [{"tag": "Great value", "pct": 0.0, "reason": "No clear buying motive extracted."}],
+            "rows": positive_tags[:10] or [{"tag": "Great value", "pct": 0.0, "reason": "No clear buying motive extracted."}],
         },
         "unmet_needs": {
             "summary": unmet_summary,
-            "rows": negative_tags[:5] or [{"tag": "Quality improvement", "pct": 0.0, "reason": "No clear unmet need extracted."}],
+            "rows": negative_tags[:10] or [{"tag": "Quality improvement", "pct": 0.0, "reason": "No clear unmet need extracted."}],
         },
         "recommendations": {
             "summary": "Use both complaints and strengths to align product, listing, and communication decisions.",
@@ -142,12 +159,14 @@ def _build_ai_results_payload(
 ) -> dict[str, Any] | None:
     if not comments:
         return None
+    positive_tags = _top_tag_rows([c for c in comments if c.get("sentiment") == "positive"], "highlight_tag")
+    negative_tags = _top_tag_rows([c for c in comments if c.get("sentiment") == "negative"], "issue_tag")
     prompt = {
         "context": context,
         "review_count": len(comments),
-        "representative_comments": _serialize_comments(comments[:10]),
-        "positive_tags": _top_tag_rows([c for c in comments if c.get("sentiment") == "positive"], "highlight_tag"),
-        "negative_tags": _top_tag_rows([c for c in comments if c.get("sentiment") == "negative"], "issue_tag"),
+        "representative_comments": _serialize_comments(comments[:15]),
+        "positive_tags": positive_tags,
+        "negative_tags": negative_tags,
     }
     try:
         client = OpenAI(
@@ -161,21 +180,71 @@ def _build_ai_results_payload(
                 {
                     "role": "system",
                     "content": (
-                        "You are an ecommerce review analyst. Return JSON with keys "
-                        "consumer_profile, user_experience, purchase_motives, unmet_needs, recommendations. "
-                        "Write user-facing values in concise English. Preserve arrays and objects."
+                        "You are an ecommerce review analyst. Analyze the provided review data and return a JSON object with exactly these keys:\n"
+                        "1. consumer_profile: {summary: string, rows: [{label: string, detail: string}], evidence: [string]}\n"
+                        "2. user_experience: {summary: string, positive: [{tag: string, pct: number, reason: string}], negative: [{tag: string, pct: number, reason: string}]}\n"
+                        "3. purchase_motives: {summary: string, rows: [{tag: string, pct: number, reason: string}]}\n"
+                        "4. unmet_needs: {summary: string, rows: [{tag: string, pct: number, reason: string}]}\n"
+                        "5. recommendations: {summary: string, rows: [{label: string, detail: string}]}\n\n"
+                        "Rules:\n"
+                        "- positive and negative arrays must have up to 10 items each, sorted by pct descending\n"
+                        "- pct is the percentage of reviews mentioning that tag (0-100)\n"
+                        "- reason must quote or closely paraphrase a real review as evidence\n"
+                        "- recommendations should be actionable (Product/Operations/Listing/QA)\n"
+                        "- Write all values in concise English\n"
+                        "- Return ONLY the JSON object, no markdown"
                     ),
                 },
                 {"role": "user", "content": json.dumps(prompt, ensure_ascii=False)},
             ],
             temperature=0.2,
-            max_tokens=2200,
+            max_tokens=3000,
             response_format={"type": "json_object"},
         )
         payload = json.loads(response.choices[0].message.content.strip())
-        return payload if isinstance(payload, dict) else None
+        if not isinstance(payload, dict):
+            return None
+        return _validate_ai_payload(payload)
     except (APIError, APITimeoutError, AuthenticationError, json.JSONDecodeError, ValueError, TypeError):
         return None
+
+
+def _validate_ai_payload(payload: dict[str, Any]) -> dict[str, Any] | None:
+    """Validate AI output structure, returning None for invalid modules."""
+    expected_keys = {"consumer_profile", "user_experience", "purchase_motives", "unmet_needs", "recommendations"}
+    validated: dict[str, Any] = {}
+    for key in expected_keys:
+        module = payload.get(key)
+        if not isinstance(module, dict):
+            continue
+        if key == "user_experience":
+            pos = module.get("positive")
+            neg = module.get("negative")
+            if not isinstance(pos, list) or not isinstance(neg, list):
+                continue
+            module["positive"] = [_normalize_tag_row(r) for r in pos[:10] if isinstance(r, dict)]
+            module["negative"] = [_normalize_tag_row(r) for r in neg[:10] if isinstance(r, dict)]
+        elif key in ("purchase_motives", "unmet_needs"):
+            rows = module.get("rows")
+            if not isinstance(rows, list):
+                continue
+            module["rows"] = [_normalize_tag_row(r) for r in rows[:10] if isinstance(r, dict)]
+        elif key == "recommendations":
+            rows = module.get("rows")
+            if not isinstance(rows, list):
+                continue
+            module["rows"] = [r for r in rows if isinstance(r, dict) and r.get("detail")]
+        validated[key] = module
+    return validated if validated else None
+
+
+def _normalize_tag_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Ensure tag rows have consistent field names."""
+    return {
+        "tag": str(row.get("tag") or row.get("label") or row.get("name") or ""),
+        "pct": float(row.get("pct") or row.get("percentage") or row.get("percent") or 0),
+        "reason": str(row.get("reason") or row.get("evidence") or row.get("detail") or row.get("example") or ""),
+    }
 
 
 def _build_compare_object_ai(
@@ -255,7 +324,7 @@ def _top_tag_rows(comments: list[dict[str, Any]], field: str) -> list[dict[str, 
             if tag not in examples and content:
                 examples[tag] = content[:160]
     rows: list[dict[str, Any]] = []
-    for tag, count in counter.most_common(8):
+    for tag, count in counter.most_common(10):
         pct = round(count / pool_size * 100, 1) if pool_size else 0.0
         rows.append(
             {
