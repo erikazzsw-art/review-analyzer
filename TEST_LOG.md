@@ -9,6 +9,7 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-06-22 | 生产站点 502 Bad Gateway，api 容器反复崩溃重启。根因：`workers/jobs.py` 新增了对 `backend_api.app.services.taxonomy_coverage_monitor` 的 import 并提交，但该文件本身从未 `git add`，ECS 拉取后 api 容器启动即报 `ModuleNotFoundError` 崩溃循环 | 本地 `git add backend_api/app/services/taxonomy_coverage_monitor.py` + commit + push develop，ECS `git pull && docker compose up -d --build api`，api 41 秒后恢复 healthy，502 消除 |
 | 2026-06-18 | 本地开发环境 embedding 代理方案优化：之前为解决代理导致全局请求卡死，一刀切清除了所有代理变量，导致 OpenAI embedding 在国内直连不通、batch失败后跳过、聚类优化失效、432条评论全部逐条走 LLM（本可优化为~150次） | 修复：`review_analyzer/rag.py` 的 `_get_embedding_client` 改为通过 `httpx.Client(proxy=...)` **单独**给 OpenAI embedding 客户端配代理（读取 `.env` 中的 `EMBEDDING_PROXY=http://127.0.0.1:7890`），不再依赖全局环境变量。DeepSeek LLM 和 Supabase DB 继续直连不受影响。生产环境（香港 ECS）不设此变量，OpenAI 直连可达 |
 | 2026-06-18 | 上传432条评论后进度条一直卡在0/432不动，持续10+分钟 | 根因：`review_analyzer/rag.py` 的 `generate_embeddings_batch` batch请求失败时回退到逐条单独调用（432条×5s超时=36分钟）。OpenAI在无代理环境下不可达，2个batch各失败后触发432次单条超时调用，embedding阶段无限期阻塞。修复：删除单条回退逻辑，batch失败直接跳过整批（填空vector），embedding是可选优化，不影响LLM分析主流程 |
 | 2026-06-18 | 分析432条评论进度卡住（`processed_rows`从28停止不动，总耗时20+分钟），根本原因是OpenAI Python SDK默认`max_retries=2`：每个LLM调用失败时SDK自动重试2次，每次最多30s，3个fallback模型（DeepSeek→OpenAI→Qwen）叠加后单条评论最坏耗时270s（30s×3次×3模型）；在代理关闭环境下DeepSeek/OpenAI各超时90s后才切Qwen，导致整体分析速度极慢并最终卡死 | 修复：在`backend_api/app/services/llm_router.py`和`review_analyzer/rag.py`的OpenAI客户端构造中加`max_retries=0`——我们自己的fallback链已经处理重试，不需要SDK层再重试，失败立即切下一个模型 |
@@ -354,3 +355,59 @@ File "database.py", line 13, in get_connection
 > - **当天（1 小时 + 1 天）**：DB-1 环境隔离（Step 2.1）+ DB-3 多租户审计（Step 2.3）
 > - **本周内（1 天）**：DB-4/5/6 schema 标准化 + DB-7 备份脚本（Step 2.2/2.4/2.5）
 > - **回灌生产（30 分钟）**：所有 dev 库验证通过后再操作生产库（Step 2.6）
+
+---
+
+## 部署（2026-06-18）
+
+### 环境信息
+
+| 项目 | 值 |
+|------|---|
+| ECS 服务器 | 阿里云 `8.210.51.242`（香港） |
+| 登录用户 | `ecs-user` |
+| SSH 密钥 | `~/.ssh/clueai-reviewlens` |
+| 仓库路径 | `~/评论分析_Web_系统/` |
+| 部署编排 | `deploy/docker-compose.yml` |
+| 测试域名 | `https://clueai-reviewlens.com` |
+| 分支 | `develop`（ECS 跟踪 develop） |
+
+### 容器组成
+
+通过 `deploy/docker-compose.yml` 编排，共 5 个容器：
+
+| 容器 | 镜像/基础 | 作用 |
+|------|----------|------|
+| nginx | nginx:alpine | 反向代理，80/443 入口 |
+| frontend | node:20-alpine（多阶段构建） | Next.js 15 standalone 产物 |
+| api | python:3.11-slim | FastAPI 后端 |
+| worker | python:3.11-slim | RQ 异步任务消费 |
+| redis | redis:7-alpine | 任务队列 broker |
+
+### 部署工作流
+
+```
+本地代码修改 → git push origin develop → SSH 到 ECS → cd ~/评论分析_Web_系统 → git pull origin develop → cd deploy → docker compose up -d --build → 浏览器访问 https://clueai-reviewlens.com 验证
+```
+
+> 选择 ECS 作为测试环境的原因：本地 Mac（8GB RAM）资源不足以同时跑 Docker Compose 全套容器，ECS 作为真实环境可直接验证部署链路。
+
+### 首次部署遇到的问题
+
+| 问题 | 现象 | 解决方案 |
+|------|------|---------|
+| BuildKit gRPC 报错 | `docker compose build` 输出乱码 non-printable characters | 使用 `DOCKER_BUILDKIT=0 docker compose build` 禁用 BuildKit |
+| npm ci 缺失 @swc/helpers | frontend 构建阶段报 `Could not resolve @swc/helpers` | Dockerfile 多阶段构建中确保 `package-lock.json` 完整，`npm ci` 正常拉取依赖后解决 |
+| next build Module not found | `Can't resolve '@/components/auth/auth-layout'` | 该文件本地存在但未被 git 跟踪，`git add` + `git commit` + `git push` 后 ECS 重新拉取即解决（commit `116f6ee`） |
+| 仓库路径混淆 | 误以为 ECS 仓库在 `/root/review-analyzer`，多克隆了一份 | 确认实际路径为 `~/评论分析_Web_系统/`，删除多余克隆 `rm -rf ~/review-analyzer` |
+
+### 最终状态
+
+所有 5 个容器启动成功（`docker compose ps` 均为 running），网站可通过 `https://clueai-reviewlens.com` 正常访问。
+
+### 关键教训
+
+> 1. **本地有但 git 没跟踪的文件**会在 ECS 上缺失导致构建失败——每次新增组件后及时 `git status` 检查是否有遗漏的 untracked 文件。**已发生两次（auth-layout / taxonomy_coverage_monitor）**，建议在 CI 加 `python -c "from backend_api.app.main import app"` smoke test 作为硬防线
+> 2. **ECS 上只有一份仓库**（`~/评论分析_Web_系统/`），不要因为找不到路径就重新 clone，避免多仓库造成混乱
+> 3. **BuildKit 兼容性**：阿里云 ECS 的 Docker 版本若遇到 gRPC 乱码，用 `DOCKER_BUILDKIT=0` 回退到传统构建器
+> 4. **SSH 连接限制**：ECS 安全组仅允许 IPv4 访问 22 端口，本地若走 IPv6 网络需确认连通性
