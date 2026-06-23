@@ -10,12 +10,13 @@ Sheet 2 「phrase_merge」: 跨品类 TOP500 phrase, Erika 在 synonym_of 列填
 review 完成后, Erika 用同一份 xlsx 给 apply_review_decisions.py (后续脚本) 重生成 yaml.
 """
 from __future__ import annotations
-import yaml
+
 from collections import Counter
 from pathlib import Path
 
 import openpyxl
-from openpyxl.styles import PatternFill, Font, Alignment
+import yaml
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
@@ -168,7 +169,7 @@ def build_phrase_sheet(wb: openpyxl.Workbook, groups: dict[str, list[Path]]) -> 
     counter: Counter = Counter()
     sub_index: dict[str, Counter] = {}
     aspect_index: dict[str, Counter] = {}
-    for cat, paths in groups.items():
+    for _cat, paths in groups.items():
         for ypath in paths:
             with ypath.open(encoding="utf-8") as f:
                 data = yaml.safe_load(f)
@@ -218,7 +219,7 @@ def build_readme_sheet(wb: openpyxl.Workbook, n_aspect_rows: int, n_phrase_rows:
     lines = [
         ("V4-T1 Step 3 Taxonomy Review 工作流", True),
         ("", False),
-        (f"生成时间: 由 scripts/build_taxonomy_review_sheet.py 生成", False),
+        ("生成时间: 由 scripts/build_taxonomy_review_sheet.py 生成", False),
         ("", False),
         ("【你需要做什么】", True),
         ("Sheet 「aspect_check」: 60 个 sub_category 共 " + str(n_aspect_rows) + " 个 aspect 实例", False),

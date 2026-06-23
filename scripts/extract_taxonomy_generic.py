@@ -250,7 +250,7 @@ def write_summary(agg: dict, total_reviews: int, total_cost: float,
     ]
 
     overall: dict[str, dict] = defaultdict(lambda: {"total": 0, "negative": 0})
-    for sub, aspects in agg.items():
+    for _sub, aspects in agg.items():
         for key, data in aspects.items():
             total = data["positive_count"] + data["negative_count"] + data["neutral_count"]
             overall[key]["total"] += total
@@ -400,7 +400,7 @@ def main() -> int:
     total_out = 0
     start = time.time()
 
-    raw_file = open(raw_path, "a" if args.resume else "w", encoding="utf-8")
+    raw_file = open(raw_path, "a" if args.resume else "w", encoding="utf-8")  # noqa: SIM115
 
     try:
         if len(df) > 0:
@@ -460,9 +460,9 @@ def main() -> int:
     print("\n" + "=" * 60)
     print(f"{category_label} Taxonomy 抽取完成")
     print("=" * 60)
-    print(f"\n下一步:")
+    print("\n下一步:")
     print(f"  1. Erika review {output_dir} 下的 yaml 文件，合并同义词、删除低频 aspect")
-    print(f"  2. review 完成后运行: python3 scripts/import_v4t1_assets.py --taxonomy-only")
+    print("  2. review 完成后运行: python3 scripts/import_v4t1_assets.py --taxonomy-only")
     return 0
 
 

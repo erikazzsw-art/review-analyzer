@@ -33,15 +33,15 @@ sys.path.insert(0, str(ROOT))
 # 复用家具预处理脚本中的纯函数 (无副作用)
 from scripts.preprocess_furniture_data import (  # type: ignore[import-not-found]
     UNIFIED_COLUMNS,
+    _coalesce,
     detect_language,
     detect_schema,
     extract_asin,
     normalize_rating,
-    _coalesce,
 )
 
 
-def _read_excel_or_csv(path: Path) -> Optional[pd.DataFrame]:
+def _read_excel_or_csv(path: Path) -> pd.DataFrame | None:
     fname = path.name
     try:
         if path.suffix.lower() in (".xlsx", ".xls"):
@@ -102,7 +102,7 @@ def detect_sub_category(
     return rules.get("default_split") or rules.get("default_sub", "其他")
 
 
-def _resolve_product_type_column(df: pd.DataFrame) -> Optional[str]:
+def _resolve_product_type_column(df: pd.DataFrame) -> str | None:
     """如果 df 里有用户手工加的产品类型列, 返回列名; 否则 None."""
     for col in PRODUCT_TYPE_COLUMNS:
         if col in df.columns:
@@ -203,7 +203,7 @@ def normalize_public(df: pd.DataFrame, fname: str, category_label: str, rules: d
     return out
 
 
-def process_file(path: Path, category_label: str, rules: dict) -> Optional[pd.DataFrame]:
+def process_file(path: Path, category_label: str, rules: dict) -> pd.DataFrame | None:
     fname = path.name
     df = _read_excel_or_csv(path)
     if df is None or df.empty:
@@ -247,7 +247,7 @@ def sample_per_sub(df: pd.DataFrame, sample_per_sub_limit: int, seed: int = 42) 
     if not sample_per_sub_limit:
         return df
     pieces = []
-    for sub, group in df.groupby("sub_category"):
+    for _sub, group in df.groupby("sub_category"):
         n = min(len(group), sample_per_sub_limit)
         pieces.append(group.sample(n=n, random_state=seed))
     sampled = pd.concat(pieces, ignore_index=True)
