@@ -330,6 +330,7 @@
   },
   "locale": {
     "switchTo": "English",
+    "switchLanguage": "切换语言",
     "zh": "中文",
     "en": "English"
   }
