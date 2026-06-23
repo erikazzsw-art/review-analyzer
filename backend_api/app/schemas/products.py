@@ -64,3 +64,17 @@ class ProductsResponsePayload(BaseModel):
     items: list[ProductOverviewPayload]
     total: int
     generated_at: datetime
+
+
+class ProductSearchItem(BaseModel):
+    parent_product_id: str
+    name: str | None = None
+    review_count: int = 0
+    session_count: int = 0
+    latest_session_id: int | None = None
+
+
+class ProductSearchResponse(BaseModel):
+    items: list[ProductSearchItem]
+    total: int
+    query: str = ""

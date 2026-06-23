@@ -6,9 +6,11 @@ import type {
   CopywriterProduct,
   AnalysisCompareResponse,
   AnalysisHistoryResponse,
+  AnalysisResultsResponse,
   AnalysisSessionResultsResponse,
   QaProduct,
   ProductsResponse,
+  ProductSearchResponse,
   SettingsResponse,
   ReviewTrackersResponse,
   WorkspaceRole,
@@ -93,6 +95,38 @@ export async function getAnalysisSessionResults(
   return apiFetch<AnalysisSessionResultsResponse>(`/analysis/sessions/${sessionId}/results`);
 }
 
+export async function getAnalysisResults(params: {
+  productId: string;
+  range?: string;
+  start?: string | null;
+  end?: string | null;
+  sessionId?: number | null;
+}): Promise<AnalysisResultsResponse> {
+  const search = new URLSearchParams();
+  search.set("product_id", params.productId);
+  if (params.range) {
+    search.set("range", params.range);
+  }
+  if (params.start) {
+    search.set("start", params.start);
+  }
+  if (params.end) {
+    search.set("end", params.end);
+  }
+  if (params.sessionId) {
+    search.set("session_id", String(params.sessionId));
+  }
+  return apiFetch<AnalysisResultsResponse>(`/analysis/results?${search.toString()}`);
+}
+
+export async function searchProductsServer(
+  q: string,
+  limit = 20,
+): Promise<ProductSearchResponse> {
+  const search = new URLSearchParams({ q, limit: String(limit) });
+  return apiFetch<ProductSearchResponse>(`/products/search?${search.toString()}`);
+}
+
 export async function getAnalysisCompare(params?: {
   compareType?: string;
   sessionIds?: number[];
@@ -147,21 +181,6 @@ export type QuotaItem = {
 
 export async function getQuota(): Promise<QuotaItem[]> {
   return apiFetch<QuotaItem[]>("/quota");
-}
-
-export type MeResponse = {
-  id: number;
-  username: string;
-  email: string;
-  plan: string;
-};
-
-export async function getMe(): Promise<MeResponse | null> {
-  try {
-    return await apiFetch<MeResponse>("/me");
-  } catch {
-    return null;
-  }
 }
 
 export function isApiError(value: unknown): value is ApiError {

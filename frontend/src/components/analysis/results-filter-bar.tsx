@@ -1,0 +1,191 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Calendar, RefreshCw } from "lucide-react";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ProductSearchCombobox } from "@/components/analysis/product-search-combobox";
+
+type Props = {
+  productId: string;
+  range: string;
+  start?: string | null;
+  end?: string | null;
+  timeLabel?: string;
+  isAggregated?: boolean;
+};
+
+const RANGE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "default", label: "默认（当前批次）" },
+  { value: "7d", label: "最近 7 天" },
+  { value: "14d", label: "最近 14 天" },
+  { value: "30d", label: "最近 30 天" },
+  { value: "90d", label: "最近 90 天" },
+  { value: "all", label: "所有时间" },
+  { value: "custom", label: "自定义范围" },
+];
+
+export function ResultsFilterBar({
+  productId,
+  range,
+  start,
+  end,
+  timeLabel,
+  isAggregated,
+}: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  const [customStart, setCustomStart] = useState<string>(start || "");
+  const [customEnd, setCustomEnd] = useState<string>(end || "");
+  const [customOpen, setCustomOpen] = useState(false);
+
+  const pushParams = (patch: Record<string, string | null>) => {
+    const next = new URLSearchParams(params.toString());
+    Object.entries(patch).forEach(([k, v]) => {
+      if (v === null || v === "") next.delete(k);
+      else next.set(k, v);
+    });
+    startTransition(() => {
+      router.push(`${pathname}?${next.toString()}`);
+    });
+  };
+
+  const handleRangeChange = (value: string) => {
+    if (value === "custom") {
+      setCustomOpen(true);
+      return;
+    }
+    pushParams({
+      range: value,
+      start: null,
+      end: null,
+      session_id: value === "default" ? params.get("session_id") : null,
+    });
+  };
+
+  const handleProductChange = (pid: string) => {
+    if (!pid || pid === productId) return;
+    pushParams({
+      product_id: pid,
+      session_id: null,
+      range: "default",
+      start: null,
+      end: null,
+    });
+  };
+
+  const handleCustomApply = () => {
+    if (!customStart || !customEnd) return;
+    if (customStart > customEnd) return;
+    setCustomOpen(false);
+    pushParams({
+      range: "custom",
+      start: customStart,
+      end: customEnd,
+      session_id: null,
+    });
+  };
+
+  return (
+    <div className="sticky top-0 z-30 -mx-4 flex flex-wrap items-center gap-3 border-b border-line bg-white/95 px-4 py-3 backdrop-blur lg:-mx-6 lg:px-6">
+      <div className="flex flex-1 flex-wrap items-center gap-3">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
+            产品
+          </span>
+          <ProductSearchCombobox value={productId} onChange={handleProductChange} />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
+            时间范围
+          </span>
+          <div className="relative flex items-center gap-2">
+            <Select value={range} onValueChange={handleRangeChange}>
+              <SelectTrigger className="h-9 w-44 rounded-pill border-line bg-white text-sm font-medium">
+                <Calendar className="mr-1 h-3.5 w-3.5 text-soft" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RANGE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(range === "custom" || customOpen) && (
+              <div className="absolute right-0 top-full z-50 mt-1 flex flex-col gap-2 rounded-card border border-line bg-white p-3 shadow-card">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    className="h-9 rounded-md border border-line bg-white px-2 text-sm"
+                  />
+                  <span className="text-xs text-soft">至</span>
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    className="h-9 rounded-md border border-line bg-white px-2 text-sm"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCustomOpen(false)}
+                    className="rounded-pill border border-line bg-white px-3 py-1.5 text-xs text-soft"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCustomApply}
+                    disabled={!customStart || !customEnd || customStart > customEnd}
+                    className="rounded-pill bg-ink px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                  >
+                    应用
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {timeLabel && (
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
+              当前视图
+            </span>
+            <div className="flex h-9 items-center gap-2 rounded-pill bg-[#faf8fb] px-3 text-xs font-medium text-soft">
+              <span>{timeLabel}</span>
+              {isAggregated && (
+                <span className="rounded-pill bg-rose/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose">
+                  聚合
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {isPending && (
+        <div className="flex items-center gap-1.5 text-xs text-soft">
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+          重新加载
+        </div>
+      )}
+    </div>
+  );
+}

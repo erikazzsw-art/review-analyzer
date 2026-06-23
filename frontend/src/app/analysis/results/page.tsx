@@ -11,8 +11,13 @@ import {
 
 import { AppShell } from "@/components/app/app-shell";
 import { AnalysisPollingPanel } from "@/components/analysis/analysis-polling-panel";
-import { AnalysisResultsTabs } from "@/components/analysis/analysis-results-tabs";
-import { getAnalysisHistory, getAnalysisSessionResults } from "@/lib/api/server";
+import { AnalysisResultsSections } from "@/components/analysis/analysis-results-sections";
+import { ResultsFilterBar } from "@/components/analysis/results-filter-bar";
+import {
+  getAnalysisHistory,
+  getAnalysisResults,
+  getAnalysisSessionResults,
+} from "@/lib/api/server";
 import { isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
@@ -25,6 +30,10 @@ type ResultsPageProps = {
   searchParams?: Promise<{
     session_id?: string;
     job_id?: string;
+    product_id?: string;
+    range?: string;
+    start?: string;
+    end?: string;
   }>;
 };
 
@@ -96,8 +105,13 @@ export default async function AnalysisResultsPage({
   const params = searchParams ? await searchParams : undefined;
   const sessionId = Number(params?.session_id || 0);
   const jobId = Number(params?.job_id || 0);
+  const productIdParam = (params?.product_id || "").trim();
+  const rangeParam = (params?.range || "").trim() || "default";
+  const startParam = (params?.start || "").trim() || null;
+  const endParam = (params?.end || "").trim() || null;
 
-  if (!sessionId && jobId) {
+  // job 状态轮询 — 上传完成跳到 polling
+  if (!sessionId && !productIdParam && jobId) {
     return (
       <AppShell
         currentPath="/analysis/results"
@@ -109,8 +123,10 @@ export default async function AnalysisResultsPage({
     );
   }
 
-  if (!sessionId) {
+  // 全空 → 找最新 session,redirect 到 product_id + session_id
+  if (!sessionId && !productIdParam) {
     let latestId = 0;
+    let latestProductId = "";
     try {
       const history = await getAnalysisHistory();
       let latestCreatedAt = "";
@@ -119,6 +135,7 @@ export default async function AnalysisResultsPage({
           if (!latestCreatedAt || session.created_at > latestCreatedAt) {
             latestCreatedAt = session.created_at;
             latestId = session.id;
+            latestProductId = session.product_id;
           }
         }
       }
@@ -127,8 +144,10 @@ export default async function AnalysisResultsPage({
         redirect("/login");
       }
     }
-    if (latestId) {
-      redirect(`/analysis/results?session_id=${latestId}`);
+    if (latestId && latestProductId) {
+      redirect(
+        `/analysis/results?product_id=${encodeURIComponent(latestProductId)}&range=default&session_id=${latestId}`,
+      );
     }
 
     return (
@@ -152,9 +171,31 @@ export default async function AnalysisResultsPage({
     );
   }
 
+  // 老链接兼容：只有 session_id → 查 session 推断 product_id 后 redirect
+  if (sessionId && !productIdParam) {
+    try {
+      const payload = await getAnalysisSessionResults(sessionId);
+      redirect(
+        `/analysis/results?product_id=${encodeURIComponent(payload.session.product_id)}&range=default&session_id=${sessionId}`,
+      );
+    } catch (error: unknown) {
+      if (isApiError(error) && error.status === 401) {
+        redirect("/login");
+      }
+      // 404 / 其他错误：走 fallthrough 显示错误
+    }
+  }
+
+  // 主路径：按 product_id + range 拉聚合结果
   let payload;
   try {
-    payload = await getAnalysisSessionResults(sessionId);
+    payload = await getAnalysisResults({
+      productId: productIdParam,
+      range: rangeParam,
+      start: startParam,
+      end: endParam,
+      sessionId: sessionId || null,
+    });
   } catch (error: unknown) {
     if (isApiError(error) && error.status === 401) {
       redirect("/login");
@@ -237,8 +278,21 @@ export default async function AnalysisResultsPage({
     noReviews: t("noReviews"),
   };
 
+  const isAggregated = Boolean(payload.is_aggregated);
+
+  const filterBarSlot = (
+    <ResultsFilterBar
+      productId={payload.session.product_id}
+      range={payload.range || rangeParam}
+      start={payload.range_start || startParam}
+      end={payload.range_end || endParam}
+      timeLabel={context.time_label}
+      isAggregated={isAggregated}
+    />
+  );
+
   const overviewSlot = (
-    <>
+    <div className="flex flex-col gap-4">
       {/* Header */}
       <section className="rounded-shell border border-line bg-white p-5 shadow-card">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -260,7 +314,7 @@ export default async function AnalysisResultsPage({
           </div>
           <div className="flex gap-2">
             <Link
-              href={`/analysis/compare?product_id=${encodeURIComponent(payload.session.product_id)}&session_id=${sessionId}`}
+              href={`/analysis/compare?product_id=${encodeURIComponent(payload.session.product_id)}${sessionId ? `&session_id=${sessionId}` : ""}`}
               className="inline-flex min-h-9 items-center justify-center rounded-pill bg-ink px-4 py-2 text-sm font-semibold text-white shadow-card"
             >
               {t("goCompare")}
@@ -352,7 +406,7 @@ export default async function AnalysisResultsPage({
           )}
         </section>
       )}
-    </>
+    </div>
   );
 
   return (
@@ -361,8 +415,8 @@ export default async function AnalysisResultsPage({
       title={t("title")}
       description={t("description")}
     >
-      <AnalysisResultsTabs
-        sessionId={sessionId}
+      <AnalysisResultsSections
+        sessionId={sessionId || 0}
         session={payload.session}
         consumerProfile={consumerProfile}
         userExperience={userExperience}
@@ -373,6 +427,7 @@ export default async function AnalysisResultsPage({
         comments={payload.comments}
         actionCandidates={actionCandidates}
         overviewSlot={overviewSlot}
+        filterBarSlot={filterBarSlot}
         t={tStrings}
       />
     </AppShell>

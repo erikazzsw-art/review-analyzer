@@ -593,6 +593,8 @@ def get_comments(
     product_id: str | None = None,
     session_id: int | None = None,
     version: str | None = None,
+    date_start: str | None = None,
+    date_end: str | None = None,
 ) -> list[dict]:
     query = "SELECT * FROM comments WHERE user_id = %s"
     params: list = [user_id]
@@ -605,6 +607,12 @@ def get_comments(
     if version is not None:
         query += " AND version = %s"
         params.append(version)
+    if date_start is not None:
+        query += " AND date >= %s"
+        params.append(date_start)
+    if date_end is not None:
+        query += " AND date <= %s"
+        params.append(date_end)
     query += " ORDER BY id DESC"
     conn = get_connection()
     try:

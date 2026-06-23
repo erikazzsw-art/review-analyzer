@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from backend_api.app.deps import get_current_user
-from backend_api.app.schemas.products import ProductsResponsePayload
+from backend_api.app.schemas.products import (
+    ProductSearchItem,
+    ProductSearchResponse,
+    ProductsResponsePayload,
+)
 from review_analyzer.product_store import (
     create_product,
     delete_product,
@@ -53,6 +57,54 @@ def get_products_route(
         total=len(items),
         generated_at=datetime.utcnow(),
     )
+
+
+@router.get("/search", response_model=ProductSearchResponse)
+def search_products_route(
+    q: str = Query(default="", max_length=64),
+    limit: int = Query(default=20, ge=1, le=50),
+    current_user: dict = Depends(get_current_user),
+) -> ProductSearchResponse:
+    """按 parent_product_id / name 模糊匹配,用于结果页产品切换下拉框。
+
+    排序:前缀命中优先 → 评论数降序 → 字母序。
+    """
+    user_id = int(current_user["id"])
+    rows = get_product_overview_rows(user_id)
+    q_norm = q.strip().lower()
+
+    def _match(row: dict) -> bool:
+        if not q_norm:
+            return True
+        pid = str(row.get("parent_product_id") or "").lower()
+        name = str(row.get("name") or "").lower()
+        return q_norm in pid or q_norm in name
+
+    matched = [r for r in rows if _match(r)]
+
+    def _sort_key(row: dict) -> tuple:
+        pid = str(row.get("parent_product_id") or "").lower()
+        prefix_hit = 0 if (q_norm and pid.startswith(q_norm)) else 1
+        return (
+            prefix_hit,
+            -int(row.get("review_count") or 0),
+            pid,
+        )
+
+    matched.sort(key=_sort_key)
+
+    items = [
+        ProductSearchItem(
+            parent_product_id=str(r.get("parent_product_id") or ""),
+            name=(str(r.get("name") or "") or None),
+            review_count=int(r.get("review_count") or 0),
+            session_count=int(r.get("session_count") or 0),
+            latest_session_id=None,  # latest_session_label 是字符串,不含 id;前端通过 /analysis/history 拿
+        )
+        for r in matched[:limit]
+        if r.get("parent_product_id")
+    ]
+    return ProductSearchResponse(items=items, total=len(items), query=q)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
