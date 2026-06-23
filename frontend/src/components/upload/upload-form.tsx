@@ -38,19 +38,6 @@ type FormState = {
   versionNotes: string;
 };
 
-function statusTone(status: UploadJob["status"]): string {
-  if (status === "done") {
-    return "bg-[#e8f8f0] text-[#3d8b74]";
-  }
-  if (status === "failed") {
-    return "bg-[#fdeaea] text-[#c45863]";
-  }
-  if (status === "processing") {
-    return "bg-[#eef6ff] text-[#4a7dc7]";
-  }
-  return "bg-[#fff1f5] text-[#d94d72]";
-}
-
 function CategoryHitBanner({
   categoryValue,
   hit,
@@ -204,7 +191,7 @@ export function UploadForm() {
   }
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+    <section className="space-y-6">
       <div className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
         <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
           {t("step1")}
@@ -443,80 +430,6 @@ export function UploadForm() {
         </div>
         </>
         )}
-      </div>
-
-      <div className="space-y-6">
-        <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
-          <div className="inline-flex rounded-pill bg-[#eef6ff] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#4a7dc7]">
-            {t("step2")}
-          </div>
-          <h3 className="mt-4 font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-            {t("statusTitle")}
-          </h3>
-          <div className="mt-4 space-y-4">
-            {job ? (
-              <>
-                <div className="flex items-center justify-between rounded-card border border-line bg-white px-4 py-4">
-                  <span className="text-sm font-semibold text-ink">{t("statusCurrent")}</span>
-                  <span className={`rounded-pill px-3 py-1 text-xs font-bold ${statusTone(job.status)}`}>
-                    {job.status}
-                  </span>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-card border border-line bg-[#fffafb] px-4 py-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                      {t("statusProcessed")}
-                    </div>
-                    <div className="mt-2 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-                      {job.processed_rows}/{job.total_rows}
-                    </div>
-                  </div>
-                  <div className="rounded-card border border-line bg-[#fbf9ff] px-4 py-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                      {t("statusSummary")}
-                    </div>
-                    <div className="mt-2 text-sm leading-7 text-soft">
-                      {t("statusPositive")} {job.positive_count} · {t("statusNegative")} {job.negative_count}
-                    </div>
-                  </div>
-                </div>
-                {job.error_message ? (
-                  <div className="rounded-card border border-[#f5c6cb] bg-[#fff3f5] px-4 py-4 text-sm leading-7 text-[#b44655]">
-                    {job.error_message}
-                  </div>
-                ) : null}
-                <div className="rounded-card border border-line bg-white px-4 py-4 text-sm leading-7 text-soft">
-                  {job.status === "done"
-                    ? t("statusDone")
-                    : job.status === "failed"
-                      ? t("statusFailed")
-                      : t("statusCreated")}
-                </div>
-              </>
-            ) : (
-              <div className="rounded-card border border-dashed border-line bg-[#fffafb] px-4 py-6 text-sm leading-7 text-soft">
-                {t("statusEmpty")}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-shell border border-line bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(252,246,251,0.94))] p-6 shadow-card backdrop-blur">
-          <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-            {t("whatHappensTitle")}
-          </h3>
-          <div className="mt-4 space-y-3 text-sm leading-7 text-soft">
-            <div className="rounded-card border border-line bg-white px-4 py-4">
-              {t("whatHappens1")}
-            </div>
-            <div className="rounded-card border border-line bg-white px-4 py-4">
-              {t("whatHappens2")}
-            </div>
-            <div className="rounded-card border border-line bg-white px-4 py-4">
-              {t("whatHappens3")}
-            </div>
-          </div>
-        </section>
       </div>
     </section>
   );
