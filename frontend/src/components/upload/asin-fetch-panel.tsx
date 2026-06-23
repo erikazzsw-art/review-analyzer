@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { fetchByAsin, fetchUploadJob } from "@/lib/api/browser";
+import { fetchByAsin } from "@/lib/api/browser";
 import { track } from "@/lib/analytics";
-import type { UploadJob } from "@/lib/api/types";
 
 const MARKETPLACES = [
   { value: "us", label: "Amazon US" },
@@ -25,13 +24,6 @@ type AsinFormState = {
   productName: string;
 };
 
-function statusTone(status: UploadJob["status"] | "fetching"): string {
-  if (status === "done") return "bg-[#e8f8f0] text-[#3d8b74]";
-  if (status === "failed") return "bg-[#fdeaea] text-[#c45863]";
-  if (status === "processing" || status === "fetching") return "bg-[#eef6ff] text-[#4a7dc7]";
-  return "bg-[#fff1f5] text-[#d94d72]";
-}
-
 export function AsinFetchPanel() {
   const router = useRouter();
   const [form, setForm] = useState<AsinFormState>({
@@ -41,43 +33,9 @@ export function AsinFetchPanel() {
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [jobId, setJobId] = useState<number | null>(null);
-  const [job, setJob] = useState<UploadJob | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
 
   const isValidAsin = useMemo(() => /^[A-Z0-9]{10}$/.test(form.asin.toUpperCase()), [form.asin]);
   const canSubmit = isValidAsin && !isSubmitting;
-
-  useEffect(() => {
-    if (!jobId || (job && (job.status === "done" || job.status === "failed"))) {
-      return;
-    }
-
-    setIsPolling(true);
-    const timer = window.setInterval(async () => {
-      try {
-        const response = await fetchUploadJob(jobId);
-        setJob(response.job);
-        if (response.job.status === "done") {
-          window.clearInterval(timer);
-          setIsPolling(false);
-          router.push(`/analysis/results?session_id=${response.job.session_id ?? ""}`);
-        }
-        if (response.job.status === "failed") {
-          window.clearInterval(timer);
-          setIsPolling(false);
-        }
-      } catch {
-        window.clearInterval(timer);
-        setIsPolling(false);
-      }
-    }, 2500);
-
-    return () => {
-      window.clearInterval(timer);
-      setIsPolling(false);
-    };
-  }, [jobId, job, router]);
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -91,8 +49,8 @@ export function AsinFetchPanel() {
         marketplace: form.marketplace,
         productName: form.productName || undefined,
       });
-      setJobId(result.job_id);
       track("asin_fetch_queued", { job_id: result.job_id });
+      router.push(`/analysis/results?job_id=${result.job_id}`);
     } catch (err) {
       const candidate = err as { message?: string };
       setError(candidate.message || "ASIN 拉取任务创建失败");
@@ -155,28 +113,6 @@ export function AsinFetchPanel() {
       >
         {isSubmitting ? "提交中..." : "拉取评论并分析"}
       </button>
-
-      {(jobId || job) && (
-        <div className="mt-4 space-y-3 rounded-card border border-line bg-white p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-ink">任务状态</span>
-            <span className={`rounded-pill px-3 py-1 text-xs font-bold ${statusTone(job?.status || "queued")}`}>
-              {job?.status || "queued"}
-            </span>
-          </div>
-          {job && job.total_rows > 0 && (
-            <div className="text-sm text-soft">
-              已拉取 {job.total_rows} 条评论，已分析 {job.processed_rows} 条
-            </div>
-          )}
-          {job?.error_message && (
-            <div className="text-sm text-[#b44655]">{job.error_message}</div>
-          )}
-          {isPolling && (
-            <div className="text-xs text-soft">正在后台拉取和分析评论，请稍候...</div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

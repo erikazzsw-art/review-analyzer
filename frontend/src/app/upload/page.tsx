@@ -10,9 +10,9 @@ import { AsinWatchlistPanel } from "@/components/upload/asin-watchlist-panel";
 import {
   describeRequestError,
   fetchTaxonomyCategories,
-  fetchUploadJob,
   submitUploadJob,
 } from "@/lib/api/browser";
+import type { DuplicateBatchError } from "@/lib/api/browser";
 import { track } from "@/lib/analytics";
 import type { TaxonomyCategoriesResponse, UploadJob } from "@/lib/api/types";
 
@@ -90,8 +90,8 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [job, setJob] = useState<UploadJob | null>(null);
   const [error, setError] = useState<string>("");
+  const [duplicate, setDuplicate] = useState<DuplicateBatchError | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isPolling, setIsPolling] = useState(false);
   const [taxonomy, setTaxonomy] = useState<TaxonomyCategoriesResponse | null>(null);
   const [form, setForm] = useState<FormState>({
     productId: "",
@@ -154,39 +154,6 @@ export default function UploadPage() {
 
   const jobInProgress = !!job && (job.status === "queued" || job.status === "processing");
 
-  useEffect(() => {
-    if (!job || job.status === "done" || job.status === "failed") {
-      return;
-    }
-
-    setIsPolling(true);
-    const timer = window.setInterval(async () => {
-      try {
-        const response = await fetchUploadJob(job.id);
-        setJob(response.job);
-        if (response.job.status === "done") {
-          window.clearInterval(timer);
-          setIsPolling(false);
-          router.push(`/analysis/results?session_id=${response.job.session_id ?? ""}`);
-        }
-        if (response.job.status === "failed") {
-          window.clearInterval(timer);
-          setIsPolling(false);
-        }
-      } catch (pollError) {
-        const candidate = pollError as { message?: string };
-        setError(candidate.message || t("pollError"));
-        window.clearInterval(timer);
-        setIsPolling(false);
-      }
-    }, 1800);
-
-    return () => {
-      window.clearInterval(timer);
-      setIsPolling(false);
-    };
-  }, [job, router]);
-
   async function handleSubmit() {
     if (!file || !canSubmit) {
       setError(t("validationError"));
@@ -194,6 +161,7 @@ export default function UploadPage() {
     }
 
     setError("");
+    setDuplicate(null);
     setIsSubmitting(true);
     track("upload_start", {
       file_type: file.name.split(".").pop(),
@@ -218,12 +186,19 @@ export default function UploadPage() {
       track("upload_complete", { job_id: response.job.id });
       if (response.job.status === "done" && response.job.session_id) {
         router.push(`/analysis/results?session_id=${response.job.session_id}`);
+      } else {
+        router.push(`/analysis/results?job_id=${response.job.id}`);
       }
     } catch (submitError) {
-      const candidate = submitError as { message?: string };
-      const detail = candidate.message || describeRequestError(submitError, "/api/uploads");
-      setError(detail);
-      track("upload_fail", { error: detail });
+      const candidate = submitError as { status?: number; message?: string; existingSessionId?: number };
+      if (candidate.status === 409 && candidate.existingSessionId) {
+        setDuplicate(candidate as DuplicateBatchError);
+        track("upload_duplicate", { existing_session_id: candidate.existingSessionId });
+      } else {
+        const detail = candidate.message || describeRequestError(submitError, "/api/uploads");
+        setError(detail);
+        track("upload_fail", { error: detail });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -429,6 +404,26 @@ export default function UploadPage() {
             </label>
           </div>
 
+          {duplicate ? (
+            <div className="mt-4 rounded-card border border-[#f6dbb4] bg-[#fff6e6] px-4 py-4 text-sm leading-7 text-[#9a6118]">
+              <p className="font-semibold">{t("duplicateWarning")}</p>
+              <p className="mt-1 text-xs text-[#9a6118]/80">
+                {t("duplicateDetail", {
+                  title: duplicate.existingTitle,
+                  totalReviews: String(duplicate.totalReviews),
+                  createdAt: duplicate.existingCreatedAt,
+                })}
+              </p>
+              <button
+                type="button"
+                onClick={() => router.push(`/analysis/results?session_id=${duplicate.existingSessionId}`)}
+                className="mt-3 inline-flex items-center rounded-pill bg-[#9a6118] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#7a4d13]"
+              >
+                {t("viewExistingResult")}
+              </button>
+            </div>
+          ) : null}
+
           {error ? (
             <div className="mt-4 rounded-card border border-[#f5c6cb] bg-[#fff3f5] px-4 py-3 text-sm leading-7 text-[#b44655]">
               {error}
@@ -497,13 +492,11 @@ export default function UploadPage() {
                     </div>
                   ) : null}
                   <div className="rounded-card border border-line bg-white px-4 py-4 text-sm leading-7 text-soft">
-                    {isPolling
-                      ? t("statusPolling")
-                      : job.status === "done"
-                        ? t("statusDone")
-                        : job.status === "failed"
-                          ? t("statusFailed")
-                          : t("statusCreated")}
+                    {job.status === "done"
+                      ? t("statusDone")
+                      : job.status === "failed"
+                        ? t("statusFailed")
+                        : t("statusCreated")}
                   </div>
                 </>
               ) : (

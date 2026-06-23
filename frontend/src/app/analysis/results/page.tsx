@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/app/app-shell";
+import { AnalysisPollingPanel } from "@/components/analysis/analysis-polling-panel";
 import { CreateActionPanel } from "@/components/analysis/create-action-panel";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
 import { ModuleCard } from "@/components/analysis/module-card";
@@ -31,6 +32,7 @@ export const metadata = buildNoIndexMetadata({
 type ResultsPageProps = {
   searchParams?: Promise<{
     session_id?: string;
+    job_id?: string;
   }>;
 };
 
@@ -151,6 +153,19 @@ export default async function AnalysisResultsPage({
   const t = await getTranslations("analysis");
   const params = searchParams ? await searchParams : undefined;
   const sessionId = Number(params?.session_id || 0);
+  const jobId = Number(params?.job_id || 0);
+
+  if (!sessionId && jobId) {
+    return (
+      <AppShell
+        currentPath="/analysis/results"
+        title={t("title")}
+        description={t("description")}
+      >
+        <AnalysisPollingPanel jobId={jobId} />
+      </AppShell>
+    );
+  }
 
   if (!sessionId) {
     return (
