@@ -18,7 +18,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install ruff
-        run: pip install ruff
+        run: pip install ruff==0.15.16
 
       - name: Lint backend
         run: ruff check backend_api/ workers/ review_analyzer/ scripts/
