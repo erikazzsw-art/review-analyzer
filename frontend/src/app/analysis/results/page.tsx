@@ -12,7 +12,7 @@ import {
 import { AppShell } from "@/components/app/app-shell";
 import { AnalysisPollingPanel } from "@/components/analysis/analysis-polling-panel";
 import { AnalysisResultsTabs } from "@/components/analysis/analysis-results-tabs";
-import { getAnalysisSessionResults } from "@/lib/api/server";
+import { getAnalysisHistory, getAnalysisSessionResults } from "@/lib/api/server";
 import { isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
@@ -110,6 +110,27 @@ export default async function AnalysisResultsPage({
   }
 
   if (!sessionId) {
+    let latestId = 0;
+    try {
+      const history = await getAnalysisHistory();
+      let latestCreatedAt = "";
+      for (const product of history.items) {
+        for (const session of product.sessions) {
+          if (!latestCreatedAt || session.created_at > latestCreatedAt) {
+            latestCreatedAt = session.created_at;
+            latestId = session.id;
+          }
+        }
+      }
+    } catch (error: unknown) {
+      if (isApiError(error) && error.status === 401) {
+        redirect("/login");
+      }
+    }
+    if (latestId) {
+      redirect(`/analysis/results?session_id=${latestId}`);
+    }
+
     return (
       <AppShell
         currentPath="/analysis/results"
