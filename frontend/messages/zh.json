@@ -110,7 +110,10 @@
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
     "quotaEntry": "套餐额度",
-    "upgradeLink": "升级套餐"
+    "upgradeLink": "升级套餐",
+    "systemSettings": "系统设置",
+    "logout": "退出登录",
+    "loggingOut": "退出中…"
   },
   "quotaPanel": {
     "badge": "用量看板",

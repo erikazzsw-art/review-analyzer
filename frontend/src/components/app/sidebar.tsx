@@ -5,12 +5,12 @@ import { useState, useEffect } from "react";
 import {
   Menu,
   X,
-  User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 import { SidebarQuotaEntry } from "@/components/quota/sidebar-quota-entry";
+import { SidebarUserMenu } from "@/components/app/sidebar-user-menu";
 
 type MeData = { username: string; plan: string };
 
@@ -125,20 +125,8 @@ export function Sidebar({ currentPath }: SidebarProps) {
         <div className="mb-3">
           <LocaleSwitcher variant="sidebar" />
         </div>
-        <div className="mb-4 h-px bg-line" />
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-lavender/10 text-lavender">
-            <User size={16} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium text-ink">
-              {me?.username || t("notLoggedIn")}
-            </div>
-            {me?.plan && (
-              <div className="text-xs text-soft">{me.plan}</div>
-            )}
-          </div>
-        </div>
+        <div className="mb-3 h-px bg-line" />
+        <SidebarUserMenu username={me?.username ?? null} plan={me?.plan ?? null} />
       </div>
     </div>
   );

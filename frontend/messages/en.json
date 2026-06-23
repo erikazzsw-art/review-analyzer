@@ -110,7 +110,10 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "quotaEntry": "Plan Quota",
-    "upgradeLink": "Upgrade"
+    "upgradeLink": "Upgrade",
+    "systemSettings": "System Settings",
+    "logout": "Sign Out",
+    "loggingOut": "Signing out…"
   },
   "quotaPanel": {
     "badge": "USAGE DASHBOARD",
