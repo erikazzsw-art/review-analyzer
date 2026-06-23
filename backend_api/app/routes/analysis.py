@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any
 
@@ -17,7 +18,7 @@ from backend_api.app.schemas.analysis import (
     AnalysisSessionResultsPayload,
 )
 from review_analyzer.compare_store import build_compare_group_specs, get_comparison_dataset
-from review_analyzer.database import get_comments, get_session_by_id, get_sessions
+from review_analyzer.database import delete_session, get_comments, get_session_by_id, get_sessions
 from review_analyzer.insight_engine import build_results_insights
 from review_analyzer.product_store import get_product_overview_rows
 
@@ -63,16 +64,20 @@ def get_compare_dataset(
     current_user: dict = Depends(get_current_user),
 ) -> AnalysisComparePayload:
     user_id = int(current_user["id"])
-    filters: dict[str, Any] = {
-        "compare_type": compare_type,
-        "groups": _build_compare_specs(
-            user_id,
-            compare_type=compare_type,
-            session_ids=session_ids,
-            product_id=product_id,
-        ),
-    }
-    dataset = get_comparison_dataset(user_id, filters)
+    try:
+        filters: dict[str, Any] = {
+            "compare_type": compare_type,
+            "groups": _build_compare_specs(
+                user_id,
+                compare_type=compare_type,
+                session_ids=session_ids,
+                product_id=product_id,
+            ),
+        }
+        dataset = get_comparison_dataset(user_id, filters)
+    except Exception:
+        logging.getLogger(__name__).exception("compare dataset failed")
+        dataset = {}
     return AnalysisComparePayload(
         groups=[AnalysisCompareGroupPayload(**group) for group in dataset.get("groups", [])],
         compare_type=str(dataset.get("compare_type") or compare_type),
@@ -116,6 +121,21 @@ def get_session_history(
         product_id=str(session.get("product_id") or ""),
         selected_session_id=session_id,
     )
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_session_endpoint(
+    session_id: int,
+    current_user: dict = Depends(get_current_user),
+) -> None:
+    user_id = int(current_user["id"])
+    session = get_session_by_id(user_id, session_id)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found.",
+        )
+    delete_session(user_id, session_id)
 
 
 def _session_payload(session: dict[str, Any]) -> AnalysisSessionPayload:

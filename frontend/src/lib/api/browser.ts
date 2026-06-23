@@ -752,6 +752,16 @@ export async function deleteAsinWatchlistItem(itemId: number): Promise<void> {
   }
 }
 
+export async function deleteSession(sessionId: number): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/analysis/sessions/${sessionId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+}
+
 export async function triggerAsinFetchNow(
   itemId: number,
 ): Promise<{ job_id: string; message: string }> {
@@ -797,4 +807,54 @@ export async function exportModuleXlsx(sessionId: number, moduleKey: string): Pr
     throw await parseError(response);
   }
   return response.blob();
+}
+
+export type ProductCreatePayload = {
+  parent_product_id: string;
+  name?: string;
+  platform?: string;
+  category?: string;
+  lifecycle_stage?: string;
+  current_version?: string;
+  core_selling_points?: string;
+  main_competitors?: string;
+  owner_role?: string;
+  production_cycle_days?: number;
+};
+
+export type ProductUpdatePayload = Partial<Omit<ProductCreatePayload, "parent_product_id">>;
+
+export async function createProduct(payload: ProductCreatePayload): Promise<{ id: number }> {
+  const response = await fetch(`${getApiBaseUrl()}/products`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
+export async function updateProduct(productId: number, payload: ProductUpdatePayload): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/products/${productId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+}
+
+export async function deleteProduct(productId: number): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/products/${productId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
 }

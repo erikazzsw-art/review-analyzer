@@ -1,5 +1,8 @@
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
+import { CreateProductButton } from "@/components/products/create-product-button";
+import { DeleteProductButton } from "@/components/products/delete-product-button";
+import { EditProductButton } from "@/components/products/edit-product-button";
 import { getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import type { ProductOverview } from "@/lib/api/types";
@@ -71,6 +74,29 @@ function ProductCard({ product }: { product: ProductOverview }) {
             版本 {product.current_version}
           </span>
         </div>
+
+        {product.id && (
+          <div className="mt-3 flex flex-wrap gap-2 md:mt-0">
+            <EditProductButton
+              productId={product.id}
+              initial={{
+                name: product.name ?? undefined,
+                platform: product.platform ?? undefined,
+                category: product.category ?? undefined,
+                lifecycle_stage: product.lifecycle_stage ?? undefined,
+                current_version: product.current_version,
+                core_selling_points: product.core_selling_points ?? undefined,
+                main_competitors: product.main_competitors ?? undefined,
+                owner_role: product.owner_role ?? undefined,
+                production_cycle_days: product.production_cycle_days ?? undefined,
+              }}
+            />
+            <DeleteProductButton
+              productId={product.id}
+              productName={title}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -248,32 +274,35 @@ export default async function ProductsPage() {
         title="把评论资产先沉淀到产品组，再决定哪些 SKU 值得继续改。"
         description="这一页优先展示产品组、风险指标、变体和最近批次，帮助你从分散的评论批次切回产品经营视角。当前实现对齐现有 Streamlit 的只读口径，先把资产看清楚。"
       >
-        <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
-            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              产品组总数
+        <div className="flex items-center justify-between gap-4">
+          <section className="grid flex-1 gap-4 md:grid-cols-3">
+            <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                产品组总数
+              </div>
+              <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
+                {response.total}
+              </div>
             </div>
-            <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
-              {response.total}
+            <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                历史沉淀产品
+              </div>
+              <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
+                {response.items.filter((item) => item.is_archived_from_sessions).length}
+              </div>
             </div>
-          </div>
-          <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
-            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              历史沉淀产品
+            <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                高风险产品
+              </div>
+              <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
+                {response.items.filter((item) => item.negative_rate >= 12).length}
+              </div>
             </div>
-            <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
-              {response.items.filter((item) => item.is_archived_from_sessions).length}
-            </div>
-          </div>
-          <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
-            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              高风险产品
-            </div>
-            <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
-              {response.items.filter((item) => item.negative_rate >= 12).length}
-            </div>
-          </div>
-        </section>
+          </section>
+          <CreateProductButton />
+        </div>
 
         {response.items.length > 0 ? (
           <section className="space-y-5">
@@ -290,8 +319,11 @@ export default async function ProductsPage() {
               还没有产品档案
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-8 text-soft">
-              当前账号下还没有可展示的产品组。等 `NX-M4` 迁移上传流程后，这里会自然承接评论批次、产品绑定和版本资产。
+              当前账号下还没有产品组，点击右上角「新建产品」按钮添加你的第一个产品。
             </p>
+            <div className="mt-6">
+              <CreateProductButton />
+            </div>
           </section>
         )}
       </AppShell>

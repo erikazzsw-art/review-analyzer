@@ -133,6 +133,22 @@ export async function getCopywriterSessions(): Promise<CopywriterProduct[]> {
   return apiFetch<CopywriterProduct[]>("/copywriter/sessions");
 }
 
+export type QuotaItem = {
+  dimension: string;
+  used?: number;
+  limit: number;
+  remaining?: number;
+  unlimited?: boolean;
+  period: string;
+  plan: string;
+  unit?: string;
+  error?: string;
+};
+
+export async function getQuota(): Promise<QuotaItem[]> {
+  return apiFetch<QuotaItem[]>("/quota");
+}
+
 export function isApiError(value: unknown): value is ApiError {
   if (!value || typeof value !== "object") {
     return false;

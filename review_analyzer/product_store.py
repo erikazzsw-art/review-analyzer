@@ -44,6 +44,72 @@ def create_product(user_id: int, data: dict[str, Any]) -> int:
     finally:
         conn.close()
 
+def update_product(user_id: int, product_id: int, data: dict[str, Any]) -> bool:
+    conn = get_connection()
+    try:
+        allowed = {
+            "name", "platform", "category", "lifecycle_stage",
+            "current_version", "core_selling_points", "main_competitors",
+            "owner_role", "production_cycle_days",
+        }
+        fields = {k: v for k, v in data.items() if k in allowed}
+        if not fields:
+            return False
+        set_clause = ", ".join(f"{k} = %s" for k in fields)
+        values = list(fields.values()) + [user_id, product_id]
+        with conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE products SET {set_clause} WHERE user_id = %s AND id = %s",
+                values,
+            )
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def delete_product(user_id: int, product_id: int) -> bool:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM product_versions WHERE user_id = %s AND product_id = %s",
+                (user_id, product_id),
+            )
+            cur.execute(
+                "DELETE FROM product_variants WHERE user_id = %s AND product_id = %s",
+                (user_id, product_id),
+            )
+            cur.execute(
+                "UPDATE actions SET product_id = NULL WHERE product_id = %s",
+                (product_id,),
+            )
+            cur.execute(
+                "UPDATE review_trackers SET product_id = NULL WHERE product_id = %s",
+                (product_id,),
+            )
+            cur.execute(
+                "UPDATE push_snapshots SET product_id = NULL WHERE product_id = %s",
+                (product_id,),
+            )
+            cur.execute(
+                "UPDATE issue_escalation_state SET product_id = NULL WHERE product_id = %s",
+                (product_id,),
+            )
+            cur.execute(
+                "UPDATE upload_jobs SET product_ref_id = NULL WHERE product_ref_id = %s",
+                (product_id,),
+            )
+            cur.execute(
+                "DELETE FROM products WHERE user_id = %s AND id = %s",
+                (user_id, product_id),
+            )
+            deleted = cur.rowcount > 0
+        conn.commit()
+        return deleted
+    finally:
+        conn.close()
 
 
 def get_products(user_id: int) -> list[dict[str, Any]]:

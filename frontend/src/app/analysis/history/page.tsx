@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
+import { DeleteSessionButton } from "@/components/analysis/delete-session-button";
 import { getAnalysisHistory, getAnalysisSessionHistory, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
@@ -80,6 +81,10 @@ export default async function AnalysisHistoryPage({
                       >
                         去对比
                       </Link>
+                      <DeleteSessionButton
+                        sessionId={session.id}
+                        sessionTitle={session.title}
+                      />
                     </div>
                   </div>
                 ))}

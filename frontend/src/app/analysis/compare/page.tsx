@@ -305,6 +305,35 @@ export default async function AnalysisComparePage({
       );
     }
 
-    throw error;
+    return (
+      <AppShell
+        currentPath="/analysis/compare"
+        title="对比分析暂时无法加载。"
+        description="数据加载失败，可能是分析批次不足或服务暂时不可用。"
+      >
+        <section className="rounded-shell border border-dashed border-line bg-[#fffafb] px-6 py-10 shadow-card backdrop-blur">
+          <h2 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
+            暂无可用对比数据
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-soft">
+            对比分析需要至少两个分析批次。请先上传评论完成分析，再回到这里选择对比对象。
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/analysis/history"
+              className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card"
+            >
+              去历史记录
+            </Link>
+            <Link
+              href="/upload"
+              className="inline-flex min-h-11 items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-ink"
+            >
+              上传评论
+            </Link>
+          </div>
+        </section>
+      </AppShell>
+    );
   }
 }
