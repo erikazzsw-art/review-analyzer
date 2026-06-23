@@ -44,6 +44,21 @@ class AnalysisSessionResultsPayload(BaseModel):
     generated_at: datetime
 
 
+class AnalysisResultsPayload(BaseModel):
+    """聚合视图 payload — 与 AnalysisSessionResultsPayload 字段同形,
+    但 session 可以是合成的（id=0、version='AGGREGATED'）。前端可复用渲染。"""
+
+    session: AnalysisSessionPayload
+    context: dict[str, Any]
+    modules: dict[str, AnalysisResultModulePayload]
+    comments: list[dict[str, Any]]
+    generated_at: datetime
+    range: str = "default"
+    range_start: str | None = None
+    range_end: str | None = None
+    is_aggregated: bool = False
+
+
 class AnalysisCompareGroupPayload(BaseModel):
     label: str
     description: str
@@ -113,6 +128,27 @@ class ComparisonReportCreatePayload(BaseModel):
     product_id: str | None = None
     focus_feature: str | None = None
     title: str | None = None
+
+
+class CompareFilterGroupPayload(BaseModel):
+    product_id: str
+    versions: list[str] = Field(default_factory=list)
+    date_start: str | None = None
+    date_end: str | None = None
+    label: str | None = None
+    description: str | None = None
+
+
+class CompareDatasetRequest(BaseModel):
+    compare_type: str = "custom"
+    groups: list[CompareFilterGroupPayload] = Field(default_factory=list)
+
+
+class CompareExportRequest(BaseModel):
+    compare_type: str = "custom"
+    groups: list[CompareFilterGroupPayload] = Field(default_factory=list)
+    include_ai_summary: bool = False
+    focus_feature: str | None = None
 
 
 class ComparisonReportPayload(BaseModel):

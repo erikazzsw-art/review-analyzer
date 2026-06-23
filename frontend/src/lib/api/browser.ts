@@ -12,11 +12,14 @@ import type {
   AsinWatchlistResponse,
   AsinWatchlistUpdatePayload,
   BillingCheckoutResponse,
+  CompareDatasetRequest,
+  CompareExportRequest,
   CopywriterGenerateResponse,
   CopywriterPlatform,
   CopywriterProduct,
   FeedbackCreatePayload,
   FeedbackResponse,
+  ProductSearchResponse,
   QaAskPayload,
   QaAskResponse,
   QaProduct,
@@ -241,6 +244,19 @@ export async function fetchAnalysisHistory(productId?: string): Promise<Analysis
   return (await response.json()) as AnalysisHistoryResponse;
 }
 
+export async function searchProducts(q: string, limit = 20): Promise<ProductSearchResponse> {
+  const search = new URLSearchParams({ q, limit: String(limit) });
+  const response = await fetch(`${getApiBaseUrl()}/products/search?${search.toString()}`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as ProductSearchResponse;
+}
+
 export async function submitComparisonReport(
   params: ComparisonReportCreatePayload,
 ): Promise<ComparisonReportResponse> {
@@ -264,6 +280,67 @@ export async function submitComparisonReport(
   }
 
   return (await response.json()) as ComparisonReportResponse;
+}
+
+function serializeCompareGroups(request: CompareDatasetRequest | CompareExportRequest) {
+  return {
+    compare_type: request.compareType,
+    groups: request.groups.map((group) => ({
+      product_id: group.productId,
+      versions: group.versions ?? [],
+      date_start: group.dateStart ?? null,
+      date_end: group.dateEnd ?? null,
+      label: group.label ?? null,
+      description: group.description ?? null,
+    })),
+  };
+}
+
+export async function fetchCompareDataset(
+  request: CompareDatasetRequest,
+): Promise<AnalysisCompareResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/compare/dataset`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(serializeCompareGroups(request)),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as AnalysisCompareResponse;
+}
+
+export async function downloadCompareExport(request: CompareExportRequest): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/compare/export`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...serializeCompareGroups(request),
+      include_ai_summary: request.includeAiSummary ?? false,
+      focus_feature: request.focusFeature ?? null,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="?([^";]+)"?/i);
+  const filename = match ? match[1] : `compare-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 export async function fetchQaProducts(): Promise<QaProduct[]> {

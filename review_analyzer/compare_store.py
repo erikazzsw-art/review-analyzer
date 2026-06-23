@@ -72,6 +72,94 @@ def build_compare_group_specs(
     return groups
 
 
+def build_compare_specs_from_filters(
+    user_id: int,
+    compare_type: str,
+    filter_groups: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """V2 specs builder driven by product / version / review-date filters.
+
+    Each ``filter_groups`` entry accepts: ``product_id`` (required), ``versions``
+    (optional list), ``date_start`` / ``date_end`` (ISO yyyy-mm-dd, review date),
+    plus optional ``label`` and ``description`` overrides. Sessions are matched
+    on ``product_id`` and (when provided) version list; the spec carries those
+    fields plus the date window, which ``_filter_comments`` later applies on the
+    review ``date`` column.
+    """
+    sessions = get_sessions(user_id)
+    sessions_by_product: dict[str, list[dict[str, Any]]] = {}
+    for session in sessions:
+        key = str(session.get("product_id") or "").strip()
+        if not key:
+            continue
+        sessions_by_product.setdefault(key, []).append(session)
+
+    specs: list[dict[str, Any]] = []
+    for raw in filter_groups[:5]:
+        product_id = str(raw.get("product_id") or "").strip()
+        if not product_id:
+            continue
+
+        versions_raw = raw.get("versions") or raw.get("version")
+        version_list: list[str] = []
+        if isinstance(versions_raw, str):
+            version_list = [versions_raw.strip()] if versions_raw.strip() else []
+        elif isinstance(versions_raw, (list, tuple, set)):
+            version_list = [str(item).strip() for item in versions_raw if str(item).strip()]
+
+        date_start = _to_date(raw.get("date_start") or raw.get("date_from"))
+        date_end = _to_date(raw.get("date_end") or raw.get("date_to"))
+
+        product_sessions = sessions_by_product.get(product_id, [])
+        if version_list:
+            version_set = {value for value in version_list}
+            product_sessions = [
+                session
+                for session in product_sessions
+                if str(session.get("version") or "").strip() in version_set
+            ]
+        session_ids = [int(session["id"]) for session in product_sessions if session.get("id") is not None]
+
+        label = str(raw.get("label") or "").strip()
+        if not label:
+            label_parts = [product_id]
+            if version_list:
+                label_parts.append("/".join(version_list))
+            if date_start or date_end:
+                label_parts.append(
+                    f"{date_start.isoformat() if date_start else '…'} ~ {date_end.isoformat() if date_end else '…'}"
+                )
+            label = " · ".join(label_parts)
+
+        description = str(raw.get("description") or "").strip()
+        if not description:
+            desc_parts: list[str] = []
+            if version_list:
+                desc_parts.append(f"版本 {' / '.join(version_list)}")
+            if date_start or date_end:
+                desc_parts.append(
+                    f"评论日期 {date_start.isoformat() if date_start else '…'} 到 {date_end.isoformat() if date_end else '…'}"
+                )
+            if not desc_parts:
+                desc_parts.append("全部评论")
+            description = " · ".join(desc_parts)
+
+        spec: dict[str, Any] = {
+            "label": label,
+            "description": description,
+            "session_ids": session_ids,
+            "product_id": product_id,
+            "versions": version_list,
+        }
+        if date_start:
+            spec["date_start"] = date_start.isoformat()
+        if date_end:
+            spec["date_end"] = date_end.isoformat()
+        specs.append(spec)
+
+    return specs
+
+
 def get_comparison_dataset(user_id: int, filters: dict[str, Any]) -> dict[str, Any]:
     compare_type = str(filters.get("compare_type") or "custom")
     group_specs = [group for group in filters.get("groups", []) if group.get("label")]
@@ -730,3 +818,112 @@ def _to_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def dataset_to_xlsx_payload(
+    dataset: dict[str, Any],
+    ai_summary: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Adapt a comparison dataset to ``export_compare_page_to_xlsx``'s contract.
+
+    Builds the ``columns`` list (first cell + one column per group), then layers
+    the workbook into sections: KPI overview, issue & highlight differences,
+    risk / opportunity callouts, recommended actions, optional AI summary.
+    """
+    groups = list(dataset.get("groups") or [])
+    columns = ["指标 / 维度"] + [str(group.get("label") or "-") for group in groups]
+
+    def _row(label: str, values: list[Any]) -> dict[str, Any]:
+        return {"label": label, "values": [str(value) for value in values]}
+
+    overview_children: list[dict[str, Any]] = [
+        _row("描述", [group.get("description", "-") for group in groups]),
+        _row("评论数", [group.get("review_count", 0) for group in groups]),
+        _row("有效评论", [group.get("valid_review_count", 0) for group in groups]),
+        _row("好评率", [f"{group.get('positive_rate', 0):.1f}%" for group in groups]),
+        _row("差评率", [f"{group.get('negative_rate', 0):.1f}%" for group in groups]),
+        _row(
+            "平均评分",
+            [
+                "-" if group.get("avg_rating") is None else f"{group.get('avg_rating'):.1f}"
+                for group in groups
+            ],
+        ),
+        _row("TOP 问题", [group.get("top_issue", "-") for group in groups]),
+        _row("TOP 亮点", [group.get("top_highlight", "-") for group in groups]),
+    ]
+
+    issue_children: list[dict[str, Any]] = []
+    for diff in dataset.get("issue_differences") or []:
+        tag = str(diff.get("标签") or diff.get("tag") or "-")
+        values = [str(diff.get(group.get("label"), "-")) for group in groups]
+        issue_children.append(_row(tag, values))
+
+    highlight_children: list[dict[str, Any]] = []
+    for diff in dataset.get("highlight_differences") or []:
+        tag = str(diff.get("标签") or diff.get("tag") or "-")
+        values = [str(diff.get(group.get("label"), "-")) for group in groups]
+        highlight_children.append(_row(tag, values))
+
+    risk_children: list[dict[str, Any]] = []
+    for risk in dataset.get("risk_groups") or []:
+        risk_children.append(
+            _row(
+                str(risk.get("label") or "-"),
+                [
+                    f"差评率 {risk.get('negative_rate', 0):.1f}% · 评论 {risk.get('review_count', 0)} 条 · TOP {risk.get('top_issue', '-')}"
+                ]
+                + [""] * (len(columns) - 2),
+            )
+        )
+
+    opportunity_children: list[dict[str, Any]] = []
+    for opp in dataset.get("opportunity_groups") or []:
+        opportunity_children.append(
+            _row(
+                str(opp.get("label") or "-"),
+                [
+                    f"好评率 {opp.get('positive_rate', 0):.1f}% · 评论 {opp.get('review_count', 0)} 条 · TOP {opp.get('top_highlight', '-')}"
+                ]
+                + [""] * (len(columns) - 2),
+            )
+        )
+
+    action_children: list[dict[str, Any]] = [
+        _row(f"建议 {idx + 1}", [str(text)] + [""] * (len(columns) - 2))
+        for idx, text in enumerate(dataset.get("recommended_actions") or [])
+    ]
+
+    sections: list[dict[str, Any]] = [
+        {"section": "① 总览指标", "values": [""] * (len(columns) - 1), "children": overview_children},
+    ]
+    if issue_children:
+        sections.append({"section": "② 问题差异", "values": [""] * (len(columns) - 1), "children": issue_children})
+    if highlight_children:
+        sections.append({"section": "③ 亮点差异", "values": [""] * (len(columns) - 1), "children": highlight_children})
+    if risk_children:
+        sections.append({"section": "④ 风险对象", "values": [""] * (len(columns) - 1), "children": risk_children})
+    if opportunity_children:
+        sections.append({"section": "⑤ 机会对象", "values": [""] * (len(columns) - 1), "children": opportunity_children})
+    if action_children:
+        sections.append({"section": "⑥ 推荐动作", "values": [""] * (len(columns) - 1), "children": action_children})
+
+    if ai_summary:
+        ai_children: list[dict[str, Any]] = []
+        headline = str(ai_summary.get("headline") or "").strip()
+        if headline:
+            ai_children.append(_row("结论", [headline] + [""] * (len(columns) - 2)))
+        for idx, item in enumerate(ai_summary.get("summary") or []):
+            ai_children.append(_row(f"总结 {idx + 1}", [str(item)] + [""] * (len(columns) - 2)))
+        for idx, item in enumerate(ai_summary.get("recommendations") or []):
+            ai_children.append(_row(f"建议 {idx + 1}", [str(item)] + [""] * (len(columns) - 2)))
+        for idx, item in enumerate(ai_summary.get("risks") or []):
+            ai_children.append(_row(f"风险 {idx + 1}", [str(item)] + [""] * (len(columns) - 2)))
+        if ai_children:
+            sections.append({"section": "⑦ AI 总结", "values": [""] * (len(columns) - 1), "children": ai_children})
+
+    compare_type = str(dataset.get("compare_type") or "custom")
+    context = {
+        "title": f"{COMPARE_TYPE_LABELS.get(compare_type, compare_type)} · {len(groups)} 个对象",
+    }
+    return {"columns": columns, "objects": sections}, context

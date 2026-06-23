@@ -198,6 +198,32 @@ export type AnalysisSessionResultsResponse = {
   generated_at: string;
 };
 
+export type AnalysisResultsResponse = {
+  session: AnalysisSession;
+  context: Record<string, unknown>;
+  modules: Record<string, AnalysisResultModule>;
+  comments: Array<Record<string, unknown>>;
+  generated_at: string;
+  range: string;
+  range_start: string | null;
+  range_end: string | null;
+  is_aggregated: boolean;
+};
+
+export type ProductSearchItem = {
+  parent_product_id: string;
+  name: string | null;
+  review_count: number;
+  session_count: number;
+  latest_session_id: number | null;
+};
+
+export type ProductSearchResponse = {
+  items: ProductSearchItem[];
+  total: number;
+  query: string;
+};
+
 export type AnalysisCompareGroup = {
   label: string;
   description: string;
@@ -262,6 +288,25 @@ export type ComparisonReportCreatePayload = {
   productId?: string;
   focusFeature?: string;
   title?: string;
+};
+
+export type CompareFilterGroup = {
+  productId: string;
+  versions: string[];
+  dateStart?: string;
+  dateEnd?: string;
+  label?: string;
+  description?: string;
+};
+
+export type CompareDatasetRequest = {
+  compareType: string;
+  groups: CompareFilterGroup[];
+};
+
+export type CompareExportRequest = CompareDatasetRequest & {
+  includeAiSummary?: boolean;
+  focusFeature?: string;
 };
 
 export type ComparisonReport = {

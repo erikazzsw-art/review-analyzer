@@ -609,6 +609,13 @@ git add review_analyzer/pages/compare.py review_analyzer/compare_store.py review
 git commit -m "feat: add product comparison workflows"
 ```
 
+- [x] **Step 8: V3.1 重做对比工作台（2026-06-23）**
+
+把 `/analysis/compare` 从「AI Report 生成器」改回「对比工作台」：
+- 后端新增 `POST /compare/dataset`（产品 + 版本 + 评论日期窗口） 和 `POST /compare/export`（XLSX 流），`compare_store.build_compare_specs_from_filters` / `dataset_to_xlsx_payload` 承接。
+- 前端新增 `compare-filter-bar`（时间环比 / 版本对比 / 多产品 / 自定义四模式 + 评论日期预设）、`compare-dashboard`（KPI ↑↓ 变化、问题/亮点 TOP 变化表、风险/机会、推荐动作）、`compare-workspace` 串联，AI 总结降级为辅助面板。下载 XLSX 是页面顶部主操作之一。
+- 旧 `compare-page-tabs.tsx` / `compare-report-panel.tsx` 删除。验证：`ruff` 全过，`tsc` 全过。
+
 ---
 
 ### V3.0 Task 7: 角色化今日工作台
@@ -1058,6 +1065,9 @@ NX-M2 验收记录：
 - [x] 建立 `/upload` 页面
 - [x] 验收上传 -> job -> 处理中 -> 结果跳转完整跑通
 - [x] 若失败，只回滚异步链路与 worker
+- [x] 批次去重：重复上传同一批评论时返回 409 + 前端友好提示跳转已有结果（2026-06-23）
+- [x] 修复：删除分析记录失败 — upload_jobs/action_items 外键阻止 session 删除 + 前端静默吞错误（2026-06-23）
+- [x] 修复：upload/page.tsx server/client 组件拆分，解决 next build 报 next/headers 错误（2026-06-23）
 
 ### NX-M5: 结果 / 对比 / 历史迁移
 
@@ -1227,6 +1237,7 @@ NX-M8 验收记录（Phase A）：
   - 重写 `app-shell.tsx`：从顶部 nav 布局改为 sidebar + 右侧 main content
   - Mobile（<768px）：顶部 56px bar（hamburger + logo），侧边栏变 overlay（左滑出 + 暗色遮罩）
   - 验证：所有 11 个 nav 路由可点击跳转，mobile 下 hamburger 开关正常
+  - ✅ 追加 2026-06-23：Sidebar 底部新增"套餐额度"入口（参考 VOC.AI 截图）。新建 `frontend/src/components/quota/`：`quota-groups.ts`（4 业务分组 + 9 维度共享映射）、`quota-dialog.tsx`（Radix Dialog 弹窗，按 monthly/daily/forever/concurrent/per_request 周期分别决定进度条 + used/limit 显示）、`sidebar-quota-entry.tsx`（fetch `/api/quota` 后显示 `Free · X/Y` 副文，Free 用户右侧露出"升级套餐"链接 `/pricing`）。`quota-panel.tsx` 同步重构复用映射常量并迁移 i18n，去除本地 label 重复维护。i18n 文件同步新增 `sidebar.quotaEntry/upgradeLink/tagline/notLoggedIn/openMenu/closeMenu`、`quotaPanel.*`、`quotaDialog.*`（含 10 个 dimension label/hint）。Playwright 端到端验证通过（Free 用户 4 个分组 9 维度全部正确渲染）
 
 - [x] **Step C3: 文案清理（~40 min）**
   - `app-shell.tsx`：副标题 "SKU 口碑改版追踪系统" → "评论智能分析"
@@ -1297,6 +1308,17 @@ NX-M8 验收记录（Phase A）：
   - [x] 每个模块增加翻译按钮（DeepSeek 翻译 API）+ XLSX 下载按钮
   - [x] 负向标签 + 未满足需求每条旁增加「+ 行动」inline 创建按钮（Dialog 弹窗）
   - [x] 新增后端路由：`/translate/module`、`/analysis/sessions/{id}/export`
+
+- [x] **Step C9.5: 分析结果页交互升级**（2026-06-23 完成）
+  - 目标：把 Tab 切换改成长页锚点滚动，并新增时间 / 产品级筛选，让用户在结果页就能切换"该产品 + 最近 X 天"视角
+  - [x] 后端 `get_comments` 加 `date_start` / `date_end` 参数（基于评论自身的 `date` 字段）
+  - [x] 新增 `GET /analysis/results?product_id=&range=7d|14d|30d|90d|all|custom|default&start=&end=&session_id=` 聚合接口：跨 session 合并评论 → 跑 LLM → 返回与单 session 同形 payload
+  - [x] 进程内 30 分钟聚合缓存（key = `user_id + product_id + start + end + comment_ids_hash`），命中重复筛选秒返
+  - [x] 新增 `GET /products/search?q=&limit=` 用于产品下拉搜索（前缀优先 + 评论数排序）
+  - [x] 前端 5 个独立 Tab 改为长页 5 段 `<section>` + 顶部 sticky 锚点条 + IntersectionObserver 自动高亮
+  - [x] 顶部新增 `ResultsFilterBar`（产品 Combobox + 时间 Select + 自定义日期范围 Popover）
+  - [x] 老链接兼容：`?session_id=N` 自动 redirect 到 `?product_id=X&range=default&session_id=N`
+  - [x] 原始评论列表新增"显示更多"分页（每页 20 条）
 
 - [ ] **Step C10: 暗色模式（可选）**
   - 仅在种子用户反馈中有明确需求时执行
