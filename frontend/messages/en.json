@@ -163,7 +163,10 @@
     "purposeDaily": "Daily Review Analysis",
     "purposeListing": "Listing Optimization",
     "purposeQuality": "Quality Issue Review",
-    "purposeVersion": "Version Validation"
+    "purposeVersion": "Version Validation",
+    "duplicateWarning": "This batch of reviews has already been analyzed.",
+    "duplicateDetail": "Existing analysis: {title} ({totalReviews} reviews, created at {createdAt})",
+    "viewExistingResult": "View Existing Result"
   },
   "workspace": {
     "title": "Today's Workspace",

@@ -58,6 +58,22 @@ def compute_content_hash(content: str, rating: Any = None) -> str:
     return hashlib.sha256(key.encode("utf-8")).hexdigest()
 
 
+def compute_batch_hash(comments: list[dict[str, Any]]) -> str:
+    """计算整批评论的指纹，用于批次去重。
+
+    排序所有 content_hash 后拼接再 SHA256，保证行顺序无关。
+    """
+    hashes = sorted(
+        compute_content_hash(
+            str(c.get("content") or ""),
+            c.get("rating"),
+        )
+        for c in comments
+    )
+    combined = "|".join(hashes)
+    return hashlib.sha256(combined.encode("utf-8")).hexdigest()
+
+
 def _check_l1(
     comments: list[dict[str, Any]],
     existing_analyses: dict[str, dict[str, Any]],

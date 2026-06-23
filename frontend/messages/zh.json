@@ -163,7 +163,10 @@
     "purposeDaily": "日常评论分析",
     "purposeListing": "Listing 优化",
     "purposeQuality": "质量问题复盘",
-    "purposeVersion": "版本改版验证"
+    "purposeVersion": "版本改版验证",
+    "duplicateWarning": "该批评论已分析过，无需重复上传。",
+    "duplicateDetail": "已有分析记录：{title}（{totalReviews}条评论，创建于 {createdAt}）",
+    "viewExistingResult": "查看已有结果"
   },
   "workspace": {
     "title": "今日工作台",

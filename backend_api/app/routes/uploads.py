@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import tempfile
-from threading import Thread
 from pathlib import Path
+from threading import Thread
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import JSONResponse
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.uploads import (
@@ -13,8 +14,10 @@ from backend_api.app.schemas.uploads import (
     UploadJobPayload,
     UploadJobResponse,
 )
+from backend_api.app.services.analysis_cache import compute_batch_hash
 from review_analyzer.database import (
     create_upload_job,
+    find_session_by_batch_hash,
     get_upload_job,
     update_upload_job,
 )
@@ -113,6 +116,21 @@ def create_uploads(
         Path(tmp_path).unlink(missing_ok=True)
 
     comments = parsed_df.to_dict(orient="records")
+
+    batch_hash = compute_batch_hash(comments)
+    existing = find_session_by_batch_hash(user_id, product_id, batch_hash)
+    if existing:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={
+                "detail": "duplicate_batch",
+                "existing_session_id": existing["id"],
+                "existing_title": existing.get("custom_title") or existing.get("auto_title") or "",
+                "existing_created_at": str(existing.get("created_at") or ""),
+                "total_reviews": existing.get("total_reviews", 0),
+            },
+        )
+
     payload = {
         "source_filename": source_file.filename or "upload",
         "product_id": product_id,
@@ -127,6 +145,7 @@ def create_uploads(
         "product_ref_id": product_ref_id,
         "variant_ref_id": variant_ref_id,
         "comments": comments,
+        "batch_hash": batch_hash,
     }
     return _enqueue_upload_job(user_id, payload)
 
@@ -137,7 +156,25 @@ def create_analysis_job(
     current_user: dict = Depends(get_current_user),
 ) -> UploadJobResponse:
     user_id = int(current_user["id"])
-    return _enqueue_upload_job(user_id, payload.model_dump())
+    data = payload.model_dump()
+    comments = data.get("comments") or []
+    if comments:
+        batch_hash = compute_batch_hash(comments)
+        product_id = data.get("product_id") or ""
+        existing = find_session_by_batch_hash(user_id, product_id, batch_hash)
+        if existing:
+            return JSONResponse(
+                status_code=status.HTTP_409_CONFLICT,
+                content={
+                    "detail": "duplicate_batch",
+                    "existing_session_id": existing["id"],
+                    "existing_title": existing.get("custom_title") or existing.get("auto_title") or "",
+                    "existing_created_at": str(existing.get("created_at") or ""),
+                    "total_reviews": existing.get("total_reviews", 0),
+                },
+            )
+        data["batch_hash"] = batch_hash
+    return _enqueue_upload_job(user_id, data)
 
 
 @router.get("/analysis/jobs/{job_id}", response_model=UploadJobResponse)

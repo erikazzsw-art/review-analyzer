@@ -917,6 +917,26 @@ def get_analyzed_with_embeddings(
 # Sessions CRUD
 # ============================================================
 
+def find_session_by_batch_hash(
+    user_id: int, product_id: str, batch_hash: str
+) -> dict | None:
+    """查询是否已有相同 batch_hash 的 session（批次去重）。"""
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT id, product_id, auto_title, custom_title, created_at, total_reviews
+                   FROM sessions
+                   WHERE user_id = %s AND product_id = %s AND batch_hash = %s
+                   ORDER BY created_at DESC LIMIT 1""",
+                (user_id, product_id, batch_hash),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+    finally:
+        conn.close()
+
+
 def create_session(user_id: int, session_data: dict) -> int:
     conn = get_connection()
     try:
@@ -927,8 +947,8 @@ def create_session(user_id: int, session_data: dict) -> int:
                        (user_id, product_id, version, auto_title, custom_title,
                         date_range_start, date_range_end, total_reviews,
                         positive_count, negative_count, category, prompt_version, version_notes,
-                        workflow_purpose, product_ref_id, variant_ref_id)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                        workflow_purpose, product_ref_id, variant_ref_id, batch_hash)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                     (
                         user_id,
                         session_data.get("product_id"),
@@ -946,6 +966,7 @@ def create_session(user_id: int, session_data: dict) -> int:
                         session_data.get("workflow_purpose"),
                         session_data.get("product_ref_id"),
                         session_data.get("variant_ref_id"),
+                        session_data.get("batch_hash"),
                     ),
                 )
             except psycopg2.errors.UndefinedColumn:

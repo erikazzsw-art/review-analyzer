@@ -7,6 +7,7 @@ from typing import Any
 from backend_api.app.services.analysis_cache import (
     CacheResult,
     apply_cache,
+    compute_batch_hash,
     compute_content_hash,
 )
 from backend_api.app.services.analytics import track_analysis_complete
@@ -98,6 +99,10 @@ def process_upload_job(user_id: int, job_id: int) -> None:
 
         update_upload_job(user_id, job_id, {"status": "processing"})
 
+        batch_hash = payload.get("batch_hash")
+        if not batch_hash and comments_payload:
+            batch_hash = compute_batch_hash(comments_payload)
+
         if product_ref_id is None:
             existing_product = get_product_by_parent_id(user_id, product_id)
             if existing_product:
@@ -136,6 +141,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 "workflow_purpose": workflow_purpose,
                 "product_ref_id": product_ref_id,
                 "variant_ref_id": variant_ref_id,
+                "batch_hash": batch_hash,
             },
         )
 
@@ -166,13 +172,16 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             trace.end_stage(meta={"count": len(unprocessed)})
 
             def _progress_callback(current: int, total: int) -> None:
-                update_upload_job(
-                    user_id,
-                    job_id,
-                    {
-                        "processed_rows": current,
-                    },
-                )
+                try:
+                    update_upload_job(
+                        user_id,
+                        job_id,
+                        {
+                            "processed_rows": current,
+                        },
+                    )
+                except Exception:
+                    logger.debug("progress_callback: DB write failed (non-fatal), current=%d", current)
 
             sub_category = str(payload.get("category") or "家具家居")
             aspects, taxonomy_hit = resolve_aspects(sub_category)
@@ -577,15 +586,18 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             logger.warning("upload_job %s: smart push failed (non-fatal)", job_id, exc_info=True)
     except Exception as exc:
         trace.finalize(error=str(exc)[:500])
-        update_upload_job(
-            user_id,
-            job_id,
-            {
-                "status": "failed",
-                "error_message": str(exc),
-                "trace_json": trace.to_dict(),
-            },
-        )
+        try:
+            update_upload_job(
+                user_id,
+                job_id,
+                {
+                    "status": "failed",
+                    "error_message": str(exc)[:500],
+                    "trace_json": trace.to_dict(),
+                },
+            )
+        except Exception:
+            logger.error("upload_job %s: failed to mark job as failed (DB unavailable)", job_id)
         raise
 
 

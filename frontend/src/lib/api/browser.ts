@@ -52,6 +52,15 @@ type ApiError = {
   message: string;
 };
 
+export type DuplicateBatchError = {
+  status: 409;
+  message: string;
+  existingSessionId: number;
+  existingTitle: string;
+  existingCreatedAt: string;
+  totalReviews: number;
+};
+
 export function describeRequestError(err: unknown, target: string): string {
   if (err instanceof Error) {
     return `${err.name}: ${err.message} (${target})`;
@@ -107,6 +116,19 @@ export async function submitUploadJob(params: {
     body: formData,
     credentials: "include",
   });
+
+  if (response.status === 409) {
+    const payload = await response.json();
+    const err: DuplicateBatchError = {
+      status: 409,
+      message: payload.detail || "duplicate_batch",
+      existingSessionId: payload.existing_session_id,
+      existingTitle: payload.existing_title || "",
+      existingCreatedAt: payload.existing_created_at || "",
+      totalReviews: payload.total_reviews || 0,
+    };
+    throw err;
+  }
 
   if (!response.ok) {
     throw await parseError(response);
