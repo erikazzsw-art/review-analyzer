@@ -1107,6 +1107,14 @@ def delete_session(user_id: int, session_id: int) -> None:
     try:
         with conn.cursor() as cur:
             cur.execute(
+                "UPDATE upload_jobs SET session_id = NULL WHERE session_id = %s AND user_id = %s",
+                (session_id, user_id),
+            )
+            cur.execute(
+                "UPDATE action_items SET session_id = NULL WHERE session_id = %s AND user_id = %s",
+                (session_id, user_id),
+            )
+            cur.execute(
                 "DELETE FROM comments WHERE session_id = %s AND user_id = %s",
                 (session_id, user_id),
             )
