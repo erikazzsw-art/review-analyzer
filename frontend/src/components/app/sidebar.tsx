@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Menu,
   X,
@@ -10,16 +10,29 @@ import {
 import { useTranslations } from "next-intl";
 
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
+import { SidebarQuotaEntry } from "@/components/quota/sidebar-quota-entry";
+
+type MeData = { username: string; plan: string };
+
+function useMe(): MeData | null {
+  const [me, setMe] = useState<MeData | null>(null);
+  useEffect(() => {
+    fetch("/api/me", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setMe(d as MeData); })
+      .catch(() => {});
+  }, []);
+  return me;
+}
 
 type SidebarProps = {
   currentPath: string;
-  userName?: string;
-  planLabel?: string;
 };
 
-export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
+export function Sidebar({ currentPath }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslations("sidebar");
+  const me = useMe();
 
   const navGroups = [
     {
@@ -70,7 +83,7 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
           <div className="font-heading text-base font-extrabold tracking-[-0.03em] text-ink">
             ClueAI
           </div>
-          <div className="text-xs text-soft">评论智能分析</div>
+          <div className="text-xs text-soft">{t("tagline")}</div>
         </div>
       </div>
 
@@ -108,6 +121,7 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
 
       {/* User info */}
       <div className="px-4 py-4">
+        <SidebarQuotaEntry />
         <div className="mb-3">
           <LocaleSwitcher variant="sidebar" />
         </div>
@@ -118,10 +132,10 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium text-ink">
-              {userName || "未登录"}
+              {me?.username || t("notLoggedIn")}
             </div>
-            {planLabel && (
-              <div className="text-xs text-soft">{planLabel}</div>
+            {me?.plan && (
+              <div className="text-xs text-soft">{me.plan}</div>
             )}
           </div>
         </div>
@@ -150,7 +164,7 @@ export function Sidebar({ currentPath, userName, planLabel }: SidebarProps) {
         <button
           type="button"
           onClick={() => setMobileOpen((prev) => !prev)}
-          aria-label={mobileOpen ? "关闭菜单" : "打开菜单"}
+          aria-label={mobileOpen ? t("closeMenu") : t("openMenu")}
           className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-line bg-white text-ink hover:bg-roseSoft"
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}

@@ -104,7 +104,87 @@
     "copywriter": "Copywriting",
     "products": "Products",
     "pushSettings": "Push Settings",
-    "observability": "Observability"
+    "observability": "Observability",
+    "tagline": "Intelligent Review Analytics",
+    "notLoggedIn": "Not signed in",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "quotaEntry": "Plan Quota",
+    "upgradeLink": "Upgrade"
+  },
+  "quotaPanel": {
+    "badge": "USAGE DASHBOARD",
+    "currentPlanPrefix": "Current plan: ",
+    "upgrade": "Upgrade to Pro",
+    "remaining": "Remaining"
+  },
+  "quotaDialog": {
+    "title": "Plan Usage",
+    "resetNotice": "Monthly usage resets on {date}",
+    "currentPlan": "Current plan",
+    "unlimited": "Unlimited",
+    "upgrade": "Upgrade Plan",
+    "groups": {
+      "reviewAnalysis": "Review Analysis",
+      "adCopy": "Ad Copywriter",
+      "exportCompare": "Export & Compare",
+      "pushAlert": "Push & Alerts"
+    },
+    "periods": {
+      "monthly": "Monthly",
+      "daily": "Daily",
+      "forever": "Total",
+      "concurrent": "Concurrent",
+      "per_request": "Per Request"
+    },
+    "plans": {
+      "free": "Free",
+      "pro_early": "Pro (Early)",
+      "pro": "Pro",
+      "team": "Team"
+    },
+    "dimensions": {
+      "review_analyze": {
+        "label": "Review Analysis",
+        "hint": "Total reviews analyzable per month; resets at the start of each month."
+      },
+      "ask_review": {
+        "label": "Ask Reviews",
+        "hint": "Monthly Ask Reviews queries; one LLM call counts as one."
+      },
+      "ad_copy": {
+        "label": "Ad Copy",
+        "hint": "Monthly ad copy generations; one platform × one type × one variant = one call."
+      },
+      "excel_export": {
+        "label": "Excel Export",
+        "hint": "Monthly Excel export count."
+      },
+      "compare_products": {
+        "label": "Concurrent Compare",
+        "hint": "Max products selectable at once on the Compare page."
+      },
+      "webhook_count": {
+        "label": "Webhooks",
+        "hint": "Feishu / DingTalk / WeCom webhooks configured (email is separate)."
+      },
+      "global_rules": {
+        "label": "Global Alert Rules",
+        "hint": "Max global alert rules across all products."
+      },
+      "product_rules": {
+        "label": "Per-Product Alert Rules",
+        "hint": "Max alert rules per product."
+      },
+      "upload_rows_per_file": {
+        "label": "Per-file Upload Limit",
+        "hint": "Max review rows per upload; split larger files."
+      },
+      "asin_fetch": {
+        "label": "ASIN Auto Fetch",
+        "hint": "Daily ASIN auto-fetch trigger limit."
+      }
+    }
   },
   "upload": {
     "title": "Upload Review File",

@@ -104,7 +104,87 @@
     "copywriter": "宣传文案",
     "products": "产品管理",
     "pushSettings": "推送设置",
-    "observability": "可观测性"
+    "observability": "可观测性",
+    "tagline": "评论智能分析",
+    "notLoggedIn": "未登录",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
+    "quotaEntry": "套餐额度",
+    "upgradeLink": "升级套餐"
+  },
+  "quotaPanel": {
+    "badge": "用量看板",
+    "currentPlanPrefix": "当前套餐：",
+    "upgrade": "升级 Pro",
+    "remaining": "剩余"
+  },
+  "quotaDialog": {
+    "title": "套餐使用量",
+    "resetNotice": "每月使用量将在 {date} 重置",
+    "currentPlan": "当前套餐",
+    "unlimited": "不限",
+    "upgrade": "升级套餐",
+    "groups": {
+      "reviewAnalysis": "评论智能分析",
+      "adCopy": "广告文案生成",
+      "exportCompare": "数据导出与对比",
+      "pushAlert": "推送与预警"
+    },
+    "periods": {
+      "monthly": "每月",
+      "daily": "每日",
+      "forever": "累计",
+      "concurrent": "同时",
+      "per_request": "单次"
+    },
+    "plans": {
+      "free": "Free",
+      "pro_early": "Pro (早鸟)",
+      "pro": "Pro",
+      "team": "Team"
+    },
+    "dimensions": {
+      "review_analyze": {
+        "label": "评论分析",
+        "hint": "每月可分析的评论总条数，跨月自动重置。"
+      },
+      "ask_review": {
+        "label": "Ask Reviews",
+        "hint": "每月可向评论提问的次数，调用一次 LLM 算一次。"
+      },
+      "ad_copy": {
+        "label": "广告文案",
+        "hint": "每月可生成的广告文案次数，1 个平台×1 种类型×1 个变体记 1 次。"
+      },
+      "excel_export": {
+        "label": "Excel 导出",
+        "hint": "每月可导出 Excel 报表的次数。"
+      },
+      "compare_products": {
+        "label": "对比产品数",
+        "hint": "对比页同时可勾选的产品数上限。"
+      },
+      "webhook_count": {
+        "label": "Webhook 数",
+        "hint": "已配置的飞书/钉钉/企业微信 webhook 总数（邮件独立计算）。"
+      },
+      "global_rules": {
+        "label": "全局预警规则",
+        "hint": "全局预警规则条数上限，针对所有产品生效。"
+      },
+      "product_rules": {
+        "label": "产品预警规则",
+        "hint": "每个产品可配置的预警规则条数上限。"
+      },
+      "upload_rows_per_file": {
+        "label": "单文件上限",
+        "hint": "单次上传文件的评论条数上限，超出请拆分上传。"
+      },
+      "asin_fetch": {
+        "label": "ASIN 自动拉取",
+        "hint": "每天可触发的 ASIN 自动拉取次数。"
+      }
+    }
   },
   "upload": {
     "title": "上传评论文件",

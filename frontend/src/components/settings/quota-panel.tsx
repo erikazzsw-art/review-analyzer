@@ -1,49 +1,35 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import type { QuotaItem } from "@/lib/api/server";
-
-const dimensionLabels: Record<string, string> = {
-  review_analyze: "评论分析",
-  ask_review: "问评论 (RAG)",
-  ad_copy: "文案生成",
-  excel_export: "Excel 导出",
-  compare_products: "对比产品数",
-  webhook_count: "Webhook 数",
-  global_rules: "推送规则",
-};
-
-const periodLabels: Record<string, string> = {
-  monthly: "每月",
-  daily: "每日",
-  forever: "累计",
-  concurrent: "同时",
-  per_request: "单次",
-};
-
-const planLabels: Record<string, string> = {
-  free: "Free",
-  pro_early: "Pro (早鸟)",
-  pro: "Pro",
-  team: "Team",
-};
+import {
+  DIMENSION_LABEL_KEY,
+  PERIOD_LABEL_KEY,
+  PLAN_LABEL_KEY,
+} from "@/components/quota/quota-groups";
 
 type QuotaPanelProps = {
   items: QuotaItem[];
 };
 
 export function QuotaPanel({ items }: QuotaPanelProps) {
+  const t = useTranslations("quotaDialog");
+  const tPanel = useTranslations("quotaPanel");
   const plan = items[0]?.plan || "free";
   const usableItems = items.filter((item) => !item.error && item.period !== "per_request");
+  const planLabel = t(PLAN_LABEL_KEY[plan] ?? "plans.free");
 
   return (
     <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
       <div className="flex items-center justify-between">
         <div>
           <div className="inline-flex rounded-pill bg-[#eef6ff] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#4a7dc7]">
-            用量看板
+            {tPanel("badge")}
           </div>
           <h3 className="mt-3 font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-            当前套餐：{planLabels[plan] || plan}
+            {tPanel("currentPlanPrefix")}{planLabel}
           </h3>
         </div>
         {plan === "free" && (
@@ -51,15 +37,17 @@ export function QuotaPanel({ items }: QuotaPanelProps) {
             href="/pricing"
             className="inline-flex min-h-11 items-center justify-center rounded-pill bg-[#d94d72] px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-[#c4405f]"
           >
-            升级 Pro
+            {tPanel("upgrade")}
           </Link>
         )}
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {usableItems.map((item) => {
-          const label = dimensionLabels[item.dimension] || item.dimension;
-          const period = periodLabels[item.period] || item.period;
+          const labelKey = DIMENSION_LABEL_KEY[item.dimension];
+          const label = labelKey ? t(labelKey) : item.dimension;
+          const periodKey = PERIOD_LABEL_KEY[item.period];
+          const period = periodKey ? t(periodKey) : item.period;
           const pct =
             item.unlimited || !item.limit || item.limit === -1
               ? 0
@@ -77,7 +65,7 @@ export function QuotaPanel({ items }: QuotaPanelProps) {
               </div>
 
               {item.unlimited || item.limit === -1 ? (
-                <div className="mt-3 text-sm text-soft">无限制</div>
+                <div className="mt-3 text-sm text-soft">{t("unlimited")}</div>
               ) : (
                 <>
                   <div className="mt-3 flex items-baseline gap-1">
@@ -98,7 +86,7 @@ export function QuotaPanel({ items }: QuotaPanelProps) {
                     />
                   </div>
                   <div className="mt-1.5 text-xs text-soft">
-                    剩余 {item.remaining ?? item.limit - (item.used ?? 0)} {item.unit || ""}
+                    {tPanel("remaining")} {item.remaining ?? item.limit - (item.used ?? 0)} {item.unit || ""}
                   </div>
                 </>
               )}
