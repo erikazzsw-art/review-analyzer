@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
 import { Sidebar } from "@/components/app/sidebar";
+import { getMe } from "@/lib/api/server";
 
 type AppShellProps = {
   currentPath:
@@ -21,15 +22,17 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-export function AppShell({
+export async function AppShell({
   currentPath,
   title,
   description,
   children,
 }: AppShellProps) {
+  const me = await getMe();
+
   return (
     <div className="min-h-screen bg-hero-wash">
-      <Sidebar currentPath={currentPath} />
+      <Sidebar currentPath={currentPath} userName={me?.username} planLabel={me?.plan} />
 
       {/* Main content area */}
       <div className="pt-14 md:pl-[260px] md:pt-0">

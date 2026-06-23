@@ -149,6 +149,21 @@ export async function getQuota(): Promise<QuotaItem[]> {
   return apiFetch<QuotaItem[]>("/quota");
 }
 
+export type MeResponse = {
+  id: number;
+  username: string;
+  email: string;
+  plan: string;
+};
+
+export async function getMe(): Promise<MeResponse | null> {
+  try {
+    return await apiFetch<MeResponse>("/me");
+  } catch {
+    return null;
+  }
+}
+
 export function isApiError(value: unknown): value is ApiError {
   if (!value || typeof value !== "object") {
     return false;
