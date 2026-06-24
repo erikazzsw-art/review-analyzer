@@ -59,6 +59,7 @@ class ProductOverviewPayload(BaseModel):
     latest_session_label: str | None = None
     latest_updated_at: datetime | None = None
     latest_review_date: str | None = None
+    earliest_review_date: str | None = None
 
 
 class ProductsResponsePayload(BaseModel):

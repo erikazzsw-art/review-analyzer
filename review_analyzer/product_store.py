@@ -442,6 +442,7 @@ def get_product_overview_rows(user_id: int) -> list[dict[str, Any]]:
                 "top_issue": stats["top_issue"],
                 "top_highlight": stats["top_highlight"],
                 "latest_review_date": stats["latest_review_date"],
+                "earliest_review_date": stats["earliest_review_date"],
                 "variant_count": len(variants),
                 "variants": variants,
                 "versions": versions,
@@ -480,10 +481,9 @@ def _build_comment_stats(comments: list[dict[str, Any]]) -> dict[str, Any]:
     negative_count = sum(1 for comment in comments if comment.get("sentiment") == "negative")
     top_issue = _get_top_tag(comments, "issue_tag")
     top_highlight = _get_top_tag(comments, "highlight_tag")
-    latest_date = max(
-        (str(comment.get("date") or "") for comment in comments),
-        default="",
-    ) or None
+    valid_dates = [str(comment.get("date") or "") for comment in comments if comment.get("date")]
+    latest_date = max(valid_dates, default="") or None
+    earliest_date = min(valid_dates, default="") or None
     return {
         "review_count": review_count,
         "positive_rate": round((positive_count / valid_count) * 100, 1) if valid_count > 0 else 0.0,
@@ -491,6 +491,7 @@ def _build_comment_stats(comments: list[dict[str, Any]]) -> dict[str, Any]:
         "top_issue": top_issue,
         "top_highlight": top_highlight,
         "latest_review_date": latest_date,
+        "earliest_review_date": earliest_date,
     }
 
 

@@ -108,6 +108,7 @@ export type ProductOverview = {
   latest_session_label: string | null;
   latest_updated_at: string | null;
   latest_review_date: string | null;
+  earliest_review_date: string | null;
 };
 
 export type ProductsResponse = {

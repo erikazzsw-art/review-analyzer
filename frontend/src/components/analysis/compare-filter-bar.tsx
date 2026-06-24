@@ -182,9 +182,25 @@ export function CompareFilterBar({
     });
     return map;
   }, [products]);
+  const productRangeMap = useMemo(() => {
+    const map = new Map<string, { earliest: string | null; latest: string | null }>();
+    products.forEach((product) => {
+      map.set(product.parent_product_id, {
+        earliest: product.earliest_review_date ?? null,
+        latest: product.latest_review_date ?? null,
+      });
+    });
+    return map;
+  }, [products]);
 
   function anchorFor(productId: string): string | null {
     return productAnchorMap.get(productId) ?? null;
+  }
+
+  function rangeLabelFor(productId: string): string | null {
+    const range = productRangeMap.get(productId);
+    if (!range || (!range.earliest && !range.latest)) return null;
+    return `评论日期范围 ${range.earliest || "…"} ~ ${range.latest || "…"}`;
   }
 
   const [rows, setRows] = useState<RowState[]>(() => {
@@ -410,94 +426,100 @@ export function CompareFilterBar({
         <div className="mt-4 space-y-3">
           {rows.map((row, index) => {
             const versionOptions = row.productId ? productVersionsMap.get(row.productId) ?? [] : [];
+            const rangeLabel = row.productId ? rangeLabelFor(row.productId) : null;
             return (
               <div
                 key={`row-${index}`}
-                className="grid gap-3 rounded-card border border-line bg-white px-4 py-3 md:grid-cols-[120px_1.6fr_1fr_1.2fr_auto]"
+                className="rounded-card border border-line bg-white px-4 py-3"
               >
-                <div className="flex items-center text-xs font-semibold uppercase tracking-[0.1em] text-soft">
-                  {row.label || `对象 ${index + 1}`}
-                </div>
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">产品</div>
-                  <select
-                    value={row.productId}
-                    onChange={(event) => updateRow(index, { productId: event.target.value, version: "" })}
-                    className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
-                  >
-                    <option value="">选择产品</option>
-                    {productOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">版本</div>
-                  <select
-                    value={row.version}
-                    onChange={(event) => updateRow(index, { version: event.target.value })}
-                    className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
-                    disabled={!row.productId}
-                  >
-                    <option value="">全部版本</option>
-                    {versionOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">评论时间</div>
-                  <div className="mt-1 flex gap-2">
+                <div className="grid gap-3 md:grid-cols-[120px_1.6fr_1fr_1.2fr_auto]">
+                  <div className="flex items-center text-xs font-semibold uppercase tracking-[0.1em] text-soft">
+                    {row.label || `对象 ${index + 1}`}
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">产品</div>
                     <select
-                      value={row.windowPreset}
-                      onChange={(event) => applyPreset(index, event.target.value)}
-                      className="rounded-card border border-line bg-white px-2 py-2 text-xs text-ink outline-none focus:border-[#f36f8f]"
+                      value={row.productId}
+                      onChange={(event) => updateRow(index, { productId: event.target.value, version: "" })}
+                      className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
                     >
-                      {PRESET_WINDOWS.map((preset) => (
-                        <option key={preset.value} value={preset.value}>
-                          {preset.label}
+                      <option value="">选择产品</option>
+                      {productOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
                         </option>
                       ))}
                     </select>
-                    {row.windowPreset !== "all" ? (
-                      <div className="flex flex-1 items-center gap-1 text-xs text-soft">
-                        <input
-                          type="date"
-                          value={row.dateStart}
-                          onChange={(event) =>
-                            updateRow(index, { windowPreset: "custom", dateStart: event.target.value })
-                          }
-                          className="w-full rounded-card border border-line bg-white px-2 py-2 text-xs outline-none focus:border-[#f36f8f]"
-                        />
-                        <span>~</span>
-                        <input
-                          type="date"
-                          value={row.dateEnd}
-                          onChange={(event) =>
-                            updateRow(index, { windowPreset: "custom", dateEnd: event.target.value })
-                          }
-                          className="w-full rounded-card border border-line bg-white px-2 py-2 text-xs outline-none focus:border-[#f36f8f]"
-                        />
-                      </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">版本</div>
+                    <select
+                      value={row.version}
+                      onChange={(event) => updateRow(index, { version: event.target.value })}
+                      className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
+                      disabled={!row.productId}
+                    >
+                      <option value="">全部版本</option>
+                      {versionOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">评论时间</div>
+                    <div className="mt-1 flex gap-2">
+                      <select
+                        value={row.windowPreset}
+                        onChange={(event) => applyPreset(index, event.target.value)}
+                        className="rounded-card border border-line bg-white px-2 py-2 text-xs text-ink outline-none focus:border-[#f36f8f]"
+                      >
+                        {PRESET_WINDOWS.map((preset) => (
+                          <option key={preset.value} value={preset.value}>
+                            {preset.label}
+                          </option>
+                        ))}
+                      </select>
+                      {row.windowPreset !== "all" ? (
+                        <div className="flex flex-1 items-center gap-1 text-xs text-soft">
+                          <input
+                            type="date"
+                            value={row.dateStart}
+                            onChange={(event) =>
+                              updateRow(index, { windowPreset: "custom", dateStart: event.target.value })
+                            }
+                            className="w-full rounded-card border border-line bg-white px-2 py-2 text-xs outline-none focus:border-[#f36f8f]"
+                          />
+                          <span>~</span>
+                          <input
+                            type="date"
+                            value={row.dateEnd}
+                            onChange={(event) =>
+                              updateRow(index, { windowPreset: "custom", dateEnd: event.target.value })
+                            }
+                            className="w-full rounded-card border border-line bg-white px-2 py-2 text-xs outline-none focus:border-[#f36f8f]"
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="flex items-end justify-end">
+                    {mode === "multi_product" ? (
+                      <button
+                        type="button"
+                        onClick={() => removeRow(index)}
+                        disabled={rows.length <= 2}
+                        className="rounded-pill border border-line bg-white px-3 py-1.5 text-xs font-semibold text-soft transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        移除
+                      </button>
                     ) : null}
                   </div>
                 </div>
-                <div className="flex items-end justify-end">
-                  {mode === "multi_product" ? (
-                    <button
-                      type="button"
-                      onClick={() => removeRow(index)}
-                      disabled={rows.length <= 2}
-                      className="rounded-pill border border-line bg-white px-3 py-1.5 text-xs font-semibold text-soft transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      移除
-                    </button>
-                  ) : null}
-                </div>
+                {rangeLabel ? (
+                  <div className="mt-2 text-[11px] text-soft">{rangeLabel}</div>
+                ) : null}
               </div>
             );
           })}
@@ -514,8 +536,8 @@ export function CompareFilterBar({
         <div className="text-xs text-soft">
           {mode === "same_product_time"
             ? `基准窗口 ${timeRow.baselineStart || "…"} ~ ${timeRow.baselineEnd || "…"} · 对比窗口 ${timeRow.compareStart || "…"} ~ ${timeRow.compareEnd || "…"}${
-                anchorFor(timeRow.productId) && timeRow.presetValue !== "custom"
-                  ? ` · 锚定该产品最新评论日 ${anchorFor(timeRow.productId)}`
+                rangeLabelFor(timeRow.productId)
+                  ? ` · ${rangeLabelFor(timeRow.productId)}`
                   : ""
               }`
             : mode === "same_product_version"
