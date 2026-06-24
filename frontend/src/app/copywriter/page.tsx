@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
-import { CopywriterPanel } from "@/components/copywriter/copywriter-panel";
-import { getCopywriterSessions, isApiError } from "@/lib/api/server";
+import { CopywriterWorkspace } from "@/components/copywriter/copywriter-workspace";
+import { getCopywriterPlatforms, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
@@ -9,16 +9,36 @@ export const metadata = buildNoIndexMetadata({
   description: "Authenticated copy generation for products and campaigns.",
 });
 
-export default async function CopywriterPage() {
+type SearchParams = {
+  product_id?: string;
+  version?: string;
+  range?: string;
+  platform?: string;
+  style?: string;
+};
+
+export default async function CopywriterPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   try {
-    const sessions = await getCopywriterSessions();
+    // 仅用作 Pro / 鉴权探针；workspace 自己拉一次最新平台与风格
+    await getCopywriterPlatforms();
+    const params = await searchParams;
     return (
       <AppShell
         currentPath="/copywriter"
         title="把评论洞察转成可直接使用的广告文案。"
-        description="这一页承接分析批次，按平台生成文案和理想产品画像。它是高价值但低频的输出入口，所以放在独立页面里。"
+        description="选择产品和版本后，系统按平台规则生成英文文案与中文参考，并同步出一份理想产品画像。"
       >
-        <CopywriterPanel sessions={sessions} />
+        <CopywriterWorkspace
+          productId={params.product_id ?? ""}
+          version={params.version ?? ""}
+          range={params.range ?? "all"}
+          platform={params.platform ?? "amazon"}
+          style={params.style ?? "简洁专业"}
+        />
       </AppShell>
     );
   } catch (error) {
@@ -27,7 +47,7 @@ export default async function CopywriterPage() {
         <AppShell
           currentPath="/copywriter"
           title="宣传文案需要先登录。"
-          description="登录后会直接读取当前账号的分析批次和评论资产。"
+          description="登录后会直接读取当前账号的产品与评论资产。"
         >
           <EmptyAuthState
             title="登录后生成宣传文案"

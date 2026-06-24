@@ -591,6 +591,7 @@ export type CopywriterPlatformType = {
   name_zh: string;
   name_en: string;
   limit: number;
+  internal_estimate?: boolean;
 };
 
 export type CopywriterPlatform = {
@@ -607,21 +608,21 @@ export type CopywriterPlatform = {
   guidelines_en: string;
 };
 
-export type CopywriterSession = {
-  session_id: number;
-  product_id: string;
-  version: string;
-  label: string;
-  total_reviews: number;
-  positive_count: number;
-  negative_count: number;
-  created_at: string;
+export type CopywriterStyle = {
+  name: string;
+  incompatible_on: string[];
 };
 
-export type CopywriterProduct = {
+export type CopywriterProductVersion = {
+  version: string;
+  review_count: number;
+  last_analyzed_at: string | null;
+};
+
+export type CopywriterProductVersionsResponse = {
+  items: CopywriterProductVersion[];
+  total: number;
   product_id: string;
-  product_name: string | null;
-  sessions: CopywriterSession[];
 };
 
 export type CopywriterGeneratedItem = {
@@ -633,6 +634,7 @@ export type CopywriterGeneratedItem = {
   zh: string;
   char_count: number;
   compliant: boolean;
+  compliance_notes: string[];
 };
 
 export type CopywriterIdealProfile = {
@@ -642,12 +644,15 @@ export type CopywriterIdealProfile = {
   packaging: string;
   service: string;
   summary: string;
+  cached: boolean;
+  generated_at: string | null;
+  comment_count_at_generation: number;
 };
 
 export type CopywriterGenerateResponse = {
   platform: CopywriterPlatform;
-  selected_sessions: CopywriterSession[];
   review_summary: string;
+  review_count: number;
   generated_items: CopywriterGeneratedItem[];
   ideal_profile: CopywriterIdealProfile | null;
   generated_at: string;

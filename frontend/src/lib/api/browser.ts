@@ -16,7 +16,8 @@ import type {
   CompareExportRequest,
   CopywriterGenerateResponse,
   CopywriterPlatform,
-  CopywriterProduct,
+  CopywriterProductVersionsResponse,
+  CopywriterStyle,
   FeedbackCreatePayload,
   FeedbackResponse,
   ProductSearchResponse,
@@ -632,27 +633,49 @@ export async function fetchCopywriterPlatforms(): Promise<CopywriterPlatform[]> 
   return (await response.json()) as CopywriterPlatform[];
 }
 
-export async function fetchCopywriterSessions(): Promise<CopywriterProduct[]> {
-  const response = await fetch(`${getApiBaseUrl()}/copywriter/sessions`, {
+export async function fetchCopywriterStyles(): Promise<CopywriterStyle[]> {
+  const response = await fetch(`${getApiBaseUrl()}/copywriter/styles`, {
     method: "GET",
     credentials: "include",
     cache: "no-store",
   });
-
   if (!response.ok) {
     throw await parseError(response);
   }
+  return (await response.json()) as CopywriterStyle[];
+}
 
-  return (await response.json()) as CopywriterProduct[];
+export async function fetchProductVersions(
+  productId: string,
+): Promise<CopywriterProductVersionsResponse> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/products/${encodeURIComponent(productId)}/versions`,
+    {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as CopywriterProductVersionsResponse;
 }
 
 export async function generateCopywriter(payload: {
-  productSessionIds: number[];
+  productId: string;
+  version?: string | null;
+  range?: string;
+  start?: string | null;
+  end?: string | null;
   platform: string;
+  adTypeId?: string | null;
+  style: string;
+  nVariants?: number;
   featuresText: string;
   generateAdCopy: boolean;
   generateIdealDesc: boolean;
-  styleByType: Record<string, string>;
+  forceRegenProfile?: boolean;
 }): Promise<CopywriterGenerateResponse> {
   const response = await fetch(`${getApiBaseUrl()}/copywriter/generate`, {
     method: "POST",
@@ -661,12 +684,19 @@ export async function generateCopywriter(payload: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      product_session_ids: payload.productSessionIds,
+      product_id: payload.productId,
+      version: payload.version ?? null,
+      range: payload.range ?? "all",
+      start: payload.start ?? null,
+      end: payload.end ?? null,
       platform: payload.platform,
+      ad_type_id: payload.adTypeId ?? null,
+      style: payload.style,
+      n_variants: payload.nVariants ?? 1,
       features_text: payload.featuresText,
       generate_ad_copy: payload.generateAdCopy,
       generate_ideal_desc: payload.generateIdealDesc,
-      style_by_type: payload.styleByType,
+      force_regen_profile: payload.forceRegenProfile ?? false,
     }),
   });
 

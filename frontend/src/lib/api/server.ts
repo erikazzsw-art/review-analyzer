@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import type {
   ActionItemsResponse,
   CopywriterPlatform,
-  CopywriterProduct,
   AnalysisCompareResponse,
   AnalysisHistoryResponse,
   AnalysisResultsResponse,
@@ -161,10 +160,6 @@ export async function getSettings(): Promise<SettingsResponse> {
 
 export async function getCopywriterPlatforms(): Promise<CopywriterPlatform[]> {
   return apiFetch<CopywriterPlatform[]>("/copywriter/platforms");
-}
-
-export async function getCopywriterSessions(): Promise<CopywriterProduct[]> {
-  return apiFetch<CopywriterProduct[]>("/copywriter/sessions");
 }
 
 export type QuotaItem = {
