@@ -82,6 +82,27 @@ function PctBar({ pct, color }: { pct: number; color: string }) {
   );
 }
 
+function truncate(text: string, max = 140): string {
+  if (!text) return "";
+  return text.length > max ? text.slice(0, max) + "…" : text;
+}
+
+function extractQuotes(row: RowItem): string[] {
+  const arr = row.representative_comments;
+  if (Array.isArray(arr) && arr.length > 0) {
+    return arr
+      .map((q) => String(q || "").trim())
+      .filter(Boolean)
+      .slice(0, 5)
+      .map((q) => truncate(q, 140));
+  }
+  const single = String(row.reason || row.detail || "").trim();
+  if (single && single !== "No representative comment found.") {
+    return [truncate(single, 140)];
+  }
+  return [];
+}
+
 function TagTable({
   items,
   variant,
@@ -104,6 +125,8 @@ function TagTable({
 
   if (items.length === 0) return null;
 
+  const limited = items.slice(0, 10);
+
   return (
     <Table>
       <TableHeader>
@@ -116,12 +139,13 @@ function TagTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {items.map((row, i) => {
+        {limited.map((row, i) => {
           const tag = String(row.tag || row.label || `#${i + 1}`);
           const pct = Number(row.pct || 0);
-          const reason = String(row.reason || row.detail || "");
+          const quotes = extractQuotes(row);
+          const reasonForAction = String(row.reason || row.detail || "");
           return (
-            <TableRow key={`${variant}-${i}`} className="group">
+            <TableRow key={`${variant}-${i}`} className="group align-top">
               <TableCell className="text-center text-xs font-bold text-soft">
                 {i + 1}
               </TableCell>
@@ -131,12 +155,19 @@ function TagTable({
               <TableCell>
                 <PctBar pct={pct} color={barColor} />
               </TableCell>
-              <TableCell className="max-w-xs text-xs leading-5 text-soft">
-                {reason && reason !== "No representative comment found."
-                  ? reason.length > 100
-                    ? reason.slice(0, 100) + "..."
-                    : reason
-                  : "—"}
+              <TableCell className="text-xs leading-5 text-soft">
+                {quotes.length > 0 ? (
+                  <ul className="space-y-1.5">
+                    {quotes.map((q, qi) => (
+                      <li key={qi} className="flex gap-1.5">
+                        <span className="text-soft/60">•</span>
+                        <span>{q}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  "—"
+                )}
               </TableCell>
               {showAction && sessionId > 0 && (
                 <TableCell>
@@ -147,7 +178,7 @@ function TagTable({
                     sourceVersion={session.version}
                     tag={tag}
                     pct={pct}
-                    reason={reason}
+                    reason={reasonForAction}
                   />
                 </TableCell>
               )}
@@ -188,104 +219,41 @@ export function AnalysisResultsSections({
   t,
 }: Props) {
   const [reviewsShown, setReviewsShown] = useState(REVIEWS_PAGE_SIZE);
+  const canShowActions = sessionId > 0;
   const sections = [
-    { id: "overview", label: t.tabOverview || "概览" },
+    { id: "profile", label: t.moduleConsumerProfile || "用户画像" },
     { id: "experience", label: t.moduleUserExperience || "用户体验" },
-    { id: "profile", label: t.tabProfile || "画像 & 动机" },
-    { id: "needs", label: t.tabNeeds || "需求 & 建议" },
-    { id: "reviews", label: t.rawReviews || "原始评论" },
+    { id: "motives", label: t.modulePurchaseMotives || "消费动机" },
+    { id: "needs", label: t.moduleUnmetNeeds || "未满足的需求" },
+    { id: "recommendations", label: t.moduleRecommendations || "综合建议" },
+    ...(canShowActions ? [{ id: "actions", label: t.tabCreateAction || "创建行动" }] : []),
+    { id: "reviews", label: t.rawReviews || "评论原文" },
   ];
 
-  const canShowActions = sessionId > 0;
+  const positiveTop = Math.min(userExperience.positive.length, 10);
+  const negativeTop = Math.min(userExperience.negative.length, 10);
 
   return (
     <div className="flex flex-col gap-4">
       {filterBarSlot}
       <SectionAnchorNav sections={sections} offsetTop={130} />
 
-      {/* Section: 概览 */}
-      <section className="flex flex-col gap-4">
-        <SectionHeading id="overview" title={t.tabOverview || "概览"} />
-        {overviewSlot}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-shell border border-line bg-white p-5 shadow-card">
-            <h3 className="text-sm font-semibold text-ink">{t.moduleConsumerProfile}</h3>
-            <p className="mt-1.5 text-sm leading-6 text-soft">{consumerProfile.summary}</p>
-          </section>
-          <section className="rounded-shell border border-line bg-white p-5 shadow-card">
-            <h3 className="text-sm font-semibold text-ink">{t.moduleUserExperience}</h3>
-            <p className="mt-1.5 text-sm leading-6 text-soft">{userExperience.summary}</p>
-          </section>
-          <section className="rounded-shell border border-line bg-white p-5 shadow-card">
-            <h3 className="text-sm font-semibold text-ink">{t.modulePurchaseMotives}</h3>
-            <p className="mt-1.5 text-sm leading-6 text-soft">{purchaseMotives.summary}</p>
-          </section>
-          <section className="rounded-shell border border-line bg-white p-5 shadow-card">
-            <h3 className="text-sm font-semibold text-ink">{t.moduleUnmetNeeds}</h3>
-            <p className="mt-1.5 text-sm leading-6 text-soft">{unmetNeeds.summary}</p>
-          </section>
-        </div>
-      </section>
+      {/* Hero: 概览（无标题、无锚点） */}
+      <section>{overviewSlot}</section>
 
-      {/* Section: 用户体验 */}
+      {/* Section: 用户画像 */}
       <section className="flex flex-col gap-3">
-        <SectionHeading id="experience" title={t.moduleUserExperience || "用户体验"} desc={t.moduleUserExperienceDesc} />
-        <ModuleCard
-          sessionId={sessionId}
-          moduleKey="user_experience"
-          moduleData={(modules.user_experience as Record<string, unknown>) || {}}
-        >
-          <div className="grid gap-5 xl:grid-cols-2">
-            <div>
-              <div className="mb-3 flex items-center gap-2">
-                <ThumbsUp className="h-4 w-4 text-[#059669]" />
-                <span className="text-sm font-semibold text-[#059669]">
-                  {t.positiveFeedback} TOP {userExperience.positive.length}
-                </span>
-              </div>
-              <TagTable
-                items={userExperience.positive}
-                variant="positive"
-                sessionId={sessionId}
-                session={session}
-              />
-              {userExperience.positive.length === 0 && (
-                <p className="text-sm text-soft">{t.noPositive}</p>
-              )}
-            </div>
-            <div>
-              <div className="mb-3 flex items-center gap-2">
-                <ThumbsDown className="h-4 w-4 text-[#dc2626]" />
-                <span className="text-sm font-semibold text-[#dc2626]">
-                  {t.negativeFeedback} TOP {userExperience.negative.length}
-                </span>
-              </div>
-              <TagTable
-                items={userExperience.negative}
-                variant="negative"
-                sessionId={sessionId}
-                session={session}
-                showAction={canShowActions}
-              />
-              {userExperience.negative.length === 0 && (
-                <p className="text-sm text-soft">{t.noNegative}</p>
-              )}
-            </div>
-          </div>
-        </ModuleCard>
-      </section>
-
-      {/* Section: 画像 & 动机 */}
-      <section className="flex flex-col gap-3">
-        <SectionHeading id="profile" title={t.tabProfile || "画像 & 动机"} />
+        <SectionHeading
+          id="profile"
+          title={t.moduleConsumerProfile || "用户画像"}
+          desc={t.moduleConsumerProfileDesc}
+        />
         <ModuleCard
           sessionId={sessionId}
           moduleKey="consumer_profile"
           moduleData={(modules.consumer_profile as Record<string, unknown>) || {}}
         >
-          <h3 className="text-base font-bold text-ink">{t.moduleConsumerProfile}</h3>
-          <p className="mt-2 text-sm leading-6 text-soft">{t.moduleConsumerProfileDesc}</p>
-          <p className="mt-3 text-sm leading-7 text-ink">{consumerProfile.summary}</p>
+          <p className="text-sm leading-7 text-ink">{consumerProfile.summary}</p>
           {consumerProfile.rows.length > 0 && (
             <Table className="mt-4">
               <TableHeader>
@@ -319,15 +287,73 @@ export function AnalysisResultsSections({
             </div>
           )}
         </ModuleCard>
+      </section>
 
+      {/* Section: 用户体验 */}
+      <section className="flex flex-col gap-3">
+        <SectionHeading
+          id="experience"
+          title={t.moduleUserExperience || "用户体验"}
+          desc={t.moduleUserExperienceDesc}
+        />
+        <ModuleCard
+          sessionId={sessionId}
+          moduleKey="user_experience"
+          moduleData={(modules.user_experience as Record<string, unknown>) || {}}
+        >
+          <div className="flex flex-col gap-6">
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <ThumbsUp className="h-4 w-4 text-[#059669]" />
+                <span className="text-sm font-semibold text-[#059669]">
+                  {t.positiveFeedback} TOP {positiveTop}
+                </span>
+              </div>
+              <TagTable
+                items={userExperience.positive}
+                variant="positive"
+                sessionId={sessionId}
+                session={session}
+              />
+              {userExperience.positive.length === 0 && (
+                <p className="text-sm text-soft">{t.noPositive}</p>
+              )}
+            </div>
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <ThumbsDown className="h-4 w-4 text-[#dc2626]" />
+                <span className="text-sm font-semibold text-[#dc2626]">
+                  {t.negativeFeedback} TOP {negativeTop}
+                </span>
+              </div>
+              <TagTable
+                items={userExperience.negative}
+                variant="negative"
+                sessionId={sessionId}
+                session={session}
+                showAction={canShowActions}
+              />
+              {userExperience.negative.length === 0 && (
+                <p className="text-sm text-soft">{t.noNegative}</p>
+              )}
+            </div>
+          </div>
+        </ModuleCard>
+      </section>
+
+      {/* Section: 消费动机 */}
+      <section className="flex flex-col gap-3">
+        <SectionHeading
+          id="motives"
+          title={t.modulePurchaseMotives || "消费动机"}
+          desc={t.modulePurchaseMotivesDesc}
+        />
         <ModuleCard
           sessionId={sessionId}
           moduleKey="purchase_motives"
           moduleData={(modules.purchase_motives as Record<string, unknown>) || {}}
         >
-          <h3 className="text-base font-bold text-ink">{t.modulePurchaseMotives}</h3>
-          <p className="mt-2 text-sm leading-6 text-soft">{t.modulePurchaseMotivesDesc}</p>
-          <p className="mt-3 text-sm leading-7 text-ink">{purchaseMotives.summary}</p>
+          <p className="text-sm leading-7 text-ink">{purchaseMotives.summary}</p>
           <div className="mt-4">
             <TagTable
               items={purchaseMotives.rows}
@@ -339,17 +365,19 @@ export function AnalysisResultsSections({
         </ModuleCard>
       </section>
 
-      {/* Section: 需求 & 建议 */}
+      {/* Section: 未满足的需求 */}
       <section className="flex flex-col gap-3">
-        <SectionHeading id="needs" title={t.tabNeeds || "需求 & 建议"} />
+        <SectionHeading
+          id="needs"
+          title={t.moduleUnmetNeeds || "未满足的需求"}
+          desc={t.moduleUnmetNeedsDesc}
+        />
         <ModuleCard
           sessionId={sessionId}
           moduleKey="unmet_needs"
           moduleData={(modules.unmet_needs as Record<string, unknown>) || {}}
         >
-          <h3 className="text-base font-bold text-ink">{t.moduleUnmetNeeds}</h3>
-          <p className="mt-2 text-sm leading-6 text-soft">{t.moduleUnmetNeedsDesc}</p>
-          <p className="mt-3 text-sm leading-7 text-ink">{unmetNeeds.summary}</p>
+          <p className="text-sm leading-7 text-ink">{unmetNeeds.summary}</p>
           <div className="mt-4">
             <TagTable
               items={unmetNeeds.rows}
@@ -360,15 +388,21 @@ export function AnalysisResultsSections({
             />
           </div>
         </ModuleCard>
+      </section>
 
+      {/* Section: 综合建议 */}
+      <section className="flex flex-col gap-3">
+        <SectionHeading
+          id="recommendations"
+          title={t.moduleRecommendations || "综合建议"}
+          desc={t.moduleRecommendationsDesc}
+        />
         <ModuleCard
           sessionId={sessionId}
           moduleKey="recommendations"
           moduleData={(modules.recommendations as Record<string, unknown>) || {}}
         >
-          <h3 className="text-base font-bold text-ink">{t.moduleRecommendations}</h3>
-          <p className="mt-2 text-sm leading-6 text-soft">{t.moduleRecommendationsDesc}</p>
-          <p className="mt-3 text-sm leading-7 text-ink">{recommendations.summary}</p>
+          <p className="text-sm leading-7 text-ink">{recommendations.summary}</p>
           <div className="mt-4 space-y-2">
             {recommendations.rows.map((row, i) => (
               <div key={`rec-${i}`} className="flex items-start gap-3 rounded-card border border-line bg-[#faf8fb] px-4 py-3">
@@ -388,8 +422,12 @@ export function AnalysisResultsSections({
             ))}
           </div>
         </ModuleCard>
+      </section>
 
-        {canShowActions && (
+      {/* Section: 创建行动 */}
+      {canShowActions && (
+        <section className="flex flex-col gap-3">
+          <SectionHeading id="actions" title={t.tabCreateAction || "创建行动"} />
           <CreateActionPanel
             sessionId={sessionId}
             productId={session.product_ref_id}
@@ -400,12 +438,12 @@ export function AnalysisResultsSections({
               (item) => item.label || item.detail || item.suggestedAction,
             )}
           />
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* Section: 原始评论 */}
+      {/* Section: 评论原文 */}
       <section className="flex flex-col gap-3">
-        <SectionHeading id="reviews" title={t.rawReviews || "原始评论"} />
+        <SectionHeading id="reviews" title={t.rawReviews || "评论原文"} />
         <div className="rounded-shell border border-line bg-white p-5 shadow-card">
           <div className="space-y-2">
             {comments.length > 0 ? (

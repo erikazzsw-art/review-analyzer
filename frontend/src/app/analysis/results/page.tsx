@@ -7,6 +7,7 @@ import {
   ThumbsDown,
   Target,
   AlertCircle,
+  Star,
 } from "lucide-react";
 
 import { AppShell } from "@/components/app/app-shell";
@@ -74,28 +75,31 @@ function normalizeModule(
   };
 }
 
-function CalloutCard({
-  variant,
-  label,
-  value,
-  detail,
-}: {
-  variant: "issue" | "highlight";
-  label: string;
-  value: string;
-  detail?: string;
-}) {
-  const styles = {
-    issue: "border-l-[#ef4444] bg-[#fef8f8]",
-    highlight: "border-l-[#10b981] bg-[#f0fdf8]",
-  };
-  return (
-    <div className={`rounded-card border border-line border-l-4 ${styles[variant]} p-4`}>
-      <div className="text-xs font-semibold uppercase tracking-[0.08em] text-soft">{label}</div>
-      <div className="mt-1 text-sm font-bold text-ink">{value}</div>
-      {detail && <p className="mt-0.5 text-xs leading-5 text-soft">{detail}</p>}
-    </div>
-  );
+function enrichRowsWithQuotes(
+  rows: Array<Record<string, unknown>>,
+  comments: Array<Record<string, unknown>>,
+  source: "highlight_tag" | "issue_tag",
+  perRow = 5,
+): Array<Record<string, unknown>> {
+  if (rows.length === 0 || comments.length === 0) return rows;
+  return rows.map((row) => {
+    const tag = String(row.tag || row.label || "").trim();
+    if (!tag) return row;
+    const quotes: string[] = [];
+    const seen = new Set<string>();
+    for (const c of comments) {
+      const raw = String((c as Record<string, unknown>)[source] || "");
+      const tags = raw.split(",").map((s) => s.trim());
+      if (!tags.includes(tag)) continue;
+      const content = String((c as Record<string, unknown>).content || "").trim();
+      if (!content || seen.has(content)) continue;
+      seen.add(content);
+      quotes.push(content);
+      if (quotes.length >= perRow) break;
+    }
+    if (quotes.length === 0) return row;
+    return { ...row, representative_comments: quotes };
+  });
 }
 
 export default async function AnalysisResultsPage({
@@ -230,13 +234,26 @@ export default async function AnalysisResultsPage({
     workflow_purpose?: string;
   };
   const consumerProfile = normalizeModule(payload.modules?.consumer_profile);
-  const userExperience = normalizeModule(payload.modules?.user_experience);
+  const userExperienceRaw = normalizeModule(payload.modules?.user_experience);
+  const userExperience = {
+    ...userExperienceRaw,
+    positive: enrichRowsWithQuotes(userExperienceRaw.positive, payload.comments, "highlight_tag", 5),
+    negative: enrichRowsWithQuotes(userExperienceRaw.negative, payload.comments, "issue_tag", 5),
+  };
   const purchaseMotives = normalizeModule(payload.modules?.purchase_motives);
   const unmetNeeds = normalizeModule(payload.modules?.unmet_needs);
   const recommendations = normalizeModule(payload.modules?.recommendations);
 
-  const topIssue = userExperience.negative[0];
-  const topHighlight = userExperience.positive[0];
+  const total = payload.session.total_reviews;
+  const positivePct = total > 0 ? (payload.session.positive_count / total) * 100 : 0;
+  const negativePct = total > 0 ? (payload.session.negative_count / total) * 100 : 0;
+
+  const ratings = (payload.comments || [])
+    .map((c) => Number((c as { rating?: number | null }).rating))
+    .filter((r) => Number.isFinite(r) && r > 0);
+  const avgRating = ratings.length > 0
+    ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+    : null;
 
   const actionCandidates = [
     ...(userExperience.negative || []).map((row) => ({
@@ -254,9 +271,6 @@ export default async function AnalysisResultsPage({
   ].slice(0, 8);
 
   const tStrings: Record<string, string> = {
-    tabOverview: "概览",
-    tabProfile: "画像 & 动机",
-    tabNeeds: "需求 & 建议",
     moduleConsumerProfile: t("moduleConsumerProfile"),
     moduleUserExperience: t("moduleUserExperience"),
     modulePurchaseMotives: t("modulePurchaseMotives"),
@@ -267,6 +281,7 @@ export default async function AnalysisResultsPage({
     modulePurchaseMotivesDesc: t("modulePurchaseMotivesDesc"),
     moduleUnmetNeedsDesc: t("moduleUnmetNeedsDesc"),
     moduleRecommendationsDesc: t("moduleRecommendationsDesc"),
+    tabCreateAction: t("tabCreateAction"),
     evidence: t("evidence"),
     positiveFeedback: t("positiveFeedback"),
     negativeFeedback: t("negativeFeedback"),
@@ -291,6 +306,11 @@ export default async function AnalysisResultsPage({
     />
   );
 
+  const showRating = avgRating !== null;
+  const metricsGrid = showRating
+    ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
+    : "grid gap-3 sm:grid-cols-2 lg:grid-cols-4";
+
   const overviewSlot = (
     <div className="flex flex-col gap-4">
       {/* Header */}
@@ -306,9 +326,6 @@ export default async function AnalysisResultsPage({
               </span>
               <span className="rounded-pill border border-line bg-[#faf8fb] px-3 py-1 text-xs font-medium text-soft">
                 {renderValue(context.workflow_purpose, t("purposeNotSetLabel"))}
-              </span>
-              <span className="rounded-pill border border-line bg-[#faf8fb] px-3 py-1 text-xs font-medium text-soft">
-                {payload.comments.length} {t("reviews")}
               </span>
             </div>
           </div>
@@ -330,7 +347,7 @@ export default async function AnalysisResultsPage({
       </section>
 
       {/* Metrics Row */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className={metricsGrid}>
         <div className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5 shadow-sm">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5f3ff]">
             <MessageSquare className="h-4 w-4 text-[#7c3aed]" />
@@ -345,8 +362,11 @@ export default async function AnalysisResultsPage({
             <ThumbsUp className="h-4 w-4 text-[#059669]" />
           </div>
           <div>
-            <div className="text-xs font-medium text-soft">{t("positive")}</div>
-            <div className="font-heading text-xl font-bold text-[#059669]">{payload.session.positive_count}</div>
+            <div className="text-xs font-medium text-soft">
+              {t("positiveRate")}
+              <span className="ml-0.5 text-[10px] text-soft/70">{t("sentimentSourceNote")}</span>
+            </div>
+            <div className="font-heading text-xl font-bold text-[#059669]">{positivePct.toFixed(1)}%</div>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5 shadow-sm">
@@ -354,10 +374,30 @@ export default async function AnalysisResultsPage({
             <ThumbsDown className="h-4 w-4 text-[#dc2626]" />
           </div>
           <div>
-            <div className="text-xs font-medium text-soft">{t("negative")}</div>
-            <div className="font-heading text-xl font-bold text-[#dc2626]">{payload.session.negative_count}</div>
+            <div className="text-xs font-medium text-soft">
+              {t("negativeRate")}
+              <span className="ml-0.5 text-[10px] text-soft/70">{t("sentimentSourceNote")}</span>
+            </div>
+            <div className="font-heading text-xl font-bold text-[#dc2626]">{negativePct.toFixed(1)}%</div>
           </div>
         </div>
+        {showRating && (
+          <div className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5 shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fffbeb]">
+              <Star className="h-4 w-4 text-[#d97706]" />
+            </div>
+            <div>
+              <div className="text-xs font-medium text-soft">
+                {t("rating")}
+                <span className="ml-0.5 text-[10px] text-soft/70">（{t("ratingSource")}）</span>
+              </div>
+              <div className="font-heading text-xl font-bold text-ink">
+                {avgRating!.toFixed(1)}
+                <span className="ml-1 text-xs font-medium text-soft">/ 5</span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5 shadow-sm">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff7ed]">
             <Target className="h-4 w-4 text-[#d97706]" />
@@ -382,28 +422,6 @@ export default async function AnalysisResultsPage({
               ))}
             </div>
           </div>
-        </section>
-      )}
-
-      {/* Key Findings Callout */}
-      {(topIssue || topHighlight) && (
-        <section className="grid gap-3 md:grid-cols-2">
-          {topHighlight && (
-            <CalloutCard
-              variant="highlight"
-              label="TOP 亮点"
-              value={String(topHighlight.tag || topHighlight.label || "")}
-              detail={`${Number(topHighlight.pct || 0).toFixed(1)}% 的好评提及此项`}
-            />
-          )}
-          {topIssue && (
-            <CalloutCard
-              variant="issue"
-              label="TOP 问题"
-              value={String(topIssue.tag || topIssue.label || "")}
-              detail={`${Number(topIssue.pct || 0).toFixed(1)}% 的差评提及此项`}
-            />
-          )}
         </section>
       )}
     </div>

@@ -120,7 +120,7 @@ function TranslatedView({ data, moduleKey }: { data: Record<string, unknown>; mo
       {summary && <p className="text-sm leading-7 text-ink">{summary}</p>}
 
       {moduleKey === "user_experience" && (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="flex flex-col gap-4">
           {positive.length > 0 && (
             <div className="space-y-2">
               <div className="text-xs font-semibold text-[#059669]">正向反馈</div>

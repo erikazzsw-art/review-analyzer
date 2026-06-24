@@ -299,10 +299,10 @@
     "purpose": "工作目的",
     "purposeNotSet": "未设置",
     "reviews": "条原文",
-    "moduleConsumerProfile": "消费者画像",
+    "moduleConsumerProfile": "用户画像",
     "moduleUserExperience": "用户体验",
-    "modulePurchaseMotives": "购买动机",
-    "moduleUnmetNeeds": "未被满足的需求",
+    "modulePurchaseMotives": "消费动机",
+    "moduleUnmetNeeds": "未满足的需求",
     "moduleRecommendations": "综合建议",
     "moduleConsumerProfileDesc": "从评论里提炼当前批次的核心人群、关注点与代表性证据。",
     "moduleUserExperienceDesc": "拆出正向反馈和负向反馈，方便快速判断体验是否稳定。",
@@ -326,7 +326,13 @@
     "noSentiment": "未分析",
     "noReviews": "当前批次没有可展示的评论原文。",
     "purposeNotSetLabel": "未设置工作目的",
-    "warningFallback": "分析过程中发现潜在问题"
+    "warningFallback": "分析过程中发现潜在问题",
+    "tabCreateAction": "创建行动",
+    "rating": "评分",
+    "ratingSource": "源数据评分均值",
+    "positiveRate": "好评率",
+    "negativeRate": "差评率",
+    "sentimentSourceNote": "（基于内容分析）"
   },
   "locale": {
     "switchTo": "English",

@@ -299,9 +299,9 @@
     "purpose": "Purpose",
     "purposeNotSet": "Not set",
     "reviews": "raw reviews",
-    "moduleConsumerProfile": "Consumer Profile",
+    "moduleConsumerProfile": "User Profile",
     "moduleUserExperience": "User Experience",
-    "modulePurchaseMotives": "Purchase Motives",
+    "modulePurchaseMotives": "Buying Motives",
     "moduleUnmetNeeds": "Unmet Needs",
     "moduleRecommendations": "Recommendations",
     "moduleConsumerProfileDesc": "Distills key audience segments, focus areas, and representative evidence from the review batch.",
@@ -326,7 +326,13 @@
     "noSentiment": "Not analyzed",
     "noReviews": "No raw reviews available for this batch.",
     "purposeNotSetLabel": "Purpose not set",
-    "warningFallback": "Potential issue detected during analysis"
+    "warningFallback": "Potential issue detected during analysis",
+    "tabCreateAction": "Create Action",
+    "rating": "Rating",
+    "ratingSource": "Average source rating",
+    "positiveRate": "Positive Rate",
+    "negativeRate": "Negative Rate",
+    "sentimentSourceNote": " (from content analysis)"
   },
   "locale": {
     "switchTo": "中文",
