@@ -1,6 +1,11 @@
 "use client";
 
+import { useState, useCallback } from "react";
+import { Download, Languages, Loader2 } from "lucide-react";
+import * as XLSX from "xlsx";
 import type { AnalysisCompareGroup, AnalysisCompareResponse, AnalysisResultModule } from "@/lib/api/types";
+import { Button } from "@/components/ui/button";
+import { translateModule } from "@/lib/api/browser";
 
 type CompareDashboardProps = {
   dataset: AnalysisCompareResponse;
@@ -173,35 +178,7 @@ export function CompareDashboard({ dataset }: CompareDashboardProps) {
         </div>
       </section>
 
-      <section className="rounded-shell border border-line bg-white shadow-card">
-        <header className="flex items-center justify-between border-b border-line px-5 py-3">
-          <h3 className="font-heading text-base font-extrabold tracking-[-0.04em] text-ink">维度对比</h3>
-          <span className="text-xs text-soft">每个维度横向铺开各窗口的 TOP 5 标签</span>
-        </header>
-        {/* 表头 */}
-        <div
-          className="grid items-center gap-3 border-b border-line bg-[#fafafa] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-soft"
-          style={{ gridTemplateColumns: gridTemplate }}
-        >
-          <div>维度</div>
-          {groups.map((group) => (
-            <div key={`head-${group.label}`} className="truncate">
-              {group.label}
-            </div>
-          ))}
-          <div />
-        </div>
-        <div className="divide-y divide-line">
-          {DIMENSIONS.map((dimension) => (
-            <DimensionRow
-              key={dimension.key}
-              dimension={dimension}
-              groups={groups}
-              gridTemplate={gridTemplate}
-            />
-          ))}
-        </div>
-      </section>
+      <DimensionSection dataset={dataset} groups={groups} gridTemplate={gridTemplate} />
 
       <section className="grid gap-3 xl:grid-cols-2">
         <RiskOpportunityCard
@@ -378,6 +355,134 @@ function DimensionCell({ rows, tone }: { rows: TagRow[] | null; tone: DimensionT
         );
       })}
     </div>
+  );
+}
+
+type DimensionSectionProps = {
+  dataset: AnalysisCompareResponse;
+  groups: AnalysisCompareGroup[];
+  gridTemplate: string;
+};
+
+function DimensionSection({ dataset, groups, gridTemplate }: DimensionSectionProps) {
+  const [translating, setTranslating] = useState(false);
+  const [translated, setTranslated] = useState(false);
+  const [translatedGroups, setTranslatedGroups] = useState<Record<string, Record<string, unknown>> | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleDownload = useCallback(() => {
+    setExporting(true);
+    try {
+      const header = ["维度", ...groups.map((g) => g.label)];
+      const rows: string[][] = [header];
+      for (const dim of DIMENSIONS) {
+        const cells = groups.map((group) => {
+          const tagRows = dim.rowsFor(group);
+          if (!tagRows || tagRows.length === 0) return "--";
+          return tagRows.map((r) => `${r.tag}(${r.pct.toFixed(1)}%)`).join(" / ");
+        });
+        rows.push([dim.label, ...cells]);
+      }
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "维度对比");
+      XLSX.writeFile(wb, `维度对比_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
+  }, [groups]);
+
+  const handleTranslate = useCallback(async () => {
+    if (translated) {
+      setTranslated(false);
+      return;
+    }
+    if (translatedGroups) {
+      setTranslated(true);
+      return;
+    }
+    setTranslating(true);
+    try {
+      const content: Record<string, unknown> = {};
+      for (const dim of DIMENSIONS) {
+        content[dim.key] = groups.map((group) => {
+          const tagRows = dim.rowsFor(group);
+          return tagRows?.map((r) => ({ tag: r.tag, pct: r.pct })) ?? [];
+        });
+      }
+      const result = await translateModule({
+        sessionId: 0,
+        moduleKey: "compare_dimensions",
+        content,
+        targetLang: "en",
+      });
+      setTranslatedGroups(result.translated as Record<string, Record<string, unknown>>);
+      setTranslated(true);
+    } catch {
+      // silently fail
+    } finally {
+      setTranslating(false);
+    }
+  }, [translated, translatedGroups, groups]);
+
+  return (
+    <section className="rounded-shell border border-line bg-white shadow-card">
+      <header className="flex items-center justify-between border-b border-line px-5 py-3">
+        <h3 className="font-heading text-base font-extrabold tracking-[-0.04em] text-ink">维度对比</h3>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTranslate}
+            disabled={translating}
+            className="h-7 gap-1 px-2.5 text-[11px]"
+          >
+            {translating ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Languages className="h-3 w-3" />
+            )}
+            {translated ? "原文" : "翻译"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={exporting}
+            className="h-7 gap-1 px-2.5 text-[11px]"
+          >
+            {exporting ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Download className="h-3 w-3" />
+            )}
+            XLSX
+          </Button>
+        </div>
+      </header>
+      <div
+        className="grid items-center gap-3 border-b border-line bg-[#fafafa] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-soft"
+        style={{ gridTemplateColumns: gridTemplate }}
+      >
+        <div>维度</div>
+        {groups.map((group) => (
+          <div key={`head-${group.label}`} className="truncate">
+            {group.label}
+          </div>
+        ))}
+        <div />
+      </div>
+      <div className="divide-y divide-line">
+        {DIMENSIONS.map((dimension) => (
+          <DimensionRow
+            key={dimension.key}
+            dimension={dimension}
+            groups={groups}
+            gridTemplate={gridTemplate}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
