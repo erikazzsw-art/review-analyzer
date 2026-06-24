@@ -35,6 +35,40 @@ function pickPct(row: Record<string, unknown>, label: string): number {
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
+type DimensionSpec = {
+  key: string;
+  label: string;
+  tone: "neutral" | "positive" | "negative";
+  source: (insights: Record<string, Record<string, unknown>> | null | undefined) => Array<Record<string, unknown>>;
+};
+
+const DIMENSIONS: DimensionSpec[] = [
+  {
+    key: "purchase_motives",
+    label: "购买动机",
+    tone: "neutral",
+    source: (insights) => (insights?.purchase_motives?.rows as Array<Record<string, unknown>>) || [],
+  },
+  {
+    key: "unmet_needs",
+    label: "未被满足的需求",
+    tone: "neutral",
+    source: (insights) => (insights?.unmet_needs?.rows as Array<Record<string, unknown>>) || [],
+  },
+  {
+    key: "experience_positive",
+    label: "产品体验 · 正向观点",
+    tone: "positive",
+    source: (insights) => (insights?.user_experience?.positive as Array<Record<string, unknown>>) || [],
+  },
+  {
+    key: "experience_negative",
+    label: "产品体验 · 负向观点",
+    tone: "negative",
+    source: (insights) => (insights?.user_experience?.negative as Array<Record<string, unknown>>) || [],
+  },
+];
+
 export function CompareDashboard({ dataset }: CompareDashboardProps) {
   const groups = dataset.groups;
   if (!groups.length) {
@@ -46,6 +80,7 @@ export function CompareDashboard({ dataset }: CompareDashboardProps) {
   }
 
   const baseline = groups[0];
+  const hasAnyInsights = groups.some((group) => group.insights && Object.keys(group.insights).length > 0);
 
   return (
     <div className="flex flex-col gap-5">
@@ -82,6 +117,26 @@ export function CompareDashboard({ dataset }: CompareDashboardProps) {
           />
         </div>
       </section>
+
+      {hasAnyInsights ? (
+        <section className="rounded-shell border border-line bg-white shadow-card">
+          <header className="border-b border-line px-5 py-3">
+            <h3 className="font-heading text-base font-extrabold tracking-[-0.04em] text-ink">维度对照</h3>
+            <p className="mt-1 text-xs text-soft">
+              每个维度横向铺开各对比窗口的 TOP 标签和占比。
+            </p>
+          </header>
+          <div className="divide-y divide-line">
+            {DIMENSIONS.map((dimension) => (
+              <DimensionRow
+                key={dimension.key}
+                dimension={dimension}
+                groups={groups}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <DifferenceTable
         title="问题 TOP 变化"
@@ -126,22 +181,18 @@ export function CompareDashboard({ dataset }: CompareDashboardProps) {
         />
       </section>
 
-      <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-        <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">推荐动作</h3>
-        <div className="mt-3 space-y-2">
-          {dataset.recommended_actions.length > 0 ? (
-            dataset.recommended_actions.map((action, index) => (
+      {dataset.recommended_actions.length > 0 ? (
+        <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
+          <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">推荐动作</h3>
+          <div className="mt-3 space-y-2">
+            {dataset.recommended_actions.map((action, index) => (
               <div key={`action-${index}`} className="rounded-card border border-line bg-white px-4 py-3 text-sm leading-6 text-ink">
                 · {action}
               </div>
-            ))
-          ) : (
-            <div className="rounded-card border border-dashed border-line bg-[#fffafb] px-4 py-3 text-sm text-soft">
-              暂无规则建议。
-            </div>
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {dataset.empty_groups.length > 0 ? (
         <section className="rounded-card border border-dashed border-line bg-[#fffafb] px-4 py-3 text-sm text-soft">
@@ -190,6 +241,84 @@ function KpiColumn({ title, mode, baseline, groups, field, formatter }: KpiColum
                   </span>
                 ) : null}
               </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+type DimensionRowProps = {
+  dimension: DimensionSpec;
+  groups: AnalysisCompareGroup[];
+};
+
+function DimensionRow({ dimension, groups }: DimensionRowProps) {
+  const perGroupRows = groups.map((group) => dimension.source(group.insights as Record<string, Record<string, unknown>> | null | undefined).slice(0, 5));
+  const hasAnyRow = perGroupRows.some((rows) => rows.length > 0);
+
+  return (
+    <div className="grid gap-0 px-5 py-4 md:grid-cols-[160px_1fr]">
+      <div className="pr-4 text-sm font-semibold text-ink">
+        {dimension.label}
+      </div>
+      {hasAnyRow ? (
+        <div
+          className="grid gap-4"
+          style={{ gridTemplateColumns: `repeat(${Math.max(groups.length, 1)}, minmax(0, 1fr))` }}
+        >
+          {groups.map((group, gIdx) => (
+            <DimensionGroupColumn
+              key={`${dimension.key}-${gIdx}`}
+              label={group.label}
+              rows={perGroupRows[gIdx]}
+              tone={dimension.tone}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-sm text-soft">--</div>
+      )}
+    </div>
+  );
+}
+
+type DimensionGroupColumnProps = {
+  label: string;
+  rows: Array<Record<string, unknown>>;
+  tone: "neutral" | "positive" | "negative";
+};
+
+function DimensionGroupColumn({ label, rows, tone }: DimensionGroupColumnProps) {
+  const barColor =
+    tone === "positive" ? "bg-[#d6f4e5]" : tone === "negative" ? "bg-[#fbdadd]" : "bg-[#e5edff]";
+
+  if (!rows.length) {
+    return (
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{label}</div>
+        <div className="mt-2 text-xs text-soft">--</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{label}</div>
+      <div className="mt-2 space-y-1.5">
+        {rows.map((row, idx) => {
+          const tag = String(row["tag"] ?? row["label"] ?? "-");
+          const pctValue = typeof row["pct"] === "number" ? (row["pct"] as number) : Number(row["pct"] ?? 0);
+          const pct = Number.isFinite(pctValue) ? pctValue : 0;
+          const width = Math.min(100, Math.max(2, pct));
+          return (
+            <div key={`${tag}-${idx}`} className="grid grid-cols-[1fr_120px_48px] items-center gap-2">
+              <span className="truncate text-xs text-ink" title={tag}>
+                {tag}
+              </span>
+              <span className={`h-2 rounded-full ${barColor}`} style={{ width: `${width}%` }} />
+              <span className="text-right text-xs text-soft">{pct.toFixed(1)}%</span>
             </div>
           );
         })}

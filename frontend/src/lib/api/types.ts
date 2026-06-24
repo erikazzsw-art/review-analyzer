@@ -242,6 +242,14 @@ export type AnalysisCompareGroup = {
   top_issues: Array<Record<string, unknown>>;
   top_highlights: Array<Record<string, unknown>>;
   representative_reviews: Record<string, Array<Record<string, unknown>>>;
+  insights?: Record<string, AnalysisResultModule> | null;
+};
+
+export type CompareAiSummary = {
+  headline: string;
+  summary: string[];
+  recommendations: string[];
+  risks: string[];
 };
 
 export type AnalysisCompareResponse = {
@@ -254,6 +262,7 @@ export type AnalysisCompareResponse = {
   opportunity_groups: AnalysisCompareGroup[];
   recommended_actions: string[];
   empty_groups: string[];
+  ai_summary?: CompareAiSummary | null;
   generated_at: string;
 };
 

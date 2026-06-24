@@ -22,7 +22,6 @@ const ALLOWED_MODES = new Set([
   "same_product_time",
   "same_product_version",
   "multi_product",
-  "custom",
 ]);
 
 export default async function AnalysisComparePage({ searchParams }: ComparePageProps) {
@@ -32,7 +31,7 @@ export default async function AnalysisComparePage({ searchParams }: ComparePageP
     const compareTypeParam = params?.compare_type?.trim();
     const compareType =
       compareTypeParam && ALLOWED_MODES.has(compareTypeParam)
-        ? (compareTypeParam as "same_product_time" | "same_product_version" | "multi_product" | "custom")
+        ? (compareTypeParam as "same_product_time" | "same_product_version" | "multi_product")
         : "same_product_time";
 
     const productsResponse = await getProducts();

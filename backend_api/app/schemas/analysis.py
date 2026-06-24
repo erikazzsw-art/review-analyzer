@@ -77,6 +77,14 @@ class AnalysisCompareGroupPayload(BaseModel):
     top_issues: list[dict[str, Any]]
     top_highlights: list[dict[str, Any]]
     representative_reviews: dict[str, list[dict[str, Any]]]
+    insights: dict[str, AnalysisResultModulePayload] | None = None
+
+
+class CompareAiSummaryPayload(BaseModel):
+    headline: str = ""
+    summary: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+    risks: list[str] = Field(default_factory=list)
 
 
 class AnalysisComparePayload(BaseModel):
@@ -89,6 +97,7 @@ class AnalysisComparePayload(BaseModel):
     opportunity_groups: list[dict[str, Any]]
     recommended_actions: list[str]
     empty_groups: list[str]
+    ai_summary: CompareAiSummaryPayload | None = None
     generated_at: datetime
 
 

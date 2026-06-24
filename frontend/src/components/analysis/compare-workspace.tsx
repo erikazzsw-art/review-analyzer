@@ -13,7 +13,7 @@ import type {
   ProductOverview,
 } from "@/lib/api/types";
 
-import { CompareAiSummaryPanel } from "./compare-ai-summary-panel";
+import { CompareAiSummary } from "./compare-ai-summary";
 import { CompareDashboard } from "./compare-dashboard";
 import { CompareFilterBar, type CompareMode } from "./compare-filter-bar";
 
@@ -30,7 +30,6 @@ export function CompareWorkspace({
   initialDataset,
   initialMode,
   initialGroups,
-  initialProductId,
 }: CompareWorkspaceProps) {
   const [dataset, setDataset] = useState<AnalysisCompareResponse | null>(initialDataset ?? null);
   const [mode, setMode] = useState<CompareMode>(initialMode ?? "same_product_time");
@@ -73,7 +72,6 @@ export function CompareWorkspace({
     }
   }
 
-  const sessionIds = dataset?.groups.flatMap((group) => group.session_ids) ?? [];
   const hasDataset = Boolean(dataset && dataset.groups.length > 0);
 
   return (
@@ -115,11 +113,7 @@ export function CompareWorkspace({
             </button>
           </div>
           <CompareDashboard dataset={dataset} />
-          <CompareAiSummaryPanel
-            compareType={mode}
-            sessionIds={sessionIds}
-            productId={initialProductId}
-          />
+          <CompareAiSummary summary={dataset.ai_summary} />
         </>
       ) : products.length > 0 ? (
         <section className="rounded-shell border border-dashed border-line bg-[#fffafb] px-6 py-10 text-sm text-soft">
@@ -129,3 +123,4 @@ export function CompareWorkspace({
     </div>
   );
 }
+

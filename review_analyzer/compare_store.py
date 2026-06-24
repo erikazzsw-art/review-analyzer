@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 from datetime import date, datetime
@@ -10,6 +11,7 @@ from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
 
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_comments, get_connection, get_sessions
+from review_analyzer.insight_engine import build_results_insights
 
 COMPARE_TYPE_LABELS = {
     "same_product_time": "同产品时间对比",
@@ -174,6 +176,7 @@ def get_comparison_dataset(user_id: int, filters: dict[str, Any]) -> dict[str, A
             "opportunity_groups": [],
             "recommended_actions": ["请至少选择两个有效的对比对象。"],
             "empty_groups": [],
+            "_group_comments": [],
         }
 
     sessions = get_sessions(user_id)
@@ -185,11 +188,13 @@ def get_comparison_dataset(user_id: int, filters: dict[str, Any]) -> dict[str, A
     comments = get_comments(user_id)
 
     groups: list[dict[str, Any]] = []
+    group_comments_list: list[list[dict[str, Any]]] = []
     empty_groups: list[str] = []
     for spec in group_specs:
         group_comments = _filter_comments(comments, session_lookup, spec)
         group_summary = _build_group_summary(spec, group_comments)
         groups.append(group_summary)
+        group_comments_list.append(group_comments)
         if group_summary["review_count"] == 0:
             empty_groups.append(group_summary["label"])
 
@@ -229,6 +234,7 @@ def get_comparison_dataset(user_id: int, filters: dict[str, Any]) -> dict[str, A
         "opportunity_groups": opportunity_groups,
         "recommended_actions": recommended_actions,
         "empty_groups": empty_groups,
+        "_group_comments": group_comments_list,
     }
 
 
@@ -641,6 +647,18 @@ def _build_recommended_actions(
                 "建议继续观察 TOP 问题是否发生结构性变化。"
             )
 
+        delta_positive = round(last_group["positive_rate"] - first_group["positive_rate"], 1)
+        if delta_positive >= 5:
+            actions.append(
+                f"{last_group['label']} 的好评率比 {first_group['label']} 提升 {delta_positive:.1f} 个点，"
+                f"可以围绕「{last_group['top_highlight']}」沉淀 Listing 文案和广告卖点。"
+            )
+        elif delta_positive <= -5:
+            actions.append(
+                f"{last_group['label']} 的好评率比 {first_group['label']} 下降 {abs(delta_positive):.1f} 个点，"
+                "建议复盘最近的产品 / 包装 / 发货变更，找到流失的好评触点。"
+            )
+
     if compare_type == "same_parent_variants" and risk_group and opportunity_group:
         if risk_group["label"] != opportunity_group["label"]:
             actions.append(
@@ -670,7 +688,34 @@ def _build_recommended_actions(
             f"可在 Listing、广告或素材中优先强化 {opportunity_group['label']} 的「{opportunity_group['top_highlight']}」卖点。"
         )
 
-    return list(dict.fromkeys(actions))[:4]
+    # 每个 group 各出一条针对性建议: TOP 问题修复 + TOP 亮点放大。
+    for group in groups_with_data:
+        top_issue = str(group.get("top_issue") or "").strip()
+        if top_issue and top_issue != "-":
+            actions.append(
+                f"{group['label']}: 围绕「{top_issue}」做一次根因复盘，输出可执行的工艺/包装/客服话术调整。"
+            )
+
+    for group in groups_with_data:
+        top_highlight = str(group.get("top_highlight") or "").strip()
+        if top_highlight and top_highlight != "-":
+            actions.append(
+                f"{group['label']}: 把「{top_highlight}」沉淀到主图、A+ 内容和广告 headline，扩大该卖点的曝光面。"
+            )
+
+    # 同一 group 的 TOP 问题 vs TOP 亮点反差较大时, 提示用户做"扬长避短"决策。
+    for group in groups_with_data:
+        if (
+            group.get("top_issue") not in (None, "", "-")
+            and group.get("top_highlight") not in (None, "", "-")
+            and group.get("negative_rate", 0) >= 30
+        ):
+            actions.append(
+                f"{group['label']}: 差评率 {group['negative_rate']:.1f}% 偏高，"
+                f"建议先解决「{group['top_issue']}」再放大「{group['top_highlight']}」，避免好评被同期差评稀释。"
+            )
+
+    return list(dict.fromkeys(actions))[:10]
 
 
 def _build_ai_summary_prompt(dataset: dict[str, Any], focus_feature: str | None = None) -> str:
@@ -927,3 +972,132 @@ def dataset_to_xlsx_payload(
         "title": f"{COMPARE_TYPE_LABELS.get(compare_type, compare_type)} · {len(groups)} 个对象",
     }
     return {"columns": columns, "objects": sections}, context
+
+
+def compute_compare_fingerprint(
+    user_id: int,
+    compare_type: str,
+    group_specs: list[dict[str, Any]],
+) -> str:
+    """Fingerprint cache key for (user, compare_type, normalized groups).
+
+    Normalizes each group to (product_id, sorted versions, date_start, date_end),
+    then sha256 the JSON. Same filter inputs → same fingerprint → same cache hit.
+    """
+    normalized: list[dict[str, Any]] = []
+    for spec in group_specs:
+        normalized.append(
+            {
+                "product_id": str(spec.get("product_id") or "").strip(),
+                "versions": sorted(
+                    str(value).strip()
+                    for value in (spec.get("versions") or [])
+                    if str(value).strip()
+                ),
+                "date_start": str(spec.get("date_start") or "").strip(),
+                "date_end": str(spec.get("date_end") or "").strip(),
+            }
+        )
+    payload = json.dumps(
+        {"user_id": int(user_id), "compare_type": compare_type, "groups": normalized},
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def load_compare_cache(fingerprint: str) -> dict[str, Any] | None:
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT group_insights, ai_summary
+                FROM comparison_summary_cache
+                WHERE fingerprint = %s
+                """,
+                (fingerprint,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return {
+                "group_insights": _maybe_parse_json(row.get("group_insights")) or [],
+                "ai_summary": _maybe_parse_json(row.get("ai_summary")),
+            }
+    finally:
+        conn.close()
+
+
+def save_compare_cache(
+    fingerprint: str,
+    user_id: int,
+    compare_type: str,
+    filter_payload: dict[str, Any],
+    group_insights: list[dict[str, Any] | None],
+    ai_summary: dict[str, Any] | None,
+) -> None:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO comparison_summary_cache
+                    (fingerprint, user_id, compare_type, filter_payload, group_insights, ai_summary)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (fingerprint) DO UPDATE SET
+                    group_insights = EXCLUDED.group_insights,
+                    ai_summary = EXCLUDED.ai_summary
+                """,
+                (
+                    fingerprint,
+                    user_id,
+                    compare_type,
+                    psycopg2.extras.Json(filter_payload),
+                    psycopg2.extras.Json(group_insights),
+                    psycopg2.extras.Json(ai_summary) if ai_summary is not None else None,
+                ),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def _maybe_parse_json(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, (dict, list)):
+        return value
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return None
+    return value
+
+
+def build_group_insights(
+    user_id: int,
+    group: dict[str, Any],
+    comments: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Per-group structured insights (consumer_profile / purchase_motives / …).
+
+    Reuses ``build_results_insights`` so the compare page renders the same
+    7-dimension layout as the single-product results page. Returns None when
+    the group has no comments — callers should skip rendering insight blocks.
+    """
+    if not comments:
+        return None
+    context = {
+        "title": str(group.get("label") or "对比对象"),
+        "description": str(group.get("description") or ""),
+        "product_id": str(group.get("product_id") or ""),
+        "version": "/".join(group.get("versions") or []) or "全部版本",
+        "review_count": len(comments),
+    }
+    try:
+        return build_results_insights(user_id, comments, context)
+    except Exception:  # noqa: BLE001 — insight LLM is best-effort
+        return None
+
