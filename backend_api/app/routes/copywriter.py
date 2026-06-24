@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections import defaultdict
+import re
 from datetime import datetime
 from typing import Any
 
@@ -15,12 +15,12 @@ from backend_api.app.schemas.copywriter import (
     CopywriterGenerateResponse,
     CopywriterIdealProfilePayload,
     CopywriterPlatformPayload,
-    CopywriterProductPayload,
-    CopywriterSessionPayload,
+    CopywriterStylePayload,
     CopywriterTypePayload,
 )
+from backend_api.app.services.ideal_profile_cache import get_or_generate_ideal_profile
 from review_analyzer.analyzer import get_api_key
-from review_analyzer.database import get_comments, get_session_by_id, get_sessions
+from review_analyzer.database import get_comments
 from review_analyzer.paddle_billing import is_pro_user
 
 router = APIRouter(prefix="/copywriter", tags=["copywriter"])
@@ -34,13 +34,20 @@ PLATFORM_DATA: dict[str, dict[str, Any]] = {
         "label_en": "Amazon",
         "sub": "Amazon Ads",
         "types": [
-            {"id": "sp", "name_zh": "SP商品推广标题", "name_en": "SP Product Ad Title", "limit": 150},
-            {"id": "sd", "name_zh": "SD展示型广告文案", "name_en": "SD Display Ad Copy", "limit": 100},
-            {"id": "sb", "name_zh": "SB品牌推广标语", "name_en": "SB Brand Slogan", "limit": 50},
+            {"id": "sb_headline", "name_zh": "SB品牌推广标题", "name_en": "SB Headline", "limit": 50},
+            {"id": "sd_headline", "name_zh": "SD展示型广告标题", "name_en": "SD Headline", "limit": 50},
+            {"id": "sd_body", "name_zh": "SD展示型广告副文案", "name_en": "SD Body Copy", "limit": 100},
         ],
-        "prohibited": ["best", "#1", "guaranteed", "discount", "free", "cheap", "limited time", "buy now"],
-        "guidelines_zh": "Amazon 禁止使用最高级词、未经验证的声明、紧迫感语言和价格诱导词。",
-        "guidelines_en": "Avoid superlatives, unverifiable claims, urgency language, and price-led wording.",
+        "prohibited": [
+            "best", "#1", "top", "greatest",
+            "guaranteed", "100% safe", "cure",
+            "discount", "free", "cheap", "lowest price", "cheapest",
+            "limited time", "today only", "last chance", "act now", "don't miss out",
+            "buy now",
+            "$ off", "% off", "save $",
+        ],
+        "guidelines_zh": "Amazon 禁止最高级词、未经验证的声明、紧迫语和价格诱导词；CTA 用 Shop now / Learn more。",
+        "guidelines_en": "Avoid superlatives, unverifiable claims, urgency language and price-led wording; use Shop now / Learn more for CTAs.",
     },
     "google": {
         "name_zh": "谷歌广告文案",
@@ -54,7 +61,7 @@ PLATFORM_DATA: dict[str, dict[str, Any]] = {
             {"id": "desc", "name_zh": "广告描述", "name_en": "Ad Description", "limit": 90},
             {"id": "ext", "name_zh": "附加信息", "name_en": "Extra Detail", "limit": 25},
         ],
-        "prohibited": ["click here", "buy now", "free", "guaranteed", "#1", "best", "lowest price"],
+        "prohibited": ["click here", "buy now", "free", "guaranteed", "#1", "best", "lowest price", "you won't believe", "risk-free"],
         "guidelines_zh": "Google Ads 禁止误导性声明、过度大写、标题中的感叹号和点击诱导语言。",
         "guidelines_en": "Avoid misleading claims, all-caps emphasis, exclamation-heavy titles, and clickbait phrasing.",
     },
@@ -70,7 +77,7 @@ PLATFORM_DATA: dict[str, dict[str, Any]] = {
             {"id": "headline", "name_zh": "标题", "name_en": "Headline", "limit": 40},
             {"id": "desc", "name_zh": "描述", "name_en": "Description", "limit": 30},
         ],
-        "prohibited": ["you are", "your body", "weight loss", "before and after", "cure", "guaranteed results"],
+        "prohibited": ["you are", "your body", "your weight", "weight loss", "before and after", "cure", "guaranteed results", "100%", "risk-free"],
         "guidelines_zh": "Meta 禁止针对个人属性的描述、身体羞辱、健康声明和情感操纵。",
         "guidelines_en": "Avoid personal-attribute claims, body shaming, health claims, and emotional manipulation.",
     },
@@ -90,6 +97,22 @@ PLATFORM_DATA: dict[str, dict[str, Any]] = {
         "guidelines_zh": "Instagram 遵循 Meta 政策，付费广告中避免使用 swipe up 和 link in bio。",
         "guidelines_en": "Follow Meta policy and avoid swipe up or link in bio in paid ads.",
     },
+    "tiktok": {
+        "name_zh": "TikTok 广告文案",
+        "name_en": "TikTok Ad Copy",
+        "icon": "🎵",
+        "label_zh": "TikTok",
+        "label_en": "TikTok",
+        "sub": "TikTok Ads",
+        "types": [
+            {"id": "infeed_caption", "name_zh": "In-Feed 文案", "name_en": "In-Feed Caption", "limit": 100},
+            {"id": "spark_headline", "name_zh": "Spark Ad 标题", "name_en": "Spark Headline", "limit": 40},
+            {"id": "brand_name", "name_zh": "品牌名", "name_en": "Brand Name", "limit": 40},
+        ],
+        "prohibited": ["link in bio", "click link in bio", "limited time", "today only", "100% guaranteed", "cure"],
+        "guidelines_zh": "TikTok 付费广告禁止 link in bio 类引导，避免紧迫语和健康类索赔。",
+        "guidelines_en": "TikTok paid ads disallow link-in-bio prompts; avoid urgency and health claims.",
+    },
     "walmart": {
         "name_zh": "沃尔玛站内广告文案",
         "name_en": "Walmart Ad Copy",
@@ -98,17 +121,27 @@ PLATFORM_DATA: dict[str, dict[str, Any]] = {
         "label_en": "Walmart",
         "sub": "Walmart Ads",
         "types": [
-            {"id": "prodtitle", "name_zh": "商品标题", "name_en": "Product Title", "limit": 75},
-            {"id": "proddesc", "name_zh": "商品描述", "name_en": "Product Description", "limit": 150},
-            {"id": "slogan", "name_zh": "广告标语", "name_en": "Ad Slogan", "limit": 80},
+            {"id": "prodtitle", "name_zh": "商品标题", "name_en": "Product Title", "limit": 75, "internal_estimate": True},
+            {"id": "proddesc", "name_zh": "商品描述", "name_en": "Product Description", "limit": 150, "internal_estimate": True},
+            {"id": "slogan", "name_zh": "广告标语", "name_en": "Ad Slogan", "limit": 80, "internal_estimate": True},
         ],
-        "prohibited": ["best", "#1", "guaranteed", "discount", "free", "cheap", "lowest price"],
-        "guidelines_zh": "Walmart Connect 禁止最高级词、未经验证的声明和价格诱导词。",
-        "guidelines_en": "Avoid superlatives, unverifiable claims, and price-led language.",
+        "prohibited": ["best", "#1", "guaranteed", "discount", "free", "cheap", "lowest price", "limited time", "act now"],
+        "guidelines_zh": "Walmart Connect 禁止最高级词、未经验证的声明和价格诱导词；字符位为内部保守估计，发布前请二次核对。",
+        "guidelines_en": "Avoid superlatives, unverifiable claims, and price-led language; character limits are internal estimates—verify before launch.",
     },
 }
 
-STYLES = ["简洁专业", "幽默风趣", "情感共鸣", "数据驱动"]
+STYLES = ["简洁专业", "幽默风趣", "情感共鸣", "数据驱动", "紧迫促单"]
+
+# 风格 × 平台兼容性矩阵，依据 docs/copywriter-platform-rules.md。
+# 值为该风格"禁止使用"的平台 id 列表；前端 chip 灰显、服务端校验拒绝。
+STYLE_INCOMPATIBLE: dict[str, list[str]] = {
+    "简洁专业": [],
+    "幽默风趣": [],
+    "情感共鸣": [],
+    "数据驱动": [],
+    "紧迫促单": ["amazon", "walmart", "google"],
+}
 
 
 @router.get("/platforms", response_model=list[CopywriterPlatformPayload])
@@ -116,6 +149,16 @@ def list_platforms(current_user: dict = Depends(get_current_user)) -> list[Copyw
     if not is_pro_user(int(current_user["id"])):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Marketing copy is a Pro feature.")
     return [_platform_payload(pid, pdata) for pid, pdata in PLATFORM_DATA.items()]
+
+
+@router.get("/styles", response_model=list[CopywriterStylePayload])
+def list_styles(current_user: dict = Depends(get_current_user)) -> list[CopywriterStylePayload]:
+    if not is_pro_user(int(current_user["id"])):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Marketing copy is a Pro feature.")
+    return [
+        CopywriterStylePayload(name=name, incompatible_on=STYLE_INCOMPATIBLE.get(name, []))
+        for name in STYLES
+    ]
 
 
 @router.post("/generate", response_model=CopywriterGenerateResponse)
@@ -131,98 +174,83 @@ def generate_copywriter(
     if not platform:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported platform.")
 
-    sessions = _load_sessions(user_id, payload.product_session_ids)
-    if not sessions:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Please select at least one analysis session.")
+    if payload.style not in STYLES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported style.")
+    if payload.platform in STYLE_INCOMPATIBLE.get(payload.style, []):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Style '{payload.style}' is not allowed on platform '{payload.platform}'.",
+        )
 
-    comments = []
-    for session in sessions:
-        comments.extend(get_comments(user_id, session_id=int(session["id"])))
+    product_id = payload.product_id.strip()
+    if not product_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="product_id is required.")
+
+    version = (payload.version or "").strip() or None
+    start_iso = (payload.start or "").strip() or None
+    end_iso = (payload.end or "").strip() or None
+    if payload.range == "custom" and not (start_iso and end_iso):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="custom range requires start and end (YYYY-MM-DD).",
+        )
+
+    comments = get_comments(
+        user_id,
+        product_id=product_id,
+        version=version,
+        date_start=start_iso,
+        date_end=end_iso,
+    )
     if not comments:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No review comments found for the selected sessions.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No review comments found for the selected product/version/range.",
+        )
 
-    selected_session_payloads = [_session_payload(session) for session in sessions]
-    review_summary, pos_samples, neg_samples = _build_review_summary(comments)
+    review_summary, _, _ = _build_review_summary(comments)
 
     generated_items: list[CopywriterGeneratedItemPayload] = []
-    ideal_profile: CopywriterIdealProfilePayload | None = None
-
     if payload.generate_ad_copy:
-        for ad_type in platform["types"]:
-            current_style = payload.style_by_type.get(ad_type["id"], STYLES[0])
-            prompt = _build_copy_prompt(
-                platform,
-                ad_type,
-                current_style,
-                payload.features_text,
-                review_summary,
-            )
-            generated_items.append(_generate_copy_item(user_id, platform, ad_type, current_style, prompt))
+        target_types = platform["types"]
+        if payload.ad_type_id:
+            target_types = [t for t in platform["types"] if t["id"] == payload.ad_type_id]
+            if not target_types:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Unsupported ad_type_id '{payload.ad_type_id}' for platform '{payload.platform}'.",
+                )
+        n_variants = max(1, min(int(payload.n_variants or 1), 5))
+        for ad_type in target_types:
+            for _ in range(n_variants):
+                prompt = _build_copy_prompt(
+                    platform,
+                    ad_type,
+                    payload.style,
+                    payload.features_text,
+                    review_summary,
+                )
+                item = _generate_validated_item(user_id, platform, ad_type, payload.style, prompt)
+                generated_items.append(item)
 
+    ideal_profile: CopywriterIdealProfilePayload | None = None
     if payload.generate_ideal_desc:
-        ideal_profile = _generate_ideal_profile(user_id, review_summary)
+        ideal_profile = _resolve_ideal_profile(
+            user_id=user_id,
+            product_id=product_id,
+            version=version,
+            comments=comments,
+            review_summary=review_summary,
+            force=payload.force_regen_profile,
+        )
 
     return CopywriterGenerateResponse(
         platform=_platform_payload(payload.platform, platform),
-        selected_sessions=selected_session_payloads,
         review_summary=review_summary,
+        review_count=len(comments),
         generated_items=generated_items,
         ideal_profile=ideal_profile,
         generated_at=datetime.utcnow(),
-    )
-
-
-@router.get("/sessions", response_model=list[CopywriterProductPayload])
-def list_copywriter_sessions(current_user: dict = Depends(get_current_user)) -> list[CopywriterProductPayload]:
-    user_id = int(current_user["id"])
-    sessions = get_sessions(user_id)
-    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for session in sessions:
-        product_id = str(session.get("product_id") or "").strip()
-        if not product_id:
-            continue
-        grouped[product_id].append(session)
-
-    rows = []
-    for product_id, product_sessions in grouped.items():
-        rows.append(
-            CopywriterProductPayload(
-                product_id=product_id,
-                product_name=product_sessions[0].get("auto_title") or product_id,
-                sessions=[_session_payload(session) for session in product_sessions],
-            )
-        )
-    return rows
-
-
-def _load_sessions(user_id: int, session_ids: list[int]) -> list[dict[str, Any]]:
-    selected: list[dict[str, Any]] = []
-    seen: set[int] = set()
-    for session_id in session_ids:
-        if session_id in seen:
-            continue
-        seen.add(session_id)
-        session = get_session_by_id(user_id, session_id)
-        if session:
-            selected.append(session)
-    selected.sort(key=lambda item: int(item["id"]), reverse=True)
-    return selected
-
-
-def _session_payload(session: dict[str, Any]) -> CopywriterSessionPayload:
-    title = session.get("custom_title") or session.get("auto_title") or session.get("version") or "V1"
-    total = int(session.get("total_reviews") or 0)
-    positive = int(session.get("positive_count") or 0)
-    negative = int(session.get("negative_count") or 0)
-    return CopywriterSessionPayload(
-        session_id=int(session["id"]),
-        product_id=str(session.get("product_id") or ""),
-        version=str(session.get("version") or "V1"),
-        label=str(title),
-        total_reviews=total,
-        positive_count=positive,
-        negative_count=negative,
-        created_at=session["created_at"],
     )
 
 
@@ -273,6 +301,7 @@ def _generate_copy_item(
         en_text = f"Generation failed: {exc}"
         zh_text = ""
 
+    notes = _validate_copy(en_text, platform, ad_type)
     return CopywriterGeneratedItemPayload(
         type_id=str(ad_type["id"]),
         type_name=str(ad_type["name_zh"]),
@@ -281,11 +310,52 @@ def _generate_copy_item(
         en=en_text,
         zh=zh_text,
         char_count=len(en_text),
-        compliant=not any(word in en_text.lower() for word in platform["prohibited"]),
+        compliant=not notes,
+        compliance_notes=notes,
     )
 
 
-def _generate_ideal_profile(user_id: int, review_summary: str) -> CopywriterIdealProfilePayload:
+def _generate_validated_item(
+    user_id: int,
+    platform: dict[str, Any],
+    ad_type: dict[str, Any],
+    style: str,
+    prompt: str,
+) -> CopywriterGeneratedItemPayload:
+    """生成一条候选；若不合规自动重生一次。两次都失败则返回最后一次结果并保留 notes。"""
+    item = _generate_copy_item(user_id, platform, ad_type, style, prompt)
+    if item.compliant:
+        return item
+    retry_prompt = prompt + (
+        f"\n\n上一稿不合规（{'; '.join(item.compliance_notes)}），请严格遵守字符限制与禁用词清单，重写一条。"
+    )
+    return _generate_copy_item(user_id, platform, ad_type, style, retry_prompt)
+
+
+_ALLCAPS_RUN_RE = re.compile(r"(?:\b[A-Z]{2,}\b\s+){2,}\b[A-Z]{2,}\b")
+
+
+def _validate_copy(text: str, platform: dict[str, Any], ad_type: dict[str, Any]) -> list[str]:
+    """返回违规说明列表；空列表表示合规。"""
+    notes: list[str] = []
+    if not text or text.startswith("Generation failed"):
+        notes.append("生成失败")
+        return notes
+    limit = int(ad_type["limit"])
+    if len(text) > limit:
+        notes.append(f"超字符限制 {len(text)}/{limit}")
+    lower = text.lower()
+    for word in platform.get("prohibited", []):
+        if word and word.lower() in lower:
+            notes.append(f"含禁用词 '{word}'")
+    if text.count("!") >= 2:
+        notes.append("感叹号过多")
+    if _ALLCAPS_RUN_RE.search(text):
+        notes.append("出现 ALL-CAPS 连续段")
+    return notes
+
+
+def _generate_ideal_profile(user_id: int, review_summary: str) -> dict[str, Any]:
     prompt = f"""你是跨境电商选品分析师。根据以下用户评论，分析客户对该品类产品的理想画像。
 
 输出维度：
@@ -307,17 +377,39 @@ def _generate_ideal_profile(user_id: int, review_summary: str) -> CopywriterIdea
             max_tokens=600,
             response_format={"type": "json_object"},
         )
-        data = json.loads(resp.choices[0].message.content)
-        return CopywriterIdealProfilePayload(
-            features=[str(item) for item in data.get("features") or []],
-            price_range=str(data.get("price_range") or ""),
-            logistics=str(data.get("logistics") or ""),
-            packaging=str(data.get("packaging") or ""),
-            service=str(data.get("service") or ""),
-            summary=str(data.get("summary") or ""),
-        )
+        return json.loads(resp.choices[0].message.content) or {}
     except Exception as exc:
-        return CopywriterIdealProfilePayload(summary=f"Generation failed: {exc}")
+        return {"summary": f"Generation failed: {exc}"}
+
+
+def _resolve_ideal_profile(
+    *,
+    user_id: int,
+    product_id: str,
+    version: str | None,
+    comments: list[dict[str, Any]],
+    review_summary: str,
+    force: bool,
+) -> CopywriterIdealProfilePayload:
+    payload, cached = get_or_generate_ideal_profile(
+        user_id=user_id,
+        product_id=product_id,
+        version=version,
+        comments=comments,
+        generate_fn=lambda: _generate_ideal_profile(user_id, review_summary),
+        force=force,
+    )
+    return CopywriterIdealProfilePayload(
+        features=[str(item) for item in payload.get("features") or []],
+        price_range=str(payload.get("price_range") or ""),
+        logistics=str(payload.get("logistics") or ""),
+        packaging=str(payload.get("packaging") or ""),
+        service=str(payload.get("service") or ""),
+        summary=str(payload.get("summary") or ""),
+        cached=cached,
+        generated_at=payload.get("generated_at"),
+        comment_count_at_generation=int(payload.get("comment_count_at_generation") or 0),
+    )
 
 
 def _platform_payload(platform_id: str, data: dict[str, Any]) -> CopywriterPlatformPayload:
@@ -335,6 +427,7 @@ def _platform_payload(platform_id: str, data: dict[str, Any]) -> CopywriterPlatf
                 name_zh=str(item["name_zh"]),
                 name_en=str(item["name_en"]),
                 limit=int(item["limit"]),
+                internal_estimate=bool(item.get("internal_estimate", False)),
             )
             for item in data["types"]
         ],
