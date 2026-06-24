@@ -2,6 +2,9 @@
 # 部署后自动检查所有容器健康状态
 set -e
 
+echo "🔄 强制 reload nginx（刷新 upstream DNS 缓存）..."
+docker compose exec nginx nginx -s reload 2>/dev/null || echo "⚠️  nginx reload 失败，可能需要手动处理"
+
 echo "⏳ 等待容器启动（45s）..."
 sleep 45
 
