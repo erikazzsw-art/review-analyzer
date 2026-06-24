@@ -100,6 +100,7 @@ export async function getAnalysisResults(params: {
   start?: string | null;
   end?: string | null;
   sessionId?: number | null;
+  version?: string | null;
 }): Promise<AnalysisResultsResponse> {
   const search = new URLSearchParams();
   search.set("product_id", params.productId);
@@ -114,6 +115,9 @@ export async function getAnalysisResults(params: {
   }
   if (params.sessionId) {
     search.set("session_id", String(params.sessionId));
+  }
+  if (params.version) {
+    search.set("version", params.version);
   }
   return apiFetch<AnalysisResultsResponse>(`/analysis/results?${search.toString()}`);
 }

@@ -99,11 +99,13 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, children }: Modul
       </div>
 
       {/* Content */}
-      {isTranslated && translatedData ? (
-        <TranslatedView data={translatedData} moduleKey={moduleKey} />
-      ) : (
-        children
-      )}
+      <div className="pt-8">
+        {isTranslated && translatedData ? (
+          <TranslatedView data={translatedData} moduleKey={moduleKey} />
+        ) : (
+          children
+        )}
+      </div>
     </section>
   );
 }
@@ -116,7 +118,7 @@ function TranslatedView({ data, moduleKey }: { data: Record<string, unknown>; mo
   const evidence = Array.isArray(data.evidence) ? data.evidence : [];
 
   return (
-    <div className="space-y-4 pt-8">
+    <div className="space-y-4">
       {summary && <p className="text-sm leading-7 text-ink">{summary}</p>}
 
       {moduleKey === "user_experience" && (

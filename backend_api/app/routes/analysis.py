@@ -108,6 +108,7 @@ def get_aggregated_results(
     start: str | None = Query(default=None),
     end: str | None = Query(default=None),
     session_id: int | None = Query(default=None),
+    version: str | None = Query(default=None),
     current_user: dict = Depends(get_current_user),
 ) -> AnalysisResultsPayload:
     """按产品 + 时间范围跨 session 聚合评论 → 跑 LLM 分析 → 返回。
@@ -124,6 +125,7 @@ def get_aggregated_results(
     comments = get_comments(
         user_id,
         product_id=product_id,
+        version=version or None,
         date_start=start_iso or None,
         date_end=end_iso or None,
     )

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Calendar, RefreshCw } from "lucide-react";
 
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductSearchCombobox } from "@/components/analysis/product-search-combobox";
+import { fetchProductVersions } from "@/lib/api/browser";
 
 type Props = {
   productId: string;
@@ -20,6 +21,7 @@ type Props = {
   end?: string | null;
   timeLabel?: string;
   isAggregated?: boolean;
+  version?: string | null;
 };
 
 const RANGE_OPTIONS: Array<{ value: string; label: string }> = [
@@ -39,6 +41,7 @@ export function ResultsFilterBar({
   end,
   timeLabel,
   isAggregated,
+  version,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -48,6 +51,14 @@ export function ResultsFilterBar({
   const [customStart, setCustomStart] = useState<string>(start || "");
   const [customEnd, setCustomEnd] = useState<string>(end || "");
   const [customOpen, setCustomOpen] = useState(false);
+  const [versions, setVersions] = useState<Array<{ version: string; review_count: number }>>([]);
+
+  useEffect(() => {
+    if (!productId) return;
+    fetchProductVersions(productId)
+      .then((res) => setVersions(res.items))
+      .catch(() => setVersions([]));
+  }, [productId]);
 
   const pushParams = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params.toString());
@@ -81,6 +92,14 @@ export function ResultsFilterBar({
       range: "default",
       start: null,
       end: null,
+      version: null,
+    });
+  };
+
+  const handleVersionChange = (value: string) => {
+    pushParams({
+      version: value === "__all__" ? null : value,
+      session_id: null,
     });
   };
 
@@ -105,6 +124,27 @@ export function ResultsFilterBar({
           </span>
           <ProductSearchCombobox value={productId} onChange={handleProductChange} />
         </div>
+
+        {versions.length > 1 && (
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
+              版本
+            </span>
+            <Select value={version || "__all__"} onValueChange={handleVersionChange}>
+              <SelectTrigger className="h-9 w-32 rounded-pill border-line bg-white text-sm font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">全部版本</SelectItem>
+                {versions.map((v) => (
+                  <SelectItem key={v.version} value={v.version}>
+                    {v.version} ({v.review_count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="flex flex-col gap-1">
           <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">

@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 
 from backend_api.app.deps import get_current_user
 from review_analyzer.database import get_comments, get_session_by_id
+from review_analyzer.exporter import export_to_xlsx
 from review_analyzer.insight_engine import build_results_insights
 
 router = APIRouter(prefix="/analysis", tags=["export"])
@@ -38,6 +39,25 @@ def export_module_xlsx(
     filename = f"analysis_{session_id}_{module}.xlsx"
     return StreamingResponse(
         output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/sessions/{session_id}/export/full")
+def export_full_xlsx(
+    session_id: int,
+    current_user: dict = Depends(get_current_user),
+) -> StreamingResponse:
+    """导出完整 4-sheet XLSX（总览摘要 + 源评论明细 + TOP10 问题 + TOP10 亮点）"""
+    user_id = int(current_user["id"])
+    session = get_session_by_id(user_id, session_id)
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found.")
+
+    xlsx_bytes, filename = export_to_xlsx(session_id, user_id)
+    return StreamingResponse(
+        io.BytesIO(xlsx_bytes),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

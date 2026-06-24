@@ -5,12 +5,16 @@ import {
   ThumbsUp,
   ThumbsDown,
   ChevronRight,
+  Download,
+  Loader2,
 } from "lucide-react";
 
 import { ModuleCard } from "@/components/analysis/module-card";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
 import { CreateActionPanel } from "@/components/analysis/create-action-panel";
 import { SectionAnchorNav } from "@/components/analysis/section-anchor-nav";
+import { Button } from "@/components/ui/button";
+import { exportFullXlsx } from "@/lib/api/browser";
 import {
   Table,
   TableBody,
@@ -219,7 +223,29 @@ export function AnalysisResultsSections({
   t,
 }: Props) {
   const [reviewsShown, setReviewsShown] = useState(REVIEWS_PAGE_SIZE);
+  const [exportingFull, setExportingFull] = useState(false);
   const canShowActions = sessionId > 0;
+
+  async function handleExportFull() {
+    if (!sessionId) return;
+    setExportingFull(true);
+    try {
+      const blob = await exportFullXlsx(sessionId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `analysis_${sessionId}_full.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // silently fail
+    } finally {
+      setExportingFull(false);
+    }
+  }
+
   const sections = [
     { id: "profile", label: t.moduleConsumerProfile || "用户画像" },
     { id: "experience", label: t.moduleUserExperience || "用户体验" },
@@ -265,7 +291,7 @@ export function AnalysisResultsSections({
               <TableBody>
                 {consumerProfile.rows.map((row, i) => (
                   <TableRow key={`cp-${i}`}>
-                    <TableCell className="text-xs font-bold uppercase tracking-wide text-soft">
+                    <TableCell className="text-xs font-bold capitalize tracking-wide text-soft">
                       {rv(row.label)}
                     </TableCell>
                     <TableCell className="text-sm text-ink">{rv(row.detail)}</TableCell>
@@ -445,6 +471,24 @@ export function AnalysisResultsSections({
       <section className="flex flex-col gap-3">
         <SectionHeading id="reviews" title={t.rawReviews || "评论原文"} />
         <div className="rounded-shell border border-line bg-white p-5 shadow-card">
+          {sessionId > 0 && (
+            <div className="mb-3 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportFull}
+                disabled={exportingFull}
+                className="h-7 gap-1 px-2.5 text-[11px]"
+              >
+                {exportingFull ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Download className="h-3 w-3" />
+                )}
+                XLSX
+              </Button>
+            </div>
+          )}
           <div className="space-y-2">
             {comments.length > 0 ? (
               <>

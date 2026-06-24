@@ -916,6 +916,17 @@ export async function exportModuleXlsx(sessionId: number, moduleKey: string): Pr
   return response.blob();
 }
 
+export async function exportFullXlsx(sessionId: number): Promise<Blob> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/analysis/sessions/${sessionId}/export/full`,
+    { credentials: "include" },
+  );
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.blob();
+}
+
 export type ProductCreatePayload = {
   parent_product_id: string;
   name?: string;

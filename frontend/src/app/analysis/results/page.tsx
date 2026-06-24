@@ -35,6 +35,7 @@ type ResultsPageProps = {
     range?: string;
     start?: string;
     end?: string;
+    version?: string;
   }>;
 };
 
@@ -113,6 +114,7 @@ export default async function AnalysisResultsPage({
   const rangeParam = (params?.range || "").trim() || "default";
   const startParam = (params?.start || "").trim() || null;
   const endParam = (params?.end || "").trim() || null;
+  const versionParam = (params?.version || "").trim() || null;
 
   // job 状态轮询 — 上传完成跳到 polling
   if (!sessionId && !productIdParam && jobId) {
@@ -199,6 +201,7 @@ export default async function AnalysisResultsPage({
       start: startParam,
       end: endParam,
       sessionId: sessionId || null,
+      version: versionParam,
     });
   } catch (error: unknown) {
     if (isApiError(error) && error.status === 401) {
@@ -303,6 +306,7 @@ export default async function AnalysisResultsPage({
       end={payload.range_end || endParam}
       timeLabel={context.time_label}
       isAggregated={isAggregated}
+      version={versionParam}
     />
   );
 
@@ -313,39 +317,6 @@ export default async function AnalysisResultsPage({
 
   const overviewSlot = (
     <div className="flex flex-col gap-4">
-      {/* Header */}
-      <section className="rounded-shell border border-line bg-white p-5 shadow-card">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="font-heading text-xl font-extrabold tracking-[-0.04em] text-ink">
-              {payload.session.custom_title || payload.session.auto_title || payload.session.product_id}
-            </h2>
-            <div className="mt-1.5 flex flex-wrap gap-2">
-              <span className="rounded-pill border border-line bg-[#faf8fb] px-3 py-1 text-xs font-medium text-soft">
-                {renderValue(context.time_label)}
-              </span>
-              <span className="rounded-pill border border-line bg-[#faf8fb] px-3 py-1 text-xs font-medium text-soft">
-                {renderValue(context.workflow_purpose, t("purposeNotSetLabel"))}
-              </span>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Link
-              href={`/analysis/compare?product_id=${encodeURIComponent(payload.session.product_id)}${sessionId ? `&session_id=${sessionId}` : ""}`}
-              className="inline-flex min-h-9 items-center justify-center rounded-pill bg-ink px-4 py-2 text-sm font-semibold text-white shadow-card"
-            >
-              {t("goCompare")}
-            </Link>
-            <Link
-              href="/analysis/history"
-              className="inline-flex min-h-9 items-center justify-center rounded-pill border border-line bg-white px-4 py-2 text-sm font-semibold text-ink"
-            >
-              {t("backHistory")}
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Metrics Row */}
       <section className={metricsGrid}>
         <div className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5 shadow-sm">

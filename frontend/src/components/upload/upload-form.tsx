@@ -171,9 +171,9 @@ export function UploadForm() {
       setJob(response.job);
       track("upload_complete", { job_id: response.job.id });
       if (response.job.status === "done" && response.job.session_id) {
-        router.push(`/analysis/results?session_id=${response.job.session_id}`);
+        router.push(`/analysis/results?session_id=${response.job.session_id}&version=${encodeURIComponent(form.version.trim())}`);
       } else {
-        router.push(`/analysis/results?job_id=${response.job.id}`);
+        router.push(`/analysis/results?job_id=${response.job.id}&version=${encodeURIComponent(form.version.trim())}`);
       }
     } catch (submitError) {
       const candidate = submitError as { status?: number; message?: string; existingSessionId?: number };
