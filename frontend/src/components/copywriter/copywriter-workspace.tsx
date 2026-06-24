@@ -171,7 +171,6 @@ export function CopywriterWorkspace({
       <CopywriterFilterBar
         productId={productId}
         version={version}
-        range={range}
         platform={activePlatformId}
       />
 
