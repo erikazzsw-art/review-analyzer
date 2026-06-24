@@ -1,6 +1,6 @@
 "use client";
 
-import type { AnalysisCompareGroup, AnalysisCompareResponse } from "@/lib/api/types";
+import type { AnalysisCompareGroup, AnalysisCompareResponse, AnalysisResultModule } from "@/lib/api/types";
 
 type CompareDashboardProps = {
   dataset: AnalysisCompareResponse;
@@ -27,47 +27,100 @@ function deltaLabel(delta: number, suffix: string = "pt"): string {
   return `${delta > 0 ? "↑" : "↓"}${Math.abs(delta).toFixed(1)}${suffix}`;
 }
 
-function pickPct(row: Record<string, unknown>, label: string): number {
-  const raw = row[label];
-  if (typeof raw === "number") return raw;
-  if (typeof raw !== "string") return 0;
-  const numeric = parseFloat(raw.replace("%", ""));
-  return Number.isFinite(numeric) ? numeric : 0;
+type TagRow = { tag: string; pct: number; reason?: string };
+
+function normalizeTagRow(row: Record<string, unknown>): TagRow {
+  const tag = String(row["tag"] ?? row["label"] ?? row["name"] ?? "-");
+  const pctValue =
+    typeof row["pct"] === "number"
+      ? (row["pct"] as number)
+      : Number(row["pct"] ?? row["percentage"] ?? row["percent"] ?? 0);
+  const pct = Number.isFinite(pctValue) ? pctValue : 0;
+  const reason = row["reason"] ? String(row["reason"]) : undefined;
+  return { tag, pct, reason };
 }
+
+type DimensionTone = "positive" | "negative" | "neutral";
 
 type DimensionSpec = {
   key: string;
   label: string;
-  tone: "neutral" | "positive" | "negative";
-  source: (insights: Record<string, Record<string, unknown>> | null | undefined) => Array<Record<string, unknown>>;
+  tone: DimensionTone;
+  /** 把某个 group 的 insights 抽出 TOP 标签 list. 若 insights 缺失返回 null */
+  rowsFor: (group: AnalysisCompareGroup) => TagRow[] | null;
 };
 
 const DIMENSIONS: DimensionSpec[] = [
   {
-    key: "purchase_motives",
-    label: "购买动机",
+    key: "consumer_profile",
+    label: "用户画像",
     tone: "neutral",
-    source: (insights) => (insights?.purchase_motives?.rows as Array<Record<string, unknown>>) || [],
+    rowsFor: (group) => {
+      const module = group.insights?.consumer_profile;
+      if (!module) return null;
+      const rows = (module.rows as Array<Record<string, unknown>>) || [];
+      // consumer_profile.rows 是 {label, detail} 格式, 不是 {tag, pct}
+      // 在没有 tag bar 数据时, 我们走 summary 兜底, 在外层判定
+      return rows
+        .filter((row) => row["tag"] !== undefined || row["pct"] !== undefined)
+        .map(normalizeTagRow);
+    },
+  },
+  {
+    key: "user_experience_positive",
+    label: "用户体验 · 正向反馈",
+    tone: "positive",
+    rowsFor: (group) => {
+      const module = group.insights?.user_experience;
+      if (!module) {
+        // fallback: 从 group.top_highlights 兜底
+        const fallback = group.top_highlights || [];
+        if (!fallback.length) return null;
+        return fallback.slice(0, 5).map(normalizeTagRow);
+      }
+      return (module.positive as Array<Record<string, unknown>> || []).slice(0, 5).map(normalizeTagRow);
+    },
+  },
+  {
+    key: "user_experience_negative",
+    label: "用户体验 · 负向反馈",
+    tone: "negative",
+    rowsFor: (group) => {
+      const module = group.insights?.user_experience;
+      if (!module) {
+        const fallback = group.top_issues || [];
+        if (!fallback.length) return null;
+        return fallback.slice(0, 5).map(normalizeTagRow);
+      }
+      return (module.negative as Array<Record<string, unknown>> || []).slice(0, 5).map(normalizeTagRow);
+    },
+  },
+  {
+    key: "purchase_motives",
+    label: "消费动机",
+    tone: "neutral",
+    rowsFor: (group) => {
+      const module = group.insights?.purchase_motives;
+      if (!module) return null;
+      return ((module.rows as Array<Record<string, unknown>>) || []).slice(0, 5).map(normalizeTagRow);
+    },
   },
   {
     key: "unmet_needs",
-    label: "未被满足的需求",
-    tone: "neutral",
-    source: (insights) => (insights?.unmet_needs?.rows as Array<Record<string, unknown>>) || [],
-  },
-  {
-    key: "experience_positive",
-    label: "产品体验 · 正向观点",
-    tone: "positive",
-    source: (insights) => (insights?.user_experience?.positive as Array<Record<string, unknown>>) || [],
-  },
-  {
-    key: "experience_negative",
-    label: "产品体验 · 负向观点",
+    label: "未满足的需求",
     tone: "negative",
-    source: (insights) => (insights?.user_experience?.negative as Array<Record<string, unknown>>) || [],
+    rowsFor: (group) => {
+      const module = group.insights?.unmet_needs;
+      if (!module) return null;
+      return ((module.rows as Array<Record<string, unknown>>) || []).slice(0, 5).map(normalizeTagRow);
+    },
   },
 ];
+
+function summaryFor(group: AnalysisCompareGroup, key: keyof NonNullable<AnalysisCompareGroup["insights"]>): string {
+  const module = group.insights?.[key] as AnalysisResultModule | undefined;
+  return module?.summary || "";
+}
 
 export function CompareDashboard({ dataset }: CompareDashboardProps) {
   const groups = dataset.groups;
@@ -80,12 +133,14 @@ export function CompareDashboard({ dataset }: CompareDashboardProps) {
   }
 
   const baseline = groups[0];
-  const hasAnyInsights = groups.some((group) => group.insights && Object.keys(group.insights).length > 0);
+  const groupCount = groups.length;
+  // grid 列模板: 第 1 列固定 160px 维度名, 后面均分 N 个 group, 末尾 56px 占位列
+  const gridTemplate = `160px repeat(${groupCount}, minmax(0, 1fr)) 56px`;
 
   return (
     <div className="flex flex-col gap-5">
       <section>
-        <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">核心指标对比</h3>
+        <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">核心指标</h3>
         <p className="mt-1 text-xs text-soft">
           以 <strong className="text-ink">{baseline.label}</strong> 为基准，↑ ↓ 表示相对基准的变化。
         </p>
@@ -118,65 +173,57 @@ export function CompareDashboard({ dataset }: CompareDashboardProps) {
         </div>
       </section>
 
-      {hasAnyInsights ? (
-        <section className="rounded-shell border border-line bg-white shadow-card">
-          <header className="border-b border-line px-5 py-3">
-            <h3 className="font-heading text-base font-extrabold tracking-[-0.04em] text-ink">维度对照</h3>
-            <p className="mt-1 text-xs text-soft">
-              每个维度横向铺开各对比窗口的 TOP 标签和占比。
-            </p>
-          </header>
-          <div className="divide-y divide-line">
-            {DIMENSIONS.map((dimension) => (
-              <DimensionRow
-                key={dimension.key}
-                dimension={dimension}
-                groups={groups}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <DifferenceTable
-        title="问题 TOP 变化"
-        emptyHint="暂无显著问题差异"
-        rows={dataset.issue_differences}
-        groups={groups}
-        mode="negative"
-      />
-
-      <DifferenceTable
-        title="亮点 TOP 变化"
-        emptyHint="暂无显著亮点差异"
-        rows={dataset.highlight_differences}
-        groups={groups}
-        mode="positive"
-      />
+      <section className="rounded-shell border border-line bg-white shadow-card">
+        <header className="flex items-center justify-between border-b border-line px-5 py-3">
+          <h3 className="font-heading text-base font-extrabold tracking-[-0.04em] text-ink">维度对比</h3>
+          <span className="text-xs text-soft">每个维度横向铺开各窗口的 TOP 5 标签</span>
+        </header>
+        {/* 表头 */}
+        <div
+          className="grid items-center gap-3 border-b border-line bg-[#fafafa] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-soft"
+          style={{ gridTemplateColumns: gridTemplate }}
+        >
+          <div>维度</div>
+          {groups.map((group) => (
+            <div key={`head-${group.label}`} className="truncate">
+              {group.label}
+            </div>
+          ))}
+          <div />
+        </div>
+        <div className="divide-y divide-line">
+          {DIMENSIONS.map((dimension) => (
+            <DimensionRow
+              key={dimension.key}
+              dimension={dimension}
+              groups={groups}
+              gridTemplate={gridTemplate}
+            />
+          ))}
+        </div>
+      </section>
 
       <section className="grid gap-3 xl:grid-cols-2">
         <RiskOpportunityCard
           title="风险对象"
-          accent="#fff8f9"
+          tone="negative"
           rows={dataset.risk_groups}
-          render={(group) => (
-            <>
-              差评率 {formatRate(group.negative_rate)} · {group.review_count} 条 · TOP{" "}
-              {group.top_issue}
-            </>
-          )}
+          metric={(group) => ({
+            valueLabel: `差评率 ${formatRate(group.negative_rate)}`,
+            barValue: group.negative_rate,
+            tail: `${group.review_count} 条 · TOP ${group.top_issue}`,
+          })}
           emptyHint="当前没有明显的风险对象。"
         />
         <RiskOpportunityCard
           title="机会对象"
-          accent="#f8fffc"
+          tone="positive"
           rows={dataset.opportunity_groups}
-          render={(group) => (
-            <>
-              好评率 {formatRate(group.positive_rate)} · {group.review_count} 条 · TOP{" "}
-              {group.top_highlight}
-            </>
-          )}
+          metric={(group) => ({
+            valueLabel: `好评率 ${formatRate(group.positive_rate)}`,
+            barValue: group.positive_rate,
+            tail: `${group.review_count} 条 · TOP ${group.top_highlight}`,
+          })}
           emptyHint="当前没有明显的机会对象。"
         />
       </section>
@@ -252,168 +299,100 @@ function KpiColumn({ title, mode, baseline, groups, field, formatter }: KpiColum
 type DimensionRowProps = {
   dimension: DimensionSpec;
   groups: AnalysisCompareGroup[];
+  gridTemplate: string;
 };
 
-function DimensionRow({ dimension, groups }: DimensionRowProps) {
-  const perGroupRows = groups.map((group) => dimension.source(group.insights as Record<string, Record<string, unknown>> | null | undefined).slice(0, 5));
-  const hasAnyRow = perGroupRows.some((rows) => rows.length > 0);
+function DimensionRow({ dimension, groups, gridTemplate }: DimensionRowProps) {
+  // 用户画像特殊处理: 如果 insights.consumer_profile.rows 不是 tag/pct 格式, 显示 summary 文本
+  const isConsumerProfile = dimension.key === "consumer_profile";
+  const groupRows = groups.map((group) => dimension.rowsFor(group));
+  const allEmpty = groupRows.every((rows) => rows === null || rows.length === 0);
+
+  if (isConsumerProfile && allEmpty) {
+    // 退化为 summary 文本展示
+    const summaries = groups.map((group) => summaryFor(group, "consumer_profile"));
+    if (summaries.every((text) => !text)) {
+      return (
+        <div
+          className="grid items-start gap-3 px-5 py-4"
+          style={{ gridTemplateColumns: gridTemplate }}
+        >
+          <div className="text-sm font-semibold text-ink">{dimension.label}</div>
+          {groups.map((group) => (
+            <div key={`empty-${group.label}`} className="text-xs text-soft">--</div>
+          ))}
+          <div />
+        </div>
+      );
+    }
+    return (
+      <div
+        className="grid items-start gap-3 px-5 py-4"
+        style={{ gridTemplateColumns: gridTemplate }}
+      >
+        <div className="text-sm font-semibold text-ink">{dimension.label}</div>
+        {summaries.map((text, idx) => (
+          <div key={`summary-${idx}`} className="text-xs leading-5 text-ink">
+            {text || "--"}
+          </div>
+        ))}
+        <div />
+      </div>
+    );
+  }
 
   return (
-    <div className="grid gap-0 px-5 py-4 md:grid-cols-[160px_1fr]">
-      <div className="pr-4 text-sm font-semibold text-ink">
-        {dimension.label}
-      </div>
-      {hasAnyRow ? (
-        <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: `repeat(${Math.max(groups.length, 1)}, minmax(0, 1fr))` }}
-        >
-          {groups.map((group, gIdx) => (
-            <DimensionGroupColumn
-              key={`${dimension.key}-${gIdx}`}
-              label={group.label}
-              rows={perGroupRows[gIdx]}
-              tone={dimension.tone}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-sm text-soft">--</div>
-      )}
+    <div
+      className="grid items-start gap-3 px-5 py-4"
+      style={{ gridTemplateColumns: gridTemplate }}
+    >
+      <div className="text-sm font-semibold text-ink">{dimension.label}</div>
+      {groupRows.map((rows, idx) => (
+        <DimensionCell key={`cell-${dimension.key}-${idx}`} rows={rows} tone={dimension.tone} />
+      ))}
+      <div className="text-right text-xs text-soft">--</div>
     </div>
   );
 }
 
-type DimensionGroupColumnProps = {
-  label: string;
-  rows: Array<Record<string, unknown>>;
-  tone: "neutral" | "positive" | "negative";
-};
-
-function DimensionGroupColumn({ label, rows, tone }: DimensionGroupColumnProps) {
+function DimensionCell({ rows, tone }: { rows: TagRow[] | null; tone: DimensionTone }) {
   const barColor =
     tone === "positive" ? "bg-[#d6f4e5]" : tone === "negative" ? "bg-[#fbdadd]" : "bg-[#e5edff]";
 
-  if (!rows.length) {
-    return (
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{label}</div>
-        <div className="mt-2 text-xs text-soft">--</div>
-      </div>
-    );
+  if (!rows || rows.length === 0) {
+    return <div className="text-xs text-soft">--</div>;
   }
 
   return (
-    <div>
-      <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{label}</div>
-      <div className="mt-2 space-y-1.5">
-        {rows.map((row, idx) => {
-          const tag = String(row["tag"] ?? row["label"] ?? "-");
-          const pctValue = typeof row["pct"] === "number" ? (row["pct"] as number) : Number(row["pct"] ?? 0);
-          const pct = Number.isFinite(pctValue) ? pctValue : 0;
-          const width = Math.min(100, Math.max(2, pct));
-          return (
-            <div key={`${tag}-${idx}`} className="grid grid-cols-[1fr_120px_48px] items-center gap-2">
-              <span className="truncate text-xs text-ink" title={tag}>
-                {tag}
-              </span>
-              <span className={`h-2 rounded-full ${barColor}`} style={{ width: `${width}%` }} />
-              <span className="text-right text-xs text-soft">{pct.toFixed(1)}%</span>
-            </div>
-          );
-        })}
-      </div>
+    <div className="space-y-1.5">
+      {rows.map((row, idx) => {
+        const width = Math.min(100, Math.max(2, row.pct));
+        return (
+          <div key={`${row.tag}-${idx}`} className="grid grid-cols-[1fr_72px_44px] items-center gap-2">
+            <span className="truncate text-xs text-ink" title={row.tag}>
+              {row.tag}
+            </span>
+            <span className={`h-2 rounded-full ${barColor}`} style={{ width: `${width}%` }} />
+            <span className="text-right text-[11px] text-soft">{row.pct.toFixed(1)}%</span>
+          </div>
+        );
+      })}
     </div>
-  );
-}
-
-type DifferenceTableProps = {
-  title: string;
-  rows: Array<Record<string, unknown>>;
-  groups: AnalysisCompareGroup[];
-  mode: "positive" | "negative";
-  emptyHint: string;
-};
-
-function DifferenceTable({ title, rows, groups, mode, emptyHint }: DifferenceTableProps) {
-  if (!rows.length) {
-    return (
-      <section>
-        <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">{title}</h3>
-        <div className="mt-2 rounded-card border border-dashed border-line bg-[#fffafb] px-4 py-3 text-sm text-soft">
-          {emptyHint}
-        </div>
-      </section>
-    );
-  }
-
-  const baselineLabel = groups[0]?.label ?? "";
-
-  return (
-    <section className="rounded-shell border border-line bg-white shadow-card">
-      <header className="flex items-center justify-between border-b border-line px-5 py-3">
-        <h3 className="font-heading text-base font-extrabold tracking-[-0.04em] text-ink">{title}</h3>
-        <span className="text-xs text-soft">按变化幅度排序 · Top {rows.length}</span>
-      </header>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-[#fafafa] text-xs uppercase tracking-[0.1em] text-soft">
-            <tr>
-              <th className="px-5 py-2 text-left">标签</th>
-              {groups.map((group) => (
-                <th key={group.label} className="px-3 py-2 text-right">
-                  {group.label}
-                </th>
-              ))}
-              <th className="px-3 py-2 text-right">最高组</th>
-              <th className="px-3 py-2 text-right">变化</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, index) => {
-              const tag = String(row["标签"] ?? row["tag"] ?? "-");
-              const basePct = pickPct(row, baselineLabel);
-              return (
-                <tr key={`diff-${title}-${index}`} className="border-t border-line">
-                  <td className="px-5 py-2 text-ink">{tag}</td>
-                  {groups.map((group, columnIndex) => {
-                    const pct = pickPct(row, group.label);
-                    const delta = pct - basePct;
-                    const showDelta = columnIndex > 0;
-                    return (
-                      <td key={`diff-${title}-${index}-${group.label}`} className="px-3 py-2 text-right text-ink">
-                        <div className="flex flex-col items-end">
-                          <span>{pct.toFixed(1)}%</span>
-                          {showDelta ? (
-                            <span className={`text-[11px] font-semibold ${deltaTone(delta, mode)}`}>
-                              {deltaLabel(delta)}
-                            </span>
-                          ) : null}
-                        </div>
-                      </td>
-                    );
-                  })}
-                  <td className="px-3 py-2 text-right text-soft">{String(row["最高组"] ?? "-")}</td>
-                  <td className="px-3 py-2 text-right text-soft">{String(row["最大差值"] ?? "-")}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
   );
 }
 
 type RiskOpportunityCardProps = {
   title: string;
-  accent: string;
+  tone: "positive" | "negative";
   rows: Array<Record<string, unknown>> | AnalysisCompareGroup[];
-  render: (item: AnalysisCompareGroup) => React.ReactNode;
+  metric: (group: AnalysisCompareGroup) => { valueLabel: string; barValue: number; tail: string };
   emptyHint: string;
 };
 
-function RiskOpportunityCard({ title, accent, rows, render, emptyHint }: RiskOpportunityCardProps) {
+function RiskOpportunityCard({ title, tone, rows, metric, emptyHint }: RiskOpportunityCardProps) {
+  const barColor = tone === "positive" ? "bg-[#d6f4e5]" : "bg-[#fbdadd]";
+  const accent = tone === "positive" ? "#f8fffc" : "#fff8f9";
+
   return (
     <div className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
       <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">{title}</h3>
@@ -421,14 +400,22 @@ function RiskOpportunityCard({ title, accent, rows, render, emptyHint }: RiskOpp
         {rows.length > 0 ? (
           rows.map((row, index) => {
             const group = row as AnalysisCompareGroup;
+            const { valueLabel, barValue, tail } = metric(group);
+            const width = Math.min(100, Math.max(4, barValue));
             return (
               <div
                 key={`row-${title}-${index}`}
                 className="rounded-card border border-line px-4 py-3 text-sm"
                 style={{ background: accent }}
               >
-                <div className="font-semibold text-ink">{String(group.label ?? "-")}</div>
-                <div className="mt-1 text-soft">{render(group)}</div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-semibold text-ink">{group.label ?? "-"}</span>
+                  <span className="text-xs font-semibold text-ink">{valueLabel}</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-white">
+                  <div className={`h-2 rounded-full ${barColor}`} style={{ width: `${width}%` }} />
+                </div>
+                <div className="mt-2 text-xs text-soft">{tail}</div>
               </div>
             );
           })

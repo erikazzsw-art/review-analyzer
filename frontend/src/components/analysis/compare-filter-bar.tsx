@@ -38,13 +38,14 @@ const PRESET_WINDOWS: Array<{ value: string; label: string; days: number }> = [
   { value: "custom", label: "自定义", days: -1 },
 ];
 
-function isoDaysAgo(days: number): string {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() - days);
-  return date.toISOString().slice(0, 10);
+function isoDaysAgo(days: number, anchor?: string | null): string {
+  const base = anchor ? new Date(`${anchor}T00:00:00Z`) : new Date();
+  base.setUTCDate(base.getUTCDate() - days);
+  return base.toISOString().slice(0, 10);
 }
 
-function todayIso(): string {
+function todayIso(anchor?: string | null): string {
+  if (anchor) return anchor;
   return new Date().toISOString().slice(0, 10);
 }
 
@@ -107,7 +108,10 @@ type TimeRowState = {
   compareEnd: string;
 };
 
-function timeRowsFromPreset(presetValue: string): {
+function timeRowsFromPreset(
+  presetValue: string,
+  anchor?: string | null,
+): {
   baselineStart: string;
   baselineEnd: string;
   compareStart: string;
@@ -117,27 +121,27 @@ function timeRowsFromPreset(presetValue: string): {
   if (!preset || preset.value === "custom" || preset.days < 0) {
     // 自定义默认仍以 30 天回退展示
     return {
-      baselineStart: isoDaysAgo(60),
-      baselineEnd: isoDaysAgo(31),
-      compareStart: isoDaysAgo(30),
-      compareEnd: todayIso(),
+      baselineStart: isoDaysAgo(60, anchor),
+      baselineEnd: isoDaysAgo(31, anchor),
+      compareStart: isoDaysAgo(30, anchor),
+      compareEnd: todayIso(anchor),
     };
   }
   const days = preset.days;
   return {
-    baselineStart: isoDaysAgo(days * 2),
-    baselineEnd: isoDaysAgo(days + 1),
-    compareStart: isoDaysAgo(days),
-    compareEnd: todayIso(),
+    baselineStart: isoDaysAgo(days * 2, anchor),
+    baselineEnd: isoDaysAgo(days + 1, anchor),
+    compareStart: isoDaysAgo(days, anchor),
+    compareEnd: todayIso(anchor),
   };
 }
 
-function emptyTimeRow(productId: string): TimeRowState {
+function emptyTimeRow(productId: string, anchor?: string | null): TimeRowState {
   return {
     productId,
     version: "",
     presetValue: "30",
-    ...timeRowsFromPreset("30"),
+    ...timeRowsFromPreset("30", anchor),
   };
 }
 
@@ -171,6 +175,18 @@ export function CompareFilterBar({
 }: CompareFilterBarProps) {
   const [mode, setMode] = useState<CompareMode>(initialMode);
   const firstProductId = products[0]?.parent_product_id ?? "";
+  const productAnchorMap = useMemo(() => {
+    const map = new Map<string, string | null>();
+    products.forEach((product) => {
+      map.set(product.parent_product_id, product.latest_review_date ?? null);
+    });
+    return map;
+  }, [products]);
+
+  function anchorFor(productId: string): string | null {
+    return productAnchorMap.get(productId) ?? null;
+  }
+
   const [rows, setRows] = useState<RowState[]>(() => {
     if (
       initialMode !== "same_product_time" &&
@@ -181,27 +197,31 @@ export function CompareFilterBar({
         productId: group.productId,
         version: group.versions[0] ?? "",
         windowPreset: "custom",
-        dateStart: group.dateStart ?? isoDaysAgo(30),
-        dateEnd: group.dateEnd ?? todayIso(),
+        dateStart: group.dateStart ?? isoDaysAgo(30, productAnchorMap.get(group.productId)),
+        dateEnd: group.dateEnd ?? todayIso(productAnchorMap.get(group.productId)),
         label: group.label ?? "",
       }));
     }
-    return rowsForMode(initialMode === "same_product_time" ? "multi_product" : initialMode, firstProductId);
+    return rowsForMode(
+      initialMode === "same_product_time" ? "multi_product" : initialMode,
+      firstProductId,
+    );
   });
   const [timeRow, setTimeRow] = useState<TimeRowState>(() => {
     if (initialMode === "same_product_time" && initialGroups && initialGroups.length >= 2) {
       const [baseline, current] = initialGroups;
+      const anchor = productAnchorMap.get(baseline.productId);
       return {
         productId: baseline.productId,
         version: baseline.versions[0] ?? "",
         presetValue: "custom",
-        baselineStart: baseline.dateStart ?? isoDaysAgo(60),
-        baselineEnd: baseline.dateEnd ?? isoDaysAgo(31),
-        compareStart: current.dateStart ?? isoDaysAgo(30),
-        compareEnd: current.dateEnd ?? todayIso(),
+        baselineStart: baseline.dateStart ?? isoDaysAgo(60, anchor),
+        baselineEnd: baseline.dateEnd ?? isoDaysAgo(31, anchor),
+        compareStart: current.dateStart ?? isoDaysAgo(30, anchor),
+        compareEnd: current.dateEnd ?? todayIso(anchor),
       };
     }
-    return emptyTimeRow(firstProductId);
+    return emptyTimeRow(firstProductId, productAnchorMap.get(firstProductId));
   });
   const [error, setError] = useState<string>("");
 
@@ -243,7 +263,7 @@ export function CompareFilterBar({
     setMode(nextMode);
     setError("");
     if (nextMode === "same_product_time") {
-      setTimeRow(emptyTimeRow(firstProductId));
+      setTimeRow(emptyTimeRow(firstProductId, anchorFor(firstProductId)));
     } else {
       setRows(rowsForMode(nextMode, firstProductId));
     }
@@ -264,11 +284,18 @@ export function CompareFilterBar({
       updateRow(index, { windowPreset: "all", dateStart: "", dateEnd: "" });
       return;
     }
-    updateRow(index, {
-      windowPreset: target.value,
-      dateStart: isoDaysAgo(target.days),
-      dateEnd: todayIso(),
-    });
+    setRows((prev) =>
+      prev.map((row, idx) => {
+        if (idx !== index) return row;
+        const anchor = anchorFor(row.productId);
+        return {
+          ...row,
+          windowPreset: target.value,
+          dateStart: isoDaysAgo(target.days, anchor),
+          dateEnd: todayIso(anchor),
+        };
+      }),
+    );
   }
 
   function applyTimePreset(presetValue: string): void {
@@ -279,7 +306,7 @@ export function CompareFilterBar({
     setTimeRow((prev) => ({
       ...prev,
       presetValue,
-      ...timeRowsFromPreset(presetValue),
+      ...timeRowsFromPreset(presetValue, anchorFor(prev.productId)),
     }));
   }
 
@@ -330,7 +357,7 @@ export function CompareFilterBar({
   function handleReset(): void {
     setError("");
     if (mode === "same_product_time") {
-      setTimeRow(emptyTimeRow(firstProductId));
+      setTimeRow(emptyTimeRow(firstProductId, anchorFor(firstProductId)));
     } else {
       setRows(rowsForMode(mode, firstProductId));
     }
@@ -367,7 +394,13 @@ export function CompareFilterBar({
           productOptions={productOptions}
           productVersionsMap={productVersionsMap}
           onProductChange={(productId) =>
-            setTimeRow((prev) => ({ ...prev, productId, version: "" }))
+            setTimeRow((prev) => {
+              const next: TimeRowState = { ...prev, productId, version: "" };
+              if (prev.presetValue !== "custom") {
+                Object.assign(next, timeRowsFromPreset(prev.presetValue, anchorFor(productId)));
+              }
+              return next;
+            })
           }
           onVersionChange={(version) => setTimeRow((prev) => ({ ...prev, version }))}
           onPresetChange={applyTimePreset}
@@ -480,7 +513,11 @@ export function CompareFilterBar({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="text-xs text-soft">
           {mode === "same_product_time"
-            ? `基准窗口 ${timeRow.baselineStart || "…"} ~ ${timeRow.baselineEnd || "…"} · 对比窗口 ${timeRow.compareStart || "…"} ~ ${timeRow.compareEnd || "…"}`
+            ? `基准窗口 ${timeRow.baselineStart || "…"} ~ ${timeRow.baselineEnd || "…"} · 对比窗口 ${timeRow.compareStart || "…"} ~ ${timeRow.compareEnd || "…"}${
+                anchorFor(timeRow.productId) && timeRow.presetValue !== "custom"
+                  ? ` · 锚定该产品最新评论日 ${anchorFor(timeRow.productId)}`
+                  : ""
+              }`
             : mode === "same_product_version"
               ? "同一产品 · 不同版本对比（时间窗口共用）"
               : `${rows.length} 个对比对象（最多 5 个）`}

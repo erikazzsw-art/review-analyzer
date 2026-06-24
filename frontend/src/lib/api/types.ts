@@ -107,6 +107,7 @@ export type ProductOverview = {
   pending_review_count: number;
   latest_session_label: string | null;
   latest_updated_at: string | null;
+  latest_review_date: string | null;
 };
 
 export type ProductsResponse = {
