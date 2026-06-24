@@ -78,3 +78,16 @@ class ProductSearchResponse(BaseModel):
     items: list[ProductSearchItem]
     total: int
     query: str = ""
+
+
+class ProductVersionItem(BaseModel):
+    """sessions 表里某产品已用过的版本（V1/V2/...），含评论汇总。"""
+    version: str
+    review_count: int = 0
+    last_analyzed_at: datetime | None = None
+
+
+class ProductVersionsResponse(BaseModel):
+    items: list[ProductVersionItem]
+    total: int
+    product_id: str

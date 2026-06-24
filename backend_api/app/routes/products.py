@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import psycopg2.extras
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel
 
 from backend_api.app.deps import get_current_user
@@ -10,7 +11,10 @@ from backend_api.app.schemas.products import (
     ProductSearchItem,
     ProductSearchResponse,
     ProductsResponsePayload,
+    ProductVersionItem,
+    ProductVersionsResponse,
 )
+from review_analyzer.database import get_connection
 from review_analyzer.product_store import (
     create_product,
     delete_product,
@@ -105,6 +109,48 @@ def search_products_route(
         if r.get("parent_product_id")
     ]
     return ProductSearchResponse(items=items, total=len(items), query=q)
+
+
+@router.get("/{product_id}/versions", response_model=ProductVersionsResponse)
+def list_product_versions(
+    product_id: str = Path(..., min_length=1, max_length=128),
+    current_user: dict = Depends(get_current_user),
+) -> ProductVersionsResponse:
+    """列出该产品已有的版本与各版本评论数 / 最近分析时间。
+
+    供宣传文案、对比分析等"按版本聚合"场景使用。
+    """
+    user_id = int(current_user["id"])
+    pid = product_id.strip()
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT
+                    s.version AS version,
+                    COALESCE(SUM(s.total_reviews), 0) AS review_count,
+                    MAX(s.created_at) AS last_analyzed_at
+                FROM sessions s
+                WHERE s.user_id = %s AND s.product_id = %s
+                GROUP BY s.version
+                ORDER BY s.version ASC
+                """,
+                (user_id, pid),
+            )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+
+    items = [
+        ProductVersionItem(
+            version=str(r["version"] or "V1"),
+            review_count=int(r.get("review_count") or 0),
+            last_analyzed_at=r.get("last_analyzed_at"),
+        )
+        for r in rows
+    ]
+    return ProductVersionsResponse(items=items, total=len(items), product_id=pid)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
