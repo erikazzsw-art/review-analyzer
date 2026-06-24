@@ -29,7 +29,6 @@ export function SettingsPanel({ initialSettings }: SettingsPanelProps) {
   const [isCheckouting, setIsCheckouting] = useState(false);
   const checkoutContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const billingPlan = initialSettings.billing.plan || "free";
   const configured = Boolean(initialSettings.billing.configured);
 
   const canSave = useMemo(
@@ -274,25 +273,6 @@ export function SettingsPanel({ initialSettings }: SettingsPanelProps) {
       </div>
 
       <div className="space-y-6">
-        <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
-          <div className="inline-flex rounded-pill bg-[#eef6ff] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#4a7dc7]">
-            BILLING
-          </div>
-          <h3 className="mt-4 font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-            当前订阅
-          </h3>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="rounded-card border border-line bg-white px-4 py-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">Plan</div>
-              <div className="mt-2 text-lg font-semibold text-ink">{billingPlan}</div>
-            </div>
-            <div className="rounded-card border border-line bg-white px-4 py-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">Paddle</div>
-              <div className="mt-2 text-lg font-semibold text-ink">{configured ? "已配置" : "未配置"}</div>
-            </div>
-          </div>
-        </section>
-
         <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
           <div className="inline-flex rounded-pill bg-[#eef6ff] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#4a7dc7]">
             PRODUCT RULES
