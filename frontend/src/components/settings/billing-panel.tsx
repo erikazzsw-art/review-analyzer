@@ -43,7 +43,7 @@ export function BillingPanel({ billing }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div>
       <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
         <h2 className="font-heading text-2xl font-extrabold tracking-tight text-ink">订阅计费</h2>
         <p className="mt-1 text-sm text-soft">当前计划：{billing.plan || "Free"}</p>

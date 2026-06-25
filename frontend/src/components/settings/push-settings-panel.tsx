@@ -144,7 +144,7 @@ export function PushSettingsPanel({ initialSettings }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="space-y-8">
       {/* ① 绑定飞书 */}
       <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
         <h2 className="font-heading text-2xl font-extrabold tracking-tight text-ink">绑定飞书</h2>
