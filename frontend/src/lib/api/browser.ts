@@ -25,6 +25,8 @@ import type {
   ProductSearchResponse,
   QaAskPayload,
   QaAskResponse,
+  QaConversation,
+  QaMessage,
   QaProduct,
   ComparisonReportCreatePayload,
   ComparisonReportResponse,
@@ -423,6 +425,48 @@ export async function askReviews(
   }
 
   return (await response.json()) as QaAskResponse;
+}
+
+export async function createQaConversation(productIds: string[]): Promise<QaConversation> {
+  const response = await fetch(`${getApiBaseUrl()}/qa/conversations`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ product_ids: productIds }),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as QaConversation;
+}
+
+export async function sendQaMessage(
+  conversationId: number,
+  question: string,
+  topK: number = 5,
+): Promise<QaMessage> {
+  const response = await fetch(`${getApiBaseUrl()}/qa/conversations/${conversationId}/messages`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, top_k: topK }),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as QaMessage;
+}
+
+export async function fetchQaConversationMessages(conversationId: number): Promise<QaMessage[]> {
+  const response = await fetch(`${getApiBaseUrl()}/qa/conversations/${conversationId}/messages`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as QaMessage[];
 }
 
 export async function fetchActionItems(): Promise<ActionItemsResponse> {

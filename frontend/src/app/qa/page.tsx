@@ -17,8 +17,8 @@ export default async function QaPage() {
     return (
       <AppShell
         currentPath="/qa"
-        title="先选产品范围，再直接问评论。"
-        description="问评论是 Pro 能力，支持按 1-5 个产品聚合评论后提问，并保留原文引用。"
+        title="问评论"
+        description="选择产品，围绕评论自由提问，支持多轮追问。"
       >
         <QaPanel products={products} />
       </AppShell>

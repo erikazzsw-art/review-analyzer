@@ -397,6 +397,24 @@ export type QaAskPayload = {
   topK?: number;
 };
 
+export type QaConversation = {
+  id: number;
+  product_ids: string[];
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type QaMessage = {
+  id: number;
+  conversation_id: number;
+  role: "user" | "assistant";
+  content: string;
+  citations: QaCitation[];
+  retrieval_method: string | null;
+  created_at: string;
+};
+
 export type ActionItem = {
   id: number;
   user_id: number;

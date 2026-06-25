@@ -320,8 +320,9 @@ def answer_question(
     comments: list[dict],
     api_key: str | None = None,
     top_k: int = DEFAULT_TOP_K,
+    history: list[dict] | None = None,
 ) -> dict:
-    """检索评论并生成回答，返回 answer + citations。"""
+    """检索评论并生成回答，返回 answer + citations。history 为多轮对话历史 [{"role": ..., "content": ...}]。"""
     retrieval_method = "text"
     citations: list[dict] = []
     try:
@@ -350,21 +351,26 @@ def answer_question(
             timeout=30.0,
         )
         context = _format_context(citations)
+        messages: list[dict] = [
+            {
+                "role": "system",
+                "content": (
+                    "你是跨境电商评论分析助手。只能基于给定评论回答问题；"
+                    "如果证据不足，要明确说明。回答要简洁，并用 [1] [2] 这样的编号引用评论。"
+                ),
+            },
+        ]
+        if history:
+            messages.extend(history)
+        messages.append(
+            {
+                "role": "user",
+                "content": f"用户问题：{question}\n\n相关评论：\n{context}",
+            },
+        )
         response = client.chat.completions.create(
             model="deepseek-chat",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "你是跨境电商评论分析助手。只能基于给定评论回答问题；"
-                        "如果证据不足，要明确说明。回答要简洁，并用 [1] [2] 这样的编号引用评论。"
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": f"用户问题：{question}\n\n相关评论：\n{context}",
-                },
-            ],
+            messages=messages,
             temperature=0.2,
             max_tokens=700,
         )

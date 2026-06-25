@@ -232,6 +232,33 @@ class QaAskResponse(BaseModel):
     citations: list[QaCitationPayload] = Field(default_factory=list)
 
 
+class QaConversationCreate(BaseModel):
+    product_ids: list[str]
+
+
+class QaConversationResponse(BaseModel):
+    id: int
+    product_ids: list[str]
+    title: str | None = None
+    created_at: str
+    updated_at: str
+
+
+class QaMessageCreate(BaseModel):
+    question: str
+    top_k: int = 5
+
+
+class QaMessageResponse(BaseModel):
+    id: int
+    conversation_id: int
+    role: str
+    content: str
+    citations: list[QaCitationPayload] = Field(default_factory=list)
+    retrieval_method: str | None = None
+    created_at: str
+
+
 class ActionItemCreatePayload(BaseModel):
     product_id: int | None = None
     variant_id: int | None = None
