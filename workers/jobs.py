@@ -45,6 +45,7 @@ from review_analyzer.database import (
     update_upload_job,
 )
 from review_analyzer.product_store import create_product, get_product_by_parent_id
+from review_analyzer.quota import quota_consume
 from review_analyzer.rag import embed_session_comments
 
 from .queue import get_queue
@@ -463,6 +464,9 @@ def process_upload_job(user_id: int, job_id: int) -> None:
 
         update_session_stats(user_id, session_id, len(unprocessed), positive_count, negative_count)
 
+        # 扣减 review_analyze 月度额度
+        quota_consume(user_id, "review_analyze", len(unprocessed))
+
         # V4-T4 Step 5: 记录 LLM 用量日志
         usage_rows: list[dict] = []
         for comment, v4 in zip(unprocessed, ordered_v4_results):
@@ -819,7 +823,6 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
     import asyncio
 
     from backend_api.app.services.rainforest import RainforestError, fetch_reviews_by_asin
-    from review_analyzer.quota import quota_consume
 
     try:
         job = get_upload_job(user_id, job_id)

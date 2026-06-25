@@ -22,6 +22,7 @@ from review_analyzer.database import (
     update_upload_job,
 )
 from review_analyzer.parser import parse_file
+from review_analyzer.quota import quota_check, quota_check_atomic
 from workers.jobs import enqueue_upload_job_task, process_upload_job
 
 router = APIRouter(tags=["uploads"])
@@ -34,6 +35,19 @@ def _job_payload(job: dict[str, Any]) -> UploadJobPayload:
 
 
 def _enqueue_upload_job(user_id: int, payload: dict[str, Any]) -> UploadJobResponse:
+    comments = payload.get("comments") or []
+    comment_count = len(comments)
+
+    # 单文件行数限制
+    allowed, msg = quota_check(user_id, "upload_rows_per_file", comment_count)
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
+
+    # 月度评论分析额度预检
+    allowed, msg = quota_check_atomic(user_id, "review_analyze", comment_count)
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
+
     job_id = create_upload_job(
         user_id,
         {
