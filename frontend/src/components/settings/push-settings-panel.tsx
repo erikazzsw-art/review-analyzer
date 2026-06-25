@@ -144,10 +144,10 @@ export function PushSettingsPanel({ initialSettings }: Props) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {/* ① 绑定飞书 */}
-      <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
-        <h2 className="font-heading text-2xl font-extrabold tracking-tight text-ink">绑定飞书</h2>
+      <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
+        <h2 className="text-base font-bold text-ink">绑定飞书</h2>
         <p className="mt-1 text-sm text-soft">配置飞书群机器人 Webhook，启用自动推送。</p>
         <div className="mt-5 space-y-4">
           <label className="block space-y-1">
@@ -171,8 +171,8 @@ export function PushSettingsPanel({ initialSettings }: Props) {
       </section>
 
       {/* ② 全局触发规则 */}
-      <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
-        <h2 className="font-heading text-xl font-extrabold tracking-tight text-ink">全局触发规则</h2>
+      <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
+        <h2 className="text-base font-bold text-ink">全局触发规则</h2>
         <p className="mt-1 text-sm text-soft">满足以下任一条件时自动推送。环比窗口固定 14 天。</p>
         <div className="mt-4 space-y-3">
           <RuleToggle label="问题占比 ≥" checked={rules.issue_pct_enabled} value={rules.issue_pct_threshold} onToggle={(v) => updateRule("issue_pct_enabled", v)} onValue={(v) => updateRule("issue_pct_threshold", v)} />
@@ -189,8 +189,8 @@ export function PushSettingsPanel({ initialSettings }: Props) {
       </section>
 
       {/* ③ 产品级专项规则 */}
-      <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
-        <h2 className="font-heading text-xl font-extrabold tracking-tight text-ink">产品级专项规则</h2>
+      <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
+        <h2 className="text-base font-bold text-ink">产品级专项规则</h2>
         <p className="mt-1 text-sm text-soft">为特定产品设置独立的告警阈值。</p>
         <div className="mt-4 space-y-3">
           {productRules.map((rule, idx) => (
@@ -224,8 +224,8 @@ export function PushSettingsPanel({ initialSettings }: Props) {
       </section>
 
       {/* ④ 部门负责人 */}
-      <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
-        <h2 className="font-heading text-xl font-extrabold tracking-tight text-ink">部门负责人</h2>
+      <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
+        <h2 className="text-base font-bold text-ink">部门负责人</h2>
         <p className="mt-1 text-sm text-soft">配置后推送消息将 @对应负责人。Open ID 从飞书管理后台获取。</p>
         {smartLoading ? <div className="py-4 text-sm text-soft">加载中...</div> : (
           <div className="mt-4 space-y-2">
@@ -240,8 +240,8 @@ export function PushSettingsPanel({ initialSettings }: Props) {
       </section>
 
       {/* ⑤ 周期推送 */}
-      <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
-        <h2 className="font-heading text-xl font-extrabold tracking-tight text-ink">周期推送</h2>
+      <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
+        <h2 className="text-base font-bold text-ink">周期推送</h2>
         {smartLoading ? <div className="py-4 text-sm text-soft">加载中...</div> : (
           <div className="mt-4 space-y-3">
             <label className="flex items-center gap-2 text-sm text-ink">
@@ -281,8 +281,8 @@ export function PushSettingsPanel({ initialSettings }: Props) {
       </section>
 
       {/* ⑥ 升级规则 */}
-      <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
-        <h2 className="font-heading text-xl font-extrabold tracking-tight text-ink">升级规则</h2>
+      <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
+        <h2 className="text-base font-bold text-ink">升级规则</h2>
         <p className="mt-1 text-sm text-soft">当某问题连续 N 个推送周期满足条件时，自动升级并生成行动建议。</p>
         {smartLoading ? <div className="py-4 text-sm text-soft">加载中...</div> : (
           <div className="mt-4 grid grid-cols-3 gap-3">

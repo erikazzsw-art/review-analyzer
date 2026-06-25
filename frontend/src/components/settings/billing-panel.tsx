@@ -44,8 +44,8 @@ export function BillingPanel({ billing }: Props) {
 
   return (
     <div>
-      <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card">
-        <h2 className="font-heading text-2xl font-extrabold tracking-tight text-ink">订阅计费</h2>
+      <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
+        <h2 className="text-base font-bold text-ink">订阅计费</h2>
         <p className="mt-1 text-sm text-soft">当前计划：{billing.plan || "Free"}</p>
         <div ref={checkoutRef} className="hidden" aria-hidden="true" />
         <div className="mt-5 flex items-center gap-4">
