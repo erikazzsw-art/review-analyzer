@@ -1371,6 +1371,8 @@ NX-M8 验收记录（Phase A）：
 | 2026-06-14 | V4.5-T6 | 用户反馈浮窗组件全部完成：migration + 后端 route（含邮件通知）+ 前端 Widget（FAB+情绪+表单+中英文自适应+快捷键）+ AppShell 集成 + PostHog 埋点；已推送 develop（3 commits） |
 | 2026-06-14 | V4.5-T7 | 新增「中国大陆访问优化」计划：Phase A Cloudflare CDN + 性能优化（立即执行）；Phase B ICP 备案 + 国内节点（付费用户 ≥10 触发）|
 | 2026-06-18 | 前端测试 | 决策：当前阶段不引入前端测试框架（Vitest/Jest）。理由：快速迭代期、CI 已有 tsc+build 兜底、核心逻辑在后端。触发条件：出现复杂前端逻辑/状态机、频繁回归 bug、核心功能稳定进入维护期时引入 Vitest + React Testing Library |
+| 2026-06-25 | V5-T3 增强 | 推送设置页重构（Part A）：设置页改为 sidebar 3 子页（push/api-keys/billing），推送页合并全局规则+产品规则+周期推送+升级规则为单页全宽布局；推送内容增强（Part B）：B1 条数+占比、B2 AI 总结建议、B3 可点击链接、B4 行动中心引导、B5 环比推送增强、B6 TOP 问题复盘进度 |
+| 2026-06-25 | V4.5-T12 | 可观测性页面重构：从 265 行单页重构为 5-Tab 管理后台（概览/成本/任务/缓存/告警），新增时间范围选择器+模型状态灯行+可展开 trace timeline+成本堆叠柱状图；从用户 sidebar 移除，仅管理员 URL 访问；10 个新组件于 `components/observability/` |
 
 ---
 
@@ -3709,6 +3711,11 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 - [x] 图表库：recharts（检查 package.json，无则引入）
 - [x] sidebar 添加"可观测性"子导航
 - [x] 验证：`npm run dev` → /settings/observability 渲染正常（TypeScript 编译通过，API 端点已验证）
+- [x] **2026-06-25 重构**：基于 Langfuse/Helicone/Portkey/Datadog 调研，从 265 行单页重构为 5-Tab 管理后台：
+  - Tab 容器 + 时间范围选择器（1h/6h/24h/7d/30d）+ 模型状态灯行（60s 轮询）
+  - 概览 Tab（指标卡+延迟趋势+失败任务）/ 成本 Tab（堆叠柱状图+模型汇总表，集成 `/llm-costs` API）/ 任务 Tab（状态筛选+可展开 trace timeline+分页）/ 缓存 Tab / 告警 Tab（占位）
+  - 从用户 sidebar 导航中移除，仅管理员通过 URL 访问
+  - 10 个新组件文件于 `frontend/src/components/observability/`
 
 #### Step 5: C5 Feishu 告警（1天）
 

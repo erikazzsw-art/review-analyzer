@@ -179,6 +179,11 @@ def periodic_digest_job(user_id: int) -> dict[str, Any]:
         period_label = f"{period_start.isoformat()} ~ {period_end.isoformat()}"
         secret = settings.get("webhook_secret", "")
 
+        # B6: 获取 TOP 问题复盘进度
+        from review_analyzer.notifier import _get_action_progress
+        top_tag_names = [i.get("tag", "") for i in top_issues[:5] if i.get("tag")]
+        action_progress = _get_action_progress(user_id, product_id, top_tag_names)
+
         push_result = send_rich_push(
             webhook_url=webhook_url,
             product_name=product_name,
@@ -188,6 +193,8 @@ def periodic_digest_job(user_id: int) -> dict[str, Any]:
             escalation_results=escalation_actions or None,
             top_highlights=top_highlights[:3],
             secret=secret,
+            action_progress=action_progress or None,
+            product_id=product_id,
         )
 
         results.append({

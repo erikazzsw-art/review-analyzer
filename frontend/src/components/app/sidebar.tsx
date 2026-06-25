@@ -65,7 +65,6 @@ export function Sidebar({ currentPath }: SidebarProps) {
       items: [
         { href: "/products", label: t("products") },
         { href: "/settings", label: t("pushSettings") },
-        { href: "/settings/observability", label: t("observability") },
       ],
     },
   ];
