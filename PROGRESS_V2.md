@@ -1089,6 +1089,10 @@ NX-M2 验收记录：
 - [x] 建立 `/reviews`
 - [x] 验收从结果页创建 action，再生成 tracker，再回写复盘结果
 - [x] 若失败，只回滚闭环模块
+- [x] 问评论对话式 UI 重构 + 多轮对话支持（2026-06-25）
+  - [x] 前端改为 AI 对话框形式（消息列表 + Popover 产品选择器 + 预设问题卡片）
+  - [x] 后端新增 qa_conversations/qa_messages 表 + 对话管理 API
+  - [x] RAG 模块支持 history 参数，LLM 感知多轮上下文
 
 NX-M6 验收记录：
 
@@ -2637,6 +2641,113 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - A 累计推荐 4 人后，第 5 人奖励自动升为 ¥50 + 1000 额度
   - 提现申请正常创建，管理后台可见
   - 防刷规则：同 IP 重复注册不计入有效推荐
+
+### V5-T5: 自研评论标注模型 — 知识蒸馏摆脱 LLM API 实时依赖（P2，月活跃用户 ≥50 或日均分析量 ≥5000 条后启动）
+
+> **背景**：当前架构每条评论都需实时调用 DeepSeek API（~1-3 秒/条），432 条评论需 Worker 运行数分钟。
+> 竞品 Shulex 采用「自研 tagging model + 预标注入库」模式，用户请求时只做聚合统计，10 秒出结果。
+> 本任务通过知识蒸馏将 DeepSeek 的标注能力迁移到自研轻量模型，实现毫秒级推理 + 离线预标注。
+
+#### 阶段一：数据积累与标注质量监控（2-4 周，无额外开发成本）
+
+**前提**：Worker 增量写入已部署（V4.5-T11 bug fix），系统正常积累分析数据。
+
+- [ ] 确认 `comments` 表中已有字段满足训练需求：`content`, `sentiment`, `aspects_json`, `issue_tag`, `highlight_tag`, `is_processed`
+- [ ] 编写数据导出脚本 `scripts/export_training_data.py`：从生产 DB 导出 `is_processed=1` 的评论为 JSONL 格式
+  - 字段：content, rating, sentiment, aspects (from aspects_json), issue_tag, highlight_tag
+  - 过滤条件：`analyzer_version >= 'v2.4'`（确保用最新 prompt 标注的数据）
+  - 目标：≥10,000 条高质量标注样本
+- [ ] 在 `PROGRESS_V2.md` 中设置里程碑追踪：每周统计 `SELECT COUNT(*) FROM comments WHERE is_processed=1 AND analyzer_version >= 'v2.4'`
+- [ ] 建立标注质量基线：从 Golden Set（`data/golden_set/`）中导出人工标注对照集
+
+#### 阶段二：模型选型与 PoC 训练（2 周）
+
+**启动条件**：积累 ≥10,000 条标注数据
+
+- [ ] 模型选型评估（选 1 个）：
+  - 方案 A：`bert-base-chinese` fine-tune（多任务：sentiment + aspect 分类），推理 ~5ms/条
+  - 方案 B：`Qwen2-0.5B` LoRA fine-tune（保留一定生成能力，可输出 JSON），推理 ~50ms/条
+  - 方案 C：`distilbert-multilingual` + 分类头（跨语言支持好，推理 ~3ms/条）
+  - 评估标准：Golden Set 准确率 ≥ 90% + 推理速度 ≤ 50ms/条 + 显存 ≤ 2GB
+- [ ] 搭建训练环境：`review_analyzer/ml/` 目录结构
+  ```
+  review_analyzer/ml/
+  ├── train.py           # 训练脚本
+  ├── evaluate.py        # Golden Set 评测
+  ├── inference.py       # 推理服务封装
+  ├── export_onnx.py     # 导出 ONNX 用于生产部署
+  └── config.yaml        # 模型配置
+  ```
+- [ ] 训练 PoC 模型，在 Golden Set 上评测：
+  - sentiment accuracy ≥ 92%（对标 DeepSeek 的 ~95%）
+  - aspect top-1 key accuracy ≥ 88%
+  - issue_tag / highlight_tag 提取 F1 ≥ 0.85
+- [ ] 成本对比文档：自研模型 vs DeepSeek API（推理速度、成本/条、准确率）
+
+#### 阶段三：双轨运行 — Shadow Mode（2 周）
+
+**启动条件**：PoC 模型 Golden Set 达标
+
+- [ ] 部署自研模型为独立服务（Docker container，GPU 可选 / CPU ONNX 推理）
+- [ ] Worker 新增 Shadow Mode 配置：`USE_LOCAL_MODEL_SHADOW=true`
+  - 每条评论同时调 DeepSeek + 本地模型
+  - 本地模型结果不写入 `comments` 表，写入独立的 `ml_shadow_results` 表
+  - 对比两者的 sentiment / aspect 一致率
+- [ ] 建立自动化对比 dashboard（或定期脚本）：
+  - 一致率 ≥ 95% 进入下一阶段
+  - 不一致的 case 导出为「困难样本」加入训练集（active learning）
+- [ ] 持续迭代：困难样本回灌 → 重新训练 → 评测 → 直到一致率达标
+
+#### 阶段四：切换主链路（1 周）
+
+**启动条件**：Shadow Mode 一致率 ≥ 95% 持续 7 天
+
+- [ ] `workers/jobs.py` 新增模型路由开关：`ANALYSIS_ENGINE=local|deepseek|hybrid`
+  - `local`：全量走自研模型（毫秒级，无 API 成本）
+  - `deepseek`：保持现状（兜底）
+  - `hybrid`：自研模型主 + DeepSeek 对低置信度样本做二次确认
+- [ ] 压测：1000 条评论批量分析，确认 < 30 秒完成（对比当前 ~10 分钟）
+- [ ] 灰度切换：先 10% 流量 → 50% → 100%，每阶段观察 3 天
+- [ ] 切换后 DeepSeek API 降级为 fallback（置信度 < 0.8 时触发）
+
+#### 阶段五：预标注模式（长期方向）
+
+**启动条件**：阶段四成功，且有 V5-T1 评论自动获取功能
+
+- [ ] 评论入库时自动触发本地模型标注（类 Shulex 模式）
+- [ ] 用户点击「分析」时只做聚合统计 + LLM 摘要（10 秒内出结果）
+- [ ] 定期重标注：新模型版本上线后，对历史评论做批量重标注（夜间 cron job）
+
+#### 里程碑与退出标准
+
+| 里程碑 | 条件 | 预计时间 |
+|--------|------|---------|
+| 数据就绪 | ≥10,000 条 v2.4+ 标注数据 | 阶段一完成 |
+| PoC 达标 | Golden Set sentiment acc ≥ 92% | 阶段二完成 |
+| Shadow 达标 | 7 天一致率 ≥ 95% | 阶段三完成 |
+| 主链路切换 | 1000 条 < 30s + 无准确率回归 | 阶段四完成 |
+| 预标注上线 | 入库即标注 + 用户 10s 出结果 | 阶段五完成 |
+
+#### 成本收益预估
+
+| 维度 | 当前（DeepSeek API） | 目标（自研模型） |
+|------|---------------------|-----------------|
+| 推理速度 | 1-3 秒/条 | 3-50 毫秒/条 |
+| 432 条分析耗时 | 3-10 分钟 | < 30 秒 |
+| 成本/千条 | ¥0.3（API 费用） | ¥0.01（GPU 算力分摊） |
+| Worker 崩溃风险 | 高（长时间进程） | 极低（秒级完成） |
+| 依赖外部 API | 是（DeepSeek 宕机=全挂） | 否（自主可控） |
+
+#### 风险与应对
+
+| 风险 | 应对措施 |
+|------|---------|
+| 标注数据不足 | 阶段一期间优先积累数据；必要时用 DeepSeek 对历史未标注评论补标 |
+| 模型准确率不达标 | 保持 DeepSeek fallback，hybrid 模式不影响用户体验 |
+| GPU 成本 | ONNX 量化后可用 CPU 推理；阿里云 GPU 实例按需开 |
+| 新品类泛化差 | 持续收集用户反馈样本 + 定期 fine-tune |
+
+---
 
 ### V5 路线图原则
 

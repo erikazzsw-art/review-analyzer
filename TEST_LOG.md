@@ -425,3 +425,19 @@ File "database.py", line 13, in get_connection
 > 2. **ECS 上只有一份仓库**（`/opt/clueai/`），不要因为找不到路径就重新 clone，避免多仓库造成混乱
 > 3. **BuildKit 兼容性**：阿里云 ECS 的 Docker 版本若遇到 gRPC 乱码，用 `DOCKER_BUILDKIT=0` 回退到传统构建器
 > 4. **SSH 连接限制**：ECS 安全组仅允许 IPv4 访问 22 端口，本地若走 IPv6 网络需确认连通性
+
+---
+
+### 2026-06-25 Worker 批量分析崩溃 — 增量写入修复
+
+| 问题 | 现象 | 根因 | 解决方案 |
+|------|------|------|---------|
+| Session 58（432条评论）好评率/差评率均为 0%，全部显示"未分析" | upload_job status=processing 卡住，processed_rows=67，33秒后进程死亡 | Worker 的 batch-write-at-end 模式：所有评论分析完才一次性写入 DB；进程崩溃后零数据保存。同时 Scheduler 未启用 stale job scan，卡死任务无人检测 | 4 层修复：(1) 增量写入 — 每条分析完立即 `update_comment_analysis()` 写入 DB；(2) 断点续跑 — job 重启后只处理 `is_processed=0` 的剩余评论；(3) Scheduler 启用每 5 分钟 stale scan + 自动重试（≤2次）；(4) Docker worker 加 memory limit 1024M + healthcheck |
+
+---
+
+### 2026-06-25 问评论页面对话式 UI 重构
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-06-25 | feat | 问评论页面从表单布局改为 AI 对话框形式；后端新增多轮对话支持（qa_conversations + qa_messages 表 + 对话管理 API + RAG history 参数） | tsc PASS, ruff PASS, next build PASS |

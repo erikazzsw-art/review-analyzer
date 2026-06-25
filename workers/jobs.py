@@ -99,69 +99,75 @@ def process_upload_job(user_id: int, job_id: int) -> None:
 
         update_upload_job(user_id, job_id, {"status": "processing"})
 
-        batch_hash = payload.get("batch_hash")
-        if not batch_hash and comments_payload:
-            batch_hash = compute_batch_hash(comments_payload)
+        # 断点续跑：如果 job 已有 session_id，跳过创建阶段直接续跑未处理评论
+        existing_session_id = job.get("session_id")
+        if existing_session_id:
+            session_id = int(existing_session_id)
+            logger.info("upload_job %s: resuming session %d", job_id, session_id)
+        else:
+            batch_hash = payload.get("batch_hash")
+            if not batch_hash and comments_payload:
+                batch_hash = compute_batch_hash(comments_payload)
 
-        if product_ref_id is None:
-            existing_product = get_product_by_parent_id(user_id, product_id)
-            if existing_product:
-                product_ref_id = int(existing_product["id"])
-            else:
-                product_ref_id = create_product(
-                    user_id,
-                    {
-                        "parent_product_id": product_id,
-                        "name": payload.get("product_name"),
-                        "platform": payload.get("platform"),
-                        "category": payload.get("category"),
-                        "lifecycle_stage": "growth",
-                        "current_version": version,
-                        "owner_role": "运营",
-                    },
-                )
+            if product_ref_id is None:
+                existing_product = get_product_by_parent_id(user_id, product_id)
+                if existing_product:
+                    product_ref_id = int(existing_product["id"])
+                else:
+                    product_ref_id = create_product(
+                        user_id,
+                        {
+                            "parent_product_id": product_id,
+                            "name": payload.get("product_name"),
+                            "platform": payload.get("platform"),
+                            "category": payload.get("category"),
+                            "lifecycle_stage": "growth",
+                            "current_version": version,
+                            "owner_role": "运营",
+                        },
+                    )
 
-        session_id = create_session(
-            user_id,
-            {
-                "product_id": product_id,
-                "version": version,
-                "auto_title": (
-                    f"{datetime.now().strftime('%Y-%m-%d')} | {product_id} | "
-                    f"{workflow_purpose or '日常评论分析'} | {len(comments_payload)}条"
-                ),
-                "date_range_start": payload.get("date_start"),
-                "date_range_end": payload.get("date_end"),
-                "total_reviews": len(comments_payload),
-                "positive_count": 0,
-                "negative_count": 0,
-                "category": payload.get("category"),
-                "prompt_version": PROMPT_VERSION,
-                "version_notes": payload.get("version_notes"),
-                "workflow_purpose": workflow_purpose,
-                "product_ref_id": product_ref_id,
-                "variant_ref_id": variant_ref_id,
-                "batch_hash": batch_hash,
-            },
-        )
+            session_id = create_session(
+                user_id,
+                {
+                    "product_id": product_id,
+                    "version": version,
+                    "auto_title": (
+                        f"{datetime.now().strftime('%Y-%m-%d')} | {product_id} | "
+                        f"{workflow_purpose or '日常评论分析'} | {len(comments_payload)}条"
+                    ),
+                    "date_range_start": payload.get("date_start"),
+                    "date_range_end": payload.get("date_end"),
+                    "total_reviews": len(comments_payload),
+                    "positive_count": 0,
+                    "negative_count": 0,
+                    "category": payload.get("category"),
+                    "prompt_version": PROMPT_VERSION,
+                    "version_notes": payload.get("version_notes"),
+                    "workflow_purpose": workflow_purpose,
+                    "product_ref_id": product_ref_id,
+                    "variant_ref_id": variant_ref_id,
+                    "batch_hash": batch_hash,
+                },
+            )
 
-        comments_to_insert = _build_comments(comments_payload, product_id, version)
-        for comment in comments_to_insert:
-            comment["session_id"] = session_id
-        add_comments_batch(user_id, comments_to_insert)
+            comments_to_insert = _build_comments(comments_payload, product_id, version)
+            for comment in comments_to_insert:
+                comment["session_id"] = session_id
+            add_comments_batch(user_id, comments_to_insert)
 
-        update_upload_job(
-            user_id,
-            job_id,
-            {
-                "session_id": session_id,
-                "total_rows": len(comments_to_insert),
-            },
-        )
+            update_upload_job(
+                user_id,
+                job_id,
+                {
+                    "session_id": session_id,
+                    "total_rows": len(comments_to_insert),
+                },
+            )
 
         unprocessed = get_unprocessed_comments(user_id, session_id)
         cluster_count = 0
-        trace.end_stage(meta={"review_count": len(comments_to_insert)})
+        trace.end_stage(meta={"review_count": len(unprocessed)})
 
         if unprocessed:
             trace.begin_stage("embed")
@@ -395,32 +401,38 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             ordered_v4_results = [id_to_v4.get(c["id"], {"error": "no_result"}) for c in unprocessed]
 
             _progress_callback(len(unprocessed), len(unprocessed))
-            results = []
-            for comment, v4 in zip(unprocessed, ordered_v4_results):
-                if v4.get("error"):
-                    results.append({
-                        "sentiment": "unrecognizable",
-                        "content_sentiment": "unrecognizable",
-                        "category": "无效乱码",
-                        "priority": "无",
-                        "reason": "",
-                        "improvement": "",
-                        "issue_tag": "",
-                        "highlight_tag": "",
-                        "aspects_json": None,
-                        "analyzer_version": ANALYZER_VERSION,
-                        "cache_hit_level": v4.get("cache_hit_level"),
-                        "cache_source_id": v4.get("cache_source_id"),
-                    })
-                    continue
-                legacy = aspects_to_legacy_schema(
+        else:
+            ordered_v4_results = []
+
+        # 增量写入：每条评论分析完立即持久化，崩溃不丢进度
+        positive_count = 0
+        negative_count = 0
+        results = []
+        for comment, v4 in zip(unprocessed, ordered_v4_results):
+            if v4.get("error"):
+                result = {
+                    "sentiment": "unrecognizable",
+                    "content_sentiment": "unrecognizable",
+                    "category": "无效乱码",
+                    "priority": "无",
+                    "reason": "",
+                    "improvement": "",
+                    "issue_tag": "",
+                    "highlight_tag": "",
+                    "aspects_json": None,
+                    "analyzer_version": ANALYZER_VERSION,
+                    "cache_hit_level": v4.get("cache_hit_level"),
+                    "cache_source_id": v4.get("cache_source_id"),
+                }
+            else:
+                result = aspects_to_legacy_schema(
                     aspects=v4.get("aspects", []),
                     sentiment=v4.get("sentiment", "neutral"),
                     content=comment.get("content", ""),
                     pain_points=v4.get("pain_points", []),
                     highlights=v4.get("highlights", []),
                 )
-                legacy["aspects_json"] = {
+                result["aspects_json"] = {
                     "sentiment": v4.get("sentiment"),
                     "aspects": v4.get("aspects", []),
                     "pain_points": v4.get("pain_points", []),
@@ -429,16 +441,10 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "prompt_version": v4.get("prompt_version", PROMPT_VERSION),
                     "cluster_propagated": v4.get("cluster_propagated", False),
                 }
-                legacy["analyzer_version"] = ANALYZER_VERSION
-                legacy["cache_hit_level"] = v4.get("cache_hit_level")
-                legacy["cache_source_id"] = v4.get("cache_source_id")
-                results.append(legacy)
-        else:
-            results = []
+                result["analyzer_version"] = ANALYZER_VERSION
+                result["cache_hit_level"] = v4.get("cache_hit_level")
+                result["cache_source_id"] = v4.get("cache_source_id")
 
-        positive_count = 0
-        negative_count = 0
-        for comment, result in zip(unprocessed, results):
             rating = comment.get("rating")
             if rating is not None:
                 try:
@@ -446,7 +452,10 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     result["sentiment"] = "negative" if rating_val <= 3 else "positive"
                 except (TypeError, ValueError):
                     pass
+
             update_comment_analysis(user_id, int(comment["id"]), result)
+            results.append(result)
+
             if result.get("sentiment") == "positive":
                 positive_count += 1
             elif result.get("sentiment") == "negative":

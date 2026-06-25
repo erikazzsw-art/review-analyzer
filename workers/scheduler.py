@@ -11,12 +11,13 @@ import logging
 import time
 from datetime import datetime
 
-from workers.periodic_jobs import enqueue_periodic_digest
+from workers.periodic_jobs import enqueue_periodic_digest, enqueue_stale_job_scan
 from workers.queue import get_redis_connection
 
 logger = logging.getLogger(__name__)
 
 SCAN_INTERVAL_SECONDS = 60
+STALE_SCAN_INTERVAL_SECONDS = 300
 LOCK_PREFIX = "scheduler:periodic_push:lock:"
 LOCK_TTL_SECONDS = 300
 
@@ -106,9 +107,10 @@ def _acquire_lock(redis_conn, user_id: int) -> bool:
 
 
 def run_scheduler() -> None:
-    """主循环：每分钟扫描一次到期用户，入队推送任务"""
-    logger.info("scheduler: started, scan interval=%ds", SCAN_INTERVAL_SECONDS)
+    """主循环：每分钟扫描一次到期用户，入队推送任务；每 5 分钟扫描卡死任务"""
+    logger.info("scheduler: started, scan interval=%ds, stale scan interval=%ds", SCAN_INTERVAL_SECONDS, STALE_SCAN_INTERVAL_SECONDS)
     redis_conn = get_redis_connection()
+    last_stale_scan = 0.0
 
     while True:
         try:
@@ -125,6 +127,17 @@ def run_scheduler() -> None:
                     logger.info("scheduler: enqueued periodic digest for user %d", user_id)
                 except Exception:
                     logger.exception("scheduler: failed to enqueue for user %d", user_id)
+
+            # 每 STALE_SCAN_INTERVAL_SECONDS 秒扫描一次卡死任务
+            import time as _time
+            now = _time.time()
+            if now - last_stale_scan >= STALE_SCAN_INTERVAL_SECONDS:
+                try:
+                    enqueue_stale_job_scan()
+                    logger.info("scheduler: enqueued stale job scan")
+                except Exception:
+                    logger.exception("scheduler: failed to enqueue stale job scan")
+                last_stale_scan = now
 
         except Exception:
             logger.exception("scheduler: scan cycle error")

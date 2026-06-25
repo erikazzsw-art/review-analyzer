@@ -219,15 +219,17 @@ def enqueue_periodic_digest(user_id: int) -> str:
 # ============================================================
 
 STALE_THRESHOLD_MINUTES = 15
+MAX_AUTO_RETRY = 2
 
 
 def scan_stale_jobs() -> dict[str, Any]:
-    """扫描卡死任务：status='processing' 超过阈值未更新，标记 failed + 告警。
+    """扫描卡死任务：status='processing' 超过阈值未更新，自动重试或标记 failed + 告警。
 
     设计：
     - 每 5 分钟由 scheduler 入队一次
     - 查 upload_jobs WHERE status='processing' AND updated_at < now() - 15min
-    - 逐个标记为 failed（error_message 写明超时原因）
+    - retry_count < MAX_AUTO_RETRY 的 job 重新入队（断点续跑）
+    - 超过重试上限的标记为 failed
     - 汇总后发飞书运维告警
     """
     import psycopg2
@@ -240,7 +242,8 @@ def scan_stale_jobs() -> dict[str, Any]:
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """SELECT id, user_id, status, created_at, updated_at
+                """SELECT id, user_id, session_id, status, created_at, updated_at,
+                          COALESCE(retry_count, 0) AS retry_count
                    FROM upload_jobs
                    WHERE status = 'processing'
                      AND updated_at < NOW() - INTERVAL '%s minutes'""",
@@ -254,23 +257,72 @@ def scan_stale_jobs() -> dict[str, Any]:
         logger.info("scan_stale_jobs: no stale jobs found")
         return {"ok": True, "stale_count": 0}
 
+    retried_jobs: list[dict] = []
+    failed_jobs: list[dict] = []
+
     for job in stale_jobs:
-        update_upload_job(
-            user_id=job["user_id"],
-            job_id=job["id"],
-            updates={
-                "status": "failed",
-                "error_message": f"Worker timeout: job stuck in processing for >{STALE_THRESHOLD_MINUTES}min",
-            },
-        )
-        logger.warning(
-            "scan_stale_jobs: marked job %d (user %d) as failed — stuck since %s",
-            job["id"], job["user_id"], job["updated_at"],
-        )
+        retry_count = int(job.get("retry_count") or 0)
+        if retry_count < MAX_AUTO_RETRY and job.get("session_id"):
+            update_upload_job(
+                user_id=job["user_id"],
+                job_id=job["id"],
+                updates={
+                    "status": "queued",
+                    "retry_count": retry_count + 1,
+                    "error_message": f"Auto-retry #{retry_count + 1}: job stuck >{STALE_THRESHOLD_MINUTES}min",
+                },
+            )
+            try:
+                queue = get_queue()
+                from workers.jobs import process_upload_job
+                queue.enqueue(
+                    process_upload_job,
+                    job["user_id"],
+                    job["id"],
+                    job_id=f"retry-{job['id']}-{retry_count + 1}",
+                    description=f"Auto-retry upload job {job['id']} (attempt {retry_count + 2})",
+                )
+                retried_jobs.append(job)
+                logger.info(
+                    "scan_stale_jobs: re-enqueued job %d (user %d), retry #%d",
+                    job["id"], job["user_id"], retry_count + 1,
+                )
+            except Exception:
+                logger.exception("scan_stale_jobs: failed to re-enqueue job %d", job["id"])
+                update_upload_job(
+                    user_id=job["user_id"],
+                    job_id=job["id"],
+                    updates={
+                        "status": "failed",
+                        "error_message": f"Auto-retry enqueue failed after {retry_count + 1} attempts",
+                    },
+                )
+                failed_jobs.append(job)
+        else:
+            update_upload_job(
+                user_id=job["user_id"],
+                job_id=job["id"],
+                updates={
+                    "status": "failed",
+                    "error_message": f"Worker timeout: job stuck >{STALE_THRESHOLD_MINUTES}min, retries exhausted ({retry_count}/{MAX_AUTO_RETRY})",
+                },
+            )
+            failed_jobs.append(job)
+            logger.warning(
+                "scan_stale_jobs: marked job %d (user %d) as failed — stuck since %s, retries exhausted",
+                job["id"], job["user_id"], job["updated_at"],
+            )
 
-    _send_stale_alert(stale_jobs)
+    if failed_jobs:
+        _send_stale_alert(failed_jobs)
 
-    return {"ok": True, "stale_count": len(stale_jobs), "job_ids": [j["id"] for j in stale_jobs]}
+    return {
+        "ok": True,
+        "stale_count": len(stale_jobs),
+        "retried": len(retried_jobs),
+        "failed": len(failed_jobs),
+        "job_ids": [j["id"] for j in stale_jobs],
+    }
 
 
 def _send_stale_alert(stale_jobs: list[dict]) -> None:
