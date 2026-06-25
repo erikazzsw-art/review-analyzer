@@ -114,25 +114,26 @@ function tagMatchesComment(
   comment: Record<string, unknown>,
   tagSource: "highlight_tag" | "issue_tag",
 ): boolean {
-  const raw = String(comment[tagSource] || "");
-  if (!raw) return false;
-  const commentTags = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
   const needle = searchTag.trim().toLowerCase();
   if (!needle) return false;
 
-  // 1) exact match (case-insensitive)
+  const raw = String(comment[tagSource] || "");
+  const commentTags = raw
+    ? raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  // 1) exact tag match (case-insensitive)
   if (commentTags.includes(needle)) return true;
 
-  // 2) either side fully contains the other (word-boundary aware)
+  // 2) substring: either side contains the other (min 4 chars for shorter side)
   for (const ct of commentTags) {
     if (ct.includes(needle) || needle.includes(ct)) {
-      // only allow if the shorter side is at least 4 chars (avoid "fit" matching "outfit")
       const shorter = ct.length < needle.length ? ct : needle;
       if (shorter.length >= 4) return true;
     }
   }
 
-  // 3) token overlap: split AI tag into words, check if any comment tag shares a significant word
+  // 3) token overlap on tag fields
   const needleWords = needle.split(/[\s_\-/()]+/).filter((w) => w.length >= 4);
   if (needleWords.length > 0) {
     for (const ct of commentTags) {
@@ -140,8 +141,27 @@ function tagMatchesComment(
       for (const nw of needleWords) {
         for (const cw of ctWords) {
           if (nw === cw) return true;
-          // stem-like: one contains the other and both >= 5 chars
           if (nw.length >= 5 && cw.length >= 5 && (nw.includes(cw) || cw.includes(nw))) return true;
+        }
+      }
+    }
+  }
+
+  // 4) content keyword search: tag keywords appear in review text (stem-aware)
+  // Only apply to comments that have the relevant tag field populated
+  const content = String(comment.content || "").toLowerCase();
+  if (content && commentTags.length > 0 && needleWords.length > 0) {
+    const significantWords = needleWords.filter((w) => w.length >= 5);
+    const contentWords = content.split(/[\s,.!?;:'"()\-]+/).filter((w) => w.length >= 4);
+    for (const sw of significantWords) {
+      for (const cw of contentWords) {
+        if (sw === cw) return true;
+        if (sw.includes(cw) || cw.includes(sw)) return true;
+        // shared prefix >= 6 chars (assemble/assembly, sturdy/sturdiness)
+        if (sw.length >= 6 && cw.length >= 6) {
+          const minLen = Math.min(sw.length, cw.length);
+          const prefixLen = Math.min(6, minLen);
+          if (sw.slice(0, prefixLen) === cw.slice(0, prefixLen)) return true;
         }
       }
     }
@@ -182,17 +202,16 @@ function DownloadTagButton({
 }) {
   const count = comments.filter((c) => tagMatchesComment(tag, c, tagSource)).length;
 
-  if (count === 0) return null;
-
   return (
     <button
       type="button"
-      onClick={() => downloadTagReviews(tag, comments, tagSource)}
-      className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink"
-      title={`下载 ${count} 条原文`}
+      onClick={() => count > 0 && downloadTagReviews(tag, comments, tagSource)}
+      disabled={count === 0}
+      className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+      title={count > 0 ? `下载 ${count} 条原文` : "未匹配到评论原文"}
     >
       <FileDown className="h-3 w-3" />
-      原文下载
+      {count > 0 ? `原文 ${count}` : "原文 0"}
     </button>
   );
 }
