@@ -6,8 +6,10 @@ import {
   ThumbsDown,
   ChevronRight,
   Download,
+  FileDown,
   Loader2,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 import { ModuleCard } from "@/components/analysis/module-card";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
@@ -107,18 +109,76 @@ function extractQuotes(row: RowItem): string[] {
   return [];
 }
 
+function downloadTagReviews(
+  tag: string,
+  comments: Array<Record<string, unknown>>,
+  tagSource: "highlight_tag" | "issue_tag",
+) {
+  const matched = comments.filter((c) => {
+    const raw = String((c as Record<string, unknown>)[tagSource] || "");
+    const tags = raw.split(",").map((s) => s.trim());
+    return tags.includes(tag);
+  });
+  const rows = matched.map((c) => ({
+    评论原文: String(c.content || ""),
+    日期: String(c.date || ""),
+    评分: c.rating != null ? Number(c.rating) : "",
+    情感: String(c.sentiment || ""),
+    来源: String(c.source || ""),
+    问题标签: String(c.issue_tag || ""),
+    亮点标签: String(c.highlight_tag || ""),
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, tag.slice(0, 31));
+  XLSX.writeFile(wb, `${tag}_原文_${matched.length}条.xlsx`);
+}
+
+function DownloadTagButton({
+  tag,
+  comments,
+  tagSource,
+}: {
+  tag: string;
+  comments: Array<Record<string, unknown>>;
+  tagSource: "highlight_tag" | "issue_tag";
+}) {
+  const count = comments.filter((c) => {
+    const raw = String((c as Record<string, unknown>)[tagSource] || "");
+    return raw.split(",").map((s) => s.trim()).includes(tag);
+  }).length;
+
+  if (count === 0) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => downloadTagReviews(tag, comments, tagSource)}
+      className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink"
+      title={`下载 ${count} 条原文`}
+    >
+      <FileDown className="h-3 w-3" />
+      原文下载
+    </button>
+  );
+}
+
 function TagTable({
   items,
   variant,
   sessionId,
   session,
   showAction,
+  comments,
+  tagSource,
 }: {
   items: RowItem[];
   variant: "positive" | "negative" | "neutral";
   sessionId: number;
   session: SessionInfo;
   showAction?: boolean;
+  comments?: Array<Record<string, unknown>>;
+  tagSource?: "highlight_tag" | "issue_tag";
 }) {
   const barColor =
     variant === "positive"
@@ -139,7 +199,7 @@ function TagTable({
           <TableHead className="min-w-[120px]">标签</TableHead>
           <TableHead className="w-36">提及占比</TableHead>
           <TableHead>代表评论</TableHead>
-          {showAction && <TableHead className="w-16" />}
+          <TableHead className="w-24" />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -173,19 +233,28 @@ function TagTable({
                   "—"
                 )}
               </TableCell>
-              {showAction && sessionId > 0 && (
-                <TableCell>
-                  <InlineActionButton
-                    sessionId={sessionId}
-                    productId={session.product_ref_id}
-                    sourceProductId={session.product_id}
-                    sourceVersion={session.version}
-                    tag={tag}
-                    pct={pct}
-                    reason={reasonForAction}
-                  />
-                </TableCell>
-              )}
+              <TableCell>
+                <div className="flex items-center gap-1.5">
+                  {comments && tagSource && (
+                    <DownloadTagButton
+                      tag={tag}
+                      comments={comments}
+                      tagSource={tagSource}
+                    />
+                  )}
+                  {showAction && sessionId > 0 && (
+                    <InlineActionButton
+                      sessionId={sessionId}
+                      productId={session.product_ref_id}
+                      sourceProductId={session.product_id}
+                      sourceVersion={session.version}
+                      tag={tag}
+                      pct={pct}
+                      reason={reasonForAction}
+                    />
+                  )}
+                </div>
+              </TableCell>
             </TableRow>
           );
         })}
@@ -340,6 +409,8 @@ export function AnalysisResultsSections({
                 variant="positive"
                 sessionId={sessionId}
                 session={session}
+                comments={comments}
+                tagSource="highlight_tag"
               />
               {userExperience.positive.length === 0 && (
                 <p className="text-sm text-soft">{t.noPositive}</p>
@@ -358,6 +429,8 @@ export function AnalysisResultsSections({
                 sessionId={sessionId}
                 session={session}
                 showAction={canShowActions}
+                comments={comments}
+                tagSource="issue_tag"
               />
               {userExperience.negative.length === 0 && (
                 <p className="text-sm text-soft">{t.noNegative}</p>
@@ -386,6 +459,8 @@ export function AnalysisResultsSections({
               variant="positive"
               sessionId={sessionId}
               session={session}
+              comments={comments}
+              tagSource="highlight_tag"
             />
           </div>
         </ModuleCard>
@@ -411,6 +486,8 @@ export function AnalysisResultsSections({
               sessionId={sessionId}
               session={session}
               showAction={canShowActions}
+              comments={comments}
+              tagSource="issue_tag"
             />
           </div>
         </ModuleCard>
