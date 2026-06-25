@@ -66,6 +66,11 @@ def aspect_to_zh(key: str) -> str:
     return labels.get(key, {}).get("zh", key)
 
 
+def aspect_to_en(key: str) -> str:
+    labels = _load_labels()
+    return labels.get(key, {}).get("en", key)
+
+
 def _derive_category(
     aspects: list[dict[str, Any]],
     sentiment: str,
@@ -138,44 +143,44 @@ def _derive_improvement(pain_points: list[str], aspects: list[dict[str, Any]]) -
     """根据 pain_points 拼接改进建议."""
     if not pain_points:
         return ""
-    neg_aspects_zh = [
-        aspect_to_zh(a.get("key", ""))
+    neg_aspects_en = [
+        aspect_to_en(a.get("key", ""))
         for a in aspects
         if a.get("polarity") == "negative"
     ]
-    if neg_aspects_zh:
-        return f"重点改进 {','.join(neg_aspects_zh[:2])}: {'; '.join(pain_points[:2])}"
+    if neg_aspects_en:
+        return f"Improve {','.join(neg_aspects_en[:2])}: {'; '.join(pain_points[:2])}"
     return "; ".join(pain_points[:2])
 
 
 def _aspects_to_issue_tag(aspects: list[dict[str, Any]]) -> str:
-    """提取负面 aspects 的中文标签，逗号分隔（最多 3 个）."""
-    neg_zh: list[str] = []
+    """提取负面 aspects 的英文标签，逗号分隔（最多 3 个）."""
+    neg_en: list[str] = []
     seen: set[str] = set()
     for a in aspects:
         if a.get("polarity") == "negative":
-            zh = aspect_to_zh(a.get("key", ""))
-            if zh and zh not in seen:
-                seen.add(zh)
-                neg_zh.append(zh)
-                if len(neg_zh) >= 3:
+            en = aspect_to_en(a.get("key", ""))
+            if en and en not in seen:
+                seen.add(en)
+                neg_en.append(en)
+                if len(neg_en) >= 3:
                     break
-    return ",".join(neg_zh)
+    return ",".join(neg_en)
 
 
 def _aspects_to_highlight_tag(aspects: list[dict[str, Any]]) -> str:
-    """提取正面 aspects 的中文标签，逗号分隔（最多 3 个）."""
-    pos_zh: list[str] = []
+    """提取正面 aspects 的英文标签，逗号分隔（最多 3 个）."""
+    pos_en: list[str] = []
     seen: set[str] = set()
     for a in aspects:
         if a.get("polarity") == "positive":
-            zh = aspect_to_zh(a.get("key", ""))
-            if zh and zh not in seen:
-                seen.add(zh)
-                pos_zh.append(zh)
-                if len(pos_zh) >= 3:
+            en = aspect_to_en(a.get("key", ""))
+            if en and en not in seen:
+                seen.add(en)
+                pos_en.append(en)
+                if len(pos_en) >= 3:
                     break
-    return ",".join(pos_zh)
+    return ",".join(pos_en)
 
 
 def aspects_to_legacy_schema(

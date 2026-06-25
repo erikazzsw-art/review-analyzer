@@ -28,6 +28,9 @@ def build_results_insights(
             for field, field_value in value.items():
                 if field_value is None or field_value == "" or field_value == []:
                     continue
+                # AI only enhances text fields; tag arrays stay from heuristic counting
+                if field in ("positive", "negative", "rows"):
+                    continue
                 existing[field] = field_value
             merged[key] = existing
         return merged

@@ -118,56 +118,10 @@ function tagMatchesComment(
   if (!needle) return false;
 
   const raw = String(comment[tagSource] || "");
-  const commentTags = raw
-    ? raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)
-    : [];
+  if (!raw) return false;
+  const commentTags = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
 
-  // 1) exact tag match (case-insensitive)
-  if (commentTags.includes(needle)) return true;
-
-  // 2) substring: either side contains the other (min 4 chars for shorter side)
-  for (const ct of commentTags) {
-    if (ct.includes(needle) || needle.includes(ct)) {
-      const shorter = ct.length < needle.length ? ct : needle;
-      if (shorter.length >= 4) return true;
-    }
-  }
-
-  // 3) token overlap on tag fields
-  const needleWords = needle.split(/[\s_\-/()]+/).filter((w) => w.length >= 4);
-  if (needleWords.length > 0) {
-    for (const ct of commentTags) {
-      const ctWords = ct.split(/[\s_\-/()]+/).filter((w) => w.length >= 4);
-      for (const nw of needleWords) {
-        for (const cw of ctWords) {
-          if (nw === cw) return true;
-          if (nw.length >= 5 && cw.length >= 5 && (nw.includes(cw) || cw.includes(nw))) return true;
-        }
-      }
-    }
-  }
-
-  // 4) content keyword search: tag keywords appear in review text (stem-aware)
-  // Only apply to comments that have the relevant tag field populated
-  const content = String(comment.content || "").toLowerCase();
-  if (content && commentTags.length > 0 && needleWords.length > 0) {
-    const significantWords = needleWords.filter((w) => w.length >= 5);
-    const contentWords = content.split(/[\s,.!?;:'"()\-]+/).filter((w) => w.length >= 4);
-    for (const sw of significantWords) {
-      for (const cw of contentWords) {
-        if (sw === cw) return true;
-        if (sw.includes(cw) || cw.includes(sw)) return true;
-        // shared prefix >= 6 chars (assemble/assembly, sturdy/sturdiness)
-        if (sw.length >= 6 && cw.length >= 6) {
-          const minLen = Math.min(sw.length, cw.length);
-          const prefixLen = Math.min(6, minLen);
-          if (sw.slice(0, prefixLen) === cw.slice(0, prefixLen)) return true;
-        }
-      }
-    }
-  }
-
-  return false;
+  return commentTags.includes(needle);
 }
 
 function downloadTagReviews(
@@ -177,18 +131,18 @@ function downloadTagReviews(
 ) {
   const matched = comments.filter((c) => tagMatchesComment(tag, c, tagSource));
   const rows = matched.map((c) => ({
-    评论原文: String(c.content || ""),
-    日期: String(c.date || ""),
-    评分: c.rating != null ? Number(c.rating) : "",
-    情感: String(c.sentiment || ""),
-    来源: String(c.source || ""),
-    问题标签: String(c.issue_tag || ""),
-    亮点标签: String(c.highlight_tag || ""),
+    Review: String(c.content || ""),
+    Date: String(c.date || ""),
+    Rating: c.rating != null ? Number(c.rating) : "",
+    Sentiment: String(c.sentiment || ""),
+    Source: String(c.source || ""),
+    Issue_Tags: String(c.issue_tag || ""),
+    Highlight_Tags: String(c.highlight_tag || ""),
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, tag.slice(0, 31));
-  XLSX.writeFile(wb, `${tag}_原文_${matched.length}条.xlsx`);
+  XLSX.writeFile(wb, `${tag}_reviews_${matched.length}.xlsx`);
 }
 
 function DownloadTagButton({
@@ -208,10 +162,10 @@ function DownloadTagButton({
       onClick={() => count > 0 && downloadTagReviews(tag, comments, tagSource)}
       disabled={count === 0}
       className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-      title={count > 0 ? `下载 ${count} 条原文` : "未匹配到评论原文"}
+      title={count > 0 ? `Download ${count} reviews` : "No matching reviews"}
     >
       <FileDown className="h-3 w-3" />
-      {count > 0 ? `原文 ${count}` : "原文 0"}
+      {count > 0 ? `Reviews ${count}` : "Reviews 0"}
     </button>
   );
 }
