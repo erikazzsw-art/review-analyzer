@@ -1,25 +1,47 @@
-import { AppShell } from "@/components/app/app-shell";
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { fetchSettings } from "@/lib/api/browser";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { ApiKeysPanel } from "@/components/settings/api-keys-panel";
-import { getSettings, isApiError } from "@/lib/api/server";
 
-export default async function ApiKeysPage() {
-  try {
-    const settings = await getSettings();
+export default function ApiKeysPage() {
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [unauthorized, setUnauthorized] = useState(false);
 
-    return (
-      <AppShell currentPath="/settings" title="API 密钥" description="管理 DeepSeek API Key。">
-        <ApiKeysPanel initialApiKey={settings.api_key} />
-      </AppShell>
-    );
-  } catch (error) {
-    if (isApiError(error) && error.status === 401) {
-      return (
-        <AppShell currentPath="/settings" title="API 密钥" description="登录后管理。">
-          <EmptyAuthState title="登录后管理 API 密钥" description="这里配置 DeepSeek API Key。" />
-        </AppShell>
-      );
-    }
-    throw error;
+  useEffect(() => {
+    fetchSettings()
+      .then((s) => setApiKey(s.api_key ?? ""))
+      .catch((err) => {
+        if (err?.status === 401) {
+          setUnauthorized(true);
+        } else {
+          setError(err?.message || "加载设置失败");
+        }
+      });
+  }, []);
+
+  if (unauthorized) {
+    return <EmptyAuthState title="登录后管理 API 密钥" description="这里配置 DeepSeek API Key。" />;
   }
+
+  if (error) {
+    return (
+      <div className="rounded-shell border border-line bg-white/84 p-6 text-center">
+        <p className="text-sm text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (apiKey === null) {
+    return (
+      <div className="rounded-shell border border-line bg-white/84 p-6 text-center">
+        <p className="text-sm text-soft">加载中...</p>
+      </div>
+    );
+  }
+
+  return <ApiKeysPanel initialApiKey={apiKey} />;
 }

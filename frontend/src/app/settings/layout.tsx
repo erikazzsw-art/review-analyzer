@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
+import { Sidebar } from "@/components/app/sidebar";
+import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
 
 const NAV_ITEMS = [
   { href: "/settings/push", label: "绑定飞书" },
@@ -15,29 +17,45 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] gap-0">
-      <aside className="w-48 shrink-0 border-r border-line bg-white/60 px-3 py-6">
-        <h2 className="mb-4 px-3 text-xs font-bold uppercase tracking-widest text-soft">
-          系统设置
-        </h2>
-        <nav className="space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "block rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                pathname === item.href
-                  ? "bg-ink/5 text-ink"
-                  : "text-soft hover:bg-ink/3 hover:text-ink",
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
-      <main className="flex-1 overflow-y-auto px-6 py-4">{children}</main>
+    <div className="min-h-screen bg-hero-wash">
+      <Sidebar currentPath="/settings" />
+
+      <div className="pt-14 md:pl-[260px] md:pt-0">
+        <header className="px-6 pb-1 pt-6 lg:px-10">
+          <h1 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-ink md:text-3xl">
+            系统设置
+          </h1>
+          <p className="mt-1.5 text-sm leading-6 text-soft md:text-base">
+            管理推送、API 密钥和订阅计划。
+          </p>
+        </header>
+
+        <div className="px-6 pt-4 lg:px-10">
+          <nav className="mb-6 flex gap-1 border-b border-line">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "relative px-4 py-2.5 text-sm font-medium transition-colors",
+                  pathname === item.href
+                    ? "text-ink"
+                    : "text-soft hover:text-ink",
+                )}
+              >
+                {item.label}
+                {pathname === item.href && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose" />
+                )}
+              </Link>
+            ))}
+          </nav>
+
+          {children}
+        </div>
+      </div>
+
+      <FeedbackWidget />
     </div>
   );
 }

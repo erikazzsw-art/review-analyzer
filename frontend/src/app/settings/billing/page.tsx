@@ -1,25 +1,47 @@
-import { AppShell } from "@/components/app/app-shell";
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { fetchSettings } from "@/lib/api/browser";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { BillingPanel } from "@/components/settings/billing-panel";
-import { getSettings, isApiError } from "@/lib/api/server";
 
-export default async function BillingPage() {
-  try {
-    const settings = await getSettings();
+export default function BillingPage() {
+  const [billing, setBilling] = useState<{ plan?: string; configured?: boolean } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [unauthorized, setUnauthorized] = useState(false);
 
-    return (
-      <AppShell currentPath="/settings" title="订阅计费" description="管理订阅计划。">
-        <BillingPanel billing={settings.billing} />
-      </AppShell>
-    );
-  } catch (error) {
-    if (isApiError(error) && error.status === 401) {
-      return (
-        <AppShell currentPath="/settings" title="订阅计费" description="登录后管理。">
-          <EmptyAuthState title="登录后管理订阅" description="这里查看和升级订阅计划。" />
-        </AppShell>
-      );
-    }
-    throw error;
+  useEffect(() => {
+    fetchSettings()
+      .then((s) => setBilling(s.billing ?? { plan: "Free" }))
+      .catch((err) => {
+        if (err?.status === 401) {
+          setUnauthorized(true);
+        } else {
+          setError(err?.message || "加载设置失败");
+        }
+      });
+  }, []);
+
+  if (unauthorized) {
+    return <EmptyAuthState title="登录后管理订阅" description="这里查看和升级订阅计划。" />;
   }
+
+  if (error) {
+    return (
+      <div className="rounded-shell border border-line bg-white/84 p-6 text-center">
+        <p className="text-sm text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (!billing) {
+    return (
+      <div className="rounded-shell border border-line bg-white/84 p-6 text-center">
+        <p className="text-sm text-soft">加载中...</p>
+      </div>
+    );
+  }
+
+  return <BillingPanel billing={billing} />;
 }
