@@ -39,6 +39,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 | Bug 修复完成 | `TEST_LOG.md` | 在修复记录表追加一行：日期、问题描述、解决方案 |
 | 新功能 / 需求变更 | `PROGRESS_V2.md` | 在对应 Step/Task 下更新状态或追加条目 |
 | 模块任务完成 | `PROGRESS_V2.md` | 将对应任务的 `[ ]` 改为 `[x]` |
+| 需求开发完成并 push | `需求记录/YYYY-MM-DD_需求简称.md` | 新建需求记录文件，含需求描述、工作量评估（S/M/L/XL）、涉及岗位及工时；同时在对话中输出需求明细供 Erika 核实 |
 
 **执行顺序**：先更新文档，再提交 Git。文档更新和代码提交合并为同一个 commit。
 
@@ -227,3 +228,17 @@ git commit -m "fix: [简要描述修改内容]"
 git push origin develop
 
 # 6. push 后 GitHub Actions 自动跑 CI（ruff + tsc + next build），无需手动触发
+```
+
+### 部署职责分离（强制）
+
+- **部署由 Erika 手动完成**，Claude Code 不执行 SSH 到 ECS 的任何操作
+- Claude Code 的职责边界：写代码 → 本地验证 → push 到 develop → 更新文档（TEST_LOG / PROGRESS_V2 / 需求记录）
+- push 完成后告知 Erika "已推送，可以部署"即可
+- ECS 部署命令（供 Erika 参考）：
+  ```bash
+  cd /opt/clueai/deploy
+  git pull origin develop
+  docker compose up -d --build <服务名>
+  docker compose exec nginx nginx -s reload
+  ```

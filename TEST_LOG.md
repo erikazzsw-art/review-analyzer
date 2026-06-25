@@ -9,6 +9,7 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-06-25 | 设置页面（推送/API密钥/计费）标题字体过大（text-2xl/xl）、模块间距过宽（space-y-8, p-6）、与导航栏距离远，与其他页面风格不统一 | 统一所有 section heading 为 `text-base font-bold`，section padding 从 `p-6` 收紧到 `p-5`，模块间距从 `space-y-8` 降为 `space-y-5`，layout 垂直 padding 从 `p-6` 改为 `py-4`。涉及 `push-settings-panel.tsx`、`api-keys-panel.tsx`、`billing-panel.tsx`、`settings/layout.tsx` 四个文件。typecheck 通过 |
 | 2026-06-25 | 点击 sidebar"系统设置"入口页面闪退（白屏后跳转） | 根因：`/settings/page.tsx` 使用服务端 `redirect("/settings/push")` 导致客户端导航时触发全页刷新。修复：改为 `"use client"` + `useRouter().replace()` 客户端软跳转，layout 正常渲染不闪白。typecheck 通过 |
 | 2026-06-25 | 可观测性页面信息杂乱：单页 265 行塞进 Pipeline Health/Cache/Model Status/Job Traces 四块，无时间选择器、无 Tab 分层、无 trace 展开、无成本独立视图 | 重构为 5-Tab 管理后台结构：`page.tsx` 改为容器（PageTabs + TimeRangeSelect + ModelStatusRow），拆分为 `overview-tab`（概览）/ `cost-tab`（成本：堆叠柱状图+模型汇总表）/ `jobs-tab`（任务：状态筛选+可展开 trace timeline+分页）/ `cache-tab`（缓存效果）/ `alerts-tab`（告警占位）5 个独立组件。新增时间范围选择器（1h/6h/24h/7d/30d）、模型状态灯行（60s 轮询）、集成之前未使用的 `/llm-costs` API。各 Tab 独立 loading/error 状态。从用户 sidebar 导航中移除，仅管理员通过 URL 访问。typecheck + build 通过 |
 | 2026-06-25 | 反馈按钮（💬）固定在页面右下角浮动，与 sidebar 底部的语言切换地球图标分离，位置不统一 | 将反馈触发按钮从 FeedbackWidget 的 fixed 浮动布局移除，新增 `FeedbackTrigger` 组件放入 sidebar 底部与 `LocaleSwitcher` 同行并排（`flex items-center gap-1`）。FeedbackWidget 通过监听自定义事件 `open-feedback` 打开面板，FeedbackTrigger 点击时 dispatch 该事件。快捷键 `Cmd+Shift+F` 保持可用。typecheck 通过 |
