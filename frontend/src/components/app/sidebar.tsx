@@ -9,6 +9,7 @@ import {
 import { useTranslations } from "next-intl";
 
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
+import { FeedbackTrigger } from "@/components/feedback/FeedbackWidget";
 import { SidebarQuotaEntry } from "@/components/quota/sidebar-quota-entry";
 import { SidebarUserMenu } from "@/components/app/sidebar-user-menu";
 
@@ -122,8 +123,9 @@ export function Sidebar({ currentPath }: SidebarProps) {
       {/* User info */}
       <div className="px-4 py-4">
         <SidebarQuotaEntry />
-        <div className="mb-3">
+        <div className="mb-3 flex items-center gap-1">
           <LocaleSwitcher variant="sidebar" />
+          <FeedbackTrigger />
         </div>
         <div className="mb-3 h-px bg-line" />
         <SidebarUserMenu username={me?.username ?? null} plan={me?.plan ?? null} />

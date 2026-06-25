@@ -29,7 +29,7 @@ export function FeedbackWidget() {
   const locale = getLocale();
 
   const open = useCallback(() => {
-    setStage("mood");
+    setStage((s) => (s === "closed" ? "mood" : s));
     track("feedback_opened");
   }, []);
 
@@ -95,17 +95,13 @@ export function FeedbackWidget() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    window.addEventListener("open-feedback", open);
+    return () => window.removeEventListener("open-feedback", open);
+  }, [open]);
+
   if (stage === "closed") {
-    return (
-      <button
-        type="button"
-        onClick={open}
-        className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-1.5 rounded-pill border border-line bg-white/88 px-3.5 py-2 text-sm font-semibold text-soft shadow-card backdrop-blur transition hover:border-rose hover:text-ink"
-      >
-        <span className="text-base">💬</span>
-        {locale === "zh" ? "反馈" : "Feedback"}
-      </button>
-    );
+    return null;
   }
 
   return (
@@ -147,5 +143,18 @@ export function FeedbackWidget() {
         </>
       )}
     </div>
+  );
+}
+
+export function FeedbackTrigger() {
+  return (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new Event("open-feedback"))}
+      className="inline-flex items-center justify-center rounded-md p-2 text-soft transition hover:bg-roseSoft/40 hover:text-ink"
+      aria-label="Feedback"
+    >
+      <span className="text-base leading-none">💬</span>
+    </button>
   );
 }
