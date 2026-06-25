@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 def track_event(user_id: int, event_name: str, properties: dict | None = None) -> None:
     """Insert an analytics event. Fails silently to avoid impacting business logic."""
+    conn = None
     try:
         conn = get_connection()
         with conn.cursor() as cur:
@@ -34,6 +35,9 @@ def track_event(user_id: int, event_name: str, properties: dict | None = None) -
         conn.commit()
     except (psycopg2.Error, Exception) as e:
         logger.warning("analytics track_event failed: %s", e)
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 def track_llm_call(

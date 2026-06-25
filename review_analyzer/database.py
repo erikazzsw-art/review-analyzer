@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time as _time
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -125,7 +126,10 @@ class _PooledConnection:
 
 
 def get_connection():
-    """从连接池借一条连接，调用方 conn.close() 时会自动归还到池。"""
+    """从连接池借一条连接，调用方 conn.close() 时会自动归还到池。
+
+    当连接池暂时耗尽时，最多重试 3 次（指数退避 0.5s / 1s / 2s）。
+    """
     db_url = _get_database_url()
     if not db_url:
         raise DatabaseConnectionUnavailable("Database URL is missing.")
@@ -134,11 +138,20 @@ def get_connection():
     if pool is None:
         raise DatabaseConnectionUnavailable("Database connection pool is unavailable.")
 
-    try:
-        conn = pool.getconn()
-    except (psycopg2.OperationalError, psycopg2.pool.PoolError) as e:
-        _render_connection_error(e, db_url)
-        raise DatabaseConnectionUnavailable("Database connection failed.") from e
+    max_retries = 3
+    for attempt in range(max_retries + 1):
+        try:
+            conn = pool.getconn()
+            break
+        except psycopg2.pool.PoolError as e:
+            if attempt == max_retries:
+                raise DatabaseConnectionUnavailable(
+                    "Connection pool exhausted after retries."
+                ) from e
+            _time.sleep(0.5 * (2 ** attempt))
+        except psycopg2.OperationalError as e:
+            _render_connection_error(e, db_url)
+            raise DatabaseConnectionUnavailable("Database connection failed.") from e
 
     if conn.closed:
         pool.putconn(conn, close=True)
