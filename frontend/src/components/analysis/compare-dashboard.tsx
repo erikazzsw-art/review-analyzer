@@ -180,43 +180,7 @@ export function CompareDashboard({ dataset }: CompareDashboardProps) {
 
       <DimensionSection dataset={dataset} groups={groups} gridTemplate={gridTemplate} />
 
-      <section className="grid gap-3 xl:grid-cols-2">
-        <RiskOpportunityCard
-          title="风险对象"
-          tone="negative"
-          rows={dataset.risk_groups}
-          metric={(group) => ({
-            valueLabel: `差评率 ${formatRate(group.negative_rate)}`,
-            barValue: group.negative_rate,
-            tail: `${group.review_count} 条 · TOP ${group.top_issue}`,
-          })}
-          emptyHint="当前没有明显的风险对象。"
-        />
-        <RiskOpportunityCard
-          title="机会对象"
-          tone="positive"
-          rows={dataset.opportunity_groups}
-          metric={(group) => ({
-            valueLabel: `好评率 ${formatRate(group.positive_rate)}`,
-            barValue: group.positive_rate,
-            tail: `${group.review_count} 条 · TOP ${group.top_highlight}`,
-          })}
-          emptyHint="当前没有明显的机会对象。"
-        />
-      </section>
 
-      {dataset.recommended_actions.length > 0 ? (
-        <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-          <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">推荐动作</h3>
-          <div className="mt-3 space-y-2">
-            {dataset.recommended_actions.map((action, index) => (
-              <div key={`action-${index}`} className="rounded-card border border-line bg-white px-4 py-3 text-sm leading-6 text-ink">
-                · {action}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       {dataset.empty_groups.length > 0 ? (
         <section className="rounded-card border border-dashed border-line bg-[#fffafb] px-4 py-3 text-sm text-soft">
@@ -486,50 +450,3 @@ function DimensionSection({ dataset, groups, gridTemplate }: DimensionSectionPro
   );
 }
 
-type RiskOpportunityCardProps = {
-  title: string;
-  tone: "positive" | "negative";
-  rows: Array<Record<string, unknown>> | AnalysisCompareGroup[];
-  metric: (group: AnalysisCompareGroup) => { valueLabel: string; barValue: number; tail: string };
-  emptyHint: string;
-};
-
-function RiskOpportunityCard({ title, tone, rows, metric, emptyHint }: RiskOpportunityCardProps) {
-  const barColor = tone === "positive" ? "bg-[#d6f4e5]" : "bg-[#fbdadd]";
-  const accent = tone === "positive" ? "#f8fffc" : "#fff8f9";
-
-  return (
-    <div className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-      <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">{title}</h3>
-      <div className="mt-3 space-y-2">
-        {rows.length > 0 ? (
-          rows.map((row, index) => {
-            const group = row as AnalysisCompareGroup;
-            const { valueLabel, barValue, tail } = metric(group);
-            const width = Math.min(100, Math.max(4, barValue));
-            return (
-              <div
-                key={`row-${title}-${index}`}
-                className="rounded-card border border-line px-4 py-3 text-sm"
-                style={{ background: accent }}
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-semibold text-ink">{group.label ?? "-"}</span>
-                  <span className="text-xs font-semibold text-ink">{valueLabel}</span>
-                </div>
-                <div className="mt-2 h-2 rounded-full bg-white">
-                  <div className={`h-2 rounded-full ${barColor}`} style={{ width: `${width}%` }} />
-                </div>
-                <div className="mt-2 text-xs text-soft">{tail}</div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="rounded-card border border-dashed border-line bg-[#fffafb] px-4 py-3 text-sm text-soft">
-            {emptyHint}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}

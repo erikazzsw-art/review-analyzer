@@ -187,6 +187,7 @@ def _build_ai_results_payload(
                         "4. unmet_needs: {summary: string, rows: [{tag: string, pct: number, reason: string}]}\n"
                         "5. recommendations: {summary: string, rows: [{label: string, detail: string}]}\n\n"
                         "Rules:\n"
+                        "- CRITICAL: The 'tag' field in positive/negative/purchase_motives/unmet_needs MUST use the EXACT tag names from the provided positive_tags and negative_tags arrays. Do NOT rephrase, rename or create new tag names.\n"
                         "- positive and negative arrays must have up to 10 items each, sorted by pct descending\n"
                         "- pct is the percentage of reviews mentioning that tag (0-100)\n"
                         "- reason must quote or closely paraphrase a real review as evidence\n"

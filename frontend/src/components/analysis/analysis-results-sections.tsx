@@ -114,21 +114,39 @@ function tagMatchesComment(
   comment: Record<string, unknown>,
   tagSource: "highlight_tag" | "issue_tag",
 ): boolean {
-  const norm = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, "");
-  const needle = norm(searchTag);
+  const raw = String(comment[tagSource] || "");
+  if (!raw) return false;
+  const commentTags = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const needle = searchTag.trim().toLowerCase();
   if (!needle) return false;
-  const sources: Array<"highlight_tag" | "issue_tag"> =
-    tagSource === "highlight_tag"
-      ? ["highlight_tag", "issue_tag"]
-      : ["issue_tag", "highlight_tag"];
-  for (const src of sources) {
-    const raw = String(comment[src] || "");
-    const tags = raw.split(",").map((s) => s.trim()).filter(Boolean);
-    for (const t of tags) {
-      const nt = norm(t);
-      if (nt === needle || nt.includes(needle) || needle.includes(nt)) return true;
+
+  // 1) exact match (case-insensitive)
+  if (commentTags.includes(needle)) return true;
+
+  // 2) either side fully contains the other (word-boundary aware)
+  for (const ct of commentTags) {
+    if (ct.includes(needle) || needle.includes(ct)) {
+      // only allow if the shorter side is at least 4 chars (avoid "fit" matching "outfit")
+      const shorter = ct.length < needle.length ? ct : needle;
+      if (shorter.length >= 4) return true;
     }
   }
+
+  // 3) token overlap: split AI tag into words, check if any comment tag shares a significant word
+  const needleWords = needle.split(/[\s_\-/()]+/).filter((w) => w.length >= 4);
+  if (needleWords.length > 0) {
+    for (const ct of commentTags) {
+      const ctWords = ct.split(/[\s_\-/()]+/).filter((w) => w.length >= 4);
+      for (const nw of needleWords) {
+        for (const cw of ctWords) {
+          if (nw === cw) return true;
+          // stem-like: one contains the other and both >= 5 chars
+          if (nw.length >= 5 && cw.length >= 5 && (nw.includes(cw) || cw.includes(nw))) return true;
+        }
+      }
+    }
+  }
+
   return false;
 }
 
