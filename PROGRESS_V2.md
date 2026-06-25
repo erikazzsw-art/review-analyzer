@@ -1324,6 +1324,13 @@ NX-M8 验收记录（Phase A）：
   - [x] 老链接兼容：`?session_id=N` 自动 redirect 到 `?product_id=X&range=default&session_id=N`
   - [x] 原始评论列表新增"显示更多"分页（每页 20 条）
 
+- [x] **Step C9.6: 标签数据层回归英文 canonical key**（2026-06-25 完成）
+  - 背景：原文下载按钮始终匹配不到评论，根因是 `category_grouper` 存中文标签违反竞品调研确定的 L2 英文 key 设计，加上 `insight_engine` AI 改名导致前端无法匹配
+  - [x] `category_grouper.py`：新增 `aspect_to_en()`，`issue_tag`/`highlight_tag` 改存英文 canonical label
+  - [x] `insight_engine.py`：AI merge 跳过 tag 数组覆盖，只增强 summary/evidence 文本
+  - [x] 前端下载按钮：匹配逻辑简化为精确匹配（tag 名 = 评论字段值）
+  - [x] 旧 session 兼容：中文 tag 仍由 `_top_tag_rows` 精确统计，下载匹配同样有效
+
 - [ ] **Step C10: 暗色模式（可选）**
   - 仅在种子用户反馈中有明确需求时执行
   - 需要为所有 color token 增加 dark 变体
