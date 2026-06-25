@@ -2,7 +2,7 @@
 
 > 适用范围：`clueai-reviewlens.com` 主站、`app.clueai-reviewlens.com` 应用站、`api.clueai-reviewlens.com` API
 > 部署方式：ECS + Docker Compose + Nginx
-> 目标：在保留 Streamlit 回退口的前提下，稳定上线 Next.js + FastAPI + Redis/RQ 三层架构
+> 架构：Next.js 15 + FastAPI + RQ Worker + Redis + Supabase PostgreSQL
 
 ## 1. 域名分工
 
@@ -14,18 +14,21 @@
 
 1. 购买一台阿里云 ECS
 2. 安装 Docker 与 Docker Compose
-3. 申请 SSL 证书
-4. 绑定 DNS 解析到 ECS 公网 IP
-5. 准备以下环境变量：
+3. 绑定 DNS 解析到 ECS 公网 IP
+4. 准备以下环境变量：
    - `DATABASE_URL`
    - `AES_SECRET_KEY`
    - `API_SESSION_SECRET`
    - `DEEPSEEK_API_KEY`
-   - `FEISHU_WEBHOOK`
-   - `PADDLE_CLIENT_TOKEN`
-   - `PADDLE_PRICE_ID`
-   - `PADDLE_WEBHOOK_SECRET`
-   - `PADDLE_ENVIRONMENT`
+   - `LETSENCRYPT_EMAIL`
+
+其余变量按功能启用情况再补：
+
+- `FEISHU_WEBHOOK`
+- `PADDLE_CLIENT_TOKEN`
+- `PADDLE_PRICE_ID`
+- `PADDLE_WEBHOOK_SECRET`
+- `PADDLE_ENVIRONMENT`
 
 ### 2.1 环境变量优先级
 
@@ -35,6 +38,7 @@
 - `AES_SECRET_KEY`：API Key 加密密钥，建议新生成，不要复用旧环境里不确定来源的值
 - `API_SESSION_SECRET`：API 会话签名密钥，可与 `AES_SECRET_KEY` 不同
 - `DEEPSEEK_API_KEY`：评论分析和文案生成必需
+- `LETSENCRYPT_EMAIL`：Let's Encrypt 注册邮箱，证书首次签发和续期提醒都要用
 
 可以先留空或后补的项：
 
@@ -55,7 +59,7 @@
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
-注意：`deploy/docker-compose.yml` 里已经包含 `nginx` 容器并占用宿主机 `80` 端口。
+注意：`deploy/docker-compose.yml` 里已经包含 `nginx` 容器，并同时占用宿主机 `80` 和 `443` 端口。
 如果你前面已经在 ECS 上安装并启动了系统级 `nginx`，请先停用它，避免端口冲突：
 
 ```bash
@@ -64,6 +68,20 @@ sudo systemctl disable nginx
 ```
 
 compose 会自动读取 `deploy/.env`，所以部署时请把环境变量文件放在 `deploy/.env`，然后再执行上面的启动命令。
+
+如果是第一次上线 HTTPS，需要先让 Nginx 用 80 端口接住 ACME 校验，再签发证书：
+
+```bash
+docker compose -f deploy/docker-compose.yml up -d --build
+docker compose -f deploy/docker-compose.yml --profile certbot run --rm certbot
+docker compose -f deploy/docker-compose.yml exec nginx nginx -s reload
+```
+
+说明：
+
+- `up -d --build` 只负责起容器
+- `certbot` 只负责签发和更新证书，证书会落在 `/etc/letsencrypt`
+- Nginx 通过 `/var/www/certbot` 提供 `/.well-known/acme-challenge/`
 
 启动后会得到：
 
@@ -75,35 +93,62 @@ compose 会自动读取 `deploy/.env`，所以部署时请把环境变量文件�
 
 ## 4. Nginx 路由逻辑
 
-- `clueai-reviewlens.com` 和 `app.clueai-reviewlens.com` 代理到前端容器
-- `api.clueai-reviewlens.com` 代理到 API 容器
+- `http://clueai-reviewlens.com`、`http://app.clueai-reviewlens.com`、`http://api.clueai-reviewlens.com` 统一跳转到 HTTPS
+- `https://clueai-reviewlens.com`、`https://www.clueai-reviewlens.com`、`https://app.clueai-reviewlens.com` 代理到前端容器
+- `https://api.clueai-reviewlens.com` 代理到 API 容器
+- API 容器内部默认监听 `8000`，前端容器默认监听 `3000`
 - API 与前端通过 `NEXT_PUBLIC_API_BASE_URL=https://api.clueai-reviewlens.com` 通信
+- 证书默认挂载到 `/etc/letsencrypt`，ACME 校验目录挂载到 `/var/www/certbot`
 
 ## 5. 验证清单
 
 部署后先确认：
 
-1. `https://clueai-reviewlens.com/` 可打开首页
-2. `https://app.clueai-reviewlens.com/login` 可打开登录页
-3. `https://api.clueai-reviewlens.com/health` 返回健康状态
-4. 登录后 `/workspace`、`/products`、`/upload`、`/qa`、`/actions`、`/reviews`、`/copywriter`、`/settings` 可访问
-5. 上传任务会进入 Redis/RQ 队列
-6. Paddle webhook 回调能成功回写 `users.plan`
+1. `http://clueai-reviewlens.com/` 会跳转到 `https://clueai-reviewlens.com/`
+2. `https://clueai-reviewlens.com/` 可打开首页
+3. `https://app.clueai-reviewlens.com/login` 可打开登录页
+4. `https://api.clueai-reviewlens.com/health` 返回健康状态
+5. 浏览器证书链显示为 Let's Encrypt 签发，且没有混合内容报错
+6. 登录后 `/workspace`、`/products`、`/upload`、`/qa`、`/actions`、`/reviews`、`/copywriter`、`/settings` 可访问
+7. 上传任务会进入 Redis/RQ 队列
+8. Paddle webhook 回调能成功回写 `users.plan`
 
-## 6. Streamlit 下线前置条件
+## 6. 日常部署（代码推送后）
 
-只在以下条件同时满足时才考虑下线 Streamlit：
+职责分离：Claude Code 负责写代码 + push 到 develop；**部署由 Erika 在 ECS 上手动执行**。
 
-- Next.js 覆盖全部主路径
-- 登录、上传、分析、结果、问评论、行动、复盘、计费全部跑通
-- 关键阻塞问题连续 2 周未出现
-- 业务方已接受新应用站作为默认工作入口
+### 标准流程
+
+```bash
+cd /opt/clueai/deploy
+git pull origin develop
+docker compose up -d --build <服务名>
+docker compose exec nginx nginx -s reload
+```
+
+### 服务名对照表
+
+| 改动范围 | `--build` 参数 |
+|---------|---------------|
+| 仅前端 (`frontend/`) | `frontend` |
+| 仅后端 API (`backend_api/`) | `api` |
+| 仅 Worker (`workers/`、`review_analyzer/`) | `worker` |
+| 前端 + 后端 | `frontend api` |
+| 全部 | `frontend api worker` |
+
+### 注意事项
+
+- `nginx -s reload` **每次都要执行**——rebuild 容器后 IP 变化，不 reload 会 502（6/23 事故教训）
+- 改了 `deploy/.env` 后必须 `docker compose up -d --force-recreate <服务名>`（`restart` 不重读 .env）
+- 改了 `deploy/nginx.conf` 后需 `docker compose up -d --build nginx`
+- 部署后验证：`curl https://api.clueai-reviewlens.com/health` 返回 200 即可
 
 ## 7. 回退方案
 
 如果部署后出现严重问题：
 
-1. 暂停 `nginx` 对外流量
-2. 保留 `streamlit` 旧入口作为临时回退
-3. 回滚 `deploy/` 配置
-4. 不回滚已经验证通过的产品代码
+1. `docker compose logs <服务名> --tail=50` 查看错误
+2. `git log --oneline -5` 确认问题 commit
+3. `git revert <commit>` 或 `git checkout <上一个好的commit> -- <文件>`
+4. 重新 `docker compose up -d --build <服务名>`
+5. 不回滚已经验证通过的产品代码
