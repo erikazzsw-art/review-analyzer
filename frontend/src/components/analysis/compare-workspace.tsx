@@ -16,6 +16,7 @@ import type {
 import { CompareAiSummary } from "./compare-ai-summary";
 import { CompareDashboard } from "./compare-dashboard";
 import { CompareFilterBar, type CompareMode } from "./compare-filter-bar";
+import { CompareHistory } from "./compare-history";
 
 type CompareWorkspaceProps = {
   products: ProductOverview[];
@@ -72,6 +73,17 @@ export function CompareWorkspace({
     }
   }
 
+  function handleHistorySelect(
+    historyDataset: AnalysisCompareResponse,
+    groups: CompareFilterGroup[],
+    historyMode: CompareMode,
+  ) {
+    setDataset(historyDataset);
+    setFilterGroups(groups);
+    setMode(historyMode);
+    setError("");
+  }
+
   const hasDataset = Boolean(dataset && dataset.groups.length > 0);
 
   return (
@@ -120,6 +132,10 @@ export function CompareWorkspace({
           选择 2 个或以上对比对象，点击「生成对比」后这里会出现核心指标、问题/亮点差异、风险/机会和推荐动作。
         </section>
       ) : null}
+
+      {products.length > 0 && (
+        <CompareHistory onSelect={handleHistorySelect} />
+      )}
     </div>
   );
 }

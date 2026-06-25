@@ -178,6 +178,25 @@ class ComparisonReportResponse(BaseModel):
     ai_summary: dict[str, Any] | None = None
 
 
+class CompareHistoryItemPayload(BaseModel):
+    fingerprint: str
+    compare_type: str
+    product_names: list[str] = Field(default_factory=list)
+    group_labels: list[str] = Field(default_factory=list)
+    created_at: datetime
+
+
+class CompareHistoryPayload(BaseModel):
+    items: list[CompareHistoryItemPayload] = Field(default_factory=list)
+    total: int = 0
+
+
+class CompareLatestPayload(BaseModel):
+    dataset: AnalysisComparePayload
+    filter_groups: list[CompareFilterGroupPayload] = Field(default_factory=list)
+    compare_type: str
+
+
 class QaProductPayload(BaseModel):
     id: int | None = None
     parent_product_id: str

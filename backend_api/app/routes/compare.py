@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 
 from backend_api.app.deps import get_current_user
@@ -13,6 +13,10 @@ from backend_api.app.schemas.analysis import (
     CompareAiSummaryPayload,
     CompareDatasetRequest,
     CompareExportRequest,
+    CompareFilterGroupPayload,
+    CompareHistoryItemPayload,
+    CompareHistoryPayload,
+    CompareLatestPayload,
     ComparisonReportCreatePayload,
     ComparisonReportPayload,
     ComparisonReportResponse,
@@ -24,9 +28,12 @@ from review_analyzer.compare_store import (
     build_group_insights,
     compute_compare_fingerprint,
     dataset_to_xlsx_payload,
+    delete_compare_history,
     generate_ai_comparison_summary,
     get_comparison_dataset,
+    list_compare_history,
     load_compare_cache,
+    load_compare_history_entry,
     save_compare_cache,
     save_comparison_report,
 )
@@ -222,3 +229,128 @@ def _default_report_title(compare_type: str, focus_feature: str | None) -> str:
     if focus_feature:
         return f"{base_title} · {focus_feature}"
     return base_title
+
+
+# ---------------------------------------------------------------------------
+# History endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/history", response_model=CompareHistoryPayload)
+def get_compare_history(
+    q: str | None = Query(None, description="产品名模糊搜索"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_user: dict = Depends(get_current_user),
+) -> CompareHistoryPayload:
+    user_id = int(current_user["id"])
+    result = list_compare_history(user_id, q=q, limit=limit, offset=offset)
+    items = [CompareHistoryItemPayload(**item) for item in result["items"]]
+    return CompareHistoryPayload(items=items, total=result["total"])
+
+
+@router.get("/latest", response_model=CompareLatestPayload | None)
+def get_compare_latest(
+    current_user: dict = Depends(get_current_user),
+) -> CompareLatestPayload | None:
+    user_id = int(current_user["id"])
+    history = list_compare_history(user_id, q=None, limit=1, offset=0)
+    if not history["items"]:
+        return None
+    fingerprint = history["items"][0]["fingerprint"]
+    entry = load_compare_history_entry(user_id, fingerprint)
+    if not entry:
+        return None
+    filter_payload = entry["filter_payload"]
+    compare_type = entry["compare_type"]
+    groups_raw = filter_payload.get("groups") or []
+
+    filters: dict[str, Any] = {
+        "compare_type": compare_type,
+        "groups": groups_raw,
+    }
+    dataset = get_comparison_dataset(user_id, filters)
+    insights = entry.get("group_insights") or []
+    insights = list(insights) + [None] * max(0, len(dataset.get("groups", [])) - len(insights))
+    ai_summary = entry.get("ai_summary")
+
+    payload = _dataset_to_payload(
+        dataset, compare_type, insights[: len(dataset.get("groups", []))], ai_summary
+    )
+
+    filter_groups = [
+        CompareFilterGroupPayload(
+            product_id=str(g.get("product_id") or ""),
+            versions=list(g.get("versions") or []),
+            date_start=g.get("date_start"),
+            date_end=g.get("date_end"),
+        )
+        for g in groups_raw
+    ]
+
+    return CompareLatestPayload(
+        dataset=payload,
+        filter_groups=filter_groups,
+        compare_type=compare_type,
+    )
+
+
+@router.get("/history/{fingerprint}", response_model=CompareLatestPayload)
+def get_compare_history_entry(
+    fingerprint: str,
+    current_user: dict = Depends(get_current_user),
+) -> CompareLatestPayload:
+    user_id = int(current_user["id"])
+    entry = load_compare_history_entry(user_id, fingerprint)
+    if not entry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="对比记录不存在或已被删除。",
+        )
+    filter_payload = entry["filter_payload"]
+    compare_type = entry["compare_type"]
+    groups_raw = filter_payload.get("groups") or []
+
+    filters: dict[str, Any] = {
+        "compare_type": compare_type,
+        "groups": groups_raw,
+    }
+    dataset = get_comparison_dataset(user_id, filters)
+    insights = entry.get("group_insights") or []
+    insights = list(insights) + [None] * max(0, len(dataset.get("groups", [])) - len(insights))
+    ai_summary = entry.get("ai_summary")
+
+    payload = _dataset_to_payload(
+        dataset, compare_type, insights[: len(dataset.get("groups", []))], ai_summary
+    )
+
+    filter_groups = [
+        CompareFilterGroupPayload(
+            product_id=str(g.get("product_id") or ""),
+            versions=list(g.get("versions") or []),
+            date_start=g.get("date_start"),
+            date_end=g.get("date_end"),
+        )
+        for g in groups_raw
+    ]
+
+    return CompareLatestPayload(
+        dataset=payload,
+        filter_groups=filter_groups,
+        compare_type=compare_type,
+    )
+
+
+@router.delete("/history/{fingerprint}")
+def remove_compare_history(
+    fingerprint: str,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, bool]:
+    user_id = int(current_user["id"])
+    deleted = delete_compare_history(user_id, fingerprint)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="对比记录不存在或已被删除。",
+        )
+    return {"deleted": True}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { CompareWorkspace } from "@/components/analysis/compare-workspace";
-import { getProducts, isApiError } from "@/lib/api/server";
+import { getCompareLatest, getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
@@ -32,9 +32,23 @@ export default async function AnalysisComparePage({ searchParams }: ComparePageP
     const compareType =
       compareTypeParam && ALLOWED_MODES.has(compareTypeParam)
         ? (compareTypeParam as "same_product_time" | "same_product_version" | "multi_product")
-        : "same_product_time";
+        : undefined;
 
-    const productsResponse = await getProducts();
+    const [productsResponse, latestResponse] = await Promise.all([
+      getProducts(),
+      getCompareLatest(),
+    ]);
+
+    const initialMode = compareType ?? (latestResponse?.compare_type as "same_product_time" | "same_product_version" | "multi_product" | undefined) ?? "same_product_time";
+    const initialDataset = latestResponse?.dataset ?? null;
+    const initialGroups = latestResponse?.filter_groups
+      ? (latestResponse.filter_groups as Array<Record<string, unknown>>).map((g) => ({
+          productId: (g.productId ?? g.product_id ?? "") as string,
+          versions: (g.versions ?? []) as string[],
+          dateStart: (g.dateStart ?? g.date_start ?? undefined) as string | undefined,
+          dateEnd: (g.dateEnd ?? g.date_end ?? undefined) as string | undefined,
+        }))
+      : undefined;
 
     return (
       <AppShell
@@ -52,8 +66,10 @@ export default async function AnalysisComparePage({ searchParams }: ComparePageP
         </div>
         <CompareWorkspace
           products={productsResponse.items}
-          initialMode={compareType}
+          initialMode={initialMode}
           initialProductId={productId}
+          initialDataset={initialDataset}
+          initialGroups={initialGroups}
         />
       </AppShell>
     );

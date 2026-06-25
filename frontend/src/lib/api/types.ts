@@ -343,6 +343,25 @@ export type ComparisonReportResponse = {
   } | null;
 };
 
+export type CompareHistoryItem = {
+  fingerprint: string;
+  compare_type: string;
+  product_names: string[];
+  group_labels: string[];
+  created_at: string;
+};
+
+export type CompareHistoryResponse = {
+  items: CompareHistoryItem[];
+  total: number;
+};
+
+export type CompareLatestResponse = {
+  dataset: AnalysisCompareResponse;
+  filter_groups: CompareFilterGroup[];
+  compare_type: string;
+};
+
 export type QaProduct = {
   id: number | null;
   parent_product_id: string;

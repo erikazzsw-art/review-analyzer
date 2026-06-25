@@ -14,6 +14,8 @@ import type {
   BillingCheckoutResponse,
   CompareDatasetRequest,
   CompareExportRequest,
+  CompareHistoryResponse,
+  CompareLatestResponse,
   CopywriterGenerateResponse,
   CopywriterPlatform,
   CopywriterProductVersionsResponse,
@@ -342,6 +344,48 @@ export async function downloadCompareExport(request: CompareExportRequest): Prom
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+export async function fetchCompareHistory(
+  q?: string,
+  limit = 20,
+  offset = 0,
+): Promise<CompareHistoryResponse> {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  const response = await fetch(`${getApiBaseUrl()}/compare/history?${params.toString()}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as CompareHistoryResponse;
+}
+
+export async function fetchCompareHistoryEntry(
+  fingerprint: string,
+): Promise<CompareLatestResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/compare/history/${fingerprint}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as CompareLatestResponse;
+}
+
+export async function deleteCompareHistory(fingerprint: string): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/compare/history/${fingerprint}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
 }
 
 export async function fetchQaProducts(): Promise<QaProduct[]> {

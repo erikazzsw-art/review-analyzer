@@ -7,6 +7,7 @@ import type {
   AnalysisHistoryResponse,
   AnalysisResultsResponse,
   AnalysisSessionResultsResponse,
+  CompareLatestResponse,
   QaProduct,
   ProductsResponse,
   ProductSearchResponse,
@@ -180,6 +181,22 @@ export type QuotaItem = {
 
 export async function getQuota(): Promise<QuotaItem[]> {
   return apiFetch<QuotaItem[]>("/quota");
+}
+
+export async function getCompareLatest(): Promise<CompareLatestResponse | null> {
+  const cookieHeader = await buildCookieHeader();
+  const response = await fetch(`${getApiBaseUrl()}/compare/latest`, {
+    headers: cookieHeader ? { cookie: cookieHeader } : {},
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return null;
+  }
+  const body = await response.json();
+  if (!body || !body.dataset) {
+    return null;
+  }
+  return body as CompareLatestResponse;
 }
 
 export function isApiError(value: unknown): value is ApiError {

@@ -1101,3 +1101,200 @@ def build_group_insights(
     except Exception:  # noqa: BLE001 — insight LLM is best-effort
         return None
 
+
+# ---------------------------------------------------------------------------
+# History helpers (list / load / delete comparison_summary_cache entries)
+# ---------------------------------------------------------------------------
+
+
+def list_compare_history(
+    user_id: int,
+    q: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """List user's comparison history from comparison_summary_cache.
+
+    Returns ``{items: [...], total: int}``. Each item contains fingerprint,
+    compare_type, product_names, group_labels, created_at.
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            if q and q.strip():
+                search_term = f"%{q.strip()}%"
+                cur.execute(
+                    """
+                    WITH cache_with_products AS (
+                        SELECT
+                            c.fingerprint,
+                            c.compare_type,
+                            c.filter_payload,
+                            c.created_at,
+                            COALESCE(
+                                array_agg(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL),
+                                ARRAY[]::TEXT[]
+                            ) AS product_names
+                        FROM comparison_summary_cache c
+                        LEFT JOIN LATERAL (
+                            SELECT (elem->>'product_id')::TEXT AS pid
+                            FROM jsonb_array_elements(c.filter_payload->'groups') AS elem
+                        ) g ON TRUE
+                        LEFT JOIN products p ON p.parent_product_id = g.pid AND p.user_id = c.user_id
+                        WHERE c.user_id = %s
+                        GROUP BY c.fingerprint, c.compare_type, c.filter_payload, c.created_at
+                    )
+                    SELECT * FROM cache_with_products
+                    WHERE EXISTS (
+                        SELECT 1 FROM unnest(product_names) AS pn WHERE pn ILIKE %s
+                    )
+                    ORDER BY created_at DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    (user_id, search_term, limit, offset),
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT
+                        c.fingerprint,
+                        c.compare_type,
+                        c.filter_payload,
+                        c.created_at,
+                        COALESCE(
+                            array_agg(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL),
+                            ARRAY[]::TEXT[]
+                        ) AS product_names
+                    FROM comparison_summary_cache c
+                    LEFT JOIN LATERAL (
+                        SELECT (elem->>'product_id')::TEXT AS pid
+                        FROM jsonb_array_elements(c.filter_payload->'groups') AS elem
+                    ) g ON TRUE
+                    LEFT JOIN products p ON p.parent_product_id = g.pid AND p.user_id = c.user_id
+                    WHERE c.user_id = %s
+                    GROUP BY c.fingerprint, c.compare_type, c.filter_payload, c.created_at
+                    ORDER BY created_at DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    (user_id, limit, offset),
+                )
+            rows = cur.fetchall()
+
+            # Count total
+            if q and q.strip():
+                cur.execute(
+                    """
+                    WITH cache_with_products AS (
+                        SELECT
+                            c.fingerprint,
+                            COALESCE(
+                                array_agg(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL),
+                                ARRAY[]::TEXT[]
+                            ) AS product_names
+                        FROM comparison_summary_cache c
+                        LEFT JOIN LATERAL (
+                            SELECT (elem->>'product_id')::TEXT AS pid
+                            FROM jsonb_array_elements(c.filter_payload->'groups') AS elem
+                        ) g ON TRUE
+                        LEFT JOIN products p ON p.parent_product_id = g.pid AND p.user_id = c.user_id
+                        WHERE c.user_id = %s
+                        GROUP BY c.fingerprint
+                    )
+                    SELECT COUNT(*) FROM cache_with_products
+                    WHERE EXISTS (
+                        SELECT 1 FROM unnest(product_names) AS pn WHERE pn ILIKE %s
+                    )
+                    """,
+                    (user_id, search_term),
+                )
+            else:
+                cur.execute(
+                    "SELECT COUNT(*) FROM comparison_summary_cache WHERE user_id = %s",
+                    (user_id,),
+                )
+            total = cur.fetchone()["count"]
+
+        items = []
+        for row in rows:
+            filter_payload = _maybe_parse_json(row.get("filter_payload")) or {}
+            groups = filter_payload.get("groups") or []
+            group_labels = _build_group_labels(groups)
+            items.append({
+                "fingerprint": row["fingerprint"],
+                "compare_type": row["compare_type"],
+                "product_names": list(row.get("product_names") or []),
+                "group_labels": group_labels,
+                "created_at": row["created_at"].isoformat() if row.get("created_at") else "",
+            })
+        return {"items": items, "total": total}
+    finally:
+        conn.close()
+
+
+def _build_group_labels(groups: list[dict[str, Any]]) -> list[str]:
+    """Build short display labels from filter_payload groups."""
+    labels = []
+    for g in groups:
+        parts = []
+        versions = g.get("versions") or []
+        if versions:
+            parts.append("/".join(str(v) for v in versions))
+        date_start = g.get("date_start") or ""
+        date_end = g.get("date_end") or ""
+        if date_start and date_end:
+            parts.append(f"{date_start}~{date_end}")
+        elif date_start:
+            parts.append(f"{date_start}~")
+        elif date_end:
+            parts.append(f"~{date_end}")
+        labels.append(" · ".join(parts) if parts else "全部")
+    return labels
+
+
+def load_compare_history_entry(
+    user_id: int,
+    fingerprint: str,
+) -> dict[str, Any] | None:
+    """Load a single cache entry for replay (filter_payload + insights + summary)."""
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT compare_type, filter_payload, group_insights, ai_summary
+                FROM comparison_summary_cache
+                WHERE fingerprint = %s AND user_id = %s
+                """,
+                (fingerprint, user_id),
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return {
+                "compare_type": row["compare_type"],
+                "filter_payload": _maybe_parse_json(row.get("filter_payload")) or {},
+                "group_insights": _maybe_parse_json(row.get("group_insights")) or [],
+                "ai_summary": _maybe_parse_json(row.get("ai_summary")),
+            }
+    finally:
+        conn.close()
+
+
+def delete_compare_history(user_id: int, fingerprint: str) -> bool:
+    """Delete a single comparison cache entry. Returns True if deleted."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                DELETE FROM comparison_summary_cache
+                WHERE fingerprint = %s AND user_id = %s
+                """,
+                (fingerprint, user_id),
+            )
+            deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
+    finally:
+        conn.close()
+
