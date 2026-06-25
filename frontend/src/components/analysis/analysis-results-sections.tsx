@@ -109,16 +109,35 @@ function extractQuotes(row: RowItem): string[] {
   return [];
 }
 
+function tagMatchesComment(
+  searchTag: string,
+  comment: Record<string, unknown>,
+  tagSource: "highlight_tag" | "issue_tag",
+): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, "");
+  const needle = norm(searchTag);
+  if (!needle) return false;
+  const sources: Array<"highlight_tag" | "issue_tag"> =
+    tagSource === "highlight_tag"
+      ? ["highlight_tag", "issue_tag"]
+      : ["issue_tag", "highlight_tag"];
+  for (const src of sources) {
+    const raw = String(comment[src] || "");
+    const tags = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    for (const t of tags) {
+      const nt = norm(t);
+      if (nt === needle || nt.includes(needle) || needle.includes(nt)) return true;
+    }
+  }
+  return false;
+}
+
 function downloadTagReviews(
   tag: string,
   comments: Array<Record<string, unknown>>,
   tagSource: "highlight_tag" | "issue_tag",
 ) {
-  const matched = comments.filter((c) => {
-    const raw = String((c as Record<string, unknown>)[tagSource] || "");
-    const tags = raw.split(",").map((s) => s.trim());
-    return tags.includes(tag);
-  });
+  const matched = comments.filter((c) => tagMatchesComment(tag, c, tagSource));
   const rows = matched.map((c) => ({
     评论原文: String(c.content || ""),
     日期: String(c.date || ""),
@@ -143,10 +162,7 @@ function DownloadTagButton({
   comments: Array<Record<string, unknown>>;
   tagSource: "highlight_tag" | "issue_tag";
 }) {
-  const count = comments.filter((c) => {
-    const raw = String((c as Record<string, unknown>)[tagSource] || "");
-    return raw.split(",").map((s) => s.trim()).includes(tag);
-  }).length;
+  const count = comments.filter((c) => tagMatchesComment(tag, c, tagSource)).length;
 
   if (count === 0) return null;
 
