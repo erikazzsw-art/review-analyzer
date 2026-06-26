@@ -957,6 +957,18 @@ export async function deleteSession(sessionId: number): Promise<void> {
   }
 }
 
+export async function fetchProductList(): Promise<import("./types").ProductsResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/products`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return (await response.json()) as import("./types").ProductsResponse;
+}
+
 export async function triggerAsinFetchNow(
   itemId: number,
 ): Promise<{ job_id: string; message: string }> {

@@ -54,6 +54,7 @@ class ProductOverviewPayload(BaseModel):
     variant_count: int
     variants: list[ProductVariantPayload]
     versions: list[ProductVersionPayload]
+    session_versions: list[str] = []
     session_count: int
     pending_review_count: int
     latest_session_label: str | None = None

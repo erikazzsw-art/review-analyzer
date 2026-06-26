@@ -321,6 +321,32 @@ def _fetch_all_versions_grouped(user_id: int) -> dict[int, list[dict[str, Any]]]
         conn.close()
 
 
+def _fetch_session_versions_grouped(user_id: int) -> dict[str, list[str]]:
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT product_id, version
+                   FROM sessions
+                   WHERE user_id = %s AND product_id IS NOT NULL
+                   GROUP BY product_id, version
+                   ORDER BY product_id, version""",
+                (user_id,),
+            )
+            grouped: dict[str, list[str]] = {}
+            for row in cur.fetchall():
+                pid = str(row["product_id"]).strip()
+                ver = str(row["version"] or "V1")
+                if pid:
+                    grouped.setdefault(pid, []).append(ver)
+            return grouped
+    except psycopg2.errors.UndefinedTable:
+        conn.rollback()
+        return {}
+    finally:
+        conn.close()
+
+
 def _fetch_all_comments_deduped_grouped(user_id: int) -> dict[str, list[dict[str, Any]]]:
     sql = """
         SELECT * FROM (
@@ -382,6 +408,7 @@ def get_product_overview_rows(user_id: int) -> list[dict[str, Any]]:
 
     variants_by_product = _fetch_all_variants_grouped(user_id)
     versions_by_product = _fetch_all_versions_grouped(user_id)
+    session_versions_by_parent = _fetch_session_versions_grouped(user_id)
     comments_by_parent = _fetch_all_comments_deduped_grouped(user_id)
     pending_by_product = _fetch_all_pending_review_counts(user_id)
 
@@ -446,6 +473,7 @@ def get_product_overview_rows(user_id: int) -> list[dict[str, Any]]:
                 "variant_count": len(variants),
                 "variants": variants,
                 "versions": versions,
+                "session_versions": session_versions_by_parent.get(parent_id, []),
                 "session_count": len(related_sessions),
                 "pending_review_count": pending_by_product.get(product_pid, 0) if product_pid is not None else 0,
                 "latest_session_label": _build_session_label(latest_session),

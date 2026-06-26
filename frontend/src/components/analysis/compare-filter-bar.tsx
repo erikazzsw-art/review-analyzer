@@ -262,9 +262,7 @@ export function CompareFilterBar({
         label: product.name
           ? `${product.parent_product_id} · ${product.name}`
           : product.parent_product_id,
-        versions: product.versions
-          .map((version) => version.version_name)
-          .filter((value): value is string => Boolean(value)),
+        versions: product.session_versions ?? [],
       })),
     [products],
   );

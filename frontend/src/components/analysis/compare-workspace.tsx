@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   downloadCompareExport,
   fetchCompareDataset,
+  fetchProductList,
 } from "@/lib/api/browser";
 import type {
   AnalysisCompareResponse,
@@ -32,12 +33,19 @@ export function CompareWorkspace({
   initialMode,
   initialGroups,
 }: CompareWorkspaceProps) {
+  const [productList, setProductList] = useState<ProductOverview[]>(products);
   const [dataset, setDataset] = useState<AnalysisCompareResponse | null>(initialDataset ?? null);
   const [mode, setMode] = useState<CompareMode>(initialMode ?? "same_product_time");
   const [filterGroups, setFilterGroups] = useState<CompareFilterGroup[]>(initialGroups ?? []);
   const [isFetching, setIsFetching] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchProductList()
+      .then((res) => setProductList(res.items))
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(nextMode: CompareMode, groups: CompareFilterGroup[]): Promise<void> {
     setMode(nextMode);
@@ -88,7 +96,7 @@ export function CompareWorkspace({
 
   return (
     <div className="flex flex-col gap-4">
-      {products.length === 0 ? (
+      {productList.length === 0 ? (
         <section className="rounded-shell border border-dashed border-line bg-[#fffafb] px-6 py-8 text-sm text-soft">
           还没有可对比的产品。先去
           <Link href="/upload" className="mx-1 font-semibold text-ink underline">
@@ -98,7 +106,7 @@ export function CompareWorkspace({
         </section>
       ) : (
         <CompareFilterBar
-          products={products}
+          products={productList}
           initialMode={mode}
           initialGroups={filterGroups.length > 0 ? filterGroups : undefined}
           isSubmitting={isFetching}
@@ -127,13 +135,13 @@ export function CompareWorkspace({
           <CompareDashboard dataset={dataset} />
           <CompareAiSummary summary={dataset.ai_summary} />
         </>
-      ) : products.length > 0 ? (
+      ) : productList.length > 0 ? (
         <section className="rounded-shell border border-dashed border-line bg-[#fffafb] px-6 py-10 text-sm text-soft">
           选择 2 个或以上对比对象，点击「生成对比」后这里会出现核心指标、问题/亮点差异、风险/机会和推荐动作。
         </section>
       ) : null}
 
-      {products.length > 0 && (
+      {productList.length > 0 && (
         <CompareHistory onSelect={handleHistorySelect} />
       )}
     </div>
