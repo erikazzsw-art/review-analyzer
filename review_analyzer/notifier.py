@@ -233,15 +233,20 @@ def _test_webhook(webhook_url: str, platform: str = "feishu", secret: str = "") 
 
     if platform == "feishu":
         body = _build_feishu_body(test_text, secret)
+        logger.info(f"飞书测试: url={webhook_url[:60]}..., has_secret={bool(secret)}, body_keys={list(body.keys())}")
         try:
             resp = requests.post(webhook_url, json=body, timeout=FEISHU_TIMEOUT)
             result = resp.json()
-            if result.get("code") == 0 or result.get("StatusCode") == 0:
-                return {"ok": True, "msg": "连接成功"}
-            return {"ok": False, "msg": result.get("msg", "连接失败")}
+            logger.info(f"飞书测试响应: status={resp.status_code}, body={result}")
+            if result.get("code") == 0 and result.get("msg") == "success":
+                return {"ok": True, "msg": "连接成功，消息已发送"}
+            if result.get("StatusCode") == 0:
+                return {"ok": True, "msg": "连接成功，消息已发送"}
+            return {"ok": False, "msg": f"飞书返回错误: {result.get('msg', '未知错误')} (code={result.get('code')})"}
         except requests.Timeout:
             return {"ok": False, "msg": "连接超时"}
         except Exception as e:
+            logger.error(f"飞书测试异常: {e}")
             return {"ok": False, "msg": f"连接异常: {str(e)}"}
 
     return {"ok": False, "msg": f"不支持的平台: {platform}"}

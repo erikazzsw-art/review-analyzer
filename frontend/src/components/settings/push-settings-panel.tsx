@@ -129,7 +129,11 @@ export function PushSettingsPanel({ initialSettings }: Props) {
     setError(""); setMessage(""); setIsTesting(true);
     try {
       const result = await testWebhook({ webhookUrl: webhookUrl.trim(), webhookSecret: webhookSecret.trim() });
-      setMessage((result.message as string) || "连接测试完成。");
+      if (result.ok) {
+        setMessage((result.msg as string) || "连接测试完成。");
+      } else {
+        setError((result.msg as string) || "测试失败，请检查 Webhook 地址和签名校验配置");
+      }
     } catch (err) {
       setError((err as { message?: string }).message || "测试失败");
     } finally { setIsTesting(false); }
@@ -151,13 +155,13 @@ export function PushSettingsPanel({ initialSettings }: Props) {
         <p className="mt-1 text-sm text-soft">配置飞书群机器人 Webhook，启用自动推送。</p>
         <div className="mt-5 space-y-4">
           <label className="block space-y-1">
-            <span className="text-sm font-semibold text-ink">Webhook URL</span>
-            <Input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..." className="rounded-card border-line" />
+            <span className="text-sm font-semibold text-ink">Webhook 地址</span>
+            <Input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx（完整地址，含 hook/ 后的 token）" className="rounded-card border-line" />
           </label>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block space-y-1">
-              <span className="text-sm font-semibold text-ink">加签密钥</span>
-              <Input type="password" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} className="rounded-card border-line" />
+              <span className="text-sm font-semibold text-ink">签名校验</span>
+              <Input type="password" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="飞书机器人「安全设置」中的签名校验密钥（未开启则留空）" className="rounded-card border-line" />
             </label>
             <label className="block space-y-1">
               <span className="text-sm font-semibold text-ink">群名称备注</span>
