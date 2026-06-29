@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Download, Languages, Loader2 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 import { Button } from "@/components/ui/button";
 import { exportModuleXlsx, translateModule } from "@/lib/api/browser";
@@ -10,11 +11,12 @@ type ModuleCardProps = {
   sessionId: number;
   moduleKey: string;
   moduleData: Record<string, unknown>;
+  comments?: Array<Record<string, unknown>>;
   locale?: string;
   children: ReactNode;
 };
 
-export function ModuleCard({ sessionId, moduleKey, moduleData, locale, children }: ModuleCardProps) {
+export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale, children }: ModuleCardProps) {
   const [translatedData, setTranslatedData] = useState<Record<string, unknown> | null>(null);
   const [isTranslated, setIsTranslated] = useState(false);
   const [translating, setTranslating] = useState(false);
@@ -49,11 +51,16 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, locale, children 
   async function handleExport() {
     setExporting(true);
     try {
-      const blob = await exportModuleXlsx(sessionId, moduleKey, locale);
+      let blob: Blob;
+      if (sessionId > 0) {
+        blob = await exportModuleXlsx(sessionId, moduleKey, locale);
+      } else {
+        blob = buildClientXlsx(moduleKey, comments || [], locale || "zh");
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `analysis_${sessionId}_${moduleKey}.xlsx`;
+      a.download = `analysis_${sessionId || "aggregated"}_${moduleKey}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -109,6 +116,83 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, locale, children 
       </div>
     </section>
   );
+}
+
+function buildClientXlsx(
+  moduleKey: string,
+  comments: Array<Record<string, unknown>>,
+  locale: string,
+): Blob {
+  const wb = XLSX.utils.book_new();
+  const positive = comments.filter((c) => c.sentiment === "positive");
+  const negative = comments.filter((c) => c.sentiment === "negative");
+  const headers =
+    locale === "zh"
+      ? ["排名", "标签", "出现次数", "提及占比", "代表性评论（前20条摘要）"]
+      : ["Rank", "Tag", "Count", "Percentage", "Representative Reviews (Top 20)"];
+
+  function buildTop10(pool: Array<Record<string, unknown>>, tagField: string) {
+    const counter: Record<string, number> = {};
+    const sources: Record<string, string[]> = {};
+    for (const c of pool) {
+      const raw = String(c[tagField] || "");
+      if (!raw) continue;
+      const seen = new Set<string>();
+      for (const t of raw.split(",")) {
+        const tag = t.trim();
+        if (!tag || seen.has(tag)) continue;
+        seen.add(tag);
+        counter[tag] = (counter[tag] || 0) + 1;
+        if (!sources[tag]) sources[tag] = [];
+        if (sources[tag].length < 20) {
+          sources[tag].push(String(c.content || "").slice(0, 120));
+        }
+      }
+    }
+    const poolSize = pool.length || 1;
+    return Object.entries(counter)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([tag, count], i) => [
+        i + 1,
+        tag,
+        count,
+        `${((count / poolSize) * 100).toFixed(1)}%`,
+        (sources[tag] || []).join(" | "),
+      ]);
+  }
+
+  if (moduleKey === "user_experience") {
+    const posData = [headers, ...buildTop10(positive, "highlight_tag")];
+    const wsPos = XLSX.utils.aoa_to_sheet(posData);
+    XLSX.utils.book_append_sheet(wb, wsPos, locale === "zh" ? "正向反馈 TOP10" : "Positive Feedback TOP10");
+    const negData = [headers, ...buildTop10(negative, "issue_tag")];
+    const wsNeg = XLSX.utils.aoa_to_sheet(negData);
+    XLSX.utils.book_append_sheet(wb, wsNeg, locale === "zh" ? "负向反馈 TOP10" : "Negative Feedback TOP10");
+  } else if (moduleKey === "purchase_motives") {
+    const data = [headers, ...buildTop10(positive, "highlight_tag")];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "消费动机" : "Purchase Motives");
+  } else if (moduleKey === "unmet_needs") {
+    const data = [headers, ...buildTop10(negative, "issue_tag")];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "未满足的需求" : "Unmet Needs");
+  } else if (moduleKey === "consumer_profile") {
+    const posData = [headers, ...buildTop10(positive, "highlight_tag")];
+    const wsPos = XLSX.utils.aoa_to_sheet(posData);
+    XLSX.utils.book_append_sheet(wb, wsPos, locale === "zh" ? "亮点标签 TOP10" : "Highlight Tags TOP10");
+    const negData = [headers, ...buildTop10(negative, "issue_tag")];
+    const wsNeg = XLSX.utils.aoa_to_sheet(negData);
+    XLSX.utils.book_append_sheet(wb, wsNeg, locale === "zh" ? "问题标签 TOP10" : "Issue Tags TOP10");
+  } else {
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    XLSX.utils.book_append_sheet(wb, ws, moduleKey);
+  }
+
+  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+  return new Blob([buf], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
 }
 
 function TranslatedView({ data, moduleKey }: { data: Record<string, unknown>; moduleKey: string }) {

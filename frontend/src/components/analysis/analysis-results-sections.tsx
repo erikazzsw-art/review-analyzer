@@ -375,6 +375,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="consumer_profile"
           moduleData={(modules.consumer_profile as Record<string, unknown>) || {}}
+          comments={comments}
           locale={locale}
         >
           <p className="text-sm leading-7 text-ink">{consumerProfile.summary}</p>
@@ -424,6 +425,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="user_experience"
           moduleData={(modules.user_experience as Record<string, unknown>) || {}}
+          comments={comments}
           locale={locale}
         >
           <div className="flex flex-col gap-6">
@@ -483,6 +485,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="purchase_motives"
           moduleData={(modules.purchase_motives as Record<string, unknown>) || {}}
+          comments={comments}
           locale={locale}
         >
           <p className="text-sm leading-7 text-ink">{purchaseMotives.summary}</p>
@@ -511,6 +514,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="unmet_needs"
           moduleData={(modules.unmet_needs as Record<string, unknown>) || {}}
+          comments={comments}
           locale={locale}
         >
           <p className="text-sm leading-7 text-ink">{unmetNeeds.summary}</p>
@@ -540,6 +544,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="recommendations"
           moduleData={(modules.recommendations as Record<string, unknown>) || {}}
+          comments={comments}
           locale={locale}
         >
           <p className="text-sm leading-7 text-ink">{recommendations.summary}</p>
