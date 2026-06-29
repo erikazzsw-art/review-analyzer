@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { identify, track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 type AuthResponse = {
   user: {
@@ -85,9 +86,8 @@ export function LoginForm() {
         <label htmlFor="login-password" className="block text-sm font-medium text-ink">
           {t("password")}
         </label>
-        <Input
+        <PasswordInput
           id="login-password"
-          type="password"
           required
           minLength={6}
           maxLength={128}
