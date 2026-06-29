@@ -18,6 +18,7 @@ from backend_api.app.schemas.analysis import (
 from review_analyzer.database import get_comments, get_connection
 from review_analyzer.paddle_billing import is_pro_user
 from review_analyzer.product_store import get_product_overview_rows
+from review_analyzer.quota import quota_check, quota_consume
 from review_analyzer.rag import answer_question
 
 router = APIRouter(prefix="/qa", tags=["qa"])
@@ -76,7 +77,14 @@ def ask_reviews(
         return QaAskResponse(answer="No review data is available for the selected products.", retrieval_method="text")
 
     selected_comments = _dedupe_comments(selected_comments)
+
+    allowed, msg = quota_check(user_id, "ask_review")
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
+
     result = answer_question(user_id, payload.question.strip(), selected_comments, top_k=payload.top_k)
+    quota_consume(user_id, "ask_review")
+
     citations = [
         QaCitationPayload(
             id=int(comment["id"]) if comment.get("id") is not None else None,
@@ -253,7 +261,12 @@ def send_message(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No review data available for selected products.")
     selected_comments = _dedupe_comments(selected_comments)
 
+    allowed, msg = quota_check(user_id, "ask_review")
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
+
     result = answer_question(user_id, question, selected_comments, top_k=payload.top_k, history=history)
+    quota_consume(user_id, "ask_review")
     answer = str(result.get("answer") or "")
     citations_raw = result.get("citations", [])
     retrieval_method = str(result.get("retrieval_method") or "text")

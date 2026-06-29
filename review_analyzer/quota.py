@@ -207,6 +207,8 @@ def quota_check_atomic(user_id: int, dimension: str, amount: int) -> tuple[bool,
 
 def quota_consume(user_id: int, dimension: str, amount: int = 1) -> None:
     """扣减配额。使用 UPSERT 保证并发安全。"""
+    if amount <= 0:
+        return
     dim = PLAN_LIMITS.get(dimension)
     if dim is None or dim["period"] == "per_request":
         return

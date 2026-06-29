@@ -22,6 +22,7 @@ from backend_api.app.services.ideal_profile_cache import get_or_generate_ideal_p
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_comments
 from review_analyzer.paddle_billing import is_pro_user
+from review_analyzer.quota import quota_check, quota_consume
 
 router = APIRouter(prefix="/copywriter", tags=["copywriter"])
 
@@ -210,6 +211,10 @@ def generate_copywriter(
 
     review_summary, _, _ = _build_review_summary(comments)
 
+    allowed, msg = quota_check(user_id, "ad_copy")
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
+
     generated_items: list[CopywriterGeneratedItemPayload] = []
     if payload.generate_ad_copy:
         target_types = platform["types"]
@@ -243,6 +248,8 @@ def generate_copywriter(
             review_summary=review_summary,
             force=payload.force_regen_profile,
         )
+
+    quota_consume(user_id, "ad_copy")
 
     return CopywriterGenerateResponse(
         platform=_platform_payload(payload.platform, platform),

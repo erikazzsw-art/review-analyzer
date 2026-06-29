@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 from backend_api.app.deps import get_current_user
 from review_analyzer.database import get_comments, get_session_by_id
 from review_analyzer.exporter import export_to_xlsx
+from review_analyzer.quota import quota_check, quota_consume
 
 router = APIRouter(prefix="/analysis", tags=["export"])
 
@@ -26,11 +27,17 @@ def export_module_xlsx(
     if not session:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found.")
 
+    allowed, msg = quota_check(user_id, "excel_export")
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
+
     comments = get_comments(user_id, session_id=session_id)
     for c in comments:
         c.pop("embedding", None)
 
     output = _build_module_xlsx(module, comments, locale)
+    quota_consume(user_id, "excel_export")
+
     filename = f"analysis_{session_id}_{module}.xlsx"
     return StreamingResponse(
         output,
@@ -50,7 +57,12 @@ def export_full_xlsx(
     if not session:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found.")
 
+    allowed, msg = quota_check(user_id, "excel_export")
+    if not allowed:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
+
     xlsx_bytes, filename = export_to_xlsx(session_id, user_id)
+    quota_consume(user_id, "excel_export")
     return StreamingResponse(
         io.BytesIO(xlsx_bytes),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
