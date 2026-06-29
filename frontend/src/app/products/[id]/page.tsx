@@ -18,7 +18,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
     const name = (product.name as string) || (product.parent_product_id as string) || "未命名产品";
     const brand = product.brand as string | null;
-    const rating = product.rating as number | null;
+    const rating = product.rating != null ? Number(product.rating) : null;
     const imageUrl = product.image_url as string | null;
     const parentProductId = product.parent_product_id as string;
     const category = product.category as string | null;

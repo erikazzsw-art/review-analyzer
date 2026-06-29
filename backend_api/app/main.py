@@ -13,6 +13,7 @@ from backend_api.app.routes.analysis import router as analysis_router
 from backend_api.app.routes.analytics import router as analytics_router
 from backend_api.app.routes.asin_watchlist import router as asin_watchlist_router
 from backend_api.app.routes.auth import router as auth_router
+from backend_api.app.routes.calibration import router as calibration_router
 from backend_api.app.routes.compare import router as compare_router
 from backend_api.app.routes.copywriter import router as copywriter_router
 from backend_api.app.routes.downloads import router as downloads_router
@@ -79,6 +80,7 @@ app.include_router(quota_router)
 app.include_router(scrape_router)
 app.include_router(settings_router)
 app.include_router(taxonomy_router)
+app.include_router(calibration_router)
 app.include_router(analytics_router)
 app.include_router(feedback_router)
 app.include_router(asin_watchlist_router)

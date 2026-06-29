@@ -11,6 +11,7 @@ from backend_api.app.services.analysis_cache import (
     compute_content_hash,
 )
 from backend_api.app.services.analytics import track_analysis_complete
+from backend_api.app.services.calibration_injector import build_calibration_block
 from backend_api.app.services.category_grouper import aspects_to_legacy_schema
 from backend_api.app.services.clustering import (
     cluster_reviews,
@@ -198,6 +199,9 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             sub_category = str(payload.get("category") or "家具家居")
             aspects, taxonomy_hit = resolve_aspects(sub_category)
             aspects_block = render_aspects_block(aspects)
+            calibration_block = build_calibration_block(sub_category)
+            if calibration_block:
+                aspects_block += "\n\n" + calibration_block
             allowed_aspects = [a["key"] for a in aspects]
 
             # --- V4-T4 Step 3: 多级缓存 ---

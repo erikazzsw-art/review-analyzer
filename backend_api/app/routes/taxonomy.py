@@ -161,3 +161,13 @@ def probe_sub_category(
         category_label=cat_labels.get(cat_key) if cat_key else None,
         aspects_count=len(aspects) if hit else 0,
     )
+
+
+@router.get("/taxonomy/aspects")
+def get_aspects(
+    _: dict = Depends(get_current_user),
+) -> list[dict[str, str]]:
+    """返回完整 aspect 列表（key + 中文 label），供校准下拉选择."""
+    from backend_api.app.core.aspect_taxonomy import FURNITURE_ASPECTS
+
+    return [{"key": k, "label": v} for k, v in FURNITURE_ASPECTS.items()]
