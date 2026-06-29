@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
   MessageSquare,
@@ -186,10 +187,10 @@ export default async function AnalysisResultsPage({
         `/analysis/results?product_id=${encodeURIComponent(payload.session.product_id)}&range=default&session_id=${sessionId}`,
       );
     } catch (error: unknown) {
+      if (isRedirectError(error)) throw error;
       if (isApiError(error) && error.status === 401) {
         redirect("/login");
       }
-      // 404 / 其他错误：走 fallthrough 显示错误
     }
   }
 
