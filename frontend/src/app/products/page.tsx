@@ -67,13 +67,11 @@ function ProductCard({ product }: { product: ProductOverview }) {
 
         {/* 查看分析按钮 */}
         {product.session_count > 0 && (
-          <Link
-            href={`/analysis/results?product_id=${product.parent_product_id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="absolute right-2 top-2 rounded-pill bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[#f36f8f] shadow-sm backdrop-blur transition hover:bg-[#f36f8f] hover:text-white"
+          <span
+            className="absolute right-2 top-2 rounded-pill bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[#f36f8f] shadow-sm backdrop-blur"
           >
-            查看分析
-          </Link>
+            有分析
+          </span>
         )}
 
         {/* 生命周期 badge */}
