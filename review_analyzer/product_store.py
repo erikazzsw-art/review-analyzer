@@ -132,6 +132,40 @@ def delete_product(user_id: int, product_id: int) -> bool:
         conn.close()
 
 
+def delete_variant(user_id: int, product_id: int, variant_id: int) -> bool:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM product_variants WHERE id = %s AND user_id = %s AND product_id = %s",
+                (variant_id, user_id, product_id),
+            )
+            if not cur.fetchone():
+                return False
+
+            cur.execute(
+                "UPDATE action_items SET variant_id = NULL WHERE variant_id = %s",
+                (variant_id,),
+            )
+            cur.execute(
+                "UPDATE review_trackers SET variant_id = NULL WHERE variant_id = %s",
+                (variant_id,),
+            )
+            cur.execute(
+                "UPDATE upload_jobs SET variant_ref_id = NULL WHERE variant_ref_id = %s",
+                (variant_id,),
+            )
+            cur.execute(
+                "DELETE FROM product_variants WHERE id = %s AND user_id = %s AND product_id = %s",
+                (variant_id, user_id, product_id),
+            )
+            deleted = cur.rowcount > 0
+        conn.commit()
+        return deleted
+    finally:
+        conn.close()
+
+
 def get_products(user_id: int) -> list[dict[str, Any]]:
     conn = get_connection()
     try:

@@ -18,6 +18,7 @@ from review_analyzer.database import get_connection
 from review_analyzer.product_store import (
     create_product,
     delete_product,
+    delete_variant,
     get_product_by_id,
     get_product_overview_rows,
     get_variants,
@@ -200,6 +201,27 @@ def delete_product_route(
             detail="Product not found.",
         )
     delete_product(user_id, product_id)
+
+
+@router.delete("/{product_id}/variants/{variant_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_variant_route(
+    product_id: int,
+    variant_id: int,
+    current_user: dict = Depends(get_current_user),
+) -> None:
+    user_id = int(current_user["id"])
+    existing = get_product_by_id(user_id, product_id)
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found.",
+        )
+    deleted = delete_variant(user_id, product_id, variant_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Variant not found.",
+        )
 
 
 @router.get("/{product_id}/detail")

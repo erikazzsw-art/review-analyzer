@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app/app-shell";
+import { DeleteVariantButton } from "@/components/products/delete-variant-button";
 import { getProductDetail, isApiError } from "@/lib/api/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -111,6 +112,7 @@ export default async function ProductDetailPage({ params }: Props) {
                     <th className="px-3 py-3">销售额</th>
                     <th className="px-3 py-3">FBA</th>
                     <th className="px-3 py-3">上架日期</th>
+                    <th className="px-3 py-3">操作</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -139,6 +141,13 @@ export default async function ProductDetailPage({ params }: Props) {
                       <td className="px-3 py-3 text-soft">—</td>
                       <td className="px-3 py-3 text-soft">—</td>
                       <td className="px-3 py-3 text-soft">{(v.listing_date as string) || "—"}</td>
+                      <td className="px-3 py-3">
+                        <DeleteVariantButton
+                          productId={productId}
+                          variantId={v.id as number}
+                          variantName={(v.name as string) || (v.child_asin as string) || "未命名变体"}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

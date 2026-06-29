@@ -1081,6 +1081,16 @@ export async function deleteProduct(productId: number): Promise<void> {
   }
 }
 
+export async function deleteVariant(productId: number, variantId: number): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/products/${productId}/variants/${variantId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+}
+
 export async function fetchDownloads(): Promise<import("./types").DownloadRecord[]> {
   const response = await fetch(`${getApiBaseUrl()}/downloads`, {
     credentials: "include",

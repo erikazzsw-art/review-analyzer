@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { CreateProductButton } from "@/components/products/create-product-button";
+import { DeleteProductButton } from "@/components/products/delete-product-button";
 import { getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import type { ProductOverview } from "@/lib/api/types";
@@ -45,10 +46,13 @@ function ProductCard({ product }: { product: ProductOverview }) {
     "";
 
   return (
-    <Link
-      href={`/products/${product.id}`}
-      className="group flex flex-col overflow-hidden rounded-shell border border-line bg-white/90 shadow-card backdrop-blur transition hover:border-[#f36f8f]/40 hover:shadow-lg"
-    >
+    <div className="group relative flex flex-col overflow-hidden rounded-shell border border-line bg-white/90 shadow-card backdrop-blur transition hover:border-[#f36f8f]/40 hover:shadow-lg">
+      <Link
+        href={`/products/${product.id}`}
+        className="absolute inset-0 z-0"
+        aria-label={`查看 ${title} 详情`}
+      />
+
       {/* 产品图片区域 */}
       <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
         {product.image_url ? (
@@ -98,8 +102,15 @@ function ProductCard({ product }: { product: ProductOverview }) {
           <span>{product.reviews_total ?? product.review_count} 条评论</span>
           <span>{product.variant_count} 个变体</span>
         </div>
+
+        {/* 删除按钮 — z-10 浮于 overlay link 之上 */}
+        <div className="relative z-10 mt-2 flex justify-end">
+          {product.id != null && (
+            <DeleteProductButton productId={product.id} productName={title} />
+          )}
+        </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
