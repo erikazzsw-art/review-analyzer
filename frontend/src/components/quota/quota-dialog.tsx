@@ -1,9 +1,11 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { createBillingCheckout } from "@/lib/api/browser";
 import type { QuotaItem } from "@/lib/api/server";
 import {
   Dialog,
@@ -97,6 +99,12 @@ export function QuotaDialog({ open, onOpenChange, items }: QuotaDialogProps) {
             </Link>
           </div>
         )}
+
+        {plan === "pro" && (
+          <div className="border-t border-line bg-[#f8f6f3] px-6 py-4">
+            <ManageSubscriptionButton onDone={() => onOpenChange(false)} />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -176,5 +184,52 @@ function QuotaRow({ item }: { item: QuotaItem }) {
         </div>
       )}
     </li>
+  );
+}
+
+function ManageSubscriptionButton({ onDone }: { onDone: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const checkoutRef = useRef<HTMLDivElement | null>(null);
+
+  async function handleManage() {
+    setError(""); setLoading(true);
+    try {
+      const result = await createBillingCheckout();
+      if (!result.checkout_html) {
+        onDone();
+        return;
+      }
+      if (checkoutRef.current) {
+        checkoutRef.current.innerHTML = result.checkout_html;
+        const scripts = Array.from(checkoutRef.current.querySelectorAll("script"));
+        for (const script of scripts) {
+          await new Promise<void>((resolve, reject) => {
+            const next = document.createElement("script");
+            Array.from(script.attributes).forEach((attr) => next.setAttribute(attr.name, attr.value));
+            if (next.src) { next.onload = () => resolve(); next.onerror = () => reject(new Error("脚本加载失败")); }
+            else { next.text = script.textContent || ""; resolve(); }
+            script.replaceWith(next);
+          });
+        }
+      }
+    } catch (err) {
+      setError((err as { message?: string }).message || "操作失败");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <>
+      <div ref={checkoutRef} className="hidden" aria-hidden="true" />
+      <button
+        type="button"
+        onClick={handleManage}
+        disabled={loading}
+        className="inline-flex w-full items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-ink shadow-sm transition hover:bg-[#f8f6f3] disabled:opacity-50"
+      >
+        {loading ? "加载中..." : "管理订阅"}
+      </button>
+      {error && <p className="mt-2 text-center text-xs text-red-600">{error}</p>}
+    </>
   );
 }

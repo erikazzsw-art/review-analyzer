@@ -13,6 +13,7 @@ import type {
 } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ProductSearchCombobox } from "@/components/analysis/product-search-combobox";
 
 type Props = { initialSettings: SettingsResponse };
 
@@ -200,7 +201,9 @@ export function PushSettingsPanel({ initialSettings }: Props) {
           {productRules.map((rule, idx) => (
             <div key={idx} className="rounded-card border border-line bg-white p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <Input value={rule.product_id} onChange={(e) => { const next = [...productRules]; next[idx] = { ...rule, product_id: e.target.value }; setProductRules(next); }} placeholder="产品 ID" className="flex-1 rounded-card border-line text-sm" />
+                <div className="flex-1 min-w-0">
+                  <ProductSearchCombobox value={rule.product_id} onChange={(pid) => { const next = [...productRules]; next[idx] = { ...rule, product_id: pid }; setProductRules(next); }} placeholder="产品编码" />
+                </div>
                 <label className="flex items-center gap-1 text-xs text-soft">
                   <input type="checkbox" checked={rule.enabled} onChange={(e) => { const next = [...productRules]; next[idx] = { ...rule, enabled: e.target.checked }; setProductRules(next); }} />
                   启用

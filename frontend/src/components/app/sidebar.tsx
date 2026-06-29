@@ -64,7 +64,8 @@ export function Sidebar({ currentPath }: SidebarProps) {
       title: t("groupManage"),
       items: [
         { href: "/products", label: t("products") },
-        { href: "/settings", label: t("pushSettings") },
+        { href: "/settings/push", label: t("pushSettings") },
+        { href: "/settings", label: t("systemSettings") },
       ],
     },
   ];
