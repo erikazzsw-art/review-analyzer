@@ -9,6 +9,10 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-06-29 | ASIN 抓取评论后分析结果页全部为空（0 条评论、0% 好评/差评、无用户画像）。根因：Rainforest API 返回日期为 `{"raw": "Reviewed in ... on March 5, 2023", "utc": "2023-03-05T00:00:00.000Z"}`，之前 `_parse_review` 直接存 raw 文本，SQL `date <= '2026-06-29'` 对文本做字典序比较全部排除；加上 session 没有 date_range，`_resolve_range` 兜底到 30 天窗口进一步导致零结果 | 三处修复：1) `rainforest.py` 新增 `_extract_iso_date()` 优先取 utc 字段转 ISO 日期；2) `analysis.py /results` 传 session_id 给 get_comments 精确匹配；3) `_resolve_range` 当 session 存在但日期无法解析时返回不过滤（靠 session_id 兜底）。commit `cf9ed06` |
+| 2026-06-29 | 分析结果页 Aesthetics 标签代表性评论不准（含聚类传播的无关评论）。三次迭代：1) 首版只检查 cluster_propagated 标志 → 对旧数据无效；2) 增加 evidence_span ∈ content 验证 → Pass 1 因大小写不匹配（Title Case vs snake_case）永远为空；3) 归一化 tagKey 为 lowercase+underscore 后修复 | 前端 `hasAspectEvidence()` + 后端 `_has_aspect_evidence()` 两处同步修复：normalize(`tagKey.toLowerCase().replace(/[\s_]+/g, "_")`) 与 `aspects[].key` 比较 + 验证 evidence_span 在正文中存在 + 排除 cluster_propagated 评论。commit `00b83b9` → `04f0d5a` → `65709ff`。验证结论：session 69 无聚类传播评论（0/193），显示结果不变是正常的；修复对未来有传播的 session 生效 |
+| 2026-06-29 | 测试账号套餐额度始终显示 0/10000 不变化。根因：1) commit e122eba 前 worker 从未调用 quota_consume；2) 修复后未执行新分析故 used 仍为 0；3) qa/copywriter/export 三个路由完全缺失 quota_check + quota_consume | 1) quota_consume 加 amount<=0 防御性早返回；2) qa.py 的 ask_reviews + send_message 接入 quota_check/consume(ask_review)；3) copywriter.py generate 接入 quota_check/consume(ad_copy)；4) export.py 两个导出端点接入 quota_check/consume(excel_export)；5) 提供回填 SQL 按月汇总 sessions.total_reviews 写入 user_quota_usage |
+| 2026-06-29 | 设置页面 4 项优化：1) API 密钥管理对用户无意义（后台已配置）；2) 系统设置作为 sidebar 导航项占位不合理；3) 缺少下载中心页面记录用户导出历史；4) 缺少团队管理方案规划 | 1) 删除 api-keys-panel.tsx + settings/api-keys/page.tsx；2) 系统设置改为 Dialog 弹窗（从用户下拉菜单触发），sidebar groupManage 不再包含系统设置入口；3) 新增下载中心全栈实现：后端 migration 030 + GET/POST /downloads API + 前端 /downloads 页面（表格+空状态+状态 badge）+ 现有导出自动记录；4) 团队管理可行性方案（Workspace 模型 + 4 角色 RBAC + 3 Phase 落地）写入 PROGRESS_V2.md |
 | 2026-06-29 | 用户画像模块三大问题：1) Review Distribution 与上方汇总好评率/差评率重复；2) Core Audience Focus 中同一标签出现两次；3) Key Insight 模板句式逻辑自相矛盾；且整体内容与「消费动机」「未满足的需求」模块职责重叠 | 重构 consumer_profile 为纯人物画像（参考 Facebook Ads 核心受众模型）：三行改为 Demographics / Interests & Context / Purchase Behavior，只描述买家身份、使用场景和购买行为模式，不再包含产品好坏评价。新增三个 heuristic 函数从评论文本中提取关键词（身份角色、兴趣场景、行为模式），AI prompt 同步更新强制输出人物维度。前端无需改动（通用 label/detail 渲染），compare-dashboard fallback 兼容。ruff + typecheck 通过 |
 | 2026-06-29 | 推送设置页面标题错误显示"系统设置"；产品级规则输入框为纯文本无法搜索；订阅计费和 API 密钥不应放在推送设置里；系统设置页缺乏实际内容 | 拆分 settings/layout.tsx 为纯结构壳 + 新建 push/layout.tsx（标题"推送设置"）；产品规则 Input 替换为 ProductSearchCombobox；新建系统设置页（/settings）含账户信息 + API 密钥 + 数据导出占位；订阅计费移入 QuotaDialog（Pro 用户显示"管理订阅"按钮）；侧边栏新增"系统设置"入口。typecheck + build 通过 |
 | 2026-06-25 | 设置页面（推送/API密钥/计费）标题字体过大（text-2xl/xl）、模块间距过宽（space-y-8, p-6）、与导航栏距离远，与其他页面风格不统一 | 统一所有 section heading 为 `text-base font-bold`，section padding 从 `p-6` 收紧到 `p-5`，模块间距从 `space-y-8` 降为 `space-y-5`，layout 垂直 padding 从 `p-6` 改为 `py-4`。涉及 `push-settings-panel.tsx`、`api-keys-panel.tsx`、`billing-panel.tsx`、`settings/layout.tsx` 四个文件。typecheck 通过 |
@@ -478,3 +482,13 @@ File "database.py", line 13, in get_connection
 | 2026-06-29 | feat | 综合建议模块去掉 "Recommendation N" 标题，只保留序号圆圈 + 建议正文 | tsc PASS |
 | 2026-06-29 | feat | 模块右上角下载按钮（用户体验/消费动机/未满足的需求/用户画像）输出改为 TOP10 格式（排名/标签/出现次数/提及占比/代表性评论前20条摘要） | tsc PASS, ruff PASS |
 | 2026-06-29 | feat | 所有下载 Excel 表头支持 i18n（中文系统输出中文表头，英文系统输出英文表头） | tsc PASS, ruff PASS |
+| 2026-06-29 | fix | ?session_id=N 直接访问分析结果页报错，需带 product_id 才能加载。根因：redirect() 在 try-catch 中被吞掉。修复：catch 中加 isRedirectError 判断重新抛出 | tsc PASS, 线上验证 PASS |
+
+---
+
+### 2026-06-29 产品管理删除 + 搜索下拉框修复
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-06-29 | fix | 产品管理页删除产品无效。根因：delete_product() 中使用了不存在的表名 `actions`（正确为 `action_items`），导致 SQL 报错事务回滚；同时补充删除 variants 前清空 action_items/review_trackers 的 variant_id 外键引用 | ruff PASS |
+| 2026-06-29 | fix | 分析结果页产品搜索下拉框显示已删除历史记录的产品（session_count=0）。修复：search 接口过滤掉 session_count=0 的产品 | ruff PASS |

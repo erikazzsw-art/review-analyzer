@@ -84,7 +84,10 @@ def search_products_route(
         name = str(row.get("name") or "").lower()
         return q_norm in pid or q_norm in name
 
-    matched = [r for r in rows if _match(r)]
+    matched = [
+        r for r in rows
+        if _match(r) and int(r.get("session_count") or 0) > 0
+    ]
 
     def _sort_key(row: dict) -> tuple:
         pid = str(row.get("parent_product_id") or "").lower()

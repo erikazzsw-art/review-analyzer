@@ -73,6 +73,26 @@ def delete_product(user_id: int, product_id: int) -> bool:
     conn = get_connection()
     try:
         with conn.cursor() as cur:
+            variant_ids_sql = (
+                "SELECT id FROM product_variants WHERE user_id = %s AND product_id = %s"
+            )
+            cur.execute(variant_ids_sql, (user_id, product_id))
+            variant_ids = [r[0] for r in cur.fetchall()]
+
+            if variant_ids:
+                cur.execute(
+                    "UPDATE action_items SET variant_id = NULL WHERE variant_id = ANY(%s)",
+                    (variant_ids,),
+                )
+                cur.execute(
+                    "UPDATE review_trackers SET variant_id = NULL WHERE variant_id = ANY(%s)",
+                    (variant_ids,),
+                )
+                cur.execute(
+                    "UPDATE upload_jobs SET variant_ref_id = NULL WHERE variant_ref_id = ANY(%s)",
+                    (variant_ids,),
+                )
+
             cur.execute(
                 "DELETE FROM product_versions WHERE user_id = %s AND product_id = %s",
                 (user_id, product_id),
@@ -82,7 +102,7 @@ def delete_product(user_id: int, product_id: int) -> bool:
                 (user_id, product_id),
             )
             cur.execute(
-                "UPDATE actions SET product_id = NULL WHERE product_id = %s",
+                "UPDATE action_items SET product_id = NULL WHERE product_id = %s",
                 (product_id,),
             )
             cur.execute(
