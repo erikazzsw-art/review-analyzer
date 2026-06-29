@@ -53,7 +53,7 @@ def _get_api_key() -> str:
 def _parse_review(raw: dict[str, Any]) -> dict[str, Any]:
     """将 Rainforest API 返回的单条 review 转为内部格式。"""
     date_field = raw.get("date", {})
-    date_str = date_field.get("raw", "") if isinstance(date_field, dict) else str(date_field)
+    date_str = _extract_iso_date(date_field)
     profile = raw.get("profile", {}) or {}
     return {
         "content": raw.get("body", ""),
@@ -65,6 +65,38 @@ def _parse_review(raw: dict[str, Any]) -> dict[str, Any]:
         "reviewer_id": profile.get("id", ""),
         "review_id": raw.get("id", ""),
     }
+
+
+def _extract_iso_date(date_field: Any) -> str:
+    """从 Rainforest date 字段提取 ISO 日期 (YYYY-MM-DD)。
+
+    Rainforest API 返回格式: {"raw": "Reviewed in ... on March 5, 2023", "utc": "2023-03-05T00:00:00.000Z"}
+    优先用 utc 字段；fallback 尝试从 raw 文本解析。
+    """
+    if not isinstance(date_field, dict):
+        s = str(date_field).strip()
+        return s[:10] if s and s[:4].isdigit() else ""
+
+    utc = str(date_field.get("utc", "")).strip()
+    if utc and utc[:4].isdigit():
+        return utc[:10]
+
+    raw = str(date_field.get("raw", "")).strip()
+    if raw and raw[:4].isdigit():
+        return raw[:10]
+
+    # 尝试从 "Reviewed in ... on September 29, 2024" 格式解析
+    if " on " in raw:
+        from datetime import datetime as _dt
+
+        tail = raw.rsplit(" on ", 1)[-1].strip()
+        for fmt in ("%B %d, %Y", "%d %B %Y", "%b %d, %Y"):
+            try:
+                return _dt.strptime(tail, fmt).strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+
+    return ""
 
 
 async def fetch_reviews_by_asin(

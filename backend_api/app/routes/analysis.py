@@ -125,6 +125,7 @@ def get_aggregated_results(
     comments = get_comments(
         user_id,
         product_id=product_id,
+        session_id=session_id,
         version=version or None,
         date_start=start_iso or None,
         date_end=end_iso or None,
@@ -367,6 +368,8 @@ def _resolve_range(
             s, e = _comments_date_span(user_id, session_id=int(session["id"]))
             if s and e:
                 return s, e, "default"
+            # session 存在但日期无法解析 — 不做日期过滤，靠 session_id 查询兜底
+            return "", "", "all"
 
     # 找该产品最近一个 session 的 date_range
     sessions = get_sessions(user_id, product_id=product_id)
