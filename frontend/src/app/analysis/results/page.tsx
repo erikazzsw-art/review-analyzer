@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import {
   MessageSquare,
   ThumbsUp,
@@ -107,6 +107,7 @@ export default async function AnalysisResultsPage({
   searchParams,
 }: ResultsPageProps) {
   const t = await getTranslations("analysis");
+  const locale = await getLocale();
   const params = searchParams ? await searchParams : undefined;
   const sessionId = Number(params?.session_id || 0);
   const jobId = Number(params?.job_id || 0);
@@ -418,6 +419,7 @@ export default async function AnalysisResultsPage({
         overviewSlot={overviewSlot}
         filterBarSlot={filterBarSlot}
         t={tStrings}
+        locale={locale}
       />
     </AppShell>
   );

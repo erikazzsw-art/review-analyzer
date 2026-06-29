@@ -9,6 +9,7 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-06-29 | 推送设置页面标题错误显示"系统设置"；产品级规则输入框为纯文本无法搜索；订阅计费和 API 密钥不应放在推送设置里；系统设置页缺乏实际内容 | 拆分 settings/layout.tsx 为纯结构壳 + 新建 push/layout.tsx（标题"推送设置"）；产品规则 Input 替换为 ProductSearchCombobox；新建系统设置页（/settings）含账户信息 + API 密钥 + 数据导出占位；订阅计费移入 QuotaDialog（Pro 用户显示"管理订阅"按钮）；侧边栏新增"系统设置"入口。typecheck + build 通过 |
 | 2026-06-25 | 设置页面（推送/API密钥/计费）标题字体过大（text-2xl/xl）、模块间距过宽（space-y-8, p-6）、与导航栏距离远，与其他页面风格不统一 | 统一所有 section heading 为 `text-base font-bold`，section padding 从 `p-6` 收紧到 `p-5`，模块间距从 `space-y-8` 降为 `space-y-5`，layout 垂直 padding 从 `p-6` 改为 `py-4`。涉及 `push-settings-panel.tsx`、`api-keys-panel.tsx`、`billing-panel.tsx`、`settings/layout.tsx` 四个文件。typecheck 通过 |
 | 2026-06-25 | 点击 sidebar"系统设置"入口页面闪退（白屏后跳转） | 根因：`/settings/page.tsx` 使用服务端 `redirect("/settings/push")` 导致客户端导航时触发全页刷新。修复：改为 `"use client"` + `useRouter().replace()` 客户端软跳转，layout 正常渲染不闪白。typecheck 通过 |
 | 2026-06-25 | 修复上述 commit 02b221c 后设置页仍闪退（点击侧栏"系统设置"白屏崩溃） | 根因：子页面（push/api-keys/billing）各自包裹 `AppShell`（含 fixed Sidebar），而 `settings/layout.tsx` 是薄壳无 Sidebar，导致双重嵌套布局 + 服务端 `getSettings()` 未 catch 的异常直接崩溃整页。修复：1) `settings/layout.tsx` 重写为完整 shell（含 Sidebar + header + tab 导航）；2) 三个子页面从 server component 转为 client component，使用 `fetchSettings()` 客户端获取数据，统一处理 401/error/loading 三态，不再嵌套 AppShell。typecheck + next build 通过，Playwright 验证页面结构正确 |
@@ -456,3 +457,23 @@ File "database.py", line 13, in get_connection
 | 2026-06-25 | feat(Part A) | 设置页改为 sidebar 导航 + 3 子页（/settings/push, /settings/api-keys, /settings/billing）；推送页合并全局规则+产品规则+周期推送+升级规则为单页全宽 | tsc PASS, ruff PASS, next build PASS |
 | 2026-06-25 | feat(Part B) | 推送内容增强：B1 条数+占比、B2 AI 总结建议（insight_engine）、B3 可点击链接、B4 行动中心引导文案、B5 环比推送增强（对比周期+上下期+TOP3变化）、B6 TOP 问题复盘进度 | ruff PASS |
 | 2026-06-25 | fix(UI) | 设置页面卡片移除 max-w-2xl/3xl + mx-auto 约束，平铺撑满内容区，与其他页面风格一致 | tsc PASS |
+
+---
+
+### 2026-06-26 对比分析版本下拉框 + 产品列表同步修复
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-06-26 | fix | 版本对比模式下版本下拉框只显示"全部版本"，无法选择 V1/V2；原因是读取 product_versions 目录表而非 sessions 实际版本。改为从 sessions.version 聚合 | tsc PASS, ruff PASS |
+| 2026-06-26 | fix | 历史记录删除分析记录后对比分析页产品列表未同步；改为 compare-workspace 挂载时 client-side 重新获取产品列表 | tsc PASS, ruff PASS |
+
+---
+
+### 2026-06-29 分析结果页下载与显示优化
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-06-29 | feat | 标签代表性评论下载扩展为 13 列完整分析格式（序号/评论内容/评分/日期/评论者/来源/情感/分类/优先级/分析理由/改进建议/问题标签/亮点标签） | tsc PASS, ruff PASS |
+| 2026-06-29 | feat | 综合建议模块去掉 "Recommendation N" 标题，只保留序号圆圈 + 建议正文 | tsc PASS |
+| 2026-06-29 | feat | 模块右上角下载按钮（用户体验/消费动机/未满足的需求/用户画像）输出改为 TOP10 格式（排名/标签/出现次数/提及占比/代表性评论前20条摘要） | tsc PASS, ruff PASS |
+| 2026-06-29 | feat | 所有下载 Excel 表头支持 i18n（中文系统输出中文表头，英文系统输出英文表头） | tsc PASS, ruff PASS |

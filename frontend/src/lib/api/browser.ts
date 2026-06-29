@@ -1005,9 +1005,10 @@ export async function translateModule(params: {
   return (await response.json()) as { translated: Record<string, unknown> };
 }
 
-export async function exportModuleXlsx(sessionId: number, moduleKey: string): Promise<Blob> {
+export async function exportModuleXlsx(sessionId: number, moduleKey: string, locale?: string): Promise<Blob> {
+  const localeParam = locale ? `&locale=${encodeURIComponent(locale)}` : "";
   const response = await fetch(
-    `${getApiBaseUrl()}/analysis/sessions/${sessionId}/export?module=${encodeURIComponent(moduleKey)}`,
+    `${getApiBaseUrl()}/analysis/sessions/${sessionId}/export?module=${encodeURIComponent(moduleKey)}${localeParam}`,
     { credentials: "include" },
   );
   if (!response.ok) {

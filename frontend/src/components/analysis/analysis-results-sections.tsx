@@ -65,6 +65,7 @@ type Props = {
   overviewSlot: ReactNode;
   filterBarSlot?: ReactNode;
   t: Record<string, string>;
+  locale: string;
 };
 
 function rv(value: unknown, fallback = "--"): string {
@@ -128,18 +129,32 @@ function downloadTagReviews(
   tag: string,
   comments: Array<Record<string, unknown>>,
   tagSource: "highlight_tag" | "issue_tag",
+  locale: string,
 ) {
   const matched = comments.filter((c) => tagMatchesComment(tag, c, tagSource));
-  const rows = matched.map((c) => ({
-    Review: String(c.content || ""),
-    Date: String(c.date || ""),
-    Rating: c.rating != null ? Number(c.rating) : "",
-    Sentiment: String(c.sentiment || ""),
-    Source: String(c.source || ""),
-    Issue_Tags: String(c.issue_tag || ""),
-    Highlight_Tags: String(c.highlight_tag || ""),
-  }));
-  const ws = XLSX.utils.json_to_sheet(rows);
+  const headers =
+    locale === "zh"
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags"];
+  const data: (string | number)[][] = [headers];
+  matched.forEach((c, idx) => {
+    data.push([
+      idx + 1,
+      String(c.content || ""),
+      c.rating != null ? Number(c.rating) : "",
+      String(c.date || ""),
+      String(c.reviewer || ""),
+      String(c.source || ""),
+      String(c.sentiment || ""),
+      String(c.category || ""),
+      String(c.priority || ""),
+      String(c.reason || ""),
+      String(c.improvement || ""),
+      String(c.issue_tag || ""),
+      String(c.highlight_tag || ""),
+    ] as (string | number)[]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, tag.slice(0, 31));
   XLSX.writeFile(wb, `${tag}_reviews_${matched.length}.xlsx`);
@@ -149,17 +164,19 @@ function DownloadTagButton({
   tag,
   comments,
   tagSource,
+  locale,
 }: {
   tag: string;
   comments: Array<Record<string, unknown>>;
   tagSource: "highlight_tag" | "issue_tag";
+  locale: string;
 }) {
   const count = comments.filter((c) => tagMatchesComment(tag, c, tagSource)).length;
 
   return (
     <button
       type="button"
-      onClick={() => count > 0 && downloadTagReviews(tag, comments, tagSource)}
+      onClick={() => count > 0 && downloadTagReviews(tag, comments, tagSource, locale)}
       disabled={count === 0}
       className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
       title={count > 0 ? `Download ${count} reviews` : "No matching reviews"}
@@ -178,6 +195,7 @@ function TagTable({
   showAction,
   comments,
   tagSource,
+  locale,
 }: {
   items: RowItem[];
   variant: "positive" | "negative" | "neutral";
@@ -186,6 +204,7 @@ function TagTable({
   showAction?: boolean;
   comments?: Array<Record<string, unknown>>;
   tagSource?: "highlight_tag" | "issue_tag";
+  locale?: string;
 }) {
   const barColor =
     variant === "positive"
@@ -247,6 +266,7 @@ function TagTable({
                       tag={tag}
                       comments={comments}
                       tagSource={tagSource}
+                      locale={locale || "zh"}
                     />
                   )}
                   {showAction && sessionId > 0 && (
@@ -297,6 +317,7 @@ export function AnalysisResultsSections({
   overviewSlot,
   filterBarSlot,
   t,
+  locale,
 }: Props) {
   const [reviewsShown, setReviewsShown] = useState(REVIEWS_PAGE_SIZE);
   const [exportingFull, setExportingFull] = useState(false);
@@ -354,6 +375,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="consumer_profile"
           moduleData={(modules.consumer_profile as Record<string, unknown>) || {}}
+          locale={locale}
         >
           <p className="text-sm leading-7 text-ink">{consumerProfile.summary}</p>
           {consumerProfile.rows.length > 0 && (
@@ -402,6 +424,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="user_experience"
           moduleData={(modules.user_experience as Record<string, unknown>) || {}}
+          locale={locale}
         >
           <div className="flex flex-col gap-6">
             <div>
@@ -418,6 +441,7 @@ export function AnalysisResultsSections({
                 session={session}
                 comments={comments}
                 tagSource="highlight_tag"
+                locale={locale}
               />
               {userExperience.positive.length === 0 && (
                 <p className="text-sm text-soft">{t.noPositive}</p>
@@ -438,6 +462,7 @@ export function AnalysisResultsSections({
                 showAction={canShowActions}
                 comments={comments}
                 tagSource="issue_tag"
+                locale={locale}
               />
               {userExperience.negative.length === 0 && (
                 <p className="text-sm text-soft">{t.noNegative}</p>
@@ -458,6 +483,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="purchase_motives"
           moduleData={(modules.purchase_motives as Record<string, unknown>) || {}}
+          locale={locale}
         >
           <p className="text-sm leading-7 text-ink">{purchaseMotives.summary}</p>
           <div className="mt-4">
@@ -468,6 +494,7 @@ export function AnalysisResultsSections({
               session={session}
               comments={comments}
               tagSource="highlight_tag"
+              locale={locale}
             />
           </div>
         </ModuleCard>
@@ -484,6 +511,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="unmet_needs"
           moduleData={(modules.unmet_needs as Record<string, unknown>) || {}}
+          locale={locale}
         >
           <p className="text-sm leading-7 text-ink">{unmetNeeds.summary}</p>
           <div className="mt-4">
@@ -495,6 +523,7 @@ export function AnalysisResultsSections({
               showAction={canShowActions}
               comments={comments}
               tagSource="issue_tag"
+              locale={locale}
             />
           </div>
         </ModuleCard>
@@ -511,6 +540,7 @@ export function AnalysisResultsSections({
           sessionId={sessionId}
           moduleKey="recommendations"
           moduleData={(modules.recommendations as Record<string, unknown>) || {}}
+          locale={locale}
         >
           <p className="text-sm leading-7 text-ink">{recommendations.summary}</p>
           <div className="mt-4 space-y-2">
@@ -519,14 +549,9 @@ export function AnalysisResultsSections({
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#7c3aed] text-xs font-bold text-white">
                   {i + 1}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-ink">
-                    {rv(row.label || row.tag || row.title)}
-                  </div>
-                  <p className="mt-0.5 text-sm leading-6 text-soft">
-                    {rv(row.detail || row.reason || row.summary || row.value)}
-                  </p>
-                </div>
+                <p className="min-w-0 flex-1 text-sm leading-6 text-ink">
+                  {rv(row.detail || row.reason || row.summary || row.value)}
+                </p>
                 <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-soft/50" />
               </div>
             ))}

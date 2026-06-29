@@ -10,10 +10,11 @@ type ModuleCardProps = {
   sessionId: number;
   moduleKey: string;
   moduleData: Record<string, unknown>;
+  locale?: string;
   children: ReactNode;
 };
 
-export function ModuleCard({ sessionId, moduleKey, moduleData, children }: ModuleCardProps) {
+export function ModuleCard({ sessionId, moduleKey, moduleData, locale, children }: ModuleCardProps) {
   const [translatedData, setTranslatedData] = useState<Record<string, unknown> | null>(null);
   const [isTranslated, setIsTranslated] = useState(false);
   const [translating, setTranslating] = useState(false);
@@ -48,7 +49,7 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, children }: Modul
   async function handleExport() {
     setExporting(true);
     try {
-      const blob = await exportModuleXlsx(sessionId, moduleKey);
+      const blob = await exportModuleXlsx(sessionId, moduleKey, locale);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
