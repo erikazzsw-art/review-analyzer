@@ -9,6 +9,7 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-06-29 | 用户画像模块三大问题：1) Review Distribution 与上方汇总好评率/差评率重复；2) Core Audience Focus 中同一标签出现两次；3) Key Insight 模板句式逻辑自相矛盾；且整体内容与「消费动机」「未满足的需求」模块职责重叠 | 重构 consumer_profile 为纯人物画像（参考 Facebook Ads 核心受众模型）：三行改为 Demographics / Interests & Context / Purchase Behavior，只描述买家身份、使用场景和购买行为模式，不再包含产品好坏评价。新增三个 heuristic 函数从评论文本中提取关键词（身份角色、兴趣场景、行为模式），AI prompt 同步更新强制输出人物维度。前端无需改动（通用 label/detail 渲染），compare-dashboard fallback 兼容。ruff + typecheck 通过 |
 | 2026-06-29 | 推送设置页面标题错误显示"系统设置"；产品级规则输入框为纯文本无法搜索；订阅计费和 API 密钥不应放在推送设置里；系统设置页缺乏实际内容 | 拆分 settings/layout.tsx 为纯结构壳 + 新建 push/layout.tsx（标题"推送设置"）；产品规则 Input 替换为 ProductSearchCombobox；新建系统设置页（/settings）含账户信息 + API 密钥 + 数据导出占位；订阅计费移入 QuotaDialog（Pro 用户显示"管理订阅"按钮）；侧边栏新增"系统设置"入口。typecheck + build 通过 |
 | 2026-06-25 | 设置页面（推送/API密钥/计费）标题字体过大（text-2xl/xl）、模块间距过宽（space-y-8, p-6）、与导航栏距离远，与其他页面风格不统一 | 统一所有 section heading 为 `text-base font-bold`，section padding 从 `p-6` 收紧到 `p-5`，模块间距从 `space-y-8` 降为 `space-y-5`，layout 垂直 padding 从 `p-6` 改为 `py-4`。涉及 `push-settings-panel.tsx`、`api-keys-panel.tsx`、`billing-panel.tsx`、`settings/layout.tsx` 四个文件。typecheck 通过 |
 | 2026-06-25 | 点击 sidebar"系统设置"入口页面闪退（白屏后跳转） | 根因：`/settings/page.tsx` 使用服务端 `redirect("/settings/push")` 导致客户端导航时触发全页刷新。修复：改为 `"use client"` + `useRouter().replace()` 客户端软跳转，layout 正常渲染不闪白。typecheck 通过 |

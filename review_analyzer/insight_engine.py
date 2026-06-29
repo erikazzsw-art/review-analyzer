@@ -59,7 +59,6 @@ def build_compare_insights(
 def _build_heuristic_results(comments: list[dict[str, Any]], context: dict[str, Any]) -> dict[str, dict[str, Any]]:
     positive = [comment for comment in comments if comment.get("sentiment") == "positive"]
     negative = [comment for comment in comments if comment.get("sentiment") == "negative"]
-    neutral = [comment for comment in comments if comment.get("sentiment") not in ("positive", "negative")]
     positive_tags = _top_tag_rows(positive, "highlight_tag")
     negative_tags = _top_tag_rows(negative, "issue_tag")
 
@@ -67,7 +66,7 @@ def _build_heuristic_results(comments: list[dict[str, Any]], context: dict[str, 
     pos_rate = round(len(positive) / total * 100, 1) if total else 0.0
     neg_rate = round(len(negative) / total * 100, 1) if total else 0.0
 
-    consumer_summary = _build_consumer_profile_summary(positive_tags, negative_tags)
+    consumer_summary = _build_consumer_profile_summary(comments)
     evidence = _sample_quotes(comments, limit=5)
     experience_summary = (
         f"Out of {total} reviews, {pos_rate}% are positive and {neg_rate}% are negative. "
@@ -88,9 +87,9 @@ def _build_heuristic_results(comments: list[dict[str, Any]], context: dict[str, 
         "consumer_profile": {
             "summary": consumer_summary,
             "rows": [
-                {"label": "Review distribution", "detail": f"Positive {pos_rate}% · Negative {neg_rate}% · Neutral {round(len(neutral) / total * 100, 1) if total else 0}%"},
-                {"label": "Core audience focus", "detail": _join_tag_names(positive_tags[:3], negative_tags[:2])},
-                {"label": "Key insight", "detail": consumer_summary},
+                {"label": "Demographics", "detail": _infer_demographics_heuristic(comments)},
+                {"label": "Interests & Context", "detail": _infer_interests_heuristic(comments)},
+                {"label": "Purchase Behavior", "detail": _infer_behavior_heuristic(comments)},
             ],
             "evidence": evidence,
         },
@@ -185,6 +184,13 @@ def _build_ai_results_payload(
                     "content": (
                         "You are an ecommerce review analyst. Analyze the provided review data and return a JSON object with exactly these keys:\n"
                         "1. consumer_profile: {summary: string, rows: [{label: string, detail: string}], evidence: [string]}\n"
+                        "   - summary: One sentence describing WHO the buyers are and their life context (no product quality judgments)\n"
+                        "   - rows MUST have exactly 3 items with these labels:\n"
+                        "     {label: \"Demographics\", detail: \"Who is buying? Infer roles, family status, life stage (e.g. parents with young children, college students, first-time homeowners)\"}\n"
+                        "     {label: \"Interests & Context\", detail: \"What interests them? What scenario triggers the purchase? (e.g. children's room decor, home office setup, space-saving)\"}\n"
+                        "     {label: \"Purchase Behavior\", detail: \"How do they decide and use? (e.g. compare on price, buy on deals, self-assemble, prefer bundles)\"}\n"
+                        "   - evidence: 2-3 quotes revealing buyer identity or context, NOT product opinions\n"
+                        "   - IMPORTANT: consumer_profile describes THE PEOPLE (like Facebook Ads audience targeting), NOT the product. No product strengths/weaknesses/tags here.\n"
                         "2. user_experience: {summary: string, positive: [{tag: string, pct: number, reason: string}], negative: [{tag: string, pct: number, reason: string}]}\n"
                         "3. purchase_motives: {summary: string, rows: [{tag: string, pct: number, reason: string}]}\n"
                         "4. unmet_needs: {summary: string, rows: [{tag: string, pct: number, reason: string}]}\n"
@@ -340,21 +346,79 @@ def _top_tag_rows(comments: list[dict[str, Any]], field: str) -> list[dict[str, 
     return rows
 
 
-def _build_consumer_profile_summary(
-    positive_tags: list[dict[str, Any]],
-    negative_tags: list[dict[str, Any]],
-) -> str:
-    positive_hint = ", ".join(row["tag"] for row in positive_tags[:2])
-    negative_hint = ", ".join(row["tag"] for row in negative_tags[:2])
-    if positive_hint and negative_hint:
-        return (
-            f"The audience values {positive_hint} but is sensitive to problems around {negative_hint}."
-        )
-    if positive_hint:
-        return f"The audience is mainly driven by {positive_hint} and overall product practicality."
-    if negative_hint:
-        return f"The audience is highly sensitive to friction around {negative_hint}."
-    return "The selected reviews do not contain a strong enough profile signal yet."
+def _build_consumer_profile_summary(comments: list[dict[str, Any]]) -> str:
+    """Generate a one-sentence audience description from review text (people-focused, no product judgments)."""
+    if not comments:
+        return "Not enough reviews to build an audience profile."
+    return "Review-based audience profile — see rows below for demographics, interests, and purchase behavior."
+
+
+def _infer_demographics_heuristic(comments: list[dict[str, Any]]) -> str:
+    """Extract buyer identity signals from review text."""
+    keywords_map = {
+        "parent": ["kid", "kids", "child", "children", "son", "daughter", "boy", "girl", "toddler", "baby"],
+        "gift buyer": ["gift", "present", "birthday", "christmas"],
+        "first-time buyer": ["first time", "first purchase", "never bought"],
+        "repeat buyer": ["bought again", "second time", "reorder", "repurchase"],
+        "budget-conscious": ["price", "cheap", "affordable", "budget", "deal", "value for money"],
+        "professional": ["office", "work", "business", "professional"],
+        "student": ["dorm", "college", "university", "student", "school"],
+    }
+    signals: dict[str, int] = {}
+    for comment in comments:
+        content = str(comment.get("content") or "").lower()
+        for label, triggers in keywords_map.items():
+            if any(t in content for t in triggers):
+                signals[label] = signals.get(label, 0) + 1
+    if not signals:
+        return "General consumers — no strong demographic signal in reviews."
+    top = sorted(signals.items(), key=lambda x: x[1], reverse=True)[:3]
+    return ", ".join(f"{label.title()} ({count} mentions)" for label, count in top)
+
+
+def _infer_interests_heuristic(comments: list[dict[str, Any]]) -> str:
+    """Extract interest and context signals from review text."""
+    keywords_map = {
+        "home decor": ["room", "bedroom", "living room", "decor", "furniture", "house", "apartment"],
+        "space-saving": ["small space", "compact", "space-saving", "small room", "tiny"],
+        "tech features": ["usb", "led", "light", "bluetooth", "charging", "smart"],
+        "outdoor use": ["outdoor", "garden", "patio", "camping", "travel"],
+        "fitness": ["gym", "workout", "exercise", "fitness", "yoga"],
+        "kids' use": ["kid", "kids", "child", "children", "playroom", "nursery"],
+        "pet owners": ["dog", "cat", "pet"],
+    }
+    signals: dict[str, int] = {}
+    for comment in comments:
+        content = str(comment.get("content") or "").lower()
+        for label, triggers in keywords_map.items():
+            if any(t in content for t in triggers):
+                signals[label] = signals.get(label, 0) + 1
+    if not signals:
+        return "General product interest — no strong contextual signal in reviews."
+    top = sorted(signals.items(), key=lambda x: x[1], reverse=True)[:3]
+    return ", ".join(f"{label.title()} ({count} mentions)" for label, count in top)
+
+
+def _infer_behavior_heuristic(comments: list[dict[str, Any]]) -> str:
+    """Extract purchase and usage behavior signals from review text."""
+    keywords_map = {
+        "self-assembly": ["assemble", "assembly", "put together", "build it", "instructions"],
+        "price comparison": ["compare", "compared", "cheaper", "better deal", "alternative"],
+        "impulse/deal buy": ["prime day", "sale", "discount", "deal", "coupon", "black friday"],
+        "gift purchase": ["gift", "present", "for my", "for her", "for him"],
+        "replacement buy": ["replace", "replacement", "broke", "old one", "upgrade"],
+        "bundle preference": ["set", "bundle", "all-in-one", "package", "combo"],
+    }
+    signals: dict[str, int] = {}
+    for comment in comments:
+        content = str(comment.get("content") or "").lower()
+        for label, triggers in keywords_map.items():
+            if any(t in content for t in triggers):
+                signals[label] = signals.get(label, 0) + 1
+    if not signals:
+        return "Standard purchase behavior — no distinctive pattern detected in reviews."
+    top = sorted(signals.items(), key=lambda x: x[1], reverse=True)[:3]
+    return ", ".join(f"{label.title()} ({count} mentions)" for label, count in top)
 
 
 def _sample_quotes(comments: list[dict[str, Any]], limit: int = 3) -> list[str]:
