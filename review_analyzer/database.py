@@ -445,6 +445,19 @@ def get_upload_job(user_id: int, job_id: int) -> dict | None:
         conn.close()
 
 
+def get_upload_jobs_by_session(user_id: int, session_id: int) -> list[dict]:
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM upload_jobs WHERE user_id = %s AND session_id = %s ORDER BY id DESC",
+                (user_id, session_id),
+            )
+            return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
 def update_upload_job(
     user_id: int,
     job_id: int,
@@ -799,6 +812,27 @@ def get_unprocessed_comments(user_id: int, session_id: int) -> list[dict]:
                 (user_id, session_id),
             )
             return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def reset_session_analysis(user_id: int, session_id: int) -> int:
+    """重置 session 内所有评论的分析状态，返回受影响行数。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE comments
+                   SET is_processed = 0,
+                       sentiment = NULL,
+                       issue_tag = '',
+                       highlight_tag = '',
+                       aspects_json = NULL
+                   WHERE user_id = %s AND session_id = %s""",
+                (user_id, session_id),
+            )
+            conn.commit()
+            return cur.rowcount
     finally:
         conn.close()
 

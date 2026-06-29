@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.analysis import (
@@ -21,9 +22,18 @@ from backend_api.app.schemas.analysis import (
     AnalysisSessionResultsPayload,
 )
 from review_analyzer.compare_store import build_compare_group_specs, get_comparison_dataset
-from review_analyzer.database import delete_session, get_comments, get_session_by_id, get_sessions
+from review_analyzer.database import (
+    delete_session,
+    get_comments,
+    get_session_by_id,
+    get_sessions,
+    get_upload_jobs_by_session,
+    reset_session_analysis,
+    update_upload_job,
+)
 from review_analyzer.insight_engine import build_results_insights
 from review_analyzer.product_store import get_product_overview_rows
+from workers.jobs import enqueue_upload_job_task
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -253,6 +263,69 @@ def delete_session_endpoint(
             detail="Session not found.",
         )
     delete_session(user_id, session_id)
+
+
+class ReanalyzeRequest(BaseModel):
+    session_id: int
+
+
+class ReanalyzeResponse(BaseModel):
+    job_id: int
+    session_id: int
+    reset_count: int
+    message: str
+
+
+@router.post("/reanalyze", response_model=ReanalyzeResponse)
+def reanalyze_session(
+    req: ReanalyzeRequest,
+    current_user: dict = Depends(get_current_user),
+) -> ReanalyzeResponse:
+    """重置 session 评论的分析状态并重新入队分析任务。"""
+    user_id = int(current_user["id"])
+    session = get_session_by_id(user_id, req.session_id)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found.",
+        )
+
+    reset_count = reset_session_analysis(user_id, req.session_id)
+    if reset_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No comments found in this session.",
+        )
+
+    jobs = get_upload_jobs_by_session(user_id, req.session_id)
+    if not jobs:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No upload job found for this session.",
+        )
+    job_id = int(jobs[0]["id"])
+
+    update_upload_job(user_id, job_id, {"status": "queued", "error_message": None})
+    _invalidate_insights_cache(user_id, str(session.get("product_id") or ""))
+
+    try:
+        enqueue_upload_job_task(user_id, job_id)
+    except Exception as exc:
+        _LOGGER.warning("reanalyze enqueue failed, running inline: %s", exc)
+        from workers.jobs import process_upload_job
+        process_upload_job(user_id, job_id)
+
+    return ReanalyzeResponse(
+        job_id=job_id,
+        session_id=req.session_id,
+        reset_count=reset_count,
+        message=f"Reset {reset_count} comments and re-queued analysis job {job_id}.",
+    )
+
+
+def _invalidate_insights_cache(user_id: int, product_id: str) -> None:
+    """清除缓存结果，确保重分析后返回最新数据。"""
+    _INSIGHTS_CACHE.clear()
 
 
 def _session_payload(session: dict[str, Any]) -> AnalysisSessionPayload:
