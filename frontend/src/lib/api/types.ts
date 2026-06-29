@@ -776,3 +776,12 @@ export type AsinWatchlistUpdatePayload = {
   fetch_frequency?: "daily" | "weekly" | "manual";
   status?: "active" | "paused";
 };
+
+export type DownloadRecord = {
+  id: number;
+  name: string;
+  source: string;
+  status: "completed" | "processing" | "failed";
+  file_url?: string | null;
+  created_at: string;
+};

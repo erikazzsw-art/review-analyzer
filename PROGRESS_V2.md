@@ -4070,7 +4070,138 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-#### 退出标准（上线前必须满足）
+### V5-T1: 团队管理（多租户）可行性方案
+
+**启动条件：** 获得 1 个付费用户后启动  
+**状态：** 📋 规划中（方案已确认，待启动条件满足）  
+**预估总工期：** 15-20 天（分 3 Phase 渐进式落地）
+
+---
+
+#### 一、核心模型：Workspace（工作空间）
+
+参考 Shulex VOC.AI / Notion / Linear 的团队模型，采用 Workspace 作为多租户隔离单元。
+
+**数据架构：**
+- 所有业务表增加 `workspace_id` 字段（products、sessions、action_items、download_records 等）
+- 查询默认按当前工作空间过滤，用户无感知
+- 用户可属于多个 workspace（如顾问同时服务多个品牌方）
+
+**计费模型：**
+- Quota 绑定 workspace 而非 user
+- 一个 workspace 的 Pro 计划惠及所有成员
+- Owner 负责付费，其余角色享受权益
+
+---
+
+#### 二、角色权限体系（RBAC）
+
+| 角色 | 适用人群 | 核心权限 |
+|------|---------|---------|
+| Owner | 创建者/付费人 | 全部权限 + 计费管理 + 删除工作空间 + 转让所有权 |
+| Admin | 运营管理者 | 推送设置 + 产品管理 + 邀请/移除成员 + 查看所有分析 |
+| Member | 分析师/运营 | 上传评论 + 发起分析 + Q&A + 下载 + Action 管理 |
+| Viewer | 只读人员（如老板/投资人） | 仅查看分析结果 + Dashboard + 下载报告 |
+
+**推送设置权限限制：**
+- 推送设置（飞书 webhook、告警规则）仅 Owner/Admin 可配置
+- Member/Viewer 在 sidebar 不显示推送设置入口
+
+---
+
+#### 三、邀请流程设计
+
+1. Owner/Admin 进入「团队设置」页面
+2. 输入受邀人邮箱 + 选择角色
+3. 系统发送邀请邮件（含邀请链接，7 天有效）
+4. 受邀人点击链接 → 已有账号直接加入 / 未注册则注册后自动加入
+5. 成员列表显示 `pending`（待接受）/ `active`（已加入）状态
+6. Owner/Admin 可随时移除成员或修改角色
+
+---
+
+#### 四、关键数据库设计
+
+```sql
+-- 工作空间
+CREATE TABLE workspaces (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    owner_id INTEGER NOT NULL REFERENCES users(id),
+    plan TEXT NOT NULL DEFAULT 'free',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 工作空间成员
+CREATE TABLE workspace_members (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    role TEXT NOT NULL DEFAULT 'member',  -- owner/admin/member/viewer
+    status TEXT NOT NULL DEFAULT 'active', -- active/pending/removed
+    invited_by INTEGER REFERENCES users(id),
+    invited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    joined_at TIMESTAMPTZ,
+    UNIQUE(workspace_id, user_id)
+);
+
+-- 邀请记录
+CREATE TABLE workspace_invitations (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id),
+    email TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member',
+    token TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    accepted_at TIMESTAMPTZ,
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+---
+
+#### 五、分阶段落地计划
+
+| Phase | 内容 | 工期 | 启动条件 |
+|-------|------|------|---------|
+| Phase 1 | 基础设施：workspace 表 + 自动为现有用户建默认 workspace + 业务表加 workspace_id + 查询改造 | 5-7 天 | 1 个付费用户 |
+| Phase 2 | 团队功能 UI：团队设置页（邀请 + 成员列表 + 角色管理）+ 推送设置权限检查 + 邀请邮件 | 5-7 天 | Phase 1 完成 |
+| Phase 3 | 多空间支持：工作空间切换器 + 创建新空间 + 空间级 Quota 面板 | 3-5 天 | Phase 2 完成 + 有多 workspace 需求 |
+
+**Phase 1 详细任务清单：**
+- [ ] 创建 workspaces / workspace_members / workspace_invitations 表
+- [ ] 数据迁移：为每个现有用户创建默认 workspace（`{username}的工作空间`）
+- [ ] products / sessions / action_items / download_records 等表加 workspace_id
+- [ ] 后端中间件：从 session 中解析当前 workspace_id，注入所有查询
+- [ ] API 鉴权层：检查用户在当前 workspace 的角色权限
+
+**Phase 2 详细任务清单：**
+- [ ] 前端：团队设置页面（成员列表 + 邀请表单 + 角色修改）
+- [ ] 后端：邀请 API（创建邀请 + 接受邀请 + 取消邀请）
+- [ ] 邮件服务：接入邮件发送（可复用 Resend / 飞书机器人通知）
+- [ ] 推送设置页加权限检查（非 Owner/Admin 返回 403）
+- [ ] Sidebar 按角色动态隐藏受限菜单项
+
+**Phase 3 详细任务清单：**
+- [ ] 前端：workspace 切换器（sidebar 顶部 / dropdown）
+- [ ] 后端：切换 workspace API + 创建新 workspace
+- [ ] Quota 面板改为空间级展示
+
+---
+
+#### 六、风险与注意事项
+
+| 风险 | 影响 | 缓解措施 |
+|------|------|---------|
+| 现有数据迁移 | 所有业务表需回填 workspace_id | Phase 1 用默认 workspace 回填，零停机 |
+| 权限穿透 | 用户跨 workspace 访问数据 | 所有查询强制带 workspace_id WHERE 条件 |
+| 计费争议 | 成员使用配额但不付费 | Quota 归属 workspace，Owner 负责管理 |
+| 邀请安全 | 邀请链接泄露 | Token 一次性 + 7 天过期 + 绑定邮箱验证 |
+
+---
+
+
 
 | 条件 | 要求 |
 |------|------|

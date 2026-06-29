@@ -15,6 +15,7 @@ from backend_api.app.routes.asin_watchlist import router as asin_watchlist_route
 from backend_api.app.routes.auth import router as auth_router
 from backend_api.app.routes.compare import router as compare_router
 from backend_api.app.routes.copywriter import router as copywriter_router
+from backend_api.app.routes.downloads import router as downloads_router
 from backend_api.app.routes.export import router as export_router
 from backend_api.app.routes.feedback import router as feedback_router
 from backend_api.app.routes.me import router as me_router
@@ -82,5 +83,6 @@ app.include_router(analytics_router)
 app.include_router(feedback_router)
 app.include_router(asin_watchlist_router)
 app.include_router(copywriter_router)
+app.include_router(downloads_router)
 app.include_router(export_router)
 app.include_router(translate_router)

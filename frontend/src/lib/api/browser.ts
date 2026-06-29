@@ -346,6 +346,7 @@ export async function downloadCompareExport(request: CompareExportRequest): Prom
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+  recordDownload(filename, "对比分析");
 }
 
 export async function fetchCompareHistory(
@@ -1076,4 +1077,23 @@ export async function deleteProduct(productId: number): Promise<void> {
   if (!response.ok) {
     throw await parseError(response);
   }
+}
+
+export async function fetchDownloads(): Promise<import("./types").DownloadRecord[]> {
+  const response = await fetch(`${getApiBaseUrl()}/downloads`, {
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
+export async function recordDownload(name: string, source: string): Promise<void> {
+  fetch(`${getApiBaseUrl()}/downloads`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, source, status: "completed" }),
+  }).catch(() => {});
 }
