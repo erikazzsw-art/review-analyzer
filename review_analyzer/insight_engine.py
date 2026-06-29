@@ -318,6 +318,17 @@ def _serialize_comments(comments: list[dict[str, Any]]) -> list[dict[str, str]]:
     return serialized
 
 
+def _has_aspect_evidence(comment: dict[str, Any], tag: str) -> bool:
+    """Check if comment has direct LLM evidence for the given aspect tag."""
+    aj = comment.get("aspects_json")
+    if not isinstance(aj, dict) or aj.get("cluster_propagated"):
+        return False
+    aspects = aj.get("aspects")
+    if not isinstance(aspects, list):
+        return False
+    return any(a.get("key") == tag and a.get("evidence_span") for a in aspects)
+
+
 def _top_tag_rows(comments: list[dict[str, Any]], field: str) -> list[dict[str, Any]]:
     counter: Counter[str] = Counter()
     examples: dict[str, str] = {}
@@ -331,7 +342,16 @@ def _top_tag_rows(comments: list[dict[str, Any]], field: str) -> list[dict[str, 
                 continue
             seen.add(tag)
             counter[tag] += 1
-            if tag not in examples and content:
+            if tag not in examples and content and _has_aspect_evidence(comment, tag):
+                examples[tag] = content[:160]
+    # Fallback: if no verified example found, use first available
+    for comment in comments:
+        content = str(comment.get("content") or "").strip()
+        if not content:
+            continue
+        for raw_tag in str(comment.get(field) or "").split(","):
+            tag = raw_tag.strip()
+            if tag and tag not in examples:
                 examples[tag] = content[:160]
     rows: list[dict[str, Any]] = []
     for tag, count in counter.most_common(10):

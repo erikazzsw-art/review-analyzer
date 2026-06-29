@@ -77,6 +77,20 @@ function normalizeModule(
   };
 }
 
+function hasAspectEvidence(
+  comment: Record<string, unknown>,
+  tagKey: string,
+): boolean {
+  const aj = comment.aspects_json as
+    | { aspects?: Array<{ key?: string; evidence_span?: string }>; cluster_propagated?: boolean }
+    | null
+    | undefined;
+  if (!aj || aj.cluster_propagated) return false;
+  const aspects = aj.aspects;
+  if (!Array.isArray(aspects)) return false;
+  return aspects.some((a) => a.key === tagKey && !!a.evidence_span);
+}
+
 function enrichRowsWithQuotes(
   rows: Array<Record<string, unknown>>,
   comments: Array<Record<string, unknown>>,
@@ -89,16 +103,31 @@ function enrichRowsWithQuotes(
     if (!tag) return row;
     const quotes: string[] = [];
     const seen = new Set<string>();
+
+    // Pass 1: comments with direct LLM evidence for this aspect
     for (const c of comments) {
-      const raw = String((c as Record<string, unknown>)[source] || "");
-      const tags = raw.split(",").map((s) => s.trim());
-      if (!tags.includes(tag)) continue;
+      if (quotes.length >= perRow) break;
+      if (!hasAspectEvidence(c, tag)) continue;
       const content = String((c as Record<string, unknown>).content || "").trim();
       if (!content || seen.has(content)) continue;
       seen.add(content);
       quotes.push(content);
-      if (quotes.length >= perRow) break;
     }
+
+    // Pass 2: fall back to tag-field match if not enough verified quotes
+    if (quotes.length < perRow) {
+      for (const c of comments) {
+        if (quotes.length >= perRow) break;
+        const raw = String((c as Record<string, unknown>)[source] || "");
+        const tags = raw.split(",").map((s) => s.trim());
+        if (!tags.includes(tag)) continue;
+        const content = String((c as Record<string, unknown>).content || "").trim();
+        if (!content || seen.has(content)) continue;
+        seen.add(content);
+        quotes.push(content);
+      }
+    }
+
     if (quotes.length === 0) return row;
     return { ...row, representative_comments: quotes };
   });
