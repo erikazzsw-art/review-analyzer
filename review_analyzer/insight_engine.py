@@ -319,14 +319,25 @@ def _serialize_comments(comments: list[dict[str, Any]]) -> list[dict[str, str]]:
 
 
 def _has_aspect_evidence(comment: dict[str, Any], tag: str) -> bool:
-    """Check if comment has direct LLM evidence for the given aspect tag."""
+    """Check if comment has direct LLM evidence for the given aspect tag.
+
+    Validates that evidence_span actually appears in the comment's content,
+    which filters out cluster-propagated reviews (they inherit aspects from
+    the representative but the evidence text won't match their own content).
+    """
     aj = comment.get("aspects_json")
-    if not isinstance(aj, dict) or aj.get("cluster_propagated"):
+    if not isinstance(aj, dict):
+        return False
+    if aj.get("cluster_propagated"):
         return False
     aspects = aj.get("aspects")
     if not isinstance(aspects, list):
         return False
-    return any(a.get("key") == tag and a.get("evidence_span") for a in aspects)
+    content = str(comment.get("content") or "")
+    return any(
+        a.get("key") == tag and a.get("evidence_span") and a["evidence_span"] in content
+        for a in aspects
+    )
 
 
 def _top_tag_rows(comments: list[dict[str, Any]], field: str) -> list[dict[str, Any]]:

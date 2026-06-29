@@ -85,10 +85,14 @@ function hasAspectEvidence(
     | { aspects?: Array<{ key?: string; evidence_span?: string }>; cluster_propagated?: boolean }
     | null
     | undefined;
-  if (!aj || aj.cluster_propagated) return false;
+  if (!aj) return false;
+  if (aj.cluster_propagated) return false;
   const aspects = aj.aspects;
   if (!Array.isArray(aspects)) return false;
-  return aspects.some((a) => a.key === tagKey && !!a.evidence_span);
+  const content = String((comment as Record<string, unknown>).content || "");
+  return aspects.some(
+    (a) => a.key === tagKey && !!a.evidence_span && content.includes(a.evidence_span),
+  );
 }
 
 function enrichRowsWithQuotes(
