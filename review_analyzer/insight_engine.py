@@ -334,8 +334,11 @@ def _has_aspect_evidence(comment: dict[str, Any], tag: str) -> bool:
     if not isinstance(aspects, list):
         return False
     content = str(comment.get("content") or "")
+    norm = tag.lower().replace(" ", "_")
     return any(
-        a.get("key") == tag and a.get("evidence_span") and a["evidence_span"] in content
+        (a.get("key") or "").lower().replace(" ", "_") == norm
+        and a.get("evidence_span")
+        and a["evidence_span"] in content
         for a in aspects
     )
 

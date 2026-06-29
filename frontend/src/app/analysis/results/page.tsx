@@ -90,8 +90,12 @@ function hasAspectEvidence(
   const aspects = aj.aspects;
   if (!Array.isArray(aspects)) return false;
   const content = String((comment as Record<string, unknown>).content || "");
+  const norm = tagKey.toLowerCase().replace(/[\s_]+/g, "_");
   return aspects.some(
-    (a) => a.key === tagKey && !!a.evidence_span && content.includes(a.evidence_span),
+    (a) =>
+      a.key?.toLowerCase().replace(/[\s_]+/g, "_") === norm &&
+      !!a.evidence_span &&
+      content.includes(a.evidence_span),
   );
 }
 
