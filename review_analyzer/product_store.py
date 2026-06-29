@@ -241,6 +241,83 @@ def get_variants(user_id: int, product_id: int) -> list[dict[str, Any]]:
 
 
 
+def upsert_product_from_api(user_id: int, data: dict[str, Any]) -> int:
+    """从 Rainforest API 数据 upsert 产品记录，返回 product_id。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO products
+                   (user_id, parent_product_id, name, platform, category, brand,
+                    image_url, rating, ratings_total, reviews_total, current_version)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   ON CONFLICT (user_id, parent_product_id) DO UPDATE SET
+                       name = COALESCE(EXCLUDED.name, products.name),
+                       brand = COALESCE(EXCLUDED.brand, products.brand),
+                       image_url = COALESCE(EXCLUDED.image_url, products.image_url),
+                       rating = COALESCE(EXCLUDED.rating, products.rating),
+                       ratings_total = COALESCE(EXCLUDED.ratings_total, products.ratings_total),
+                       reviews_total = COALESCE(EXCLUDED.reviews_total, products.reviews_total),
+                       category = COALESCE(EXCLUDED.category, products.category)
+                   RETURNING id""",
+                (
+                    user_id,
+                    data["parent_product_id"],
+                    data.get("name"),
+                    data.get("platform", "amazon"),
+                    data.get("category"),
+                    data.get("brand"),
+                    data.get("image_url"),
+                    data.get("rating"),
+                    data.get("ratings_total"),
+                    data.get("reviews_total"),
+                    data.get("current_version", "V1"),
+                ),
+            )
+            product_id = int(cur.fetchone()[0])
+            conn.commit()
+            return product_id
+    finally:
+        conn.close()
+
+
+def upsert_variant_from_api(user_id: int, product_id: int, data: dict[str, Any]) -> int:
+    """从 Rainforest API 数据 upsert 变体记录，返回 variant_id。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO product_variants
+                   (user_id, product_id, child_asin, variant_sku, name, brand,
+                    image_url, price, price_currency, status)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   ON CONFLICT (user_id, child_asin) WHERE child_asin IS NOT NULL DO UPDATE SET
+                       name = COALESCE(EXCLUDED.name, product_variants.name),
+                       brand = COALESCE(EXCLUDED.brand, product_variants.brand),
+                       image_url = COALESCE(EXCLUDED.image_url, product_variants.image_url),
+                       price = COALESCE(EXCLUDED.price, product_variants.price),
+                       price_currency = COALESCE(EXCLUDED.price_currency, product_variants.price_currency)
+                   RETURNING id""",
+                (
+                    user_id,
+                    product_id,
+                    data.get("child_asin"),
+                    data.get("child_asin"),
+                    data.get("name"),
+                    data.get("brand"),
+                    data.get("image_url"),
+                    data.get("price"),
+                    data.get("price_currency", "USD"),
+                    data.get("status", "active"),
+                ),
+            )
+            variant_id = int(cur.fetchone()[0])
+            conn.commit()
+            return variant_id
+    finally:
+        conn.close()
+
+
 def get_product_versions(user_id: int, product_id: int) -> list[dict[str, Any]]:
     conn = get_connection()
     try:

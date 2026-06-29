@@ -22,6 +22,7 @@ type AsinFormState = {
   asin: string;
   marketplace: string;
   productName: string;
+  fetchAllVariants: boolean;
 };
 
 export function AsinFetchPanel() {
@@ -30,6 +31,7 @@ export function AsinFetchPanel() {
     asin: "",
     marketplace: "us",
     productName: "",
+    fetchAllVariants: false,
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +50,7 @@ export function AsinFetchPanel() {
         asin: form.asin.toUpperCase(),
         marketplace: form.marketplace,
         productName: form.productName || undefined,
+        fetchAllVariants: form.fetchAllVariants,
       });
       track("asin_fetch_queued", { job_id: result.job_id });
       router.push(`/analysis/results?job_id=${result.job_id}`);
@@ -96,6 +99,17 @@ export function AsinFetchPanel() {
             className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
             placeholder="留空则自动从 Amazon 获取"
           />
+        </label>
+        <label className="flex items-center gap-3 md:col-span-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={form.fetchAllVariants}
+            onChange={(e) => setForm((c) => ({ ...c, fetchAllVariants: e.target.checked }))}
+            className="h-4 w-4 rounded border-line text-[#f36f8f] accent-[#f36f8f]"
+          />
+          <span className="text-sm text-ink/80">
+            抓取所有变体（自动识别同款所有子 ASIN 并合并分析）
+          </span>
         </label>
       </div>
 

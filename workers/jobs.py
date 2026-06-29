@@ -44,7 +44,12 @@ from review_analyzer.database import (
     update_session_warnings,
     update_upload_job,
 )
-from review_analyzer.product_store import create_product, get_product_by_parent_id
+from review_analyzer.product_store import (
+    create_product,
+    get_product_by_parent_id,
+    upsert_product_from_api,
+    upsert_variant_from_api,
+)
 from review_analyzer.quota import quota_consume
 from review_analyzer.rag import embed_session_comments
 
@@ -819,10 +824,20 @@ def enqueue_upload_job_task(user_id: int, job_id: int) -> str:
 
 
 def process_asin_fetch_job(user_id: int, job_id: int) -> None:
-    """Worker 任务：通过 Rainforest API 拉取评论 → 存储 → 触发分析。"""
+    """Worker 任务：通过 Rainforest API 拉取评论 → 存储 → 触发分析。
+
+    支持多变体模式：fetch_all_variants=True 时自动发现并抓取所有变体评论。
+    无论是否勾选变体，都会保存产品信息到产品管理模块。
+    """
     import asyncio
 
-    from backend_api.app.services.rainforest import RainforestError, fetch_reviews_by_asin
+    from backend_api.app.services.rainforest import (
+        RainforestError,
+        fetch_product_variants,
+        fetch_reviews_by_asin,
+    )
+
+    MAX_VARIANTS = 20
 
     try:
         job = get_upload_job(user_id, job_id)
@@ -833,23 +848,92 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
         asin = payload.get("asin", "")
         marketplace = payload.get("marketplace", "us")
         max_pages = payload.get("max_pages", 5)
+        fetch_all_variants = payload.get("fetch_all_variants", False)
 
         update_upload_job(user_id, job_id, {"status": "fetching"})
 
         loop = asyncio.new_event_loop()
         try:
-            reviews = loop.run_until_complete(
-                fetch_reviews_by_asin(asin, marketplace=marketplace, max_pages=max_pages)
+            # Step 1: 获取产品信息和变体列表
+            product_info, variants_list = loop.run_until_complete(
+                fetch_product_variants(asin, marketplace=marketplace)
             )
+
+            # Step 2: 保存产品信息（upsert）
+            parent_asin = asin
+            product_ref_id = upsert_product_from_api(user_id, {
+                "parent_product_id": parent_asin,
+                "name": product_info.get("title") or payload.get("product_name") or f"ASIN: {asin}",
+                "platform": f"Amazon {marketplace.upper()}",
+                "category": product_info.get("category"),
+                "brand": product_info.get("brand"),
+                "image_url": product_info.get("image_url"),
+                "rating": product_info.get("rating"),
+                "ratings_total": product_info.get("ratings_total"),
+                "reviews_total": product_info.get("reviews_total"),
+            })
+
+            # Step 3: 保存变体信息
+            for v in variants_list[:MAX_VARIANTS]:
+                try:
+                    upsert_variant_from_api(user_id, product_ref_id, {
+                        "child_asin": v["asin"],
+                        "name": v.get("title", ""),
+                        "brand": product_info.get("brand"),
+                        "image_url": v.get("image_url", ""),
+                        "price": v.get("price"),
+                        "price_currency": "USD",
+                    })
+                except Exception:
+                    logger.warning("Failed to upsert variant %s (non-fatal)", v.get("asin"))
+
+            # Step 4: 确定抓取目标
+            if fetch_all_variants and variants_list:
+                target_asins = [v["asin"] for v in variants_list[:MAX_VARIANTS]]
+                if asin not in target_asins:
+                    target_asins.insert(0, asin)
+            else:
+                target_asins = [asin]
+
+            # Step 5: 逐个抓取评论
+            all_reviews: list[dict[str, Any]] = []
+            for idx, target_asin in enumerate(target_asins, 1):
+                update_upload_job(user_id, job_id, {
+                    "status": "fetching",
+                    "error_message": f"正在拉取变体评论 ({idx}/{len(target_asins)})",
+                })
+                try:
+                    reviews = loop.run_until_complete(
+                        fetch_reviews_by_asin(target_asin, marketplace=marketplace, max_pages=max_pages)
+                    )
+                except RainforestError:
+                    logger.warning("Failed to fetch reviews for variant %s, skipping", target_asin)
+                    continue
+
+                for r in reviews:
+                    r["source_variant_asin"] = target_asin
+                all_reviews.extend(reviews)
+
         finally:
             loop.close()
 
-        if not reviews:
+        if not all_reviews:
             update_upload_job(
                 user_id, job_id,
                 {"status": "done", "total_rows": 0, "error_message": "No reviews found for this ASIN"},
             )
             return
+
+        # 去重（同一 review_id 只保留一条）
+        seen_ids: set[str] = set()
+        unique_reviews: list[dict[str, Any]] = []
+        for r in all_reviews:
+            rid = r.get("review_id", "")
+            if rid and rid in seen_ids:
+                continue
+            if rid:
+                seen_ids.add(rid)
+            unique_reviews.append(r)
 
         quota_consume(user_id, "asin_fetch")
 
@@ -860,8 +944,9 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
                 "date": r.get("date", ""),
                 "reviewer": r.get("reviewer", ""),
                 "source": f"Amazon {marketplace.upper()}",
+                "source_variant_asin": r.get("source_variant_asin", asin),
             }
-            for r in reviews
+            for r in unique_reviews
         ]
 
         update_upload_job(
@@ -869,12 +954,15 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             {
                 "status": "queued",
                 "total_rows": len(comments_payload),
+                "product_ref_id": product_ref_id,
                 "payload_json": {
                     **payload,
                     "comments": comments_payload,
-                    "product_name": payload.get("product_name") or f"ASIN: {asin}",
+                    "product_name": product_info.get("title") or payload.get("product_name") or f"ASIN: {asin}",
                     "platform": f"Amazon {marketplace.upper()}",
                     "source_channel": "api",
+                    "product_ref_id": product_ref_id,
+                    "variant_count": len(target_asins),
                 },
             },
         )

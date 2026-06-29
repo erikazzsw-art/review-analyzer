@@ -67,6 +67,15 @@ export type ProductVariant = {
   status: string | null;
   launched_at: string | null;
   created_at: string | null;
+  image_url: string | null;
+  name: string | null;
+  brand: string | null;
+  price: number | null;
+  price_currency: string | null;
+  sales_volume: number | null;
+  sales_revenue: number | null;
+  is_fba: boolean | null;
+  listing_date: string | null;
 };
 
 export type ProductVersion = {
@@ -110,6 +119,11 @@ export type ProductOverview = {
   latest_updated_at: string | null;
   latest_review_date: string | null;
   earliest_review_date: string | null;
+  image_url: string | null;
+  brand: string | null;
+  rating: number | null;
+  ratings_total: number | null;
+  reviews_total: number | null;
 };
 
 export type ProductsResponse = {

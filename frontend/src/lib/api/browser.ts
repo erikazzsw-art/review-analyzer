@@ -164,6 +164,7 @@ export async function fetchByAsin(params: {
   marketplace: string;
   productName?: string;
   maxPages?: number;
+  fetchAllVariants?: boolean;
 }): Promise<AsinFetchResponse> {
   const response = await fetch(`${getApiBaseUrl()}/reviews/fetch-by-asin`, {
     method: "POST",
@@ -174,6 +175,7 @@ export async function fetchByAsin(params: {
       marketplace: params.marketplace,
       product_name: params.productName || undefined,
       max_pages: params.maxPages || 5,
+      fetch_all_variants: params.fetchAllVariants || false,
     }),
   });
 

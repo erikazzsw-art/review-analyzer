@@ -18,6 +18,15 @@ class ProductVariantPayload(BaseModel):
     status: str | None = None
     launched_at: str | None = None
     created_at: datetime | None = None
+    image_url: str | None = None
+    name: str | None = None
+    brand: str | None = None
+    price: float | None = None
+    price_currency: str | None = None
+    sales_volume: int | None = None
+    sales_revenue: float | None = None
+    is_fba: bool | None = None
+    listing_date: str | None = None
 
 
 class ProductVersionPayload(BaseModel):
@@ -61,6 +70,11 @@ class ProductOverviewPayload(BaseModel):
     latest_updated_at: datetime | None = None
     latest_review_date: str | None = None
     earliest_review_date: str | None = None
+    image_url: str | None = None
+    brand: str | None = None
+    rating: float | None = None
+    ratings_total: int | None = None
+    reviews_total: int | None = None
 
 
 class ProductsResponsePayload(BaseModel):

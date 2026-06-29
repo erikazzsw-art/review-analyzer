@@ -45,6 +45,7 @@ def fetch_by_asin(
                 "product_name": req.product_name,
                 "max_pages": req.max_pages,
                 "source_channel": "api",
+                "fetch_all_variants": req.fetch_all_variants,
             },
         },
     )

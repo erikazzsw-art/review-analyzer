@@ -20,6 +20,7 @@ from review_analyzer.product_store import (
     delete_product,
     get_product_by_id,
     get_product_overview_rows,
+    get_variants,
     update_product,
 )
 
@@ -199,3 +200,23 @@ def delete_product_route(
             detail="Product not found.",
         )
     delete_product(user_id, product_id)
+
+
+@router.get("/{product_id}/detail")
+def get_product_detail(
+    product_id: int,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """产品详情 — 返回产品完整信息 + 变体列表（含新增字段）。"""
+    user_id = int(current_user["id"])
+    product = get_product_by_id(user_id, product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found.",
+        )
+    variants = get_variants(user_id, product_id)
+    return {
+        "product": product,
+        "variants": variants,
+    }

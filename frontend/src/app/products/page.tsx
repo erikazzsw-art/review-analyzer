@@ -1,11 +1,10 @@
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { CreateProductButton } from "@/components/products/create-product-button";
-import { DeleteProductButton } from "@/components/products/delete-product-button";
-import { EditProductButton } from "@/components/products/edit-product-button";
 import { getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import type { ProductOverview } from "@/lib/api/types";
+import Link from "next/link";
 
 export const metadata = buildNoIndexMetadata({
   title: "Product Management | ClueAI",
@@ -20,22 +19,22 @@ const lifecycleLabels: Record<string, string> = {
   decline: "衰退期",
 };
 
-const roleLabels: Record<string, string> = {
-  "运营": "运营",
-  "产研": "产研",
-  "质检": "质检",
-  "管理者": "管理者",
-  "跨团队": "跨团队",
-};
-
-function metricTone(negativeRate: number): string {
-  if (negativeRate >= 20) {
-    return "text-[#d94d72]";
-  }
-  if (negativeRate >= 12) {
-    return "text-[#b57a20]";
-  }
-  return "text-[#4b8f82]";
+function StarRating({ rating }: { rating: number | null }) {
+  if (rating == null) return <span className="text-xs text-soft">暂无评分</span>;
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating - fullStars >= 0.3;
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex" aria-label={`${rating} stars`}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <svg key={i} className={`h-4 w-4 ${i < fullStars ? "text-amber-400" : i === fullStars && hasHalf ? "text-amber-300" : "text-gray-200"}`} fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        ))}
+      </div>
+      <span className="text-xs font-semibold text-ink/70">{rating.toFixed(1)}</span>
+    </div>
+  );
 }
 
 function ProductCard({ product }: { product: ProductOverview }) {
@@ -43,225 +42,66 @@ function ProductCard({ product }: { product: ProductOverview }) {
   const lifecycle =
     lifecycleLabels[product.lifecycle_stage || ""] ||
     product.lifecycle_stage ||
-    "未设置";
-  const owner = product.owner_role
-    ? roleLabels[product.owner_role] || product.owner_role
-    : "未设置";
+    "";
 
   return (
-    <article className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <div className="inline-flex rounded-pill bg-roseSoft px-3 py-1 text-[11px] font-bold tracking-[0.12em] text-[#d94d72]">
-            {product.is_archived_from_sessions ? "历史评论沉淀" : "正式产品组"}
+    <Link
+      href={`/products/${product.id}`}
+      className="group flex flex-col overflow-hidden rounded-shell border border-line bg-white/90 shadow-card backdrop-blur transition hover:border-[#f36f8f]/40 hover:shadow-lg"
+    >
+      {/* 产品图片区域 */}
+      <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
+        {product.image_url ? (
+          <img
+            src={product.image_url}
+            alt={title}
+            className="h-full w-full object-contain p-3 transition group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <svg className="h-16 w-16 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
-          <h2 className="mt-4 font-heading text-[1.9rem] font-extrabold tracking-[-0.04em] text-ink">
-            {title}
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-soft">
-            父体产品编号：{product.parent_product_id}
-          </p>
-        </div>
+        )}
 
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-soft">
-            {product.platform || "未设置平台"}
-          </span>
-          <span className="rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-soft">
+        {/* 查看分析按钮 */}
+        {product.session_count > 0 && (
+          <Link
+            href={`/analysis/results?product_id=${product.parent_product_id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute right-2 top-2 rounded-pill bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[#f36f8f] shadow-sm backdrop-blur transition hover:bg-[#f36f8f] hover:text-white"
+          >
+            查看分析
+          </Link>
+        )}
+
+        {/* 生命周期 badge */}
+        {lifecycle && (
+          <span className="absolute bottom-2 left-2 rounded-pill bg-white/90 px-2 py-0.5 text-[10px] font-bold tracking-wide text-ink/70 backdrop-blur">
             {lifecycle}
           </span>
-          <span className="rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-soft">
-            版本 {product.current_version}
-          </span>
-        </div>
-
-        {product.id && (
-          <div className="mt-3 flex flex-wrap gap-2 md:mt-0">
-            <EditProductButton
-              productId={product.id}
-              initial={{
-                name: product.name ?? undefined,
-                platform: product.platform ?? undefined,
-                category: product.category ?? undefined,
-                lifecycle_stage: product.lifecycle_stage ?? undefined,
-                current_version: product.current_version,
-                core_selling_points: product.core_selling_points ?? undefined,
-                main_competitors: product.main_competitors ?? undefined,
-                owner_role: product.owner_role ?? undefined,
-                production_cycle_days: product.production_cycle_days ?? undefined,
-              }}
-            />
-            <DeleteProductButton
-              productId={product.id}
-              productName={title}
-            />
-          </div>
         )}
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-card border border-line bg-[#fffafc] px-4 py-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-            评论总量
-          </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-            {product.review_count}
-          </div>
-        </div>
-        <div className="rounded-card border border-line bg-[#fbfcff] px-4 py-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-            好评率
-          </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-            {product.positive_rate.toFixed(1)}%
-          </div>
-        </div>
-        <div className="rounded-card border border-line bg-[#fff8f9] px-4 py-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-            差评率
-          </div>
-          <div
-            className={[
-              "mt-2 font-heading text-3xl font-extrabold tracking-[-0.04em]",
-              metricTone(product.negative_rate),
-            ].join(" ")}
-          >
-            {product.negative_rate.toFixed(1)}%
-          </div>
-        </div>
-        <div className="rounded-card border border-line bg-[#faf8ff] px-4 py-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-            待复盘
-          </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-            {product.pending_review_count}
-          </div>
-        </div>
-        <div className="rounded-card border border-line bg-[#f8fffc] px-4 py-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-            变体 SKU
-          </div>
-          <div className="mt-2 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-            {product.variant_count}
-          </div>
+      {/* 产品信息区域 */}
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <h3 className="line-clamp-2 text-sm font-bold leading-5 text-ink group-hover:text-[#f36f8f]">
+          {title}
+        </h3>
+
+        {product.brand && (
+          <p className="text-xs text-soft">{product.brand}</p>
+        )}
+
+        <StarRating rating={product.rating} />
+
+        <div className="mt-auto flex items-center justify-between pt-2 text-xs text-soft">
+          <span>{product.reviews_total ?? product.review_count} 条评论</span>
+          <span>{product.variant_count} 个变体</span>
         </div>
       </div>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-card border border-line bg-white/88 p-5">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                类目
-              </div>
-              <div className="mt-2 text-sm leading-7 text-ink">
-                {product.category || "未设置"}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                负责人
-              </div>
-              <div className="mt-2 text-sm leading-7 text-ink">{owner}</div>
-            </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                生产周期
-              </div>
-              <div className="mt-2 text-sm leading-7 text-ink">
-                {product.production_cycle_days
-                  ? `${product.production_cycle_days} 天`
-                  : "未设置"}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <div className="rounded-card border border-line bg-[#fff9fa] px-4 py-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                最大问题
-              </div>
-              <div className="mt-2 text-sm leading-7 text-ink">
-                {product.top_issue || "暂无问题标签"}
-              </div>
-            </div>
-            <div className="rounded-card border border-line bg-[#fbf9ff] px-4 py-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                最大亮点
-              </div>
-              <div className="mt-2 text-sm leading-7 text-ink">
-                {product.top_highlight || "暂无亮点标签"}
-              </div>
-            </div>
-          </div>
-
-          {product.core_selling_points ? (
-            <div className="mt-5 rounded-card border border-line bg-white px-4 py-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                核心卖点
-              </div>
-              <p className="mt-2 text-sm leading-7 text-ink">
-                {product.core_selling_points}
-              </p>
-            </div>
-          ) : null}
-
-          {product.main_competitors ? (
-            <div className="mt-4 rounded-card border border-line bg-white px-4 py-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                主要竞品
-              </div>
-              <p className="mt-2 text-sm leading-7 text-ink">
-                {product.main_competitors}
-              </p>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="rounded-card border border-line bg-white/90 p-5">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-            最近批次
-          </div>
-          <div className="mt-2 text-sm leading-7 text-ink">
-            {product.latest_session_label || "暂无上传批次"}
-          </div>
-          <div className="mt-4 text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-            版本 / 批次数
-          </div>
-          <div className="mt-2 text-sm leading-7 text-ink">
-            {product.versions.length} 个版本记录 · {product.session_count} 个评论批次
-          </div>
-
-          <div className="mt-5">
-            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              变体列表
-            </div>
-            {product.variants.length > 0 ? (
-              <div className="mt-3 space-y-3">
-                {product.variants.slice(0, 4).map((variant) => (
-                  <div
-                    key={`${product.parent_product_id}-${variant.id ?? variant.variant_sku}`}
-                    className="rounded-card border border-line bg-[#fffafb] px-4 py-4"
-                  >
-                    <div className="text-sm font-semibold text-ink">
-                      {variant.variant_sku || "未命名变体"}
-                    </div>
-                    <div className="mt-1 text-xs leading-6 text-soft">
-                      {variant.child_asin || "无 Child ASIN"} ·{" "}
-                      {variant.color || "无颜色"} · {variant.size || "无尺码"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-3 text-sm leading-7 text-soft">
-                当前还没有绑定变体。这个产品组仍然可以承接历史评论和后续行动闭环。
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    </article>
+    </Link>
   );
 }
 
@@ -271,14 +111,14 @@ export default async function ProductsPage() {
     return (
       <AppShell
         currentPath="/products"
-        title="把评论资产先沉淀到产品组，再决定哪些 SKU 值得继续改。"
-        description="这一页优先展示产品组、风险指标、变体和最近批次，帮助你从分散的评论批次切回产品经营视角。当前实现对齐现有 Streamlit 的只读口径，先把资产看清楚。"
+        title="产品管理"
+        description="浏览所有产品档案，点击卡片查看详情和变体信息。"
       >
         <div className="flex items-center justify-between gap-4">
           <section className="grid flex-1 gap-4 md:grid-cols-3">
             <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                产品组总数
+                产品总数
               </div>
               <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
                 {response.total}
@@ -286,18 +126,18 @@ export default async function ProductsPage() {
             </div>
             <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                历史沉淀产品
+                总评论数
               </div>
               <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
-                {response.items.filter((item) => item.is_archived_from_sessions).length}
+                {response.items.reduce((sum, p) => sum + (p.reviews_total ?? p.review_count), 0)}
               </div>
             </div>
             <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                高风险产品
+                总变体数
               </div>
               <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
-                {response.items.filter((item) => item.negative_rate >= 12).length}
+                {response.items.reduce((sum, p) => sum + p.variant_count, 0)}
               </div>
             </div>
           </section>
@@ -305,7 +145,7 @@ export default async function ProductsPage() {
         </div>
 
         {response.items.length > 0 ? (
-          <section className="space-y-5">
+          <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {response.items.map((product) => (
               <ProductCard
                 key={`${product.parent_product_id}-${product.id ?? "archived"}`}
@@ -319,7 +159,7 @@ export default async function ProductsPage() {
               还没有产品档案
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-8 text-soft">
-              当前账号下还没有产品组，点击右上角「新建产品」按钮添加你的第一个产品。
+              当前账号下还没有产品组。通过 ASIN 抓取评论时会自动创建产品档案，或点击右上角手动添加。
             </p>
             <div className="mt-6">
               <CreateProductButton />
@@ -333,12 +173,12 @@ export default async function ProductsPage() {
       return (
         <AppShell
           currentPath="/products"
-          title="产品管理已经接入真实 API，但需要登录后才能读到数据。"
-          description="当前 Next.js 端已经具备读取产品资产的能力。登录表单会在后续模块继续接上，这一版先保证工作台和产品管理页的读取链路成立。"
+          title="产品管理"
+          description="登录后查看产品档案。"
         >
           <EmptyAuthState
-            title="登录后查看产品组、风险 SKU 和变体沉淀"
-            description="一旦存在有效 Cookie，这个页面会直接从 FastAPI 读取现有 Supabase 数据，不依赖 Streamlit 的页面状态。"
+            title="登录后查看产品组、变体和评论资产"
+            description="登录后可以看到从 ASIN 抓取自动沉淀的产品数据。"
           />
         </AppShell>
       );

@@ -241,3 +241,78 @@ async def fetch_product_info(
             "ratings_total": product.get("ratings_total"),
             "reviews_total": product.get("reviews_total"),
         }
+
+
+async def fetch_product_variants(
+    asin: str,
+    *,
+    marketplace: str = "us",
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """拉取产品信息及其所有变体 ASIN 列表。
+
+    Returns:
+        (product_info, variants) — variants 为 [{"asin": "B0xxx", "title": "...", ...}, ...]
+    """
+    api_key = _get_api_key()
+    domain = AMAZON_DOMAINS.get(marketplace)
+    if not domain:
+        raise RainforestError(f"Unsupported marketplace: {marketplace}")
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        params = {
+            "api_key": api_key,
+            "type": "product",
+            "asin": asin,
+            "amazon_domain": domain,
+        }
+        resp = await client.get(RAINFOREST_BASE_URL, params=params)
+
+        if resp.status_code != 200:
+            raise RainforestError(
+                f"Rainforest API error: {resp.status_code}",
+                status_code=resp.status_code,
+            )
+
+        data = resp.json()
+        product = data.get("product", {})
+
+        main_image = product.get("main_image") or {}
+        buybox = product.get("buybox_winner") or {}
+        buybox_price = buybox.get("price", {}) if isinstance(buybox.get("price"), dict) else {}
+
+        product_info = {
+            "title": product.get("title", ""),
+            "category": product.get("categories_flat", ""),
+            "brand": product.get("brand", ""),
+            "rating": product.get("rating"),
+            "ratings_total": product.get("ratings_total"),
+            "reviews_total": product.get("reviews_total"),
+            "image_url": main_image.get("link", ""),
+            "price": buybox.get("price") if isinstance(buybox.get("price"), (int, float)) else buybox_price.get("value"),
+            "price_currency": buybox_price.get("currency", "USD") if buybox_price else "USD",
+            "asin": asin,
+        }
+
+        raw_variants = product.get("variants", [])
+        variants = []
+        for v in raw_variants:
+            v_asin = v.get("asin", "")
+            if v_asin and len(v_asin) == 10:
+                v_image = ""
+                if isinstance(v.get("main_image"), dict):
+                    v_image = v["main_image"].get("link", "")
+                elif isinstance(v.get("image"), str):
+                    v_image = v["image"]
+                variants.append({
+                    "asin": v_asin,
+                    "title": v.get("title", ""),
+                    "dimensions": v.get("dimensions", []),
+                    "image_url": v_image,
+                    "price": v.get("price", {}).get("value") if isinstance(v.get("price"), dict) else v.get("price"),
+                })
+
+        logger.info(
+            "Discovered %d variants for ASIN %s (%s)",
+            len(variants), asin, marketplace,
+        )
+        return product_info, variants

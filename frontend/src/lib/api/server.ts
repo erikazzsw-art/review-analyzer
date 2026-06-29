@@ -76,6 +76,13 @@ export async function getProducts(): Promise<ProductsResponse> {
   return apiFetch<ProductsResponse>("/products");
 }
 
+export async function getProductDetail(productId: number): Promise<{
+  product: Record<string, unknown>;
+  variants: Record<string, unknown>[];
+}> {
+  return apiFetch(`/products/${productId}/detail`);
+}
+
 export async function getQaProducts(): Promise<QaProduct[]> {
   return apiFetch<QaProduct[]>("/qa/products");
 }

@@ -8,6 +8,7 @@ class AsinFetchRequest(BaseModel):
     marketplace: str = Field(default="us", pattern=r"^[a-z]{2}$")
     product_name: str | None = None
     max_pages: int = Field(default=5, ge=1, le=10)
+    fetch_all_variants: bool = False
 
 
 class AsinFetchResponse(BaseModel):
@@ -16,3 +17,4 @@ class AsinFetchResponse(BaseModel):
     asin: str
     marketplace: str
     message: str
+    variant_count: int | None = None
