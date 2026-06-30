@@ -36,10 +36,10 @@ const VALIDATION: Record<Platform, { pattern: RegExp; hint: string; placeholder:
     maxLength: 10,
   },
   aliexpress: {
-    pattern: /^\d{12,15}$/,
-    hint: "Product ID 必须为 12-15 位数字",
+    pattern: /^\d{12,16}$/,
+    hint: "Product ID 必须为 12-16 位数字",
     placeholder: "例如：1005006714526748（Product ID）",
-    maxLength: 15,
+    maxLength: 16,
   },
 };
 

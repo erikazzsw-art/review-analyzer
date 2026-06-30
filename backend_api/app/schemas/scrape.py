@@ -20,8 +20,8 @@ class AsinFetchRequest(BaseModel):
             if not re.fullmatch(r"[A-Z0-9]{10}", self.asin):
                 raise ValueError("Amazon ASIN 必须为 10 位字母数字组合")
         elif self.platform == "aliexpress":
-            if not re.fullmatch(r"\d{12,15}", self.asin):
-                raise ValueError("AliExpress Product ID 必须为 12-15 位数字")
+            if not re.fullmatch(r"\d{12,16}", self.asin):
+                raise ValueError("AliExpress Product ID 必须为 12-16 位数字")
         return self
 
 
