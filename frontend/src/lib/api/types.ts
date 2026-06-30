@@ -145,7 +145,7 @@ export type AnalysisCommentInput = {
 export type UploadJob = {
   id: number;
   user_id: number;
-  status: "queued" | "processing" | "done" | "failed";
+  status: "queued" | "fetching" | "processing" | "done" | "failed";
   source_filename: string;
   product_id: string;
   version: string;
