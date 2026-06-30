@@ -13,7 +13,6 @@ import * as XLSX from "xlsx";
 
 import { ModuleCard } from "@/components/analysis/module-card";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
-import { LabelCalibrationPopover } from "@/components/analysis/label-calibration-popover";
 import { CreateActionPanel } from "@/components/analysis/create-action-panel";
 import { SectionAnchorNav } from "@/components/analysis/section-anchor-nav";
 import { Button } from "@/components/ui/button";
@@ -250,13 +249,9 @@ function TagTable({
                 {quotes.length > 0 ? (
                   <ul className="space-y-1.5">
                     {quotes.map((q, qi) => (
-                      <li key={qi} className="flex gap-1.5 items-start">
+                      <li key={qi} className="flex gap-1.5">
                         <span className="text-soft/60">•</span>
-                        <span className="flex-1">{q}</span>
-                        <LabelCalibrationPopover
-                          originalTag={tag}
-                          sessionId={String(sessionId)}
-                        />
+                        <span>{q}</span>
                       </li>
                     ))}
                   </ul>
