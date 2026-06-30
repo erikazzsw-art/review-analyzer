@@ -20,18 +20,20 @@ def fetch_by_asin(
     req: AsinFetchRequest,
     current_user: dict = Depends(get_current_user),
 ) -> AsinFetchResponse:
-    """通过 ASIN 自动拉取 Amazon 评论（异步任务）。"""
+    """通过产品编码自动拉取评论（异步任务）。"""
     user_id = int(current_user["id"])
 
     allowed, msg = quota_check(user_id, "asin_fetch")
     if not allowed:
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
 
+    source_label = f"aliexpress:{req.asin}" if req.platform == "aliexpress" else f"rainforest:{req.asin}"
+
     job_id = create_upload_job(
         user_id,
         {
             "status": "queued",
-            "source_filename": f"rainforest:{req.asin}",
+            "source_filename": source_label,
             "product_id": req.asin,
             "source_channel": "api",
             "version": "V1",
@@ -41,6 +43,7 @@ def fetch_by_asin(
             "negative_count": 0,
             "payload_json": {
                 "asin": req.asin,
+                "platform": req.platform,
                 "marketplace": req.marketplace,
                 "product_name": req.product_name,
                 "max_pages": req.max_pages,
@@ -71,6 +74,7 @@ def fetch_by_asin(
     return AsinFetchResponse(
         job_id=job_id,
         asin=req.asin,
+        platform=req.platform,
         marketplace=req.marketplace,
-        message=f"ASIN fetch job queued for {req.asin}",
+        message=f"Fetch job queued for {req.platform}:{req.asin}",
     )

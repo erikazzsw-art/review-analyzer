@@ -161,6 +161,7 @@ export async function fetchUploadJob(jobId: number): Promise<UploadJobResponse> 
 
 export async function fetchByAsin(params: {
   asin: string;
+  platform?: "amazon" | "aliexpress";
   marketplace: string;
   productName?: string;
   maxPages?: number;
@@ -172,6 +173,7 @@ export async function fetchByAsin(params: {
     credentials: "include",
     body: JSON.stringify({
       asin: params.asin,
+      platform: params.platform || "amazon",
       marketplace: params.marketplace,
       product_name: params.productName || undefined,
       max_pages: params.maxPages || 5,

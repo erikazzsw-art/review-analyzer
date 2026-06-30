@@ -1,14 +1,15 @@
-"""统一评论抓取入口 — 协调多个数据源获取 Amazon 评论。
+"""统一评论抓取入口 — 按平台分派到对应数据源。
 
-当前数据源优先级：
-1. woot.com（免费，~50 条/ASIN）
-2. ScrapingDog /amazon/reviews（付费，预留接口，待端点稳定后启用）
+支持平台：
+- Amazon: woot.com 免费 API（~50 条/ASIN）
+- AliExpress: feedback API + Playwright 浏览器 fallback
 """
 from __future__ import annotations
 
 import logging
 from typing import Any
 
+from backend_api.app.services.aliexpress_scraper import fetch_aliexpress_reviews
 from backend_api.app.services.woot_scraper import fetch_woot_reviews
 
 logger = logging.getLogger(__name__)
@@ -22,19 +23,20 @@ class ReviewScraperError(Exception):
 
 
 async def fetch_reviews(
-    asin: str,
+    product_id: str,
     *,
+    platform: str = "amazon",
     marketplace: str = "us",
     max_years: int = 2,
 ) -> list[dict[str, Any]]:
-    """统一评论抓取入口。
-
-    当前实现：仅使用 woot.com 免费源。
-    后续扩展：woot.com 数量不足时自动切换到 ScrapingDog。
-    """
-    reviews = await fetch_woot_reviews(asin, max_years=max_years)
-
-    if not reviews:
-        logger.warning("No reviews found for ASIN %s via woot.com", asin)
+    """统一评论抓取入口 — 按平台分派。"""
+    if platform == "aliexpress":
+        reviews = await fetch_aliexpress_reviews(product_id, max_years=max_years)
+        if not reviews:
+            logger.warning("No reviews found for AliExpress item %s", product_id)
+    else:
+        reviews = await fetch_woot_reviews(product_id, max_years=max_years)
+        if not reviews:
+            logger.warning("No reviews found for ASIN %s via woot.com", product_id)
 
     return reviews

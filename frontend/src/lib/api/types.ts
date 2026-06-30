@@ -174,6 +174,7 @@ export type AsinFetchResponse = {
   ok: boolean;
   job_id: number;
   asin: string;
+  platform: string;
   marketplace: string;
   message: string;
 };
