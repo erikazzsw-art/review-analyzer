@@ -319,7 +319,7 @@ async def _fetch_via_browser(
 async def fetch_aliexpress_reviews(
     item_id: str,
     *,
-    max_pages: int = 5,
+    max_pages: int = 10,
     max_years: int = 2,
 ) -> list[dict[str, Any]]:
     """AliExpress 评论抓取统一入口 — 先 API，失败则 fallback 浏览器。"""
