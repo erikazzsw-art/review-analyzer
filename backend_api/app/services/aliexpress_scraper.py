@@ -1,12 +1,14 @@
-"""AliExpress 评论抓取 — 双数据源自动 fallback。
+"""AliExpress 评论抓取 — 三级数据源自动 fallback。
 
-主数据源：feedback.aliexpress.com AJAX API（免费，无需认证）
-备用数据源：Playwright 无头浏览器抓取（API 被封或返回空时自动切换）
+主数据源：Apify CrowdPull AliExpress Reviews Scraper（付费，稳定）
+备用数据源 1：feedback.aliexpress.com AJAX API（免费，可能被反爬封锁）
+备用数据源 2：Playwright 无头浏览器抓取（最后兜底）
 """
 from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import random
 import re
 from datetime import datetime, timedelta, timezone
@@ -17,6 +19,7 @@ import httpx
 logger = logging.getLogger(__name__)
 
 FEEDBACK_URL = "https://feedback.aliexpress.com/pc/searchEvaluation.do"
+APIFY_ACTOR_URL = "https://api.apify.com/v2/acts/crowdpull~aliexpress-reviews-scraper/run-sync-get-dataset-items"
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -80,6 +83,98 @@ def _parse_api_review(raw: dict[str, Any]) -> dict[str, Any] | None:
         "review_id": str(raw.get("evaluationId", "")),
         "sku_info": sku_info,
     }
+
+
+async def _fetch_via_apify(
+    item_id: str,
+    *,
+    max_reviews: int = 200,
+    max_years: int = 2,
+) -> list[dict[str, Any]]:
+    """通过 Apify CrowdPull Actor 抓取评论（主数据源）。"""
+    token = os.getenv("APIFY_API_TOKEN", "").strip()
+    if not token:
+        logger.debug("APIFY_API_TOKEN not set, skipping Apify source")
+        return []
+
+    payload = {
+        "productIds": [item_id],
+        "maxReviewsPerProduct": max_reviews,
+        "includeProductStats": False,
+        "sortBy": "default",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            resp = await client.post(
+                APIFY_ACTOR_URL,
+                params={"token": token},
+                json=payload,
+            )
+            if resp.status_code != 200:
+                logger.warning(
+                    "Apify Actor returned %d for item %s: %s",
+                    resp.status_code, item_id, resp.text[:200],
+                )
+                return []
+
+            items = resp.json()
+            if not isinstance(items, list):
+                logger.warning("Apify response is not a list for item %s", item_id)
+                return []
+
+    except (httpx.HTTPError, httpx.TimeoutException) as exc:
+        logger.warning("Apify request failed for item %s: %s", item_id, exc)
+        return []
+
+    reviews: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+
+    for raw in items:
+        content = (raw.get("buyerFeedback") or "").strip()
+        if not content or not _is_english(content):
+            continue
+
+        rating = raw.get("starRating") or 5
+        eval_date = raw.get("evalDate") or ""
+        date_str = ""
+        if eval_date:
+            match = re.search(r"\d{4}-\d{2}-\d{2}", eval_date)
+            if match:
+                date_str = match.group(0)
+            else:
+                for fmt in ("%d %b %Y", "%b %d, %Y", "%d %B %Y"):
+                    try:
+                        date_str = datetime.strptime(eval_date.strip(), fmt).strftime("%Y-%m-%d")
+                        break
+                    except ValueError:
+                        continue
+
+        if not _is_within_years(date_str, max_years):
+            continue
+
+        reviewer = raw.get("buyerCountry") or "Anonymous"
+        dedup_key = (content[:80], reviewer)
+        if dedup_key in seen:
+            continue
+        seen.add(dedup_key)
+
+        reviews.append({
+            "content": content,
+            "rating": int(rating) if rating else 5,
+            "date": date_str,
+            "reviewer": reviewer,
+            "title": "",
+            "verified_purchase": True,
+            "reviewer_id": "",
+            "review_id": str(raw.get("reviewId") or ""),
+            "sku_info": raw.get("skuInfo") or "",
+        })
+
+    logger.info("Apify CrowdPull: fetched %d reviews for item %s", len(reviews), item_id)
+    return reviews
+
+
 async def _fetch_via_api(
     item_id: str,
     *,
@@ -157,6 +252,8 @@ async def _fetch_via_api(
 
     logger.info("AliExpress API: fetched %d reviews for item %s", len(all_reviews), item_id)
     return all_reviews
+
+
 async def _fetch_via_browser(
     item_id: str,
     *,
@@ -316,18 +413,31 @@ async def _fetch_via_browser(
         len(all_reviews), item_id, product_title[:50],
     )
     return all_reviews
+
+
 async def fetch_aliexpress_reviews(
     item_id: str,
     *,
     max_pages: int = 10,
     max_years: int = 2,
 ) -> list[dict[str, Any]]:
-    """AliExpress 评论抓取统一入口 — 先 API，失败则 fallback 浏览器。"""
-    reviews = await _fetch_via_api(item_id, max_pages=max_pages, max_years=max_years)
+    """AliExpress 评论抓取统一入口 — 三级 fallback。
 
-    if not reviews:
-        logger.info("Feedback API returned 0 reviews for %s, falling back to browser", item_id)
-        reviews = await _fetch_via_browser(item_id, max_pages=max_pages, max_years=max_years)
+    优先级：Apify CrowdPull → feedback API → Playwright 浏览器
+    """
+    reviews = await _fetch_via_apify(item_id, max_reviews=200, max_years=max_years)
+    if reviews:
+        logger.info("Using Apify source: %d reviews for %s", len(reviews), item_id)
+        return reviews
+
+    logger.info("Apify returned 0 reviews for %s, trying feedback API", item_id)
+    reviews = await _fetch_via_api(item_id, max_pages=max_pages, max_years=max_years)
+    if reviews:
+        logger.info("Using feedback API source: %d reviews for %s", len(reviews), item_id)
+        return reviews
+
+    logger.info("Feedback API returned 0 reviews for %s, falling back to browser", item_id)
+    reviews = await _fetch_via_browser(item_id, max_pages=max_pages, max_years=max_years)
 
     if not reviews:
         logger.warning("No reviews found for AliExpress item %s via any source", item_id)
