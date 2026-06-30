@@ -89,6 +89,18 @@
 
 ---
 
+## ASIN 多变体抓取 + 产品管理增强（2026-06-29）
+
+- [x] ASIN 抓取面板新增「抓取所有变体」checkbox，自动发现同款所有子 ASIN 并合并分析（上限 20 变体）
+- [x] 抓取时自动保存产品信息（图片、品牌、评分、评论数）到产品管理
+- [x] 产品管理列表页改为卡片网格（图片 + 名称 + 品牌 + 星级 + 评论数 + 变体数）
+- [x] 新增产品详情页 `/products/[id]`，展示变体表格（ASIN、图片、变体名、品牌、价格等）
+- [x] 产品详情页可直接跳转该产品的评论分析结果
+- [x] 数据库迁移 031：products 表新增 image_url/brand/rating/ratings_total/reviews_total；product_variants 表新增 image_url/name/brand/price 等字段
+- [x] Worker 流程重构：先保存产品信息 → 再抓取评论 → 合并去重 → 分析
+
+---
+
 ## V2.5-V3.1 本地收口进展补充（2026-06-09）
 
 - [x] 登录后全局 App Shell 已对齐 `clueai_v2_ui_prototype.html` 的柔和 V2 风格，导航、按钮、卡片、上传区和侧边栏视觉保持统一
@@ -1385,6 +1397,7 @@ NX-M8 验收记录（Phase A）：
 | 2026-06-18 | 前端测试 | 决策：当前阶段不引入前端测试框架（Vitest/Jest）。理由：快速迭代期、CI 已有 tsc+build 兜底、核心逻辑在后端。触发条件：出现复杂前端逻辑/状态机、频繁回归 bug、核心功能稳定进入维护期时引入 Vitest + React Testing Library |
 | 2026-06-25 | V5-T3 增强 | 推送设置页重构（Part A）：设置页改为 sidebar 3 子页（push/api-keys/billing），推送页合并全局规则+产品规则+周期推送+升级规则为单页全宽布局；推送内容增强（Part B）：B1 条数+占比、B2 AI 总结建议、B3 可点击链接、B4 行动中心引导、B5 环比推送增强、B6 TOP 问题复盘进度 |
 | 2026-06-25 | V4.5-T12 | 可观测性页面重构：从 265 行单页重构为 5-Tab 管理后台（概览/成本/任务/缓存/告警），新增时间范围选择器+模型状态灯行+可展开 trace timeline+成本堆叠柱状图；从用户 sidebar 移除，仅管理员 URL 访问；10 个新组件于 `components/observability/` |
+| 2026-06-30 | V4-T1.6 | Golden Set 标签校准管理系统 + 管理员权限控制：golden_set 表 + boundary_note 字段 + CSV 上传 API + 准确率统计 + few-shot 注入 + /settings/golden-set 管理页 + users.is_admin + sidebar adminOnly 过滤 + 页面级权限守卫；migration 033/034/035 |
 
 ---
 
@@ -2345,6 +2358,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - 对每个 ASIN 入队一个 `process_asin_fetch_job`（复用现有 worker）
   - 并发控制：同一用户最多 5 个并发拉取任务
   - 失败重试：最多 3 次，第 3 次失败后标记 `status=error` 并通知用户
+  - **2026-06-30 优化**：定时抓取数据源从 Rainforest API（付费）切换为 woot.com（免费），零 API 成本实现自动监控。调用统一入口 `fetch_reviews()` → woot.com AJAX API
 
 - [x] **Step 4: 增量检测 + 去重**
   - 拉取后与上次结果对比：按 `review_id` 去重，只入库新增评论
@@ -4220,5 +4234,26 @@ CREATE TABLE workspace_invitations (
 | `backend_api/tests/test_v24_dynamic_aspects.py` | 6 个测试用 `return` 代替 `assert`，pytest 会忽略这些断言（假通过） | P1 |
 | `backend_api/tests/test_llm_router.py` | 文件不存在，熔断逻辑完全无测试覆盖 | P0 |
 | `frontend/e2e/` | 目录不存在，UI 回归靠人眼 | P1 |
+
+---
+
+### AliExpress 评论抓取集成（2026-06-30 完成）
+
+- 状态: ✅ 已完成 | 已部署线上验证通过
+- 分支: `develop`（commit `9cd4771`、`c97ae74`）
+- 任务:
+  - [x] 新建 AliExpress 抓取器（双数据源：feedback API + Playwright 浏览器 fallback）
+  - [x] 更新 review_scraper 路由层按 platform 分派
+  - [x] 更新 API Schema（platform 字段 + 按平台动态校验产品编码格式）
+  - [x] 更新 API 路由（传递 platform 到 payload）
+  - [x] 更新 Worker 任务分派（Amazon / AliExpress 独立路径）
+  - [x] 前端 asin-fetch-panel 改造为平台切换模式（Amazon / AliExpress 分段控件）
+  - [x] 产品管理页新增平台 Tab 过滤 + 平台 badge
+  - [x] 移除非英文 Amazon 站点（仅保留 US/UK/CA/AU）
+  - [x] 接入 Apify CrowdPull 作为主数据源（解决 feedback API 反爬封锁）
+  - [x] 三级 fallback 策略：Apify → feedback API → Playwright
+  - [x] 修复 Product ID 验证范围（12-16 位，支持 16 位 ID）
+  - [x] 修复 Apify HTTP 201 状态码被错误丢弃问题
+  - 线上验证（2026-06-30）：product ID 1005009259589970 成功抓取 131 条评论，session_id=75，好评率 82.4%，差评率 17.6%
 
 ---
