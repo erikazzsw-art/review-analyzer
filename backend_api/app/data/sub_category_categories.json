@@ -5,7 +5,12 @@
     "3c": "3C 配件",
     "apparel": "服装鞋帽",
     "baby": "母婴用品",
-    "pet": "宠物用品"
+    "pet": "宠物用品",
+    "outdoor": "户外运动",
+    "beauty": "美妆个护",
+    "kitchen": "厨房用品",
+    "automotive": "汽车配件",
+    "office": "办公用品"
   },
   "sub_category_to_category": {
     "Allergy Immune Bites": "pet",
@@ -67,9 +72,36 @@
     "手提包": "apparel",
     "沙发": "home",
     "衣架": "home",
-    "连衣裙": "apparel"
+    "连衣裙": "apparel",
+    "冲锋衣": "outdoor",
+    "帐篷": "outdoor",
+    "登山鞋": "outdoor",
+    "睡袋": "outdoor",
+    "户外背包": "outdoor",
+    "钓鱼竿": "outdoor",
+    "面霜": "beauty",
+    "洗面奶": "beauty",
+    "防晒霜": "beauty",
+    "口红": "beauty",
+    "洗发水": "beauty",
+    "电动牙刷": "beauty",
+    "不粘锅": "kitchen",
+    "刀具套装": "kitchen",
+    "保温杯": "kitchen",
+    "空气炸锅": "kitchen",
+    "收纳盒": "kitchen",
+    "车载充电器": "automotive",
+    "行车记录仪": "automotive",
+    "座椅套": "automotive",
+    "遮阳挡": "automotive",
+    "车载吸尘器": "automotive",
+    "办公椅": "office",
+    "显示器支架": "office",
+    "桌面收纳": "office",
+    "打印机墨盒": "office",
+    "鼠标垫": "office"
   },
-  "generated_at": "2026-06-10",
+  "generated_at": "2026-06-30",
   "source": "data/taxonomy/v1.0/<category>/*.yaml (sub_category 字段)",
-  "total_sub_categories": 60
+  "total_sub_categories": 87
 }

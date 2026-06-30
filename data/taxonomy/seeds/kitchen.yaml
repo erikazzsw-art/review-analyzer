@@ -1,0 +1,14 @@
+# 厨房用品 Aspect Taxonomy Delta 词典 v1.0
+extends: base.yaml
+category: kitchen
+category_label: 厨房用品
+
+delta_aspects:
+  - {key: non_stick, label_zh: 不粘性能}
+  - {key: heat_distribution, label_zh: 导热均匀性}
+  - {key: seal, label_zh: 密封性}
+  - {key: insulation, label_zh: 保温/隔热效果}
+  - {key: cleaning, label_zh: 清洗便捷性}
+  - {key: size_fit, label_zh: 尺寸/容量}
+  - {key: safety, label_zh: 食品安全/材质安全}
+  - {key: noise, label_zh: 噪音}

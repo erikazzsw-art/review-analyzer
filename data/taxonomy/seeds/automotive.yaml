@@ -1,0 +1,14 @@
+# 汽车配件 Aspect Taxonomy Delta 词典 v1.0
+extends: base.yaml
+category: automotive
+category_label: 汽车配件
+
+delta_aspects:
+  - {key: compatibility, label_zh: 兼容适配性}
+  - {key: installation, label_zh: 安装便捷性}
+  - {key: image_quality, label_zh: 画面/显示质量}
+  - {key: charging_speed, label_zh: 充电速度}
+  - {key: heat, label_zh: 发热情况}
+  - {key: stability, label_zh: 稳定性/固定效果}
+  - {key: portability, label_zh: 便携性}
+  - {key: noise, label_zh: 噪音}

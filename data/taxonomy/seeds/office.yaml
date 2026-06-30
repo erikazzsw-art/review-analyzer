@@ -1,0 +1,13 @@
+# 办公用品 Aspect Taxonomy Delta 词典 v1.0
+extends: base.yaml
+category: office
+category_label: 办公用品
+
+delta_aspects:
+  - {key: ergonomics, label_zh: 人体工学/舒适度}
+  - {key: adjustability, label_zh: 可调节性}
+  - {key: stability, label_zh: 稳定性}
+  - {key: compatibility, label_zh: 兼容适配性}
+  - {key: size_fit, label_zh: 尺寸匹配}
+  - {key: print_quality, label_zh: 打印/输出质量}
+  - {key: noise, label_zh: 噪音}

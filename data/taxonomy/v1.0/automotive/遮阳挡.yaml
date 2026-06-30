@@ -1,0 +1,169 @@
+# 遮阳挡 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-30 (手动生成，参考跨境电商评论维度)
+sub_category: 遮阳挡
+aspect_count: 15
+aspects:
+- key: uv_blocking
+  label_zh: 遮光隔热效果
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "阳光隔挡和降温效果"
+  top_phrases: []
+  sample_reviews: []
+
+- key: installation
+  label_zh: 安装便捷性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "展开收纳和固定操作是否方便，不含遮光"
+  top_phrases: []
+  sample_reviews: []
+
+- key: size_fit
+  label_zh: 尺寸覆盖度
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "是否能完整覆盖前挡风玻璃"
+  top_phrases: []
+  sample_reviews: []
+
+- key: storage
+  label_zh: 收纳便捷性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "折叠后体积小，收纳是否简便，不含安装"
+  top_phrases: []
+  sample_reviews: []
+
+- key: stability
+  label_zh: 固定稳定性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "使用时是否会移位脱落"
+  top_phrases: []
+  sample_reviews: []
+
+- key: build_quality
+  label_zh: 做工
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "制造工艺、做工细节（缝合/拉链/接缝），不含材质本身"
+  top_phrases: []
+  sample_reviews: []
+
+- key: durability
+  label_zh: 耐用性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "长期使用后的耐磨损表现，不含到货损坏（归 shipping_damage）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: material
+  label_zh: 材质用料
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "面料/材质手感、厚薄质感，不含功能性（功能归各专项）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: ease_of_use
+  label_zh: 易用性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "日常操作便捷性，不含安装过程（有专项时归安装 aspect）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: aesthetics
+  label_zh: 外观设计
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "颜色、款式、外观好看程度"
+  top_phrases: []
+  sample_reviews: []
+
+- key: packaging
+  label_zh: 包装
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "外包装质量和美观度，不含运输损坏"
+  top_phrases: []
+  sample_reviews: []
+
+- key: shipping_damage
+  label_zh: 运输损坏
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "到货时损坏或缺件，不含产品本身质量问题"
+  top_phrases: []
+  sample_reviews: []
+
+- key: customer_service
+  label_zh: 客服
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "售后服务、退换货体验"
+  top_phrases: []
+  sample_reviews: []
+
+- key: value_for_money
+  label_zh: 性价比
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "价格与整体品质的匹配感"
+  top_phrases: []
+  sample_reviews: []
+
+- key: other
+  label_zh: 其他
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "不属于以上任何维度的评论内容（兜底）"
+  top_phrases: []
+  sample_reviews: []

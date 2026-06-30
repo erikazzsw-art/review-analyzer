@@ -164,6 +164,7 @@ def import_taxonomy(conn, dry_run: bool = False) -> tuple[int, int]:
                 "sub_category": sub_category,
                 "aspect_key": aspect["key"],
                 "label_zh": aspect.get("label_zh", aspect["key"]),
+                "boundary_note": aspect.get("boundary_note") or None,
                 "total_count": total,
                 "positive_count": int(aspect.get("positive_count", 0)),
                 "negative_count": negative,
@@ -187,15 +188,16 @@ def import_taxonomy(conn, dry_run: bool = False) -> tuple[int, int]:
         for i, row in enumerate(rows, 1):
             cur.execute(
                 """INSERT INTO category_aspect_taxonomy
-                   (sub_category, aspect_key, label_zh, total_count,
+                   (sub_category, aspect_key, label_zh, boundary_note, total_count,
                     positive_count, negative_count, neutral_count, negative_rate,
                     top_phrases, sample_review_ids, taxonomy_version)
                    VALUES (%s, %s, %s, %s,
                            %s, %s, %s, %s,
-                           %s, %s, %s)
+                           %s, %s, %s, %s)
                    ON CONFLICT (sub_category, aspect_key, taxonomy_version)
                    DO UPDATE SET
                        label_zh = EXCLUDED.label_zh,
+                       boundary_note = EXCLUDED.boundary_note,
                        total_count = EXCLUDED.total_count,
                        positive_count = EXCLUDED.positive_count,
                        negative_count = EXCLUDED.negative_count,
@@ -205,7 +207,8 @@ def import_taxonomy(conn, dry_run: bool = False) -> tuple[int, int]:
                        sample_review_ids = EXCLUDED.sample_review_ids
                    RETURNING (xmax = 0) AS inserted""",
                 (
-                    row["sub_category"], row["aspect_key"], row["label_zh"], row["total_count"],
+                    row["sub_category"], row["aspect_key"], row["label_zh"], row["boundary_note"],
+                    row["total_count"],
                     row["positive_count"], row["negative_count"], row["neutral_count"], row["negative_rate"],
                     json.dumps(row["top_phrases"], ensure_ascii=False),
                     json.dumps(row["sample_review_ids"], ensure_ascii=False),

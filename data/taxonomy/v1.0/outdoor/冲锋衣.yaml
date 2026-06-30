@@ -1,0 +1,202 @@
+# 冲锋衣 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-30 (手动生成，参考跨境电商户外品类评论维度)
+sub_category: 冲锋衣
+aspect_count: 18
+aspects:
+  - key: waterproof
+    label_zh: 防水性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "雨水是否渗透衣物内部，仅限防水功能本身，不含面料手感（手感归 material）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: breathability
+    label_zh: 透气性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "排汗导湿、穿着是否闷热，不含保暖效果（保暖归 temperature_rating）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: wind_resistance
+    label_zh: 防风性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "挡风遮风效果，不含防水和保暖"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: temperature_rating
+    label_zh: 保暖性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "保暖层次和抗寒效果，不含透气性（透气归 breathability）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: size_fit
+    label_zh: 尺寸匹配
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "版型肥瘦、长短是否符合标注尺码，不含舒适度（舒适归 comfort）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: comfort
+    label_zh: 穿着舒适度
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "穿着贴合感、肩部袖子活动自由度，不含尺寸大小（尺寸归 size_fit）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: portability
+    label_zh: 便携性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "可压缩收纳体积、重量轻便，不含穿着舒适（穿着舒适归 comfort）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: noise
+    label_zh: 面料噪音
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "运动时面料相互摩擦的声响，仅限声音维度"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: build_quality
+    label_zh: 做工
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "缝合走线、拉链做工、口袋接缝质量，不含面料本身（面料归 material）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: durability
+    label_zh: 耐用性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "长期穿用耐磨、抗撕裂表现，不含到货损坏（到货损坏归 shipping_damage）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: material
+    label_zh: 材质用料
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "面料手感、厚薄、柔软度，不含防水防风等功能性（功能归各专项）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "颜色、款式、版型外观好看程度"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "穿脱方便、口袋开合、拉链操作，不含穿着舒适（舒适归 comfort）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: packaging
+    label_zh: 包装
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "外包装质量，不含运输损坏（运输损坏归 shipping_damage）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "到货时衣物损坏、污渍、破洞，不含产品本身质量问题"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: customer_service
+    label_zh: 客服
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "售后服务、退换货体验"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "价格与整体品质的匹配感"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: other
+    label_zh: 其他
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "不属于以上任何维度的评论内容"
+    top_phrases: []
+    sample_reviews: []

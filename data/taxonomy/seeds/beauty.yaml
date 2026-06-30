@@ -1,0 +1,22 @@
+# 美妆个护 Aspect Taxonomy Delta 词典 v1.0
+# 设计参考: 跨境电商美妆评论常见维度 + Shulex VOC 方法论
+# 用途: 与 base.yaml 合并后供 extract_taxonomy_generic.py 使用
+
+extends: base.yaml
+category: beauty
+category_label: 美妆个护
+
+delta_aspects:
+  # 核心效果类
+  - {key: efficacy, label_zh: 使用效果}
+  - {key: skin_compatibility, label_zh: 肤质适配/刺激性}
+  # 产品特性类
+  - {key: texture, label_zh: 质地手感}
+  - {key: scent, label_zh: 气味/香味}
+  - {key: absorption, label_zh: 吸收速度}
+  # 持久性
+  - {key: longevity, label_zh: 持久度}
+  # 使用感受
+  - {key: color_payoff, label_zh: 显色度}
+  # 成分
+  - {key: ingredients, label_zh: 成分安全}

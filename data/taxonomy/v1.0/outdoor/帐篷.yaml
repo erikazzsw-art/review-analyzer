@@ -1,0 +1,202 @@
+# 帐篷 Aspect Taxonomy v1.0
+# 生成时间: 2026-06-30
+sub_category: 帐篷
+aspect_count: 18
+aspects:
+  - key: waterproof
+    label_zh: 防水性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "帐篷面料和接缝是否漏雨，仅限防水功能，不含防风（防风归 wind_resistance）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: wind_resistance
+    label_zh: 防风稳定性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "大风中帐篷是否稳固不倒，含风杆/营钉效果，不含防水"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: assembly
+    label_zh: 搭建难度
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "搭建和拆卸是否方便快捷，含说明书清晰度"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: size_fit
+    label_zh: 内部空间
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "帐篷内部实际空间是否与描述一致，含人数容量"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: portability
+    label_zh: 便携性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "收纳体积大小、重量，不含搭建难度（搭建归 assembly）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: ventilation
+    label_zh: 通风透气
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "帐篷内部是否闷热、通风窗设计，不含防水（防水归 waterproof）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: stability
+    label_zh: 结构稳定性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "帐杆/支撑结构强度稳固程度，不含风中稳定（风中稳定归 wind_resistance）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: build_quality
+    label_zh: 做工
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "缝合质量、拉链做工、接缝精细度，不含面料本身"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: durability
+    label_zh: 耐用性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "多次使用后面料/帐杆的耐磨损表现"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: material
+    label_zh: 材质用料
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "面料质感、帐杆材质（铝/玻璃纤维），不含防水功能"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: aesthetics
+    label_zh: 外观设计
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "帐篷颜色、造型外观好看程度"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: ease_of_use
+    label_zh: 易用性
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "出入口开合、内部功能设计（挂钩/收纳袋）使用便捷性，不含搭建（搭建归 assembly）"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: packaging
+    label_zh: 包装
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "外包装质量，不含到货损坏"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: shipping_damage
+    label_zh: 运输损坏
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "到货时零件损坏、缺失，不含产品本身质量问题"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: customer_service
+    label_zh: 客服
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "售后服务、退换货体验"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: value_for_money
+    label_zh: 性价比
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "价格与整体品质的匹配感"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: instructions
+    label_zh: 说明书
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "搭建说明书是否清晰、图示是否易懂，仅限说明文档本身"
+    top_phrases: []
+    sample_reviews: []
+
+  - key: other
+    label_zh: 其他
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "不属于以上任何维度的评论内容"
+    top_phrases: []
+    sample_reviews: []
