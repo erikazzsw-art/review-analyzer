@@ -57,7 +57,7 @@ export default async function ProductsPage() {
               还没有产品档案
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-8 text-soft">
-              当前账号下还没有产品组。通过产品编码抓取评论时会自动创建产品档案，或点击右上角手动添加。
+              当前账号下还没有产品组。通过自动抓取评论时会自动创建产品档案，或点击右上角手动添加。
             </p>
             <div className="mt-6">
               <CreateProductButton />
@@ -76,7 +76,7 @@ export default async function ProductsPage() {
         >
           <EmptyAuthState
             title="登录后查看产品组、变体和评论资产"
-            description="登录后可以看到从产品编码抓取自动沉淀的产品数据。"
+            description="登录后可以看到从自动抓取沉淀的产品数据。"
           />
         </AppShell>
       );
