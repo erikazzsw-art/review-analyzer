@@ -22,7 +22,7 @@ def create_calibration(
 ) -> dict:
     """提交一条标签校准反馈."""
     cal_id = save_calibration(
-        user_id=str(user["id"]),
+        user_id=user["id"],
         comment_id=body.comment_id,
         session_id=body.session_id,
         original_tag=body.original_tag,

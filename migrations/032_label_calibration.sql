@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS label_calibration (
     id            BIGSERIAL PRIMARY KEY,
-    user_id       UUID NOT NULL REFERENCES users(id),
+    user_id       INTEGER NOT NULL REFERENCES users(id),
     comment_id    BIGINT,
     session_id    UUID,
     original_tag  TEXT NOT NULL,

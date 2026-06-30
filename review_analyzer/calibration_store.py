@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def save_calibration(
     *,
-    user_id: str,
+    user_id: int,
     comment_id: int | None,
     session_id: str | None,
     original_tag: str,
