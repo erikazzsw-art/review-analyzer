@@ -22,7 +22,8 @@ export function DeleteVariantButton({ productId, variantId, variantName }: Delet
     try {
       await deleteVariant(productId, variantId);
       router.refresh();
-    } catch {
+    } catch (err) {
+      console.error("Delete variant failed:", err);
       setDeleting(false);
       setConfirming(false);
     }

@@ -21,7 +21,8 @@ export function DeleteProductButton({ productId, productName }: DeleteProductBut
     try {
       await deleteProduct(productId);
       router.refresh();
-    } catch {
+    } catch (err) {
+      console.error("Delete product failed:", err);
       setDeleting(false);
       setConfirming(false);
     }

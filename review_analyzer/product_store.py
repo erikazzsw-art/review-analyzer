@@ -69,6 +69,16 @@ def update_product(user_id: int, product_id: int, data: dict[str, Any]) -> bool:
         conn.close()
 
 
+def _safe_execute(cur: Any, sql: str, params: tuple) -> None:
+    """Execute SQL, silently skipping if the target table doesn't exist."""
+    cur.execute("SAVEPOINT _safe_exec")
+    try:
+        cur.execute(sql, params)
+        cur.execute("RELEASE SAVEPOINT _safe_exec")
+    except psycopg2.errors.UndefinedTable:
+        cur.execute("ROLLBACK TO SAVEPOINT _safe_exec")
+
+
 def delete_product(user_id: int, product_id: int) -> bool:
     conn = get_connection()
     try:
@@ -80,20 +90,24 @@ def delete_product(user_id: int, product_id: int) -> bool:
             variant_ids = [r[0] for r in cur.fetchall()]
 
             if variant_ids:
-                cur.execute(
+                _safe_execute(
+                    cur,
                     "UPDATE action_items SET variant_id = NULL WHERE variant_id = ANY(%s)",
                     (variant_ids,),
                 )
-                cur.execute(
+                _safe_execute(
+                    cur,
                     "UPDATE review_trackers SET variant_id = NULL WHERE variant_id = ANY(%s)",
                     (variant_ids,),
                 )
-                cur.execute(
+                _safe_execute(
+                    cur,
                     "UPDATE upload_jobs SET variant_ref_id = NULL WHERE variant_ref_id = ANY(%s)",
                     (variant_ids,),
                 )
 
-            cur.execute(
+            _safe_execute(
+                cur,
                 "DELETE FROM product_versions WHERE user_id = %s AND product_id = %s",
                 (user_id, product_id),
             )
@@ -101,23 +115,28 @@ def delete_product(user_id: int, product_id: int) -> bool:
                 "DELETE FROM product_variants WHERE user_id = %s AND product_id = %s",
                 (user_id, product_id),
             )
-            cur.execute(
+            _safe_execute(
+                cur,
                 "UPDATE action_items SET product_id = NULL WHERE product_id = %s",
                 (product_id,),
             )
-            cur.execute(
+            _safe_execute(
+                cur,
                 "UPDATE review_trackers SET product_id = NULL WHERE product_id = %s",
                 (product_id,),
             )
-            cur.execute(
+            _safe_execute(
+                cur,
                 "UPDATE push_snapshots SET product_id = NULL WHERE product_id = %s",
                 (product_id,),
             )
-            cur.execute(
+            _safe_execute(
+                cur,
                 "UPDATE issue_escalation_state SET product_id = NULL WHERE product_id = %s",
                 (product_id,),
             )
-            cur.execute(
+            _safe_execute(
+                cur,
                 "UPDATE upload_jobs SET product_ref_id = NULL WHERE product_ref_id = %s",
                 (product_id,),
             )
