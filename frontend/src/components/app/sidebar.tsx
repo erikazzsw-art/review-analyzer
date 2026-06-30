@@ -13,7 +13,7 @@ import { FeedbackTrigger } from "@/components/feedback/FeedbackWidget";
 import { SidebarQuotaEntry } from "@/components/quota/sidebar-quota-entry";
 import { SidebarUserMenu } from "@/components/app/sidebar-user-menu";
 
-type MeData = { username: string; plan: string };
+type MeData = { username: string; plan: string; is_admin: boolean };
 
 function useMe(): MeData | null {
   const [me, setMe] = useState<MeData | null>(null);
@@ -34,6 +34,8 @@ export function Sidebar({ currentPath }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslations("sidebar");
   const me = useMe();
+
+  const isAdmin = me?.is_admin ?? false;
 
   const navGroups = [
     {
@@ -64,11 +66,15 @@ export function Sidebar({ currentPath }: SidebarProps) {
       title: t("groupManage"),
       items: [
         { href: "/products", label: t("products") },
-        { href: "/settings/golden-set", label: t("goldenSet") },
+        { href: "/settings/golden-set", label: t("goldenSet"), adminOnly: true },
         { href: "/settings/push", label: t("pushSettings") },
+        { href: "/settings/observability", label: t("observability"), adminOnly: true },
       ],
     },
-  ];
+  ].map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin),
+  }));
 
   const navContent = (
     <div className="flex h-full flex-col">

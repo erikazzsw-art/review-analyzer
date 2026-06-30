@@ -53,6 +53,7 @@ class UserPayload(BaseModel):
     username: str
     email: str = ""
     plan: str = "free"
+    is_admin: bool = False
 
 
 class AuthResponse(BaseModel):

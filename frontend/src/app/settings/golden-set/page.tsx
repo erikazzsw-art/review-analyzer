@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,14 +44,30 @@ type Summary = {
 };
 
 export default function GoldenSetPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<AccuracyStat[]>([]);
   const [entries, setEntries] = useState<GoldenEntry[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<string | null>(null);
   const [filterAspect, setFilterAspect] = useState<string | null>(null);
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/me", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.is_admin) {
+          setAuthorized(true);
+        } else {
+          router.replace("/workspace");
+        }
+      })
+      .catch(() => router.replace("/workspace"));
+  }, [router]);
 
   const fetchData = useCallback(async () => {
+    if (!authorized) return;
     const [statsRes, entriesRes, summaryRes] = await Promise.all([
       fetch("/api/golden-set/stats", { credentials: "include" }),
       fetch(
@@ -62,7 +79,7 @@ export default function GoldenSetPage() {
     if (statsRes.ok) setStats(await statsRes.json());
     if (entriesRes.ok) setEntries(await entriesRes.json());
     if (summaryRes.ok) setSummary(await summaryRes.json());
-  }, [filterAspect]);
+  }, [filterAspect, authorized]);
 
   useEffect(() => {
     fetchData();
@@ -105,6 +122,8 @@ export default function GoldenSetPage() {
       prev.map((e) => (e.id === id ? { ...e, use_as_fewshot: !current } : e))
     );
   };
+
+  if (!authorized) return null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
