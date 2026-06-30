@@ -828,18 +828,19 @@ def enqueue_upload_job_task(user_id: int, job_id: int) -> str:
 
 
 def process_asin_fetch_job(user_id: int, job_id: int) -> None:
-    """Worker 任务：通过 Rainforest API 拉取评论 → 存储 → 触发分析。
+    """Worker 任务：拉取 Amazon 评论 → 存储 → 触发分析。
 
+    评论数据源：woot.com（免费，~50条/ASIN）。
+    产品信息/变体：仍通过 Rainforest API 获取。
     支持多变体模式：fetch_all_variants=True 时自动发现并抓取所有变体评论。
-    无论是否勾选变体，都会保存产品信息到产品管理模块。
     """
     import asyncio
 
     from backend_api.app.services.rainforest import (
         RainforestError,
         fetch_product_variants,
-        fetch_reviews_by_asin,
     )
+    from backend_api.app.services.review_scraper import fetch_reviews
 
     MAX_VARIANTS = 20
 
@@ -851,7 +852,6 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
         payload = job.get("payload_json") or {}
         asin = payload.get("asin", "")
         marketplace = payload.get("marketplace", "us")
-        max_pages = payload.get("max_pages", 5)
         fetch_all_variants = payload.get("fetch_all_variants", False)
 
         update_upload_job(user_id, job_id, {"status": "fetching"})
@@ -899,7 +899,7 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             else:
                 target_asins = [asin]
 
-            # Step 5: 逐个抓取评论
+            # Step 5: 逐个抓取评论（via woot.com）
             all_reviews: list[dict[str, Any]] = []
             for idx, target_asin in enumerate(target_asins, 1):
                 update_upload_job(user_id, job_id, {
@@ -908,9 +908,9 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
                 })
                 try:
                     reviews = loop.run_until_complete(
-                        fetch_reviews_by_asin(target_asin, marketplace=marketplace, max_pages=max_pages)
+                        fetch_reviews(target_asin, marketplace=marketplace)
                     )
-                except RainforestError:
+                except Exception:
                     logger.warning("Failed to fetch reviews for variant %s, skipping", target_asin)
                     continue
 
@@ -928,15 +928,18 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             )
             return
 
-        # 去重（同一 review_id 只保留一条）
-        seen_ids: set[str] = set()
+        # 去重（review_id 或 content[:80]+reviewer 组合）
+        seen_keys: set[str] = set()
         unique_reviews: list[dict[str, Any]] = []
         for r in all_reviews:
             rid = r.get("review_id", "")
-            if rid and rid in seen_ids:
-                continue
             if rid:
-                seen_ids.add(rid)
+                key = rid
+            else:
+                key = f"{r.get('content', '')[:80]}|{r.get('reviewer', '')}"
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
             unique_reviews.append(r)
 
         quota_consume(user_id, "asin_fetch")
