@@ -43,12 +43,19 @@ def render_aspects_block(aspects: list[dict[str, str]]) -> str:
     """把 aspect 列表渲染成 prompt 占位符替换用的多行块.
 
     格式：每行 `- {aspect_key}: {label_zh}`
+    若 aspect 含 boundary_note，追加 `（边界: {boundary_note}）`
     """
-    return "\n".join(f"- {a['key']}: {a['label_zh']}" for a in aspects)
+    lines: list[str] = []
+    for a in aspects:
+        line = f"- {a['key']}: {a['label_zh']}"
+        if a.get("boundary_note"):
+            line += f"（边界: {a['boundary_note']}）"
+        lines.append(line)
+    return "\n".join(lines)
 
 
 @lru_cache(maxsize=256)
-def _load_aspects_from_db(sub_category: str) -> tuple[tuple[str, str], ...]:
+def _load_aspects_from_db(sub_category: str) -> tuple[tuple[str, str, str], ...]:
     """查 category_aspect_taxonomy 表，返回不可变元组（lru_cache 可哈希要求）.
 
     未命中或 DB 异常 → 返回空元组（调用方据此走 fallback）.
@@ -73,7 +80,7 @@ def _load_aspects_from_db(sub_category: str) -> tuple[tuple[str, str], ...]:
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """SELECT aspect_key, label_zh
+                """SELECT aspect_key, label_zh, boundary_note
                    FROM category_aspect_taxonomy
                    WHERE sub_category = %s
                    ORDER BY total_count DESC NULLS LAST, aspect_key""",
@@ -96,7 +103,10 @@ def _load_aspects_from_db(sub_category: str) -> tuple[tuple[str, str], ...]:
         except Exception:
             pass
 
-    return tuple((str(r["aspect_key"]), str(r["label_zh"])) for r in rows)
+    return tuple(
+        (str(r["aspect_key"]), str(r["label_zh"]), str(r.get("boundary_note") or ""))
+        for r in rows
+    )
 
 
 def resolve_aspects(sub_category: str) -> tuple[list[dict[str, str]], bool]:
@@ -104,7 +114,7 @@ def resolve_aspects(sub_category: str) -> tuple[list[dict[str, str]], bool]:
 
     Returns:
         (aspects, is_taxonomy_hit)
-        - aspects: list of {"key": ..., "label_zh": ...}
+        - aspects: list of {"key": ..., "label_zh": ..., "boundary_note": ...}
         - is_taxonomy_hit: True 表示 category_aspect_taxonomy 表命中，
           False 表示走 fallback（base aspect 通用块）
     """
@@ -112,8 +122,12 @@ def resolve_aspects(sub_category: str) -> tuple[list[dict[str, str]], bool]:
     if not rows:
         return get_fallback_aspects(), False
 
-    aspects = [{"key": k, "label_zh": v} for k, v in rows if k != "other"]
-    aspects.append({"key": "other", "label_zh": "其他"})
+    aspects = [
+        {"key": k, "label_zh": v, "boundary_note": bn}
+        for k, v, bn in rows
+        if k != "other"
+    ]
+    aspects.append({"key": "other", "label_zh": "其他", "boundary_note": ""})
     return aspects, True
 
 

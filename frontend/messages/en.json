@@ -122,7 +122,8 @@
     "downloadCenter": "Download Center",
     "systemSettings": "System Settings",
     "logout": "Sign Out",
-    "loggingOut": "Signing out…"
+    "loggingOut": "Signing out…",
+    "goldenSet": "Tag Calibration"
   },
   "quotaPanel": {
     "badge": "USAGE DASHBOARD",
@@ -300,7 +301,7 @@
     "loadError": "Unable to load analysis results",
     "notFound": "No matching analysis record found. It may have been deleted or the session_id is invalid.",
     "loadException": "An error occurred while loading results. Please try again or contact support.",
-    "backHistory": "Back to History",
+    "backHistory": "History",
     "goCompare": "Compare",
     "totalReviews": "Total Reviews",
     "positive": "Positive",
@@ -330,7 +331,6 @@
     "rawReviews": "Raw Reviews",
     "rawReviewsDesc": "Original review text is preserved for tracing conclusions back to evidence.",
     "goCompareDetail": "Compare",
-    "backHistory": "History",
     "noDate": "No date",
     "noSentiment": "Not analyzed",
     "noReviews": "No raw reviews available for this batch.",

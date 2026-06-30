@@ -1,33 +1,47 @@
-"""Calibration Injector — 从 label_calibration 表构建 prompt 注入片段."""
+"""Calibration Injector — 从 golden_set 构建 few-shot prompt 注入片段.
+
+方案B：精选正/负例作为 few-shot 示例注入 aspects_block，取代旧版抽象否定规则。
+"""
 from __future__ import annotations
 
 import logging
 
-from review_analyzer.calibration_store import get_calibrations
+from review_analyzer.golden_set_store import get_fewshot_examples
 
 logger = logging.getLogger(__name__)
 
 
 def build_calibration_block(sub_category: str) -> str:
-    """加载 active 校准样例，构建可追加到 aspects_block 的 prompt 片段.
+    """加载 golden_set 中标记为 few-shot 的示例，构建 prompt 片段.
 
     返回空字符串表示无校准数据（调用方无需注入）。
+    格式：正例展示"这条评论属于X标签"，负例展示"这条评论不属于X标签，应为Y"。
     """
-    calibrations = get_calibrations(sub_category, limit=20)
-    if not calibrations:
+    examples = get_fewshot_examples(sub_category, limit=30)
+    if not examples:
         return ""
 
-    lines: list[str] = ["[标签校准参考 — 以下为人工标注的纠错样例，请避免重复相同错误]"]
-    for cal in calibrations:
-        original = cal["original_tag"]
-        correct = cal.get("correct_tag")
-        note = cal.get("note")
+    lines: list[str] = [
+        "[标签校准参考 — 以下为人工验证的标注示例，请参考判断标签归属]"
+    ]
 
-        if correct:
-            lines.append(f"- 不要将类似内容标记为 {original}，正确标签应为 {correct}")
-        elif note:
-            lines.append(f"- 不要将类似内容标记为 {original}（备注: {note}）")
+    for ex in examples:
+        text_preview = ex["comment_text"][:80]
+        aspect = ex["aspect_key"]
+        if ex["is_correct"]:
+            lines.append(f'- "{text_preview}..." → 正确标签: {aspect}')
         else:
-            lines.append(f"- 不要将类似内容标记为 {original}")
+            correct = ex.get("correct_tag")
+            reason = ex.get("reason", "")
+            if correct:
+                lines.append(
+                    f'- "{text_preview}..." → 不属于 {aspect}，应为 {correct}'
+                )
+            elif reason:
+                lines.append(
+                    f'- "{text_preview}..." → 不属于 {aspect}（{reason}）'
+                )
+            else:
+                lines.append(f'- "{text_preview}..." → 不属于 {aspect}')
 
     return "\n".join(lines)

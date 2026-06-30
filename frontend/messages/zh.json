@@ -122,7 +122,8 @@
     "downloadCenter": "下载中心",
     "systemSettings": "系统设置",
     "logout": "退出登录",
-    "loggingOut": "退出中…"
+    "loggingOut": "退出中…",
+    "goldenSet": "标签校准"
   },
   "quotaPanel": {
     "badge": "用量看板",
@@ -300,7 +301,7 @@
     "loadError": "无法加载分析结果",
     "notFound": "未找到对应的分析记录，可能已被删除或 session_id 无效。",
     "loadException": "加载分析结果时出现异常，请稍后重试或联系支持。",
-    "backHistory": "返回历史记录",
+    "backHistory": "回历史",
     "goCompare": "去对比",
     "totalReviews": "总评论",
     "positive": "好评",
@@ -330,7 +331,6 @@
     "rawReviews": "评论原文",
     "rawReviewsDesc": "结果页保留原始评论明细，便于从结论回到证据。",
     "goCompareDetail": "去看对比",
-    "backHistory": "回历史",
     "noDate": "无日期",
     "noSentiment": "未分析",
     "noReviews": "当前批次没有可展示的评论原文。",
