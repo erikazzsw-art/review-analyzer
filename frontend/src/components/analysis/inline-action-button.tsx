@@ -85,7 +85,7 @@ export function InlineActionButton({
         <Button
           variant="ghost"
           size="sm"
-          className="h-6 gap-1 px-1.5 text-[10px] font-medium text-soft opacity-0 transition group-hover:opacity-100"
+          className="h-6 gap-1 px-1.5 text-[10px] font-medium text-soft"
         >
           <Plus className="h-3 w-3" />
           行动

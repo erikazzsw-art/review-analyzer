@@ -6,6 +6,16 @@ import * as XLSX from "xlsx";
 
 import { Button } from "@/components/ui/button";
 import { exportModuleXlsx, translateModule } from "@/lib/api/browser";
+import { InlineActionButton } from "@/components/analysis/inline-action-button";
+import { DownloadTagButton } from "@/components/analysis/download-tag-button";
+
+type SessionInfo = {
+  product_ref_id?: number | null;
+  product_id: string;
+  version: string;
+  custom_title?: string | null;
+  auto_title?: string | null;
+};
 
 type ModuleCardProps = {
   sessionId: number;
@@ -13,10 +23,12 @@ type ModuleCardProps = {
   moduleData: Record<string, unknown>;
   comments?: Array<Record<string, unknown>>;
   locale?: string;
+  session?: SessionInfo;
+  showAction?: boolean;
   children: ReactNode;
 };
 
-export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale, children }: ModuleCardProps) {
+export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale, session, showAction, children }: ModuleCardProps) {
   const [translatedData, setTranslatedData] = useState<Record<string, unknown> | null>(null);
   const [isTranslated, setIsTranslated] = useState(false);
   const [translating, setTranslating] = useState(false);
@@ -109,7 +121,15 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale,
       {/* Content */}
       <div className="pt-8">
         {isTranslated && translatedData ? (
-          <TranslatedView data={translatedData} moduleKey={moduleKey} />
+          <TranslatedView
+            data={translatedData}
+            moduleKey={moduleKey}
+            sessionId={sessionId}
+            session={session}
+            comments={comments}
+            locale={locale}
+            showAction={showAction}
+          />
         ) : (
           children
         )}
@@ -195,12 +215,54 @@ function buildClientXlsx(
   });
 }
 
-function TranslatedView({ data, moduleKey }: { data: Record<string, unknown>; moduleKey: string }) {
+function TranslatedView({
+  data,
+  moduleKey,
+  sessionId,
+  session,
+  comments,
+  locale,
+  showAction,
+}: {
+  data: Record<string, unknown>;
+  moduleKey: string;
+  sessionId: number;
+  session?: SessionInfo;
+  comments?: Array<Record<string, unknown>>;
+  locale?: string;
+  showAction?: boolean;
+}) {
   const summary = String(data.summary || "");
   const rows = Array.isArray(data.rows) ? data.rows : [];
   const positive = Array.isArray(data.positive) ? data.positive : [];
   const negative = Array.isArray(data.negative) ? data.negative : [];
   const evidence = Array.isArray(data.evidence) ? data.evidence : [];
+
+  function renderRowButtons(tag: string, pct: number, reason: string, tagSource: "highlight_tag" | "issue_tag", canAction: boolean) {
+    return (
+      <div className="mt-2 flex items-center gap-1.5">
+        {comments && (
+          <DownloadTagButton
+            tag={tag}
+            comments={comments}
+            tagSource={tagSource}
+            locale={locale || "zh"}
+          />
+        )}
+        {canAction && session && sessionId > 0 && (
+          <InlineActionButton
+            sessionId={sessionId}
+            productId={session.product_ref_id}
+            sourceProductId={session.product_id}
+            sourceVersion={session.version}
+            tag={tag}
+            pct={pct}
+            reason={reason}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -211,31 +273,43 @@ function TranslatedView({ data, moduleKey }: { data: Record<string, unknown>; mo
           {positive.length > 0 && (
             <div className="space-y-2">
               <div className="text-xs font-semibold text-[#059669]">正向反馈</div>
-              {positive.map((row: Record<string, unknown>, i: number) => (
-                <div key={i} className="rounded-card border border-line bg-white p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-soft">{i + 1}</span>
-                    <span className="text-sm font-semibold text-ink">{String(row.tag || "")}</span>
-                    <span className="text-xs text-soft">{Number(row.pct || 0).toFixed(1)}%</span>
+              {positive.map((row: Record<string, unknown>, i: number) => {
+                const tag = String(row.tag || "");
+                const pct = Number(row.pct || 0);
+                const reason = String(row.reason || "");
+                return (
+                  <div key={i} className="rounded-card border border-line bg-white p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-soft">{i + 1}</span>
+                      <span className="text-sm font-semibold text-ink">{tag}</span>
+                      <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
+                    </div>
+                    {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
+                    {renderRowButtons(tag, pct, reason, "highlight_tag", false)}
                   </div>
-                  {row.reason ? <p className="mt-1 text-xs text-soft italic">{String(row.reason)}</p> : null}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {negative.length > 0 && (
             <div className="space-y-2">
               <div className="text-xs font-semibold text-[#dc2626]">负向反馈</div>
-              {negative.map((row: Record<string, unknown>, i: number) => (
-                <div key={i} className="rounded-card border border-line bg-white p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-soft">{i + 1}</span>
-                    <span className="text-sm font-semibold text-ink">{String(row.tag || "")}</span>
-                    <span className="text-xs text-soft">{Number(row.pct || 0).toFixed(1)}%</span>
+              {negative.map((row: Record<string, unknown>, i: number) => {
+                const tag = String(row.tag || "");
+                const pct = Number(row.pct || 0);
+                const reason = String(row.reason || "");
+                return (
+                  <div key={i} className="rounded-card border border-line bg-white p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-soft">{i + 1}</span>
+                      <span className="text-sm font-semibold text-ink">{tag}</span>
+                      <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
+                    </div>
+                    {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
+                    {renderRowButtons(tag, pct, reason, "issue_tag", !!showAction)}
                   </div>
-                  {row.reason ? <p className="mt-1 text-xs text-soft italic">{String(row.reason)}</p> : null}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -243,21 +317,30 @@ function TranslatedView({ data, moduleKey }: { data: Record<string, unknown>; mo
 
       {rows.length > 0 && moduleKey !== "user_experience" && (
         <div className="space-y-2">
-          {rows.map((row: Record<string, unknown>, i: number) => (
-            <div key={i} className="rounded-card border border-line bg-[#faf8fb] px-4 py-3">
-              <div className="flex items-center gap-2">
-                {(row.tag || row.label) ? (
-                  <span className="text-sm font-semibold text-ink">{String(row.tag || row.label)}</span>
+          {rows.map((row: Record<string, unknown>, i: number) => {
+            const tag = String(row.tag || row.label || "");
+            const pct = Number(row.pct || 0);
+            const reason = String(row.reason || row.detail || "");
+            const tagSource: "highlight_tag" | "issue_tag" =
+              moduleKey === "unmet_needs" ? "issue_tag" : "highlight_tag";
+            const canAction = moduleKey === "unmet_needs" && !!showAction;
+            return (
+              <div key={i} className="rounded-card border border-line bg-[#faf8fb] px-4 py-3">
+                <div className="flex items-center gap-2">
+                  {tag ? (
+                    <span className="text-sm font-semibold text-ink">{tag}</span>
+                  ) : null}
+                  {row.pct !== undefined && (
+                    <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
+                  )}
+                </div>
+                {(row.reason || row.detail) ? (
+                  <p className="mt-1 text-xs leading-5 text-soft">{reason}</p>
                 ) : null}
-                {row.pct !== undefined && (
-                  <span className="text-xs text-soft">{Number(row.pct || 0).toFixed(1)}%</span>
-                )}
+                {renderRowButtons(tag, pct, reason, tagSource, canAction)}
               </div>
-              {(row.reason || row.detail) ? (
-                <p className="mt-1 text-xs leading-5 text-soft">{String(row.reason || row.detail)}</p>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
