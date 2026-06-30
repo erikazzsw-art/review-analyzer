@@ -111,7 +111,7 @@ async def _fetch_via_apify(
                 params={"token": token},
                 json=payload,
             )
-            if resp.status_code != 200:
+            if resp.status_code not in (200, 201):
                 logger.warning(
                     "Apify Actor returned %d for item %s: %s",
                     resp.status_code, item_id, resp.text[:200],
