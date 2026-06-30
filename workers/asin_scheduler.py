@@ -44,7 +44,7 @@ def process_watchlist_fetch(user_id: int, item_id: int) -> None:
         mark_fetch_error,
         mark_fetch_result,
     )
-    from backend_api.app.services.rainforest import RainforestError, fetch_reviews_by_asin
+    from backend_api.app.services.review_scraper import ReviewScraperError, fetch_reviews
 
     try:
         item = get_watchlist_item_by_id(item_id)
@@ -58,7 +58,7 @@ def process_watchlist_fetch(user_id: int, item_id: int) -> None:
         loop = asyncio.new_event_loop()
         try:
             reviews = loop.run_until_complete(
-                fetch_reviews_by_asin(asin, marketplace=marketplace, max_pages=5)
+                fetch_reviews(asin, platform="amazon", marketplace=marketplace)
             )
         finally:
             loop.close()
@@ -93,8 +93,8 @@ def process_watchlist_fetch(user_id: int, item_id: int) -> None:
             item_id, asin, new_count, total_count,
         )
 
-    except RainforestError as exc:
-        mark_fetch_error(item_id, f"Rainforest API: {exc}")
+    except ReviewScraperError as exc:
+        mark_fetch_error(item_id, f"Scraper error: {exc}")
         _notify_fetch_error(user_id, item, str(exc))
         logger.error("watchlist fetch failed: item=%d err=%s", item_id, exc)
     except Exception as exc:
