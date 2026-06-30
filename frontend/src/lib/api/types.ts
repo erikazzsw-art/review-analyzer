@@ -113,6 +113,7 @@ export type ProductOverview = {
   variants: ProductVariant[];
   versions: ProductVersion[];
   session_versions: string[];
+  version_date_ranges: Record<string, { earliest: string | null; latest: string | null }>;
   session_count: number;
   pending_review_count: number;
   latest_session_label: string | null;

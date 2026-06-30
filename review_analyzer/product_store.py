@@ -573,6 +573,7 @@ def get_product_overview_rows(user_id: int) -> list[dict[str, Any]]:
         variants = variants_by_product.get(product_pid, []) if product_pid is not None else []
         versions = versions_by_product.get(product_pid, []) if product_pid is not None else []
         stats = _build_comment_stats(comments)
+        version_date_ranges = _build_version_date_ranges(comments)
 
         current_version = (
             str(product_row.get("current_version"))
@@ -624,6 +625,7 @@ def get_product_overview_rows(user_id: int) -> list[dict[str, Any]]:
                 "variants": variants,
                 "versions": versions,
                 "session_versions": session_versions_by_parent.get(parent_id, []),
+                "version_date_ranges": version_date_ranges,
                 "session_count": len(related_sessions),
                 "pending_review_count": pending_by_product.get(product_pid, 0) if product_pid is not None else 0,
                 "latest_session_label": _build_session_label(latest_session),
@@ -649,6 +651,24 @@ def _build_session_map(sessions: list[dict[str, Any]]) -> dict[str, list[dict[st
             continue
         session_map.setdefault(product_id, []).append(session)
     return session_map
+
+
+def _build_version_date_ranges(comments: list[dict[str, Any]]) -> dict[str, dict[str, str | None]]:
+    version_dates: dict[str, list[str]] = {}
+    for comment in comments:
+        version = str(comment.get("version") or "").strip()
+        if not version:
+            continue
+        date_str = str(comment.get("date") or "").strip()
+        if date_str:
+            version_dates.setdefault(version, []).append(date_str)
+    result: dict[str, dict[str, str | None]] = {}
+    for version, dates in version_dates.items():
+        result[version] = {
+            "earliest": min(dates) if dates else None,
+            "latest": max(dates) if dates else None,
+        }
+    return result
 
 
 def _build_comment_stats(comments: list[dict[str, Any]]) -> dict[str, Any]:

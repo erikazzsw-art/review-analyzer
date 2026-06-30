@@ -193,11 +193,43 @@ export function CompareFilterBar({
     return map;
   }, [products]);
 
-  function anchorFor(productId: string): string | null {
+  const versionAnchorMap = useMemo(() => {
+    const map = new Map<string, string | null>();
+    products.forEach((product) => {
+      const ranges = product.version_date_ranges ?? {};
+      Object.entries(ranges).forEach(([version, range]) => {
+        map.set(`${product.parent_product_id}::${version}`, range.latest ?? null);
+      });
+    });
+    return map;
+  }, [products]);
+
+  const versionRangeMap = useMemo(() => {
+    const map = new Map<string, { earliest: string | null; latest: string | null }>();
+    products.forEach((product) => {
+      const ranges = product.version_date_ranges ?? {};
+      Object.entries(ranges).forEach(([version, range]) => {
+        map.set(`${product.parent_product_id}::${version}`, range);
+      });
+    });
+    return map;
+  }, [products]);
+
+  function anchorFor(productId: string, version?: string): string | null {
+    if (version) {
+      const versionAnchor = versionAnchorMap.get(`${productId}::${version}`);
+      if (versionAnchor) return versionAnchor;
+    }
     return productAnchorMap.get(productId) ?? null;
   }
 
-  function rangeLabelFor(productId: string): string | null {
+  function rangeLabelFor(productId: string, version?: string): string | null {
+    if (version) {
+      const vRange = versionRangeMap.get(`${productId}::${version}`);
+      if (vRange && (vRange.earliest || vRange.latest)) {
+        return `评论日期范围 ${vRange.earliest || "…"} ~ ${vRange.latest || "…"}`;
+      }
+    }
     const range = productRangeMap.get(productId);
     if (!range || (!range.earliest && !range.latest)) return null;
     return `评论日期范围 ${range.earliest || "…"} ~ ${range.latest || "…"}`;
@@ -301,7 +333,7 @@ export function CompareFilterBar({
     setRows((prev) =>
       prev.map((row, idx) => {
         if (idx !== index) return row;
-        const anchor = anchorFor(row.productId);
+        const anchor = anchorFor(row.productId, row.version || undefined);
         return {
           ...row,
           windowPreset: target.value,
@@ -424,7 +456,7 @@ export function CompareFilterBar({
         <div className="mt-4 space-y-3">
           {rows.map((row, index) => {
             const versionOptions = row.productId ? productVersionsMap.get(row.productId) ?? [] : [];
-            const rangeLabel = row.productId ? rangeLabelFor(row.productId) : null;
+            const rangeLabel = row.productId ? rangeLabelFor(row.productId, row.version || undefined) : null;
             return (
               <div
                 key={`row-${index}`}
@@ -453,7 +485,20 @@ export function CompareFilterBar({
                     <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">版本</div>
                     <select
                       value={row.version}
-                      onChange={(event) => updateRow(index, { version: event.target.value })}
+                      onChange={(event) => {
+                        const newVersion = event.target.value;
+                        const preset = PRESET_WINDOWS.find((p) => p.value === row.windowPreset);
+                        if (preset && preset.days > 0) {
+                          const anchor = anchorFor(row.productId, newVersion || undefined);
+                          updateRow(index, {
+                            version: newVersion,
+                            dateStart: isoDaysAgo(preset.days, anchor),
+                            dateEnd: todayIso(anchor),
+                          });
+                        } else {
+                          updateRow(index, { version: newVersion });
+                        }
+                      }}
                       className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
                       disabled={!row.productId}
                     >
@@ -539,7 +584,7 @@ export function CompareFilterBar({
                   : ""
               }`
             : mode === "same_product_version"
-              ? "同一产品 · 不同版本对比（时间窗口共用）"
+              ? "同一产品 · 不同版本对比（各版本独立时间窗口）"
               : `${rows.length} 个对比对象（最多 5 个）`}
         </div>
         <div className="flex gap-2">

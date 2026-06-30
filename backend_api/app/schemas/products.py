@@ -64,6 +64,7 @@ class ProductOverviewPayload(BaseModel):
     variants: list[ProductVariantPayload]
     versions: list[ProductVersionPayload]
     session_versions: list[str] = []
+    version_date_ranges: dict[str, dict[str, str | None]] = {}
     session_count: int
     pending_review_count: int
     latest_session_label: str | None = None
