@@ -12,13 +12,11 @@ import {
 import { track } from "@/lib/analytics";
 import type { AsinWatchlistItem, AsinWatchlistResponse } from "@/lib/api/types";
 
-const MARKETPLACES = [
+const AMAZON_MARKETPLACES = [
   { value: "us", label: "US" },
   { value: "uk", label: "UK" },
-  { value: "de", label: "DE" },
-  { value: "jp", label: "JP" },
-  { value: "fr", label: "FR" },
   { value: "ca", label: "CA" },
+  { value: "au", label: "AU" },
 ] as const;
 
 const FREQUENCIES = [
@@ -29,8 +27,7 @@ const FREQUENCIES = [
 
 function statusBadge(status: AsinWatchlistItem["status"]) {
   if (status === "active") return "bg-[#e8f8f0] text-[#3d8b74]";
-  if (status === "paused") return "bg-[#f5f5f5] text-[#888]";
-  return "bg-[#fdeaea] text-[#c45863]";
+  return "bg-[#f5f5f5] text-[#888]";
 }
 
 function relativeTime(dateStr: string | null): string {
@@ -43,13 +40,12 @@ function relativeTime(dateStr: string | null): string {
   return `${Math.floor(hours / 24)} 天前`;
 }
 
-/* --- PLACEHOLDER_COMPONENT_BODY --- */
-
 export function AsinWatchlistPanel() {
   const [data, setData] = useState<AsinWatchlistResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [addInput, setAddInput] = useState("");
+  const [addPlatform, setAddPlatform] = useState<"amazon" | "aliexpress">("amazon");
   const [addMarketplace, setAddMarketplace] = useState("us");
   const [addFrequency, setAddFrequency] = useState<"daily" | "weekly" | "manual">("daily");
   const [submitting, setSubmitting] = useState(false);
@@ -71,14 +67,24 @@ export function AsinWatchlistPanel() {
     loadData();
   }, [loadData]);
 
-  async function handleAdd() {
-    const asins = addInput
-      .split(/[\n,;]/)
-      .map((s) => s.trim().toUpperCase())
-      .filter((s) => s.length === 10);
+  function validateInput(): string[] {
+    const raw = addInput.split(/[\n,;]/).map((s) => s.trim()).filter(Boolean);
+    if (addPlatform === "amazon") {
+      return raw
+        .map((s) => s.toUpperCase())
+        .filter((s) => s.length === 10 && /^[A-Z0-9]{10}$/.test(s));
+    }
+    return raw.filter((s) => /^\d{8,15}$/.test(s));
+  }
 
-    if (asins.length === 0) {
-      setError("请输入有效的 ASIN（10 位字母数字）");
+  async function handleAdd() {
+    const productIds = validateInput();
+    if (productIds.length === 0) {
+      setError(
+        addPlatform === "amazon"
+          ? "请输入有效的 ASIN（10 位字母数字）"
+          : "请输入有效的商品 ID（8-15 位数字）"
+      );
       return;
     }
 
@@ -86,11 +92,12 @@ export function AsinWatchlistPanel() {
     setError("");
     try {
       await addAsinWatchlist({
-        asins,
-        marketplace: addMarketplace,
+        platform: addPlatform,
+        product_ids: productIds,
+        marketplace: addPlatform === "amazon" ? addMarketplace : "global",
         fetch_frequency: addFrequency,
       });
-      track("asin_watchlist_add", { count: asins.length });
+      track("asin_watchlist_add", { count: productIds.length, platform: addPlatform });
       setAddInput("");
       await loadData();
     } catch (err) {
@@ -148,13 +155,38 @@ export function AsinWatchlistPanel() {
     return <div className="py-8 text-center text-sm text-soft">加载中...</div>;
   }
 
-/* --- PLACEHOLDER_JSX --- */
-
   return (
     <div className="space-y-6">
-      {/* Add ASIN form */}
+      {/* Add form */}
       <div className="rounded-card border border-line bg-white p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-ink">添加 ASIN 到监控</h3>
+        <h3 className="text-sm font-semibold text-ink">添加商品到定时抓取</h3>
+
+        {/* Platform selector */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setAddPlatform("amazon")}
+            className={`rounded-pill px-4 py-1.5 text-sm font-medium transition ${
+              addPlatform === "amazon"
+                ? "bg-ink text-white"
+                : "bg-[#f5f5f5] text-soft hover:bg-[#eee]"
+            }`}
+          >
+            Amazon
+          </button>
+          <button
+            type="button"
+            onClick={() => setAddPlatform("aliexpress")}
+            className={`rounded-pill px-4 py-1.5 text-sm font-medium transition ${
+              addPlatform === "aliexpress"
+                ? "bg-ink text-white"
+                : "bg-[#f5f5f5] text-soft hover:bg-[#eee]"
+            }`}
+          >
+            AliExpress
+          </button>
+        </div>
+
         <div className="grid gap-3 md:grid-cols-4">
           <div className="md:col-span-2">
             <textarea
@@ -162,19 +194,25 @@ export function AsinWatchlistPanel() {
               onChange={(e) => setAddInput(e.target.value)}
               rows={2}
               className="w-full rounded-card border border-line bg-white px-3 py-2 text-sm font-mono outline-none transition focus:border-[#f36f8f] resize-none"
-              placeholder="输入 ASIN，多个用逗号或换行分隔"
+              placeholder={
+                addPlatform === "amazon"
+                  ? "输入 ASIN，多个用逗号或换行分隔"
+                  : "输入商品 ID，多个用逗号或换行分隔"
+              }
             />
           </div>
           <div className="space-y-2">
-            <select
-              value={addMarketplace}
-              onChange={(e) => setAddMarketplace(e.target.value)}
-              className="w-full rounded-card border border-line bg-white px-3 py-2 text-sm"
-            >
-              {MARKETPLACES.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
+            {addPlatform === "amazon" && (
+              <select
+                value={addMarketplace}
+                onChange={(e) => setAddMarketplace(e.target.value)}
+                className="w-full rounded-card border border-line bg-white px-3 py-2 text-sm"
+              >
+                {AMAZON_MARKETPLACES.map((m) => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            )}
             <select
               value={addFrequency}
               onChange={(e) => setAddFrequency(e.target.value as typeof addFrequency)}
@@ -192,13 +230,13 @@ export function AsinWatchlistPanel() {
               disabled={submitting || !addInput.trim()}
               className="w-full rounded-pill bg-ink px-4 py-2 text-sm font-semibold text-white shadow-card transition disabled:opacity-60"
             >
-              {submitting ? "添加中..." : "添加监控"}
+              {submitting ? "添加中..." : "添加抓取"}
             </button>
           </div>
         </div>
         {data && (
           <p className="text-xs text-soft">
-            配额：{data.quota_used} / {data.quota_limit} ASIN
+            配额：{data.quota_used} / {data.quota_limit} 商品
           </p>
         )}
       </div>
@@ -215,7 +253,8 @@ export function AsinWatchlistPanel() {
           <table className="w-full text-sm">
             <thead className="bg-[#fafafa] border-b border-line">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-ink">ASIN</th>
+                <th className="px-4 py-3 text-left font-semibold text-ink">平台</th>
+                <th className="px-4 py-3 text-left font-semibold text-ink">产品编码</th>
                 <th className="px-4 py-3 text-left font-semibold text-ink">产品名</th>
                 <th className="px-4 py-3 text-center font-semibold text-ink">站点</th>
                 <th className="px-4 py-3 text-center font-semibold text-ink">频率</th>
@@ -228,11 +267,22 @@ export function AsinWatchlistPanel() {
             <tbody className="divide-y divide-line">
               {data.items.map((item) => (
                 <tr key={item.id} className="hover:bg-[#fafafa] transition">
+                  <td className="px-4 py-3 text-xs">
+                    <span className={`rounded-pill px-2 py-0.5 font-medium ${
+                      item.platform === "amazon"
+                        ? "bg-[#fff4e5] text-[#b87333]"
+                        : "bg-[#ffe8e8] text-[#c45050]"
+                    }`}>
+                      {item.platform === "amazon" ? "Amazon" : "AliExpress"}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 font-mono text-xs">{item.asin}</td>
                   <td className="px-4 py-3 text-soft max-w-[160px] truncate">
                     {item.product_name || "—"}
                   </td>
-                  <td className="px-4 py-3 text-center uppercase">{item.marketplace}</td>
+                  <td className="px-4 py-3 text-center uppercase text-xs">
+                    {item.marketplace === "global" ? "—" : item.marketplace}
+                  </td>
                   <td className="px-4 py-3 text-center">
                     <select
                       value={item.fetch_frequency}
@@ -246,8 +296,11 @@ export function AsinWatchlistPanel() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`rounded-pill px-2 py-0.5 text-xs font-bold ${statusBadge(item.status)}`}>
-                      {item.status === "active" ? "监控中" : item.status === "paused" ? "暂停" : "异常"}
+                      {item.status === "active" ? "抓取中" : "暂停"}
                     </span>
+                    {item.hint_message && (
+                      <p className="text-[10px] text-[#b08d57] mt-0.5">{item.hint_message}</p>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-center text-xs text-soft">
                     {relativeTime(item.last_fetched_at)}
@@ -293,21 +346,7 @@ export function AsinWatchlistPanel() {
 
       {data && data.items.length === 0 && (
         <div className="py-8 text-center text-sm text-soft">
-          暂无监控的 ASIN，添加后系统将按设定频率自动拉取评论并分析
-        </div>
-      )}
-
-      {/* Error items detail */}
-      {data && data.items.some((i) => i.status === "error" && i.error_message) && (
-        <div className="rounded-card border border-[#f5c6cb] bg-[#fff9f9] p-4 space-y-2">
-          <h4 className="text-sm font-semibold text-[#b44655]">异常项</h4>
-          {data.items
-            .filter((i) => i.status === "error" && i.error_message)
-            .map((i) => (
-              <p key={i.id} className="text-xs text-[#b44655]">
-                {i.asin}：{i.error_message}
-              </p>
-            ))}
+          暂无定时抓取项，添加后系统将按设定频率自动拉取评论并分析
         </div>
       )}
     </div>

@@ -762,6 +762,7 @@ export type FeedbackResponse = {
 
 export type AsinWatchlistItem = {
   id: number;
+  platform: "amazon" | "aliexpress";
   asin: string;
   marketplace: string;
   product_name: string | null;
@@ -770,8 +771,8 @@ export type AsinWatchlistItem = {
   last_fetched_at: string | null;
   last_review_count: number;
   new_review_count: number;
-  status: "active" | "paused" | "error";
-  error_message: string | null;
+  status: "active" | "paused";
+  hint_message: string | null;
   created_at: string;
 };
 
@@ -783,7 +784,8 @@ export type AsinWatchlistResponse = {
 };
 
 export type AsinWatchlistCreatePayload = {
-  asins: string[];
+  platform: "amazon" | "aliexpress";
+  product_ids: string[];
   marketplace: string;
   fetch_frequency: "daily" | "weekly" | "manual";
 };

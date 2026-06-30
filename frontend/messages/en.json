@@ -208,7 +208,7 @@
     "importDesc": "Upload a file or enter a product code to auto-fetch reviews.",
     "modeFile": "File Upload",
     "modeAsin": "Product Code Fetch",
-    "modeWatchlist": "ASIN Watch",
+    "modeWatchlist": "Auto-Fetch",
     "productId": "Product ID",
     "productIdPlaceholder": "e.g. SKU-1001",
     "productName": "Product Name",

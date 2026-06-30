@@ -208,7 +208,7 @@
     "importDesc": "选择文件上传或输入产品编码自动拉取评论。",
     "modeFile": "文件上传",
     "modeAsin": "产品编码抓取",
-    "modeWatchlist": "ASIN 监控",
+    "modeWatchlist": "定时自动抓取",
     "productId": "产品编号",
     "productIdPlaceholder": "例如：SKU-1001",
     "productName": "产品名称",

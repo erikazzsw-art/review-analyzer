@@ -1,4 +1,4 @@
-"""ASIN 监控列表 CRUD 路由。"""
+"""定时自动抓取评论 — CRUD 路由。"""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -23,12 +23,52 @@ def _get_watchlist_db():
     return asin_watchlist_store
 
 
+def _compute_hint(item: dict) -> str | None:
+    """根据内部状态生成用户可见的优化提示。"""
+    consecutive_empty = item.get("consecutive_empty", 0)
+    retry_count = item.get("retry_count", 0)
+
+    if consecutive_empty >= 3 and item.get("fetch_frequency") == "weekly":
+        return "连续多次无新评论，已自动降频为每周"
+    if retry_count >= 3:
+        return "抓取暂时受阻，系统将自动重试"
+    if retry_count >= 1:
+        return "上次抓取未成功，系统将自动重试"
+    if item.get("new_review_count", 0) == 0 and item.get("last_fetched_at"):
+        if consecutive_empty >= 1:
+            return "上次拉取未获取到新评论"
+    return None
+
+
+def _item_to_response(item: dict) -> AsinWatchlistItem:
+    """将 DB 行转为对外响应，隐藏 error 状态。"""
+    display_status = item.get("status", "active")
+    if display_status == "error":
+        display_status = "active"
+
+    return AsinWatchlistItem(
+        id=item["id"],
+        platform=item.get("platform", "amazon"),
+        asin=item["asin"],
+        marketplace=item["marketplace"],
+        product_name=item.get("product_name"),
+        product_id=item.get("product_id"),
+        fetch_frequency=item["fetch_frequency"],
+        last_fetched_at=item.get("last_fetched_at"),
+        last_review_count=item.get("last_review_count", 0),
+        new_review_count=item.get("new_review_count", 0),
+        status=display_status,
+        hint_message=_compute_hint(item),
+        created_at=item["created_at"],
+    )
+
+
 @router.post("", response_model=list[AsinWatchlistItem], status_code=status.HTTP_201_CREATED)
 def add_asins(
     req: AsinWatchlistCreate,
     current_user: dict = Depends(get_current_user),
 ) -> list[AsinWatchlistItem]:
-    """添加 ASIN 到监控列表（支持批量，最多 20 个/次）。"""
+    """添加产品编码到定时抓取（支持批量，最多 20 个/次）。"""
     user_id = int(current_user["id"])
     store = _get_watchlist_db()
 
@@ -36,26 +76,27 @@ def add_asins(
     plan = current_user.get("plan", "free")
     limit = WATCHLIST_LIMITS.get(plan, 3)
 
-    if current_count + len(req.asins) > limit:
+    if current_count + len(req.product_ids) > limit:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"ASIN 监控上限 {limit} 个（当前 {current_count}），升级套餐解锁更多",
+            detail=f"定时抓取上限 {limit} 个（当前 {current_count}），升级套餐解锁更多",
         )
 
     items = store.add_watchlist_items(
         user_id=user_id,
-        asins=req.asins,
+        product_ids=req.product_ids,
+        platform=req.platform,
         marketplace=req.marketplace,
         fetch_frequency=req.fetch_frequency,
     )
-    return items
+    return [_item_to_response(item) for item in items]
 
 
 @router.get("", response_model=AsinWatchlistResponse)
 def get_watchlist(
     current_user: dict = Depends(get_current_user),
 ) -> AsinWatchlistResponse:
-    """获取当前用户的 ASIN 监控列表。"""
+    """获取当前用户的定时抓取列表。"""
     user_id = int(current_user["id"])
     store = _get_watchlist_db()
     plan = current_user.get("plan", "free")
@@ -63,7 +104,7 @@ def get_watchlist(
 
     items = store.get_watchlist(user_id)
     return AsinWatchlistResponse(
-        items=items,
+        items=[_item_to_response(item) for item in items],
         total=len(items),
         quota_used=len(items),
         quota_limit=limit,
@@ -86,10 +127,10 @@ def update_watchlist_item(
 
     updates = req.model_dump(exclude_none=True)
     if not updates:
-        return AsinWatchlistItem(**item)
+        return _item_to_response(item)
 
     updated = store.update_watchlist_item(user_id, item_id, updates)
-    return AsinWatchlistItem(**updated)
+    return _item_to_response(updated)
 
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -41,8 +41,8 @@ def process_watchlist_fetch(user_id: int, item_id: int) -> None:
 
     from backend_api.app.services.asin_watchlist_store import (
         get_watchlist_item_by_id,
-        mark_fetch_error,
         mark_fetch_result,
+        mark_fetch_retry,
     )
     from backend_api.app.services.review_scraper import ReviewScraperError, fetch_reviews
 
@@ -53,12 +53,13 @@ def process_watchlist_fetch(user_id: int, item_id: int) -> None:
             return
 
         asin = item["asin"]
+        platform = item.get("platform", "amazon")
         marketplace = item["marketplace"]
 
         loop = asyncio.new_event_loop()
         try:
             reviews = loop.run_until_complete(
-                fetch_reviews(asin, platform="amazon", marketplace=marketplace)
+                fetch_reviews(asin, platform=platform, marketplace=marketplace)
             )
         finally:
             loop.close()
@@ -89,16 +90,16 @@ def process_watchlist_fetch(user_id: int, item_id: int) -> None:
             _trigger_analysis(user_id, item, new_reviews)
 
         logger.info(
-            "watchlist fetch done: item=%d asin=%s new=%d total=%d",
-            item_id, asin, new_count, total_count,
+            "watchlist fetch done: item=%d asin=%s platform=%s new=%d total=%d",
+            item_id, asin, platform, new_count, total_count,
         )
 
     except ReviewScraperError as exc:
-        mark_fetch_error(item_id, f"Scraper error: {exc}")
+        mark_fetch_retry(item_id, f"Scraper error: {exc}")
         _notify_fetch_error(user_id, item, str(exc))
         logger.error("watchlist fetch failed: item=%d err=%s", item_id, exc)
     except Exception as exc:
-        mark_fetch_error(item_id, str(exc)[:500])
+        mark_fetch_retry(item_id, str(exc)[:500])
         _notify_fetch_error(user_id, item, str(exc)[:200])
         logger.exception("watchlist fetch error: item=%d", item_id)
         raise
@@ -151,8 +152,14 @@ def _trigger_analysis(user_id: int, item: dict, new_reviews: list[dict]) -> None
     from workers.jobs import process_upload_job
 
     asin = item["asin"]
+    platform = item.get("platform", "amazon")
     marketplace = item["marketplace"]
     product_name = item.get("product_name") or f"ASIN: {asin}"
+
+    if platform == "aliexpress":
+        source_label = "AliExpress"
+    else:
+        source_label = f"Amazon {marketplace.upper()}"
 
     comments_payload = [
         {
@@ -160,7 +167,7 @@ def _trigger_analysis(user_id: int, item: dict, new_reviews: list[dict]) -> None
             "rating": r.get("rating"),
             "date": r.get("date", ""),
             "reviewer": r.get("reviewer", ""),
-            "source": f"Amazon {marketplace.upper()}",
+            "source": source_label,
         }
         for r in new_reviews
     ]
@@ -178,7 +185,7 @@ def _trigger_analysis(user_id: int, item: dict, new_reviews: list[dict]) -> None
                 "marketplace": marketplace,
                 "comments": comments_payload,
                 "product_name": product_name,
-                "platform": f"Amazon {marketplace.upper()}",
+                "platform": source_label,
                 "source_channel": "auto_fetch",
                 "product_id": item.get("product_id"),
             },
@@ -214,7 +221,8 @@ def _notify_fetch_error(user_id: int, item: dict, error_msg: str) -> None:
 
         asin = item.get("asin", "")
         product_name = item.get("product_name") or asin
-        text = f"⚠️ ASIN 监控拉取异常\n产品：{product_name}\nASIN：{asin}\n错误：{error_msg[:100]}"
+        platform = item.get("platform", "amazon")
+        text = f"⚠️ 定时抓取异常\n平台：{platform}\n产品：{product_name}\n编码：{asin}\n错误：{error_msg[:100]}"
 
         import requests
         body = {"msg_type": "text", "content": {"text": text}}
