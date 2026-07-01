@@ -26,15 +26,16 @@ const workflowPurposeKeys = [
   "purposeVersion",
 ] as const;
 
+const PLATFORMS = ["Amazon", "AliExpress", "eBay", "Shopee", "Walmart"] as const;
+
 type FormState = {
   productId: string;
   productName: string;
   platform: string;
+  parentCategory: string;
   category: string;
   version: string;
   workflowPurpose: string;
-  dateStart: string;
-  dateEnd: string;
   versionNotes: string;
 };
 
@@ -83,11 +84,10 @@ export function UploadForm() {
     productId: "",
     productName: "",
     platform: "Amazon",
-    category: "家具家居",
+    parentCategory: "",
+    category: "",
     version: "V1",
     workflowPurpose: "purposeDaily",
-    dateStart: "",
-    dateEnd: "",
     versionNotes: "",
   });
 
@@ -97,11 +97,20 @@ export function UploadForm() {
       .then((data) => {
         if (!cancelled) {
           setTaxonomy(data);
+          const firstGroup = data.supported_categories[0];
+          if (firstGroup) {
+            const sorted = [...firstGroup.sub_categories].sort((a, b) =>
+              a.localeCompare(b, "zh-Hans"),
+            );
+            setForm((prev) => ({
+              ...prev,
+              parentCategory: firstGroup.category_key,
+              category: sorted[0] ?? "",
+            }));
+          }
         }
       })
-      .catch(() => {
-        // taxonomy 拉取失败不阻断上传流程，前端仅退回到无提示状态
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -122,6 +131,15 @@ export function UploadForm() {
     }
     return m;
   }, [taxonomy]);
+
+  const filteredSubCategories = useMemo(() => {
+    if (!taxonomy || !form.parentCategory) return [];
+    const group = taxonomy.supported_categories.find(
+      (g) => g.category_key === form.parentCategory,
+    );
+    if (!group) return [];
+    return [...group.sub_categories].sort((a, b) => a.localeCompare(b, "zh-Hans"));
+  }, [taxonomy, form.parentCategory]);
 
   const categoryHit = useMemo(() => {
     const trimmed = form.category.trim();
@@ -164,8 +182,8 @@ export function UploadForm() {
         productName: form.productName.trim(),
         platform: form.platform.trim(),
         category: form.category.trim(),
-        dateStart: form.dateStart.trim(),
-        dateEnd: form.dateEnd.trim(),
+        dateStart: "",
+        dateEnd: "",
         versionNotes: form.versionNotes.trim(),
       });
       setJob(response.job);
@@ -262,34 +280,69 @@ export function UploadForm() {
           </label>
           <label className="space-y-2">
             <span className="text-sm font-semibold text-ink">{t("platform")}</span>
-            <input
+            <select
               value={form.platform}
               onChange={(event) =>
                 setForm((current) => ({ ...current, platform: event.target.value }))
               }
               className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-            />
+            >
+              {PLATFORMS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="space-y-2">
             <span className="text-sm font-semibold text-ink">
-              {t("category")}
+              {t("parentCategory")}
             </span>
-            <input
+            <select
+              value={form.parentCategory}
+              onChange={(event) => {
+                const key = event.target.value;
+                const group = taxonomy?.supported_categories.find(
+                  (g) => g.category_key === key,
+                );
+                const sorted = group
+                  ? [...group.sub_categories].sort((a, b) => a.localeCompare(b, "zh-Hans"))
+                  : [];
+                setForm((current) => ({
+                  ...current,
+                  parentCategory: key,
+                  category: sorted[0] ?? "",
+                }));
+              }}
+              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+            >
+              {!taxonomy && (
+                <option value="">{t("categoryLoading")}</option>
+              )}
+              {taxonomy?.supported_categories.map((g) => (
+                <option key={g.category_key} value={g.category_key}>
+                  {g.category_label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-ink">
+              {t("subCategory")}
+            </span>
+            <select
               value={form.category}
               onChange={(event) =>
                 setForm((current) => ({ ...current, category: event.target.value }))
               }
-              list="taxonomy-sub-categories"
               className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-              placeholder={t("categoryPlaceholder")}
-            />
-            {taxonomy && (
-              <datalist id="taxonomy-sub-categories">
-                {Array.from(supportedSubCategories.keys()).map((sub) => (
-                  <option key={sub} value={sub} />
-                ))}
-              </datalist>
-            )}
+            >
+              {filteredSubCategories.map((sub) => (
+                <option key={sub} value={sub}>
+                  {sub}
+                </option>
+              ))}
+            </select>
             {taxonomy && form.category.trim().length > 0 && (
               <CategoryHitBanner
                 categoryValue={form.category.trim()}
@@ -328,28 +381,6 @@ export function UploadForm() {
                 </option>
               ))}
             </select>
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-ink">{t("dateStart")}</span>
-            <input
-              type="date"
-              value={form.dateStart}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, dateStart: event.target.value }))
-              }
-              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-            />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-ink">{t("dateEnd")}</span>
-            <input
-              type="date"
-              value={form.dateEnd}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, dateEnd: event.target.value }))
-              }
-              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-            />
           </label>
         </div>
 
