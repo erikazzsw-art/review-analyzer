@@ -161,7 +161,7 @@ export async function fetchUploadJob(jobId: number): Promise<UploadJobResponse> 
 
 export async function fetchByAsin(params: {
   asin: string;
-  platform?: "amazon" | "aliexpress";
+  platform?: "amazon" | "aliexpress" | "shopee" | "ebay" | "walmart";
   marketplace: string;
   productName?: string;
   maxPages?: number;

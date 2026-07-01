@@ -9,9 +9,12 @@ const PLATFORM_TABS = [
   { value: "all", label: "全部" },
   { value: "amazon", label: "Amazon" },
   { value: "aliexpress", label: "AliExpress" },
+  { value: "shopee", label: "Shopee" },
+  { value: "ebay", label: "eBay" },
+  { value: "walmart", label: "Walmart" },
 ] as const;
 
-type PlatformFilter = "all" | "amazon" | "aliexpress";
+type PlatformFilter = "all" | "amazon" | "aliexpress" | "shopee" | "ebay" | "walmart";
 
 const lifecycleLabels: Record<string, string> = {
   research: "调研期",
@@ -21,10 +24,13 @@ const lifecycleLabels: Record<string, string> = {
   decline: "衰退期",
 };
 
-function normalizePlatform(platform: string | null): "amazon" | "aliexpress" | "other" {
+function normalizePlatform(platform: string | null): "amazon" | "aliexpress" | "shopee" | "ebay" | "walmart" | "other" {
   if (!platform) return "other";
   const lower = platform.toLowerCase();
   if (lower.includes("aliexpress")) return "aliexpress";
+  if (lower.includes("shopee")) return "shopee";
+  if (lower.includes("ebay")) return "ebay";
+  if (lower.includes("walmart")) return "walmart";
   if (lower.includes("amazon")) return "amazon";
   return "other";
 }
@@ -33,6 +39,9 @@ function getPlatformBadge(platform: string | null) {
   const norm = normalizePlatform(platform);
   if (norm === "amazon") return { label: "Amazon", color: "bg-orange-50 text-orange-700 border-orange-200" };
   if (norm === "aliexpress") return { label: "AliExpress", color: "bg-red-50 text-red-700 border-red-200" };
+  if (norm === "shopee") return { label: "Shopee", color: "bg-green-50 text-green-700 border-green-200" };
+  if (norm === "ebay") return { label: "eBay", color: "bg-blue-50 text-blue-700 border-blue-200" };
+  if (norm === "walmart") return { label: "Walmart", color: "bg-sky-50 text-sky-700 border-sky-200" };
   return null;
 }
 
