@@ -25,6 +25,81 @@
 
 ---
 
+## 2026-07-01
+
+### eBay + Walmart 评论抓取接入
+
+- **工作量**: M
+- **状态**: 已完成
+
+**需求描述**：
+新增 eBay 和 Walmart 平台评论抓取能力，通过 Apify 按量付费 Actor 实现，与 AliExpress 共用同一个 APIFY_API_TOKEN。先用 $5 免费积分跑通流程，后期有付费用户后再充值。
+
+**实现要点**：
+1. eBay: Apify `scrapier/ebay-review-scraper`（$5.99/1k条），无 1-5 星评分（Positive/Neutral/Negative → 5/3/1），无精确日期（相对时间 → 近似日期：Past month → -15天，Past 6 months → -90天）
+2. Walmart: Apify `webscrapewizard/walmart-review-crawler`（$6.00/1k条），标准 1-5 星 + 精确日期
+3. 各平台 max_reviews=100（节省免费额度）
+4. 前端平台选择器扩展（产品编码抓取 + 定时抓取面板均支持 4 平台）
+5. Worker 分派逻辑、Schema 校验、TypeScript 类型同步扩展
+
+**涉及岗位及工时**：
+
+| 岗位 | 工作内容 | 预估工时 |
+|------|---------|---------|
+| 后端开发 | ebay_scraper.py + walmart_scraper.py + review_scraper 分派 + schemas + jobs.py | 3h |
+| 前端开发 | asin-fetch-panel + asin-watchlist-panel + types.ts 扩展 | 1h |
+
+**合计：约 0.5 人天**
+
+**修改文件**：
+
+| 文件 | 变更 |
+|------|------|
+| `backend_api/app/services/ebay_scraper.py` | 新建，eBay Apify 抓取 + 评分映射 + 日期近似化 |
+| `backend_api/app/services/walmart_scraper.py` | 新建，Walmart Apify 抓取 + 多字段名兼容 |
+| `backend_api/app/services/review_scraper.py` | 添加 ebay/walmart 分派分支 |
+| `backend_api/app/schemas/scrape.py` | platform Literal 扩展 + 校验规则 |
+| `backend_api/app/schemas/asin_watchlist.py` | platform Literal 扩展 + 校验规则 |
+| `workers/jobs.py` | 新增 _fetch_ebay_path / _fetch_walmart_path + 分派 + source_label |
+| `frontend/src/components/upload/asin-fetch-panel.tsx` | 平台选项 + 校验规则扩展 |
+| `frontend/src/components/upload/asin-watchlist-panel.tsx` | 平台选择器 + 校验 + placeholder |
+| `frontend/src/lib/api/types.ts` | platform union 扩展 |
+
+**部署注意**：无数据库变更。需重建 api + worker 容器。
+
+---
+
+### 分析结果页翻译后按钮消失 + 行动按钮常显
+
+- **工作量**: S
+- **状态**: 已完成
+
+**需求描述**：
+1. 分析结果页（用户体验等模块）点击"翻译"按钮后，每行的"下载原文"（Reviews N）和"加入行动"按钮消失
+2. "加入行动"按钮需要鼠标 hover 到该行才会出现，希望始终可见
+
+**解决方案**：
+1. 根因：`ModuleCard` 翻译模式用 `TranslatedView` 完全替换 `children`，`TagTable` 中的 `DownloadTagButton` / `InlineActionButton` 随之丢失
+2. `TranslatedView` 新增 `comments`、`sessionId`、`session`、`showAction`、`locale` props，在每个翻译后的 tag 行末尾渲染对应按钮
+3. 提取 `DownloadTagButton` 为独立文件 `download-tag-button.tsx`，避免循环依赖
+4. 移除 `InlineActionButton` 的 `opacity-0 group-hover:opacity-100` 样式，改为始终可见
+
+**涉及岗位及工时**：
+
+| 岗位 | 工作内容 | 预估工时 |
+|------|---------|---------|
+| 前端开发 | TranslatedView 按钮集成 + DownloadTagButton 提取 + hover 样式移除 | 1h |
+
+**合计：约 0.125 人天**
+
+**修改文件**：
+- `frontend/src/components/analysis/module-card.tsx`
+- `frontend/src/components/analysis/analysis-results-sections.tsx`
+- `frontend/src/components/analysis/inline-action-button.tsx`
+- `frontend/src/components/analysis/download-tag-button.tsx`（新建）
+
+---
+
 ## 2026-06-30
 
 ### 产品管理删除功能 + rating 类型修复

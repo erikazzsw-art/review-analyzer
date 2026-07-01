@@ -9,6 +9,7 @@
 
 | 日期 | 问题描述 | 解决方案 |
 |------|---------|---------|
+| 2026-07-01 | 分析结果页翻译后"下载原文"和"加入行动"按钮消失；"加入行动"按钮需 hover 才显示 | 根因：ModuleCard 翻译模式用 TranslatedView 完全替换 children，导致 TagTable 中的 DownloadTagButton / InlineActionButton 丢失；按钮设有 `opacity-0 group-hover:opacity-100`。修复：① TranslatedView 接收 comments/sessionId/showAction/locale 并在每行渲染对应按钮；② 提取 DownloadTagButton 为独立文件避免循环依赖；③ 移除 InlineActionButton 的 hover 隐藏样式改为常显。commit `4477aee` |
 | 2026-06-30 | AliExpress 评论抓取全部返回 0 条（三次修复迭代）：1) feedback API 被反爬封锁；2) Apify 接入后产品 ID 被 maxLength=15 截断（16位ID被截为15位）；3) Apify run-sync 端点返回 HTTP 201，代码只接受 200 导致数据被丢弃 | 1) 接入 Apify CrowdPull 作为主数据源（commit `c97ae74`）；2) 前端 maxLength 从 15 改为 16、后端正则 `\d{12,15}` 改为 `\d{12,16}`（commit `9b1bc0a`）；3) `_fetch_via_apify` 状态码检查改为 `in (200, 201)`（commit `5f4b5e6`）。线上验证：product ID 1005009259589970 成功抓取 131 条评论，完整分析结果正常渲染（session_id=75，好评率82.4%，差评率17.6%） |
 | 2026-06-30 | AliExpress 产品编码抓取后分析结果页显示空白卡片，刷新后也无分析结果。用户体验：无进度条、无错误提示、无法判断任务状态 | 根因双 bug：1) 后端设 status="fetching" 但前端 UploadJob.status 类型缺少 "fetching"，polling panel 条件分支全部不匹配渲染为空；2) 0 条评论时 status="done" + session_id=null，前端 `done && session_id` 条件不满足也不停轮询导致无限循环。修复：types.ts 补 "fetching" 状态 + 重写 polling panel 新增四步横向进度条（排队→拉取→分析→完成）、"未找到评论"空结果提示（含原因说明+操作按钮）、60s 超时提醒、网络中断自动重试。commit `88ca2d5` |
 | 2026-06-30 | ASIN 监控页面线上 500 错误 + 定时抓取依赖付费 Rainforest API | 1) 500 错误根因：生产数据库缺少 `asin_watchlist` 表（migration 018 未执行），在 ECS api 容器内执行建表 SQL 修复；2) 定时调度器 `workers/asin_scheduler.py` 从 Rainforest API (`fetch_reviews_by_asin`) 切换为 woot.com 免费源 (`fetch_reviews`)，零 API 成本实现自动监控。线上验证：监控页面正常加载，显示空列表+配额信息 |
@@ -512,3 +513,13 @@ File "database.py", line 13, in get_connection
 | 2026-06-30 | feat | golden_set 后端：CSV 上传（中英文表头兼容）+ 条目查询 + 准确率统计 + few-shot 切换 API | ruff PASS |
 | 2026-06-30 | feat | Prompt 注入：few-shot 示例从 golden_set 自动注入分析 prompt + taxonomy boundary_note 渲染 | ruff PASS |
 | 2026-06-30 | feat | AliExpress 评论抓取集成：双数据源（feedback API + Playwright 浏览器 fallback）、平台切换 UI（Amazon/AliExpress 分段控件）、产品管理页平台 Tab 过滤 + badge、移除非英文 Amazon 站点 | ruff PASS, tsc PASS, 线上验证 PASS |
+
+---
+
+### 2026-06-30 全品类 Taxonomy 批量扩展
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-06-30 | feat | 新增 5 品类 27 子品类 taxonomy YAML：outdoor(冲锋衣/帐篷/登山鞋/睡袋/户外背包/钓鱼竿)、beauty(面霜/洗面奶/防晒霜/口红/洗发水/电动牙刷)、kitchen(不粘锅/刀具套装/保温杯/空气炸锅/收纳盒)、automotive(车载充电器/行车记录仪/座椅套/遮阳挡/车载吸尘器)、office(办公椅/显示器支架/桌面收纳/打印机墨盒/鼠标垫) | HIT 验证全部通过 |
+| 2026-06-30 | feat | category_aspect_taxonomy 表结构重建（migration 037）：旧schema(category/aspect/level) → 新schema(sub_category/aspect_key/label_zh/boundary_note/统计字段)；1501 条全部入库 | import OK |
+| 2026-06-30 | feat | sub_category_categories.json 扩展至 87 子品类；docs/类目标签覆盖表.md 产出 | - |
