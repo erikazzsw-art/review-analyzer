@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend_api /app/backend_api
 COPY review_analyzer /app/review_analyzer
 COPY workers /app/workers
+COPY data /app/data
+COPY scripts /app/scripts
 
 EXPOSE 8000
 CMD ["uvicorn", "backend_api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
