@@ -40,6 +40,7 @@ from review_analyzer.database import (
     _estimate_cost_yuan,
     add_comments_batch,
     create_session,
+    find_session_by_batch_hash,
     get_analyzed_by_content_hash,
     get_analyzed_with_embeddings,
     get_session_embeddings,
@@ -122,6 +123,21 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             batch_hash = payload.get("batch_hash")
             if not batch_hash and comments_payload:
                 batch_hash = compute_batch_hash(comments_payload)
+
+            # batch_hash 重复时复用已有 session（同一用户+产品+相同评论集）
+            if batch_hash:
+                dup_session = find_session_by_batch_hash(user_id, product_id, batch_hash)
+                if dup_session:
+                    session_id = int(dup_session["id"])
+                    logger.info("upload_job %s: batch_hash duplicate, reusing session %d", job_id, session_id)
+                    update_upload_job(user_id, job_id, {
+                        "status": "done",
+                        "session_id": session_id,
+                        "total_rows": dup_session.get("total_reviews") or len(comments_payload),
+                        "positive_count": dup_session.get("positive_count") or 0,
+                        "negative_count": dup_session.get("negative_count") or 0,
+                    })
+                    return
 
             if product_ref_id is None:
                 existing_product = get_product_by_parent_id(user_id, product_id)
