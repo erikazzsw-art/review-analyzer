@@ -61,9 +61,10 @@ async def fetch_ebay_reviews(
 
     url = f"https://www.ebay.com/itm/{item_id}"
     payload = {
-        "ebayProductUrls": [url],
+        "ebayProductUrls": [{"url": url}],
         "maxReviewsPerUrl": max_reviews,
-        "sortReviewsBy": "TIME",
+        "sortReviewsBy": "RELEVANCE",
+        "proxyConfiguration": {"useApifyProxy": True},
     }
 
     try:
