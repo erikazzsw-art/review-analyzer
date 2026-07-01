@@ -1398,6 +1398,7 @@ NX-M8 验收记录（Phase A）：
 | 2026-06-25 | V5-T3 增强 | 推送设置页重构（Part A）：设置页改为 sidebar 3 子页（push/api-keys/billing），推送页合并全局规则+产品规则+周期推送+升级规则为单页全宽布局；推送内容增强（Part B）：B1 条数+占比、B2 AI 总结建议、B3 可点击链接、B4 行动中心引导、B5 环比推送增强、B6 TOP 问题复盘进度 |
 | 2026-06-25 | V4.5-T12 | 可观测性页面重构：从 265 行单页重构为 5-Tab 管理后台（概览/成本/任务/缓存/告警），新增时间范围选择器+模型状态灯行+可展开 trace timeline+成本堆叠柱状图；从用户 sidebar 移除，仅管理员 URL 访问；10 个新组件于 `components/observability/` |
 | 2026-06-30 | V4-T1.6 | Golden Set 标签校准管理系统 + 管理员权限控制：golden_set 表 + boundary_note 字段 + CSV 上传 API + 准确率统计 + few-shot 注入 + /settings/golden-set 管理页 + users.is_admin + sidebar adminOnly 过滤 + 页面级权限守卫；migration 033/034/035 |
+| 2026-06-30 | V4-T1 扩展 | 全品类 Taxonomy 批量扩展：新增 5 品类(outdoor/beauty/kitchen/automotive/office) 27 子品类 441 条 aspect 全部携带 boundary_note；表结构重建 migration 037；sub_category_categories.json 覆盖 87 子品类；docs/类目标签覆盖表.md 产出 |
 
 ---
 
@@ -1470,8 +1471,10 @@ NX-M8 验收记录（Phase A）：
   - 实际产物（2026-06-10 完成）：
     - 5 个核心品类 60 个子品类 YAML：家居 6（24032 条）、3C 11（21719 条）、服饰 8（18695 条）、母婴 9（6588 条）、宠物 26（41536 条），合计 112570 条评论 Aspect 抽取
     - 户外品类本轮剔除（Erika 决策，原始数据保留待后续轮次）
-    - PG `category_aspect_taxonomy` 表共 1060 行（60 sub_category × 平均 17.7 aspect）
-    - 通用脚本：`scripts/preprocess_reviews.py`（按品类 yaml 配置预处理）、`scripts/extract_taxonomy_generic.py`（支持 seed extends）、`scripts/build_taxonomy_review_sheet.py`（人工 review 表生成）、`scripts/apply_taxonomy_review.py`（review 决策套回 yaml）、`scripts/import_v4t1_assets.py`（rglob 入库，加 keepalive 防 SSL 超时）
+    - PG `category_aspect_taxonomy` 表共 1501 行（87 sub_category × 平均 17.3 aspect）
+      - 2026-06-10: 初始 1060 行（5 品类 60 子品类）
+      - 2026-06-30: 扩展至 1501 行（10 品类 87 子品类），新增 outdoor/beauty/kitchen/automotive/office 5 品类 27 子品类，全部携带 boundary_note；表结构重建（migration 037）
+    - 通用脚本：`scripts/preprocess_reviews.py`（按品类 yaml 配置预处理）、`scripts/extract_taxonomy_generic.py`（支持 seed extends）、`scripts/build_taxonomy_review_sheet.py`（人工 review 表生成）、`scripts/apply_taxonomy_review.py`（review 决策套回 yaml）、`scripts/import_v4t1_assets.py`（rglob 入库，加 keepalive 防 SSL 超时）、`scripts/generate_new_taxonomy_yamls.py`（批量生成新品类 YAML）
     - 抽取成本：¥55.99（DeepSeek API）
 
 - [x] **Step 4: 建立 Bad Case 库**
@@ -4255,5 +4258,21 @@ CREATE TABLE workspace_invitations (
   - [x] 修复 Product ID 验证范围（12-16 位，支持 16 位 ID）
   - [x] 修复 Apify HTTP 201 状态码被错误丢弃问题
   - 线上验证（2026-06-30）：product ID 1005009259589970 成功抓取 131 条评论，session_id=75，好评率 82.4%，差评率 17.6%
+- Apify 计费说明:
+  - 计费模式：按量付费，$1.50 / 1,000 条评论
+  - 当前状态：使用 $5 免费平台积分（约 3,000 条），未绑定信用卡
+  - 当前上限：每次抓取 max_reviews=200（含定时自动抓取）
+  - 后续计划：等有付费用户后再绑卡 + 提升 max_reviews 上限（改 `aliexpress_scraper.py:428` 即可）
+  - 注意：免费积分耗尽后 Apify 返回 402，代码会 fallback 到 feedback API / Playwright（但目前两者均不稳定）
+- [x] eBay 评论抓取接入（2026-07-01）
+  - Actor: scrapier/ebay-review-scraper，$5.99/1,000 条
+  - eBay 仅 Positive/Neutral/Negative 三档 → 映射为 5/3/1 星
+  - 相对时间（Past month / Past 6 months / More than a year ago）→ 近似日期
+  - max_reviews=100（节省免费额度）
+- [x] Walmart 评论抓取接入（2026-07-01）
+  - Actor: webscrapewizard/walmart-review-crawler，$6.00/1,000 条
+  - 标准 1-5 星 + 精确日期
+  - max_reviews=100（节省免费额度）
+  - 注意：字段映射基于文档推断，首次运行需确认实际字段名
 
 ---
