@@ -49,6 +49,8 @@ def fetch_by_asin(
                 "max_pages": req.max_pages,
                 "source_channel": "api",
                 "fetch_all_variants": req.fetch_all_variants,
+                "max_reviews": req.max_reviews,
+                "force_refresh": req.force_refresh,
             },
         },
     )
