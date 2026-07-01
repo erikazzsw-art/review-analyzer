@@ -8,12 +8,13 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
 AMAZON_MARKETPLACES = ("us", "uk", "ca", "au")
+SHOPEE_REGIONS = ("sg", "th")
 
 
 class AsinWatchlistCreate(BaseModel):
     """添加产品编码到定时抓取（支持批量）。"""
 
-    platform: Literal["amazon", "aliexpress"] = "amazon"
+    platform: Literal["amazon", "aliexpress", "ebay", "walmart", "shopee"] = "amazon"
     product_ids: list[str] = Field(..., min_length=1, max_length=20)
     marketplace: str = Field(default="us")
     fetch_frequency: str = Field(default="daily", pattern=r"^(daily|weekly|manual)$")
@@ -32,13 +33,41 @@ class AsinWatchlistCreate(BaseModel):
                     raise ValueError(f"Invalid ASIN format: {pid}")
                 cleaned.append(pid)
             self.product_ids = cleaned
-        else:
+        elif self.platform == "aliexpress":
             self.marketplace = "global"
             cleaned = []
             for pid in self.product_ids:
                 pid = pid.strip()
                 if not re.match(r"^\d{8,15}$", pid):
                     raise ValueError(f"Invalid AliExpress product ID: {pid}")
+                cleaned.append(pid)
+            self.product_ids = cleaned
+        elif self.platform == "shopee":
+            if self.marketplace not in SHOPEE_REGIONS:
+                self.marketplace = "sg"
+            cleaned = []
+            for pid in self.product_ids:
+                pid = pid.strip()
+                if not re.match(r"^\d{5,15}\.\d{5,15}$", pid):
+                    raise ValueError(f"Invalid Shopee product code: {pid} (格式：商品ID.店铺ID)")
+                cleaned.append(pid)
+            self.product_ids = cleaned
+        elif self.platform == "ebay":
+            self.marketplace = "global"
+            cleaned = []
+            for pid in self.product_ids:
+                pid = pid.strip()
+                if not re.match(r"^\d{9,15}$", pid):
+                    raise ValueError(f"Invalid eBay Item Number: {pid}")
+                cleaned.append(pid)
+            self.product_ids = cleaned
+        elif self.platform == "walmart":
+            self.marketplace = "us"
+            cleaned = []
+            for pid in self.product_ids:
+                pid = pid.strip()
+                if not re.match(r"^[A-Za-z0-9]{6,13}$", pid):
+                    raise ValueError(f"Invalid Walmart Product ID: {pid}")
                 cleaned.append(pid)
             self.product_ids = cleaned
         return self

@@ -21,6 +21,12 @@ from backend_api.app.services.clustering import (
 from backend_api.app.services.deep_analyzer import analyze_batch as deep_analyze_batch
 from backend_api.app.services.job_trace import JobTrace
 from backend_api.app.services.prompt_registry import DEFAULT_ANNOTATE_VERSION
+from backend_api.app.services.review_pool import (
+    pool_backfill_analysis,
+    pool_has_enough,
+    pool_lookup,
+    pool_write,
+)
 from backend_api.app.services.taxonomy_coverage_monitor import (
     build_coverage_warning,
     compute_taxonomy_coverage,
@@ -593,6 +599,24 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             },
         )
 
+        # ── 分析完成后回填到评论池 ──
+        try:
+            _backfill_source = str(payload.get("platform") or "").lower()
+            _backfill_platform = "amazon"
+            for _p in ("aliexpress", "shopee", "ebay", "walmart"):
+                if _p in _backfill_source:
+                    _backfill_platform = _p
+                    break
+            _backfill_key = product_id
+            _backfill_market = str(payload.get("marketplace") or "us")
+            if payload.get("source_channel") == "api":
+                pool_backfill_analysis(
+                    _backfill_platform, _backfill_key, _backfill_market,
+                    unprocessed, analyzer_version=ANALYZER_VERSION,
+                )
+        except Exception:
+            logger.warning("upload_job %s: pool_backfill_analysis failed (non-fatal)", job_id, exc_info=True)
+
         # V5-T3 Step 9: 即时推送升级——写入快照 + 升级判定
         try:
             _post_analysis_smart_push(
@@ -869,6 +893,130 @@ def _fetch_aliexpress_path(
     return reviews, product_ref_id
 
 
+def _fetch_ebay_path(
+    loop: asyncio.AbstractEventLoop,
+    user_id: int,
+    job_id: int,
+    item_id: str,
+    payload: dict[str, Any],
+    fetch_all_variants: bool,
+) -> tuple[list[dict[str, Any]], int | None]:
+    """eBay 抓取路径：Apify scrapier Actor。"""
+    from backend_api.app.services.review_scraper import fetch_reviews
+
+    product_ref_id = upsert_product_from_api(user_id, {
+        "parent_product_id": item_id,
+        "name": payload.get("product_name") or f"eBay: {item_id}",
+        "platform": "eBay",
+        "category": payload.get("category"),
+    })
+
+    update_upload_job(user_id, job_id, {
+        "status": "fetching",
+        "error_message": "正在从 eBay 拉取评论...",
+    })
+
+    reviews = loop.run_until_complete(
+        fetch_reviews(item_id, platform="ebay")
+    )
+
+    if reviews:
+        ratings = [r.get("rating", 5) for r in reviews]
+        avg_rating = sum(ratings) / len(ratings)
+        upsert_product_from_api(user_id, {
+            "parent_product_id": item_id,
+            "name": payload.get("product_name") or f"eBay: {item_id}",
+            "platform": "eBay",
+            "rating": round(avg_rating, 1),
+            "reviews_total": len(reviews),
+        })
+
+    return reviews, product_ref_id
+
+
+def _fetch_walmart_path(
+    loop: asyncio.AbstractEventLoop,
+    user_id: int,
+    job_id: int,
+    item_id: str,
+    payload: dict[str, Any],
+    fetch_all_variants: bool,
+) -> tuple[list[dict[str, Any]], int | None]:
+    """Walmart 抓取路径：Apify webscrapewizard Actor。"""
+    from backend_api.app.services.review_scraper import fetch_reviews
+
+    product_ref_id = upsert_product_from_api(user_id, {
+        "parent_product_id": item_id,
+        "name": payload.get("product_name") or f"Walmart: {item_id}",
+        "platform": "Walmart",
+        "category": payload.get("category"),
+    })
+
+    update_upload_job(user_id, job_id, {
+        "status": "fetching",
+        "error_message": "正在从 Walmart 拉取评论...",
+    })
+
+    reviews = loop.run_until_complete(
+        fetch_reviews(item_id, platform="walmart")
+    )
+
+    if reviews:
+        ratings = [r.get("rating", 5) for r in reviews]
+        avg_rating = sum(ratings) / len(ratings)
+        upsert_product_from_api(user_id, {
+            "parent_product_id": item_id,
+            "name": payload.get("product_name") or f"Walmart: {item_id}",
+            "platform": "Walmart",
+            "rating": round(avg_rating, 1),
+            "reviews_total": len(reviews),
+        })
+
+    return reviews, product_ref_id
+
+
+def _fetch_shopee_path(
+    loop: asyncio.AbstractEventLoop,
+    user_id: int,
+    job_id: int,
+    product_code: str,
+    marketplace: str,
+    payload: dict[str, Any],
+    fetch_all_variants: bool,
+) -> tuple[list[dict[str, Any]], int | None]:
+    """Shopee 抓取路径：Apify → 公开 API fallback。"""
+    from backend_api.app.services.review_scraper import fetch_reviews
+
+    product_ref_id = upsert_product_from_api(user_id, {
+        "parent_product_id": product_code,
+        "name": payload.get("product_name") or f"Shopee: {product_code}",
+        "platform": "Shopee",
+        "category": payload.get("category"),
+    })
+
+    update_upload_job(user_id, job_id, {
+        "status": "fetching",
+        "error_message": "正在从 Shopee 拉取评论...",
+    })
+
+    reviews = loop.run_until_complete(
+        fetch_reviews(product_code, platform="shopee", marketplace=marketplace)
+    )
+
+    if reviews:
+        ratings = [r.get("rating", 5) for r in reviews]
+        avg_rating = sum(ratings) / len(ratings)
+        upsert_product_from_api(user_id, {
+            "parent_product_id": product_code,
+            "name": payload.get("product_name") or f"Shopee: {product_code}",
+            "platform": "Shopee",
+            "rating": round(avg_rating, 1),
+            "reviews_total": len(reviews),
+        })
+
+    return reviews, product_ref_id
+
+
 def _fetch_amazon_path(
     loop: asyncio.AbstractEventLoop,
     user_id: int,
@@ -943,9 +1091,7 @@ def _fetch_amazon_path(
 def process_asin_fetch_job(user_id: int, job_id: int) -> None:
     """Worker 任务：拉取评论 → 存储 → 触发分析。
 
-    支持平台：
-    - Amazon: Rainforest API（产品信息） + woot.com（评论）
-    - AliExpress: feedback API + Playwright fallback（评论+SKU标签）
+    支持平台：Amazon / AliExpress / eBay / Walmart / Shopee
     """
     MAX_VARIANTS = 20
 
@@ -959,21 +1105,46 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
         platform = payload.get("platform", "amazon")
         marketplace = payload.get("marketplace", "us")
         fetch_all_variants = payload.get("fetch_all_variants", False)
+        max_reviews: int = int(payload.get("max_reviews") or 100)
+        force_refresh: bool = bool(payload.get("force_refresh", False))
 
         update_upload_job(user_id, job_id, {"status": "fetching"})
 
-        loop = asyncio.new_event_loop()
-        try:
-            if platform == "aliexpress":
-                all_reviews, product_ref_id = _fetch_aliexpress_path(
-                    loop, user_id, job_id, asin, payload, fetch_all_variants,
-                )
-            else:
-                all_reviews, product_ref_id = _fetch_amazon_path(
-                    loop, user_id, job_id, asin, marketplace, payload, fetch_all_variants, MAX_VARIANTS,
-                )
-        finally:
-            loop.close()
+        # ── 池缓存查询（fetch_all_variants 时跳过，需抓完整变体） ──
+        pool_cache_hit = False
+        product_ref_id: int | None = None
+        if not force_refresh and not fetch_all_variants:
+            cached_reviews, pool_meta = pool_lookup(platform, asin, marketplace, max_reviews)
+            if pool_has_enough(pool_meta):
+                all_reviews = cached_reviews
+                pool_cache_hit = True
+                logger.info("review_pool HIT: %s:%s/%s (%d reviews)", platform, asin, marketplace, len(cached_reviews))
+
+        if not pool_cache_hit:
+            loop = asyncio.new_event_loop()
+            try:
+                if platform == "aliexpress":
+                    all_reviews, product_ref_id = _fetch_aliexpress_path(
+                        loop, user_id, job_id, asin, payload, fetch_all_variants,
+                    )
+                elif platform == "ebay":
+                    all_reviews, product_ref_id = _fetch_ebay_path(
+                        loop, user_id, job_id, asin, payload, fetch_all_variants,
+                    )
+                elif platform == "walmart":
+                    all_reviews, product_ref_id = _fetch_walmart_path(
+                        loop, user_id, job_id, asin, payload, fetch_all_variants,
+                    )
+                elif platform == "shopee":
+                    all_reviews, product_ref_id = _fetch_shopee_path(
+                        loop, user_id, job_id, asin, marketplace, payload, fetch_all_variants,
+                    )
+                else:
+                    all_reviews, product_ref_id = _fetch_amazon_path(
+                        loop, user_id, job_id, asin, marketplace, payload, fetch_all_variants, MAX_VARIANTS,
+                    )
+            finally:
+                loop.close()
 
         if not all_reviews:
             update_upload_job(
@@ -996,6 +1167,13 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             seen_keys.add(key)
             unique_reviews.append(r)
 
+        # ── 新鲜抓取后写入池（缓存命中时跳过） ──
+        if not pool_cache_hit and unique_reviews:
+            try:
+                pool_write(platform, asin, marketplace, unique_reviews, scraper_source=platform)
+            except Exception:
+                logger.warning("pool_write failed, continuing without cache write", exc_info=True)
+
         quota_consume(user_id, "asin_fetch")
 
         if platform == "aliexpress":
@@ -1004,10 +1182,49 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
                 {
                     "content": r["content"],
                     "rating": r.get("rating"),
-                    "date": r.get("date", ""),
+                    "date": r.get("date") or r.get("review_date", ""),
                     "reviewer": r.get("reviewer", ""),
                     "source": "AliExpress",
-                    "source_variant_asin": r.get("sku_info", ""),
+                    "source_variant_asin": r.get("sku_info") or r.get("source_variant", ""),
+                }
+                for r in unique_reviews
+            ]
+        elif platform == "ebay":
+            source_label = "eBay"
+            comments_payload = [
+                {
+                    "content": r["content"],
+                    "rating": r.get("rating"),
+                    "date": r.get("date") or r.get("review_date", ""),
+                    "reviewer": r.get("reviewer", ""),
+                    "source": "eBay",
+                    "source_variant_asin": "",
+                }
+                for r in unique_reviews
+            ]
+        elif platform == "walmart":
+            source_label = "Walmart"
+            comments_payload = [
+                {
+                    "content": r["content"],
+                    "rating": r.get("rating"),
+                    "date": r.get("date") or r.get("review_date", ""),
+                    "reviewer": r.get("reviewer", ""),
+                    "source": "Walmart",
+                    "source_variant_asin": "",
+                }
+                for r in unique_reviews
+            ]
+        elif platform == "shopee":
+            source_label = "Shopee"
+            comments_payload = [
+                {
+                    "content": r["content"],
+                    "rating": r.get("rating"),
+                    "date": r.get("date") or r.get("review_date", ""),
+                    "reviewer": r.get("reviewer", ""),
+                    "source": "Shopee",
+                    "source_variant_asin": r.get("sku_info") or r.get("source_variant", ""),
                 }
                 for r in unique_reviews
             ]
@@ -1017,13 +1234,15 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
                 {
                     "content": r["content"],
                     "rating": r.get("rating"),
-                    "date": r.get("date", ""),
+                    "date": r.get("date") or r.get("review_date", ""),
                     "reviewer": r.get("reviewer", ""),
                     "source": source_label,
-                    "source_variant_asin": r.get("source_variant_asin", asin),
+                    "source_variant_asin": r.get("source_variant_asin") or r.get("source_variant", asin),
                 }
                 for r in unique_reviews
             ]
+
+        comments_payload = comments_payload[:max_reviews]
 
         update_upload_job(
             user_id, job_id,

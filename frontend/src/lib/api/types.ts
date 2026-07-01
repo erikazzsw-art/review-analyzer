@@ -762,7 +762,7 @@ export type FeedbackResponse = {
 
 export type AsinWatchlistItem = {
   id: number;
-  platform: "amazon" | "aliexpress";
+  platform: "amazon" | "aliexpress" | "ebay" | "walmart";
   asin: string;
   marketplace: string;
   product_name: string | null;
@@ -784,7 +784,7 @@ export type AsinWatchlistResponse = {
 };
 
 export type AsinWatchlistCreatePayload = {
-  platform: "amazon" | "aliexpress";
+  platform: "amazon" | "aliexpress" | "ebay" | "walmart";
   product_ids: string[];
   marketplace: string;
   fetch_frequency: "daily" | "weekly" | "manual";

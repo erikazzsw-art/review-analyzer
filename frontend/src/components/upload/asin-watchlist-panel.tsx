@@ -45,7 +45,7 @@ export function AsinWatchlistPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [addInput, setAddInput] = useState("");
-  const [addPlatform, setAddPlatform] = useState<"amazon" | "aliexpress">("amazon");
+  const [addPlatform, setAddPlatform] = useState<"amazon" | "aliexpress" | "ebay" | "walmart">("amazon");
   const [addMarketplace, setAddMarketplace] = useState("us");
   const [addFrequency, setAddFrequency] = useState<"daily" | "weekly" | "manual">("daily");
   const [submitting, setSubmitting] = useState(false);
@@ -74,27 +74,44 @@ export function AsinWatchlistPanel() {
         .map((s) => s.toUpperCase())
         .filter((s) => s.length === 10 && /^[A-Z0-9]{10}$/.test(s));
     }
-    return raw.filter((s) => /^\d{8,15}$/.test(s));
+    if (addPlatform === "aliexpress") {
+      return raw.filter((s) => /^\d{8,16}$/.test(s));
+    }
+    if (addPlatform === "ebay") {
+      return raw.filter((s) => /^\d{9,15}$/.test(s));
+    }
+    if (addPlatform === "walmart") {
+      return raw.filter((s) => /^[A-Za-z0-9]{6,13}$/.test(s));
+    }
+    return raw;
   }
 
   async function handleAdd() {
     const productIds = validateInput();
     if (productIds.length === 0) {
-      setError(
-        addPlatform === "amazon"
-          ? "请输入有效的 ASIN（10 位字母数字）"
-          : "请输入有效的商品 ID（8-15 位数字）"
-      );
+      const hints: Record<string, string> = {
+        amazon: "请输入有效的 ASIN（10 位字母数字）",
+        aliexpress: "请输入有效的商品 ID（8-16 位数字）",
+        ebay: "请输入有效的 eBay Item Number（9-15 位数字）",
+        walmart: "请输入有效的 Walmart Product ID（6-13 位字母数字）",
+      };
+      setError(hints[addPlatform] || "请输入有效的商品编码");
       return;
     }
 
     setSubmitting(true);
     setError("");
     try {
+      const marketplaceMap: Record<string, string> = {
+        amazon: addMarketplace,
+        aliexpress: "global",
+        ebay: "global",
+        walmart: "us",
+      };
       await addAsinWatchlist({
         platform: addPlatform,
         product_ids: productIds,
-        marketplace: addPlatform === "amazon" ? addMarketplace : "global",
+        marketplace: marketplaceMap[addPlatform] || "global",
         fetch_frequency: addFrequency,
       });
       track("asin_watchlist_add", { count: productIds.length, platform: addPlatform });
@@ -162,29 +179,21 @@ export function AsinWatchlistPanel() {
         <h3 className="text-sm font-semibold text-ink">添加商品到定时抓取</h3>
 
         {/* Platform selector */}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setAddPlatform("amazon")}
-            className={`rounded-pill px-4 py-1.5 text-sm font-medium transition ${
-              addPlatform === "amazon"
-                ? "bg-ink text-white"
-                : "bg-[#f5f5f5] text-soft hover:bg-[#eee]"
-            }`}
-          >
-            Amazon
-          </button>
-          <button
-            type="button"
-            onClick={() => setAddPlatform("aliexpress")}
-            className={`rounded-pill px-4 py-1.5 text-sm font-medium transition ${
-              addPlatform === "aliexpress"
-                ? "bg-ink text-white"
-                : "bg-[#f5f5f5] text-soft hover:bg-[#eee]"
-            }`}
-          >
-            AliExpress
-          </button>
+        <div className="flex flex-wrap gap-2">
+          {(["amazon", "aliexpress", "ebay", "walmart"] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setAddPlatform(p)}
+              className={`rounded-pill px-4 py-1.5 text-sm font-medium transition ${
+                addPlatform === p
+                  ? "bg-ink text-white"
+                  : "bg-[#f5f5f5] text-soft hover:bg-[#eee]"
+              }`}
+            >
+              {p === "amazon" ? "Amazon" : p === "aliexpress" ? "AliExpress" : p === "ebay" ? "eBay" : "Walmart"}
+            </button>
+          ))}
         </div>
 
         <div className="grid gap-3 md:grid-cols-4">
@@ -197,6 +206,10 @@ export function AsinWatchlistPanel() {
               placeholder={
                 addPlatform === "amazon"
                   ? "输入 ASIN，多个用逗号或换行分隔"
+                  : addPlatform === "ebay"
+                  ? "输入 eBay Item Number，多个用逗号或换行分隔"
+                  : addPlatform === "walmart"
+                  ? "输入 Walmart Product ID，多个用逗号或换行分隔"
                   : "输入商品 ID，多个用逗号或换行分隔"
               }
             />
