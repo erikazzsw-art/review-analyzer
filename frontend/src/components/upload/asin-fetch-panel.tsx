@@ -26,6 +26,16 @@ const SHOPEE_REGIONS = [
   { value: "th", label: "Shopee TH" },
 ] as const;
 
+const EBAY_MARKETS = [
+  { value: "us", label: "eBay US" },
+  { value: "uk", label: "eBay UK" },
+] as const;
+
+const WALMART_MARKETS = [
+  { value: "us", label: "Walmart US" },
+  { value: "ca", label: "Walmart CA" },
+] as const;
+
 type Platform = "amazon" | "aliexpress" | "shopee" | "ebay" | "walmart";
 
 type FormState = {
@@ -186,7 +196,37 @@ export function AsinFetchPanel() {
           </label>
         )}
 
-        <label className={`space-y-2 ${form.platform === "amazon" || form.platform === "shopee" ? "md:col-span-2" : ""}`}>
+        {form.platform === "ebay" && (
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-ink">站点</span>
+            <select
+              value={form.marketplace}
+              onChange={(e) => setForm((c) => ({ ...c, marketplace: e.target.value }))}
+              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+            >
+              {EBAY_MARKETS.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {form.platform === "walmart" && (
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-ink">站点</span>
+            <select
+              value={form.marketplace}
+              onChange={(e) => setForm((c) => ({ ...c, marketplace: e.target.value }))}
+              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+            >
+              {WALMART_MARKETS.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        <label className={`space-y-2 ${form.platform !== "aliexpress" ? "md:col-span-2" : ""}`}>
           <span className="text-sm font-semibold text-ink">产品名称（可选）</span>
           <input
             value={form.productName}
