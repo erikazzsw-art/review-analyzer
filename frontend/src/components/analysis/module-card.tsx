@@ -123,6 +123,7 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale,
         {isTranslated && translatedData ? (
           <TranslatedView
             data={translatedData}
+            originalData={moduleData}
             moduleKey={moduleKey}
             sessionId={sessionId}
             session={session}
@@ -217,6 +218,7 @@ function buildClientXlsx(
 
 function TranslatedView({
   data,
+  originalData,
   moduleKey,
   sessionId,
   session,
@@ -225,6 +227,7 @@ function TranslatedView({
   showAction,
 }: {
   data: Record<string, unknown>;
+  originalData: Record<string, unknown>;
   moduleKey: string;
   sessionId: number;
   session?: SessionInfo;
@@ -237,6 +240,10 @@ function TranslatedView({
   const positive = Array.isArray(data.positive) ? data.positive : [];
   const negative = Array.isArray(data.negative) ? data.negative : [];
   const evidence = Array.isArray(data.evidence) ? data.evidence : [];
+
+  const origPositive = Array.isArray(originalData.positive) ? originalData.positive as Record<string, unknown>[] : [];
+  const origNegative = Array.isArray(originalData.negative) ? originalData.negative as Record<string, unknown>[] : [];
+  const origRows = Array.isArray(originalData.rows) ? originalData.rows as Record<string, unknown>[] : [];
 
   function renderRowButtons(tag: string, pct: number, reason: string, tagSource: "highlight_tag" | "issue_tag", canAction: boolean) {
     return (
@@ -275,6 +282,7 @@ function TranslatedView({
               <div className="text-xs font-semibold text-[#059669]">正向反馈</div>
               {positive.map((row: Record<string, unknown>, i: number) => {
                 const tag = String(row.tag || "");
+                const origTag = String(origPositive[i]?.tag || tag);
                 const pct = Number(row.pct || 0);
                 const reason = String(row.reason || "");
                 return (
@@ -285,7 +293,7 @@ function TranslatedView({
                       <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
                     </div>
                     {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
-                    {renderRowButtons(tag, pct, reason, "highlight_tag", false)}
+                    {renderRowButtons(origTag, pct, reason, "highlight_tag", false)}
                   </div>
                 );
               })}
@@ -296,6 +304,7 @@ function TranslatedView({
               <div className="text-xs font-semibold text-[#dc2626]">负向反馈</div>
               {negative.map((row: Record<string, unknown>, i: number) => {
                 const tag = String(row.tag || "");
+                const origTag = String(origNegative[i]?.tag || tag);
                 const pct = Number(row.pct || 0);
                 const reason = String(row.reason || "");
                 return (
@@ -306,7 +315,7 @@ function TranslatedView({
                       <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
                     </div>
                     {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
-                    {renderRowButtons(tag, pct, reason, "issue_tag", !!showAction)}
+                    {renderRowButtons(origTag, pct, reason, "issue_tag", !!showAction)}
                   </div>
                 );
               })}
@@ -319,6 +328,7 @@ function TranslatedView({
         <div className="space-y-2">
           {rows.map((row: Record<string, unknown>, i: number) => {
             const tag = String(row.tag || row.label || "");
+            const origTag = String(origRows[i]?.tag || origRows[i]?.label || tag);
             const pct = Number(row.pct || 0);
             const reason = String(row.reason || row.detail || "");
             const tagSource: "highlight_tag" | "issue_tag" =
@@ -337,7 +347,7 @@ function TranslatedView({
                 {(row.reason || row.detail) ? (
                   <p className="mt-1 text-xs leading-5 text-soft">{reason}</p>
                 ) : null}
-                {renderRowButtons(tag, pct, reason, tagSource, canAction)}
+                {renderRowButtons(origTag, pct, reason, tagSource, canAction)}
               </div>
             );
           })}
