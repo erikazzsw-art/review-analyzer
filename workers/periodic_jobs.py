@@ -378,3 +378,122 @@ def enqueue_stale_job_scan() -> str:
         failure_ttl=24 * 60 * 60,
     )
     return job.id
+
+
+# ============================================================
+# Daily Cost Digest — 每日成本日报（推送到飞书运维群）
+# ============================================================
+
+
+def daily_cost_digest() -> dict[str, Any]:
+    """汇总昨日 LLM 花费、top 用户，推送到飞书运维群。
+
+    - 每天 UTC+8 09:07 由 scheduler 触发（避开 :00 :30）
+    - 数据源：llm_usage_log 表
+    - 无数据不推送
+    """
+    import os
+    from datetime import timedelta as _td
+    from datetime import timezone as _tz
+
+    import psycopg2.extras
+    import requests
+
+    from backend_api.app.services.budget_guard import get_budget_status
+    from review_analyzer.database import get_connection
+
+    tz = _tz(_td(hours=8))
+    now = datetime.now(tz)
+    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0) - _td(days=1)
+    day_end = day_start + _td(days=1)
+
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT COALESCE(SUM(cost_yuan), 0) AS total, COUNT(*) AS calls
+                FROM llm_usage_log
+                WHERE created_at >= %s AND created_at < %s
+                """,
+                (day_start, day_end),
+            )
+            summary = cur.fetchone() or {}
+
+            cur.execute(
+                """
+                SELECT l.user_id, u.username,
+                       COALESCE(SUM(l.cost_yuan), 0) AS cost_yuan,
+                       COUNT(*) AS calls
+                FROM llm_usage_log l
+                LEFT JOIN users u ON u.id = l.user_id
+                WHERE l.created_at >= %s AND l.created_at < %s
+                GROUP BY l.user_id, u.username
+                ORDER BY cost_yuan DESC
+                LIMIT 10
+                """,
+                (day_start, day_end),
+            )
+            top_users = list(cur.fetchall())
+    finally:
+        conn.close()
+
+    total_cost = float(summary.get("total") or 0)
+    total_calls = int(summary.get("calls") or 0)
+
+    if total_calls == 0:
+        logger.info("daily_cost_digest: no LLM calls yesterday, skipping")
+        return {"ok": True, "skipped": True}
+
+    webhook = os.getenv("FEISHU_OPS_WEBHOOK", "").strip()
+    if not webhook:
+        logger.warning("daily_cost_digest: FEISHU_OPS_WEBHOOK not set, skipping")
+        return {"ok": False, "msg": "no webhook"}
+
+    budget = get_budget_status()
+    daily_cap = budget["daily"].get("cap_yuan")
+    monthly = budget["monthly"]
+
+    lines = [
+        f"💰 ClueAI 昨日成本日报（{day_start.strftime('%Y-%m-%d')}）",
+        "",
+        f"总花费：¥{total_cost:.2f}",
+        f"调用次数：{total_calls}",
+    ]
+    if daily_cap:
+        pct = total_cost / daily_cap * 100 if daily_cap > 0 else 0
+        lines.append(f"日预算用量：{pct:.1f}% (¥{total_cost:.2f} / ¥{daily_cap:.2f})")
+    if monthly.get("cap_yuan"):
+        month_pct = monthly["used_yuan"] / monthly["cap_yuan"] * 100 if monthly["cap_yuan"] > 0 else 0
+        lines.append(
+            f"月预算用量：{month_pct:.1f}% (¥{monthly['used_yuan']:.2f} / ¥{monthly['cap_yuan']:.2f})"
+        )
+    lines.append("")
+    lines.append("Top 用户：")
+    for r in top_users[:10]:
+        uname = r.get("username") or f"user_{r['user_id']}"
+        lines.append(f"  {uname}  ¥{float(r['cost_yuan']):.2f}  ({int(r['calls'])} 次)")
+
+    try:
+        requests.post(
+            webhook,
+            json={"msg_type": "text", "content": {"text": "\n".join(lines)}},
+            timeout=10,
+        )
+        return {"ok": True, "total_cost_yuan": total_cost, "users": len(top_users)}
+    except Exception as e:
+        logger.error("daily_cost_digest: feishu push failed: %s", e)
+        return {"ok": False, "msg": str(e)}
+
+
+def enqueue_daily_cost_digest() -> str:
+    """入队每日成本日报（由 scheduler 每天 09:07 UTC+8 调用一次）"""
+    queue = get_queue()
+    job = queue.enqueue(
+        daily_cost_digest,
+        job_id=f"cost-digest-{datetime.now().strftime('%Y%m%d')}",
+        description="Daily LLM cost digest push",
+        result_ttl=3600,
+        failure_ttl=24 * 60 * 60,
+    )
+    return job.id

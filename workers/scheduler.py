@@ -11,14 +11,21 @@ import logging
 import time
 from datetime import datetime
 
-from workers.periodic_jobs import enqueue_periodic_digest, enqueue_stale_job_scan
+from workers.periodic_jobs import (
+    enqueue_daily_cost_digest,
+    enqueue_periodic_digest,
+    enqueue_stale_job_scan,
+)
 from workers.queue import get_redis_connection
 
 logger = logging.getLogger(__name__)
 
 SCAN_INTERVAL_SECONDS = 60
 STALE_SCAN_INTERVAL_SECONDS = 300
+DAILY_DIGEST_HOUR = 9
+DAILY_DIGEST_MINUTE = 7
 LOCK_PREFIX = "scheduler:periodic_push:lock:"
+DAILY_DIGEST_LOCK_PREFIX = "scheduler:daily_cost_digest:lock:"
 LOCK_TTL_SECONDS = 300
 
 
@@ -138,6 +145,17 @@ def run_scheduler() -> None:
                 except Exception:
                     logger.exception("scheduler: failed to enqueue stale job scan")
                 last_stale_scan = now
+
+            # 每日 09:07 UTC+8 触发一次成本日报（redis lock 去重）
+            now_dt = datetime.now()
+            if now_dt.hour == DAILY_DIGEST_HOUR and now_dt.minute == DAILY_DIGEST_MINUTE:
+                lock_key = f"{DAILY_DIGEST_LOCK_PREFIX}{now_dt.strftime('%Y%m%d')}"
+                if redis_conn.set(lock_key, "1", nx=True, ex=86400):
+                    try:
+                        enqueue_daily_cost_digest()
+                        logger.info("scheduler: enqueued daily cost digest")
+                    except Exception:
+                        logger.exception("scheduler: failed to enqueue daily cost digest")
 
         except Exception:
             logger.exception("scheduler: scan cycle error")

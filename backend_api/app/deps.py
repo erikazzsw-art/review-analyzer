@@ -168,3 +168,23 @@ def get_current_user(request: Request) -> dict[str, Any]:
     access_token = request.cookies.get(settings.access_cookie_name)
     refresh_token = request.cookies.get(settings.refresh_cookie_name)
     return _get_authenticated_user(access_token, refresh_token)
+
+
+def get_admin_user(request: Request) -> dict[str, Any]:
+    user = get_current_user(request)
+    from review_analyzer.database import get_connection
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT is_admin FROM users WHERE id = %s", (int(user["id"]),))
+            row = cur.fetchone()
+    finally:
+        conn.close()
+
+    if not (row and row[0]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required.",
+        )
+    return user

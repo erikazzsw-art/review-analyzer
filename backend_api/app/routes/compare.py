@@ -21,6 +21,7 @@ from backend_api.app.schemas.analysis import (
     ComparisonReportPayload,
     ComparisonReportResponse,
 )
+from backend_api.app.services.budget_guard import assert_budget
 from review_analyzer.analysis_export import export_compare_page_to_xlsx
 from review_analyzer.compare_store import (
     build_compare_group_specs,
@@ -82,7 +83,10 @@ def _enrich_dataset_with_cache(
     groups_with_data = sum(1 for group in dataset["groups"] if group.get("review_count", 0) > 0)
     if groups_with_data >= 2:
         try:
+            assert_budget(user_id)
             ai_summary = generate_ai_comparison_summary(user_id, dataset)
+        except HTTPException:
+            raise
         except ValueError:
             ai_summary = None
 
@@ -163,10 +167,13 @@ def compare_export(
 
     ai_summary: dict[str, Any] | None = None
     if payload.include_ai_summary:
-        try:
-            ai_summary = generate_ai_comparison_summary(user_id, dataset, payload.focus_feature)
-        except ValueError:
-            ai_summary = None
+        ai_summary = _get_or_generate_ai_summary(
+            user_id,
+            payload.compare_type,
+            filters,
+            dataset,
+            focus_feature=payload.focus_feature,
+        )
 
     xlsx_payload, context = dataset_to_xlsx_payload(dataset, ai_summary)
     binary, filename = export_compare_page_to_xlsx(xlsx_payload, context)
@@ -175,6 +182,44 @@ def compare_export(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+def _get_or_generate_ai_summary(
+    user_id: int,
+    compare_type: str,
+    filters: dict[str, Any],
+    dataset: dict[str, Any],
+    focus_feature: str | None = None,
+) -> dict[str, Any] | None:
+    """走 fingerprint 缓存 → 命中直接返回；未命中才调 LLM。
+
+    focus_feature 参与指纹，因为不同 feature 产出不同总结。
+    """
+    group_specs = filters.get("groups", [])
+    fp_input = list(group_specs)
+    if focus_feature:
+        fp_input = [{"__focus__": focus_feature}, *group_specs]
+    fingerprint = compute_compare_fingerprint(user_id, compare_type, fp_input)
+
+    cached = load_compare_cache(fingerprint)
+    if cached is not None and cached.get("ai_summary"):
+        return cached["ai_summary"]
+
+    assert_budget(user_id)
+    try:
+        ai_summary = generate_ai_comparison_summary(user_id, dataset, focus_feature)
+    except ValueError:
+        return None
+
+    save_compare_cache(
+        fingerprint=fingerprint,
+        user_id=user_id,
+        compare_type=compare_type,
+        filter_payload={"compare_type": compare_type, "groups": group_specs, "focus_feature": focus_feature},
+        group_insights=(cached or {}).get("group_insights") or [],
+        ai_summary=ai_summary,
+    )
+    return ai_summary
 
 
 @router.post("/reports", response_model=ComparisonReportResponse)
@@ -194,13 +239,18 @@ def create_comparison_report(
         "focus_feature": payload.focus_feature,
     }
     dataset = get_comparison_dataset(user_id, filters)
-    try:
-        ai_summary = generate_ai_comparison_summary(user_id, dataset, payload.focus_feature)
-    except ValueError as exc:
+    ai_summary = _get_or_generate_ai_summary(
+        user_id,
+        payload.compare_type,
+        filters,
+        dataset,
+        focus_feature=payload.focus_feature,
+    )
+    if ai_summary is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
-        ) from exc
+            detail="当前有效评论不足或 AI 服务暂不可用，请稍后再试。",
+        )
 
     report = save_comparison_report(
         user_id=user_id,

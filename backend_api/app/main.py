@@ -9,6 +9,7 @@ from backend_api.app.config import get_settings
 from backend_api.app.middleware import AnalyticsMiddleware
 from backend_api.app.routes.actions import router as actions_router
 from backend_api.app.routes.actions import trackers_router as trackers_router
+from backend_api.app.routes.admin import router as admin_router
 from backend_api.app.routes.analysis import router as analysis_router
 from backend_api.app.routes.analytics import router as analytics_router
 from backend_api.app.routes.asin_watchlist import router as asin_watchlist_router
@@ -90,3 +91,4 @@ app.include_router(copywriter_router)
 app.include_router(downloads_router)
 app.include_router(export_router)
 app.include_router(translate_router)
+app.include_router(admin_router)
