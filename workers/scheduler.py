@@ -33,6 +33,8 @@ def _get_due_users() -> list[dict]:
     """查询所有启用了周期推送且当前时间到期的用户配置"""
     import json
 
+    import psycopg2
+
     from review_analyzer.database import get_connection
 
     conn = get_connection()
@@ -45,6 +47,12 @@ def _get_due_users() -> list[dict]:
                    WHERE u.is_active = true"""
             )
             rows = cur.fetchall()
+    except psycopg2.errors.UndefinedTable:
+        logger.warning("_get_due_users: user_settings table missing, skipping periodic push scan")
+        return []
+    except Exception:
+        logger.exception("_get_due_users: query failed")
+        return []
     finally:
         conn.close()
 
@@ -114,17 +122,20 @@ def _acquire_lock(redis_conn, user_id: int) -> bool:
 
 
 def run_scheduler() -> None:
-    """主循环：每分钟扫描一次到期用户，入队推送任务；每 5 分钟扫描卡死任务"""
+    """主循环：每分钟扫描一次到期用户，入队推送任务；每 5 分钟扫描卡死任务；每天 09:07 UTC+8 推送成本日报。
+
+    每个调度点独立 try/except，一个失败不影响其他。
+    """
     logger.info("scheduler: started, scan interval=%ds, stale scan interval=%ds", SCAN_INTERVAL_SECONDS, STALE_SCAN_INTERVAL_SECONDS)
     redis_conn = get_redis_connection()
     last_stale_scan = 0.0
 
     while True:
+        # --- 周期推送扫描 ---
         try:
             due_users = _get_due_users()
             if due_users:
                 logger.info("scheduler: found %d due users", len(due_users))
-
             for user_config in due_users:
                 user_id = user_config["user_id"]
                 if not _acquire_lock(redis_conn, user_id):
@@ -134,31 +145,30 @@ def run_scheduler() -> None:
                     logger.info("scheduler: enqueued periodic digest for user %d", user_id)
                 except Exception:
                     logger.exception("scheduler: failed to enqueue for user %d", user_id)
+        except Exception:
+            logger.exception("scheduler: periodic push scan failed")
 
-            # 每 STALE_SCAN_INTERVAL_SECONDS 秒扫描一次卡死任务
+        # --- 卡死任务扫描 ---
+        try:
             import time as _time
             now = _time.time()
             if now - last_stale_scan >= STALE_SCAN_INTERVAL_SECONDS:
-                try:
-                    enqueue_stale_job_scan()
-                    logger.info("scheduler: enqueued stale job scan")
-                except Exception:
-                    logger.exception("scheduler: failed to enqueue stale job scan")
+                enqueue_stale_job_scan()
+                logger.info("scheduler: enqueued stale job scan")
                 last_stale_scan = now
+        except Exception:
+            logger.exception("scheduler: failed to enqueue stale job scan")
 
-            # 每日 09:07 UTC+8 触发一次成本日报（redis lock 去重）
+        # --- 每日成本日报（09:07 UTC+8，redis lock 去重）---
+        try:
             now_dt = datetime.now()
             if now_dt.hour == DAILY_DIGEST_HOUR and now_dt.minute == DAILY_DIGEST_MINUTE:
                 lock_key = f"{DAILY_DIGEST_LOCK_PREFIX}{now_dt.strftime('%Y%m%d')}"
                 if redis_conn.set(lock_key, "1", nx=True, ex=86400):
-                    try:
-                        enqueue_daily_cost_digest()
-                        logger.info("scheduler: enqueued daily cost digest")
-                    except Exception:
-                        logger.exception("scheduler: failed to enqueue daily cost digest")
-
+                    enqueue_daily_cost_digest()
+                    logger.info("scheduler: enqueued daily cost digest")
         except Exception:
-            logger.exception("scheduler: scan cycle error")
+            logger.exception("scheduler: failed to enqueue daily cost digest")
 
         time.sleep(SCAN_INTERVAL_SECONDS)
 
