@@ -228,6 +228,8 @@ class QaCitationPayload(BaseModel):
 class QaAskResponse(BaseModel):
     answer: str
     retrieval_method: str
+    intent: str | None = None
+    aggregation_snapshot: dict[str, Any] | None = None
     selected_products: list[QaProductPayload] = Field(default_factory=list)
     citations: list[QaCitationPayload] = Field(default_factory=list)
 
@@ -256,6 +258,8 @@ class QaMessageResponse(BaseModel):
     content: str
     citations: list[QaCitationPayload] = Field(default_factory=list)
     retrieval_method: str | None = None
+    intent: str | None = None
+    aggregation_snapshot: dict[str, Any] | None = None
     created_at: str
 
 

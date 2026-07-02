@@ -71,6 +71,7 @@
   - [x] 实现"Ask your reviews"对话框 UI
   - [x] 集成到分析结果页
   - [x] Free 用户入口触发升级提示
+  - [x] **2026-07-02 P0 升级**：从单一检索 RAG 升级为意图路由 + 结构化聚合，修复 4 个内置示例问题（差评原因/质量最好/最常提到的优点/共同质量问题）在真实数据下答不出来的问题；对齐 Shulex VOC 问评论能力矩阵。P1 待做：完整意图分类 LLM 兜底、rating_breakdown/consumer_insight/trend handler、前端 4 分组建议问题
 
 ### V2-M4: Paddle 计费 (Subscription & Paywall)
 - 分支: `develop`（已在主开发线实现）

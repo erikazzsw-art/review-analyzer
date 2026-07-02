@@ -25,6 +25,36 @@
 
 ---
 
+## 2026-07-02
+
+### 问评论页面能力升级 · P0（意图路由 + 结构化聚合）
+
+- **工作量**: M
+- **状态**: 已完成（P0），P1/P2 待排期
+
+**需求描述**：
+问评论页面的 4 个内置示例问题（差评原因/质量最好/最常提到的优点/共同质量问题）在真实数据上全部返回"没有找到"。用户反馈：页面上"看似能问的问题"都不能问，不清楚具体能问什么。对齐竞品 Shulex VOC 的问评论能力（消费者洞察/产品反馈/竞品对比/市场趋势 4 大类），把系统从"单一检索型 RAG"重构为"意图路由 + 结构化聚合 + 检索证据"。
+
+**实现要点**：
+1. 新增聚合原语层 `review_analyzer/aggregations.py`（top_tags / pick_representative_reviews / pick_citations_by_tags 含 TypedDict），`compare_store.py` 复用同一模块，消除重复实现
+2. 规则版意图分类 `review_analyzer/qa_intent.py`（7 类 intent + `_RULE_PATTERNS` 20+ 正则），4 个示例问题全部命中期望 intent（0ms 开销）；LLM 兜底 P1 再接入
+3. P0 三个 handler `review_analyzer/qa_handlers.py`：aggregate_feedback（Top-N 骨架 + 代表评论 → LLM 强制列 Top 3-5 + 占比 + 引用 + 可行动建议）、product_compare（按产品分组表格对比）、retrieval（封装现有 hybrid 检索作 fallback）
+4. `rag.py:answer_question` 重构为纯意图路由，返回体新增 `intent` + `aggregation_snapshot` 字段；handler 内部 LLM 失败自动降级到骨架文案（永不返回"没有找到"）
+5. `backend_api/app/routes/qa.py` 单轮/多轮两处入口都传 `products_meta` 支持跨产品对比；qa_messages 表 INSERT 存 intent 和 snapshot 便于历史回放
+6. migration `039_qa_intent_columns.sql` 加两列，schema `QaAskResponse`/`QaMessageResponse` 加两字段
+7. 前端 `qa-chat-area.tsx` 加意图徽章（聚合分析/跨产品对比/检索证据/…），retrieval_method 中文化
+8. Smoke test 验证：4 条示例问题全部产出结构化答案，retrieval_method 分别显示 `aggregation`/`compare`；ruff + tsc 通过
+
+**涉及岗位及工时**：
+- 算法工程师 · 0.75 天（意图分类规则设计、handler prompt 编写、聚合原语提取）
+- 后端开发 · 0.5 天（路由层适配、schema/migration、qa_messages 存 intent）
+- 前端开发 · 0.25 天（类型同步、意图徽章）
+
+**后续计划（P1）**：
+补齐 rating_breakdown/consumer_insight/trend_and_emerging/unanswerable 4 个 handler + LLM few-shot 兜底意图分类 + 前端建议问题重做为 4 分组 12-16 条 + Golden Set 10 条完整验收。
+
+---
+
 ## 2026-07-01
 
 ### eBay + Walmart 评论抓取接入

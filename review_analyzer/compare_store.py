@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections import Counter
 from datetime import date, datetime
 from typing import Any
 
 import psycopg2.extras
 from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
 
+from review_analyzer.aggregations import (
+    pick_representative_reviews as _pick_representative_reviews,
+)
+from review_analyzer.aggregations import (
+    top_tags as _get_top_tags,
+)
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_comments, get_connection, get_sessions
 from review_analyzer.insight_engine import build_results_insights
@@ -479,61 +484,6 @@ def _dedupe_comments(comments: list[dict[str, Any]]) -> list[dict[str, Any]]:
         ),
         reverse=True,
     )
-
-
-def _get_top_tags(comments: list[dict[str, Any]], tag_field: str) -> list[dict[str, Any]]:
-    counter: Counter[str] = Counter()
-    for comment in comments:
-        seen_tags: set[str] = set()
-        for raw_tag in str(comment.get(tag_field) or "").split(","):
-            tag = raw_tag.strip()
-            if tag and tag not in seen_tags:
-                seen_tags.add(tag)
-                counter[tag] += 1
-
-    pool_size = len(comments)
-    results: list[dict[str, Any]] = []
-    for tag, count in counter.most_common(8):
-        pct = round((count / pool_size) * 100, 1) if pool_size else 0.0
-        results.append({"tag": tag, "count": count, "pct": pct})
-    return results
-
-
-def _pick_representative_reviews(
-    comments: list[dict[str, Any]],
-    top_tags: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    if not comments:
-        return []
-
-    preferred_tags = {item["tag"] for item in top_tags[:3]}
-
-    def sort_key(comment: dict[str, Any]) -> tuple[int, date, int]:
-        raw_tags = ",".join(
-            [
-                str(comment.get("issue_tag") or "").strip(),
-                str(comment.get("highlight_tag") or "").strip(),
-            ]
-        )
-        tag_hit = 1 if any(tag in raw_tags for tag in preferred_tags) else 0
-        return (
-            tag_hit,
-            _to_date(comment.get("date")) or date.min,
-            int(comment.get("id") or 0),
-        )
-
-    picked = sorted(comments, key=sort_key, reverse=True)[:3]
-    return [
-        {
-            "rating": comment.get("rating"),
-            "date": comment.get("date"),
-            "content": str(comment.get("content") or "").strip(),
-            "issue_tag": str(comment.get("issue_tag") or "").strip(),
-            "highlight_tag": str(comment.get("highlight_tag") or "").strip(),
-        }
-        for comment in picked
-        if str(comment.get("content") or "").strip()
-    ]
 
 
 def _build_tag_difference_rows(groups: list[dict[str, Any]], field_name: str) -> list[dict[str, Any]]:

@@ -57,6 +57,7 @@ export function QaPanel({ products }: QaPanelProps) {
         content: response.content,
         citations: response.citations,
         retrieval_method: response.retrieval_method,
+        intent: response.intent,
       };
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {

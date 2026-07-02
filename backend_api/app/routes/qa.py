@@ -82,7 +82,13 @@ def ask_reviews(
     if not allowed:
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
 
-    result = answer_question(user_id, payload.question.strip(), selected_comments, top_k=payload.top_k)
+    result = answer_question(
+        user_id,
+        payload.question.strip(),
+        selected_comments,
+        top_k=payload.top_k,
+        products_meta=selected_rows,
+    )
     quota_consume(user_id, "ask_review")
 
     citations = [
@@ -103,6 +109,8 @@ def ask_reviews(
     return QaAskResponse(
         answer=str(result.get("answer") or ""),
         retrieval_method=str(result.get("retrieval_method") or "text"),
+        intent=result.get("intent"),
+        aggregation_snapshot=result.get("aggregation_snapshot"),
         selected_products=[
             QaProductPayload(
                 id=int(row["id"]) if row.get("id") is not None else None,
@@ -215,7 +223,7 @@ def get_conversation_messages(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, conversation_id, role, content, citations, retrieval_method, created_at FROM qa_messages WHERE conversation_id = %s ORDER BY created_at ASC",
+                "SELECT id, conversation_id, role, content, citations, retrieval_method, intent, aggregation_snapshot, created_at FROM qa_messages WHERE conversation_id = %s ORDER BY created_at ASC",
                 (conversation_id,),
             )
             rows = cur.fetchall()
@@ -230,7 +238,9 @@ def get_conversation_messages(
             content=r[3],
             citations=_parse_citations_json(r[4]),
             retrieval_method=r[5],
-            created_at=r[6].isoformat(),
+            intent=r[6],
+            aggregation_snapshot=_parse_snapshot_json(r[7]),
+            created_at=r[8].isoformat(),
         )
         for r in rows
     ]
@@ -265,11 +275,24 @@ def send_message(
     if not allowed:
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
 
-    result = answer_question(user_id, question, selected_comments, top_k=payload.top_k, history=history)
+    product_rows = get_product_overview_rows(user_id)
+    product_map = {str(row["parent_product_id"]): row for row in product_rows if row.get("parent_product_id")}
+    selected_rows_for_conv = [product_map[pid] for pid in product_ids if pid in product_map]
+
+    result = answer_question(
+        user_id,
+        question,
+        selected_comments,
+        top_k=payload.top_k,
+        history=history,
+        products_meta=selected_rows_for_conv,
+    )
     quota_consume(user_id, "ask_review")
     answer = str(result.get("answer") or "")
     citations_raw = result.get("citations", [])
     retrieval_method = str(result.get("retrieval_method") or "text")
+    intent = result.get("intent")
+    aggregation_snapshot = result.get("aggregation_snapshot")
 
     citations_payload = [
         QaCitationPayload(
@@ -295,8 +318,15 @@ def send_message(
                 (conversation_id, question),
             )
             cur.execute(
-                "INSERT INTO qa_messages (conversation_id, role, content, citations, retrieval_method) VALUES (%s, 'assistant', %s, %s, %s) RETURNING id, created_at",
-                (conversation_id, answer, json.dumps([c.model_dump() for c in citations_payload]), retrieval_method),
+                "INSERT INTO qa_messages (conversation_id, role, content, citations, retrieval_method, intent, aggregation_snapshot) VALUES (%s, 'assistant', %s, %s, %s, %s, %s) RETURNING id, created_at",
+                (
+                    conversation_id,
+                    answer,
+                    json.dumps([c.model_dump() for c in citations_payload]),
+                    retrieval_method,
+                    intent,
+                    json.dumps(aggregation_snapshot, ensure_ascii=False) if aggregation_snapshot else None,
+                ),
             )
             row = cur.fetchone()
             title_update = ""
@@ -322,6 +352,8 @@ def send_message(
         content=answer,
         citations=citations_payload,
         retrieval_method=retrieval_method,
+        intent=intent,
+        aggregation_snapshot=aggregation_snapshot,
         created_at=row[1].isoformat(),
     )
 
@@ -369,3 +401,13 @@ def _parse_citations_json(raw) -> list[QaCitationPayload]:
     if isinstance(raw, str):
         raw = json.loads(raw)
     return [QaCitationPayload(**item) for item in raw]
+
+
+def _parse_snapshot_json(raw) -> dict | None:
+    if not raw:
+        return None
+    if isinstance(raw, str):
+        return json.loads(raw)
+    if isinstance(raw, dict):
+        return raw
+    return None

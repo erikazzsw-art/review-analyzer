@@ -321,61 +321,35 @@ def answer_question(
     api_key: str | None = None,
     top_k: int = DEFAULT_TOP_K,
     history: list[dict] | None = None,
+    products_meta: list[dict] | None = None,
 ) -> dict:
-    """检索评论并生成回答，返回 answer + citations。history 为多轮对话历史 [{"role": ..., "content": ...}]。"""
-    retrieval_method = "text"
-    citations: list[dict] = []
-    try:
-        ensure_comment_embeddings(user_id, comments)
-        question_embedding = generate_embedding(question, user_id)
-        comment_ids = [int(c["id"]) for c in comments if c.get("id")]
-        citations = hybrid_retrieve(
-            user_id, question, question_embedding, comment_ids, top_k=top_k
-        )
-        if citations:
-            retrieval_method = "hybrid"
-    except Exception:
-        citations = []
+    """路由到对应 handler 生成回答，返回 {answer, citations, retrieval_method, intent, aggregation_snapshot}."""
+    # 延迟导入避免循环依赖（qa_handlers 会 import rag 里的原语）
+    from review_analyzer.qa_handlers import INTENT_HANDLERS, retrieval_handler  # noqa: PLC0415
+    from review_analyzer.qa_intent import classify_intent  # noqa: PLC0415
 
-    if not citations:
-        citations = retrieve_relevant_comments(question, comments, top_k=top_k)
+    intent_result = classify_intent(question, products_meta, history)
+    intent = intent_result["intent"]
+    handler = INTENT_HANDLERS.get(intent, retrieval_handler)
 
-    if not citations:
-        return {"answer": _fallback_answer(question, citations), "citations": [], "retrieval_method": retrieval_method}
+    kwargs: dict = {"fallback": retrieval_handler}
+    if intent == "product_compare":
+        kwargs["products_meta"] = products_meta
 
-    try:
-        resolved_api_key = api_key or get_api_key(user_id)
-        client = OpenAI(
-            api_key=resolved_api_key,
-            base_url="https://api.deepseek.com/v1",
-            timeout=30.0,
-        )
-        context = _format_context(citations)
-        messages: list[dict] = [
-            {
-                "role": "system",
-                "content": (
-                    "你是跨境电商评论分析助手。只能基于给定评论回答问题；"
-                    "如果证据不足，要明确说明。回答要简洁，并用 [1] [2] 这样的编号引用评论。"
-                ),
-            },
-        ]
-        if history:
-            messages.extend(history)
-        messages.append(
-            {
-                "role": "user",
-                "content": f"用户问题：{question}\n\n相关评论：\n{context}",
-            },
-        )
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=messages,
-            temperature=0.2,
-            max_tokens=700,
-        )
-        answer = response.choices[0].message.content.strip()
-    except Exception:
-        answer = _fallback_answer(question, citations)
+    result = handler(
+        user_id,
+        question,
+        comments,
+        top_k,
+        history,
+        intent_result,
+        **kwargs,
+    )
 
-    return {"answer": answer, "citations": citations, "retrieval_method": retrieval_method}
+    return {
+        "answer": result["answer"],
+        "citations": result["citations"],
+        "retrieval_method": result["retrieval_method"],
+        "intent": intent,
+        "aggregation_snapshot": result.get("aggregation_snapshot"),
+    }

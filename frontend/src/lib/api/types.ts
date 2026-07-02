@@ -404,6 +404,8 @@ export type QaCitation = {
 export type QaAskResponse = {
   answer: string;
   retrieval_method: string;
+  intent: string | null;
+  aggregation_snapshot: Record<string, unknown> | null;
   selected_products: QaProduct[];
   citations: QaCitation[];
 };
@@ -429,6 +431,8 @@ export type QaMessage = {
   content: string;
   citations: QaCitation[];
   retrieval_method: string | null;
+  intent: string | null;
+  aggregation_snapshot: Record<string, unknown> | null;
   created_at: string;
 };
 

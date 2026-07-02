@@ -10,6 +10,25 @@ type ChatMessage = {
   content: string;
   citations?: QaCitation[];
   retrieval_method?: string | null;
+  intent?: string | null;
+};
+
+const INTENT_LABELS: Record<string, string> = {
+  aggregate_feedback: "聚合分析",
+  product_compare: "跨产品对比",
+  rating_breakdown: "星级分层",
+  consumer_insight: "消费者洞察",
+  trend_and_emerging: "趋势分析",
+  specific_retrieval: "检索证据",
+  unanswerable: "无法回答",
+};
+
+const RETRIEVAL_LABELS: Record<string, string> = {
+  hybrid: "混合检索",
+  vector: "向量检索",
+  aggregation: "结构化聚合",
+  compare: "跨产品聚合",
+  fallback: "兜底文案",
 };
 
 type QaChatAreaProps = {
@@ -56,9 +75,18 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <div className="whitespace-pre-line text-sm leading-7 text-ink">
           {message.content}
         </div>
-        {message.retrieval_method && (
-          <div className="mt-1 text-xs text-soft">
-            检索方式：{message.retrieval_method === "hybrid" ? "混合检索" : message.retrieval_method === "vector" ? "向量检索" : "文本检索"}
+        {(message.intent || message.retrieval_method) && (
+          <div className="mt-1 flex flex-wrap gap-2 text-xs text-soft">
+            {message.intent && INTENT_LABELS[message.intent] && (
+              <span className="rounded-full bg-[#fdf1f4] px-2 py-0.5 font-medium text-[#d94d72]">
+                {INTENT_LABELS[message.intent]}
+              </span>
+            )}
+            {message.retrieval_method && (
+              <span>
+                {RETRIEVAL_LABELS[message.retrieval_method] ?? `检索方式：${message.retrieval_method}`}
+              </span>
+            )}
           </div>
         )}
         {message.citations && message.citations.length > 0 && (
