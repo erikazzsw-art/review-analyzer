@@ -54,6 +54,8 @@ def periodic_digest_job(user_id: int) -> dict[str, Any]:
     if not webhook_url:
         return {"ok": False, "msg": "no webhook url"}
 
+    platform = settings.get("webhook_platform") or "feishu"
+
     periodic_config = settings.get("periodic_push", {})
     frequency = periodic_config.get("frequency", "weekly")
     period_days = {"daily": 1, "weekly": 7, "biweekly": 14, "monthly": 30}.get(frequency, 7)
@@ -195,6 +197,7 @@ def periodic_digest_job(user_id: int) -> dict[str, Any]:
             secret=secret,
             action_progress=action_progress or None,
             product_id=product_id,
+            platform=platform,
         )
 
         results.append({
@@ -333,10 +336,8 @@ def scan_stale_jobs() -> dict[str, Any]:
 
 
 def _send_stale_alert(stale_jobs: list[dict]) -> None:
-    """发送飞书运维告警"""
+    """发送运维告警（走三平台分发）"""
     import os
-
-    import requests
 
     webhook_url = os.getenv("FEISHU_OPS_WEBHOOK")
     if not webhook_url:
@@ -358,11 +359,14 @@ def _send_stale_alert(stale_jobs: list[dict]) -> None:
     lines.append("")
     lines.append("请检查 Worker 进程状态：docker logs clueai-worker")
 
-    body = {"msg_type": "text", "content": {"text": "\n".join(lines)}}
+    platform = os.getenv("OPS_WEBHOOK_PLATFORM", "feishu").strip().lower() or "feishu"
+    secret = os.getenv("OPS_WEBHOOK_SECRET", "").strip()
 
     try:
-        resp = requests.post(webhook_url, json=body, timeout=10)
-        logger.info("scan_stale_jobs: alert sent, status=%d", resp.status_code)
+        from review_analyzer.notifier import send_text_notification
+
+        result = send_text_notification(platform, webhook_url, "\n".join(lines), secret)
+        logger.info("scan_stale_jobs: alert sent, ok=%s msg=%s", result.get("ok"), result.get("msg"))
     except Exception as e:
         logger.error("scan_stale_jobs: alert failed: %s", e)
 
@@ -386,21 +390,22 @@ def enqueue_stale_job_scan() -> str:
 
 
 def daily_cost_digest() -> dict[str, Any]:
-    """汇总昨日 LLM 花费、top 用户，推送到飞书运维群。
+    """汇总昨日 LLM 花费、top 用户，推送到运维群（三平台分发）。
 
     - 每天 UTC+8 09:07 由 scheduler 触发（避开 :00 :30）
     - 数据源：llm_usage_log 表
     - 无数据不推送
+    - 环境变量：FEISHU_OPS_WEBHOOK / OPS_WEBHOOK_PLATFORM / OPS_WEBHOOK_SECRET
     """
     import os
     from datetime import timedelta as _td
     from datetime import timezone as _tz
 
     import psycopg2.extras
-    import requests
 
     from backend_api.app.services.budget_guard import get_budget_status
     from review_analyzer.database import get_connection
+    from review_analyzer.notifier import send_text_notification
 
     tz = _tz(_td(hours=8))
     now = datetime.now(tz)
@@ -474,16 +479,14 @@ def daily_cost_digest() -> dict[str, Any]:
         uname = r.get("username") or f"user_{r['user_id']}"
         lines.append(f"  {uname}  ¥{float(r['cost_yuan']):.2f}  ({int(r['calls'])} 次)")
 
-    try:
-        requests.post(
-            webhook,
-            json={"msg_type": "text", "content": {"text": "\n".join(lines)}},
-            timeout=10,
-        )
+    platform = os.getenv("OPS_WEBHOOK_PLATFORM", "feishu").strip().lower() or "feishu"
+    secret = os.getenv("OPS_WEBHOOK_SECRET", "").strip()
+
+    result = send_text_notification(platform, webhook, "\n".join(lines), secret)
+    if result.get("ok"):
         return {"ok": True, "total_cost_yuan": total_cost, "users": len(top_users)}
-    except Exception as e:
-        logger.error("daily_cost_digest: feishu push failed: %s", e)
-        return {"ok": False, "msg": str(e)}
+    logger.error("daily_cost_digest: push failed: %s", result.get("msg"))
+    return {"ok": False, "msg": result.get("msg", "push failed")}
 
 
 def enqueue_daily_cost_digest() -> str:

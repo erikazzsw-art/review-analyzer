@@ -27,7 +27,10 @@ from review_analyzer.quota import get_all_quota_status
 
 router = APIRouter(tags=["settings"])
 
+_VALID_WEBHOOK_PLATFORMS = ("feishu", "dingtalk", "wechat")
+
 DEFAULT_PUSH_SETTINGS = {
+    "webhook_platform": "feishu",
     "webhook_url": "",
     "webhook_secret": "",
     "webhook_group_name": "",
@@ -36,11 +39,17 @@ DEFAULT_PUSH_SETTINGS = {
 }
 
 
+def _clean_platform(value: Any) -> str:
+    v = str(value or "feishu").strip().lower()
+    return v if v in _VALID_WEBHOOK_PLATFORMS else "feishu"
+
+
 def _normalize_push_settings(raw: dict[str, Any] | None) -> dict[str, Any]:
     payload = dict(DEFAULT_PUSH_SETTINGS)
     if raw:
         payload.update(
             {
+                "webhook_platform": _clean_platform(raw.get("webhook_platform")),
                 "webhook_url": str(raw.get("webhook_url") or ""),
                 "webhook_secret": str(raw.get("webhook_secret") or ""),
                 "webhook_group_name": str(raw.get("webhook_group_name") or ""),
@@ -107,6 +116,7 @@ def get_settings_route(current_user: dict = Depends(get_current_user)) -> Settin
     user_id = int(current_user["id"])
     payload = _load_settings(user_id)
     return SettingsPayload(
+        webhook_platform=_clean_platform(payload.get("webhook_platform")),
         webhook_url=str(payload.get("webhook_url") or ""),
         webhook_secret=str(payload.get("webhook_secret") or ""),
         webhook_group_name=str(payload.get("webhook_group_name") or ""),
@@ -124,14 +134,24 @@ def patch_settings_route(
     current_user: dict = Depends(get_current_user),
 ) -> SettingsPayload:
     user_id = int(current_user["id"])
-    normalized = {
+    # 保留 push_settings 里的其他字段（periodic_push / dept_contacts / escalation_rules / dept_mapping）
+    raw_existing = get_setting(user_id, "push_settings")
+    existing: dict[str, Any] = {}
+    if raw_existing:
+        try:
+            existing = json.loads(raw_existing)
+        except json.JSONDecodeError:
+            existing = {}
+
+    existing.update({
+        "webhook_platform": _clean_platform(payload.webhook_platform),
         "webhook_url": payload.webhook_url.strip(),
         "webhook_secret": payload.webhook_secret.strip(),
         "webhook_group_name": payload.webhook_group_name.strip(),
         "rules": payload.rules.model_dump(),
         "product_rules": [item.model_dump() for item in payload.product_rules],
-    }
-    set_setting(user_id, "push_settings", json.dumps(normalized, ensure_ascii=False))
+    })
+    set_setting(user_id, "push_settings", json.dumps(existing, ensure_ascii=False))
 
     api_key = payload.api_key.strip()
     if api_key:
@@ -149,9 +169,10 @@ def test_webhook_route(
 ) -> dict[str, Any]:
     webhook_url = str(payload.get("webhook_url") or "").strip()
     secret = str(payload.get("webhook_secret") or "").strip()
+    platform = _clean_platform(payload.get("webhook_platform"))
     if not webhook_url:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Webhook URL is required.")
-    return _test_webhook(webhook_url, "feishu", secret)
+    return _test_webhook(webhook_url, platform, secret)
 
 
 @router.get("/billing")

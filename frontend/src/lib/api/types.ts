@@ -580,7 +580,10 @@ export type ProductRuleSettings = {
   compare_version?: string | null;
 };
 
+export type WebhookPlatform = "feishu" | "dingtalk" | "wechat";
+
 export type SettingsResponse = {
+  webhook_platform: WebhookPlatform;
   webhook_url: string;
   webhook_secret: string;
   webhook_group_name: string;
@@ -596,6 +599,7 @@ export type SettingsResponse = {
 };
 
 export type SettingsUpdatePayload = {
+  webhookPlatform: WebhookPlatform;
   webhookUrl: string;
   webhookSecret: string;
   webhookGroupName: string;

@@ -78,8 +78,8 @@ def build_coverage_warning(coverage: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def format_feishu_alert(warning: dict[str, Any], session_id: int, user_id: int) -> str:
-    """格式化飞书推送文本."""
+def format_ops_alert(warning: dict[str, Any], session_id: int, user_id: int) -> str:
+    """格式化运维告警文本（三平台通用）."""
     data = warning["data"]
     pct = round(data["other_ratio"] * 100, 1)
     return (

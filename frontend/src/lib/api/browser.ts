@@ -673,6 +673,7 @@ export async function saveSettings(payload: SettingsUpdatePayload): Promise<Sett
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      webhook_platform: payload.webhookPlatform,
       webhook_url: payload.webhookUrl,
       webhook_secret: payload.webhookSecret,
       webhook_group_name: payload.webhookGroupName,
@@ -690,6 +691,7 @@ export async function saveSettings(payload: SettingsUpdatePayload): Promise<Sett
 }
 
 export async function testWebhook(payload: {
+  webhookPlatform: "feishu" | "dingtalk" | "wechat";
   webhookUrl: string;
   webhookSecret: string;
 }): Promise<Record<string, unknown>> {
@@ -700,6 +702,7 @@ export async function testWebhook(payload: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      webhook_platform: payload.webhookPlatform,
       webhook_url: payload.webhookUrl,
       webhook_secret: payload.webhookSecret,
     }),

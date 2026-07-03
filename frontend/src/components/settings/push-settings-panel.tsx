@@ -10,6 +10,7 @@ import type {
   ProductRuleSettings,
   PushRuleSettings,
   SettingsResponse,
+  WebhookPlatform,
 } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,54 @@ const DAY_OPTIONS = [
   { value: "saturday", label: "周六" },
   { value: "sunday", label: "周日" },
 ];
+
+const PLATFORM_OPTIONS: Array<{ value: WebhookPlatform; label: string }> = [
+  { value: "feishu", label: "飞书" },
+  { value: "dingtalk", label: "钉钉" },
+  { value: "wechat", label: "企业微信" },
+];
+
+const PLATFORM_META: Record<WebhookPlatform, {
+  sectionTitle: string;
+  sectionDesc: string;
+  urlPlaceholder: string;
+  secretPlaceholder: string;
+  secretHint: string;
+  showSecret: boolean;
+  contactHint: string;
+  contactPlaceholder: string;
+}> = {
+  feishu: {
+    sectionTitle: "绑定飞书",
+    sectionDesc: "配置飞书群机器人 Webhook，启用自动推送。",
+    urlPlaceholder: "https://open.feishu.cn/open-apis/bot/v2/hook/xxx（完整地址，含 hook/ 后的 token）",
+    secretPlaceholder: "飞书机器人「安全设置」中的签名校验密钥（未开启则留空）",
+    secretHint: "签名校验（可选）",
+    showSecret: true,
+    contactHint: "配置后推送消息将 @对应负责人。Open ID 从飞书管理后台获取。",
+    contactPlaceholder: "ou_xxx（飞书 Open ID）",
+  },
+  dingtalk: {
+    sectionTitle: "绑定钉钉",
+    sectionDesc: "配置钉钉自定义机器人 Webhook，启用自动推送。",
+    urlPlaceholder: "https://oapi.dingtalk.com/robot/send?access_token=xxx",
+    secretPlaceholder: "钉钉机器人「安全设置 → 加签」提供的密钥（未启用加签则留空）",
+    secretHint: "加签密钥",
+    showSecret: true,
+    contactHint: "钉钉群机器人暂不支持精准 @ 联系人（因 Open ID 不通用）。",
+    contactPlaceholder: "钉钉暂不使用",
+  },
+  wechat: {
+    sectionTitle: "绑定企业微信",
+    sectionDesc: "配置企业微信群机器人 Webhook，启用自动推送。",
+    urlPlaceholder: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx",
+    secretPlaceholder: "",
+    secretHint: "",
+    showSecret: false,
+    contactHint: "企业微信群机器人暂不支持精准 @ 联系人（需飞书 Open ID）。",
+    contactPlaceholder: "企业微信暂不使用",
+  },
+};
 
 // --- placeholder for remaining content ---
 
@@ -76,6 +125,7 @@ function RuleToggle({
 }
 
 export function PushSettingsPanel({ initialSettings }: Props) {
+  const [webhookPlatform, setWebhookPlatform] = useState<WebhookPlatform>(initialSettings.webhook_platform ?? "feishu");
   const [webhookUrl, setWebhookUrl] = useState(initialSettings.webhook_url);
   const [webhookSecret, setWebhookSecret] = useState(initialSettings.webhook_secret);
   const [webhookGroupName, setWebhookGroupName] = useState(initialSettings.webhook_group_name);
@@ -95,6 +145,8 @@ export function PushSettingsPanel({ initialSettings }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [smartLoading, setSmartLoading] = useState(true);
+
+  const platformMeta = PLATFORM_META[webhookPlatform];
 
   useEffect(() => {
     fetchSmartPushSettings()
@@ -118,7 +170,15 @@ export function PushSettingsPanel({ initialSettings }: Props) {
   async function handleSave() {
     setError(""); setMessage(""); setIsSaving(true);
     try {
-      await saveSettings({ webhookUrl: webhookUrl.trim(), webhookSecret: webhookSecret.trim(), webhookGroupName: webhookGroupName.trim(), apiKey: "", rules, productRules });
+      await saveSettings({
+        webhookPlatform,
+        webhookUrl: webhookUrl.trim(),
+        webhookSecret: webhookSecret.trim(),
+        webhookGroupName: webhookGroupName.trim(),
+        apiKey: "",
+        rules,
+        productRules,
+      });
       await saveSmartPushSettings({ periodic_push: periodicPush, dept_contacts: deptContacts, escalation_rules: escalationRules, dept_mapping: [] });
       setMessage("设置已保存。");
     } catch (err) {
@@ -129,11 +189,15 @@ export function PushSettingsPanel({ initialSettings }: Props) {
   async function handleTestWebhook() {
     setError(""); setMessage(""); setIsTesting(true);
     try {
-      const result = await testWebhook({ webhookUrl: webhookUrl.trim(), webhookSecret: webhookSecret.trim() });
+      const result = await testWebhook({
+        webhookPlatform,
+        webhookUrl: webhookUrl.trim(),
+        webhookSecret: webhookSecret.trim(),
+      });
       if (result.ok) {
         setMessage((result.msg as string) || "连接测试完成。");
       } else {
-        setError((result.msg as string) || "测试失败，请检查 Webhook 地址和签名校验配置");
+        setError((result.msg as string) || "测试失败，请检查 Webhook 地址和签名配置");
       }
     } catch (err) {
       setError((err as { message?: string }).message || "测试失败");
@@ -150,20 +214,36 @@ export function PushSettingsPanel({ initialSettings }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* ① 绑定飞书 */}
+      {/* ① 绑定推送渠道 */}
       <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
-        <h2 className="text-base font-bold text-ink">绑定飞书</h2>
-        <p className="mt-1 text-sm text-soft">配置飞书群机器人 Webhook，启用自动推送。</p>
+        <h2 className="text-base font-bold text-ink">{platformMeta.sectionTitle}</h2>
+        <p className="mt-1 text-sm text-soft">{platformMeta.sectionDesc}</p>
         <div className="mt-5 space-y-4">
           <label className="block space-y-1">
+            <span className="text-sm font-semibold text-ink">推送平台</span>
+            <select
+              value={webhookPlatform}
+              onChange={(e) => setWebhookPlatform(e.target.value as WebhookPlatform)}
+              className="w-full rounded-card border border-line bg-white px-3 py-2 text-sm"
+            >
+              {PLATFORM_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block space-y-1">
             <span className="text-sm font-semibold text-ink">Webhook 地址</span>
-            <Input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx（完整地址，含 hook/ 后的 token）" className="rounded-card border-line" />
+            <Input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder={platformMeta.urlPlaceholder} className="rounded-card border-line" />
           </label>
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="block space-y-1">
-              <span className="text-sm font-semibold text-ink">签名校验</span>
-              <Input type="password" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="飞书机器人「安全设置」中的签名校验密钥（未开启则留空）" className="rounded-card border-line" />
-            </label>
+            {platformMeta.showSecret ? (
+              <label className="block space-y-1">
+                <span className="text-sm font-semibold text-ink">{platformMeta.secretHint}</span>
+                <Input type="password" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder={platformMeta.secretPlaceholder} className="rounded-card border-line" />
+              </label>
+            ) : (
+              <div className="text-xs text-soft self-center">企业微信不使用签名密钥，URL 中的 key 已完成鉴权。</div>
+            )}
             <label className="block space-y-1">
               <span className="text-sm font-semibold text-ink">群名称备注</span>
               <Input value={webhookGroupName} onChange={(e) => setWebhookGroupName(e.target.value)} className="rounded-card border-line" />
@@ -233,13 +313,19 @@ export function PushSettingsPanel({ initialSettings }: Props) {
       {/* ④ 部门负责人 */}
       <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
         <h2 className="text-base font-bold text-ink">部门负责人</h2>
-        <p className="mt-1 text-sm text-soft">配置后推送消息将 @对应负责人。Open ID 从飞书管理后台获取。</p>
+        <p className="mt-1 text-sm text-soft">{platformMeta.contactHint}</p>
         {smartLoading ? <div className="py-4 text-sm text-soft">加载中...</div> : (
           <div className="mt-4 space-y-2">
             {(Object.keys(DEPT_LABELS) as Array<keyof DeptContactSettings>).map((dept) => (
               <div key={dept} className="flex items-center gap-3">
                 <span className="w-12 text-sm font-medium text-ink">{DEPT_LABELS[dept]}</span>
-                <Input value={deptContacts[dept]} onChange={(e) => setDeptContacts({ ...deptContacts, [dept]: e.target.value })} placeholder={`ou_xxx`} className="flex-1 rounded-card border-line font-mono text-sm" />
+                <Input
+                  value={deptContacts[dept]}
+                  onChange={(e) => setDeptContacts({ ...deptContacts, [dept]: e.target.value })}
+                  placeholder={platformMeta.contactPlaceholder}
+                  disabled={webhookPlatform !== "feishu"}
+                  className="flex-1 rounded-card border-line font-mono text-sm disabled:bg-slate-50 disabled:text-soft"
+                />
               </div>
             ))}
           </div>

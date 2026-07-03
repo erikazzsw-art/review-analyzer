@@ -148,20 +148,26 @@ def _should_alert(key: str) -> bool:
         return True
 
 
-def _send_feishu_alert(text: str) -> None:
+def _send_ops_alert(text: str) -> None:
+    """运维告警推送。走 send_text_notification 三平台分发。
+
+    环境变量：
+    - FEISHU_OPS_WEBHOOK: 运维推送 URL（历史变量名，语义已升级为通用运维 webhook）
+    - OPS_WEBHOOK_PLATFORM: feishu (默认) / dingtalk / wechat
+    - OPS_WEBHOOK_SECRET: 可选签名密钥（飞书/钉钉支持）
+    """
     webhook = os.getenv("FEISHU_OPS_WEBHOOK", "").strip()
     if not webhook:
         logger.warning("budget_guard: FEISHU_OPS_WEBHOOK not set, skipping alert")
         return
+    platform = os.getenv("OPS_WEBHOOK_PLATFORM", "feishu").strip().lower() or "feishu"
+    secret = os.getenv("OPS_WEBHOOK_SECRET", "").strip()
     try:
-        import requests
-        requests.post(
-            webhook,
-            json={"msg_type": "text", "content": {"text": text}},
-            timeout=10,
-        )
+        from review_analyzer.notifier import send_text_notification
+
+        send_text_notification(platform, webhook, text, secret)
     except Exception:
-        logger.exception("budget_guard: feishu alert failed")
+        logger.exception("budget_guard: ops alert failed")
 
 
 def assert_budget(user_id: int) -> None:
@@ -170,7 +176,7 @@ def assert_budget(user_id: int) -> None:
 
     if global_status["daily"]["tripped"]:
         if _should_alert(_alert_key("global", "daily")):
-            _send_feishu_alert(
+            _send_ops_alert(
                 f"🛑 全站每日预算触顶\n"
                 f"今日已花费 ¥{global_status['daily']['used_yuan']} "
                 f"/ 阈值 ¥{global_status['daily']['cap_yuan']}\n"
@@ -183,7 +189,7 @@ def assert_budget(user_id: int) -> None:
 
     if global_status["monthly"]["tripped"]:
         if _should_alert(_alert_key("global", "monthly")):
-            _send_feishu_alert(
+            _send_ops_alert(
                 f"🛑 全站本月预算触顶\n"
                 f"本月已花费 ¥{global_status['monthly']['used_yuan']} "
                 f"/ 阈值 ¥{global_status['monthly']['cap_yuan']}\n"
@@ -198,7 +204,7 @@ def assert_budget(user_id: int) -> None:
 
     if user_status["daily"]["tripped"]:
         if _should_alert(_alert_key(f"user_{user_id}", "daily")):
-            _send_feishu_alert(
+            _send_ops_alert(
                 f"⚠️ 用户 {user_id} 今日预算触顶\n"
                 f"已花费 ¥{user_status['daily']['used_yuan']} "
                 f"/ 阈值 ¥{user_status['daily']['cap_yuan']}"
@@ -210,7 +216,7 @@ def assert_budget(user_id: int) -> None:
 
     if user_status["monthly"]["tripped"]:
         if _should_alert(_alert_key(f"user_{user_id}", "monthly")):
-            _send_feishu_alert(
+            _send_ops_alert(
                 f"⚠️ 用户 {user_id} 本月预算触顶\n"
                 f"已花费 ¥{user_status['monthly']['used_yuan']} "
                 f"/ 阈值 ¥{user_status['monthly']['cap_yuan']}"

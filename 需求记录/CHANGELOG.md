@@ -25,6 +25,62 @@
 
 ---
 
+## 2026-07-03
+
+### Bug 修复：文件上传 500（生产库缺 source_channel 列）
+
+- **工作量**: S
+- **状态**: 已修复（Erika 已执行 migration，无需重启服务）
+
+**需求描述**：
+测试账号在上传页选 `data.xlsx`（产品编号 `BG015-PN-US-01`，一级"户外运动"/二级"户外背包"）点"上传并开始分析"后，前端弹出 `Request failed with status 500.`，且 `upload_jobs` 表内没有对应记录（请求根本没落库）。
+
+**根因**：
+生产 Supabase 库缺少 `upload_jobs.source_channel` 列，migration `017_add_source_channel.sql` 从未在生产执行。`review_analyzer/database.py:368` 的 `create_upload_job` INSERT 语句包含该列，`psycopg2.errors.UndefinedColumn` 冒到 FastAPI 顶层默认变 500。代码里其实写了 try/except fallback 走无 source_channel 的 INSERT，但从 traceback 看未生效（推测 ECS 镜像里的 database.py 版本早于 06-17 加入 fallback 的提交 `2a5dc58`）。同一测试账号 45 条历史 upload_jobs 也都是无 source_channel 的老结构。
+
+**修复动作**：
+ECS api 容器内一次性补跑 migration 017：
+- `ALTER TABLE upload_jobs ADD COLUMN IF NOT EXISTS source_channel TEXT NOT NULL DEFAULT 'manual'`
+- `ALTER TABLE comments ADD COLUMN IF NOT EXISTS source_channel TEXT NOT NULL DEFAULT 'manual'`
+- `CREATE INDEX IF NOT EXISTS idx_comments_source_channel ON comments(user_id, source_channel)`
+
+幂等 DDL，历史行自动补 default `manual`（与代码兜底一致）。`information_schema.columns` 已确认列存在。无需 nginx reload、无需重建镜像。
+
+**验证**：
+- Erika 执行 migration 命令后返回 `migration 017 done` + `verify: [('source_channel',)]`
+- 待用测试账号线上重跑一次 `data.xlsx` 上传确认 500 消失
+
+**涉及岗位及工时**：
+- 后端开发 / DevOps: 1h（排查 + migration 执行）
+
+---
+
+### 推送渠道扩展：钉钉 / 企业微信 · B2 方案
+
+- **工作量**: M
+- **状态**: 已完成（待 Erika 部署 + 线上验收）
+
+**需求描述**：
+服务条款 `terms/page.tsx:24` 明写"预警通知（飞书/钉钉/企业微信 Webhook）"，但代码只实装飞书，构成虚假宣传合规风险。方案 B2（补实装）：用户面 + 运维告警双通道全部支持三平台；单选下拉；原生富文本格式（飞书 post，钉钉/企业微信 markdown）。
+
+**实现要点**：
+1. `review_analyzer/notifier.py` 抽象 platform 分发层：`send_text_notification(platform, url, text, secret)` 统一入口 + 三家 body 构造 + 三家签名（飞书 body、钉钉 URL query、企业微信免签）；富文本 `send_rich_push` 新增 `platform` 参数，飞书用 post 保留 @人 能力，钉钉/企业微信共用一份 markdown 渲染
+2. Schema `backend_api/app/schemas/settings.py` + `routes/settings.py` 新增 `webhook_platform` 字段（feishu/dingtalk/wechat，默认 feishu）；`test-webhook` 路由透传 platform；PATCH 改为 merge 更新避免误清 periodic_push/dept_contacts
+3. 运维告警：`budget_guard._send_ops_alert`（原 `_send_feishu_alert` 重命名）+ `workers/periodic_jobs` 的 stale 告警和 daily cost digest 全部走 `send_text_notification`；新增环境变量 `OPS_WEBHOOK_PLATFORM`（默认 feishu）+ `OPS_WEBHOOK_SECRET`；`FEISHU_OPS_WEBHOOK` 变量名保留（语义升级为通用运维 URL）
+4. `taxonomy_coverage_monitor.format_ops_alert`（原 `format_feishu_alert` 重命名）+ `workers/jobs.py` 的 taxonomy 告警读用户 `webhook_platform` 字段
+5. 前端：`lib/api/types.ts` 新增 `WebhookPlatform` + `SettingsResponse.webhook_platform` + `SettingsUpdatePayload.webhookPlatform`；`browser.ts` 的 `saveSettings` / `testWebhook` 透传 platform；`push-settings-panel.tsx` 新增平台下拉 + 按平台动态切换 section 标题/URL placeholder/secret 提示/联系人 hint（企业微信隐藏 secret 输入框；钉钉/企业微信 disable 部门 open_id 输入）；`settings-panel.tsx` 兼容修复
+
+**限制说明**：钉钉/企业微信群机器人不支持精准 @ 联系人（Open ID 是飞书专属），前端 UI 已 disable 对应输入。
+
+**验证**：ruff check、npm run typecheck、py_compile 全过。
+
+**涉及岗位及工时**：
+- 后端开发（含 worker）: 4h
+- 前端开发: 2h
+- 合计: ~1 人天
+
+---
+
 ## 2026-07-02
 
 ### 问评论页面能力升级 · P0（意图路由 + 结构化聚合）

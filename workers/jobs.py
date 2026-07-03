@@ -30,7 +30,7 @@ from backend_api.app.services.review_pool import (
 from backend_api.app.services.taxonomy_coverage_monitor import (
     build_coverage_warning,
     compute_taxonomy_coverage,
-    format_feishu_alert,
+    format_ops_alert,
 )
 from backend_api.app.services.taxonomy_loader import (
     render_aspects_block,
@@ -578,18 +578,19 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     import json as _json
 
                     from review_analyzer.database import get_setting
-                    from review_analyzer.notifier import send_feishu_notification
+                    from review_analyzer.notifier import send_text_notification
 
                     raw_settings = get_setting(user_id, "push_settings")
                     if raw_settings:
                         push_cfg = _json.loads(raw_settings)
                         webhook_url = push_cfg.get("webhook_url", "")
-                        secret = push_cfg.get("secret", "")
+                        secret = push_cfg.get("webhook_secret") or push_cfg.get("secret", "")
+                        platform = push_cfg.get("webhook_platform") or "feishu"
                         if webhook_url:
-                            alert_text = format_feishu_alert(warning, session_id, user_id)
-                            send_feishu_notification(webhook_url, alert_text, secret)
+                            alert_text = format_ops_alert(warning, session_id, user_id)
+                            send_text_notification(platform, webhook_url, alert_text, secret)
                 except Exception:
-                    logger.warning("upload_job %s: feishu taxonomy alert failed (non-fatal)", job_id, exc_info=True)
+                    logger.warning("upload_job %s: taxonomy alert failed (non-fatal)", job_id, exc_info=True)
         except Exception:
             logger.warning("upload_job %s: taxonomy coverage check failed (non-fatal)", job_id, exc_info=True)
 
@@ -699,6 +700,8 @@ def _post_analysis_smart_push(
     webhook_url = settings.get("webhook_url", "")
     if not webhook_url:
         return
+
+    platform = settings.get("webhook_platform") or "feishu"
 
     total = len(comments)
     if total == 0:
@@ -846,6 +849,7 @@ def _post_analysis_smart_push(
         secret=secret,
         action_progress=action_progress or None,
         product_id=product_id,
+        platform=platform,
     )
 
     logger.info(

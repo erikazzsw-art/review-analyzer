@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import { createBillingCheckout, saveSettings, testWebhook } from "@/lib/api/browser";
-import type { ProductRuleSettings, PushRuleSettings, SettingsResponse } from "@/lib/api/types";
+import type { ProductRuleSettings, PushRuleSettings, SettingsResponse, WebhookPlatform } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -16,6 +16,7 @@ function cloneRules(rules: PushRuleSettings): PushRuleSettings {
 }
 
 export function SettingsPanel({ initialSettings }: SettingsPanelProps) {
+  const [webhookPlatform, setWebhookPlatform] = useState<WebhookPlatform>(initialSettings.webhook_platform ?? "feishu");
   const [webhookUrl, setWebhookUrl] = useState(initialSettings.webhook_url);
   const [webhookSecret, setWebhookSecret] = useState(initialSettings.webhook_secret);
   const [webhookGroupName, setWebhookGroupName] = useState(initialSettings.webhook_group_name);
@@ -46,6 +47,7 @@ export function SettingsPanel({ initialSettings }: SettingsPanelProps) {
     setIsSaving(true);
     try {
       await saveSettings({
+        webhookPlatform,
         webhookUrl: webhookUrl.trim(),
         webhookSecret: webhookSecret.trim(),
         webhookGroupName: webhookGroupName.trim(),
@@ -68,6 +70,7 @@ export function SettingsPanel({ initialSettings }: SettingsPanelProps) {
     setIsTesting(true);
     try {
       const result = await testWebhook({
+        webhookPlatform,
         webhookUrl: webhookUrl.trim(),
         webhookSecret: webhookSecret.trim(),
       });
@@ -139,7 +142,19 @@ export function SettingsPanel({ initialSettings }: SettingsPanelProps) {
 
         <div className="mt-6 space-y-4">
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-ink">飞书 Webhook</span>
+            <span className="text-sm font-semibold text-ink">推送平台</span>
+            <select
+              value={webhookPlatform}
+              onChange={(event) => setWebhookPlatform(event.target.value as WebhookPlatform)}
+              className="w-full rounded-card border border-line bg-white px-3 py-2 text-sm"
+            >
+              <option value="feishu">飞书</option>
+              <option value="dingtalk">钉钉</option>
+              <option value="wechat">企业微信</option>
+            </select>
+          </label>
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold text-ink">Webhook 地址</span>
             <Input
               value={webhookUrl}
               onChange={(event) => setWebhookUrl(event.target.value)}

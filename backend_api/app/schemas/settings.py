@@ -40,6 +40,7 @@ class ProductRulePayload(BaseModel):
 
 
 class SettingsPayload(BaseModel):
+    webhook_platform: str = "feishu"
     webhook_url: str = ""
     webhook_secret: str = ""
     webhook_group_name: str = ""
@@ -51,6 +52,7 @@ class SettingsPayload(BaseModel):
 
 
 class SettingsUpdatePayload(BaseModel):
+    webhook_platform: str = "feishu"
     webhook_url: str = ""
     webhook_secret: str = ""
     webhook_group_name: str = ""
