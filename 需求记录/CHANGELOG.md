@@ -27,6 +27,72 @@
 
 ## 2026-07-03
 
+### V4-出海-M3.1：EU/UK/EEA + OFAC 制裁国 Geo-Block 中间件
+
+- **工作量**: S（1 文件新增 + 1 文件挂载 + 1 单测，约 0.5 人天）
+- **状态**: 本地完成，未部署（M1 Erika 手动 Cloudflare 未上线，本次上线不影响功能，等 Cloudflare 前置后自动生效）
+
+**需求描述**：
+V4-出海模块 M3.1 后端合规能力第一环。在用户注册入口拦截来自 EU / UK / EEA / 瑞士 / OFAC 全面制裁 6 国的请求,防止在合规配套（Cookie Banner、Terms Gate、GDPR 通知）就绪前就把这些高监管地区用户圈进系统。只拦注册,不拦登录,存量用户完全不受影响。
+
+**涉及岗位及工时**：
+- 后端开发：0.5 人天（`backend_api/app/middleware/geo_block.py` 新建、`backend_api/app/main.py` 挂载、`backend_api/tests/test_geo_block.py` 8 个单测）
+
+**变更清单**：
+- `BLOCKED_COUNTRIES = 38 国` — EU 27（AT/BE/BG/HR/CY/CZ/DK/EE/FI/FR/DE/GR/HU/IE/IT/LV/LT/LU/MT/NL/PL/PT/RO/SK/SI/ES/SE）+ EEA 3（IS/LI/NO）+ UK/CH + OFAC 6（IR/KP/SY/CU/RU/BY）
+- 拦截范围严格限定 `(POST, /auth/register)`；登录、其他 API、GET 请求全部放行
+- `CF-IPCountry` header 缺失时放行 + DEBUG 日志（Cloudflare 未上线阶段的兜底策略,避免上线前把所有注册都误拦）
+- 命中受限国家返回 403 JSON：`{"detail": "Registration is not available in your region...", "country": "DE", "reason": "geo_blocked"}`
+- middleware 挂载顺序：CORS → GeoBlock → Analytics（在 CORS 之后追加,与其他中间件解耦）
+- 大小写兼容：`de` 也能被识别为 `DE`
+
+**验收 & lint**：
+- `pytest backend_api/tests/test_geo_block.py`：8 passed
+- `ruff check`：PASS
+- 单测覆盖：DE → 403、IR（OFAC）→ 403、缺 header → 200、US → 200、小写 → 403、`/auth/login` DE → 200（不拦）、`/health` IR → 200（不拦）、清单完整性校验（38 国 + 未拦国抽样）
+
+**PROGRESS_V2.md M3.1 全部勾选**，M3 进度 20% → 40%。
+
+**上线依赖**：
+- Cloudflare 未接入前,`CF-IPCountry` 全部为空,middleware 相当于空操作,安全上线不影响任何用户
+- Erika 完成 M1 Cloudflare 配置后（域名接入 + Proxy 开启）,`CF-IPCountry` 自动出现在请求 header,geo-block 立即生效
+
+---
+
+### V4-出海-M3.2：数据主权 API（GDPR / CCPA / PIPEDA）
+
+- **工作量**: M（后端 3 端点 + 前端 1 页面 + sidebar 入口，约 2 人天）
+- **状态**: 本地完成，未部署（M1 Erika 手动任务完成后再统一部署）
+
+**需求描述**：
+V4-出海模块推进「M1 Erika 手动执行」期间，同步落地不阻塞的代码任务。M3.2 是海外合规最基础的三个用户端点，无外部依赖、无 migration，纯附加式代码，适合先行。
+
+**涉及岗位及工时**：
+- 后端开发：1.5 人天（`backend_api/app/routes/me.py` 新增 3 端点、`backend_api/app/schemas/me.py` 新建、`review_analyzer/database.py` 新增 5 个辅助函数、`deps.py` / `auth.py` 加软删拦截）
+- 前端开发：0.5 人天（`frontend/src/app/settings/account/page.tsx` 新建、`lib/api/browser.ts` + `lib/api/types.ts` 新增 3 个封装、sidebar 新增入口、中英文 i18n label）
+
+**变更清单**：
+- `GET /me/export` — 导出 JSON 快照（user / subscription / sessions / products / product_variants / actions / trackers / settings / asin_watchlist + comments 计数）
+- `PATCH /me` — 更正用户名 / 邮箱 / 密码，强制当前密码校验，唯一性冲突返回 409
+- `DELETE /me` — 匿名化 users 主表（username 置 `deleted_user_{id}`、email/paddle_customer_id/api_key 清空、password_hash 随机化、`deleted_at=NOW()`），业务数据 user_id 保留但已无法识别真人；有 Paddle 订阅时打 WARNING 日志，提醒手动去 Paddle 后台取消（自动取消 API 未接）
+- 认证层：`deps.get_current_user` + `/auth/login` 加 `deleted_at IS NOT NULL` 拒绝，防止旧 cookie / 猜密码绕过
+- 前端 `/settings/account` 新页面：JSON 快照下载 / 三合一修改表单 / 二次密码 + "DELETE" 双重确认删除
+
+**验收 & lint**：
+- `ruff check backend_api/ workers/ review_analyzer/`：PASS
+- `npm run typecheck`：PASS
+- `python3 -c "from backend_api.app.main import app"` 挂载 4 个 `/me*` 路由
+
+**PROGRESS_V2.md M3.2 全部勾选**，M3 进度 0% → 20%。
+
+**未完成延后项**：
+- PATCH /me 的邮箱二次验证 flow（send code + confirm）— 依赖邮件模板双语化（M3.3），待 M3.3 完成后统一补
+- DELETE /me 的 Paddle 自动取消 API — 依赖 Paddle SDK 集成，Erika 在 M1 完成 Paddle 商户配置后再接
+
+---
+
+## 2026-07-03
+
 ### Bug 修复：文件上传 500（生产库缺 source_channel 列）
 
 - **工作量**: S

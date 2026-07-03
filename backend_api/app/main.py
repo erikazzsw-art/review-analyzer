@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend_api.app.config import get_settings
 from backend_api.app.middleware import AnalyticsMiddleware
+from backend_api.app.middleware.geo_block import GeoBlockMiddleware
 from backend_api.app.routes.actions import router as actions_router
 from backend_api.app.routes.actions import trackers_router as trackers_router
 from backend_api.app.routes.admin import router as admin_router
@@ -60,6 +61,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GeoBlockMiddleware)
 app.add_middleware(AnalyticsMiddleware)
 
 
