@@ -66,6 +66,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
       title: t("groupManage"),
       items: [
         { href: "/products", label: t("products") },
+        { href: "/settings/account", label: t("accountSettings") },
         { href: "/settings/golden-set", label: t("goldenSet"), adminOnly: true },
         { href: "/settings/push", label: t("pushSettings") },
         { href: "/settings/observability", label: t("observability"), adminOnly: true },

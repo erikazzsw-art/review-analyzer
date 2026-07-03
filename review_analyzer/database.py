@@ -1340,6 +1340,231 @@ def update_user_password(user_id: int, password_hash: str) -> None:
         conn.close()
 
 
+# ============================================================
+# V4-出海-M3.2 数据主权 API 支持函数
+# ============================================================
+
+def is_user_deleted(user_id: int) -> bool:
+    """检查用户是否已软删；deleted_at 列缺失时视为未删除。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT deleted_at FROM users WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            if not row:
+                return True
+            return row[0] is not None
+    except psycopg2.errors.UndefinedColumn:
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
+
+def update_user_profile(
+    user_id: int,
+    *,
+    username: str | None = None,
+    email: str | None = None,
+) -> None:
+    """局部更新用户名/邮箱；至少传一个字段。"""
+    if username is None and email is None:
+        return
+    fields: list[str] = []
+    values: list[object] = []
+    if username is not None:
+        fields.append("username = %s")
+        values.append(username)
+    if email is not None:
+        fields.append("email = %s")
+        values.append(email)
+    values.append(user_id)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE users SET {', '.join(fields)} WHERE id = %s",
+                values,
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def anonymize_user(user_id: int, scrambled_password_hash: str) -> None:
+    """匿名化用户主表 (GDPR/CCPA 遗忘权)。
+
+    - username → deleted_user_{id}
+    - email → NULL (释放邮箱唯一约束, 允许原邮箱再注册)
+    - password_hash → 随机 bcrypt hash (无法登录)
+    - api_key_encrypted / paddle_customer_id → NULL
+    - plan → 'free'
+    - deleted_at → NOW()
+
+    业务数据 (sessions / comments / products) 保留 user_id, 但已无法识别真人。
+    """
+    anon_username = f"deleted_user_{user_id}"
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET username = %s,
+                    email = NULL,
+                    password_hash = %s,
+                    api_key_encrypted = NULL,
+                    paddle_customer_id = NULL,
+                    plan = 'free',
+                    deleted_at = NOW()
+                WHERE id = %s
+                """,
+                (anon_username, scrambled_password_hash, user_id),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def collect_user_data_for_export(user_id: int) -> dict:
+    """聚合导出用户全部数据 (数据可携权 / GDPR Article 20 / CCPA)。
+
+    返回结构直接对应 MeExportPayload schema。评论只返回统计计数 (可能上万条,
+    单次响应会过大); 如需导出全部评论明细, 走 /downloads 或 /export 接口。
+    """
+    data: dict = {
+        "subscription": None,
+        "sessions": [],
+        "products": [],
+        "product_variants": [],
+        "comments_count": 0,
+        "actions": [],
+        "trackers": [],
+        "settings": [],
+        "asin_watchlist": [],
+    }
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # sessions (评论批次)
+            _fetch_optional(cur, data, "sessions", """
+                SELECT id, product_id, version, workflow_purpose,
+                       product_ref_id, variant_ref_id, created_at
+                FROM sessions
+                WHERE user_id = %s AND (deleted_at IS NULL)
+                ORDER BY id ASC
+            """, (user_id,))
+
+            # comments 只返回计数
+            try:
+                cur.execute(
+                    "SELECT COUNT(*) AS c FROM comments WHERE user_id = %s AND (deleted_at IS NULL)",
+                    (user_id,),
+                )
+                row = cur.fetchone()
+                data["comments_count"] = int(row["c"] or 0) if row else 0
+            except (psycopg2.errors.UndefinedTable, psycopg2.errors.UndefinedColumn):
+                conn.rollback()
+                data["comments_count"] = 0
+
+            # products & variants
+            _fetch_optional(cur, data, "products", """
+                SELECT id, parent_product_id, name, platform, category,
+                       lifecycle_stage, current_version, created_at
+                FROM products
+                WHERE user_id = %s AND (deleted_at IS NULL)
+                ORDER BY id ASC
+            """, (user_id,))
+            _fetch_optional(cur, data, "product_variants", """
+                SELECT id, product_id, variant_sku, child_asin, color, size,
+                       style, material, status, created_at
+                FROM product_variants
+                WHERE user_id = %s AND (deleted_at IS NULL)
+                ORDER BY id ASC
+            """, (user_id,))
+
+            # actions & trackers
+            _fetch_optional(cur, data, "actions", """
+                SELECT id, product_id, session_id, source_tag, issue_summary,
+                       owner_role, status, created_at
+                FROM action_items
+                WHERE user_id = %s AND (deleted_at IS NULL)
+                ORDER BY id ASC
+            """, (user_id,))
+            _fetch_optional(cur, data, "trackers", """
+                SELECT id, product_id, initial_issue, improvement_action,
+                       status, created_at
+                FROM review_trackers
+                WHERE user_id = %s AND (deleted_at IS NULL)
+                ORDER BY id ASC
+            """, (user_id,))
+
+            # settings (推送/通知配置)
+            _fetch_optional(cur, data, "settings", """
+                SELECT key, value, updated_at
+                FROM settings
+                WHERE user_id = %s
+                ORDER BY key ASC
+            """, (user_id,))
+
+            # asin_watchlist
+            _fetch_optional(cur, data, "asin_watchlist", """
+                SELECT id, asin, marketplace, product_name, fetch_frequency,
+                       last_fetched_at, status, created_at
+                FROM asin_watchlist
+                WHERE user_id = %s
+                ORDER BY id ASC
+            """, (user_id,))
+
+            # subscription 视图 (从 users 表提取)
+            cur.execute(
+                "SELECT plan, paddle_customer_id, plan_locked_at FROM users WHERE id = %s",
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if row:
+                data["subscription"] = {
+                    "plan": row.get("plan"),
+                    "paddle_customer_id": row.get("paddle_customer_id"),
+                    "plan_locked_at": _iso_or_none(row.get("plan_locked_at")),
+                }
+    finally:
+        conn.close()
+
+    # 反序列化 datetime → ISO 字符串, 便于 JSON 导出
+    for key in ("sessions", "products", "product_variants", "actions", "trackers", "settings", "asin_watchlist"):
+        data[key] = [_row_to_jsonable(r) for r in data[key]]
+    return data
+
+
+def _fetch_optional(cur, data: dict, key: str, sql: str, params: tuple) -> None:
+    """执行查询, 缺表/缺列时安静降级为空列表 (老库兼容)。"""
+    try:
+        cur.execute(sql, params)
+        data[key] = [dict(r) for r in cur.fetchall()]
+    except (psycopg2.errors.UndefinedTable, psycopg2.errors.UndefinedColumn):
+        cur.connection.rollback()
+        data[key] = []
+
+
+def _iso_or_none(value) -> str | None:
+    if value is None:
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value)
+
+
+def _row_to_jsonable(row: dict) -> dict:
+    result: dict = {}
+    for k, v in row.items():
+        if hasattr(v, "isoformat"):
+            result[k] = v.isoformat()
+        else:
+            result[k] = v
+    return result
+
+
 # ---------- V4-T4 Step 5: LLM 用量日志 ----------
 
 MODEL_COST_PER_MILLION: dict[str, tuple[float, float]] = {

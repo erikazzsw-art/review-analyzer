@@ -1114,3 +1114,44 @@ export async function recordDownload(name: string, source: string): Promise<void
     body: JSON.stringify({ name, source, status: "completed" }),
   }).catch(() => {});
 }
+
+// V4-出海-M3.2: 数据主权 API (导出/更正/删除自己的账号)
+export async function exportMyData(): Promise<import("./types").MeExportPayload> {
+  const response = await fetch(`${getApiBaseUrl()}/me/export`, {
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
+export async function updateMyProfile(
+  payload: import("./types").MeUpdatePayload,
+): Promise<import("./types").MeExportUser> {
+  const response = await fetch(`${getApiBaseUrl()}/me`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
+export async function deleteMyAccount(
+  payload: import("./types").MeDeletePayload,
+): Promise<{ ok: boolean; message: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/me`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}

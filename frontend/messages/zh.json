@@ -123,7 +123,8 @@
     "systemSettings": "系统设置",
     "logout": "退出登录",
     "loggingOut": "退出中…",
-    "goldenSet": "标签校准"
+    "goldenSet": "标签校准",
+    "accountSettings": "账号与数据"
   },
   "quotaPanel": {
     "badge": "用量看板",

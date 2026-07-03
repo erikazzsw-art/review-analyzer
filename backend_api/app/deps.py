@@ -160,6 +160,12 @@ def _get_authenticated_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User does not exist.",
         )
+    # V4-出海-M3.2: 拒绝已软删的用户 (即使 cookie 仍有效)
+    if user.get("deleted_at") is not None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account has been deleted.",
+        )
     return user
 
 

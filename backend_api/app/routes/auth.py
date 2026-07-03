@@ -103,6 +103,12 @@ def login(payload: LoginRequest, response: Response) -> AuthResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password.",
         )
+    # V4-出海-M3.2: 软删账号禁止登录, 即使凭证碰巧对上
+    if user.get("deleted_at") is not None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account has been deleted.",
+        )
 
     user_id = int(user["id"])
     set_auth_cookies(response, user_id, str(user["username"]))

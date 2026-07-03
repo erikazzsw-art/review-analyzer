@@ -811,3 +811,41 @@ export type DownloadRecord = {
   file_url?: string | null;
   created_at: string;
 };
+
+// V4-出海-M3.2 数据主权 API
+export type MeExportUser = {
+  id: number;
+  username: string;
+  email: string;
+  plan: string;
+  paddle_customer_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type MeExportPayload = {
+  exported_at: string;
+  schema_version: string;
+  user: MeExportUser;
+  subscription: Record<string, unknown> | null;
+  sessions: Array<Record<string, unknown>>;
+  products: Array<Record<string, unknown>>;
+  product_variants: Array<Record<string, unknown>>;
+  comments_count: number;
+  actions: Array<Record<string, unknown>>;
+  trackers: Array<Record<string, unknown>>;
+  settings: Array<Record<string, unknown>>;
+  asin_watchlist: Array<Record<string, unknown>>;
+};
+
+export type MeUpdatePayload = {
+  current_password: string;
+  username?: string;
+  email?: string;
+  new_password?: string;
+};
+
+export type MeDeletePayload = {
+  current_password: string;
+  confirm: string;
+};

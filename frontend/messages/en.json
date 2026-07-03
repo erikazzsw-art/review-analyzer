@@ -123,7 +123,8 @@
     "systemSettings": "System Settings",
     "logout": "Sign Out",
     "loggingOut": "Signing out…",
-    "goldenSet": "Tag Calibration"
+    "goldenSet": "Tag Calibration",
+    "accountSettings": "Account & Data"
   },
   "quotaPanel": {
     "badge": "USAGE DASHBOARD",
