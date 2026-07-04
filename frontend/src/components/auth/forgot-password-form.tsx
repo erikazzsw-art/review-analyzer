@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ type Step = "email" | "code" | "done";
 export function ForgotPasswordForm() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -27,7 +28,12 @@ export function ForgotPasswordForm() {
     try {
       const res = await fetch("/api/auth/password/reset/request", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // 告诉后端当前用户界面语言,mailer 会按此渲染中文/英文邮件模板。
+          // 用自定义头避免 Accept-Language 被 nginx / CDN 改写。
+          "X-Locale": locale,
+        },
         body: JSON.stringify({ email }),
       });
 

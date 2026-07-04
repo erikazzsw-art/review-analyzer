@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import bcrypt
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from backend_api.app.deps import clear_auth_cookies, set_auth_cookies
 from backend_api.app.schemas.auth import (
@@ -125,7 +125,10 @@ def logout(response: Response) -> MessageResponse:
 
 
 @router.post("/password/reset/request", response_model=MessageResponse)
-def request_password_reset(payload: PasswordResetRequest) -> MessageResponse:
+def request_password_reset(
+    payload: PasswordResetRequest,
+    request: Request,
+) -> MessageResponse:
     email = payload.email.strip()
     user = get_user_by_email(email)
     if not user:
@@ -137,7 +140,16 @@ def request_password_reset(payload: PasswordResetRequest) -> MessageResponse:
     code = "".join(random.choices(string.digits, k=6))
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
     create_reset_token(email, code, expires_at)
-    ok, error_message = send_reset_code(email, code)
+
+    # locale 优先级: 前端显式头 X-Locale > NEXT_LOCALE cookie > Accept-Language > 默认。
+    # mailer._normalize_locale 会把 zh/zh-Hans/en/en-GB 等归一到 zh-CN/en-US。
+    locale = (
+        request.headers.get("x-locale")
+        or request.cookies.get("NEXT_LOCALE")
+        or (request.headers.get("accept-language", "").split(",")[0].strip() or None)
+        or "en-US"
+    )
+    ok, error_message = send_reset_code(email, code, locale=locale)
     if not ok:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
