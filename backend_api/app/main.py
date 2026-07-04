@@ -30,6 +30,7 @@ from backend_api.app.routes.scrape import router as scrape_router
 from backend_api.app.routes.settings import router as settings_router
 from backend_api.app.routes.taxonomy import router as taxonomy_router
 from backend_api.app.routes.translate import router as translate_router
+from backend_api.app.routes.unsubscribe import router as unsubscribe_router
 from backend_api.app.routes.uploads import router as uploads_router
 from backend_api.app.routes.workspace import router as workspace_router
 
@@ -93,4 +94,5 @@ app.include_router(copywriter_router)
 app.include_router(downloads_router)
 app.include_router(export_router)
 app.include_router(translate_router)
+app.include_router(unsubscribe_router)
 app.include_router(admin_router)

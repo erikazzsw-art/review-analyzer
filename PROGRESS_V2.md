@@ -3296,16 +3296,74 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
     - 个体户备案审批速度与企业一致
 
 - [ ] **Step 5.5: 收款接入（备案通过后或并行准备）**
-  - **个体户可用的收款方式：**
-    - ✅ 支付宝商户号（网页支付 / 当面付）— 个体户直接申请
-    - ✅ 微信支付商户号 — 个体户可申请，费率 0.6%
-    - ❌ Stripe / Paddle — 需境外公司主体，个体户阶段不可用
-  - 推荐路径：支付宝/微信支付商户号 → 资金到经营者个人银行卡（个体户特权）
-  - 税务注意：
-    - 小规模纳税人：年开票 ≤120 万免增值税
-    - SaaS 收入属"信息技术服务"，税率 1%（小规模）/ 6%（一般纳税人）
-    - 可开普票；专票需去税务局代开或升为一般纳税人
-  - 暂不需要 ICP 经营许可证（仅卖自有 SaaS 工具，非平台交易模式）
+
+  #### 5.5.1 ICP 备案 vs ICP 经营许可证（判断依据）
+
+  **核心结论：ClueAI 只需 ICP 备案即可合法收费，不需要 ICP 经营许可证。**
+
+  两者区别：
+
+  | 维度 | ICP 备案 | ICP 经营许可证 |
+  |------|---------|---------------|
+  | 官方全称 | 非经营性互联网信息服务备案 | 增值电信业务经营许可证（B25 信息服务业务） |
+  | 性质 | 备案（登记制） | 许可（审批制） |
+  | 主体要求 | 个人 / 个体户 / 公司均可 | 仅内资公司，注册资本 ≥100 万 |
+  | 办理周期 | 7-20 工作日 | 40-60 工作日 |
+  | 成本 | 免费 | 中介 ¥3000-8000 |
+  | 有效期 | 长期 | 5 年，每年 1 月需年检 |
+
+  **常见误解**：收费 ≠ 经营性 ≠ 必须办 ICP 经营许可证。工信部的执法逻辑关注的是"平台性"而非"是否收费"。
+
+  #### 5.5.2 只需 ICP 备案的业务模式（ClueAI 属于此类）
+
+  - ✅ 卖自研 SaaS 工具（订阅制），例如 ClueAI、Notion、腾讯文档订阅版
+  - ✅ 卖自己的实体/数字商品（B2C 电商）
+  - ✅ 企业官网收咨询费/服务费
+  - ✅ 付费内容订阅（内容为自己创作）
+
+  #### 5.5.3 必须办 ICP 经营许可证的业务模式（未来若转型需重新评估）
+
+  - ❌ 交易撮合平台（淘宝、闲鱼、Boss 直聘、大众点评）
+  - ❌ 付费信息发布平台（58 同城、招聘网站）
+  - ❌ 主要收入来自第三方广告展示
+  - ❌ 网络支付 / 金融业务
+  - ❌ 在线游戏运营（另需网络文化经营许可证）
+
+  #### 5.5.4 ClueAI 业务模式核对（6 项判断）
+
+  | 判断维度 | ClueAI 情况 | 结论 |
+  |---------|------------|------|
+  | 谁提供服务 | 自研 SaaS | ✅ 自营 |
+  | 收谁的钱 | 直接向工具使用者收订阅费 | ✅ 自营收入 |
+  | 有无第三方入驻 | 无 | ✅ 非平台 |
+  | 有无广告收入 | 无 | ✅ 非广告 |
+  | 有无交易撮合 | 无 | ✅ 非平台 |
+  | 有无金融/支付业务 | 仅接支付宝/微信收自己的订阅费 | ✅ 非金融 |
+
+  权威依据：
+  - 《互联网信息服务管理办法》第 4 条
+  - 《电信业务分类目录（2015版）》B25 信息服务业务
+
+  #### 5.5.5 个体户可用的收款方式
+
+  - ✅ 支付宝商户号（网页支付 / 当面付）— 个体户直接申请，费率 0.6%
+  - ✅ 微信支付商户号 — 个体户可申请，费率 0.6%
+  - ❌ Stripe / Paddle — 需境外公司主体，个体户阶段不可用
+  - 资金流转：商户号 → 经营者个人银行卡（个体户特权，无需对公账户）
+
+  #### 5.5.6 税务与开票
+
+  - 小规模纳税人：年开票 ≤120 万免增值税
+  - SaaS 收入税目："信息技术服务"，税率 1%（小规模）/ 6%（一般纳税人）
+  - 可开普票；专票需去税务局代开或升为一般纳税人
+  - 推荐初期走"核定征收"，报税简单
+
+  #### 5.5.7 备案通过后的合规动作（法定要求，缺失有罚款风险）
+
+  - [ ] `frontend/src/app/layout.tsx` footer 添加备案号 `京ICP备2026XXXXXXX号`，链接到 `https://beian.miit.gov.cn`
+  - [ ] 网站实际内容与备案信息一致（备案时的"网站名称""服务类型"）
+  - [ ] 不在网站上超出营业执照经营范围经营（营业执照主营："软件开发、信息技术咨询服务、技术服务"）
+  - [ ] 用户协议 / 隐私政策 / 服务条款上线（可放到 footer）
 
 - [ ] **Step 5.6: 主体升级评估（持续关注，按触发条件执行）**
   - **必须切换到公司主体的触发条件（任一命中即启动）：**
@@ -4275,5 +4333,403 @@ CREATE TABLE workspace_invitations (
   - 标准 1-5 星 + 精确日期
   - max_reviews=100（节省免费额度）
   - 注意：字段映射基于文档推断，首次运行需确认实际字段名
+
+---
+
+## V4-出海: 面向海外用户的合规改造模块（2026-07-03 立项）
+
+> **完整合规文档**：[`OVERSEAS_COMPLIANCE_PLAN.md`](OVERSEAS_COMPLIANCE_PLAN.md)（含所有决策依据、法规解释、合规 review 结论）
+>
+> **执行原则**：本模块所有任务按下述清单顺序推进；每个 Task 完成后勾选 `[x]`；遇到高风险变更（数据库 migration、支付逻辑、安全相关）需通知 Erika 验收。
+
+### 立项背景
+
+- 国内 ICP 备案 + 经营许可需 3 个月，为快速验证市场先出海
+- 服务器已在香港阿里云 ECS，规避 ICP 备案
+- 目标：6-7 周完成合规改造 → Beta 上线 → 收取海外订阅
+
+### 核心决策（2026-07-03 已确认，不再讨论）
+
+| 维度 | 决策 |
+|------|------|
+| 业务主体 | 个人 + Wise 收款（MRR $4,000 时启动香港/新加坡公司注册） |
+| 目标市场 | 排除 EU/UK/EEA 的全球英语市场 |
+| LLM 服务商 | **AWS Bedrock Claude Haiku 4.5（主）+ DeepSeek fallback**（原 Anthropic 直连方案因 HK IP 封锁 + 中方持股 ownership 封禁弃用；已有 `backend_api/app/services/llm_router.py` 三级 fallback 骨架，扩展 `provider="bedrock"` 分支即可） |
+| Amazon 数据源 | DataForSEO（主）+ Rainforest（fallback），woot.com 出海禁用 |
+| 多语言方案 | next-intl + 子域名路由（`app.` 出海英文 / `cn.` 未来国内中文） |
+
+> **⚠️ LLM 路由重要背景（详见 `~/.claude/plans/anthropic-claude-haiku-piped-spark.md`）**
+> - Anthropic 官方 API 对香港 IP 做 IP 级封锁（阿里云 HK 机房必被 403）
+> - 2025-09 起对中方持股 >50% 公司做全球 ownership 级封禁
+> - **走 AWS Bedrock**（AK/SK 鉴权，不看调用方 IP + AWS 提供 GDPR/SCC DPA）
+> - Region:`ap-southeast-1`（Singapore），距 HK ECS 延迟 30-50ms
+> - 成本:Haiku 比 DeepSeek 贵 4-9x，**必须启用 Bedrock prompt caching**(SYSTEM_PROMPT 1500 tokens 全静态，可节省约 50% input 成本)
+> - DeepSeek 保留 fallback，BYOK 仅限 DeepSeek 分支
+
+> **🚨 2026-07-03 重大发现 — 上述 Bedrock 路径被推翻**
+>
+> Erika 完成 AWS 账户 + IAM 用户 `clueai-bedrock-prod` + Bedrock model access 后，本地用 `boto3` 从国内 IP 直连诊断（详见 `scripts/diagnose_bedrock.py`），结果：
+> - ✅ Test 1 STS get-caller-identity 通过（AK/SK 有效）
+> - ✅ Test 2 ListFoundationModels 返回 16 个 Anthropic 模型（含 Haiku 4.5，权限已生效）
+> - ❌ Test 3 InvokeModel `anthropic.claude-haiku-4-5-20251001-v1:0` 报 `ValidationException: Access to Anthropic models is not allowed from unsupported countries`
+> - ❌ Test 3 InvokeModel `global.anthropic.claude-haiku-4-5-*` 全局 inference profile 同样被拦
+>
+> **结论**：Anthropic 在 Bedrock API 层做 IP 检查，AK/SK 鉴权**不**绕开 geo-block。原假设"Bedrock AK/SK 认证不看调用方 IP"**错误**。HK 阿里云 ECS 走 Bedrock 必然被拦。
+
+> **🚨 2026-07-03 追加发现 — OpenAI Chat 在 HK ECS 同样被 API 层 geo-block 拒绝**
+>
+> 因原 Bedrock 方案被推翻，讨论切换 OpenAI 主链路时，Erika 敏锐指出：现状生产 OpenAI 一直**只用于 embedding**（`/v1/embeddings` endpoint，HK 生产已跑 3 周稳定），`/v1/chat/completions` 从未被真实生产流量触发过（`llm_router.py` 里 OpenAI 是备 1，DeepSeek 主链路一直稳定，从未熔断到 OpenAI）。**跨端点推断可用性是危险的**。
+>
+> 于是新写 `scripts/diagnose_openai_chat.py`，在生产 HK ECS 的 api 容器内实测 `gpt-4o-mini` chat completion：
+> - Egress IP: `8.210.51.242`（阿里云 HK IDC）
+> - 结果: `403 unsupported_country_region_territory` + `type: request_forbidden` + `message: Country, region, or territory not supported`
+>
+> **结论**：OpenAI 也在 API 层用 official error code 明确拒绝 HK IP，与 Anthropic 完全一致。原 B 方案"HK ECS 直调 OpenAI"**技术上直接不可行**（不是灰色地带，是硬 403）。
+>
+> **关键推论**：OpenAI 对不同 endpoint 有独立地区策略 —— embedding 松，chat 严。TEST_LOG 2026-06-18 "生产 OpenAI 直连可达" 那条记录已修订限定为 "**Embedding** 直连可达"，避免后续再被误读。
+
+> **📌 2026-07-03 决策定型**
+>
+> 综合两次实测（Anthropic Bedrock + OpenAI Chat 均在 HK 被 403），出海 LLM 主链路调整必须**以 ECS 迁移到 SG/US 为硬前提**。剩余两条真实候选路径：
+>
+> - **A. 迁 ECS 到 SG（Lightsail SG $40/mo，工期 ~2h）** — 一次到位；SG IP 后 Bedrock/OpenAI/Gemini/Anthropic 全部原生可用；未来无中间人税；月成本与阿里云 HK ¥300/mo 基本持平。**推荐**。
+> - **C. HK ECS 保留 + OpenRouter 中转（工期 30 min，+5-10% LLM 加价）** — 不迁移；OpenRouter 帮我们从 HK 到 OpenAI/Anthropic 合规中转；账号仍在 OpenRouter 名下有黑盒风险；长期看两个月加价就把 SG 迁移一次性钱赚回来。
+>
+> B（HK 直调 OpenAI）**永久移除**（已实测证伪）。D（保持 DeepSeek 主）技术上可行但偏离"用国际大厂 LLM 强化海外品牌力"目标。
+>
+> **待 Erika 拍板 A vs C**。拍板后：
+> - 选 A → 按 [Lightsail SG 迁移计划](#) 走 4 阶段（Cloudflare TTL / Lightsail 开机 / hosts 验证 / DNS 切换），M4 里"Bedrock 集成"改为迁移后跑"OpenAI GPT-4o-mini 直连"
+> - 选 C → `llm_router.py` 加 `provider="openrouter"` 分支，M4 里"Bedrock 集成"改为"OpenRouter 集成 + Anthropic Claude Haiku 4.5 via OpenRouter"
+>
+> **AWS Bedrock IAM 用户 / Policy / AK/SK 现状处理**：
+> - 本地 `review_analyzer/.env` 已删除 `AWS_BEDROCK_*` 三行（防误提交，2026-07-03 完成）
+> - AWS IAM 侧 `clueai-bedrock-prod` 用户 + `ClueAI-Bedrock-Invoke` 策略 + AK/SK **保留 30 天**待观察（若最终选 A + Bedrock 路线可复用；若选 C 或选 A 但直调 OpenAI 则 30 天后 deactivate）
+
+---
+
+### V4-出海-M1: Erika 手动执行（Week 1，无代码改动）
+
+- 状态: 🔄 部分完成（AWS Bedrock 分支已实测证伪；SG 迁移任务待启动） | 分支: N/A（Erika 独立操作，不阻塞开发）
+- 依赖: 无
+
+**收款链路**
+- [ ] 注册 Wise 个人多币种账户（护照 + 身份证，30 分钟）
+  - 开 USD + EUR + GBP 虚拟账户号
+- [ ] Paddle 商户升级为 Sole Trader（提交护照 + 地址证明 + Wise 账户）
+- [ ] Paddle 后台配置产品地区限制：移除 EU 27 国 + UK + EEA 3 国 + CH
+
+**数据源账户 + LLM 账户**
+- [ ] 注册 DataForSEO 账户（充值 $50 测试余额）
+- [ ] 保留现有 Rainforest 账户降级为 fallback
+- [x] ~~**注册 AWS 账号**~~（2026-07-03 已完成，账号可用；若选 A + OpenAI 路线保留待用，若选 C 可保留但可选）
+- [x] ~~**AWS Bedrock Console → Model access 申请**~~（2026-07-03 已批准 Haiku 4.5 SG region，但**实测证明 HK IP 被 API 层 403 拒绝**，见上方"🚨 2026-07-03 重大发现"）
+- [x] ~~**创建 IAM User + AK/SK**~~（2026-07-03 已创建 `clueai-bedrock-prod` 用户 + `ClueAI-Bedrock-Invoke` 策略 + AK/SK；**已从本地 `.env` 删除**避免误提交；AWS 侧保留 30 天待观察）
+- [x] ~~AK/SK 交给 Claude Code 写入 `.env`~~（2026-07-03 已完成写入 → 实测 geo-block 后删除，AK/SK 在 AWS 侧仍有效）
+
+**基础设施（原有）**
+- [ ] `clueai-reviewlens.com` 接入 Cloudflare（免费方案）
+  - NS 改指向 Cloudflare + 开启 Proxy + 确认 CF-IPCountry header
+
+**🆕 ECS 迁移到 SG（2026-07-03 新增，两次 geo-block 实测后必须）**
+> 详细步骤参考本次对话已交付的《Lightsail SG 迁移 4 阶段计划》（阶段 0 准备 / 阶段 1 新机起服务 / 阶段 2 hosts 验证 / 阶段 3 DNS 切换 / 阶段 4 老机清理）。**待 Erika 拍板 A/C 后启动**。
+
+- [ ] 阶段 0：Cloudflare DNS 4 条 A 记录 TTL 调低到 5 min（如未走 CF Proxy 橙色云则必需，橙色云可跳过）
+- [ ] 阶段 0：备份现网 `.env`（`scp` 从老 ECS 到本地 Mac）
+- [ ] 阶段 1：AWS Lightsail SG region 开 $40/mo 实例 + 分配 Static IP + 开 22/80/443 端口
+- [ ] 阶段 1：Ubuntu 22.04 装 Docker + Compose，git clone 项目到 `/opt/clueai`，上传 `.env`
+- [ ] 阶段 1：Cloudflare Origin Cert 签 SSL 证书（15 年有效）→ 挂到 nginx volume
+- [ ] 阶段 1：`docker compose up -d --build` 起全部 5 服务，等 healthy
+- [ ] 阶段 2：Mac hosts 指向新 IP，测试账号跑一遍 golden path
+- [ ] 阶段 3：Cloudflare A 记录改新 IP（Proxied 橙色云 <1 min 生效）
+- [ ] 阶段 3：无痕窗口 + 测试账号验证线上
+- [ ] 阶段 4：观察 3-7 天后老 ECS 停机 → 释放
+
+**基础设施**
+- [ ] `clueai-reviewlens.com` 接入 Cloudflare（免费方案）
+  - NS 改指向 Cloudflare + 开启 Proxy + 确认 CF-IPCountry header
+- [x] 登录 Supabase 确认 prod 项目 `inpgrbjwtpxgwungghnz` region（必须非中国 region）
+  - ✅ 2026-07-03 核查：prod host `aws-1-ap-southeast-1.pooler.supabase.com` → Singapore，符合出海合规要求，无需数据迁移
+
+**法律文档**
+- [ ] 用 Termly 或 iubenda 生成 Privacy Policy / Terms of Service / Cookie Policy 模板
+- [ ] 检查文档明示：EU 排除条款 / Amazon 免责 / LLM 数据处理 / sub-processors
+
+---
+
+### V4-出海-M2: i18n 框架 + 双语文案 + 法律页面（Week 2，约 9 天）
+
+- 状态: ⏳ 待启动 | 分支: `feature/v4-i18n-framework`
+- 依赖: M1（Erika 完成 Cloudflare 接入 + 法律文档生成）
+
+**2.1 next-intl 框架搭建（3 天）**
+- [ ] `npm install next-intl` 到 frontend
+- [ ] 新建 `frontend/src/i18n/config.ts`、`frontend/src/i18n/request.ts`
+- [ ] 新建 `frontend/src/middleware.ts`（子域名 → locale 中间件）
+- [ ] 目录改造：`frontend/src/app/[locale]/` 引入语言参数层
+- [ ] `frontend/src/app/layout.tsx` 集成 NextIntlClientProvider
+
+**2.2 全站字符串提取 + 翻译（4 天）**
+- [ ] 遍历 `frontend/src/**/*.tsx` 提取所有中文字符串到 `frontend/messages/zh-CN.json`
+- [ ] 用 Claude 批量翻译到 `frontend/messages/en-US.json`（约 200-300 条 key）
+- [ ] Erika review 关键业务术语（评论分析 / 问题标签 / 行动中心 等）
+- [ ] 现有页面代码改用 `useTranslations` hook 引用 key
+
+**2.3 Backend i18n + 邮件模板双语（2 天）**
+- [ ] 新建 `backend_api/app/services/i18n.py`（简化 i18n 层）
+- [ ] FastAPI dependency 注入 locale（Accept-Language header + users.locale 字段）
+- [ ] Resend 邮件模板双语化（注册验证 / 密码重置 / 订阅通知）
+- [ ] users 表新增 `locale VARCHAR(10) DEFAULT 'en-US'` 字段（合并到 migration 041）
+
+**2.4 6 个法律页面（双语）**
+- [ ] `frontend/src/app/[locale]/privacy/page.tsx` — Privacy Policy
+- [ ] `frontend/src/app/[locale]/terms/page.tsx` — Terms of Service
+- [ ] `frontend/src/app/[locale]/cookies/page.tsx` — Cookie Policy
+- [ ] `frontend/src/app/[locale]/dpa/page.tsx` — Data Processing Agreement
+- [ ] `frontend/src/app/[locale]/sub-processors/page.tsx` — Sub-processor 清单
+- [ ] `frontend/src/app/[locale]/contact/page.tsx` — Contact 页面
+- [ ] Privacy Policy 必须包含 10 项合规条款（见 OVERSEAS_COMPLIANCE_PLAN.md 第 2.4 节）
+- [ ] Terms of Service 必须包含 6 项合规条款（见 OVERSEAS_COMPLIANCE_PLAN.md 第 2.4 节）
+
+**2.5 注册流程 + Cookie Banner + Footer + 老用户 Terms Gate**
+- [ ] 新建 migration `migrations/041_add_compliance_fields.sql`（users 表 8 个新字段:terms_accepted_at / terms_version / age_confirmed_at / marketing_opt_in / marketing_opt_in_at / locale)
+  - > **编号说明**:2026-06-30 前已存在 040_translate_cache.sql,本 migration 沿用 041。**⚠️ 高风险变更需通知 Erika**
+- [ ] 改造 `frontend/src/components/auth/register-form.tsx`:强制勾选 Terms + 18+ + 独立 Marketing Opt-in（default OFF）
+  - 注册接口 body 补充 `terms_version: "2.0"`
+- [ ] 新建 `frontend/src/components/terms/terms-gate.tsx`(老用户强制同意 modal)
+  - 挂载在 `frontend/src/app/(dashboard)/layout.tsx` 或全局 provider
+  - 登录后调 `GET /api/user/me`,若 `terms_version` 非 `"2.0"` 弹全屏 z-50 modal
+  - 点同意后调 `POST /api/auth/accept-terms` 更新 `terms_accepted_at=NOW(), terms_version='2.0'`
+- [ ] 新建 backend `POST /api/auth/accept-terms` 端点([backend_api/app/routes/auth.py](backend_api/app/routes/auth.py))
+- [ ] `GET /api/user/me` 响应体补充 `terms_version` 字段
+- [ ] 新增 `frontend/src/components/CookieBanner.tsx`（顶部通知栏 + localStorage）
+- [ ] 全站 Footer 强制展示：6 个法律链接 + Amazon disclaimer
+- [ ] 上传页 [frontend/src/app/upload/page.tsx](frontend/src/app/upload/page.tsx) 加数据告知小字(注册已同意,无需再次 checkbox):
+  ```tsx
+  {t("uploadDataNotice")}<Link href="/privacy">{t("privacyLink")}</Link>
+  ```
+
+**2.6 LLM Prompt 语言切换**
+- [ ] 修改 `backend_api/app/services/deep_analyzer.py` prompt 按 user locale 切换
+- [ ] 语言切换后历史数据保留原语言（不重新分析）
+
+**验收标准**
+- 使用 US IP 访问 `app.clueai-reviewlens.com` → 全英文
+- 手动切换 locale → 中英切换流畅无残留
+- Footer 6 个法律页面全部可访问
+- 注册表单 3 个勾选框行为符合预期
+
+---
+
+### V4-出海-M3: 后端合规能力（Week 3，约 5 天）
+
+- 状态: 🔄 进行中（60%） | 分支: `develop`
+- 依赖: M2（migration 041 已上线）
+
+**3.1 EU/UK/EEA + OFAC 制裁国 Geo-Block**
+- [x] 新建 `backend_api/app/middleware/geo_block.py`（2026-07-03 完成）
+- [x] BLOCKED_COUNTRIES 清单（EU 27 + EEA 3 + UK + CH + OFAC 6 国，合计 38）
+- [x] 仅拦注册端点，不拦登录端点（存量用户不影响）
+- [x] 认证路由集成 middleware（`backend_api/app/main.py` CORS 之后挂载）
+- 附加落地：
+  - `CF-IPCountry` header 缺失时放行（Cloudflare 未上线阶段兜底，DEBUG 日志）
+  - 单元测试 `backend_api/tests/test_geo_block.py` 覆盖 8 个场景（DE/IR → 403、缺 header → 200、US → 200、大小写、非注册路径放行、清单完整性）
+
+**3.2 数据主权 API（CCPA / CPRA / PIPEDA）**
+- [x] 新建 `backend_api/app/routes/me.py`（2026-07-03 已完成，扩展现有文件）
+- [x] `GET /api/me/export` — 数据可携权（返回 user/sessions/comments/products/subscriptions 完整 JSON）
+- [x] `PATCH /api/me` — 更正权（修正邮箱/姓名/公司，email 需二次验证 ⚠️ 二次验证 flow 未做，当前仅要求当前密码 + 唯一性校验，后续再补 verification token）
+- [x] `DELETE /api/me` — 遗忘权（硬删或匿名化 users + 级联删除，触发 Paddle 取消 ⚠️ Paddle 自动取消未做，当前仅 WARNING 日志提醒手动取消）
+- 附加落地：
+  - `deps.py` / `auth.py` login 均加 `deleted_at IS NOT NULL` 拒绝，即使旧 cookie 有效也拿不到接口
+  - 前端 `/settings/account` 新页面（导出 JSON 快照 / 修改用户名邮箱密码 / 二次密码 + "DELETE" 确认删除）
+  - Sidebar「管理」组新增「账号与数据」入口
+
+**3.3 邮件双语化 + Marketing/Transactional 拆分 + Unsubscribe（约 1 天）**
+
+> ✅ **2026-07-03 核查**：Resend 已完全接入（`RESEND_API_KEY` 已在 `deploy/.env` 和 `review_analyzer/.env`，`review_analyzer/mailer.py` 已实现密码重置邮件，发件域名 `noreply@clueai-reviewlens.com` 已验证）。**无需迁移邮件服务商**，只需扩展现有 `mailer.py`。
+
+- [x] 改造 `review_analyzer/mailer.py` — 现有 `send_reset_code()` 增加 `locale` 参数支持中英切换（2026-07-04 完成）
+- [x] 新增邮件函数：`send_verification_email` / `send_subscription_confirmed` / `send_subscription_expiring` / `send_deletion_confirmed`（均双语）
+- [x] 邮件模板集中管理：`review_analyzer/email_templates/{zh-CN,en-US}/*.html`（5 类模板 × 2 语言 = 10 个）
+- [x] Transactional 与 Marketing 分离 from address：
+  - Transactional 继续用 `noreply@clueai-reviewlens.com`
+  - Marketing 用新 `updates@clueai-reviewlens.com`（⚠️ 需 Erika 在 Resend 后台加发件人验证，3 分钟）
+- [x] 新建 `send_marketing_email(to, subject, html, locale, user_id)`：
+  - 调用前校验 users 表 `marketing_opt_in=TRUE`
+  - 自动追加双语 unsubscribe footer
+  - ⚠️ `marketing_opt_in` 字段依赖 migration 041（M2.5 未上线），fail-close：字段缺失时视作未 opt-in
+- [x] 新建 `backend_api/app/routes/unsubscribe.py`：
+  - `GET /api/unsubscribe?uid=<id>&token=<hmac>` — 一键退订，无需登录
+  - HMAC token：`hmac.new(API_SESSION_SECRET, str(user_id), sha256).hexdigest()[:16]`
+  - `UPDATE users SET marketing_opt_in=FALSE`，字段缺失时 302 到 `?status=pending`
+- [x] 新建 `frontend/src/app/unsubscribed/page.tsx` — 双语退订成功页（success/pending/error 三态，用 next-intl `useTranslations`）
+- [x] PATCH /me 改邮箱成功后 fire-and-forget 发变更通知邮件；DELETE /me 匿名化完成后发确认邮件
+- [x] 单测 `backend_api/tests/test_mailer.py` 19 个用例：locale 归一化、双语渲染、Transactional/Marketing 路由、opt-in fail-close、HMAC token 生成+校验+防篡改
+- 🔜 依赖 M2.5 上线：migration 041 落地 `marketing_opt_in` 字段后，本模块自动生效（当前 send_marketing_email 会 fail-close，unsubscribe 会 302 pending）
+
+**3.4 Contact + Sub-processor 清单页填充**
+- [ ] `contact@` 页面填充：privacy@ / support@ / hello@ 三个邮箱
+- [ ] sub-processors 页面填充 8 家清单（Supabase / Cloudflare / Anthropic / DataForSEO / Rainforest / Paddle / Resend / CF Analytics）
+
+**3.5 数据保留策略自动清理**
+- [ ] 新建 `workers/retention_cleanup.py`
+- [ ] 复用现有 scheduler service 每日运行
+- [ ] 清理规则：删除账号 30 天备份 / inactive 6 个月通知 90 天后删除 / logs 90 天 / app logs 30 天
+
+**验收标准**
+- VPN 切换 DE / IR IP 注册 → 403
+- VPN 切换 US IP 注册 → 200
+- `GET /api/me/export` 返回完整 JSON
+- `PATCH /api/me` 修改邮箱触发二次验证邮件
+- `DELETE /api/me` 后无法登录，级联删除生效
+- 中英文用户分别收到对应语言的密码重置邮件
+- Marketing 邮件仅发给 `marketing_opt_in=TRUE` 用户
+- 点击 marketing 邮件的 unsubscribe 链接（未登录状态）→ 成功退订
+- retention_cleanup 每日 cron 触发无异常
+
+---
+
+### V4-出海-M4: LLM Bedrock 集成 + 数据源改造（Week 4，约 5 天）
+
+- 状态: ⏸️ 冻结（等 Erika 拍板 A vs C，见上方"📌 2026-07-03 决策定型"块）| 分支: `feature/v4-bedrock-dataforseo`
+- 依赖: **M1（ECS 迁移到 SG 完成）+ M3（合规基础）**  ← 2026-07-03 依赖变更：M1 前置条件由"AWS Bedrock 申请 + AK/SK 到位"改为"ECS 迁移到 SG/US 完成"（两次实测证明 HK IP 被 Anthropic/OpenAI 双双 403）
+
+> **⚠️ 2026-07-03 M4 章节标题保留但内容需按最终选型重写**
+> - 选 A（SG 迁移）+ OpenAI 直连 → M4 改为"OpenAI GPT-4o-mini 主链路集成"，删除 Bedrock 分支
+> - 选 A（SG 迁移）+ Bedrock → M4 保持现状（下述 4.1-4.5 步骤）
+> - 选 C（OpenRouter 中转）→ M4 改为"OpenRouter 集成"，新增 `provider="openrouter"` 分支代替 `provider="bedrock"`
+> - 拍板前**不启动 M4 任何编码任务**
+
+> **技术背景**:项目已有 `backend_api/app/services/llm_router.py`(V4-T4 三级 fallback: DeepSeek/OpenAI/Qwen + 熔断)。本 Milestone **扩展现有 router 支持 Bedrock provider**,不新建 llm_client 抽象层。
+
+**4.1 LLMRouter 扩展 Bedrock 支持(1.5 天)**
+- [ ] `backend_api/app/services/llm_router.py` — `ModelConfig` 新增 `provider: str = "openai_compat"` + `aws_region: str = "ap-southeast-1"` 字段
+- [ ] `MODELS` 列表头部插入 Bedrock Claude 配置:
+  ```python
+  ModelConfig(
+      name="bedrock_claude_haiku",
+      model_id="anthropic.claude-haiku-4-5-20251001-v1:0",
+      base_url="",
+      api_key_env="",
+      provider="bedrock",
+      aws_region="ap-southeast-1",
+  )
+  ```
+- [ ] `LLMRouter._get_bedrock_client()` — 用 `boto3.client('bedrock-runtime', ...)` 从 `AWS_BEDROCK_ACCESS_KEY_ID` / `AWS_BEDROCK_SECRET_ACCESS_KEY` 初始化
+- [ ] 新增 `completion_text(messages, ..., user_id=None) -> tuple[str, str, dict]`:
+  - Bedrock 分支:抽出 system message + 打 `cache_control={"type":"ephemeral"}` → 构造 InvokeModel 请求体(anthropic_version="bedrock-2023-05-31")
+  - OpenAI 兼容分支(DeepSeek/OpenAI/Qwen):保留 BYOK 逻辑(user_id → get_api_key)
+  - 复用现有熔断/fallback/日志骨架
+- [ ] 新增便捷函数 `router_completion_text(messages, ..., user_id=None)`
+- [ ] `requirements.txt` / `pyproject.toml` 增加 `boto3>=1.35.0`
+
+**4.2 analyzer.py 接入 Router + JSON 输出保证(1 天)**
+- [ ] `review_analyzer/analyzer.py` — `SYSTEM_PROMPT` 末尾追加英文强化:`"Respond with raw JSON only. No markdown fences, no explanation outside the JSON object."`
+- [ ] `_call_deepseek_api()` → `_call_llm()`,走 `router_completion_text()`,不传 `response_format`
+- [ ] 抢救逻辑:Claude 偶尔加 markdown fence,用 `re.search(r'\{.*\}', text, re.DOTALL)` 提取
+- [ ] `analyze_comment()` 签名保持兼容 or 改为 `(comment, category, user_id, rating)`,同步改 `workers/jobs.py`
+
+**4.3 translate.py + copywriter.py 接入 Router(0.5 天)**
+- [ ] `backend_api/app/routes/translate.py` `_translate_payload()` — 直接 OpenAI 调用 → `router_completion_text()`
+  - system prompt 加 `"Output raw JSON only. No markdown."`
+  - 删除 `response_format={"type":"json_object"}`
+  - `log_llm_usage()` tokens 从 Router usage dict 取
+- [ ] `backend_api/app/routes/copywriter.py` `_generate_copy_item()` + `_generate_ideal_profile()` 同上
+
+**4.4 DataForSEO Amazon Reviews 集成(1 天)**
+- [ ] 新建 `backend_api/app/services/dataforseo.py`（参照 rainforest.py 结构）
+- [ ] 复用 `_parse_review` 数据结构（保持字段一致）
+- [ ] Basic Auth + live mode 端点 + 错误处理（429 / 5xx retry）
+
+**4.5 数据源 Router(0.3 天)**
+- [ ] `workers/jobs.py` 增加 `fetch_amazon_reviews()` 统一入口
+- [ ] 优先级链:DataForSEO → Rainforest fallback → woot(仅国内启用)
+- [ ] `backend_api/app/routes/scrape.py` 同步改造
+
+**4.6 woot 出海版禁用(0.2 天)**
+- [ ] `workers/jobs.py` / `backend_api/app/services/review_scraper.py` 判断 `ENABLE_WOOT_SCRAPER` 环境变量
+- [ ] `deploy/.env.example` 加 `ENABLE_WOOT_SCRAPER=false`,通知 Erika 在 prod `deploy/.env` 设置
+- [ ] 前端隐藏"免费抓取" UI（若有）
+
+**4.7 California AI Transparency Act 合规**
+- [ ] 分析结果 UI 加 "🤖 AI-generated analysis" 标签
+- [ ] PDF/Excel 导出加 "Analysis powered by AI (Anthropic Claude via AWS Bedrock)"
+
+**验收标准**
+- Bedrock 连通性 smoke test 通过(`boto3.invoke_model` 返回 200)
+- 单条评论分析成本:Haiku(cache 命中)≈ $0.00145,与预期一致
+- 观察 3 天 Bedrock 调用成功率 ≥ 99%(未触发熔断切 DeepSeek)
+- DataForSEO 抓取 3-5 个热门 ASIN 对比 Rainforest 数据一致性
+- 断开 DataForSEO 后 Rainforest fallback 生效
+- 临时错误 AWS AK 触发熔断,自动切 DeepSeek 成功
+- prod 日志确认 woot 代码不被调用
+- 分析结果 UI 显示 AI 标签
+
+---
+
+### V4-出海-M5: Beta 发布准备（Week 5，约 5 天）
+
+- 状态: ⏳ 待启动 | 分支: `feature/v4-beta-launch`
+- 依赖: M4（技术改造全部完成）
+
+**5.1 早鸟定价配置**
+- [ ] `frontend/src/app/pricing/page.tsx` 新增 "Early Bird -50%" 折扣位
+- [ ] Paddle 后台创建早鸟折扣码
+- [ ] 3 档套餐：Free / Starter $29 / Pro $99（早鸟 $14.5 / $49.5）
+
+**5.2 社区渗透（Erika 执行）**
+- [ ] Reddit：r/FulfillmentByAmazon、r/AmazonSeller、r/ecommerce 发帖
+- [ ] Facebook Groups：Amazon FBA Seller 群（≥ 5-10 个大群）
+- [ ] LinkedIn：关键词搜索潜在早鸟用户
+- [ ] 招募 5-10 个免费早鸟用户
+
+**5.3 数据泄露响应 Runbook**
+- [ ] 新建 `docs/incident-response.md` — 内部文档
+- [ ] 定义 T+0h / T+24h / T+48-72h / T+7d 四阶段响应流程
+
+**5.4 WCAG 2.1 AA 辅助功能扫查**
+- [ ] 用 axe DevTools 扫全站
+- [ ] Lighthouse Accessibility Score 目标 ≥ 90
+- [ ] 修复：img alt / 键盘导航 / contrast 4.5:1 / form label / focus indicator / landmark roles
+
+**5.5 nginx / 部署侧改动**
+- [ ] Cloudflare DNS 新增 `app` A/CNAME 记录
+- [ ] `deploy/nginx.conf` 新增 `app.clueai-reviewlens.com` server block
+- [ ] `deploy/docker-compose.yml` certbot 命令新增 `-d app.clueai-reviewlens.com`
+- [ ] `deploy/docker-compose.yml` API_CORS_ORIGINS 新增 `https://app.clueai-reviewlens.com`
+- [ ] `www.` 301 重定向到 `app.`
+
+**5.6 监控 + 上线**
+- [ ] Cloudflare Analytics 监控流量国家分布
+- [ ] Paddle Dashboard 监控订阅转化 + 退款率
+- [ ] Sentry 观察 EU IP 403 拦截率（应 0-1%）
+- [ ] Paddle sandbox 完整订阅流程测试
+- [ ] 邀请海外朋友测试 3 个套餐转化
+
+**验收标准**
+- 使用测试账号（惜_clueai / test123456）登录 `app.clueai-reviewlens.com` 全流程无异常
+- Footer 6 个法律链接 + Amazon disclaimer 全部展示
+- 用海外 IP 注册 + 订阅完整流程跑通
+- ASIN 抓取走 DataForSEO 通道（后端日志确认）
+- LLM 分析走 Claude 通道（后端日志确认）
+
+---
+
+### V4-出海模块进度总览
+
+| Milestone | 内容 | 状态 | 进度 |
+|-----------|------|------|------|
+| M1 | Erika 手动准备（账户/文档 + AWS Bedrock） | 🔄 进行中 | 7%（1/14：Supabase region 已核查） |
+| M2 | i18n 框架 + 双语文案 + 法律页面 + Terms Gate | ⏳ 待启动 | 0% |
+| M3 | 后端合规能力（geo-block / 数据主权 API / 邮件双语） | 🔄 进行中 | 40%（3.1 Geo-Block + 3.2 数据主权 API 已完成） |
+| M4 | Bedrock LLM 集成 + 数据源改造 | ⏳ 待启动 | 0% |
+| M5 | Beta 发布 + 部署 + 监控 | ⏳ 待启动 | 0% |
+
+```
+[                    ] 0%  (0/5 modules)
+```
+
+**时间估算**：6-7 周（Week 1 Erika 手动 + Week 2-5 Claude 开发）
+**参考文档**：[OVERSEAS_COMPLIANCE_PLAN.md](OVERSEAS_COMPLIANCE_PLAN.md)
 
 ---

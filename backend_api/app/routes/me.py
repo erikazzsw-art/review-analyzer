@@ -3,10 +3,11 @@ from __future__ import annotations
 import logging
 import secrets
 from datetime import datetime, timezone
+from threading import Thread
 from typing import Any
 
 import bcrypt
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from backend_api.app.deps import clear_auth_cookies, get_current_user
 from backend_api.app.schemas.auth import UserPayload
@@ -28,6 +29,7 @@ from review_analyzer.database import (
     update_user_password,
     update_user_profile,
 )
+from review_analyzer.mailer import send_deletion_confirmed, send_verification_email
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +66,37 @@ def _iso_or_none(value: Any) -> str | None:
     if hasattr(value, "isoformat"):
         return value.isoformat()
     return str(value)
+
+
+def _locale_from_request(request: Request) -> str:
+    """从 Accept-Language / NEXT_LOCALE cookie 推断用户语言,mailer 会归一化。
+
+    优先级:cookie(用户显式选择) > Accept-Language 首选 > 默认 en-US。
+    """
+    cookie_locale = request.cookies.get("NEXT_LOCALE")
+    if cookie_locale:
+        return cookie_locale
+    accept = request.headers.get("accept-language", "")
+    if accept:
+        return accept.split(",")[0].strip()
+    return "en-US"
+
+
+def _fire_and_forget(send_fn, *args, **kwargs) -> None:
+    """把邮件发送放到后台线程,失败只记 WARNING,不阻断也不回滚主流程。
+
+    邮件失败不该拖垮 PATCH/DELETE /me 的响应 —— 用户 PII 已经更新/匿名化,
+    邮件是"事后通知",可容忍。生产环境后续可换成 RQ enqueue。
+    """
+    def _run():
+        try:
+            ok, err = send_fn(*args, **kwargs)
+            if not ok:
+                logger.warning("mailer %s failed: %s", send_fn.__name__, err)
+        except Exception:
+            logger.exception("mailer %s crashed", send_fn.__name__)
+
+    Thread(target=_run, daemon=True).start()
 
 
 @router.get("/me", response_model=UserPayload)
@@ -115,12 +148,14 @@ def export_me(current_user: dict = Depends(get_current_user)) -> MeExportPayload
 @router.patch("/me", response_model=UserPayload)
 def update_me(
     payload: MeUpdateRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ) -> UserPayload:
     """更正权 (Right to Rectification) — 修改用户名 / 邮箱 / 密码。
 
     任何字段的修改都需要传入当前密码, 防止 cookie 被劫持后直接改邮箱转移账号。
     邮箱直接更新 (不做二次验证 flow), 后续可扩展 verification token 流程。
+    改邮箱成功后会向新邮箱发一封变更通知邮件(fire-and-forget,失败不影响响应)。
     """
     user_id = int(current_user["id"])
 
@@ -161,6 +196,19 @@ def update_me(
     if payload.new_password is not None:
         update_user_password(user_id, _hash_password(payload.new_password))
 
+    # 邮箱变更 → 通知新邮箱,让用户知道"发生了一次邮箱变更"。
+    # 当前没有 verification flow,code 参数用一个 6 位随机数占位,后续 flow 上线后
+    # 替换为真实 token + 存 DB。fire-and-forget,不阻断响应。
+    if new_email is not None:
+        placeholder_code = "".join(secrets.choice("0123456789") for _ in range(6))
+        _fire_and_forget(
+            send_verification_email,
+            to_email=new_email,
+            code=placeholder_code,
+            new_email=new_email,
+            locale=_locale_from_request(request),
+        )
+
     refreshed = get_user_by_id(user_id) or current_user
     return UserPayload(
         id=user_id,
@@ -174,6 +222,7 @@ def update_me(
 @router.delete("/me", response_model=MeMessageResponse)
 def delete_me(
     payload: MeDeleteRequest,
+    request: Request,
     response: Response,
     current_user: dict = Depends(get_current_user),
 ) -> MeMessageResponse:
@@ -182,7 +231,7 @@ def delete_me(
     匿名化用户主表 (PII 清零 + password_hash 置随机 + deleted_at=NOW), 业务数据
     (sessions / comments / products) 保留 user_id 但已无法识别真实身份。有
     paddle_customer_id 时打 WARNING 日志, 提醒 Erika 手动 (未来自动) 到 Paddle
-    后台取消订阅避免继续扣款。
+    后台取消订阅避免继续扣款。删除完成后向原邮箱发一封匿名化确认邮件。
     """
     user_id = int(current_user["id"])
 
@@ -191,6 +240,10 @@ def delete_me(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect.",
         )
+
+    # 匿名化前先拿到原邮箱和 locale,因为 anonymize_user 会把 email 置空。
+    original_email = str(current_user.get("email") or "")
+    locale = _locale_from_request(request)
 
     paddle_customer_id = current_user.get("paddle_customer_id")
     scrambled = _hash_password(secrets.token_urlsafe(32))
@@ -205,5 +258,13 @@ def delete_me(
         )
 
     clear_auth_cookies(response)
+
+    if original_email:
+        _fire_and_forget(
+            send_deletion_confirmed,
+            to_email=original_email,
+            deleted_at=datetime.now(timezone.utc).isoformat(),
+            locale=locale,
+        )
 
     return MeMessageResponse(message="Account deletion completed.")

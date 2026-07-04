@@ -348,5 +348,24 @@
     "switchLanguage": "Switch language",
     "zh": "中文",
     "en": "English"
+  },
+  "unsubscribed": {
+    "backHome": "Back to home",
+    "contactSupport": "Need to re-subscribe or have questions? Reach us at <mail>support@clueai-reviewlens.com</mail>.",
+    "success": {
+      "title": "You have been unsubscribed",
+      "description": "We've removed you from the product updates list.",
+      "body": "You will no longer receive marketing or product update emails from ClueAI. Transactional notifications (account security, password reset, subscription changes) will still be sent."
+    },
+    "pending": {
+      "title": "Unsubscribe request received",
+      "description": "We recorded your request, but the unsubscribe mechanism is still rolling out.",
+      "body": "The system couldn't process the unsubscribe immediately. Your request is queued and will be honored as soon as the service is fully available. You may still receive a few more emails in the meantime."
+    },
+    "error": {
+      "title": "Invalid unsubscribe link",
+      "description": "The link is expired or the parameters are incorrect.",
+      "body": "The unsubscribe link may have expired, been truncated when copied, or no longer matches your current account. Please click the unsubscribe link from the most recent email, or contact support."
+    }
   }
 }

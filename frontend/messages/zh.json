@@ -348,5 +348,24 @@
     "switchLanguage": "切换语言",
     "zh": "中文",
     "en": "English"
+  },
+  "unsubscribed": {
+    "backHome": "返回首页",
+    "contactSupport": "如需重新订阅或有疑问，请联系 <mail>support@clueai-reviewlens.com</mail>。",
+    "success": {
+      "title": "已成功退订",
+      "description": "我们已将你从产品更新邮件列表移除。",
+      "body": "你不会再收到 ClueAI 的营销与产品动态邮件。账号安全、密码重置、订阅变更等事务性通知仍会照常发送。"
+    },
+    "pending": {
+      "title": "退订请求已收到",
+      "description": "我们已记录你的请求，但退订机制尚在部署中。",
+      "body": "系统暂时无法立即处理退订操作，你的请求已排队。我们会在服务恢复后立即完成退订，你短期内可能仍会收到邮件，请稍等。"
+    },
+    "error": {
+      "title": "退订链接无效",
+      "description": "链接已过期或参数错误。",
+      "body": "退订链接可能已过期、被复制截断，或不再对应你当前账号。请从最新邮件里重新点击退订链接，或联系客服帮你处理。"
+    }
   }
 }

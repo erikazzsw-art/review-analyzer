@@ -91,6 +91,49 @@ V4-出海模块推进「M1 Erika 手动执行」期间，同步落地不阻塞�
 
 ---
 
+## 2026-07-04
+
+### V4-出海-M3.3：邮件双语化 + Marketing/Transactional 拆分 + Unsubscribe
+
+- **工作量**: M（review_analyzer + backend_api + frontend + 单测共 15 个文件，约 1 人天）
+- **状态**: 本地完成，代码已 push develop，等 Erika 部署
+
+**需求描述**：
+V4-出海模块 M3.3 后端合规能力第三环。给 Resend 邮件通道加中英双语能力，同时严格分离 Transactional（noreply@）和 Marketing（updates@）两条发件通道，Marketing 邮件强制走 opt-in 并自带一键退订链接，满足 GDPR / CCPA 对营销邮件的合规要求。所有邮件模板从代码硬编码搬到 `review_analyzer/email_templates/{zh-CN,en-US}/*.html`，后续文案迭代不用改 Python。
+
+**涉及岗位及工时**：
+- 后端开发：0.7 人天（`review_analyzer/mailer.py` 完整重构、10 个 HTML 模板、`backend_api/app/routes/unsubscribe.py` 新建、`backend_api/app/routes/me.py` 接入邮件通知、19 个单测）
+- 前端开发：0.2 人天（`frontend/src/app/unsubscribed/page.tsx` 双语退订成功页 + zh/en messages 新增 8 条文案）
+- DevOps 待办：Erika 在 Resend 后台加 `updates@clueai-reviewlens.com` 发件人验证（3 分钟），否则 send_marketing_email 走不通
+
+**变更清单**：
+- `review_analyzer/mailer.py` — 从 35 行扩到 280 行：新增 5 个邮件函数（reset_code / verification / subscription_confirmed / subscription_expiring / deletion_confirmed），全部支持 `locale="zh-CN"|"en-US"` 参数
+- `_normalize_locale()` — 前端 next-intl 的 `zh` / `en` → `zh-CN` / `en-US`；兼容 `zh-Hans` / `zh_TW` / `en-GB` 等变体；未知 locale fallback 到 `en-US`
+- 常量 `FROM_TRANSACTIONAL="ClueAI <noreply@...>"` 与 `FROM_MARKETING="ClueAI <updates@...>"` 严格分离，代码路径不可混用
+- `send_marketing_email(to, subject, html, locale, user_id)`：发送前 `SELECT marketing_opt_in FROM users` 校验，fail-close（字段缺失 / 值为 FALSE / DB 异常 → 一律不发）；自动追加双语 unsubscribe footer
+- HMAC 退订 token：`hmac.new(API_SESSION_SECRET, str(user_id).encode(), sha256).hexdigest()[:16]`，`hmac.compare_digest` 常数时间比对
+- `backend_api/app/routes/unsubscribe.py` — `GET /api/unsubscribe?uid=X&token=Y`，无需登录，三态 302 → 前端 `/unsubscribed?status={success|pending|error}`；DB 字段缺失路径归为 `pending`（等 041 上线自动生效）而非 `error`
+- `backend_api/app/routes/me.py` — PATCH /me 改邮箱成功后 fire-and-forget 发变更通知到新邮箱；DELETE /me 匿名化完成后发确认邮件到原邮箱；线程池后台发送，邮件失败不阻断主响应
+- `frontend/src/app/unsubscribed/page.tsx` — Suspense 包 useSearchParams（Next 15 静态渲染要求），`MarketingShell` + `useTranslations` 双语呈现三态
+- `frontend/messages/{zh,en}.json` — 新增 `unsubscribed.*` 命名空间（8 条文案）
+- **单元测试** `backend_api/tests/test_mailer.py`（19 个用例）：locale 归一化 4 组变体、双语模板渲染 4 类、Transactional/Marketing 通道分离、opt-in fail-close 兜底、HMAC token 生成/校验/防篡改 5 个断言
+
+**验收 & lint**：
+- `pytest backend_api/tests/test_mailer.py` — 19 passed
+- `pytest backend_api/tests/test_geo_block.py` — 8 passed（回归确认 M3.1 未破坏）
+- `ruff check backend_api/ review_analyzer/mailer.py` — All checks passed
+- `npm run typecheck`（frontend）— 通过
+
+**依赖门槛 & 已知限制**：
+- ⚠️ `send_marketing_email` 依赖 users.marketing_opt_in 字段，该字段属 migration 041（M2.5 未上线）。041 前 send_marketing_email 会 fail-close（不误发），unsubscribe 端点会 302 到 `?status=pending` 提示用户。041 上线后**代码零改动自动生效**
+- ⚠️ `updates@clueai-reviewlens.com` 发件人需 Erika 在 Resend 后台加验证，未验证前 send_marketing_email 即使 opt-in 通过也会被 Resend 拒
+- ⚠️ PATCH /me 改邮箱的**真实二次验证 flow**（code 存 DB + confirm 端点）仍未做，当前只发通知邮件带占位 code；追加 verification token 表 + `/me/verify-email` 端点是下一步
+- ⚠️ 订阅相关邮件（confirmed / expiring）已具备双语模板和函数入口，实际触发点等 Paddle webhook 集成（M1 依赖）落地后再调用
+
+**M3 进度更新**：40% → 60%（M3.1 / M3.2 / M3.3 完成，剩 M3.4 Contact 页面 + M3.5 数据保留自动清理）
+
+---
+
 ## 2026-07-03
 
 ### Bug 修复：文件上传 500（生产库缺 source_channel 列）
