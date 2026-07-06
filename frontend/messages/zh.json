@@ -367,5 +367,45 @@
       "description": "链接已过期或参数错误。",
       "body": "退订链接可能已过期、被复制截断，或不再对应你当前账号。请从最新邮件里重新点击退订链接，或联系客服帮你处理。"
     }
+  },
+  "footer": {
+    "privacy": "隐私政策",
+    "terms": "用户协议",
+    "cookies": "Cookie 政策",
+    "dpa": "数据处理协议",
+    "subProcessors": "Sub-Processor 清单",
+    "contact": "联系我们",
+    "amazonDisclaimer": "Amazon 及 Amazon 徽标是 Amazon.com, Inc. 或其附属公司的商标。ClueAI 与 Amazon 无任何关联。"
+  },
+  "contact": {
+    "title": "联系我们",
+    "description": "请根据你的需求联系对应团队。",
+    "privacy": {
+      "label": "GDPR / CCPA 数据请求",
+      "email": "privacy@clueai-reviewlens.com",
+      "description": "依据 GDPR、CCPA、PDPA 提出的数据访问、更正、删除或导出请求。"
+    },
+    "support": {
+      "label": "用户支持",
+      "email": "support@clueai-reviewlens.com",
+      "description": "账单、账号问题、功能咨询及一般故障排查。"
+    },
+    "hello": {
+      "label": "一般咨询",
+      "email": "hello@clueai-reviewlens.com",
+      "description": "合作、媒体或其他不属于上述分类的问题。"
+    },
+    "responseTime": "我们通常在 1–2 个工作日内回复。"
+  },
+  "subProcessors": {
+    "title": "Sub-Processor 清单",
+    "description": "以下第三方服务商代表我们处理用户个人数据。",
+    "lastUpdated": "最后更新：2026 年 7 月",
+    "provider": "服务商",
+    "purpose": "用途",
+    "region": "数据存储区域",
+    "dpa": "DPA / 隐私政策",
+    "quarterly": "本清单每季度审查一次，重大变更将提前通知用户。",
+    "learnMore": "查看详情"
   }
 }

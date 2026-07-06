@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 
 type MarketingShellProps = {
@@ -59,6 +60,7 @@ export function MarketingShell({
           {children ? <div className="mt-8">{children}</div> : null}
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

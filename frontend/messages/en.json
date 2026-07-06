@@ -367,5 +367,45 @@
       "description": "The link is expired or the parameters are incorrect.",
       "body": "The unsubscribe link may have expired, been truncated when copied, or no longer matches your current account. Please click the unsubscribe link from the most recent email, or contact support."
     }
+  },
+  "footer": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "dpa": "DPA",
+    "subProcessors": "Sub-processors",
+    "contact": "Contact",
+    "amazonDisclaimer": "Amazon and the Amazon logo are trademarks of Amazon.com, Inc. or its affiliates. ClueAI is not affiliated with Amazon."
+  },
+  "contact": {
+    "title": "Contact Us",
+    "description": "We're here to help. Reach out to the right team below.",
+    "privacy": {
+      "label": "GDPR / CCPA Data Requests",
+      "email": "privacy@clueai-reviewlens.com",
+      "description": "Requests for data access, correction, deletion, or export under GDPR, CCPA, or PDPA."
+    },
+    "support": {
+      "label": "User Support",
+      "email": "support@clueai-reviewlens.com",
+      "description": "Billing, account issues, feature questions, and general troubleshooting."
+    },
+    "hello": {
+      "label": "General Enquiries",
+      "email": "hello@clueai-reviewlens.com",
+      "description": "Partnerships, press, or anything else that doesn't fit the above."
+    },
+    "responseTime": "We typically respond within 1–2 business days."
+  },
+  "subProcessors": {
+    "title": "Sub-Processor List",
+    "description": "Third-party service providers that process personal data on our behalf.",
+    "lastUpdated": "Last updated: July 2026",
+    "provider": "Provider",
+    "purpose": "Purpose",
+    "region": "Region",
+    "dpa": "DPA / Privacy",
+    "quarterly": "This list is reviewed quarterly. We will notify users of material changes.",
+    "learnMore": "Learn more"
   }
 }
