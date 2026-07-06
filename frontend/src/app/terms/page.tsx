@@ -56,7 +56,7 @@ export default function TermsPage() {
           <li>Pro / Team 套餐：按月或按年订阅，通过 Paddle 平台计费</li>
           <li>订阅自动续费，可随时取消（取消后当前周期仍可使用至到期）</li>
           <li>配额按自然月重置，不结转、不退还</li>
-          <li>价格调整提前 30 天通知，早鸟用户享锁价权益</li>
+          <li>价格调整提前 30 天通知</li>
         </ul>
         <ul className="text-muted-foreground">
           <li>Free plan: free to use with quota limits</li>

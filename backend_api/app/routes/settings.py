@@ -198,7 +198,7 @@ def create_billing_checkout(
 ) -> BillingCheckoutResponse:
     user_id = int(current_user["id"])
     email = str(current_user.get("email") or "")
-    success_url = payload.success_url or "http://localhost:3000/settings?billing=success"
+    success_url = payload.success_url or f"{os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')}/settings?billing=success"
     checkout_html = get_checkout_html(user_id, email, success_url)
     return BillingCheckoutResponse(
         checkout_html=checkout_html,

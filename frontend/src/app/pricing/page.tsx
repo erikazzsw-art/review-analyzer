@@ -2,20 +2,27 @@ import Link from "next/link";
 
 import { MarketingShell } from "@/components/marketing/marketing-shell";
 import { PricingFaq } from "@/components/marketing/pricing-faq";
+import { ProCtaButton } from "@/components/marketing/pro-cta-button";
+import { PLANS, type PlanPricing } from "@/lib/pricing";
 import { buildMarketingMetadata } from "@/lib/seo";
 
 export const metadata = buildMarketingMetadata({
   title: "定价方案 | ClueAI ReviewLens",
   description:
-    "对比 Free、Pro 和 Team 方案 — 评论智能分析、问评论、行动追踪，按需升级。",
+    "对比 Free、Pro 和 Team 方案 — 评论智能分析、问评论、行动追踪，按需升级。人民币与美元双币标价。",
   path: "/pricing",
 });
 
-const plans = [
+type PlanCard = {
+  pricing: PlanPricing;
+  highlight: boolean;
+  cta: { label: string; href: string };
+  features: string[];
+};
+
+const plans: PlanCard[] = [
   {
-    name: "Free",
-    price: "¥0",
-    period: "永久免费",
+    pricing: PLANS.free,
     highlight: false,
     cta: { label: "免费开始", href: "/register" },
     features: [
@@ -28,11 +35,9 @@ const plans = [
     ],
   },
   {
-    name: "Pro",
-    price: "¥99",
-    period: "/月",
+    pricing: PLANS.pro,
     highlight: true,
-    cta: { label: "升级 Pro", href: "/register?plan=pro" },
+    cta: { label: "升级到 Pro", href: "/register?plan=pro" },
     features: [
       "不限产品组数量",
       "单次最多 500 条评论分析",
@@ -45,9 +50,7 @@ const plans = [
     ],
   },
   {
-    name: "Team",
-    price: "联系我们",
-    period: "",
+    pricing: PLANS.team,
     highlight: false,
     cta: { label: "联系销售", href: "mailto:hello@clueai.co" },
     features: [
@@ -68,13 +71,13 @@ export default function PricingPage() {
       <MarketingShell
         eyebrow="Pricing"
         title="简单透明的定价，随业务成长升级。"
-        description="免费开始体验核心分析能力。需要多产品管理、问评论、行动追踪时再升级 Pro。"
+        description="$19/月 · 约 ¥138 · Paddle 全球安全结算。免费开始体验核心分析能力，需要多产品管理、问评论、行动追踪时再升级 Pro。"
       />
 
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-6 pb-16 lg:grid-cols-3 lg:px-10">
         {plans.map((plan) => (
           <article
-            key={plan.name}
+            key={plan.pricing.key}
             className={[
               "relative flex flex-col rounded-shell border p-6 shadow-card",
               plan.highlight
@@ -88,18 +91,31 @@ export default function PricingPage() {
               </div>
             )}
             <div className="text-sm font-semibold uppercase tracking-[0.12em] text-soft">
-              {plan.name}
+              {plan.pricing.name}
             </div>
-            <div className="mt-3 flex items-baseline gap-1">
+            <div className="mt-3 flex items-baseline gap-2">
               <span className="font-heading text-5xl font-extrabold tracking-[-0.04em] text-ink">
-                {plan.price}
+                {plan.pricing.priceUsd}
               </span>
-              {plan.period && (
+              {plan.pricing.priceCnyApprox && (
+                <span className="text-base font-semibold text-soft">
+                  / 约 {plan.pricing.priceCnyApprox}
+                </span>
+              )}
+              {plan.pricing.period && (
                 <span className="text-base font-medium text-soft">
-                  {plan.period}
+                  {plan.pricing.period}
                 </span>
               )}
             </div>
+            {plan.pricing.originalPriceUsd && (
+              <div className="mt-1 text-xs text-soft">
+                原价{" "}
+                <span className="line-through">
+                  {plan.pricing.originalPriceUsd}/月
+                </span>
+              </div>
+            )}
 
             <div className="mt-6 flex-1 space-y-2.5">
               {plan.features.map((feature) => (
@@ -125,17 +141,27 @@ export default function PricingPage() {
               ))}
             </div>
 
-            <Link
-              href={plan.cta.href}
-              className={[
-                "mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-pill px-6 py-3 text-sm font-semibold shadow-card transition",
-                plan.highlight
-                  ? "bg-[#d94d72] text-white hover:bg-[#c4405f]"
-                  : "border border-line bg-white text-ink hover:border-ink/20",
-              ].join(" ")}
-            >
-              {plan.cta.label}
-            </Link>
+            {plan.pricing.key === "pro" ? (
+              <ProCtaButton
+                label={plan.cta.label}
+                className={[
+                  "mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-pill px-6 py-3 text-sm font-semibold shadow-card transition",
+                  "bg-[#d94d72] text-white hover:bg-[#c4405f]",
+                ].join(" ")}
+              />
+            ) : (
+              <Link
+                href={plan.cta.href}
+                className={[
+                  "mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-pill px-6 py-3 text-sm font-semibold shadow-card transition",
+                  plan.highlight
+                    ? "bg-[#d94d72] text-white hover:bg-[#c4405f]"
+                    : "border border-line bg-white text-ink hover:border-ink/20",
+                ].join(" ")}
+              >
+                {plan.cta.label}
+              </Link>
+            )}
           </article>
         ))}
       </div>
