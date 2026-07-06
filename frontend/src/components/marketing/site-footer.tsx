@@ -7,6 +7,7 @@ const LEGAL_LINKS = [
   { href: "/cookies", key: "cookies" },
   { href: "/dpa", key: "dpa" },
   { href: "/sub-processors", key: "subProcessors" },
+  { href: "/refund", key: "refund" },
   { href: "/contact", key: "contact" },
 ] as const;
 
