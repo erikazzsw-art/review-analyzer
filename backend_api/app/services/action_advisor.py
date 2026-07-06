@@ -72,7 +72,7 @@ def generate_action_advice(
     返回:
         {"action_title", "suggested_action", "expected_timeline", "priority"} 或 None（失败时）
     """
-    from scripts.aspect_taxonomy import get_aspect_label_zh
+    from review_analyzer.aspect_taxonomy import get_aspect_label_zh
 
     tag_label = get_aspect_label_zh(tag_name)
     dept_label = get_dept_label(dept)

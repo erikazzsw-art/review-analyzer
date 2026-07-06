@@ -25,6 +25,69 @@
 
 ---
 
+## 2026-07-06
+
+### Bug 修复：P2 级 pre-existing 分析链路 4 连修（rag 日志 + push_snapshots 表 + embedding batch + scripts 缺失）
+
+- **工作量**: M（4 个独立 pre-existing bug 连锁排查 + 修复 + 迁移，约 1 人天）
+- **状态**: P2-A/B/C/D 代码全部完成 push develop；P2-A/B 已上生产并观测；P2-C/D 待 Erika 部署 worker（本次提交）
+
+**需求描述**：
+2026-07-05 服务器迁移 SG 后，Erika 拉 worker 日志暴露出 4 个长期被静默 exception handler 吞掉的 pre-existing bug，与迁移无关，全部为分析链路 P2 级。分两个会话分批修完：上一轮修 P2-A/B（rag 异常日志详细化 + push_snapshots 表建立），本轮基于 P2-A 的详细日志锁定 P2-C（DashScope embedding batch 超限）和 P2-D（workers 引用不存在的 scripts 模块），一并修复。
+
+**涉及岗位及工时**：
+- 后端开发：1 人天（P2-A rag 日志 0.2 / P2-B migration 0.2 / P2-C batch 常量定位 0.2 / P2-D 5 处 import 迁移 + Dockerfile 归因 0.4）
+
+**变更清单**：
+- **P2-A**：`review_analyzer/rag.py` `generate_embeddings_batch` 捕获异常时打印完整异常 + `base_url` / `model` / `key_source`（原来只打 "skipping chunk"）；模块加载时校验 `EMBEDDING_API_KEY` / `OPENAI_API_KEY` 至少一个非空，均缺则打 WARNING
+- **P2-B**：新建 `migrations/041_push_snapshots.sql`，`push_snapshots` + `issue_escalation_state` 两表；用 `UNIQUE NULLS NOT DISTINCT` 保证 `product_id=NULL` 时 upsert 语义正确
+- **P2-C**：`review_analyzer/rag.py:90` `EMBEDDING_BATCH_SIZE 256 → 10`（DashScope `text-embedding-v3` 官方硬上限 10，OpenAI 是 2048 之前能跑，切 DashScope 后一直 400 静默失败），常量注释注明来源
+- **P2-D**：迁移 `scripts/aspect_taxonomy.py → review_analyzer/aspect_taxonomy.py`（属于共享分析业务字典，归属更合理），同步修 5 处 import：`workers/jobs.py:779`、`workers/jobs.py:823`、`workers/periodic_jobs.py:164`、`workers/periodic_jobs.py:174`、`backend_api/app/services/action_advisor.py:75`；`scripts/` 恢复"一次性运维脚本"定位，不进 prod 镜像
+
+**根因深度**：
+- 4 个 bug 长期存在但都被 P2-A 之前的 `except Exception: log("skipping")` 吞掉，只有当 P2-A 详细日志上线后才能看到原始错误码 / 表名 / 模块名，属于**"先修日志再修 bug"的正向连锁**
+- P2-C 意味着生产 pgvector `product_embeddings` / `review_embeddings` 表大概率长期为空，RAG 语义检索从未真正生效；本次修复只让新分析写入，历史 embedding 是否补数留待验证后与 Erika 讨论
+
+**上线部署**：
+- P2-A / P2-B 已随 commit `e7613cb` 上线
+- P2-C / P2-D 本次 commit push develop，Erika 手动 `docker compose up -d --build worker api && docker compose exec nginx nginx -s reload`（api 也 import `rag`，一起重建更稳）
+- 待验证：worker 日志不再有 `batch size is invalid` 400、不再有 `ModuleNotFoundError: No module named 'scripts'`、不再有 `UndefinedTable: push_snapshots`
+
+---
+
+## 2026-07-05
+
+### DevOps：服务器迁移 HK ECS → AWS Lightsail SG
+
+- **工作量**: L（基础设施迁移 + 多轮诊断修复 + 全链路验证，约 2 人天）
+- **状态**: Phase 0-3b 完成，线上流量已切 SG，进入 Phase 4 观察窗口（到 2026-07-12）
+
+**需求描述**：
+Anthropic Bedrock + OpenAI Chat Completions 从香港 ECS（`8.210.51.242`）出口被 API 层地理封锁（`403 unsupported_country_region_territory`），V4-出海 LLM 主链路必须以 ECS 迁 SG/US 为硬前提。选 AWS Lightsail SG（新加坡）$40/mo 静态 IP `13.215.29.99`，SG 无地理封锁，出海合规更完整。
+
+**涉及岗位及工时**：
+- DevOps：2 人天（服务器初始化 / Docker + Compose / SSL 证书 / `.env` 部署 / 容器起活 / `DATABASE_URL` bug 修复 / Cloudflare DNS 切换 / 全链路验证）
+
+**变更清单**：
+- AWS Lightsail SG 实例（Ubuntu 24.04，$40/mo，静态 IP `13.215.29.99`），开 22/80/443 端口
+- Cloudflare Origin Cert（有效期至 2041-06-29）挂入 nginx volume
+- 全部 6 个容器（redis / api / worker / scheduler / frontend / nginx）起活并 healthy
+- `deploy/.env` `DATABASE_URL` 修复：末尾 `/pos>` → `/postgres`（shell 重定向符误入 bug）
+- Cloudflare DNS 4 条 A 记录（root / www / app / api）从 HK 切到 `13.215.29.99`（Proxied 模式）
+- Mac `/etc/hosts` 临时行清理 + DNS 缓存刷新
+
+**验证结果**：
+- B 场景（上传 CSV → worker 分析 → 结果页 7 tab）两次端到端通过（hosts 指 SG + 真实公网 Cloudflare 路径）
+- worker `scan_stale_jobs` 修复后连续 3.5+ 小时稳定运行，无 `DatabaseConnectionUnavailable`
+- 4 域名公网 HTTPS 全部 200
+
+**待完成（Phase 4）**：
+- 观察 SG 稳定性至 2026-07-12，届时撤 HK ECS
+- `deploy/docker-compose.yml` volumes 加 `external: true`（`certbot_www` / `letsencrypt`）
+- 修复 2 个 pre-existing bug（embedding batch 偶发失败 + `push_snapshots` 表缺失）
+
+---
+
 ## 2026-07-03
 
 ### V4-出海-M3.1：EU/UK/EEA + OFAC 制裁国 Geo-Block 中间件
@@ -131,6 +194,34 @@ V4-出海模块 M3.3 后端合规能力第三环。给 Resend 邮件通道加中
 - ⚠️ 订阅相关邮件（confirmed / expiring）已具备双语模板和函数入口，实际触发点等 Paddle webhook 集成（M1 依赖）落地后再调用
 
 **M3 进度更新**：40% → 60%（M3.1 / M3.2 / M3.3 完成，剩 M3.4 Contact 页面 + M3.5 数据保留自动清理）
+
+---
+
+### V4-出海-M3.4：Contact 页 + Sub-processor 清单页 + 全站法律 Footer
+
+- **工作量**: S（前端 6 文件新增 + 1 shell 挂载 + 2 messages 命名空间，约 0.5 人天）
+- **状态**: 本地完成，typecheck 通过，等 Erika 部署 + 线上验收
+
+**需求描述**：
+V4-出海模块 M3 收尾第一块。用户在合规相关 flow（GDPR/CCPA 数据请求、账号支持、一般咨询）需要一个明确的联系入口；SaaS 合规惯例还要求把所有代表用户处理个人数据的第三方 sub-processor 公开列表，以便审计和季度更新。同时 M2.5 遗留的"全站 Footer 6 个法律链接 + Amazon disclaimer"因 M3.4 属先落地范畴，本次一并做到 marketing-shell 层，让所有营销页面立刻带上 footer。
+
+**涉及岗位及工时**：
+- 前端开发：0.5 人天（Contact 页 / Sub-processor 表格双布局 / SiteFooter 组件 / marketing-shell 集成 / cookies + dpa 占位 shell / 双语命名空间）
+
+**变更清单**：
+- 新建 `frontend/src/app/contact/page.tsx` — 3 邮箱卡片（privacy@ / support@ / hello@），`use client` + `useTranslations`，参考 `/unsubscribed` 风格；每张卡片：分类标签 + mailto 链接 + 场景描述；底部 1–2 工作日回复时长
+- 新建 `frontend/src/app/sub-processors/page.tsx` — 8 家 sub-processor 清单：Supabase / Cloudflare / Anthropic / DataForSEO / Rainforest API / Paddle / Resend / Cloudflare Web Analytics；Desktop 表格 + Mobile 卡片双布局；每家外链其 DPA / Privacy 页；标注 "Last updated: July 2026" + 季度审查声明
+- 新建 `frontend/src/components/marketing/site-footer.tsx` — 6 个法律链接（/privacy /terms /cookies /dpa /sub-processors /contact）+ Amazon disclaimer 小字 + `© year ClueAI` 版权
+- 修改 `frontend/src/components/marketing/marketing-shell.tsx` — import + 在 `</main>` 之后挂 `<SiteFooter />`（所有营销页 privacy/terms/pricing/trial/unsubscribed/contact/sub-processors 立刻带上 footer）
+- 新建 `frontend/src/app/cookies/page.tsx` + `frontend/src/app/dpa/page.tsx` — M2.4 独立任务前的占位空壳，避免 footer 链接 404；含 `TODO(M2.4)` 注释 + 引导到 privacy@ 邮箱兜底
+- `frontend/messages/en.json` + `frontend/messages/zh.json` 各新增 3 个命名空间：`footer.*`（7 条：6 法律链接标题 + Amazon disclaimer）/ `contact.*`（3 个 channel 结构化对象 + title/description/responseTime）/ `subProcessors.*`（title/description/lastUpdated/表头 4 列 + quarterly + learnMore）
+
+**依赖门槛 & 已知限制**：
+- cookies + dpa 页面本体属 M2.4，本次只做占位 shell 避免 footer 404；M2.4 独立任务时替换正文
+- Cookie Banner（EU 首次访问弹窗）+ 老用户 Terms Gate 属 M2.5，migration 041 上线后另做，本次不动
+- footer 目前只挂在 `marketing-shell` 层（营销侧全部覆盖）；dashboard 侧（`/dashboard`、`/upload`、`/history` 等）用独立 layout，需要时再单独挂
+
+**M3 进度更新**：60% → 80%（M3.1 / M3.2 / M3.3 / M3.4 完成，剩 M3.5 数据保留清理）
 
 ---
 

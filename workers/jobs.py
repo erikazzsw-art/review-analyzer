@@ -776,7 +776,7 @@ def _post_analysis_smart_push(
     if escalation_results:
         from backend_api.app.services.action_advisor import create_escalation_action
         from review_analyzer.push_snapshot_store import get_recent_snapshots, mark_escalated
-        from scripts.aspect_taxonomy import get_aspect_label_zh
+        from review_analyzer.aspect_taxonomy import get_aspect_label_zh
 
         for esc in escalation_results:
             recent = get_recent_snapshots(user_id, product_ref_id, limit=esc_config.consecutive_count)
@@ -820,7 +820,7 @@ def _post_analysis_smart_push(
 
     dept_issues = route_issues_by_department(top_issues, user_dept_mapping)
 
-    from scripts.aspect_taxonomy import get_aspect_label_zh
+    from review_analyzer.aspect_taxonomy import get_aspect_label_zh
     for dept_list in dept_issues.values():
         for issue in dept_list:
             issue["tag_label"] = get_aspect_label_zh(issue.get("tag", ""))
