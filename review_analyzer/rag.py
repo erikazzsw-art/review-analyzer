@@ -87,7 +87,7 @@ def generate_embedding(text: str, user_id: int | None = None) -> list[float]:
     return [float(value) for value in response.data[0].embedding]
 
 
-EMBEDDING_BATCH_SIZE = 10  # DashScope text-embedding-v3 硬上限 10（OpenAI 是 2048）
+EMBEDDING_BATCH_SIZE = 10  # OpenAI text-embedding-3-small 支持到 2048，先保守限 10
 
 
 def generate_embeddings_batch(

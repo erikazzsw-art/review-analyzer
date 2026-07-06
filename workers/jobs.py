@@ -204,7 +204,10 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             try:
                 embed_session_comments(user_id, session_id)
             except Exception:
-                pass
+                logger.exception(
+                    "embed_session_comments failed for user_id=%s session_id=%s",
+                    user_id, session_id,
+                )
             trace.end_stage(meta={"count": len(unprocessed)})
 
             def _progress_callback(current: int, total: int) -> None:
@@ -381,7 +384,10 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         try:
                             update_comment_cluster(user_id, cid, clabel, rep_id)
                         except Exception:
-                            pass
+                            logger.exception(
+                                "update_comment_cluster failed for comment_id=%s user_id=%s",
+                                cid, user_id,
+                            )
 
                     for c, r in zip(llm_emb_comments, v4_results):
                         id_to_v4[c["id"]] = r
