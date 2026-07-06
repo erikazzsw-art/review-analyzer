@@ -33,6 +33,13 @@ EMBEDDING_BASE_URL = os.getenv("EMBEDDING_API_BASE_URL", "https://api.openai.com
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 EMBEDDING_API_KEY = os.getenv("EMBEDDING_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+if not EMBEDDING_API_KEY and not OPENAI_API_KEY:
+    logger.warning(
+        "No embedding API key found (EMBEDDING_API_KEY / OPENAI_API_KEY both empty). "
+        "Embedding calls will fall back to per-user key or DeepSeek key — "
+        "RAG/Q&A may be unavailable if those are also absent."
+    )
+
 STOP_WORDS = {
     "a", "an", "and", "are", "do", "does", "for", "in", "is", "it", "of",
     "on", "or", "the", "to", "what", "which", "with", "customers", "mention",
@@ -104,10 +111,18 @@ def generate_embeddings_batch(
             all_embeddings.extend(
                 [float(v) for v in item.embedding] for item in sorted_data
             )
-        except Exception:
+        except Exception as exc:
             logger.warning(
-                "generate_embeddings_batch failed for chunk %d-%d, skipping",
-                i, i + len(batch),
+                "generate_embeddings_batch failed for chunk %d-%d: %s. "
+                "base_url=%s model=%s key_source=%s",
+                i,
+                i + len(batch),
+                exc,
+                EMBEDDING_BASE_URL,
+                EMBEDDING_MODEL,
+                "EMBEDDING_API_KEY" if EMBEDDING_API_KEY else (
+                    "OPENAI_API_KEY" if OPENAI_API_KEY else "fallback/user"
+                ),
             )
             all_embeddings.extend([] for _ in batch)
 
