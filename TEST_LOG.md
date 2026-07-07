@@ -568,3 +568,11 @@ File "database.py", line 13, in get_connection
 | 2026-07-06 | fix | P2-E: embedding provider 从 DashScope（`text-embedding-v3` 1024 维）回退到 OpenAI（`text-embedding-3-small` 1536 维），与 `comments.embedding vector(1536)` 列一致。合规动机：目标市场为排除 EU/UK/EEA 的全球英语市场，DashScope 中国境内不满足 GDPR/CCPA 子处理商披露要求；技术动机：pgvector 列维度固化，1024 维写入抛 `DataException`。改动仅 `.env` 三变量 `EMBEDDING_API_BASE_URL/EMBEDDING_MODEL/EMBEDDING_API_KEY`，零 migration | 线上验证：新分析 embedded/total = 30/30，pgvector 列写入成功 |
 | 2026-07-06 | fix | P2-F: `workers/jobs.py:206`（embed_session_comments 调用点）和 `workers/jobs.py:384`（update_comment_cluster 调用点）两处 `except Exception: pass` 继续吞掉上冒的 pgvector `DataException`，让 P2-A 详化的 rag 日志功亏一篑。改为 `logger.exception(...)` 输出完整堆栈 + user_id / session_id / comment_id 上下文；`review_analyzer/rag.py:90` 常量注释同步更新为 OpenAI 上限来源 | 线上验证：worker 日志无 `DataException` 静默吞噬，无新增 exception traceback |
 | 2026-07-06 | verify | 【线上验证】P2-A/B/C/D/E/F 6 连修全部通过：① Step 6 worker 日志无 `embed/error/dimension/InvalidParameter/ModuleNot` 相关错误；② Step 7 数据库 `SELECT COUNT(*) FILTER (WHERE embedding IS NOT NULL), COUNT(*) FROM comments WHERE session_id=<new>` 结果 = (30, 30)；③ Step 8 网页 `问评论` 提问 "What do customers say about waterproof?"，返回 5 条引用 + 检索标签为 **混合检索**（`retrieval_method=hybrid`），vector 检索确认激活 | ✅ 3 项全通过 |
+
+---
+
+### 2026-07-07 analyze_batch locale 参数缺失修复
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-07 | fix | `workers/jobs.py` 已上线并向 `deep_analyze_batch()` 传递 `locale=locale`，但 `deep_analyzer.py` / `llm_router.py` 未同步更新函数签名，导致生产所有分析任务抛 `TypeError: analyze_batch() got an unexpected keyword argument 'locale'`。修复：`analyze_one` / `analyze_batch` 新增 `locale` 参数并透传给 `router_completion`；`llm_router.router_completion` / `LLMRouter.completion` 同步新增 `locale`，并引入 `MODELS_EN`（GPT-4o-mini 优先）/ `MODELS_ZH`（DeepSeek 优先）双链路 | 待部署后线上验证 |
