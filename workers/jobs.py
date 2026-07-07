@@ -111,6 +111,8 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         workflow_purpose = job.get("workflow_purpose") or payload.get("workflow_purpose")
         product_ref_id = job.get("product_ref_id") or payload.get("product_ref_id")
         variant_ref_id = job.get("variant_ref_id") or payload.get("variant_ref_id")
+        # V6-locale: 从 payload 取 locale，无则默认 en（海外优先）
+        locale = str(payload.get("locale") or "en")
 
         update_upload_job(user_id, job_id, {"status": "processing"})
 
@@ -233,11 +235,17 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             # --- V4-T4 Step 3: 多级缓存 ---
             trace.begin_stage("cache")
             # L1: 收集当前 batch 的 content_hash，查询已有分析结果
+            # migration 043: 除用户自己历史，同时查全局 review_pool 支持跨用户复用
             content_hashes = [
                 compute_content_hash(c.get("content", ""), c.get("rating"))
                 for c in unprocessed
             ]
-            existing_analyses = get_analyzed_by_content_hash(user_id, content_hashes)
+            existing_analyses = get_analyzed_by_content_hash(
+                user_id,
+                content_hashes,
+                include_global=True,
+                analyzer_version=ANALYZER_VERSION,
+            )
 
             # L3 准备：查询同产品已分析+有 embedding 的历史评论
             comments_with_emb = get_session_embeddings(user_id, session_id)
@@ -298,6 +306,9 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     }
                 id_to_v4[cid]["cache_hit_level"] = hit.level
                 id_to_v4[cid]["cache_source_id"] = hit.source_comment_id
+                # migration 043: 记录命中来源（user=本人历史 / global=跨用户 pool）
+                if isinstance(cached, dict) and cached.get("cache_hit_source"):
+                    id_to_v4[cid]["cache_hit_source"] = cached["cache_hit_source"]
 
             logger.info(
                 "upload_job %s: cache hit=%d miss=%d (stats=%s)",
@@ -362,6 +373,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         allowed_aspects=allowed_aspects,
                         progress_callback=llm_progress,
                         user_id=user_id,
+                        locale=locale,
                     )
 
                     v4_results = propagate_cluster_results(
@@ -408,6 +420,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                             allowed_aspects=allowed_aspects,
                             progress_callback=llm_progress,
                             user_id=user_id,
+                            locale=locale,
                         )
                         for c, r in zip(non_emb_comments, non_emb_results):
                             id_to_v4[c["id"]] = r
@@ -428,6 +441,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         allowed_aspects=allowed_aspects,
                         progress_callback=_make_llm_progress(0),
                         user_id=user_id,
+                        locale=locale,
                     )
                     for c, r in zip(need_llm, llm_results):
                         id_to_v4[c["id"]] = r
@@ -623,6 +637,8 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         )
 
         # ── 分析完成后回填到评论池 ──
+        # migration 043: 拆除 source_channel=="api" 门禁，CSV 上传也回填 pool
+        # 供跨用户复用，前提是 product_id 非空（避免污染池）
         try:
             _backfill_source = str(payload.get("platform") or "").lower()
             _backfill_platform = "amazon"
@@ -632,7 +648,15 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     break
             _backfill_key = product_id
             _backfill_market = str(payload.get("marketplace") or "us")
-            if payload.get("source_channel") == "api":
+            # 只要 product_id 非空即回填（CSV / API 都参与）
+            if _backfill_key:
+                # 首先写入 review_pool（若 CSV 是新数据，pool_write 会 upsert）
+                # 再回填分析结果
+                pool_write(
+                    _backfill_platform, _backfill_key, _backfill_market,
+                    unprocessed,
+                    scraper_source=payload.get("source_channel") or "csv",
+                )
                 pool_backfill_analysis(
                     _backfill_platform, _backfill_key, _backfill_market,
                     unprocessed, analyzer_version=ANALYZER_VERSION,

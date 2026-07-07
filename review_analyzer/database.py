@@ -695,11 +695,13 @@ def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> No
                                improvement = %s, issue_tag = %s, highlight_tag = %s,
                                aspects_json = %s, analyzer_version = %s,
                                cache_hit_level = %s, cache_source_id = %s,
+                               cache_hit_source = %s,
                                is_processed = 1
                            WHERE id = %s AND user_id = %s""",
                         base_params[:-2] + (
                             analysis.get("cache_hit_level"),
                             analysis.get("cache_source_id"),
+                            analysis.get("cache_hit_source"),
                             comment_id,
                             user_id,
                         ),
@@ -888,18 +890,39 @@ def update_comment_cluster(
 
 
 def get_analyzed_by_content_hash(
-    user_id: int, content_hashes: list[str]
+    user_id: int,
+    content_hashes: list[str],
+    include_global: bool = True,
+    analyzer_version: str | None = None,
 ) -> dict[str, dict]:
     """批量按 content_hash 查找已有分析结果（L1 缓存用）.
 
+    查询顺序：
+    1) 先查用户自己的历史 comments（cache_hit_source='user'）
+    2) 未命中的 content_hash 再查全局 review_pool（cache_hit_source='global'）
+       —— 支持跨用户 A/B/C 上传重叠评论时复用（migration 043）
+
+    Args:
+        user_id: 当前用户 ID
+        content_hashes: 待查 hash 列表
+        include_global: 是否查全局 review_pool（默认 True，可关灰度）
+        analyzer_version: 全局池查询时校验的分析器版本，None 不校验
+
     Returns:
-        content_hash → {aspects_json, sentiment, source_id} 映射
+        content_hash → {aspects_json, sentiment, source_id, cache_hit_source} 映射
+        - source_id: int
+          · cache_hit_source='user' → 对应 comments.id
+          · cache_hit_source='global' → 对应 review_pool.id
+          （用 cache_hit_source 区分来自哪张表，两个 ID 空间不重叠。）
+        - cache_hit_source: 'user' | 'global'
     """
     if not content_hashes:
         return {}
     conn = get_connection()
+    result: dict[str, dict] = {}
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # ── 第一步：查用户自己历史（沿用原逻辑） ──
             cur.execute(
                 """SELECT id, content_hash, sentiment, aspects_json
                    FROM comments
@@ -910,7 +933,6 @@ def get_analyzed_by_content_hash(
                    ORDER BY id DESC""",
                 (user_id, content_hashes),
             )
-            result: dict[str, dict] = {}
             for row in cur.fetchall():
                 h = row["content_hash"]
                 if h not in result:
@@ -921,7 +943,46 @@ def get_analyzed_by_content_hash(
                         "aspects_json": aspects_json,
                         "sentiment": row["sentiment"],
                         "source_id": row["id"],
+                        "cache_hit_source": "user",
                     }
+
+            # ── 第二步：未命中的 hash 查全局 review_pool ──
+            if include_global:
+                missing = [h for h in content_hashes if h not in result]
+                if missing:
+                    if analyzer_version:
+                        cur.execute(
+                            """SELECT id, content_hash, sentiment, aspects_json
+                               FROM review_pool
+                               WHERE content_hash = ANY(%s)
+                                 AND analyzed_at IS NOT NULL
+                                 AND aspects_json IS NOT NULL
+                                 AND analyzer_version = %s
+                               ORDER BY analyzed_at DESC""",
+                            (missing, analyzer_version),
+                        )
+                    else:
+                        cur.execute(
+                            """SELECT id, content_hash, sentiment, aspects_json
+                               FROM review_pool
+                               WHERE content_hash = ANY(%s)
+                                 AND analyzed_at IS NOT NULL
+                                 AND aspects_json IS NOT NULL
+                               ORDER BY analyzed_at DESC""",
+                            (missing,),
+                        )
+                    for row in cur.fetchall():
+                        h = row["content_hash"]
+                        if h not in result:
+                            aspects_json = row["aspects_json"]
+                            if isinstance(aspects_json, str):
+                                aspects_json = json.loads(aspects_json)
+                            result[h] = {
+                                "aspects_json": aspects_json,
+                                "sentiment": row["sentiment"],
+                                "source_id": row["id"],
+                                "cache_hit_source": "global",
+                            }
             return result
     finally:
         conn.close()
@@ -1385,6 +1446,25 @@ def update_user_profile(
             cur.execute(
                 f"UPDATE users SET {', '.join(fields)} WHERE id = %s",
                 values,
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def mark_user_login(user_id: int) -> None:
+    """V4-出海-M3.5: 每次成功登录时刷新 last_login_at,并清零 inactivity_notified_at。
+
+    - last_login_at → NOW(): retention_cleanup 靠它判定 6 个月 inactive。
+    - inactivity_notified_at → NULL: 用户回归时把"已发预告"状态清零,避免下次运行
+      直接把回归用户匿名化。
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET last_login_at = NOW(), inactivity_notified_at = NULL WHERE id = %s",
+                (user_id,),
             )
             conn.commit()
     finally:
