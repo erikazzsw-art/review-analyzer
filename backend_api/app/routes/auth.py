@@ -27,6 +27,7 @@ from review_analyzer.database import (
     get_user_by_username,
     get_valid_reset_token,
     mark_token_used,
+    mark_user_login,
     update_user_password,
 )
 from review_analyzer.mailer import send_reset_code
@@ -111,6 +112,15 @@ def login(payload: LoginRequest, response: Response) -> AuthResponse:
         )
 
     user_id = int(user["id"])
+    # V4-出海-M3.5: 刷新 last_login_at + 清零 inactivity_notified_at
+    # (哪怕 DB 写失败也不阻塞登录,只记 warning。retention_cleanup 会在下次运行时补上)
+    try:
+        mark_user_login(user_id)
+    except Exception:  # noqa: BLE001 — 登录成功路径不能被 last_login_at 记账挡下
+        import logging
+        logging.getLogger(__name__).warning(
+            "mark_user_login failed for user_id=%s (login still successful)", user_id
+        )
     set_auth_cookies(response, user_id, str(user["username"]))
     return AuthResponse(
         user=_user_payload(user),
