@@ -58,6 +58,10 @@ _SUBJECTS: dict[str, dict[Locale, str]] = {
         "zh-CN": "ClueAI 账号删除确认",
         "en-US": "Your ClueAI account has been deleted",
     },
+    "inactivity_warning": {
+        "zh-CN": "[ClueAI] 您的账号即将因长期未使用被清理",
+        "en-US": "[ClueAI] Your inactive account will be deleted in 90 days",
+    },
 }
 
 # 双语退订 footer,附加到所有 marketing 邮件末尾。
@@ -228,6 +232,32 @@ def send_deletion_confirmed(
         from_addr=FROM_TRANSACTIONAL,
         to_email=to_email,
         subject=_SUBJECTS["deletion_confirmed"][lc],
+        html=html,
+    )
+
+
+def send_inactivity_warning(
+    to_email: str,
+    username: str,
+    deletion_date: str,
+    locale: str | None = None,
+) -> tuple[bool, str]:
+    """M3.5: 6 个月未登录用户的清理预告邮件。
+
+    Transactional 而非 Marketing —— 这是合规通知,不受 opt-out 控制,即使用户
+    退订 marketing 邮件也必须收到。发出 90 天后再没登录才触发匿名化。
+    """
+    lc = _normalize_locale(locale)
+    html = _render_template(
+        "inactivity_warning",
+        lc,
+        username=username,
+        deletion_date=deletion_date,
+    )
+    return _resend_send(
+        from_addr=FROM_TRANSACTIONAL,
+        to_email=to_email,
+        subject=_SUBJECTS["inactivity_warning"][lc],
         html=html,
     )
 
