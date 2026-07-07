@@ -1400,6 +1400,7 @@ NX-M8 验收记录（Phase A）：
 | 2026-06-25 | V4.5-T12 | 可观测性页面重构：从 265 行单页重构为 5-Tab 管理后台（概览/成本/任务/缓存/告警），新增时间范围选择器+模型状态灯行+可展开 trace timeline+成本堆叠柱状图；从用户 sidebar 移除，仅管理员 URL 访问；10 个新组件于 `components/observability/` |
 | 2026-06-30 | V4-T1.6 | Golden Set 标签校准管理系统 + 管理员权限控制：golden_set 表 + boundary_note 字段 + CSV 上传 API + 准确率统计 + few-shot 注入 + /settings/golden-set 管理页 + users.is_admin + sidebar adminOnly 过滤 + 页面级权限守卫；migration 033/034/035 |
 | 2026-06-30 | V4-T1 扩展 | 全品类 Taxonomy 批量扩展：新增 5 品类(outdoor/beauty/kitchen/automotive/office) 27 子品类 441 条 aspect 全部携带 boundary_note；表结构重建 migration 037；sub_category_categories.json 覆盖 87 子品类；docs/类目标签覆盖表.md 产出 |
+| 2026-07-07 | V4-T4 Step 7 | 跨用户 LLM 分析结果复用：接通已有 review_pool 全局池 → L1 缓存除用户自己历史也查 pool（analyzer_version 校验隔离），CSV 上传的分析结果也回填 pool；migration 043 加 content_hash 部分索引 + comments.cache_hit_source 列；隐私政策 + 服务条款追加"分析结果聚合复用"条款；预期热门 ASIN 场景 DeepSeek 调用量下降 30–60% |
 
 ---
 
@@ -1932,8 +1933,10 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 - [x] **Step 5: 法务底线**
   - 隐私协议（数据使用范围、第三方共享、删除流程）
   - 用户协议（服务范围、责任边界、终止条款）
+  - 退款政策（月付不退、年付按比例、取消说明、退款流程）
   - GDPR / 中国个保法基础合规
   - ✅ 已完成 2026-06-10：`frontend/src/app/privacy/page.tsx` + `frontend/src/app/terms/page.tsx`（中文，覆盖个保法 + GDPR 权利条款）
+  - ✅ 已完成 2026-07-06：三页全部改造为中英双语 + 新增 `frontend/src/app/refund/page.tsx` 退款政策页 + footer 补充 refund 链接
 
 - [ ] **Step 6: 验收**（部分达成 2026-06-11）
   - [x] 用户注册 → 登录 → cookie 鉴权 → workspace API 数据返回：本地验证通过 ✅ 2026-06-11
@@ -2076,6 +2079,21 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - LLM 调用量：2%（目标 <15% ✓，远超预期）
   - 缓存命中率：98%（L1=80 + L2=18，100 条仅 2 条需走 LLM）
   - 准确率：保持 V4-T3 基线（缓存复用已验证结果，无质量损失）
+
+- [x] **Step 7: 跨用户 LLM 分析结果复用（V4-T4 增强）** ✅ 2026-07-07
+  - **背景**：原 L1 缓存 `get_analyzed_by_content_hash` 只查用户自己历史，用户 A/B/C 上传重叠评论时仍会重复调用 DeepSeek。migration 038 建的全局 `review_pool` 已具备跨用户复用条件但未接通。
+  - **改动**：
+    - `migrations/043_review_pool_global_analysis_cache.sql`：给 `review_pool.content_hash` 加部分索引 + `comments` 新增 `cache_hit_source` 列（'user' | 'global' | NULL）
+    - `review_analyzer/database.py::get_analyzed_by_content_hash`：新增 `include_global=True` 分支，用户自己 miss 的 hash 会去查全局 pool（需 `analyzer_version` 匹配）
+    - `workers/jobs.py`：拆掉 `source_channel == "api"` 门禁 → CSV 上传的分析结果也回填 pool；同时把 `cache_hit_source` 写入 comments 表供 llm_usage_log 统计
+    - `update_comment_analysis`：写入 `cache_hit_source` 列
+    - `frontend/src/app/privacy/page.tsx` + `terms/page.tsx`：新增"分析结果聚合复用"条款（含中英双语，隐私政策日期更新至 2026-07-07）
+  - **单元测试**：`backend_api/tests/test_global_cache.py` 覆盖用户命中/全局命中/用户优先屏蔽 pool/空输入 4 个分支
+  - **验收标准**：
+    - [ ] 本地：用户 A 上传 → 用户 B 上传相同 CSV → 观察 worker 日志 `analysis_cache: L1=N` + `cache_hit_source='global'`（等 Erika 部署验证）
+    - [ ] 线上：热门 ASIN 场景下 DeepSeek 调用量下降 30%+ （待观察 llm_usage_log 汇总）
+  - **计费影响**：无 —— quota 仍在上传时按条数扣减，缓存命中不影响用户额度
+  - **隐私披露**：privacy.tsx 第四条已明示"匿名化分析输出可跨用户复用，不涉及身份/账号/上传时间共享"
 
 ---
 
@@ -3363,7 +3381,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - [ ] `frontend/src/app/layout.tsx` footer 添加备案号 `京ICP备2026XXXXXXX号`，链接到 `https://beian.miit.gov.cn`
   - [ ] 网站实际内容与备案信息一致（备案时的"网站名称""服务类型"）
   - [ ] 不在网站上超出营业执照经营范围经营（营业执照主营："软件开发、信息技术咨询服务、技术服务"）
-  - [ ] 用户协议 / 隐私政策 / 服务条款上线（可放到 footer）
+  - [x] 用户协议 / 隐私政策 / 退款政策 / 服务条款上线（已放到 footer）✅ 2026-07-06
 
 - [ ] **Step 5.6: 主体升级评估（持续关注，按触发条件执行）**
   - **必须切换到公司主体的触发条件（任一命中即启动）：**
@@ -4413,7 +4431,7 @@ CREATE TABLE workspace_invitations (
 - 依赖: 无
 
 **收款链路**
-- [ ] 注册 Wise 个人多币种账户（护照 + 身份证，30 分钟）
+- [x] 注册 Wise 个人多币种账户（护照 + 身份证，30 分钟）
   - 开 USD + EUR + GBP 虚拟账户号
 - [ ] Paddle 商户升级为 Sole Trader（提交护照 + 地址证明 + Wise 账户）
 - [ ] Paddle 后台配置产品地区限制：移除 EU 27 国 + UK + EEA 3 国 + CH
@@ -4431,18 +4449,20 @@ CREATE TABLE workspace_invitations (
   - NS 改指向 Cloudflare + 开启 Proxy + 确认 CF-IPCountry header
 
 **🆕 ECS 迁移到 SG（2026-07-03 新增，两次 geo-block 实测后必须）**
-> 详细步骤参考本次对话已交付的《Lightsail SG 迁移 4 阶段计划》（阶段 0 准备 / 阶段 1 新机起服务 / 阶段 2 hosts 验证 / 阶段 3 DNS 切换 / 阶段 4 老机清理）。**待 Erika 拍板 A/C 后启动**。
+> 详细步骤参考本次对话已交付的《Lightsail SG 迁移 4 阶段计划》（阶段 0 准备 / 阶段 1 新机起服务 / 阶段 2 hosts 验证 / 阶段 3 DNS 切换 / 阶段 4 老机清理）。**✅ 2026-07-05 Phase 0-3b 全部完成，流量已切 SG，进入 Phase 4 观察窗口。**
 
-- [ ] 阶段 0：Cloudflare DNS 4 条 A 记录 TTL 调低到 5 min（如未走 CF Proxy 橙色云则必需，橙色云可跳过）
-- [ ] 阶段 0：备份现网 `.env`（`scp` 从老 ECS 到本地 Mac）
-- [ ] 阶段 1：AWS Lightsail SG region 开 $40/mo 实例 + 分配 Static IP + 开 22/80/443 端口
-- [ ] 阶段 1：Ubuntu 22.04 装 Docker + Compose，git clone 项目到 `/opt/clueai`，上传 `.env`
-- [ ] 阶段 1：Cloudflare Origin Cert 签 SSL 证书（15 年有效）→ 挂到 nginx volume
-- [ ] 阶段 1：`docker compose up -d --build` 起全部 5 服务，等 healthy
-- [ ] 阶段 2：Mac hosts 指向新 IP，测试账号跑一遍 golden path
-- [ ] 阶段 3：Cloudflare A 记录改新 IP（Proxied 橙色云 <1 min 生效）
-- [ ] 阶段 3：无痕窗口 + 测试账号验证线上
-- [ ] 阶段 4：观察 3-7 天后老 ECS 停机 → 释放
+- [x] 阶段 0：Cloudflare DNS 4 条 A 记录 TTL 调低到 5 min（如未走 CF Proxy 橙色云则必需，橙色云可跳过）
+- [x] 阶段 0：备份现网 `.env`（`scp` 从老 ECS 到本地 Mac）
+- [x] 阶段 1：AWS Lightsail SG region 开 $40/mo 实例 + 分配 Static IP + 开 22/80/443 端口
+- [x] 阶段 1：Ubuntu 22.04 装 Docker + Compose，git clone 项目到 `/opt/clueai`，上传 `.env`
+- [x] 阶段 1：Cloudflare Origin Cert 签 SSL 证书（有效期至 2041-06-29）→ 挂到 nginx volume
+- [x] 阶段 1：`docker compose up -d --build` 起全部 6 服务（redis/api/worker/scheduler/frontend/nginx），等 healthy
+- [x] 阶段 2：Mac hosts 指向新 IP（13.215.29.99），测试账号跑一遍 golden path（B 场景 7 tab 全渲染）
+- [x] 阶段 3：Cloudflare 4 条 A 记录（root/www/app/api）改新 IP（Proxied 橙色云，公网 DNS 均返回 CF 边缘 IP）
+- [x] 阶段 3：无痕窗口 + 测试账号验证线上（4 域名 HTTPS 200，B 场景公网路径端到端通过）
+- [x] 阶段 3-fix：SG `.env` `DATABASE_URL` 修复（`/pos>` → `/postgres`，重建 worker/api/scheduler）
+- [ ] 阶段 4：观察 3-7 天（到 2026-07-12 前）后老 HK ECS 停机 → 释放
+- [ ] 阶段 4（顺便）：`deploy/docker-compose.yml` volumes 加 `external: true`（`certbot_www` / `letsencrypt`）
 
 **基础设施**
 - [ ] `clueai-reviewlens.com` 接入 Cloudflare（免费方案）
@@ -4461,12 +4481,13 @@ CREATE TABLE workspace_invitations (
 - 状态: ⏳ 待启动 | 分支: `feature/v4-i18n-framework`
 - 依赖: M1（Erika 完成 Cloudflare 接入 + 法律文档生成）
 
-**2.1 next-intl 框架搭建（3 天）**
-- [ ] `npm install next-intl` 到 frontend
-- [ ] 新建 `frontend/src/i18n/config.ts`、`frontend/src/i18n/request.ts`
-- [ ] 新建 `frontend/src/middleware.ts`（子域名 → locale 中间件）
-- [ ] 目录改造：`frontend/src/app/[locale]/` 引入语言参数层
-- [ ] `frontend/src/app/layout.tsx` 集成 NextIntlClientProvider
+**2.1 next-intl 框架搭建（3 天）** ✅ 2026-07-07 完成（路线 A：cookie + middleware，不做 `app/[locale]/` 目录改造）
+- [x] `npm install next-intl` 到 frontend（`next-intl@4.13.0` 已装）
+- [x] 新建 `frontend/src/i18n/routing.ts`（next-intl v4 官方结构，等价于原计划的 `config.ts`）+ `frontend/src/i18n/request.ts`
+- [x] `frontend/src/middleware.ts`：CF-IPCountry 白名单 + Accept-Language 检测 + cookie 持久化，输出 `Content-Language` + `Vary: Cookie`
+- [x] **未做** `app/[locale]/` 目录改造 —— 采用 `localePrefix: "never"` cookie 方案，URL 保持单一，SEO 与老收藏夹不受影响
+- [x] `frontend/src/app/layout.tsx` 集成 `NextIntlClientProvider`，`<html lang={locale} dir="ltr">` 动态化
+- [x] `defaultLocale = "en"`（主打出海，中国大陆 IP 由 CF-IPCountry=CN/HK/MO/TW 显式回落 zh）
 
 **2.2 全站字符串提取 + 翻译（4 天）**
 - [ ] 遍历 `frontend/src/**/*.tsx` 提取所有中文字符串到 `frontend/messages/zh-CN.json`
@@ -4480,13 +4501,14 @@ CREATE TABLE workspace_invitations (
 - [ ] Resend 邮件模板双语化（注册验证 / 密码重置 / 订阅通知）
 - [ ] users 表新增 `locale VARCHAR(10) DEFAULT 'en-US'` 字段（合并到 migration 041）
 
-**2.4 6 个法律页面（双语）**
-- [ ] `frontend/src/app/[locale]/privacy/page.tsx` — Privacy Policy
-- [ ] `frontend/src/app/[locale]/terms/page.tsx` — Terms of Service
-- [ ] `frontend/src/app/[locale]/cookies/page.tsx` — Cookie Policy
-- [ ] `frontend/src/app/[locale]/dpa/page.tsx` — Data Processing Agreement
-- [ ] `frontend/src/app/[locale]/sub-processors/page.tsx` — Sub-processor 清单
-- [ ] `frontend/src/app/[locale]/contact/page.tsx` — Contact 页面
+**2.4 7 个法律页面（双语）**
+- [x] `frontend/src/app/privacy/page.tsx` — Privacy Policy（已存在，M2.4 需按 OVERSEAS_COMPLIANCE_PLAN 补 10 项条款）✅ 2026-07-06 改造为中英双语
+- [x] `frontend/src/app/terms/page.tsx` — Terms of Service（已存在，M2.4 需按 OVERSEAS_COMPLIANCE_PLAN 补 6 项条款）✅ 2026-07-06 改造为中英双语
+- [x] `frontend/src/app/refund/page.tsx` — Refund Policy（✅ 2026-07-06 新建，中英双语，覆盖月付不退/年付按比例/取消说明/退款流程）
+- [ ] `frontend/src/app/cookies/page.tsx` — Cookie Policy（M3.4 已创建占位空壳，需补正文）
+- [ ] `frontend/src/app/dpa/page.tsx` — Data Processing Agreement（M3.4 已创建占位空壳，需补正文）
+- [x] `frontend/src/app/sub-processors/page.tsx` — Sub-processor 清单（M3.4 完成，双语 + 8 家清单 + DPA 外链）
+- [x] `frontend/src/app/contact/page.tsx` — Contact 页面（M3.4 完成，双语 + 3 邮箱）
 - [ ] Privacy Policy 必须包含 10 项合规条款（见 OVERSEAS_COMPLIANCE_PLAN.md 第 2.4 节）
 - [ ] Terms of Service 必须包含 6 项合规条款（见 OVERSEAS_COMPLIANCE_PLAN.md 第 2.4 节）
 
@@ -4502,15 +4524,24 @@ CREATE TABLE workspace_invitations (
 - [ ] 新建 backend `POST /api/auth/accept-terms` 端点([backend_api/app/routes/auth.py](backend_api/app/routes/auth.py))
 - [ ] `GET /api/user/me` 响应体补充 `terms_version` 字段
 - [ ] 新增 `frontend/src/components/CookieBanner.tsx`（顶部通知栏 + localStorage）
-- [ ] 全站 Footer 强制展示：6 个法律链接 + Amazon disclaimer
+- [x] 全站 Footer 强制展示：6 个法律链接 + Amazon disclaimer（M3.4 完成，挂在 `marketing-shell.tsx`）
 - [ ] 上传页 [frontend/src/app/upload/page.tsx](frontend/src/app/upload/page.tsx) 加数据告知小字(注册已同意,无需再次 checkbox):
   ```tsx
   {t("uploadDataNotice")}<Link href="/privacy">{t("privacyLink")}</Link>
   ```
 
-**2.6 LLM Prompt 语言切换**
-- [ ] 修改 `backend_api/app/services/deep_analyzer.py` prompt 按 user locale 切换
-- [ ] 语言切换后历史数据保留原语言（不重新分析）
+**2.6 LLM Prompt 语言策略** 🔄 2026-07-07 方案变更
+- [x] **决策**：Prompt 保持英文单一版本，LLM 分析结果只存英文（title / description / tags 等业务字段）
+  - 原因：一份分析结果服务所有语言用户，成本 ~50%↓；英文 prompt LLM 质量更稳定；未来加日/西/德语只需扩展"翻译层"，不用重跑分析
+- [x] **不做**：原计划的"按 user locale 切换 prompt 中/英两套"（避免同产品分析结果双份存储）
+- [ ] 中国用户看中文体验的实现路径 —— 待展示层翻译方案设计（见新增 M2.7）
+
+**2.7 展示层翻译（中国用户看英文分析结果） 🆕**
+- [ ] 决策：DeepSeek 翻译 API（复用现有）vs 前端 i18n key 化 vs 缓存表
+- [ ] 落地：analyses / issues / highlights 等表新增 `title_zh` / `description_zh` 字段 或 独立 `translations` 缓存表
+- [ ] 触发：分析完成后异步生成 zh 翻译（不阻塞主流程）
+- [ ] 展示：locale=zh 时读中文字段，为空则 fallback 英文原文
+- [ ] 与 M2.6 的关系：M2.6 上游保持英文，M2.7 是展示层增强，可独立迭代
 
 **验收标准**
 - 使用 US IP 访问 `app.clueai-reviewlens.com` → 全英文
@@ -4522,7 +4553,7 @@ CREATE TABLE workspace_invitations (
 
 ### V4-出海-M3: 后端合规能力（Week 3，约 5 天）
 
-- 状态: 🔄 进行中（60%） | 分支: `develop`
+- 状态: 🔄 进行中（80%） | 分支: `develop`
 - 依赖: M2（migration 041 已上线）
 
 **3.1 EU/UK/EEA + OFAC 制裁国 Geo-Block**
@@ -4553,7 +4584,7 @@ CREATE TABLE workspace_invitations (
 - [x] 邮件模板集中管理：`review_analyzer/email_templates/{zh-CN,en-US}/*.html`（5 类模板 × 2 语言 = 10 个）
 - [x] Transactional 与 Marketing 分离 from address：
   - Transactional 继续用 `noreply@clueai-reviewlens.com`
-  - Marketing 用新 `updates@clueai-reviewlens.com`（⚠️ 需 Erika 在 Resend 后台加发件人验证，3 分钟）
+  - Marketing 用新 `updates@clueai-reviewlens.com`（✅ 2026-07-06 确认：域名已 Verified，发件人自动可用）
 - [x] 新建 `send_marketing_email(to, subject, html, locale, user_id)`：
   - 调用前校验 users 表 `marketing_opt_in=TRUE`
   - 自动追加双语 unsubscribe footer
@@ -4567,14 +4598,38 @@ CREATE TABLE workspace_invitations (
 - [x] 单测 `backend_api/tests/test_mailer.py` 19 个用例：locale 归一化、双语渲染、Transactional/Marketing 路由、opt-in fail-close、HMAC token 生成+校验+防篡改
 - 🔜 依赖 M2.5 上线：migration 041 落地 `marketing_opt_in` 字段后，本模块自动生效（当前 send_marketing_email 会 fail-close，unsubscribe 会 302 pending）
 
-**3.4 Contact + Sub-processor 清单页填充**
-- [ ] `contact@` 页面填充：privacy@ / support@ / hello@ 三个邮箱
-- [ ] sub-processors 页面填充 8 家清单（Supabase / Cloudflare / Anthropic / DataForSEO / Rainforest / Paddle / Resend / CF Analytics）
+**3.4 Contact + Sub-processor 清单页填充** ✅（2026-07-05 完成）
+- [x] `frontend/src/app/contact/page.tsx` — 3 邮箱卡片双语（privacy@ / support@ / hello@，next-intl + MarketingShell）
+- [x] `frontend/src/app/sub-processors/page.tsx` — 8 家清单表格（Supabase / Cloudflare / Anthropic / DataForSEO / Rainforest / Paddle / Resend / CF Analytics），Desktop 表格 + Mobile 卡片双布局，含 DPA 外链
+- [x] 新增 `frontend/src/components/marketing/site-footer.tsx`：6 个法律链接（/privacy /terms /cookies /dpa /sub-processors /contact）+ Amazon disclaimer，挂到 `marketing-shell.tsx`
+- [x] 新增 `frontend/messages/{zh,en}.json` 三个命名空间：`footer.*` / `contact.*` / `subProcessors.*`
+- [x] cookies + dpa 页面创建为占位空壳（TODO(M2.4)，避免 footer 链接 404，M2.4 独立任务补齐正文）
 
-**3.5 数据保留策略自动清理**
-- [ ] 新建 `workers/retention_cleanup.py`
-- [ ] 复用现有 scheduler service 每日运行
-- [ ] 清理规则：删除账号 30 天备份 / inactive 6 个月通知 90 天后删除 / logs 90 天 / app logs 30 天
+**3.5 数据保留策略自动清理** ✅（2026-07-07 完成）
+- [x] `migrations/042_add_inactivity_tracking.sql` — `users` 表加 `last_login_at` + `inactivity_notified_at` + 2 个部分索引，兼容老用户（fallback `last_login_at = created_at`）
+- [x] 邮件模板 `email_templates/{zh-CN,en-US}/inactivity_warning.html` × 2，`deletion_confirmed.html` 里"30 天备份"改成"60 天备份"（对齐 Shulex 窗口）
+- [x] `review_analyzer/mailer.py` 补 `send_inactivity_warning()` + `_SUBJECTS["inactivity_warning"]`（Transactional，不受 opt-out 控制）
+- [x] `review_analyzer/database.py` 加 `mark_user_login()`（登录时刷 `last_login_at`、清零 `inactivity_notified_at`）
+- [x] `backend_api/app/routes/auth.py` login() 成功分支调 `mark_user_login()`（DB 写失败不阻塞登录）
+- [x] 新建 `workers/retention_cleanup.py` — 6 块清理串行执行，每块独立 try/except + 单独 commit：
+  1. inactive 6m + 未通知 → 发预告 + 打时间戳（单次 500 条上限）
+  2. 已通知 90d + 仍未登录 → 复用 M3.2 `anonymize_user()`（500 条上限）
+  3. `deleted_at < NOW() - 60d` → 硬删 6 张业务表（不动 `review_pool`，200 用户/天上限）
+  4. `analytics_events > 90d` → 硬删
+  5. `llm_usage_log > 6y` → 硬删（对齐 Shulex）
+  6. `sessions/comments > 6y AND deleted_at IS NULL` → 软删（等未来冷存储方案再做物理清理）
+- [x] `workers/periodic_jobs.py` 加 `enqueue_retention_cleanup()`（`job_timeout=30min`，`result_ttl=7d`，`failure_ttl=30d` 供审计）
+- [x] `workers/scheduler.py` 加 UTC+8 03:23 触发 + Redis 锁 `scheduler:retention_cleanup:lock:{YYYY-MM-DD}`（业务低峰、避开 09:07 成本日报）
+- [x] 单元测试 `workers/tests/test_retention_cleanup.py` — 每块��少 1 个用例（no-candidates / 正常路径 / 边界 case），加 SQL 关键词哨兵测试防止未来误改窗口口径
+- **窗口决策记录**（对齐 Shulex）：
+  - 通用保留期 **6 年**（Shulex 也是 6 年，方便长周期趋势 + 跨用户复用命中）
+  - 删除后宽限窗口 **60 天**（Shulex 也是 60 天，给"删了后悔"更长机会）
+  - inactivity 阈值 **6 月**（Shulex 无此机制，我们保留为差异化亮点）
+  - `analytics_events` 90 天 + `llm_usage_log` 6 年
+- **冷热分层缓冲方案**（未来备用，2026-07-07 追加决策）：
+  - 触发条件：单表 > 5000 万行 / 关键查询 p95 劣化 > 200ms / 存储成本超预算 30%
+  - 预案方向：老数据（>2y）dump 到 S3 / OSS 冷存储，主库只留热数据（<2y）
+  - 本次 M3.5 不实施，先按 6y 硬保留跑一段时间观察增长曲线
 
 **验收标准**
 - VPN 切换 DE / IR IP 注册 → 403
@@ -4586,6 +4641,32 @@ CREATE TABLE workspace_invitations (
 - Marketing 邮件仅发给 `marketing_opt_in=TRUE` 用户
 - 点击 marketing 邮件的 unsubscribe 链接（未登录状态）→ 成功退订
 - retention_cleanup 每日 cron 触发无异常
+
+---
+
+### V4-出海-M4-pre: LLM 路由 locale 切换（2026-07-07 完成 · 无外部服务依赖，可先落地）
+
+- 状态: ✅ 完成 | 分支: `develop`
+- 依赖: 无（不阻塞 M4 决策；不接触 Bedrock/OpenRouter，仅在现有 DeepSeek/OpenAI/Qwen 三家里按 locale 换 fallback 优先级）
+- 背景: 海外用户默认走 GPT-4o-mini 优先链（英文能力 + 品牌信任），国内用户保持 DeepSeek 优先。**统一英文 prompt**，不做中英双 prompt。
+
+**改动清单**
+- [x] `backend_api/app/services/llm_router.py` — `_DEEPSEEK` / `_OPENAI` / `_QWEN` 拆常量 + `MODELS_EN` / `MODELS_ZH` + `_models_for_locale()`；`LLMRouter.completion()` 与 `router_completion()` 新增 `locale` 参数（默认 "zh" 向后兼容）；`__post_init__` 种子所有可能模型的熔断态；`status()` 汇总两条链的模型状态
+- [x] `backend_api/app/services/locale.py` — 新建 `get_analysis_locale(request)`：`?locale=` > cookie `NEXT_LOCALE` > `Accept-Language` > 默认 `"en"`；normalize `zh-CN → zh`、`en-US → en`
+- [x] `backend_api/app/routes/uploads.py` — `/uploads` 与 `/analysis/jobs` 注入 `Request` + 写 `payload_json["locale"]`
+- [x] `workers/jobs.py` — `process_upload_job` 从 `payload_json` 读 locale，透传给 3 处 `deep_analyze_batch()`
+- [x] `backend_api/app/services/deep_analyzer.py` — `analyze_one` / `analyze_batch` 新增 `locale` 参数，透传给 `router_completion()`（默认 `"en"`）
+- [x] `review_analyzer/insight_engine.py` — 删除硬编码 `OpenAI(base_url="deepseek")`，改走 `router_completion(locale=...)`；`build_results_insights` / `build_compare_insights` / 两个内部 `_build_ai_*` 加 locale 参数
+- [x] `backend_api/app/routes/analysis.py` — `/sessions/{id}/results` 与 `/results` 端点注入 `Request` + 传 locale 到 `build_results_insights` / `_cached_build_insights`
+- [x] `frontend/src/i18n/routing.ts` — `defaultLocale: "zh"` → `"en"`（海外优先，配合 `localePrefix: "never"` + middleware/cookie 检测）
+- [x] `frontend/messages/{en,zh}.json` — 新增 `categoryLabels` 段，11 个中文分类（产品质量/包装物流/使用体验/客服售后/性价比/功能需求/正面反馈/单纯好评/无效乱码/混合评价/其他）英文翻译（en 侧完整翻译；zh 侧保留中文本名以对齐 key）
+
+**验收标准**
+- [x] llm_router import 成功 + `_models_for_locale("en") == [openai, deepseek, qwen]` + `_models_for_locale("zh") == [deepseek, openai, qwen]`
+- [x] `get_analysis_locale` 正确处理 `en`/`en-US`/`zh-CN`/`en-US,zh;q=0.9`/`fr`（fr 落到默认 en）
+- [x] `python -m pytest backend_api/tests/ --ignore=backend_api/tests/test_v24_dynamic_aspects.py` 60 通过（test_v24 失败与本次改动无关，是 taxonomy_loader row 解包问题）
+- [x] JSON messages 校验：en / zh 的 categoryLabels key 集合一致
+- [ ] 部署到 prod 后线上验证：以 en cookie 上传评论 → 日志显示 model_used=gpt-4o-mini（如 OPENAI_API_KEY 已配置且 SG IP 可达）
 
 ---
 
@@ -4719,9 +4800,9 @@ CREATE TABLE workspace_invitations (
 
 | Milestone | 内容 | 状态 | 进度 |
 |-----------|------|------|------|
-| M1 | Erika 手动准备（账户/文档 + AWS Bedrock） | 🔄 进行中 | 7%（1/14：Supabase region 已核查） |
+| M1 | Erika 手动准备（账户/文档 + AWS Bedrock） | 🔄 进行中 | SG 迁移 Phase 0-3b ✅（Phase 4 观察中到 07-12），收款/DataForSEO/法律文档待办 |
 | M2 | i18n 框架 + 双语文案 + 法律页面 + Terms Gate | ⏳ 待启动 | 0% |
-| M3 | 后端合规能力（geo-block / 数据主权 API / 邮件双语） | 🔄 进行中 | 40%（3.1 Geo-Block + 3.2 数据主权 API 已完成） |
+| M3 | 后端合规能力（geo-block / 数据主权 API / 邮件双语） | 🔄 进行中 | 80%（3.1 Geo-Block + 3.2 数据主权 API + 3.3 邮件双语化 + 3.4 Contact/Sub-processor 页已完成；3.5 数据保留清理待办） |
 | M4 | Bedrock LLM 集成 + 数据源改造 | ⏳ 待启动 | 0% |
 | M5 | Beta 发布 + 部署 + 监控 | ⏳ 待启动 | 0% |
 

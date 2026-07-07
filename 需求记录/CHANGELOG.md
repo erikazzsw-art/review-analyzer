@@ -25,33 +25,180 @@
 
 ---
 
-## 2026-07-06
+---
 
-### Bug 修复：P2 级 pre-existing 分析链路 4 连修（rag 日志 + push_snapshots 表 + embedding batch + scripts 缺失）
+## 2026-07-07
 
-- **工作量**: M（4 个独立 pre-existing bug 连锁排查 + 修复 + 迁移，约 1 人天）
-- **状态**: P2-A/B/C/D 代码全部完成 push develop；P2-A/B 已上生产并观测；P2-C/D 待 Erika 部署 worker（本次提交）
+### V4-出海-M4-pre：LLM 路由 locale 切换（海外优先 GPT-4o-mini 主链路）
+
+- **工作量**: M（1 新建 util + 8 处 wire-up + 1 前端 config + 2 处 messages 补词表，约 0.8 人天）
+- **状态**: 本地完成，pytest 60 通过（1 pre-existing 无关失败已排除），import smoke test 通过；不改动 requirements��无 migration；待 Erika 部署后线上以 en cookie 验证 `model_used=gpt-4o-mini`
 
 **需求描述**：
-2026-07-05 服务器迁移 SG 后，Erika 拉 worker 日志暴露出 4 个长期被静默 exception handler 吞掉的 pre-existing bug，与迁移无关，全部为分析链路 P2 级。分两个会话分批修完：上一轮修 P2-A/B（rag 异常日志详细化 + push_snapshots 表建立），本轮基于 P2-A 的详细日志锁定 P2-C（DashScope embedding batch 超限）和 P2-D（workers 引用不存在的 scripts 模块），一并修复。
+承接海外市场调研结论（`docs/overseas-market-research-2026-07.md`）——海外用户对国际大厂 LLM（GPT-4o-mini）品牌信任更高，且英文 aspect 抽取质量与 DeepSeek 相当或更好，国内用户仍走 DeepSeek 保成本。核心决策（Erika 拍板）：**统一英文 prompt**，不搞中英双 prompt；locale 只影响模型链优先级，不影响 prompt 内容；国内用户看到的分析结果由前端展示层翻译；`review_analyzer/insight_engine.py` 顺手把硬编码 OpenAI 直调 DeepSeek 的老代码收编进 router。
 
 **涉及岗位及工时**：
-- 后端开发：1 人天（P2-A rag 日志 0.2 / P2-B migration 0.2 / P2-C batch 常量定位 0.2 / P2-D 5 处 import 迁移 + Dockerfile 归因 0.4）
+- 后端开发：0.5 人天（llm_router locale 切换 + locale util + uploads/analysis 路由注入 Request + workers 透传 + deep_analyzer 参数 + insight_engine 收编到 router，约 6 个文件）
+- 前端开发：0.2 人天（`routing.ts` defaultLocale + `en.json` / `zh.json` categoryLabels 段）
+- 文档：0.1 人天（PROGRESS_V2 + TEST_LOG + CHANGELOG）
+
+**变更清单**：
+- `backend_api/app/services/llm_router.py`：`_DEEPSEEK` / `_OPENAI` / `_QWEN` 拆常量 + `MODELS_EN` / `MODELS_ZH` + `_models_for_locale()`；`LLMRouter.completion()` 与 `router_completion()` 新增 `locale` 参数（默认 `"zh"` 向后兼容）；`__post_init__` 种子所有可能模型的熔断态；`status()` 汇总两条链
+- `backend_api/app/services/locale.py`（新建）：`get_analysis_locale(request)` = `?locale=` > cookie `NEXT_LOCALE` > `Accept-Language` > 默认 `"en"`；`_normalize()` 处理 `zh-CN`/`en-US`/`en-US,zh;q=0.9`/未知语言（→ 默认）
+- `backend_api/app/routes/uploads.py`：`/uploads` + `/analysis/jobs` 端点注入 `Request`，写 `payload_json["locale"]`
+- `workers/jobs.py`：`process_upload_job` 从 `payload_json` 读 locale（默认 `"en"`），透传给 3 处 `deep_analyze_batch()`
+- `backend_api/app/services/deep_analyzer.py`：`analyze_one` / `analyze_batch` 加 `locale` 参数（默认 `"en"`）→ `router_completion(locale=...)`
+- `review_analyzer/insight_engine.py`：删除硬编码 `OpenAI(base_url="deepseek.com")` 直调 + `get_api_key(user_id)` 依赖，改走 `router_completion(locale=...)`；两个公共 API + 两个内部 helper 都加 locale 参数
+- `backend_api/app/routes/analysis.py`：`/sessions/{id}/results` + `/results` 端点注入 `Request`，传 locale 到 `build_results_insights` / `_cached_build_insights`
+- `frontend/src/i18n/routing.ts`：`defaultLocale: "zh"` → `"en"`
+- `frontend/messages/en.json` / `zh.json`：新增 `categoryLabels` 段，11 个中文分类的翻译（产品质量→Product Quality / 包装物流→Packaging & Logistics / 使用体验→Usage Experience / 客服售后→Customer Service / 性价比→Value for Money / 功能需求→Feature Request / 正面反馈→Positive Feedback / 单纯好评→Praise Only / 无效乱码→Invalid Content / 混合评价→Mixed Review / 其他→Other；zh 侧同 key 保留中文本名，便于前端 `useTranslations` 统一按 key 取值）
+
+**关键决策记录**：
+1. **统一英文 prompt**：评论源就是英文，英文 prompt 分析效果最好，跟用什么模型无关。中英双 prompt 需要维护两套版本、双套 golden set，产研收益负数（Erika 决策）
+2. **locale 向后兼容**：`router_completion` 默认 `locale="zh"`（保原生产链路），`deep_analyzer` / `insight_engine` 默认 `locale="en"`（新入口默认海外优先），旧调用点不改也能跑
+3. **不阻塞 M4 Bedrock/OpenRouter 决策**：本 pre-milestone 不接触 Bedrock/OpenRouter，仅在现有 DeepSeek/OpenAI/Qwen 三家里切主链路优先级；M4 决策拍板后再叠加 `provider="bedrock"` 或 `"openrouter"` 分支
+4. **insight_engine 顺手收编**：老代码硬编码 OpenAI 直调 DeepSeek 已存在很久，绕过 router 熔断 + BYOK，本次一并收编到 `router_completion`，未来 `.env` 换 key 全站生效
+5. **前端 defaultLocale 改 en**：因为 `localePrefix: "never"` 靠 cookie 驱动，defaultLocale 决定"没 cookie 的新访客"进什么语言。海外优先则默认 en，国内用户由 middleware 检测 `Accept-Language: zh-*` 或手动切换
+6. **catgoryLabels 只做前端翻译**：不改 backend `_derive_category` 返回的中文枚举，避免破坏 DB 已存的 category 字段和现有 dashboard 逻辑
+
+**关联文档**：
+- PROGRESS_V2.md 新增 V4-出海-M4-pre 章节（`✅ 完成`）
+- TEST_LOG.md 追加 2026-07-07 记录（M4-pre）
+- session-summary.md：本次任务的源计划（session 加载后落地）
+- 后续 M4 决策仍冻结，等待 Erika 拍板 A（SG + OpenAI 直连）vs C（OpenRouter 中转）
+
+---
+
+## 2026-07-07
+
+### V4-T4 Step 7：跨用户 LLM 分析结果复用（成本节约方案）
+
+- **工作量**: M（1 migration + 1 核心函数扩展 + 3 处 wire-up + 1 单测文件 + 2 处隐私/服务条款，约 0.5 人天）
+- **状态**: 本地完成，py_compile 全绿；待 Erika 部署 develop 后线上验证；migration 043 需在 push 时同步在 ECS 补执行
+
+**需求描述**：
+Erika 提出——原 L1 缓存 `get_analyzed_by_content_hash` 只查用户自己历史 comments，用户 A、B、C 上传相同 ASIN 或相同评论文本时仍会重复调用 DeepSeek，浪费 API 成本。热门 ASIN 场景（多卖家竞品共同关注）100% 评论重叠仍全额扣费。基建其实早已就绪：`review_pool` 全局表（migration 038）无 user_id + 已有 `aspects_json` + `analyzer_version` 字段，`pool_backfill_analysis()` 函数已实现，但接线被两处门禁堵住：① L1 lookup 只查 comments 不查 pool；② pool 回填被 `source_channel == "api"` 挡住，CSV 上传结果不入池。**核心决策（Erika 拍板）**：作用域全局共享，缓存命中仍扣用户额度（quota 上传时消费不受影响），存储扩展现有 `review_pool` 表（不新建）。
+
+**涉及岗位及工时**：
+- 后端开发：0.3 人天（`get_analyzed_by_content_hash` 扩展 + `workers/jobs.py` 三处 wire-up + `update_comment_analysis` 支持 cache_hit_source 列 0.2 / 单元测试 0.1）
+- 前端开发：0.05 人天（隐私政策 + 服务条款文案追加，中英双语）
+- 合规审阅：0.05 人天（跨用户数据复用合规披露的措辞把关）
+- 文档：0.1 人天（PROGRESS_V2 + TEST_LOG + CHANGELOG + plan 文件更新）
+
+**变更清单**：
+- `migrations/043_review_pool_global_analysis_cache.sql`（新建）：`review_pool.content_hash` 部分索引（analyzed_at IS NOT NULL 才索引，大幅缩小体积）+ `comments.cache_hit_source VARCHAR(20)`（'user' | 'global' | NULL 区分命中来源）
+- `review_analyzer/database.py::get_analyzed_by_content_hash`：新增 `include_global=True` + `analyzer_version` 参数——先查用户自己历史，未命中的 hash 再查全局 pool（analyzer_version 匹配才复用，防止老版本结果污染当前分析）；返回值新增 `cache_hit_source` 字段
+- `review_analyzer/database.py::update_comment_analysis`：写入 `cache_hit_source` 列，异常回退到原 base_sql
+- `workers/jobs.py` 三处改：
+  1. L1 lookup 传 `include_global=True, analyzer_version=ANALYZER_VERSION`
+  2. `cache_hit_source` 从 `hit.result` 透传写入 `id_to_v4[cid]`
+  3. 拆掉 `source_channel == "api"` 门禁，改判 `product_id` 非空即回填（CSV 上传也参与池贡献）；同时新增 `pool_write()` 调用，确保 CSV 数据先入池再回填分析结果
+- `frontend/src/app/privacy/page.tsx`：新增第四条"分析结果聚合复用"章节（中英双语），原第 4-10 章顺移为 5-11 章，"最后更新"日期改为 2026-07-07
+- `frontend/src/app/terms/page.tsx`：第四条"数据所有权"追加聚合复用说明（中英双语），指向隐私协议第四条；日期同步更新
+- `backend_api/tests/test_global_cache.py`（新建）：6 个用例覆盖用户命中/全局命中/user 屏蔽 pool/空输入/`include_global=False` 关闭全局路径/content_hash 稳定性
+
+**关键决策记录**：
+1. **计费不变**：quota 在上传时按条数扣，缓存命中不返还额度。用户付的是"分析输出"，不是"每次 DeepSeek 调用"（Erika 决策）
+2. **作用域全局**：不限制同 ASIN 或同 category（虽然 prompt 里 category 会影响 aspects taxonomy，但同 content_hash 通常语义一致；如未来发现问题可通过 `analyzer_version` 显式 bump 来强制刷新）
+3. **CSV 也回填**：拆掉 `source_channel == "api"` 门禁的前提是 `product_id` 非空，避免自由 CSV 污染池
+4. **隐私披露前置**：privacy.tsx 第四条明示"匿名化分析输出可跨用户复用，不涉及身份/账号/上传时间共享"，避免 GDPR/个保法风险
+5. **cache_source_id 保持 INT**：既存列是 INTEGER，改类型会破坏迁移；用新增 `cache_hit_source` VARCHAR 区分归属表（'user' → comments.id / 'global' → review_pool.id）
+6. **feature flag 预留**：`include_global` 默认 True 但可通过参数关闭，未来若需灰度可包一层 env var
+
+**关联文档**：
+- PROGRESS_V2.md 变更日志追加一行 2026-07-07（V4-T4 Step 7）+ V4-T4 章节末尾追加 Step 7 详情
+- TEST_LOG.md 追加 2026-07-07 记录
+- plan 文件 `~/.claude/plans/llm-a-b-c-velvety-journal.md` 保留供后续追溯
+
+---
+
+## 2026-07-07
+
+### V4-出海-M3.5：数据保留策略自动清理（对齐 Shulex 6y+60d，M3 合规模块收官）
+
+- **工作量**: M（1 migration + 1 核心 worker + 4 处 wire-up + 1 单测文件 + 4 处邮件模板/mailer + auth.py 补钩子，约 1 人天）
+- **状态**: 本地完成，待 Erika 部署 develop 后线上验证；migration 042 需在 push 时同步在 ECS 补执行
+
+**需求描述**：
+V4-出海模块 M3 合规能力收官任务。此前 M3.2 只做了"用户主动删账号 → anonymize_user"，没有：① 长期 inactive 用户自动清理（CCPA/CPRA 要求"不能无限期保留",Shulex 已做）；② 删除账号 60 天宽限后硬删关联业务数据（Shulex 也是 60d 窗口）；③ 老数据按类型分级软删/硬删的自动化。Erika 追问"保留期 2 年 vs 6 年在成本/实现上有何区别"时牵出跨用户数据复用问题（review_pool 已实现抓取层去重、评论 + LLM 分析结果按 user_id 隔离没复用），并确认按 Shulex 6 年通用保留期落地，跨用户复用作为独立话题移交新对话。
+
+**涉及岗位及工时**：
+- 后端开发：0.7 人天（`workers/retention_cleanup.py` 6 块清理主逻辑 0.4 / mailer + template + auth.py 补钩子 0.15 / scheduler + periodic_jobs 集成 0.05 / 单元测试 0.1）
+- 合规审阅：0.1 人天（对齐 Shulex 保留期决策 + 冷存储缓冲方案讨论）
+- 文档：0.2 人天（PROGRESS_V2 + TEST_LOG + CHANGELOG + plan 更新，含"冷热分层缓冲方案"备用记录）
+
+**变更清单**：
+- `migrations/042_add_inactivity_tracking.sql`：`users` 表加 `last_login_at` + `inactivity_notified_at` 两列 + 两个部分索引（`WHERE deleted_at IS NULL`），老用户 fallback `last_login_at = created_at` 避免全部误判 inactive
+- 邮件模板：`email_templates/{zh-CN,en-US}/inactivity_warning.html`（新建）+ `deletion_confirmed.html` 里"30 天备份保留期" → "60 天备份保留期"（对齐 Shulex）
+- `review_analyzer/mailer.py`：`_SUBJECTS["inactivity_warning"]` + `send_inactivity_warning(to_email, username, deletion_date, locale)`，归类 Transactional（合规通知，不受 marketing opt-out 控制）
+- `review_analyzer/database.py`：加 `mark_user_login(user_id)` helper（登录时刷 `last_login_at` + 清零 `inactivity_notified_at`）
+- `backend_api/app/routes/auth.py`：`login()` 成功分支调 `mark_user_login()`，DB 写失败降级为 warning 日志不阻塞登录
+- `workers/retention_cleanup.py`（核心新文件）：6 块清理串行执行，每块独立 try/except + 单独 commit + 单次处理上限（Block1/2 500 条、Block3 200 用户），返回 `{ok, blocks, errors, started_at, finished_at}` 结构化统计
+  - Block 1: inactive 6m + 未通知 → 发预告 + send-first-mark-after 打时间戳
+  - Block 2: 已通知 90d + 仍未登录 → 复用 M3.2 `anonymize_user()`
+  - Block 3: `deleted_at > 60d` → 按 FK 叶子→根顺序硬删 6 张表（review_trackers → action_items → comments → product_variants → products → sessions），**不动 review_pool**（无 PII、纯抓取缓存），users 表本身保留（M3.2 已匿名化，保留主键防悬垂）
+  - Block 4: `analytics_events > 90d` → 硬删
+  - Block 5: `llm_usage_log > 6y` → 硬删（对齐 Shulex）
+  - Block 6: `sessions/comments > 6y AND deleted_at IS NULL` → 软删（`UPDATE ... SET deleted_at = NOW()`，等未来冷存储方案再做物理清理）
+- `workers/periodic_jobs.py`：加 `enqueue_retention_cleanup()`（`job_timeout=30min`、`result_ttl=7d` 供审计、`failure_ttl=30d` 供定位）
+- `workers/scheduler.py`：加 `RETENTION_CLEANUP_HOUR=3` + `RETENTION_CLEANUP_MINUTE=23`（业务低峰、避开 09:07 成本日报）+ Redis 锁 `scheduler:retention_cleanup:lock:{YYYY-MM-DD}` 保证同一日历日只入队 1 次
+- `workers/tests/test_retention_cleanup.py`：每块至少 1 个用例（no-candidates / 正常路径 / 边界失败），加 SQL 关键词哨兵测试（"90 days" / "6 years" / "UPDATE ... deleted_at = NOW()"）防未来误改窗口口径，顶层 job 测试确认 6 块串行 + 一块炸不影响其他
+
+**关键决策记录**：
+- **通用保留期 6 年**（对齐 Shulex，兼顾未来跨用户 embedding 复用命中率）
+- **删除后宽限窗口 60 天**（对齐 Shulex，给"删了后悔"更长机会）
+- **inactivity 阈值 6 月**（所有用户一视同仁，Shulex 无此机制，我们保留为差异化亮点）
+- **运行时间 UTC+8 03:23**（业务低峰，避开 09:07 daily_cost_digest）
+- **review_pool 不清理**（无 PII、纯抓取缓存，删了直接翻倍抓取成本）
+- **users 表本身不删**（M3.2 已匿名化，保留主键防止业务侧 LEFT JOIN 出现悬垂 user_id 展示成 "unknown"）
+- **冷热分层缓冲方案（未来备用，本次不实施）**：如果 6 年保留导致 Postgres 主库压力（单表 >5000 万行 / p95 劣化 >200ms / 存储超预算 30% 任一命中），启动老数据（>2y）dump 到 S3/OSS 冷存储、主库只留热数据（<2y）的方案。先按 6y 硬保留跑一段观察增长曲线，触发条件命中再启动
+
+**上线部署**（待 Erika 手动执行）：
+```bash
+cd /opt/clueai/deploy && git pull origin develop && docker compose exec -T api python -c "import psycopg2, os; conn = psycopg2.connect(os.environ['DATABASE_URL']); cur = conn.cursor(); cur.execute(open('/opt/clueai/migrations/042_add_inactivity_tracking.sql').read()); conn.commit(); print('migration 042 ok')" && docker compose up -d --build api worker scheduler && docker compose exec nginx nginx -s reload
+```
+
+**验证方式**（Erika 部署后）：
+- migration 042 执行后 `SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name IN ('last_login_at','inactivity_notified_at')` 返回 2 行
+- 测试账号登录后 `SELECT last_login_at FROM users WHERE username='惜_clueai'` 应为最近时间
+- 第 2 天 03:23 后 `docker compose logs scheduler | grep "retention cleanup"` 应看到 `enqueued retention cleanup`
+- 若线上有老 inactive 账号，`SELECT COUNT(*) FROM users WHERE inactivity_notified_at IS NOT NULL` 应 > 0
+- 测试账号收到 inactivity_warning 邮件（如触发）时检查双语模板渲染
+
+---
+
+
+
+### Bug 修复：P2 级 pre-existing 分析链路 6 连修（rag 日志 + push_snapshots 表 + embedding batch + scripts 缺失 + embedding provider 回退 + except pass 显形）
+
+- **工作量**: M+（6 个独立 pre-existing bug 连锁排查 + 修复 + 迁移 + 线上验证，约 1.2 人天）
+- **状态**: ✅ 已线上验证通过 — 新分析 embedded/total = **30/30**，网页问评论走 **混合检索（vector + fulltext RRF）**，`retrieval_method=hybrid` 稳定返回
+
+**需求描述**：
+2026-07-05 服务器迁移 SG 后，Erika 拉 worker 日志暴露出 4 个长期被静默 exception handler 吞掉的 pre-existing bug，与迁移无关，全部为分析链路 P2 级。分三个会话逐层剥离：① P2-A/B 修 rag 异常日志详细化 + push_snapshots 表建立；② P2-C/D 借 P2-A 的日志锁定 DashScope embedding batch 超限和 workers scripts 模块缺失；③ 本轮验证阶段发现 pgvector 仍 0/7740 覆盖，进一步顺出 P2-E（embedding provider 维度不匹配 pgvector 列 + 合规风险）和 P2-F（`workers/jobs.py` 里另有两处 `except: pass` 继续吞掉 pgvector `DataException`），全部修完后线上验证通过。
+
+**涉及岗位及工时**：
+- 后端开发：1.2 人天（P2-A rag 日志 0.2 / P2-B migration 0.2 / P2-C batch 常量定位 0.2 / P2-D 5 处 import 迁移 + Dockerfile 归因 0.4 / P2-E 合规审阅 + provider 回退 0.1 / P2-F except pass 显形 + 线上验证 0.1）
 
 **变更清单**：
 - **P2-A**：`review_analyzer/rag.py` `generate_embeddings_batch` 捕获异常时打印完整异常 + `base_url` / `model` / `key_source`（原来只打 "skipping chunk"）；模块加载时校验 `EMBEDDING_API_KEY` / `OPENAI_API_KEY` 至少一个非空，均缺则打 WARNING
 - **P2-B**：新建 `migrations/041_push_snapshots.sql`，`push_snapshots` + `issue_escalation_state` 两表；用 `UNIQUE NULLS NOT DISTINCT` 保证 `product_id=NULL` 时 upsert 语义正确
 - **P2-C**：`review_analyzer/rag.py:90` `EMBEDDING_BATCH_SIZE 256 → 10`（DashScope `text-embedding-v3` 官方硬上限 10，OpenAI 是 2048 之前能跑，切 DashScope 后一直 400 静默失败），常量注释注明来源
 - **P2-D**：迁移 `scripts/aspect_taxonomy.py → review_analyzer/aspect_taxonomy.py`（属于共享分析业务字典，归属更合理），同步修 5 处 import：`workers/jobs.py:779`、`workers/jobs.py:823`、`workers/periodic_jobs.py:164`、`workers/periodic_jobs.py:174`、`backend_api/app/services/action_advisor.py:75`；`scripts/` 恢复"一次性运维脚本"定位，不进 prod 镜像
+- **P2-E**：embedding provider 从 DashScope（`text-embedding-v3`，1024 维，中国境内）回退到 OpenAI（`text-embedding-3-small`，1536 维，与 `comments.embedding vector(1536)` 列匹配）。合规动机：目标市场为排除 EU/UK/EEA 的全球英语市场，DashScope 在中国境内不满足 GDPR/CCPA 子处理商披露要求；技术动机：pgvector 列维度在建表时固化，写入 1024 维会抛 `DataException`，与列一致的选择只有 1536 维。改动仅 `.env` 三个变量 `EMBEDDING_API_BASE_URL/EMBEDDING_MODEL/EMBEDDING_API_KEY`，零 migration
+- **P2-F**：`workers/jobs.py:206`（分析主链路调 `embed_session_comments`）和 `workers/jobs.py:384`（聚类结果写 `update_comment_cluster`）另有两处 `except Exception: pass`，即使 P2-A 让 `rag.generate_embeddings_batch` 内部日志详细了，一旦异常上冒到这两处仍会被静默吞掉。改为 `logger.exception(...)` 输出完整堆栈 + user_id / session_id / comment_id 上下文；`review_analyzer/rag.py:90` 注释同步更新为 OpenAI 上限来源
 
 **根因深度**：
-- 4 个 bug 长期存在但都被 P2-A 之前的 `except Exception: log("skipping")` 吞掉，只有当 P2-A 详细日志上线后才能看到原始错误码 / 表名 / 模块名，属于**"先修日志再修 bug"的正向连锁**
-- P2-C 意味着生产 pgvector `product_embeddings` / `review_embeddings` 表大概率长期为空，RAG 语义检索从未真正生效；本次修复只让新分析写入，历史 embedding 是否补数留待验证后与 Erika 讨论
+- 6 个 bug 长期存在但都被多层 `except Exception: pass/log("skipping")` 遮蔽，属于**"先修日志再修 bug"的正向连锁**：P2-A → 让 batch 内部错误显形 → 定位 P2-C；P2-F → 让 batch 上游错误显形 → 定位 P2-E
+- P2-E 是最深层根因：即使 P2-C 让 batch size 从 256 降到 10，pgvector 列维度与 provider 输出维度不匹配的问题依然存在。ECS 上一次修 P2-C 时切换了 provider 到 DashScope，无意中把长期潜藏的维度依赖从 1536 → 1024，直接被 pgvector 拒绝入库
+- 生产 pgvector `comments.embedding` 从 2026-06-03 迁移建表至今一直为空（7740 条评论 0 覆盖），本次修复只让新分析写入，历史 embedding 是否补数仍待与 Erika 讨论
+- **合规副产物**：借这次事件把 DashScope 从主 embedding 链路移除，规避海外用户数据经中国 IDC 的 GDPR/CCPA 灰色地带；`llm_router.py:57` Qwen chat fallback 属于死代码，触发率极低，另行清理
 
 **上线部署**：
 - P2-A / P2-B 已随 commit `e7613cb` 上线
-- P2-C / P2-D 本次 commit push develop，Erika 手动 `docker compose up -d --build worker api && docker compose exec nginx nginx -s reload`（api 也 import `rag`，一起重建更稳）
-- 待验证：worker 日志不再有 `batch size is invalid` 400、不再有 `ModuleNotFoundError: No module named 'scripts'`、不再有 `UndefinedTable: push_snapshots`
+- P2-C / P2-D 已随第二轮 commit 上线，Erika 完成 `docker compose up -d --build worker api && docker compose exec nginx nginx -s reload`
+- P2-E / P2-F 本次 commit `b06e4da` push develop，Erika 完成 `.env` 三变量替换 + `docker compose up -d --build worker api && docker compose exec nginx nginx -s reload`
+- **线上验证结果**：① worker 日志无 `batch size is invalid` / `ModuleNotFoundError` / `UndefinedTable` / `DataException`；② 新分析 embedded/total = 30/30；③ 网页问评论 "What do customers say about waterproof?" 返回 5 条引用，检索标签为 **混合检索**（`retrieval_method=hybrid`），vector 检索确认激活
 
 ---
 
