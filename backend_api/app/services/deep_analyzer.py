@@ -144,11 +144,13 @@ def analyze_one(
     allowed_aspects: list[str] | None = None,
     client: Any = None,
     user_id: int | None = None,
+    locale: str = "en",
 ) -> dict[str, Any]:
     """对单条评论做 V4-T3 深度分析（通过 llm_router 自动 fallback）.
 
     client 参数仅用于单元测试注入 mock，生产代码不传。
     user_id 非空时自动调用 track_llm_call 记录到 analytics_events。
+    locale: "en" 走 GPT-4o-mini 优先链，"zh" 走 DeepSeek 优先链（默认 en，海外优先）。
     """
     p = load_prompt("annotate", prompt_version)
     system_prompt = p.system_prompt
@@ -193,6 +195,7 @@ def analyze_one(
                     response_format={"type": "json_object"},
                     temperature=0,
                     max_tokens=800,
+                    locale=locale,
                 )
             latency_ms = int((time.perf_counter() - t0) * 1000)
             raw = resp.choices[0].message.content
@@ -233,8 +236,12 @@ def analyze_batch(
     allowed_aspects: list[str] | None = None,
     progress_callback: Any = None,
     user_id: int | None = None,
+    locale: str = "en",
 ) -> list[dict[str, Any]]:
-    """批量分析评论（通过 llm_router 自动 fallback）."""
+    """批量分析评论（通过 llm_router 自动 fallback）.
+
+    locale: "en" 走 GPT-4o-mini 优先链，"zh" 走 DeepSeek 优先链（默认 en，海外优先）。
+    """
     results: list[dict[str, Any] | None] = [None] * len(comments)
 
     def _process(idx: int, c: dict[str, Any]) -> tuple[int, dict[str, Any]]:
@@ -247,6 +254,7 @@ def analyze_batch(
             aspects_block=aspects_block,
             allowed_aspects=allowed_aspects,
             user_id=user_id,
+            locale=locale,
         )
 
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
