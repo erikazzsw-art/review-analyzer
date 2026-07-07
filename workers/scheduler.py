@@ -14,6 +14,7 @@ from datetime import datetime
 from workers.periodic_jobs import (
     enqueue_daily_cost_digest,
     enqueue_periodic_digest,
+    enqueue_retention_cleanup,
     enqueue_stale_job_scan,
 )
 from workers.queue import get_redis_connection
@@ -24,8 +25,12 @@ SCAN_INTERVAL_SECONDS = 60
 STALE_SCAN_INTERVAL_SECONDS = 300
 DAILY_DIGEST_HOUR = 9
 DAILY_DIGEST_MINUTE = 7
+# V4-出海-M3.5: 数据保留清理,业务低峰(UTC+8 03:23),避开 09:07 成本日报
+RETENTION_CLEANUP_HOUR = 3
+RETENTION_CLEANUP_MINUTE = 23
 LOCK_PREFIX = "scheduler:periodic_push:lock:"
 DAILY_DIGEST_LOCK_PREFIX = "scheduler:daily_cost_digest:lock:"
+RETENTION_CLEANUP_LOCK_PREFIX = "scheduler:retention_cleanup:lock:"
 LOCK_TTL_SECONDS = 300
 
 
@@ -169,6 +174,18 @@ def run_scheduler() -> None:
                     logger.info("scheduler: enqueued daily cost digest")
         except Exception:
             logger.exception("scheduler: failed to enqueue daily cost digest")
+
+        # --- 数据保留清理（03:23 UTC+8，redis lock 去重, M3.5）---
+        try:
+            now_dt = datetime.now()
+            if now_dt.hour == RETENTION_CLEANUP_HOUR and now_dt.minute == RETENTION_CLEANUP_MINUTE:
+                lock_key = f"{RETENTION_CLEANUP_LOCK_PREFIX}{now_dt.strftime('%Y%m%d')}"
+                # TTL=86400 保证同一日历日只入队一次;跨天自然过期。
+                if redis_conn.set(lock_key, "1", nx=True, ex=86400):
+                    enqueue_retention_cleanup()
+                    logger.info("scheduler: enqueued retention cleanup")
+        except Exception:
+            logger.exception("scheduler: failed to enqueue retention cleanup")
 
         time.sleep(SCAN_INTERVAL_SECONDS)
 

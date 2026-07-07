@@ -500,3 +500,29 @@ def enqueue_daily_cost_digest() -> str:
         failure_ttl=24 * 60 * 60,
     )
     return job.id
+
+
+# ============================================================
+# Retention Cleanup — M3.5 数据保留策略(每天 UTC+8 03:23)
+# ============================================================
+
+
+def enqueue_retention_cleanup() -> str:
+    """入队 M3.5 数据保留清理 job(由 scheduler 每天 03:23 UTC+8 调用一次)。
+
+    实际逻辑在 workers/retention_cleanup.retention_cleanup_job() —— 6 块清理
+    每块独立处理 + 单独 commit,详见该模块的 docstring。
+    """
+    from workers.retention_cleanup import retention_cleanup_job
+
+    queue = get_queue()
+    job = queue.enqueue(
+        retention_cleanup_job,
+        job_id=f"retention-cleanup-{datetime.now().strftime('%Y%m%d')}",
+        description="Daily retention cleanup (M3.5)",
+        # 6 块串行跑 + 每块可能扫大表,给 30 分钟上限
+        job_timeout=30 * 60,
+        result_ttl=7 * 24 * 3600,  # 保留 7 天结果供审计
+        failure_ttl=30 * 24 * 3600,  # 失败保留 30 天定位问题
+    )
+    return job.id
