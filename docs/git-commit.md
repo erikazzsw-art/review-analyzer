@@ -66,6 +66,29 @@ feat(copywriter-api): 扩 TikTok 平台 + 收紧 Amazon 禁用词 + 新增风格
 回滚: revert 该 commit + 前端配套 commit
 ```
 
+## 每次修改代码后的标准流程（强制）
+
+```bash
+# 1. 确认当前在 develop 分支
+git checkout develop
+
+# 2. 拉取最新代码（避免冲突）
+git pull origin develop
+
+# 3. 修改代码（按 CLAUDE.md「UI / 后端修改规则」定位到 frontend/ / backend_api/ / workers/ 之一）
+
+# 4. 本地验证（push 前必做）
+python3 -m ruff check backend_api/ workers/ review_analyzer/   # 后端 lint
+cd frontend && npm run typecheck                                # 前端类型检查
+
+# 5. 提交并推送到 develop（git add 用具体路径，禁止 `git add .`）
+git add <具体文件路径>
+git commit -m "fix: [简要描述修改内容]"
+git push origin develop
+
+# 6. push 后 GitHub Actions 自动跑 CI（ruff + tsc + next build），无需手动触发
+```
+
 ## 其他规则
 - 每个功能完成后单独提交，不混合多个改动
 - 不提交 `.env` 和 `*.db` 文件

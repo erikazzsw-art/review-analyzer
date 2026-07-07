@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
 from backend_api.app.deps import get_current_user
@@ -21,6 +21,7 @@ from backend_api.app.schemas.analysis import (
     AnalysisSessionPayload,
     AnalysisSessionResultsPayload,
 )
+from backend_api.app.services.locale import get_analysis_locale
 from review_analyzer.compare_store import build_compare_group_specs, get_comparison_dataset
 from review_analyzer.database import (
     delete_session,
@@ -33,6 +34,7 @@ from review_analyzer.database import (
 )
 from review_analyzer.insight_engine import build_results_insights
 from review_analyzer.product_store import get_product_overview_rows
+from review_analyzer.quota import InsufficientCreditsError, credit_consume
 from workers.jobs import enqueue_upload_job_task
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
@@ -65,13 +67,14 @@ def _cached_build_insights(
     comment_ids: tuple[int, ...],
     comments: list[dict[str, Any]],
     context: dict[str, Any],
+    locale: str = "en",
 ) -> dict[str, Any]:
     key = _cache_key(user_id, product_id, start, end, comment_ids)
     now = time.time()
     cached = _INSIGHTS_CACHE.get(key)
     if cached and now - cached[0] < _INSIGHTS_CACHE_TTL:
         return cached[1]
-    modules = build_results_insights(user_id, comments, context)
+    modules = build_results_insights(user_id, comments, context, locale=locale)
     # 淘汰最旧的条目
     if len(_INSIGHTS_CACHE) >= _INSIGHTS_CACHE_MAX:
         oldest = min(_INSIGHTS_CACHE.items(), key=lambda kv: kv[1][0])[0]
@@ -83,6 +86,7 @@ def _cached_build_insights(
 @router.get("/sessions/{session_id}/results", response_model=AnalysisSessionResultsPayload)
 def get_session_results(
     session_id: int,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ) -> AnalysisSessionResultsPayload:
     user_id = int(current_user["id"])
@@ -97,7 +101,9 @@ def get_session_results(
     for c in comments:
         c.pop("embedding", None)
     context = _build_results_context(session)
-    modules = build_results_insights(user_id, comments, context)
+    modules = build_results_insights(
+        user_id, comments, context, locale=get_analysis_locale(request)
+    )
 
     return AnalysisSessionResultsPayload(
         session=_session_payload(session),
@@ -113,6 +119,7 @@ def get_session_results(
 
 @router.get("/results", response_model=AnalysisResultsPayload)
 def get_aggregated_results(
+    request: Request,
     product_id: str = Query(..., min_length=1),
     range: str | None = Query(default="default"),
     start: str | None = Query(default=None),
@@ -154,8 +161,14 @@ def get_aggregated_results(
     if comments:
         comment_ids = tuple(int(c["id"]) for c in comments if c.get("id") is not None)
         modules_raw = _cached_build_insights(
-            user_id, product_id, start_iso or "", end_iso or "", comment_ids, comments, context
+            user_id, product_id, start_iso or "", end_iso or "", comment_ids, comments, context,
+            locale=get_analysis_locale(request),
         )
+        if modules_raw:
+            try:
+                credit_consume(user_id, 6, "insight", product_id)
+            except InsufficientCreditsError as e:
+                raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left")
     else:
         modules_raw = {}
 

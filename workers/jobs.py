@@ -59,7 +59,7 @@ from review_analyzer.product_store import (
     upsert_product_from_api,
     upsert_variant_from_api,
 )
-from review_analyzer.quota import quota_consume
+from review_analyzer.quota import credit_consume, InsufficientCreditsError
 from review_analyzer.rag import embed_session_comments
 
 from .queue import get_queue
@@ -76,6 +76,7 @@ def _build_comments(
     payload_comments: list[dict[str, Any]],
     product_id: str,
     version: str,
+    category: str | None = None,
 ) -> list[dict[str, Any]]:
     comments: list[dict[str, Any]] = []
     for comment in payload_comments:
@@ -90,7 +91,7 @@ def _build_comments(
                 "date": comment.get("date"),
                 "reviewer": comment.get("reviewer"),
                 "source": comment.get("source"),
-                "content_hash": compute_content_hash(content, rating),
+                "content_hash": compute_content_hash(content, rating, category),
             }
         )
     return comments
@@ -124,7 +125,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         else:
             batch_hash = payload.get("batch_hash")
             if not batch_hash and comments_payload:
-                batch_hash = compute_batch_hash(comments_payload)
+                batch_hash = compute_batch_hash(comments_payload, payload.get("category"))
 
             # batch_hash 重复时复用已有 session（同一用户+产品+相同评论集）
             if batch_hash:
@@ -183,7 +184,9 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 },
             )
 
-            comments_to_insert = _build_comments(comments_payload, product_id, version)
+            comments_to_insert = _build_comments(
+                comments_payload, product_id, version, payload.get("category")
+            )
             for comment in comments_to_insert:
                 comment["session_id"] = session_id
             add_comments_batch(user_id, comments_to_insert)
@@ -237,7 +240,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             # L1: 收集当前 batch 的 content_hash，查询已有分析结果
             # migration 043: 除用户自己历史，同时查全局 review_pool 支持跨用户复用
             content_hashes = [
-                compute_content_hash(c.get("content", ""), c.get("rating"))
+                compute_content_hash(c.get("content", ""), c.get("rating"), sub_category)
                 for c in unprocessed
             ]
             existing_analyses = get_analyzed_by_content_hash(
@@ -516,8 +519,12 @@ def process_upload_job(user_id: int, job_id: int) -> None:
 
         update_session_stats(user_id, session_id, len(unprocessed), positive_count, negative_count)
 
-        # 扣减 review_analyze 月度额度
-        quota_consume(user_id, "review_analyze", len(unprocessed))
+        # M6: 扣减 credit（review_analyze = 1 credit/条）
+        try:
+            credit_consume(user_id, len(unprocessed), "review_analyze", str(job_id))
+        except InsufficientCreditsError as e:
+            logger.error("job %s: insufficient credits, needed=%d balance=%d", job_id, e.needed, e.balance)
+            raise
 
         # V4-T4 Step 5: 记录 LLM 用量日志
         usage_rows: list[dict] = []

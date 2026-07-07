@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from backend_api.app.deps import get_current_user
 from review_analyzer.database import get_comments, get_session_by_id
 from review_analyzer.exporter import export_to_xlsx
-from review_analyzer.quota import quota_check, quota_consume
+from review_analyzer.quota import credit_consume, InsufficientCreditsError, quota_check
 
 router = APIRouter(prefix="/analysis", tags=["export"])
 
@@ -36,7 +36,10 @@ def export_module_xlsx(
         c.pop("embedding", None)
 
     output = _build_module_xlsx(module, comments, locale)
-    quota_consume(user_id, "excel_export")
+    try:
+        credit_consume(user_id, 1, "export")
+    except InsufficientCreditsError as e:
+        raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left")
 
     filename = f"analysis_{session_id}_{module}.xlsx"
     return StreamingResponse(
@@ -62,7 +65,10 @@ def export_full_xlsx(
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=msg)
 
     xlsx_bytes, filename = export_to_xlsx(session_id, user_id)
-    quota_consume(user_id, "excel_export")
+    try:
+        credit_consume(user_id, 1, "export")
+    except InsufficientCreditsError as e:
+        raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left")
     return StreamingResponse(
         io.BytesIO(xlsx_bytes),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

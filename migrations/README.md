@@ -51,6 +51,9 @@
 | 009 | `009_create_comparison_reports.sql` | 对比报告 | V2.5 |
 | 010 | `010_standardize_fields.sql` | 字段标准化 + CHECK + 触发器 | V4-T2 |
 | 011 | `011_create_quota_usage.sql` | 配额计数表 | V4-T2 |
+| ... | *(012-043 待补全文档)* | 各功能模块迭代 | V4-V5 |
+| 044 | `044_create_user_credits.sql` | Credit 定价体系基建（user_credits + credit_ledger） | V4-出海-M6 |
+| 045 | `045_add_starter_plan.sql` | users.plan 约束添加 starter | V4-出海-M6 |
 
 ## 新增 Migration 流程
 

@@ -6,6 +6,8 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 1. **决策确认**：遇到不确定的设计问题，必须先询问 Erika
 2. **代码兼容性**：不写兼容性代码，除非明确要求
+3. **禁止全量读取大文件**：`PROGRESS_V2.md`、任何 CSV / 数据文件、日志文件，禁止不加 offset/limit 地整体读入 prompt。执行顺序：① `grep` 定位关键行 → ② `Read` 仅读目标段落（带 offset + limit）。如果不确定范围，先问 Erika 要哪一节。
+4. **`git status` 默认加 `-uno`**：本仓库有大量未纳入 git 的探索性文档、截图、临时脚本，untracked 段占 status 输出约 78% 的 token。默认使用 `git status -uno`（或 `git status -uno --short`），只显示 tracked 文件变更。**唯一例外**：当明确需要检查"某个新文件是否漏加 / 是否被 `.gitignore` 意外拦下"时，才切回 `git status --short`。pre-commit 强制扫描用的是 `git diff --cached --name-only`，不受此规则影响。
 
 ## 项目概述
 
@@ -39,7 +41,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 | Bug 修复完成 | `TEST_LOG.md` | 在修复记录表追加一行：日期、问题描述、解决方案 |
 | 新功能 / 需求变更 | `PROGRESS_V2.md` | 在对应 Step/Task 下更新状态或追加条目 |
 | 模块任务完成 | `PROGRESS_V2.md` | 将对应任务的 `[ ]` 改为 `[x]` |
-| 需求开发完成并 push | `需求记录/YYYY-MM-DD_需求简称.md` | 新建需求记录文件，含需求描述、工作量评估（S/M/L/XL）、涉及岗位及工时；同时在对话中输出需求明细供 Erika 核实 |
+| 需求开发完成并 push | `需求记录/CHANGELOG.md` | 在对应日期下追加一条记录（格式参照已有条目：标题 + 工作量 + 需求描述 + 涉及岗位及工时）；同时在对话中输出需求明细供 Erika 核实 |
 
 **执行顺序**：先更新文档，再提交 Git。文档更新和代码提交合并为同一个 commit。
 
@@ -140,27 +142,6 @@ git diff --cached | grep -E "sk-[a-zA-Z0-9]{20,}|postgres(ql)?://[^@]+:[^@:]+@|A
 
 任一行报 ❌ → **立即中止 commit，告诉 Erika 是哪一行**，不要尝试自动 fix。
 
-### 处理 `git add .` 的规则
-
-本项目**禁止** `git add .` / `git add -A`。原因：根目录历史上多次出现过 `.env`、`.DS_Store`、未跟踪机密草稿。
-
-正确做法：
-1. `git status` 看清单
-2. `git add <具体文件名>` 逐个添加
-3. 如果文件多，按目录分批：`git add backend_api/app/` 这种粒度
-
-## Architecture
-
-```
-/frontend                    # Next.js 15 + React 19 + Tailwind（prod UI）
-/backend_api                 # FastAPI + Pydantic（API 服务）
-/workers                     # RQ worker（异步分析任务）
-/review_analyzer             # 共享分析模块（LLM 调用、数据库操作）
-/deploy                      # docker-compose + nginx 部署配置
-/migrations                  # PostgreSQL 迁移文件（编号化）
-/.github/workflows           # CI workflow（ruff + tsc + next build）
-```
-
 ## 数据库环境分离（2026-06-11 生效）
 
 | 环境 | Supabase 项目 | .env 位置 |
@@ -182,8 +163,6 @@ git diff --cached | grep -E "sk-[a-zA-Z0-9]{20,}|postgres(ql)?://[^@]+:[^@:]+@|A
 - 修改后同步更新 `TEST_LOG.md`
 
 ### 线上网站入口
-
-> **历史回顾**：V1 时期是 Streamlit + Streamlit Cloud；V2 起 (NX-M2~M8) 全面迁移到 Next.js + FastAPI + ECS。**2026-06-16 Streamlit 代码已完全移除**。
 
 - **当前 prod 架构**：Next.js 15 (`frontend/`) + FastAPI (`backend_api/`) + RQ worker (`workers/`) + Redis + Supabase Postgres + nginx，由 [deploy/docker-compose.yml](deploy/docker-compose.yml) 编排，部署在阿里云 ECS
 - **用户 UI 入口**：`frontend/`（Next.js 15 + React 19 + Tailwind），nginx 默认 80/443 路由到 `frontend:3000`
@@ -207,38 +186,47 @@ git diff --cached | grep -E "sk-[a-zA-Z0-9]{20,}|postgres(ql)?://[^@]+:[^@:]+@|A
 
 ### 每次修改代码后的标准流程（强制）
 
-当用户提出 bug 修改需求时，请按以下步骤执行：
-
-```bash
-# 1. 确认当前在 develop 分支
-git checkout develop
-
-# 2. 拉取最新代码（避免冲突）
-git pull origin develop
-
-# 3. 修改代码（按上一节「UI / 后端修改规则」定位到 frontend/ / backend_api/ / workers/ 之一）
-
-# 4. 本地验证（push 前必做）
-python3 -m ruff check backend_api/ workers/ review_analyzer/   # 后端 lint
-cd frontend && npm run typecheck                                # 前端类型检查
-
-# 5. 提交并推送到 develop（git add 用具体路径，不要 `git add .` —— 见「机密保护规则」）
-git add <具体文件路径>
-git commit -m "fix: [简要描述修改内容]"
-git push origin develop
-
-# 6. push 后 GitHub Actions 自动跑 CI（ruff + tsc + next build），无需手动触发
-```
+每次提交前的完整步骤见 [`docs/git-commit.md`](docs/git-commit.md)。
 
 ### 部署职责分离（强制）
 
 - **部署由 Erika 手动完成**，Claude Code 不执行 SSH 到 ECS 的任何操作
-- Claude Code 的职责边界：写代码 → 本地验证 → push 到 develop → 更新文档（TEST_LOG / PROGRESS_V2 / 需求记录）
-- push 完成后告知 Erika "已推送，可以部署"即可
 - ECS 部署命令（供 Erika 参考）：
   ```bash
   cd /opt/clueai/deploy
   git pull origin develop
-  docker compose up -d --build <服务名>
-  docker compose exec nginx nginx -s reload
+  docker compose up -d --build <服务名> && docker compose exec nginx nginx -s reload
   ```
+
+### 部署命令输出规则（强制 · 防 502）
+
+**Claude Code 每次输出部署命令时，必须遵守：**
+
+1. `docker compose up -d --build` 和 `nginx -s reload` **必须用 `&&` 连接为一行**，禁止分开输出
+2. 标准格式（无论部署哪些服务）：
+   ```bash
+   cd /opt/clueai/deploy && git pull origin develop && docker compose up -d --build <服务名> && docker compose exec nginx nginx -s reload
+   ```
+3. 如果涉及数据库 migration，在 `--build` 之前加执行 migration 的步骤
+4. 禁止输出不含 `nginx -s reload` 的部署命令 — 即使只重建 worker 也要 reload（worker 本身不经过 nginx，但养成习惯避免遗漏）
+
+### Push 后 → 部署后标准流程（强制）
+
+**Push 后立即执行：**
+
+1. **输出部署命令** — 告知 Erika 具体需要部署哪些服务（含完整命令）
+2. **等待 Erika 确认部署完成** — 不主动推进，等 Erika 说"已部署"/"部署完成"或类似确认
+
+**Erika 确认部署完成后，自动执行以下全部步骤（无需再次询问）：**
+
+3. **更新文档**（按需） — TEST_LOG.md / PROGRESS_V2.md / 需求记录/CHANGELOG.md
+4. **线上验证** — 使用测试账号登录线上网站，验证本次变更是否按沟通确认的方案落实
+5. **报告验证结果** — 告知 Erika 验证通过/失败 + 具体截图或问题描述
+
+**测试账号**：惜_clueai / test123456
+**线上地址**：https://www.clueai-reviewlens.com
+
+**注意事项**：
+- 第 4 步（询问权限）是强制的，每次都要问，不可自行跳过
+- 如果 Erika 拒绝使用测试账号，流程到第 3 步结束
+- 验证范围：本次 push 涉及的功能变更，重点验证 golden path + 边界情况

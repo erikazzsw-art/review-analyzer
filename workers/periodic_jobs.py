@@ -526,3 +526,152 @@ def enqueue_retention_cleanup() -> str:
         failure_ttl=30 * 24 * 3600,  # 失败保留 30 天定位问题
     )
     return job.id
+
+
+# ============================================================
+# Credit 月度发放 + Trial 到期 — M6 Credit 定价体系
+# ============================================================
+
+
+def refill_monthly_credits() -> dict[str, Any]:
+    """每月 1 号 00:05 UTC 发放月度 credit。
+
+    扫描所有用户，按 plan 字段发放对应 monthly_grant：
+    free=300 / starter=5000 / pro=15000 / team=45000。
+    写入 credit_ledger（reason='monthly_grant'）。
+    balance 不结转，直接重置为 monthly_grant。
+    """
+    import logging
+
+    from review_analyzer.database import get_connection
+
+    logger = logging.getLogger(__name__)
+    conn = get_connection()
+    refilled_count = 0
+    error_count = 0
+
+    try:
+        with conn.cursor() as cur:
+            # 扫描所有用户，获取 plan 和 monthly_grant
+            cur.execute(
+                """SELECT u.id, u.plan, uc.monthly_grant
+                   FROM users u
+                   JOIN user_credits uc ON uc.user_id = u.id
+                   WHERE u.is_active = true"""
+            )
+            users = cur.fetchall()
+
+        for user_id, plan, monthly_grant in users:
+            try:
+                with conn.cursor() as cur:
+                    # balance 重置为 monthly_grant（不结转）
+                    cur.execute(
+                        "UPDATE user_credits SET balance = %s, last_refill_at = NOW(), updated_at = NOW() "
+                        "WHERE user_id = %s",
+                        (monthly_grant, user_id),
+                    )
+                    # 写流水
+                    cur.execute(
+                        "INSERT INTO credit_ledger (user_id, delta, reason, balance_after) "
+                        "VALUES (%s, %s, 'monthly_grant', %s)",
+                        (user_id, monthly_grant, monthly_grant),
+                    )
+                conn.commit()
+                refilled_count += 1
+            except Exception:
+                logger.exception("refill_monthly_credits: failed for user %s", user_id)
+                conn.rollback()
+                error_count += 1
+
+    except Exception:
+        logger.exception("refill_monthly_credits: query users failed")
+        return {"status": "error", "refilled": 0, "errors": 1}
+    finally:
+        conn.close()
+
+    return {"status": "ok", "refilled": refilled_count, "errors": error_count}
+
+
+def expire_trials() -> dict[str, Any]:
+    """每天 00:10 UTC 扫描 trial 到期用户，自动降级为 free。
+
+    查 user_credits.trial_expires_at < now()，
+    自动降级 plan='free'，monthly_grant=300。
+    """
+    import logging
+
+    from review_analyzer.database import get_connection
+
+    logger = logging.getLogger(__name__)
+    conn = get_connection()
+    expired_count = 0
+    error_count = 0
+
+    try:
+        with conn.cursor() as cur:
+            # 查所有 trial 已到期的用户
+            cur.execute(
+                """SELECT uc.user_id
+                   FROM user_credits uc
+                   JOIN users u ON u.id = uc.user_id
+                   WHERE uc.trial_expires_at IS NOT NULL
+                     AND uc.trial_expires_at < NOW()
+                     AND u.is_active = true"""
+            )
+            expired_users = [row[0] for row in cur.fetchall()]
+
+        for user_id in expired_users:
+            try:
+                with conn.cursor() as cur:
+                    # 降级为 free（plan='free', monthly_grant=300）
+                    cur.execute(
+                        "UPDATE users SET plan = 'free' WHERE id = %s",
+                        (user_id,),
+                    )
+                    cur.execute(
+                        "UPDATE user_credits SET monthly_grant = 300, trial_expires_at = NULL, updated_at = NOW() "
+                        "WHERE user_id = %s",
+                        (user_id,),
+                    )
+                conn.commit()
+                expired_count += 1
+                logger.info("expire_trials: user %s downgraded to free", user_id)
+            except Exception:
+                logger.exception("expire_trials: failed for user %s", user_id)
+                conn.rollback()
+                error_count += 1
+
+    except Exception:
+        logger.exception("expire_trials: query failed")
+        return {"status": "error", "expired": 0, "errors": 1}
+    finally:
+        conn.close()
+
+    return {"status": "ok", "expired": expired_count, "errors": error_count}
+
+
+def enqueue_refill_monthly_credits() -> str:
+    """入队月度 credit 发放 job（由 scheduler 每月 1 号 00:05 UTC 调用一次）"""
+    queue = get_queue()
+    job = queue.enqueue(
+        refill_monthly_credits,
+        job_id=f"refill-credits-{datetime.now().strftime('%Y%m')}",
+        description="Monthly credit refill (M6)",
+        job_timeout=10 * 60,
+        result_ttl=30 * 24 * 3600,
+        failure_ttl=30 * 24 * 3600,
+    )
+    return job.id
+
+
+def enqueue_expire_trials() -> str:
+    """入队 trial 到期检查 job（由 scheduler 每天 00:10 UTC 调用一次）"""
+    queue = get_queue()
+    job = queue.enqueue(
+        expire_trials,
+        job_id=f"expire-trials-{datetime.now().strftime('%Y%m%d')}",
+        description="Daily trial expiry check (M6)",
+        result_ttl=7 * 24 * 3600,
+        failure_ttl=30 * 24 * 3600,
+    )
+    return job.id

@@ -22,7 +22,7 @@ from backend_api.app.services.ideal_profile_cache import get_or_generate_ideal_p
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_comments
 from review_analyzer.paddle_billing import is_pro_user
-from review_analyzer.quota import quota_check, quota_consume
+from review_analyzer.quota import credit_consume, InsufficientCreditsError, quota_check
 
 router = APIRouter(prefix="/copywriter", tags=["copywriter"])
 
@@ -249,7 +249,10 @@ def generate_copywriter(
             force=payload.force_regen_profile,
         )
 
-    quota_consume(user_id, "ad_copy")
+    try:
+        credit_consume(user_id, 2, "copywriter")
+    except InsufficientCreditsError as e:
+        raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left")
 
     return CopywriterGenerateResponse(
         platform=_platform_payload(payload.platform, platform),

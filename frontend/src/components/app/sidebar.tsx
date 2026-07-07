@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 import { FeedbackTrigger } from "@/components/feedback/FeedbackWidget";
 import { SidebarQuotaEntry } from "@/components/quota/sidebar-quota-entry";
+import { SidebarCreditEntry } from "@/components/credit/sidebar-credit-entry";
 import { SidebarUserMenu } from "@/components/app/sidebar-user-menu";
 
 type MeData = { username: string; plan: string; is_admin: boolean };
@@ -130,6 +131,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
       {/* User info */}
       <div className="px-4 py-4">
         <SidebarQuotaEntry />
+        <SidebarCreditEntry />
         <div className="mb-3 flex items-center gap-1">
           <LocaleSwitcher variant="sidebar" />
           <FeedbackTrigger />

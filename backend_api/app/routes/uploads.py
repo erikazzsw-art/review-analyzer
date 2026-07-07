@@ -5,7 +5,7 @@ from pathlib import Path
 from threading import Thread
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from backend_api.app.deps import get_current_user
@@ -15,6 +15,7 @@ from backend_api.app.schemas.uploads import (
     UploadJobResponse,
 )
 from backend_api.app.services.analysis_cache import compute_batch_hash
+from backend_api.app.services.locale import get_analysis_locale
 from review_analyzer.database import (
     create_upload_job,
     find_session_by_batch_hash,
@@ -99,6 +100,7 @@ def _enqueue_upload_job(user_id: int, payload: dict[str, Any]) -> UploadJobRespo
 
 @router.post("/uploads", response_model=UploadJobResponse)
 def create_uploads(
+    request: Request,
     source_file: UploadFile = File(...),
     product_id: str = Form(...),
     version: str = Form(default="V1"),
@@ -131,19 +133,7 @@ def create_uploads(
 
     comments = parsed_df.to_dict(orient="records")
 
-    batch_hash = compute_batch_hash(comments)
-    existing = find_session_by_batch_hash(user_id, product_id, batch_hash)
-    if existing:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content={
-                "detail": "duplicate_batch",
-                "existing_session_id": existing["id"],
-                "existing_title": existing.get("custom_title") or existing.get("auto_title") or "",
-                "existing_created_at": str(existing.get("created_at") or ""),
-                "total_reviews": existing.get("total_reviews", 0),
-            },
-        )
+    batch_hash = compute_batch_hash(comments, category)
 
     payload = {
         "source_filename": source_file.filename or "upload",
@@ -160,6 +150,7 @@ def create_uploads(
         "variant_ref_id": variant_ref_id,
         "comments": comments,
         "batch_hash": batch_hash,
+        "locale": get_analysis_locale(request),
     }
     return _enqueue_upload_job(user_id, payload)
 
@@ -167,13 +158,15 @@ def create_uploads(
 @router.post("/analysis/jobs", response_model=UploadJobResponse)
 def create_analysis_job(
     payload: AnalysisJobCreateRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ) -> UploadJobResponse:
     user_id = int(current_user["id"])
     data = payload.model_dump()
+    data["locale"] = get_analysis_locale(request)
     comments = data.get("comments") or []
     if comments:
-        batch_hash = compute_batch_hash(comments)
+        batch_hash = compute_batch_hash(comments, data.get("category"))
         product_id = data.get("product_id") or ""
         existing = find_session_by_batch_hash(user_id, product_id, batch_hash)
         if existing:

@@ -74,7 +74,7 @@
 ### V4-T4 Step 7：跨用户 LLM 分析结果复用（成本节约方案）
 
 - **工作量**: M（1 migration + 1 核心函数扩展 + 3 处 wire-up + 1 单测文件 + 2 处隐私/服务条款，约 0.5 人天）
-- **状态**: 本地完成，py_compile 全绿；待 Erika 部署 develop 后线上验证；migration 043 需在 push 时同步在 ECS 补执行
+- **状态**: ✅ 已部署，migration 043 已在 ECS 执行（2026-07-07）；线上上传验证待 Erika 用两账号上传同一 CSV 观察 `cache_hit_source='global'` 日志
 
 **需求描述**：
 Erika 提出——原 L1 缓存 `get_analyzed_by_content_hash` 只查用户自己历史 comments，用户 A、B、C 上传相同 ASIN 或相同评论文本时仍会重复调用 DeepSeek，浪费 API 成本。热门 ASIN 场景（多卖家竞品共同关注）100% 评论重叠仍全额扣费。基建其实早已就绪：`review_pool` 全局表（migration 038）无 user_id + 已有 `aspects_json` + `analyzer_version` 字段，`pool_backfill_analysis()` 函数已实现，但接线被两处门禁堵住：① L1 lookup 只查 comments 不查 pool；② pool 回填被 `source_channel == "api"` 挡住，CSV 上传结果不入池。**核心决策（Erika 拍板）**：作用域全局共享，缓存命中仍扣用户额度（quota 上传时消费不受影响），存储扩展现有 `review_pool` 表（不新建）。
@@ -117,7 +117,7 @@ Erika 提出——原 L1 缓存 `get_analyzed_by_content_hash` 只查用户自�
 ### V4-出海-M3.5：数据保留策略自动清理（对齐 Shulex 6y+60d，M3 合规模块收官）
 
 - **工作量**: M（1 migration + 1 核心 worker + 4 处 wire-up + 1 单测文件 + 4 处邮件模板/mailer + auth.py 补钩子，约 1 人天）
-- **状态**: 本地完成，待 Erika 部署 develop 后线上验证；migration 042 需在 push 时同步在 ECS 补执行
+- **状态**: ✅ 已部署，线上验证通过（2026-07-07）；migration 042 已在 ECS 执行（`Migration 042 OK`）
 
 **需求描述**：
 V4-出海模块 M3 合规能力收官任务。此前 M3.2 只做了"用户主动删账号 → anonymize_user"，没有：① 长期 inactive 用户自动清理（CCPA/CPRA 要求"不能无限期保留",Shulex 已做）；② 删除账号 60 天宽限后硬删关联业务数据（Shulex 也是 60d 窗口）；③ 老数据按类型分级软删/硬删的自动化。Erika 追问"保留期 2 年 vs 6 年在成本/实现上有何区别"时牵出跨用户数据复用问题（review_pool 已实现抓取层去重、评论 + LLM 分析结果按 user_id 隔离没复用），并确认按 Shulex 6 年通用保留期落地，跨用户复用作为独立话题移交新对话。
@@ -1027,3 +1027,37 @@ AliExpress feedback API 被反爬封锁（返回 antiCrawlerContent），Playwri
 | 后端开发 | 2h |
 | 前端开发 | 0.5h |
 | DevOps | 0.5h |
+
+---
+
+## 2026-07-07
+
+### V4-出海-M6: Credit 定价体系改造（海外 4 档套餐 · 统一 credit 池）
+
+- **工作量**: XL
+- **状态**: 代码完成，待部署验收
+
+**需求描述**：
+海外 SaaS 定价体系全面改造：用统一 credit 池替代原有8维独立限额，降低用户认知成本。新增 Free / Starter / Pro / Team 四档套餐（月付/年付），配套加油包机制。通过 Paddle 计费平台完成订阅管理和加油包充值。
+
+**实现要点**：
+1. **DB Migration**：新建 `user_credits`（credit 钱包）+ `credit_ledger`（流水账）两张表；`045_add_starter_plan.sql` 扩展 CHECK 约束支持 starter 档
+2. **Credit 核心层**（`quota.py`）：`credit_check` / `credit_consume` / `credit_refund` / `get_credit_balance` / `get_credit_ledger` 五个函数，SELECT FOR UPDATE 防并发超扣
+3. **月度 Refill**（`periodic_jobs.py`）：每月 1 号 00:05 UTC 发放 monthly_grant；每天 00:10 UTC 扫描 trial 到期，自动降级 free
+4. **调用点改造**：review_analyze / ask / insight / copywriter / translate / export 全部接入 `credit_consume`，失败时 `InsufficientCreditsError` 返回 402
+5. **Trial 发放**（`auth.py`）：注册即发 3000 credits + 14 天有效期，写 credit_ledger
+6. **Paddle Webhook 改造**（`settings.py`）：`_resolve_plan_from_event` 优先读 Price.custom_data.plan；subscription 事件更新 `user_credits.monthly_grant`；`transaction.completed` + topup=true 触发加油包充值
+7. **前端定价页**（`pricing-content.tsx`）：月付/年付 Toggle + 4 列套餐卡（Free/Starter/Pro⭐/Team）+ 加油包区块 + Enterprise 联系入口
+8. **Credit 余额 UI**（`sidebar-credit-entry.tsx` + `credit-ledger-drawer.tsx`）：Sidebar 常驻余额入口 + 近 30 条流水抽屉；后端对应 `GET /credits/balance` + `GET /credits/ledger` 端点
+
+**待确认**：
+- 用户升级时是否应立即将 balance 重置为新套餐的 monthly_grant（当前仅更新 monthly_grant 字段）
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 |
+|------|------|
+| 产品设计 | 8h（Paddle SKU 手动配置 + 定价策略） |
+| 后端开发 | 12h |
+| 前端开发 | 6h |
+| 数据库 | 2h |

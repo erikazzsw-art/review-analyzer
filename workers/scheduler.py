@@ -13,7 +13,9 @@ from datetime import datetime
 
 from workers.periodic_jobs import (
     enqueue_daily_cost_digest,
+    enqueue_expire_trials,
     enqueue_periodic_digest,
+    enqueue_refill_monthly_credits,
     enqueue_retention_cleanup,
     enqueue_stale_job_scan,
 )
@@ -31,7 +33,16 @@ RETENTION_CLEANUP_MINUTE = 23
 LOCK_PREFIX = "scheduler:periodic_push:lock:"
 DAILY_DIGEST_LOCK_PREFIX = "scheduler:daily_cost_digest:lock:"
 RETENTION_CLEANUP_LOCK_PREFIX = "scheduler:retention_cleanup:lock:"
+CREDIT_REFILL_LOCK_PREFIX = "scheduler:credit_refill:lock:"
+EXPIRE_TRIALS_LOCK_PREFIX = "scheduler:expire_trials:lock:"
 LOCK_TTL_SECONDS = 300
+
+# Credit 月度发放：每月 1 号 00:05 UTC
+CREDIT_REFILL_HOUR = 0
+CREDIT_REFILL_MINUTE = 5
+# Trial 到期检查：每天 00:10 UTC
+EXPIRE_TRIALS_HOUR = 0
+EXPIRE_TRIALS_MINUTE = 10
 
 
 def _get_due_users() -> list[dict]:
@@ -186,6 +197,32 @@ def run_scheduler() -> None:
                     logger.info("scheduler: enqueued retention cleanup")
         except Exception:
             logger.exception("scheduler: failed to enqueue retention cleanup")
+
+        # --- Credit 月度发放（每月 1 号 00:05 UTC，redis lock 去重, M6）---
+        try:
+            now_dt = datetime.now()
+            if (
+                now_dt.day == 1
+                and now_dt.hour == CREDIT_REFILL_HOUR
+                and now_dt.minute == CREDIT_REFILL_MINUTE
+            ):
+                lock_key = f"{CREDIT_REFILL_LOCK_PREFIX}{now_dt.strftime('%Y%m')}"
+                if redis_conn.set(lock_key, "1", nx=True, ex=32 * 86400):
+                    enqueue_refill_monthly_credits()
+                    logger.info("scheduler: enqueued monthly credit refill")
+        except Exception:
+            logger.exception("scheduler: failed to enqueue monthly credit refill")
+
+        # --- Trial 到期检查（每天 00:10 UTC，redis lock 去重, M6）---
+        try:
+            now_dt = datetime.now()
+            if now_dt.hour == EXPIRE_TRIALS_HOUR and now_dt.minute == EXPIRE_TRIALS_MINUTE:
+                lock_key = f"{EXPIRE_TRIALS_LOCK_PREFIX}{now_dt.strftime('%Y%m%d')}"
+                if redis_conn.set(lock_key, "1", nx=True, ex=86400):
+                    enqueue_expire_trials()
+                    logger.info("scheduler: enqueued trial expiry check")
+        except Exception:
+            logger.exception("scheduler: failed to enqueue trial expiry check")
 
         time.sleep(SCAN_INTERVAL_SECONDS)
 

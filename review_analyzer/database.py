@@ -248,6 +248,30 @@ def update_user_plan(user_id: int, plan: str, paddle_customer_id: str | None = N
         conn.close()
 
 
+_PLAN_MONTHLY_GRANT: dict[str, int] = {
+    "free": 300,
+    "starter": 5000,
+    "pro_early": 15000,
+    "pro": 15000,
+    "team": 45000,
+}
+
+
+def update_user_credits_monthly_grant(user_id: int, plan: str) -> None:
+    """套餐变更后同步更新 user_credits.monthly_grant（不重置 balance）。"""
+    grant = _PLAN_MONTHLY_GRANT.get(plan, 300)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE user_credits SET monthly_grant = %s, updated_at = NOW() WHERE user_id = %s",
+                (grant, user_id),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def get_user_product_count(user_id: int) -> int:
     """统计用户已有产品数，用于 Free 版计费墙。"""
     conn = get_connection()

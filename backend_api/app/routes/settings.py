@@ -20,10 +20,16 @@ from backend_api.app.schemas.settings import (
     SmartPushSettingsResponse,
 )
 from review_analyzer.auth import load_user_api_key, save_user_api_key
-from review_analyzer.database import get_setting, get_user_plan, set_setting, update_user_plan
+from review_analyzer.database import (
+    get_setting,
+    get_user_plan,
+    set_setting,
+    update_user_credits_monthly_grant,
+    update_user_plan,
+)
 from review_analyzer.notifier import _test_webhook
 from review_analyzer.paddle_billing import get_checkout_html, is_billing_configured
-from review_analyzer.quota import get_all_quota_status
+from review_analyzer.quota import credit_refund, get_all_quota_status
 
 router = APIRouter(tags=["settings"])
 
@@ -236,37 +242,73 @@ async def billing_webhook_route(request: Request) -> BillingWebhookResponse:
 
     user_id = int(user_id_raw)
 
-    if event_type in ("subscription.created", "subscription.activated"):
-        update_user_plan(user_id, "pro_early", customer_id)
-    elif event_type == "subscription.updated":
+    if event_type in ("subscription.created", "subscription.activated") or event_type == "subscription.updated":
         plan = _resolve_plan_from_event(body)
         update_user_plan(user_id, plan, customer_id)
+        update_user_credits_monthly_grant(user_id, plan)
     elif event_type in ("subscription.canceled", "subscription.paused"):
         update_user_plan(user_id, "free", customer_id)
+        update_user_credits_monthly_grant(user_id, "free")
     elif event_type == "subscription.resumed":
-        update_user_plan(user_id, "pro_early", customer_id)
-    else:
-        update_user_plan(user_id, "pro_early", customer_id)
+        plan = _resolve_plan_from_event(body)
+        update_user_plan(user_id, plan, customer_id)
+        update_user_credits_monthly_grant(user_id, plan)
+    elif event_type == "transaction.completed":
+        # Add-on topup: Price custom_data contains {"topup": true, "credits": N}
+        price_cd = _get_price_custom_data(body)
+        if price_cd.get("topup"):
+            topup_amount = int(price_cd.get("credits", 0))
+            if topup_amount > 0:
+                credit_refund(user_id, topup_amount, reason="topup")
 
     return BillingWebhookResponse(message=f"Processed {event_type}.")
 
 
+def _get_price_custom_data(body: dict) -> dict:
+    """从 webhook payload 中提取 Price 级别的 custom_data。"""
+    items = body.get("data", {}).get("items") or []
+    if items:
+        return items[0].get("price", {}).get("custom_data") or {}
+    return {}
+
+
+_STARTER_PRICE_IDS: frozenset[str] = frozenset(filter(None, [
+    os.getenv("PADDLE_STARTER_PRICE_ID", "pri_01kwxtav7n1vy5vc906v0ywnr"),
+    os.getenv("PADDLE_STARTER_YEARLY_PRICE_ID", "pri_01kwxww4gbrptn4npp2n0ca5rc"),
+]))
+_PRO_PRICE_IDS: frozenset[str] = frozenset(filter(None, [
+    os.getenv("PADDLE_PRICE_ID", "pri_01ksse9jag36fddk82x6ndevjs"),
+    os.getenv("PADDLE_PRO_YEARLY_PRICE_ID", "pri_01kwxwyctdypajtpn9qh252b5h"),
+]))
+_TEAM_PRICE_IDS: frozenset[str] = frozenset(filter(None, [
+    os.getenv("PADDLE_TEAM_PRICE_ID", "pri_01kwxx2svf6mm08dbpr6x211ct"),
+    os.getenv("PADDLE_TEAM_YEARLY_PRICE_ID", "pri_01kwxx3s7fmx9hbwh30jzz2k5e"),
+]))
+
+
 def _resolve_plan_from_event(body: dict) -> str:
-    """从 Paddle webhook data 中推断目标 plan。"""
+    """从 Paddle webhook data 中推断目标 plan。
+
+    优先读 Price 级别 custom_data.plan，其次按 Price ID 匹配。
+    """
+    price_cd = _get_price_custom_data(body)
+    plan_from_cd = str(price_cd.get("plan") or "")
+    if plan_from_cd in ("starter", "pro", "team"):
+        return plan_from_cd
+
     data = body.get("data", {})
     items = data.get("items") or []
     price_id = ""
     if items:
         price_id = str(items[0].get("price", {}).get("id") or items[0].get("price_id") or "")
 
-    pro_price = os.getenv("PADDLE_PRICE_ID", "")
-    team_price = os.getenv("PADDLE_TEAM_PRICE_ID", "")
-
-    if team_price and price_id == team_price:
+    if price_id in _TEAM_PRICE_IDS:
         return "team"
-    if pro_price and price_id == pro_price:
-        return "pro_early"
-    return "pro_early"
+    if price_id in _PRO_PRICE_IDS:
+        return "pro"
+    if price_id in _STARTER_PRICE_IDS:
+        return "starter"
+    return "pro"
 
 
 # ============================================================

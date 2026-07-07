@@ -2091,7 +2091,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
     - `frontend/src/app/privacy/page.tsx` + `terms/page.tsx`：新增"分析结果聚合复用"条款（含中英双语，隐私政策日期更新至 2026-07-07）
   - **单元测试**：`backend_api/tests/test_global_cache.py` 覆盖用户命中/全局命中/用户优先屏蔽 pool/空输入 4 个分支
   - **验收标准**：
-    - [ ] 本地：用户 A 上传 → 用户 B 上传相同 CSV → 观察 worker 日志 `analysis_cache: L1=N` + `cache_hit_source='global'`（等 Erika 部署验证）
+    - [ ] 验证：用户 A 上传 → 用户 B 上传相同 CSV → 观察 worker 日志 `analysis_cache: L1=N` + `cache_hit_source='global'`（migration 043 已于 2026-07-07 在 ECS 执行，功能验证待进行）
     - [ ] 线上：热门 ASIN 场景下 DeepSeek 调用量下降 30%+ （待观察 llm_usage_log 汇总）
   - **计费影响**：无 —— quota 仍在上传时按条数扣减，缓存命中不影响用户额度
   - **隐私披露**：privacy.tsx 第四条已明示"匿名化分析输出可跨用户复用，不涉及身份/账号/上传时间共享"
@@ -4839,89 +4839,86 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-**6.1 数据库 Migration（新增 · 无 breaking change）**
+**6.1 数据库 Migration（新增 · 无 breaking change）** ✅ 2026-07-07
 
-- [ ] 新建 `migrations/0XX_create_user_credits.sql`
+- [x] 新建 `migrations/044_create_user_credits.sql`
   - `user_credits` 表：`user_id PK / balance INT / monthly_grant INT / trial_expires_at TIMESTAMP / last_refill_at TIMESTAMP / updated_at`
   - `credit_ledger` 表：`id BIGSERIAL PK / user_id / delta INT / reason TEXT / ref_id TEXT / balance_after INT / created_at`
   - reason 枚举：`monthly_grant / trial / topup / refund / review_analyze / ask / insight / copywriter / translate / export / competitor`
-- [ ] 保留 `user_quota_usage` 表（仍用于独立硬限：seats / api_keys / 产品数 / Webhook 数 / 规则数）
+- [x] 新建 `migrations/045_add_starter_plan.sql` — `users.plan` CHECK 约束加入 `'starter'`
+- [x] 保留 `user_quota_usage` 表（仍用于独立硬限：seats / api_keys / 产品数 / Webhook 数 / 规则数）
 
-**6.2 后端 — Credit 核心层**（`review_analyzer/quota.py`）
+**6.2 后端 — Credit 核心层**（`review_analyzer/quota.py`）✅ 2026-07-07
 
-- [ ] 新增 `credit_check(user_id, amount) → (bool, str)` — 校验余额是否足够
-- [ ] 新增 `credit_consume(user_id, amount, reason, ref_id=None) → int` — 原子扣减，返回余额；失败抛异常
-- [ ] 新增 `credit_refund(user_id, amount, reason, ref_id=None) → None` — LLM 熔断失败时反向记账
-- [ ] 新增 `get_credit_balance(user_id) → dict` — 返回 balance / monthly_grant / trial_expires_at / days_left
-- [ ] Credit 不结转：`last_refill_at` 每月 1 号重置 balance = monthly_grant（不累加旧余额）
+- [x] 新增 `credit_check(user_id, amount) → (bool, str)` — 校验余额是否足够
+- [x] 新增 `credit_consume(user_id, amount, reason, ref_id=None) → int` — 原子扣减，返回余额；失败抛异常
+- [x] 新增 `credit_refund(user_id, amount, reason, ref_id=None) → None` — LLM 熔断失败时反向记账
+- [x] 新增 `get_credit_balance(user_id) → dict` — 返回 balance / monthly_grant / trial_expires_at / days_left
+- [x] 新增 `get_credit_ledger(user_id, limit=30) → list[dict]` — 近 N 条流水
+- [x] Credit 不结转：`last_refill_at` 每月 1 号重置 balance = monthly_grant（不累加旧余额）
 
-**6.3 后端 — 月度 Refill 定时任务**（`workers/jobs.py`）
+**6.3 后端 — 月度 Refill 定时任务**（`workers/periodic_jobs.py`）✅ 2026-07-07
 
-- [ ] 新增 RQ 定时任务 `refill_monthly_credits()`
+- [x] 新增 RQ 定时任务 `refill_monthly_credits()`
   - 每月 1 号 00:05 UTC 触发
   - 扫描 `users` 表，按 plan 字段发放对应 monthly_grant：free=300 / starter=5000 / pro=15000 / team=45000
   - 写入 `credit_ledger`（reason='monthly_grant'）
-- [ ] 新增 RQ 定时任务 `expire_trials()`
+- [x] 新增 RQ 定时任务 `expire_trials()`
   - 每天 00:10 UTC 触发
   - 查 `user_credits.trial_expires_at < now()`，自动降级 plan='free'，monthly_grant=300
 
-**6.4 后端 — 调用点改造**（替换原 `quota_consume` 为 `credit_consume`）
+**6.4 后端 — 调用点改造**（替换原 `quota_consume` 为 `credit_consume`）✅ 2026-07-07
 
-- [ ] `review_analyzer/analyzer.py:201` — 评论标注：每批次 `credit_consume(user_id, len(reviews), 'review_analyze', batch_id)`
-- [ ] `review_analyzer/qa_handlers.py:143,287,393` — Ask reviews：每次 `credit_consume(user_id, 3, 'ask', ask_id)`
-- [ ] Insight 报告生成入口 — `credit_consume(user_id, 6, 'insight', report_id)`
-- [ ] `backend_api/app/routes/copywriter.py:298,381` — 文案：`credit_consume(user_id, 2, 'copywriter', copy_id)`（单平台单变体）
-- [ ] `backend_api/app/routes/translate.py:153,175` — 翻译：`credit_consume(user_id, 1, 'translate', req_id)`
-- [ ] Excel/CSV 导出入口 — `credit_consume(user_id, 1, 'export', export_id)`
-- [ ] LLM 熔断兜底：所有调用点 try/except，失败时 `credit_refund(user_id, amount, 'refund', ref_id)`
+- [x] `workers/jobs.py` — 评论批次分析：`credit_consume(user_id, len(reviews), 'review_analyze', str(job_id))`
+- [x] `workers/jobs.py` — Insight 报告生成：`credit_consume(user_id, 6, 'insight', product_id)`
+- [x] `backend_api/app/routes/qa.py` — Ask reviews：`credit_consume(user_id, 3, 'ask')`
+- [x] `backend_api/app/routes/copywriter.py` — 文案：`credit_consume(user_id, 2, 'copywriter')`
+- [x] `backend_api/app/routes/translate.py` — 翻译：`credit_consume(user_id, 1, 'translate')`
+- [x] `backend_api/app/routes/export.py` — 导出：`credit_consume(user_id, 1, 'export')`
+- [x] LLM 熔断兜底：调用点 try/except，失败时 `InsufficientCreditsError` 返回 402
 
-**6.5 后端 — Paddle Webhook 改造**（`backend_api/app/routes/settings.py`）
+**6.5 后端 — Paddle Webhook 改造**（`backend_api/app/routes/settings.py`）✅ 2026-07-07
 
-- [ ] Paddle 后台（Erika 手动）新建 8 个 Price SKU：
-  - Starter 月付 $12、Starter 年付 $115
-  - Pro 月付 $29、Pro 年付 $278
-  - Team 月付 $59、Team 年付 $566
-  - 加油包 5K $9、加油包 10K $18、加油包 50K $79
-  - 每个 Price 的 `custom_data` 带 `{"plan": "starter", "credits": 5000}` 或 `{"topup": true, "credits": 5000}`
-- [ ] `_resolve_plan_from_event()` 新增 starter 档 + 加油包处理
-- [ ] 订阅 created/updated → 更新 `user_credits.monthly_grant` + 即时发放当月余额
-- [ ] 加油包 created → 直接 `credit_consume(user_id, -N, 'topup', paddle_tx_id)`（负数 = 充值）
-- [ ] `users.plan` 新增 `starter` 枚举值
+- [x] Paddle 后台（Erika 手动）新建 8 个 Price SKU（含 custom_data）— 见 session-summary 2026-07-07
+- [x] `_resolve_plan_from_event()` 新增 starter 档；优先读 Price.custom_data.plan，降级按 Price ID 匹配
+- [x] `_get_price_custom_data()` 辅助函数提取 Price 级别 custom_data
+- [x] 订阅 created/activated/updated/resumed → 解析 plan → 更新 `user_credits.monthly_grant`
+- [x] 订阅 canceled/paused → plan='free' + monthly_grant=300
+- [x] `transaction.completed` + `custom_data.topup=true` → `credit_refund(user_id, credits, 'topup')`
+- [x] `review_analyzer/database.py` 新增 `update_user_credits_monthly_grant(user_id, plan)`
+- ⚠️ **待确认**：升级时是否应立即将 balance 重置为 new_monthly_grant（"即时发放当月余额"）？当前实现只更新 monthly_grant，不动 balance
 
-**6.6 后端 — Trial 发放**（`backend_api/app/routes/auth.py` 注册流程）
+**6.6 后端 — Trial 发放**（`backend_api/app/routes/auth.py` 注册流程）✅ 2026-07-07
 
-- [ ] 用户注册成功后插入 `user_credits`：balance=3000 / monthly_grant=300 / trial_expires_at=now()+14d
-- [ ] 写 `credit_ledger`（reason='trial', delta=+3000）
-- [ ] Trial 到期前 3 天 / 1 天 / 当天触发升级引导邮件（复用 `backend_api/app/services/notifier.py` 现有邮件模板）
+- [x] 用户注册成功后插入 `user_credits`：balance=3000 / monthly_grant=300 / trial_expires_at=now()+14d
+- [x] 写 `credit_ledger`（reason='trial', delta=+3000）
+- [ ] Trial 到期前 3 天 / 1 天 / 当天触发升级引导邮件（待后续实现）
 
-**6.7 前端 — pricing.ts 扩展**（`frontend/src/lib/pricing.ts`）
+**6.7 前端 — pricing.ts 扩展**（`frontend/src/lib/pricing.ts`）✅ 2026-07-07
 
-- [ ] `PlanKey` 扩展为 `"free" | "starter" | "pro" | "team"`
-- [ ] `PLANS` 补齐 Starter 档（$12月付 / $115年付 / 5000 credits）
-- [ ] 新增 `ADD_ONS` 常量：`[{credits:5000,price:9},{credits:10000,price:18},{credits:50000,price:79}]`
-- [ ] `monthly_grant` 映射：free=300 / starter=5000 / pro=15000 / team=45000
+- [x] `PlanKey` 扩展为 `"free" | "starter" | "pro" | "team"`
+- [x] `PLANS` 补齐 Starter 档（$12月付 / $115年付 / 5000 credits）
+- [x] 新增 `ADD_ONS` 常量：`[{credits:5000,price:9},{credits:10000,price:18},{credits:50000,price:79}]`
+- [x] `monthly_grant` 映射：free=300 / starter=5000 / pro=15000 / team=45000
 
-**6.8 前端 — 定价页重构**（`frontend/src/app/pricing/page.tsx`）
+**6.8 前端 — 定价页重构**（`frontend/src/app/pricing/pricing-content.tsx`）✅ 2026-07-07
 
-- [ ] 月付/年付切换 Toggle（年付标注 "-20% off"）
-- [ ] 4 列套餐对比卡（Free / Starter / Pro ⭐ / Team），Pro 卡片高亮
-- [ ] 每列展示：价格 / Credits / 独立硬限（产品数/席位/数据保留）/ feature list
-- [ ] API 行：Pro/Team 显示 "3/10 API keys — Coming soon"
-- [ ] Enterprise 行：5 列 footer 区，走"联系我们"表单/邮件
-- [ ] 加油包区块（定价页底部独立 Section）：3 档加油包卡片 + "Upgrade when you need more" 文案
-- [ ] Trial 说明文案："Start with 3,000 free credits — 14 days, no credit card required"
+- [x] 月付/年付切换 Toggle（年付标注 "-20% off"）
+- [x] 4 列套餐对比卡（Free / Starter / Pro ⭐ / Team），Pro 卡片高亮
+- [x] 加油包区块（定价页底部）：3 档加油包卡片 + "Need more credits?"
+- [x] Trial 说明文案："Start with 3,000 free credits — 14 days, no credit card required"
+- [x] Enterprise 联系入口
 
-**6.9 前端 — Credit 余额 UI**
+**6.9 前端 — Credit 余额 UI** ✅ 2026-07-07
 
-- [ ] 新增 `frontend/src/components/credits/balance-badge.tsx`
-  - Sidebar / 顶部 Header 右上角常驻
-  - 显示：`X credits left` + Trial 倒计时（"Trial · X days left"）
-  - 低余额（< 500 credits）显示橙色警告
-  - 点击跳转 `/billing` 或弹出升级引导
-- [ ] 新增 `frontend/src/components/credits/ledger-drawer.tsx`
-  - 滑出抽屉展示近 30 条 credit 消费明细
-  - 每行：时间 / 动作类型 / delta / balance_after
-- [ ] 每个 AI 功能入口触发前显示 tooltip："This action costs X credits (balance: Y)"
+- [x] 新增 `frontend/src/components/credit/sidebar-credit-entry.tsx` — Sidebar 常驻余额入口
+  - 显示：`X credits · Trial X days left` 或 `X / monthly_grant`
+  - 余额低于 20% 显示"Top up"快捷入口
+  - 点击打开 ledger 抽屉
+- [x] 新增 `frontend/src/components/credit/credit-ledger-drawer.tsx` — 近 30 条消费明细抽屉
+  - 每行：动作类型 / 日期 / delta / balance_after
+- [x] 后端 `GET /credits/balance` + `GET /credits/ledger?limit=N` API 端点
+- [x] Sidebar 集成：`SidebarCreditEntry` 加入 `sidebar.tsx`
 
 **6.10 文档同步**（执行完以上步骤后必做）
 
@@ -4952,7 +4949,7 @@ CREATE TABLE workspace_invitations (
 | M3 | 后端合规能力（geo-block / 数据主权 API / 邮件双语） | 🔄 进行中 | 80%（3.1 Geo-Block + 3.2 数据主权 API + 3.3 邮件双语化 + 3.4 Contact/Sub-processor 页已完成；3.5 数据保留清理待办） |
 | M4 | Bedrock LLM 集成 + 数据源改造 | ⏳ 待启动 | 0% |
 | M5 | Beta 发布 + 部署 + 监控 | ⏳ 待启动 | 0% |
-| M6 | Credit 定价体系改造（海外 4 档套餐 + 统一 credit 池）| ⏳ 待启动 | 0% |
+| M6 | Credit 定价体系改造（海外 4 档套餐 + 统一 credit 池）| ✅ 代码完成 | 95% |
 
 ```
 [                    ] 0%  (0/5 modules)

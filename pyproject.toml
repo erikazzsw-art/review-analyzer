@@ -1,3 +1,11 @@
+[project]
+name = "review-analyzer"
+version = "4.0.0"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["backend_api*", "review_analyzer*", "workers*"]
+
 [tool.ruff]
 target-version = "py310"
 line-length = 120

@@ -17,15 +17,16 @@
 - aspect_count 重算
 """
 from __future__ import annotations
+
 import re
 import shutil
-import yaml
 from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 import openpyxl
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 TAXONOMY_DIR = ROOT / "data" / "taxonomy" / "v1.0"
@@ -271,7 +272,7 @@ def _write_yaml(path: Path, data: dict) -> None:
         lines.append(f"    negative_count: {a['negative_count']}")
         lines.append(f"    neutral_count: {a['neutral_count']}")
         lines.append(f"    negative_rate: {a['negative_rate']}")
-        lines.append(f"    top_phrases:")
+        lines.append("    top_phrases:")
         for p in a.get("top_phrases", []):
             ph = str(p["phrase"]).replace('"', '\\"')
             lines.append(f'      - {{phrase: "{ph}", count: {p["count"]}}}')

@@ -258,7 +258,32 @@ def quota_refund(user_id: int, dimension: str, amount: int = 1) -> None:
         conn.close()
 
 
-def get_quota_status(user_id: int, dimension: str) -> dict[str, Any]:
+def get_credit_ledger(user_id: int, limit: int = 30) -> list[dict[str, Any]]:
+    """返回用户最近 N 条 credit 流水，供 UI 展示。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, delta, reason, ref_id, balance_after, created_at "
+                "FROM credit_ledger WHERE user_id = %s "
+                "ORDER BY created_at DESC LIMIT %s",
+                (user_id, limit),
+            )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+
+    return [
+        {
+            "id": row[0],
+            "delta": int(row[1]),
+            "reason": row[2],
+            "ref_id": row[3],
+            "balance_after": int(row[4]),
+            "created_at": row[5].isoformat() if row[5] else None,
+        }
+        for row in rows
+    ]
     """获取用户某维度的配额状态，供 API / UI 展示。"""
     dim = PLAN_LIMITS.get(dimension)
     if dim is None:
@@ -293,3 +318,146 @@ def get_quota_status(user_id: int, dimension: str) -> dict[str, Any]:
 def get_all_quota_status(user_id: int) -> list[dict[str, Any]]:
     """获取用户所有维度的配额状态。"""
     return [get_quota_status(user_id, dim) for dim in PLAN_LIMITS]
+
+
+# ============================================================
+# Credit 体系（V4-出海-M6）
+# ============================================================
+
+class InsufficientCreditsError(Exception):
+    def __init__(self, needed: int, balance: int) -> None:
+        self.needed = needed
+        self.balance = balance
+        super().__init__(f"Not enough credits: {needed} needed, {balance} left")
+
+
+def credit_check(user_id: int, amount: int) -> tuple[bool, str]:
+    """校验 credit 余额是否足够（只读，不加锁）。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT balance FROM user_credits WHERE user_id = %s",
+                (user_id,),
+            )
+            row = cur.fetchone()
+            balance = int(row[0]) if row else 0
+    finally:
+        conn.close()
+
+    if balance < amount:
+        return False, f"Not enough credits: {amount} needed, {balance} left"
+    return True, ""
+
+
+def credit_consume(
+    user_id: int, amount: int, reason: str, ref_id: str | None = None
+) -> int:
+    """原子扣减 credit，返回扣后余额。余额不足抛 InsufficientCreditsError。
+
+    SELECT FOR UPDATE 防并发超扣；扣减与写流水在同一事务。
+    """
+    if amount <= 0:
+        raise ValueError(f"credit_consume: amount must be positive, got {amount}")
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT balance FROM user_credits WHERE user_id = %s FOR UPDATE",
+                (user_id,),
+            )
+            row = cur.fetchone()
+            balance = int(row[0]) if row else 0
+
+            if balance < amount:
+                raise InsufficientCreditsError(amount, balance)
+
+            new_balance = balance - amount
+            cur.execute(
+                "UPDATE user_credits SET balance = %s, updated_at = NOW() WHERE user_id = %s",
+                (new_balance, user_id),
+            )
+            cur.execute(
+                "INSERT INTO credit_ledger (user_id, delta, reason, ref_id, balance_after) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (user_id, -amount, reason, ref_id, new_balance),
+            )
+        conn.commit()
+        return new_balance
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def credit_refund(
+    user_id: int, amount: int, reason: str = "refund", ref_id: str | None = None
+) -> None:
+    """反向记账：退回已扣 credit（LLM 熔断失败时调用）。"""
+    if amount <= 0:
+        return
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE user_credits SET balance = balance + %s, updated_at = NOW() "
+                "WHERE user_id = %s RETURNING balance",
+                (amount, user_id),
+            )
+            row = cur.fetchone()
+            new_balance = int(row[0]) if row else amount
+            cur.execute(
+                "INSERT INTO credit_ledger (user_id, delta, reason, ref_id, balance_after) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (user_id, amount, reason, ref_id, new_balance),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_credit_balance(user_id: int) -> dict[str, Any]:
+    """返回用户 credit 余额 + trial 状态，供 UI / API 展示。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT balance, monthly_grant, trial_expires_at "
+                "FROM user_credits WHERE user_id = %s",
+                (user_id,),
+            )
+            row = cur.fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return {
+            "balance": 0,
+            "monthly_grant": 300,
+            "trial_expires_at": None,
+            "days_left": None,
+            "is_trial": False,
+        }
+
+    balance, monthly_grant, trial_expires_at = row[0], row[1], row[2]
+    days_left: int | None = None
+    is_trial = False
+    if trial_expires_at is not None:
+        now = datetime.now(timezone.utc)
+        if trial_expires_at.tzinfo is None:
+            trial_expires_at = trial_expires_at.replace(tzinfo=timezone.utc)
+        delta = trial_expires_at - now
+        if delta.total_seconds() > 0:
+            days_left = delta.days
+            is_trial = True
+
+    return {
+        "balance": int(balance),
+        "monthly_grant": int(monthly_grant),
+        "trial_expires_at": trial_expires_at.isoformat() if trial_expires_at else None,
+        "days_left": days_left,
+        "is_trial": is_trial,
+    }

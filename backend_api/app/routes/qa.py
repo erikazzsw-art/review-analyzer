@@ -18,7 +18,7 @@ from backend_api.app.schemas.analysis import (
 from review_analyzer.database import get_comments, get_connection
 from review_analyzer.paddle_billing import is_pro_user
 from review_analyzer.product_store import get_product_overview_rows
-from review_analyzer.quota import quota_check, quota_consume
+from review_analyzer.quota import credit_consume, InsufficientCreditsError, quota_check
 from review_analyzer.rag import answer_question
 
 router = APIRouter(prefix="/qa", tags=["qa"])
@@ -89,7 +89,10 @@ def ask_reviews(
         top_k=payload.top_k,
         products_meta=selected_rows,
     )
-    quota_consume(user_id, "ask_review")
+    try:
+        credit_consume(user_id, 3, "ask")
+    except InsufficientCreditsError as e:
+        raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left")
 
     citations = [
         QaCitationPayload(
@@ -287,7 +290,10 @@ def send_message(
         history=history,
         products_meta=selected_rows_for_conv,
     )
-    quota_consume(user_id, "ask_review")
+    try:
+        credit_consume(user_id, 3, "ask")
+    except InsufficientCreditsError as e:
+        raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left")
     answer = str(result.get("answer") or "")
     citations_raw = result.get("citations", [])
     retrieval_method = str(result.get("retrieval_method") or "text")

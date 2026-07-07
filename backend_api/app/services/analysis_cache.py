@@ -51,14 +51,16 @@ class CacheResult:
         return {**levels, "miss": self.miss_count, "total": self.hit_count + self.miss_count}
 
 
-def compute_content_hash(content: str, rating: Any = None) -> str:
-    """计算评论内容 hash（content + rating）."""
+def compute_content_hash(content: str, rating: Any = None, category: str | None = None) -> str:
+    """计算评论内容 hash（content + rating + category）."""
     normalized = content.strip().lower()
     key = f"{normalized}|{rating}" if rating is not None else normalized
+    if category:
+        key = f"{key}|{category.strip().lower()}"
     return hashlib.sha256(key.encode("utf-8")).hexdigest()
 
 
-def compute_batch_hash(comments: list[dict[str, Any]]) -> str:
+def compute_batch_hash(comments: list[dict[str, Any]], category: str | None = None) -> str:
     """计算整批评论的指纹，用于批次去重。
 
     排序所有 content_hash 后拼接再 SHA256，保证行顺序无关。
@@ -67,6 +69,7 @@ def compute_batch_hash(comments: list[dict[str, Any]]) -> str:
         compute_content_hash(
             str(c.get("content") or ""),
             c.get("rating"),
+            category,
         )
         for c in comments
     )

@@ -4,19 +4,19 @@ import json
 from collections import Counter
 from typing import Any
 
-from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
-
-from review_analyzer.analyzer import get_api_key
-
 
 def build_results_insights(
     user_id: int,
     comments: list[dict[str, Any]],
     context: dict[str, Any],
+    locale: str = "en",
 ) -> dict[str, dict[str, Any]]:
-    """Build structured single-product insights from filtered comments."""
+    """Build structured single-product insights from filtered comments.
+
+    locale: passed through to llm_router — "en" prefers GPT-4o-mini, "zh" prefers DeepSeek.
+    """
     heuristic_payload = _build_heuristic_results(comments, context)
-    ai_payload = _build_ai_results_payload(user_id, comments, context)
+    ai_payload = _build_ai_results_payload(user_id, comments, context, locale=locale)
     if ai_payload:
         merged = dict(heuristic_payload)
         for key, value in ai_payload.items():
@@ -42,12 +42,13 @@ def build_compare_insights(
     objects: list[dict[str, Any]],
     context: dict[str, Any],
     focus_feature: str | None = None,
+    locale: str = "en",
 ) -> dict[str, Any]:
     """Build the comparison matrix payload."""
     enriched_objects = []
     for obj in objects:
         heuristics = _build_compare_object_heuristic(obj, focus_feature)
-        ai_payload = _build_compare_object_ai(user_id, obj, focus_feature)
+        ai_payload = _build_compare_object_ai(user_id, obj, focus_feature, locale=locale)
         enriched_objects.append({**heuristics, **(ai_payload or {})})
     return {
         "title": context.get("title", "对比分析"),
@@ -158,6 +159,7 @@ def _build_ai_results_payload(
     user_id: int,
     comments: list[dict[str, Any]],
     context: dict[str, Any],
+    locale: str = "en",
 ) -> dict[str, Any] | None:
     if not comments:
         return None
@@ -171,13 +173,9 @@ def _build_ai_results_payload(
         "negative_tags": negative_tags,
     }
     try:
-        client = OpenAI(
-            api_key=get_api_key(user_id),
-            base_url="https://api.deepseek.com/v1",
-            timeout=30.0,
-        )
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        from backend_api.app.services.llm_router import router_completion
+
+        response, _model_name = router_completion(
             messages=[
                 {
                     "role": "system",
@@ -210,12 +208,13 @@ def _build_ai_results_payload(
             temperature=0.2,
             max_tokens=3000,
             response_format={"type": "json_object"},
+            locale=locale,
         )
         payload = json.loads(response.choices[0].message.content.strip())
         if not isinstance(payload, dict):
             return None
         return _validate_ai_payload(payload)
-    except (APIError, APITimeoutError, AuthenticationError, json.JSONDecodeError, ValueError, TypeError):
+    except (json.JSONDecodeError, ValueError, TypeError, RuntimeError):
         return None
 
 
@@ -261,6 +260,7 @@ def _build_compare_object_ai(
     user_id: int,
     object_payload: dict[str, Any],
     focus_feature: str | None,
+    locale: str = "en",
 ) -> dict[str, Any] | None:
     comments = object_payload.get("comments", [])
     if not comments:
@@ -275,13 +275,9 @@ def _build_compare_object_ai(
         "representative_comments": _serialize_comments(comments[:8]),
     }
     try:
-        client = OpenAI(
-            api_key=get_api_key(user_id),
-            base_url="https://api.deepseek.com/v1",
-            timeout=30.0,
-        )
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        from backend_api.app.services.llm_router import router_completion
+
+        response, _model_name = router_completion(
             messages=[
                 {
                     "role": "system",
@@ -296,10 +292,11 @@ def _build_compare_object_ai(
             temperature=0.2,
             max_tokens=1800,
             response_format={"type": "json_object"},
+            locale=locale,
         )
         payload = json.loads(response.choices[0].message.content.strip())
         return payload if isinstance(payload, dict) else None
-    except (APIError, APITimeoutError, AuthenticationError, json.JSONDecodeError, ValueError, TypeError):
+    except (json.JSONDecodeError, ValueError, TypeError, RuntimeError):
         return None
 
 

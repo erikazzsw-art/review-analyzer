@@ -22,6 +22,7 @@ from review_analyzer.database import (
     DatabaseConnectionUnavailable,
     create_reset_token,
     create_user,
+    get_connection,
     get_user_by_email,
     get_user_by_id,
     get_user_by_username,
@@ -45,6 +46,27 @@ def _verify_password(password: str, password_hash: str) -> bool:
     except (AttributeError, TypeError, ValueError):
         # 旧账号或脏数据可能写入了非 bcrypt 格式的 hash；这类情况按认证失败处理。
         return False
+
+
+def _init_trial_credits(user_id: int) -> None:
+    """M6: 新用户注册时初始化 trial credits（3000 credits，14天有效期）"""
+    conn = get_connection()
+    try:
+        trial_expires_at = datetime.now(timezone.utc) + timedelta(days=14)
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO user_credits (user_id, balance, monthly_grant, trial_expires_at) "
+                "VALUES (%s, %s, %s, %s)",
+                (user_id, 3000, 300, trial_expires_at),
+            )
+            cur.execute(
+                "INSERT INTO credit_ledger (user_id, delta, reason, balance_after) "
+                "VALUES (%s, %s, %s, %s)",
+                (user_id, 3000, "trial", 3000),
+            )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def _user_payload(user: dict[str, Any]) -> UserPayload:
@@ -76,6 +98,7 @@ def register(payload: RegisterRequest, response: Response) -> AuthResponse:
         )
 
     user_id = create_user(username, _hash_password(payload.password), email)
+    _init_trial_credits(user_id)
     user = get_user_by_id(user_id)
     if not user:
         raise HTTPException(
