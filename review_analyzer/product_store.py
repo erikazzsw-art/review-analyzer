@@ -301,11 +301,12 @@ def upsert_product_from_api(user_id: int, data: dict[str, Any]) -> int:
         with conn.cursor() as cur:
             cur.execute(
                 """INSERT INTO products
-                   (user_id, parent_product_id, name, platform, category, brand,
+                   (user_id, parent_product_id, name, scraped_title, platform, category, brand,
                     image_url, rating, ratings_total, reviews_total, current_version)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                    ON CONFLICT (user_id, parent_product_id) DO UPDATE SET
                        name = COALESCE(EXCLUDED.name, products.name),
+                       scraped_title = COALESCE(EXCLUDED.scraped_title, products.scraped_title),
                        brand = COALESCE(EXCLUDED.brand, products.brand),
                        image_url = COALESCE(EXCLUDED.image_url, products.image_url),
                        rating = COALESCE(EXCLUDED.rating, products.rating),
@@ -317,6 +318,7 @@ def upsert_product_from_api(user_id: int, data: dict[str, Any]) -> int:
                     user_id,
                     data["parent_product_id"],
                     data.get("name"),
+                    data.get("scraped_title"),
                     data.get("platform", "amazon"),
                     data.get("category"),
                     data.get("brand"),

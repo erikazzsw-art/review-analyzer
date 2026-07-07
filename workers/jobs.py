@@ -1100,9 +1100,12 @@ def _fetch_amazon_path(
         fetch_product_variants(asin, marketplace=marketplace)
     )
 
+    user_product_name = payload.get("product_name") or f"ASIN: {asin}"
+
     product_ref_id = upsert_product_from_api(user_id, {
         "parent_product_id": asin,
-        "name": product_info.get("title") or payload.get("product_name") or f"ASIN: {asin}",
+        "name": user_product_name,
+        "scraped_title": product_info.get("title"),
         "platform": f"Amazon {marketplace.upper()}",
         "category": product_info.get("category"),
         "brand": product_info.get("brand"),

@@ -99,6 +99,7 @@
 - [x] 产品详情页可直接跳转该产品的评论分析结果
 - [x] 数据库迁移 031：products 表新增 image_url/brand/rating/ratings_total/reviews_total；product_variants 表新增 image_url/name/brand/price 等字段
 - [x] Worker 流程重构：先保存产品信息 → 再抓取评论 → 合并去重 → 分析
+- [x] products 表新增 scraped_title 字段（migration 046）：API 抓取标题与用户填写的 name 字段分离存储；Amazon 路径 name 改为用户填写优先，scraped_title 存 Rainforest 原始标题
 
 ---
 
