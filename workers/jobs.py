@@ -651,15 +651,23 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             # 只要 product_id 非空即回填（CSV / API 都参与）
             if _backfill_key:
                 # 首先写入 review_pool（若 CSV 是新数据，pool_write 会 upsert）
-                # 再回填分析结果
                 pool_write(
                     _backfill_platform, _backfill_key, _backfill_market,
                     unprocessed,
                     scraper_source=payload.get("source_channel") or "csv",
                 )
+                # 合并 content_hash（来自 unprocessed）和分析结果（来自 results）
+                # pool_backfill_analysis 需要 content_hash + sentiment + aspects_json 才能回填
+                backfill_data = []
+                for comment, result in zip(unprocessed, results):
+                    backfill_data.append({
+                        "content_hash": comment.get("content_hash"),
+                        "sentiment": result.get("sentiment"),
+                        "aspects_json": result.get("aspects_json"),
+                    })
                 pool_backfill_analysis(
                     _backfill_platform, _backfill_key, _backfill_market,
-                    unprocessed, analyzer_version=ANALYZER_VERSION,
+                    backfill_data, analyzer_version=ANALYZER_VERSION,
                 )
         except Exception:
             logger.warning("upload_job %s: pool_backfill_analysis failed (non-fatal)", job_id, exc_info=True)
