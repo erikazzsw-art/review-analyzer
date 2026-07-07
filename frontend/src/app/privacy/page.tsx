@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <MarketingShell title="Privacy Policy" description="How we collect, use, and protect your data.">
       <article className="prose prose-sm mx-auto max-w-3xl px-4 py-12">
         <h1>隐私协议 / Privacy Policy</h1>
-        <p className="text-muted-foreground">最后更新 / Last Updated：2026 年 7 月 6 日 / July 6, 2026</p>
+        <p className="text-muted-foreground">最后更新 / Last Updated：2026 年 7 月 7 日 / July 7, 2026</p>
 
         <h2>一、我们收集的信息 / 1. Information We Collect</h2>
         <ul>
@@ -58,7 +58,21 @@ export default function PrivacyPage() {
           <li><strong>Legal Requirements</strong>: We may disclose necessary information when legally required</li>
         </ul>
 
-        <h2>四、数据存储与安全 / 4. Data Storage & Security</h2>
+        <h2>四、分析结果聚合复用 / 4. Aggregated Analysis Reuse</h2>
+        <p>为提升分析速度、降低成本，当您上传的评论与其他用户已分析过的评论<strong>内容完全相同</strong>时（基于文本哈希匹配），我们可能直接复用已有的分析结果，不再重复调用 AI 模型。</p>
+        <ul>
+          <li>复用仅涉及匿名化的分析输出（情感倾向、观点标签、方面维度），<strong>不涉及</strong>任何用户身份、上传时间、账号信息的跨用户共享</li>
+          <li>复用不影响您的评论额度扣减 —— 额度按您上传的条数正常消费</li>
+          <li>您可通过账户设置发起数据删除请求，我们会在 30 天内清除您上传的原始评论；聚合分析结果（脱敏后）可能继续用于服务</li>
+        </ul>
+        <p className="text-muted-foreground">To improve analysis speed and reduce cost, when reviews you upload have <strong>identical content</strong> to reviews already analyzed by other users (matched via content hash), we may reuse the existing analysis results rather than calling the AI model again.</p>
+        <ul className="text-muted-foreground">
+          <li>Reuse involves only anonymized analysis output (sentiment, aspect tags, opinion dimensions). <strong>No</strong> user identity, upload timestamp, or account information is shared across users.</li>
+          <li>Reuse does not affect your review quota — quota is consumed based on the number of reviews you upload, regardless of cache hits.</li>
+          <li>You may request data deletion via account settings; we will remove the raw reviews you uploaded within 30 days. Anonymized aggregated analysis results may be retained for service delivery.</li>
+        </ul>
+
+        <h2>五、数据存储与安全 / 5. Data Storage & Security</h2>
         <ul>
           <li>数据加密存储，传输使用 TLS/SSL 加密</li>
           <li>API 密钥使用 AES/Fernet 加密后存储，不可逆向</li>
@@ -72,7 +86,7 @@ export default function PrivacyPage() {
           <li>Regular backups are stored encrypted in separate regions</li>
         </ul>
 
-        <h2>五、数据保留与删除 / 5. Data Retention & Deletion</h2>
+        <h2>六、数据保留与删除 / 6. Data Retention & Deletion</h2>
         <ul>
           <li>账户存续期间保留您的数据</li>
           <li>账户注销后 30 天内删除所有个人数据和业务数据</li>
@@ -86,7 +100,7 @@ export default function PrivacyPage() {
           <li>Anonymized aggregate statistics (which cannot identify individuals) may be retained for service improvement</li>
         </ul>
 
-        <h2>六、您的权利 / 6. Your Rights</h2>
+        <h2>七、您的权利 / 7. Your Rights</h2>
         <p>根据《中华人民共和国个人信息保护法》及 GDPR，您享有：</p>
         <p className="text-muted-foreground">Under China&apos;s Personal Information Protection Law (PIPL) and GDPR, you have the right to:</p>
         <ul>
@@ -104,19 +118,19 @@ export default function PrivacyPage() {
           <li>Data portability (export in common formats)</li>
         </ul>
 
-        <h2>七、Cookie 使用 / 7. Cookies</h2>
+        <h2>八、Cookie 使用 / 8. Cookies</h2>
         <p>我们使用必要的会话 Cookie 维持登录状态，不使用第三方追踪 Cookie。</p>
         <p className="text-muted-foreground">We use essential session cookies to maintain login status. We do not use third-party tracking cookies.</p>
 
-        <h2>八、未成年人保护 / 8. Protection of Minors</h2>
+        <h2>九、未成年人保护 / 9. Protection of Minors</h2>
         <p>本服务面向企业用户，不面向 16 岁以下未成年人。如发现误收集未成年人信息，将立即删除。</p>
         <p className="text-muted-foreground">This Service is designed for business users and is not intended for minors under 16. If we discover that information from minors has been inadvertently collected, it will be deleted immediately.</p>
 
-        <h2>九、协议变更 / 9. Policy Changes</h2>
+        <h2>十、协议变更 / 10. Policy Changes</h2>
         <p>协议更新时，我们会通过邮件或站内通知告知。继续使用服务视为接受更新后的协议。</p>
         <p className="text-muted-foreground">We will notify you of policy updates via email or in-app notifications. Continued use of the Service constitutes acceptance of the updated policy.</p>
 
-        <h2>十、联系方式 / 10. Contact Us</h2>
+        <h2>十一、联系方式 / 11. Contact Us</h2>
         <p>
           如有隐私相关问题，请联系：<a href="mailto:privacy@clueai-reviewlens.com">privacy@clueai-reviewlens.com</a>
         </p>

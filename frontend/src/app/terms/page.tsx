@@ -12,7 +12,7 @@ export default function TermsPage() {
     <MarketingShell title="Terms of Service" description="Service scope, responsibilities, and usage rules.">
       <article className="prose prose-sm mx-auto max-w-3xl px-4 py-12">
         <h1>用户协议 / Terms of Service</h1>
-        <p className="text-muted-foreground">最后更新 / Last Updated：2026 年 7 月 6 日 / July 6, 2026</p>
+        <p className="text-muted-foreground">最后更新 / Last Updated：2026 年 7 月 7 日 / July 7, 2026</p>
 
         <h2>一、服务范围 / 1. Scope of Service</h2>
         <p>ClueAI（以下简称&quot;本服务&quot;）为跨境电商卖家提供：</p>
@@ -72,12 +72,14 @@ export default function TermsPage() {
           <li>AI 分析生成的结果归您所有</li>
           <li>我们不会将您的数据用于训练 AI 模型</li>
           <li>我们有权使用匿名化聚合数据改进服务质量</li>
+          <li><strong>分析结果聚合复用</strong>：当您上传的评论与其他用户已分析过的评论内容完全相同时，我们可能复用已有分析结果以降低运营成本，具体机制详见《隐私协议》第四条</li>
         </ul>
         <ul className="text-muted-foreground">
           <li>Review data you upload remains your property</li>
           <li>AI-generated analysis results belong to you</li>
           <li>We will not use your data to train AI models</li>
           <li>We may use anonymized aggregate data to improve service quality</li>
+          <li><strong>Aggregated Analysis Reuse</strong>: When reviews you upload have identical content to reviews already analyzed by other users, we may reuse the existing analysis results to reduce operational cost. See Section 4 of the Privacy Policy for details.</li>
         </ul>
 
         <h2>五、服务可用性 / 5. Service Availability</h2>
