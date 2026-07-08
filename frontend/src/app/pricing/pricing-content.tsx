@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 
+import { openBillingCheckout, isUnauthenticatedCheckoutError } from "@/lib/billing";
 import { ADD_ONS, PLANS, TRIAL_CREDITS, TRIAL_DAYS, formatPrice, type BillingPeriod } from "@/lib/pricing";
 
 const PLAN_FEATURES: Record<string, string[]> = {
@@ -59,9 +61,28 @@ const CHECK_ICON = (
 
 export default function PricingContent() {
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const router = useRouter();
+  const checkoutRef = useRef<HTMLDivElement | null>(null);
+
+  async function handlePaidPlanClick(planKey: "starter" | "pro") {
+    setCheckoutLoading(planKey);
+    try {
+      await openBillingCheckout(checkoutRef.current);
+    } catch (err) {
+      if (isUnauthenticatedCheckoutError(err)) {
+        router.push(`/register?plan=${planKey}`);
+        return;
+      }
+      router.push(`/register?plan=${planKey}`);
+    } finally {
+      setCheckoutLoading(null);
+    }
+  }
 
   return (
     <div className="bg-hero-wash">
+      <div ref={checkoutRef} className="hidden" aria-hidden="true" />
       {/* Header */}
       <div className="mx-auto max-w-7xl px-6 pb-10 pt-20 text-center lg:px-10">
         <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#4a7dc7]">
@@ -150,17 +171,33 @@ export default function PricingContent() {
                 </div>
               )}
 
-              <Link
-                href={key === "free" ? "/register" : `/register?plan=${key}`}
-                className={[
-                  "mt-5 inline-flex min-h-10 w-full items-center justify-center rounded-pill px-4 py-2.5 text-sm font-semibold shadow-card transition",
-                  isPro
-                    ? "bg-[#d94d72] text-white hover:bg-[#c4405f]"
-                    : "border border-line bg-white text-ink hover:border-ink/20",
-                ].join(" ")}
-              >
-                {key === "free" ? "Get started free" : key === "team" ? "Get Team" : `Get ${plan.name}`}
-              </Link>
+              {key === "free" || key === "team" ? (
+                <Link
+                  href={key === "free" ? "/register" : `/register?plan=${key}`}
+                  className={[
+                    "mt-5 inline-flex min-h-10 w-full items-center justify-center rounded-pill px-4 py-2.5 text-sm font-semibold shadow-card transition",
+                    isPro
+                      ? "bg-[#d94d72] text-white hover:bg-[#c4405f]"
+                      : "border border-line bg-white text-ink hover:border-ink/20",
+                  ].join(" ")}
+                >
+                  {key === "free" ? "Get started free" : "Get Team"}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handlePaidPlanClick(key)}
+                  disabled={checkoutLoading !== null}
+                  className={[
+                    "mt-5 inline-flex min-h-10 w-full items-center justify-center rounded-pill px-4 py-2.5 text-sm font-semibold shadow-card transition disabled:opacity-60",
+                    isPro
+                      ? "bg-[#d94d72] text-white hover:bg-[#c4405f]"
+                      : "border border-line bg-white text-ink hover:border-ink/20",
+                  ].join(" ")}
+                >
+                  {checkoutLoading === key ? "Loading…" : `Get ${plan.name}`}
+                </button>
+              )}
 
               <div className="mt-5 space-y-2.5 border-t border-line pt-5">
                 {PLAN_FEATURES[key].map((feature) => (

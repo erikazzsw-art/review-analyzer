@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
 import { Check, Minus } from "lucide-react";
 
@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { createBillingCheckout } from "@/lib/api/browser";
+import { openBillingCheckout, isUnauthenticatedCheckoutError } from "@/lib/billing";
 import {
   PLANS,
   type BillingPeriod,
@@ -188,37 +188,23 @@ export function UpgradePricingDialog({
   const [checkoutLoading, setCheckoutLoading] = useState<PlanKey | null>(null);
   const [error, setError] = useState<string>("");
   const checkoutRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
 
   async function handlePaidCheckout(planKey: PlanKey) {
     setError("");
     setCheckoutLoading(planKey);
     try {
-      const result = await createBillingCheckout();
-      if (!result.checkout_html) {
+      const result = await openBillingCheckout(checkoutRef.current);
+      if (!result.hasHtml) {
         onOpenChange(false);
         return;
       }
-      if (checkoutRef.current) {
-        checkoutRef.current.innerHTML = result.checkout_html;
-        const scripts = Array.from(checkoutRef.current.querySelectorAll("script"));
-        for (const script of scripts) {
-          await new Promise<void>((resolve, reject) => {
-            const next = document.createElement("script");
-            Array.from(script.attributes).forEach((attr) =>
-              next.setAttribute(attr.name, attr.value),
-            );
-            if (next.src) {
-              next.onload = () => resolve();
-              next.onerror = () => reject(new Error("脚本加载失败"));
-            } else {
-              next.text = script.textContent || "";
-              resolve();
-            }
-            script.replaceWith(next);
-          });
-        }
-      }
     } catch (err) {
+      if (isUnauthenticatedCheckoutError(err)) {
+        onOpenChange(false);
+        router.push(`/register?plan=${planKey}`);
+        return;
+      }
       setError((err as { message?: string }).message || "操作失败，请稍后再试");
     } finally {
       setCheckoutLoading(null);
@@ -311,22 +297,7 @@ export function UpgradePricingDialog({
                     联系销售
                   </a>
                 );
-              } else if (!isPaidCurrent) {
-                cta = (
-                  <Link
-                    href={`/register?plan=${key}`}
-                    onClick={() => onOpenChange(false)}
-                    className={[
-                      "mt-4 inline-flex w-full items-center justify-center rounded-pill px-4 py-2 text-xs font-semibold shadow-card transition",
-                      isPro
-                        ? "bg-[#d94d72] text-white hover:bg-[#c4405f]"
-                        : "border border-line bg-white text-ink hover:border-ink/20",
-                    ].join(" ")}
-                  >
-                    立即升级
-                  </Link>
-                );
-              } else {
+              } else if (!isPaidCurrent || key !== "free") {
                 cta = (
                   <button
                     type="button"
@@ -339,7 +310,11 @@ export function UpgradePricingDialog({
                         : "border border-line bg-white text-ink hover:border-ink/20",
                     ].join(" ")}
                   >
-                    {checkoutLoading === key ? "加载中..." : "升级套餐"}
+                    {checkoutLoading === key
+                      ? "加载中..."
+                      : isPaidCurrent
+                      ? "升级套餐"
+                      : "立即升级"}
                   </button>
                 );
               }
