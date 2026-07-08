@@ -32,7 +32,7 @@
 ### Bug 修复：Credit History drawer 被 Workspace 页面盖住
 
 - **工作量**: XS（单文件 4 行改动，0.2 人时）
-- **状态**: ✅ 已实现 + 本地 tsc 通过；待 push develop + Erika 部署 + prod 验证
+- **状态**: ✅ 已实现 + 本地 tsc 通过 + push develop（commit `66b8254`）+ Erika 部署上线 + Prod Playwright MCP 验证通过
 
 **需求描述**：
 Sidebar → Upgrade 按钮打开升级套餐弹窗（`UpgradePricingDialog`，Radix `DialogPortal`）后，点击弹窗底部「查看消费记录」按钮，`CreditLedgerDrawer` 应从右侧滑入并覆盖整个 Workspace。实际观察到 drawer 出现在 Workspace 主内容之下：drawer 面板被 Workspace 的模块卡片遮挡，右侧看到的仍是 Workspace 的 "Today's Workspace" 及 SKU 卡片，drawer 内容不可点击。
@@ -48,10 +48,14 @@ Sidebar → Upgrade 按钮打开升级套餐弹窗（`UpgradePricingDialog`，Ra
 
 **验证方式**：
 - 本地 `npx tsc --noEmit` 通过 ✅
-- 待 prod 验证：登录测试账号 `惜_clueai / test123456` → https://www.clueai-reviewlens.com/workspace → sidebar 点 Upgrade → 弹出升级套餐弹窗 → 点底部「查看消费记录」→ Credit History drawer 应完整覆盖 Workspace 主内容且可交互（点击 backdrop 关闭 / 点 X 关闭 / 滚动列表）
+- **Prod Playwright MCP 验证**（2026-07-08 部署 commit `66b8254` 后，测试账号 `惜_clueai` 登录 https://www.clueai-reviewlens.com/workspace）：
+  - 视觉 ✅ — sidebar 点 Upgrade → 升级套餐弹窗 → 底部「查看消费记录 →」→ Credit History drawer 完整覆盖 Workspace 主内容，backdrop 半透明遮罩生效，无穿透（截图 `credit-drawer-verification.png`）
+  - 结构 ✅ — `browser_evaluate` 查询 DOM：`drawerParentTag=BODY`、`drawerParentIsBody=true`、`drawerZ=110`、`backdropParentIsBody=true`、`backdropZ=100`（portal 到 body 生效，z-index 层级正确）
+  - 交互 ✅ — 点击 backdrop 关闭 drawer（`drawerStillOpen=false`）；列表正常加载 Insight/Export/Top-up/Monthly grant 等 ledger 条目
 
 **涉及岗位及工时**：
 - 前端开发：0.2 人时（诊断 stacking context + 单文件 portal 改造）
+- QA：0.1 人时（Prod Playwright MCP 三维度验证）
 
 ---
 
