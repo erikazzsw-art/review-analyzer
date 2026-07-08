@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface LedgerEntry {
   id: number;
@@ -46,17 +47,18 @@ export function CreditLedgerDrawer({ open, onOpenChange }: Props) {
   }, [open]);
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/30"
+        className="fixed inset-0 z-[100] bg-black/30"
         onClick={() => onOpenChange(false)}
       />
 
       {/* Drawer */}
-      <aside className="fixed bottom-0 right-0 top-0 z-50 flex w-full max-w-sm flex-col border-l border-line bg-white shadow-xl">
+      <aside className="fixed bottom-0 right-0 top-0 z-[110] flex w-full max-w-sm flex-col border-l border-line bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <h2 className="text-base font-semibold text-ink">Credit History</h2>
           <button
@@ -118,6 +120,7 @@ export function CreditLedgerDrawer({ open, onOpenChange }: Props) {
           )}
         </div>
       </aside>
-    </>
+    </>,
+    document.body,
   );
 }

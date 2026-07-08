@@ -29,6 +29,32 @@
 
 ## 2026-07-08
 
+### Bug 修复：Credit History drawer 被 Workspace 页面盖住
+
+- **工作量**: XS（单文件 4 行改动，0.2 人时）
+- **状态**: ✅ 已实现 + 本地 tsc 通过；待 push develop + Erika 部署 + prod 验证
+
+**需求描述**：
+Sidebar → Upgrade 按钮打开升级套餐弹窗（`UpgradePricingDialog`，Radix `DialogPortal`）后，点击弹窗底部「查看消费记录」按钮，`CreditLedgerDrawer` 应从右侧滑入并覆盖整个 Workspace。实际观察到 drawer 出现在 Workspace 主内容之下：drawer 面板被 Workspace 的模块卡片遮挡，右侧看到的仍是 Workspace 的 "Today's Workspace" 及 SKU 卡片，drawer 内容不可点击。
+
+**根因**：
+`CreditLedgerDrawer` 是 inline 渲染（`return <>...</>` 直接返回），挂载在 `SidebarCreditEntry` → `Sidebar` 的 `<aside class="fixed left-0 top-0">` 内。`position: fixed` 会创建独立的 stacking context，导致 drawer 的 `z-50` 只在 sidebar 这个 context 内部生效，无法压过后面 DOM sibling（AppShell 里的 main）中带 `backdrop-blur` 的 workspace 模块卡片（`backdrop-filter` 也会创建 stacking context）。参考 `UpgradePricingDialog` 走 Radix `DialogPortal`，portal 到 `document.body` 后就可以逃出 sidebar 的 stacking context，因此升级套餐弹窗本身能正常压过 Workspace。
+
+**实现内容**：
+1. [frontend/src/components/credit/credit-ledger-drawer.tsx](frontend/src/components/credit/credit-ledger-drawer.tsx)：新增 `import { createPortal } from "react-dom"`
+2. `return (...)` 改为 `return createPortal(..., document.body)`
+3. 加 SSR 守卫 `if (typeof document === "undefined") return null`（避免 Next.js SSR 阶段 `document` 未定义）
+4. Backdrop `z-40` → `z-[100]`、drawer `z-50` → `z-[110]`（抬升 z 数值兜底，确保盖过任何 `z-50` 元素）
+
+**验证方式**：
+- 本地 `npx tsc --noEmit` 通过 ✅
+- 待 prod 验证：登录测试账号 `惜_clueai / test123456` → https://www.clueai-reviewlens.com/workspace → sidebar 点 Upgrade → 弹出升级套餐弹窗 → 点底部「查看消费记录」→ Credit History drawer 应完整覆盖 Workspace 主内容且可交互（点击 backdrop 关闭 / 点 X 关闭 / 滚动列表）
+
+**涉及岗位及工时**：
+- 前端开发：0.2 人时（诊断 stacking context + 单文件 portal 改造）
+
+---
+
 ### V4-出海-M2.2.L：法律五页 locale 完全切换 + cookies/dpa 补正文
 
 - **工作量**: M（10 文件改造 + 2 页正文新增，约 1.2 人天）
