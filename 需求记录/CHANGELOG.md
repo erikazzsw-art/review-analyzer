@@ -27,6 +27,54 @@
 
 ---
 
+## 2026-07-08
+
+### V4-出海-M6：Credit 定价体系改造（海外 4 档套餐 · 统一 credit 池）
+
+- **工作量**: L（2 migration + 后端核心层 6 函数 + Webhook 改造 + Trial 发放 + 月度 Refill 定时任务 + 6 调用点改造 + 前端定价页重构 + Credit 余额 UI 2 组件 + 2 API 端点，约 4 人天）
+- **状态**: ✅ 6.1-6.9 已部署上线、prod 验证通过；6.10 文档待同步
+
+**需求描述**：
+现有配额体系是 8 维独立限制（评论条数 / Ask 次数 / 文案 / Excel / 对比 / Webhook / 规则数），用户理解成本高、加功能就要新开限额。海外市场竞品（VOC AI）采用统一 credit 池，ClueAI 需对齐并差异化。定价 4 档：Free($0/300) / Starter($12/5K) / Pro($29/15K) / Team($59/45K)，首注册送 3000 credits × 14 天 Trial。
+
+**涉及岗位及工时**：
+- 后端开发：2.5 人天（credit 核心层 6 函数 + Webhook 改造 + Trial 发放 + 月度 Refill + 6 调用点改造 + 2 API 端点）
+- 前端开发：1 人天（定价页重构 pricing-content.tsx + Credit 余额 UI sidebar-credit-entry.tsx + credit-ledger-drawer.tsx + pricing.ts 扩展）
+- DBA：0.3 人天（migration 044 + 045 + backfill）
+- 文档：0.2 人天（PROGRESS_V2 + TEST_LOG + CHANGELOG）
+
+**变更清单**：
+- `migrations/044_create_user_credits.sql`：创建 `user_credits`（credit 钱包）+ `credit_ledger`（流水账）+ 索引 + updated_at 触发器 + 全量 backfill
+- `migrations/045_add_starter_plan.sql`：`users.plan` CHECK 约束加入 `'starter'`
+- `review_analyzer/quota.py`：新增 `credit_check` / `credit_consume`（SELECT FOR UPDATE 防并发）/ `credit_refund` / `get_credit_balance` / `get_credit_ledger` + `InsufficientCreditsError` 异常类
+- `backend_api/app/routes/quota.py`：新增 `GET /credits/balance` + `GET /credits/ledger` API 端点
+- `backend_api/app/routes/settings.py`：Paddle Webhook 改造 — `_resolve_plan_from_event()` 新增 starter 档 + `_get_price_custom_data()` + subscription.*/transaction.completed → 更新 monthly_grant
+- `backend_api/app/routes/auth.py`：注册时插入 user_credits（Trial: balance=3000, trial_expires_at=now()+14d）
+- `review_analyzer/database.py`：新增 `update_user_credits_monthly_grant(user_id, plan)`
+- `workers/periodic_jobs.py`：新增 `refill_monthly_credits()`（每月 1 号）+ `expire_trials()`（每日）
+- `workers/jobs.py` + `backend_api/app/routes/{qa,copywriter,translate,export}.py`：6 处调用点 `quota_consume` → `credit_consume` + `InsufficientCreditsError` → 402
+- `frontend/src/lib/pricing.ts`：PlanKey 扩展 + PLANS 补 Starter 档 + ADD_ONS 常量
+- `frontend/src/app/pricing/pricing-content.tsx`（新建）：月付/年付 Toggle + 4 档对比卡 + 加油包区块 + Trial 文案
+- `frontend/src/components/credit/sidebar-credit-entry.tsx`（新建）：Sidebar 常驻余额入口
+- `frontend/src/components/credit/credit-ledger-drawer.tsx`（新建）：近 30 条消费明细抽屉
+- `frontend/src/components/app/sidebar.tsx`：集成 SidebarCreditEntry
+
+**部署修复记录**（3 个 hotfix）：
+1. `locale.py` 未 git add → api 容器 ModuleNotFoundError（commit `443f982`）
+2. `get_quota_status` 函数定义被误删 → api 容器 ImportError（commit `9a38777`）
+3. `pricing-content.tsx` 未 git add → frontend build Module not found（commit `3e9c41a`）
+4. Migration 044 原始 SQL 的 user_id 类型 UUID 与 users.id INT 不匹配 + backfill 引用不存在的 is_active 列 — 修正后 Erika 在 Supabase 重新执行成功
+
+**线上验证结果**（2026-07-08 测试账号 惜_clueai）：
+- SidebarCreditEntry 显示 `Credits 300 / 300` ✅
+- CreditLedgerDrawer 点击弹出，显示 `Monthly grant +300` ✅
+- API `/credits/balance` 返回 `{"balance":300,"monthly_grant":300}` ✅
+- 套餐额度组件 + workspace 页面正常 ✅
+
+**待确认**：升级时是否应立即将 balance 重置为 new_monthly_grant（"即时发放当月余额"）？当前实现只更新 monthly_grant，不动 balance。
+
+---
+
 ## 2026-07-07
 
 ### V4-出海-M4-pre：LLM 路由 locale 切换（海外优先 GPT-4o-mini 主链路）
@@ -1061,3 +1109,25 @@ AliExpress feedback API 被反爬封锁（返回 antiCrawlerContent），Playwri
 | 后端开发 | 12h |
 | 前端开发 | 6h |
 | 数据库 | 2h |
+
+---
+
+## 2026-07-08
+
+### V4-出海-M6: 移除 Plan Quota UI 展示，Sidebar 切换为纯 Credits 计费
+
+- **工作量**: XS
+- **状态**: 完成
+
+**需求描述**：
+删除侧边栏 Plan Quota 展示条目（SidebarQuotaEntry），用户侧只保留 Credits 余额入口。后端 quota_check 逻辑保留不动，作为内部风控使用。
+
+**实现要点**：
+1. 从 `sidebar.tsx` 移除 `SidebarQuotaEntry` import 和 JSX 渲染
+2. 后端 `quota_check` / `quota_consume` / `PLAN_LIMITS` 全部保留，不影响业务逻辑
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 |
+|------|------|
+| 前端开发 | 0.1h |

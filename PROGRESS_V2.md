@@ -4800,7 +4800,7 @@ CREATE TABLE workspace_invitations (
 
 ### V4-出海-M6: Credit 定价体系改造（海外 4 档套餐 · 统一 credit 池）
 
-- 状态: ⏳ 待启动 | 分支: `feature/v4-credit-pricing`
+- 状态: ✅ 基建完成（6.1-6.9 已部署验证） | 分支: `develop`
 - 依赖: M3（用户注册/locale 已区分海外流量）
 - 设计文档: `~/.claude/plans/cheeky-percolating-zephyr.md`（含完整成本测算 + 套餐详表 + 套利验证）
 
@@ -4840,7 +4840,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-**6.1 数据库 Migration（新增 · 无 breaking change）** ✅ 2026-07-07
+**6.1 数据库 Migration（新增 · 无 breaking change）** ✅ 2026-07-08 prod 已执行
 
 - [x] 新建 `migrations/044_create_user_credits.sql`
   - `user_credits` 表：`user_id PK / balance INT / monthly_grant INT / trial_expires_at TIMESTAMP / last_refill_at TIMESTAMP / updated_at`
@@ -4910,7 +4910,7 @@ CREATE TABLE workspace_invitations (
 - [x] Trial 说明文案："Start with 3,000 free credits — 14 days, no credit card required"
 - [x] Enterprise 联系入口
 
-**6.9 前端 — Credit 余额 UI** ✅ 2026-07-07
+**6.9 前端 — Credit 余额 UI** ✅ 2026-07-08 prod 验证通过
 
 - [x] 新增 `frontend/src/components/credit/sidebar-credit-entry.tsx` — Sidebar 常驻余额入口
   - 显示：`X credits · Trial X days left` 或 `X / monthly_grant`
@@ -4920,6 +4920,7 @@ CREATE TABLE workspace_invitations (
   - 每行：动作类型 / 日期 / delta / balance_after
 - [x] 后端 `GET /credits/balance` + `GET /credits/ledger?limit=N` API 端点
 - [x] Sidebar 集成：`SidebarCreditEntry` 加入 `sidebar.tsx`
+- [x] 移除 `SidebarQuotaEntry`（Plan Quota 展示）— Sidebar 切换为纯 credits 计费展示，后端 `quota_check` 保留作内部风控
 
 **6.10 文档同步**（执行完以上步骤后必做）
 
@@ -4950,7 +4951,7 @@ CREATE TABLE workspace_invitations (
 | M3 | 后端合规能力（geo-block / 数据主权 API / 邮件双语） | 🔄 进行中 | 80%（3.1 Geo-Block + 3.2 数据主权 API + 3.3 邮件双语化 + 3.4 Contact/Sub-processor 页已完成；3.5 数据保留清理待办） |
 | M4 | Bedrock LLM 集成 + 数据源改造 | ⏳ 待启动 | 0% |
 | M5 | Beta 发布 + 部署 + 监控 | ⏳ 待启动 | 0% |
-| M6 | Credit 定价体系改造（海外 4 档套餐 + 统一 credit 池）| ✅ 代码完成 | 95% |
+| M6 | Credit 定价体系改造（海外 4 档套餐 + 统一 credit 池）| ✅ 基建完成 | 6.1-6.9 已部署上线，6.10 文档待同步，待确认「即时发放当月余额」逻辑 |
 
 ```
 [                    ] 0%  (0/5 modules)
