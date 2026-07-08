@@ -4922,6 +4922,83 @@ CREATE TABLE workspace_invitations (
 - [x] Sidebar 集成：`SidebarCreditEntry` 加入 `sidebar.tsx`
 - [x] 移除 `SidebarQuotaEntry`（Plan Quota 展示）— Sidebar 切换为纯 credits 计费展示，后端 `quota_check` 保留作内部风控
 
+**6.9.1 前端 — 侧边栏 Credits 升级按钮 + 升级弹窗** ✅ 2026-07-08
+
+> 需求：在侧边栏左下角 Credits 卡片右侧新增常驻 **Upgrade 按钮**，点击后弹出套餐升级弹窗（Shulex 风格：顶部套餐卡片 + 下方功能对比表）。Credits 余额区域的点击行为保持不变（仍弹出已有的"套餐使用量"对话框）。弹窗底部保留"查看消费记录"入口。Credit 单价是内部信息，不展示给客户。
+
+**新建文件**：`frontend/src/components/credit/upgrade-pricing-dialog.tsx`
+**修改文件**：`frontend/src/components/credit/sidebar-credit-entry.tsx`
+
+**执行步骤**：
+
+1. 新建 `upgrade-pricing-dialog.tsx`，实现 `<UpgradePricingDialog>` 组件：
+   - Props：`open`, `onOpenChange`, `currentPlan: PlanKey`, `onOpenLedger: () => void`
+   - 使用 `Dialog/DialogContent/DialogHeader/DialogTitle`（来自 `@/components/ui/dialog`）
+   - 导入 `PLANS`, `formatPrice`, `PlanKey`, `BillingPeriod`（来自 `@/lib/pricing.ts`）
+   - DialogContent：`max-w-4xl max-h-[90vh] p-0`
+
+2. 弹窗结构：
+   - **Header**：标题"升级套餐" + 月付/年付切换开关（内部 state `billingCycle`）
+   - **套餐卡片区**：`grid sm:grid-cols-2 lg:grid-cols-4`，4 列卡片（Free / Starter / Pro / Team）
+     - 每张卡片：中文套餐名、价格（根据月付/年付切换）、credits 数量、5-6 条中文功能要点
+     - Pro 卡片高亮：`border-2 border-[#d94d72]`，徽章"最受欢迎"
+   - **功能对比表**：`mt-8 overflow-x-auto`，按分组展示，值类型：`string`（数值）/ `true`（蓝色勾 ✓）/ `false`（灰色横线 —）
+   - **Footer**：错误提示区 + "查看消费记录"链接（触发 `onOpenLedger`）
+
+3. **功能对比表内容**（credit 单价是内部信息，不展示给用户）：
+
+   | 分组 | 行 | Free | Starter | Pro | Team |
+   |------|-----|------|---------|-----|------|
+   | 积分与配额 | 月度 Credits | 300 | 5,000 | 15,000 | 45,000 |
+   | | 单次上传上限 | 500 条 | 1,000 条 | 5,000 条 | 5,000 条 |
+   | | ASIN 自动拉取 | 1 次/天 | 10 次/天 | 10 次/天 | 50 次/天 |
+   | 评论分析 | 情感分析与标签 | ✓ | ✓ | ✓ | ✓ |
+   | | Ask Reviews 问答 | ✓ | ✓ | ✓ | ✓ |
+   | | Insight 深度报告 | ✓ | ✓ | ✓ | ✓ |
+   | | 多产品对比 | 2 款 | 不限 | 不限 | 不限 |
+   | 内容生成 | 广告文案 | ✓ | ✓ | ✓ | ✓ |
+   | | 翻译 | 20 次/天 | 200 次/天 | 200 次/天 | 500 次/天 |
+   | 导出与集成 | Excel/CSV 导出 | 10 次/月 | 不限 | 不限 | 不限 |
+   | | Webhook 集成 | 3 个 | 不限 | 不限 | 不限 |
+   | | 预警规则 | 全局 3 条 | 不限 | 不限 | 不限 |
+   | | API 密钥 | — | — | 3 个（即将） | 10 个（即将） |
+   | 团队与支持 | 多成员协作 | — | — | — | ✓ |
+   | | 角色权限 | — | — | — | ✓ |
+   | | 客服支持 | 社区 | 邮件 | 优先 | 专属经理 |
+
+4. **CTA 按钮逻辑**：
+   - `planKey === currentPlan` → disabled 按钮显示"当前套餐"
+   - `planKey === 'free'` 且用户已付费 → 不显示按钮
+   - `planKey === 'team'` → `<a mailto:hello@clueai.co>联系销售</a>`
+   - Free 用户升级付费套餐 → `<Link href="/pricing">立即升级</Link>`
+   - 付费用户换档 → `<button onClick={handlePaidCheckout}>升级套餐</button>`
+
+5. **修改 `sidebar-credit-entry.tsx`**：
+   - 新增 `upgradeOpen` state（保留原有 `open` 控制消费记录抽屉）
+   - **Credits 余额区域点击行为保持不变**（仍打开已有的"套餐使用量"对话框）
+   - 在 Credits 卡片右侧新增**常驻 "Upgrade" 按钮**（替代原来仅余额 <20% 时显示的 "Top up" 链接），点击 → `setUpgradeOpen(true)` 打开升级弹窗
+   - 按钮样式：`self-center text-xs font-semibold text-rose hover:underline`，位于卡片右侧（与当前 "Top up" 位置一致）
+   - 当用户是 Team 套餐时隐藏 Upgrade 按钮（已是最高档）
+   - 从 `data.monthly_grant` 推导 `currentPlan`（`>=45000→team, >=15000→pro, >=5000→starter, else→free`）
+   - 渲染 `<UpgradePricingDialog>` + 保留原有 `<CreditLedgerDrawer>`
+   - UpgradePricingDialog 的 `onOpenLedger` 回调：关闭升级弹窗 → 打开消费记录抽屉
+
+6. **复用清单**：
+   - `Dialog/DialogContent/DialogHeader/DialogTitle` — `components/ui/dialog`
+   - `PLANS`, `formatPrice`, `PlanKey`, `BillingPeriod` — `lib/pricing.ts`
+   - `CreditLedgerDrawer` — 保留不改，通过回调打开
+   - `Check`, `Minus` icons — `lucide-react`
+   - 参考 `components/quota/quota-dialog.tsx` 中 `ManageSubscriptionButton` 的 Paddle checkout 模式
+
+7. **验证**：
+   - `cd frontend && npm run dev` 启动开发服务器
+   - 登录后侧边栏 Credits 卡片右侧显示常驻 "Upgrade" 按钮
+   - 点击 Credits 余额区域 → 仍弹出已有的"套餐使用量"对话框（行为不变）
+   - 点击 Upgrade 按钮 → 弹出套餐升级弹窗（4 卡片 + 月/年切换 + 对比表）
+   - 当前套餐卡片显示"当前套餐"禁用按钮
+   - 点击弹窗底部"查看消费记录" → 关闭弹窗 → 打开消费记录抽屉
+   - `npx tsc --noEmit` 类型检查通过
+
 **6.10 文档同步**（执行完以上步骤后必做）
 
 - [ ] `QUOTA_TABLE.md` — 全部重写为 credit 单价表 + 4 档硬限矩阵（作为唯一 SSOT）

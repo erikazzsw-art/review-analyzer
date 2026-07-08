@@ -1,10 +1,14 @@
 "use client";
 
 import { Coins } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import type { QuotaItem } from "@/lib/api/server";
+import { QuotaDialog } from "@/components/quota/quota-dialog";
+import type { PlanKey } from "@/lib/pricing";
+
 import { CreditLedgerDrawer } from "./credit-ledger-drawer";
+import { UpgradePricingDialog } from "./upgrade-pricing-dialog";
 
 interface CreditBalance {
   balance: number;
@@ -14,9 +18,19 @@ interface CreditBalance {
   is_trial: boolean;
 }
 
+function derivePlan(monthlyGrant: number): PlanKey {
+  if (monthlyGrant >= 45000) return "team";
+  if (monthlyGrant >= 15000) return "pro";
+  if (monthlyGrant >= 5000) return "starter";
+  return "free";
+}
+
 export function SidebarCreditEntry() {
-  const [open, setOpen] = useState(false);
+  const [quotaOpen, setQuotaOpen] = useState(false);
+  const [ledgerOpen, setLedgerOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [data, setData] = useState<CreditBalance | null>(null);
+  const [quotaItems, setQuotaItems] = useState<QuotaItem[] | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -26,20 +40,28 @@ export function SidebarCreditEntry() {
         if (active && d) setData(d);
       })
       .catch(() => {});
-    return () => { active = false; };
+    fetch("/api/quota", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((items) => {
+        if (active && Array.isArray(items)) {
+          setQuotaItems(items as QuotaItem[]);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const pct = data
-    ? Math.min(100, Math.round((data.balance / Math.max(data.monthly_grant, 1)) * 100))
-    : null;
-  const isLow = pct !== null && pct < 20;
+  const currentPlan: PlanKey = data ? derivePlan(data.monthly_grant) : "free";
+  const showUpgrade = currentPlan !== "team";
 
   return (
     <>
       <div className="mb-3 flex items-stretch gap-2 rounded-card border border-line bg-white/70 px-3 py-2 transition hover:bg-roseSoft/40">
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => setQuotaOpen(true)}
           className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
           aria-label="Credit balance"
         >
@@ -60,17 +82,36 @@ export function SidebarCreditEntry() {
             )}
           </span>
         </button>
-        {isLow && (
-          <Link
-            href="/pricing"
+        {showUpgrade && (
+          <button
+            type="button"
+            onClick={() => setUpgradeOpen(true)}
             className="self-center whitespace-nowrap text-xs font-semibold text-rose hover:underline"
           >
-            Top up
-          </Link>
+            Upgrade
+          </button>
         )}
       </div>
 
-      <CreditLedgerDrawer open={open} onOpenChange={setOpen} />
+      {quotaItems && (
+        <QuotaDialog
+          open={quotaOpen}
+          onOpenChange={setQuotaOpen}
+          items={quotaItems}
+        />
+      )}
+
+      <UpgradePricingDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        currentPlan={currentPlan}
+        onOpenLedger={() => {
+          setUpgradeOpen(false);
+          setLedgerOpen(true);
+        }}
+      />
+
+      <CreditLedgerDrawer open={ledgerOpen} onOpenChange={setLedgerOpen} />
     </>
   );
 }

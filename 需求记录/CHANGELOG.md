@@ -29,7 +29,62 @@
 
 ## 2026-07-08
 
-### V4-出海-M6：Credit 定价体系改造（海外 4 档套餐 · 统一 credit 池）
+### V4-M6-6.9.1：侧边栏 Credits 升级按钮 + 套餐升级弹窗
+
+- **工作量**: S（2 文件，0.5 人天）
+- **状态**: ✅ 已实现 + 类型检查 + dev preview 验证；待 push + Erika 部署 + prod 验证
+
+**需求描述**：
+在侧边栏 Credits 卡片右侧新增常驻 **Upgrade** 按钮，点击后弹出中文套餐升级弹窗（Shulex 风格：顶部 4 卡片 + 下方功能对比表）。Credits 余额区域点击改为打开原有的"套餐使用量"对话框（QuotaDialog）。Credit 单价是内部信息，不展示给用户。弹窗底部保留"查看消费记录"入口，关闭弹窗后打开 CreditLedgerDrawer。
+
+**实现内容**：
+- 新建 `frontend/src/components/credit/upgrade-pricing-dialog.tsx`：
+  - 月付/年付切换 Toggle（年付 -20%）
+  - 4 列卡片：免费版 / 入门版 / 专业版 ⭐"最受欢迎" / 团队版
+  - 5 组功能对比表（积分/评论分析/内容生成/导出集成/团队支持），共 16 行；勾/横线/中文数值三类单元格
+  - CTA 分支：当前套餐 disabled；team → mailto 联系销售；free 用户 → `/register?plan=X` 立即升级；付费换档 → Paddle checkout
+  - Footer："查看消费记录"链接触发 `onOpenLedger`
+- 修改 `frontend/src/components/credit/sidebar-credit-entry.tsx`：
+  - 并行 fetch `/api/credits/balance` + `/api/quota`
+  - Credits 数字点击 → 打开 QuotaDialog（原有"套餐使用量"）
+  - 右侧常驻 "Upgrade" 按钮（team 用户隐藏），点击 → UpgradePricingDialog
+  - 从 `monthly_grant` 派生 currentPlan：`>=45000→team, >=15000→pro, >=5000→starter, else→free`
+  - 集成三个弹层：QuotaDialog / UpgradePricingDialog / CreditLedgerDrawer
+
+**涉及岗位及工时**：
+- 前端开发（0.5 人天）：新建升级弹窗 + Sidebar 集成 + dev preview 验证
+
+**验证方式**：
+- `npx tsc --noEmit` 通过
+- 本地 dev preview 页面截图确认弹窗 4 卡片 + 对比表 + 月/年切换 + Pro 高亮均符合预期
+- 待 Erika 部署到 prod 后用测试账号验证：登录 → 侧边栏 Credits 卡片 → 点击 Upgrade → 弹窗正常 → 底部"查看消费记录" → 消费记录抽屉
+
+---
+
+### Bug fix: quota.py PLAN_LIMITS 缺失 starter key（M6 收尾）
+
+- **工作量**: S（1 个 dict 补 11 个 key + 2 个回归测试，0.3 人天）
+- **状态**: ✅ 已修复，单测 24 通过；待 push + Erika 部署 + prod 验证
+
+**需求描述**：
+M6 引入 Starter 档时，`review_analyzer/quota.py::PLAN_LIMITS` 每个维度的 `limits` 字典遗漏了 `starter` key，只保留 `free/pro_early/pro/team`。`_get_limit()` 找不到套餐时 fallback 到 free 值，导致所有付费 Starter 用户实际拿到的是 Free 硬限（review_analyze 1500 而非 5000、ask_review 10 而非 50、upload_rows_per_file 500 而非 1000 等），付费但未获等价配额，存在退款风险。
+
+**修复内容**：
+- 补齐 11 个维度（review_analyze / ask_review / ad_copy / excel_export / compare_products / webhook_count / global_rules / product_rules / upload_rows_per_file / asin_fetch / translate）的 `starter` 限额，值与 [frontend/src/app/pricing/pricing-content.tsx](frontend/src/app/pricing/pricing-content.tsx) `PLAN_FEATURES.starter` 一致
+- 新增回归测试 `test_get_limit_starter_not_fallback_to_free` + `test_starter_all_dimensions_have_key`，锁定 starter 不再回退到 free
+- QUOTA_TABLE.md（SSoT）当前仍是 Free / pro_early / Pro / Team 四列结构，缺 Starter 列，本次未同步（涉及多张表列结构改造，建议后续单独任务处理）
+
+**涉及岗位及工时**：
+- 后端开发（0.3 人天）：定位 bug + 补 dict key + 回归测试
+
+**风险与验证**：
+- 直接影响所有已订阅 Starter 的付费用户，部署后 Erika 用 Starter 测试账号验证：
+  - upload 1000 行 CSV 不再被拦（旧行为：500 条上限提示）
+  - review_analyze 累计 1500 条后仍能继续（旧行为：1500 用完触发升级弹窗）
+
+---
+
+
 
 - **工作量**: L（2 migration + 后端核心层 6 函数 + Webhook 改造 + Trial 发放 + 月度 Refill 定时任务 + 6 调用点改造 + 前端定价页重构 + Credit 余额 UI 2 组件 + 2 API 端点，约 4 人天）
 - **状态**: ✅ 6.1-6.9 已部署上线、prod 验证通过；6.10 文档待同步
