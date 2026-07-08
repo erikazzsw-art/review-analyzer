@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { createBillingCheckout } from "@/lib/api/browser";
+import { openBillingCheckout } from "@/lib/billing";
 import { Button } from "@/components/ui/button";
 
 type Props = { billing: { plan?: string; configured?: boolean; [key: string]: unknown } };
@@ -18,23 +18,10 @@ export function BillingPanel({ billing }: Props) {
   async function handleCheckout() {
     setError(""); setMessage(""); setIsLoading(true);
     try {
-      const result = await createBillingCheckout();
-      if (!result.checkout_html) {
+      const result = await openBillingCheckout(checkoutRef.current);
+      if (!result.hasHtml) {
         setMessage(result.configured ? "Paddle 已配置，但未返回 checkout 内容。" : "Paddle 还未完全配置，请先检查环境变量。");
         return;
-      }
-      if (checkoutRef.current) {
-        checkoutRef.current.innerHTML = result.checkout_html;
-        const scripts = Array.from(checkoutRef.current.querySelectorAll("script"));
-        for (const script of scripts) {
-          await new Promise<void>((resolve, reject) => {
-            const next = document.createElement("script");
-            Array.from(script.attributes).forEach((attr) => next.setAttribute(attr.name, attr.value));
-            if (next.src) { next.onload = () => resolve(); next.onerror = () => reject(new Error("加载脚本失败")); }
-            else { next.text = script.textContent || ""; resolve(); }
-            script.replaceWith(next);
-          });
-        }
       }
       setMessage("Paddle checkout 已打开。");
     } catch (err) {

@@ -1,10 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { identify, track } from "@/lib/analytics";
+import { openBillingCheckout, isUnauthenticatedCheckoutError } from "@/lib/billing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -29,8 +30,11 @@ function checkPasswordStrength(password: string) {
   };
 }
 
+const PAID_PLAN_KEYS = new Set(["starter", "pro"]);
+
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const [username, setUsername] = useState("");
@@ -42,6 +46,9 @@ export function RegisterForm() {
 
   const strength = checkPasswordStrength(password);
   const allRulesPassed = Object.values(strength).every(Boolean);
+
+  const rawPlan = searchParams.get("plan");
+  const intendedPlan = rawPlan && PAID_PLAN_KEYS.has(rawPlan) ? rawPlan : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,7 +63,7 @@ export function RegisterForm() {
 
     setError("");
     setLoading(true);
-    track("signup_click", { page: "/register" });
+    track("signup_click", { page: "/register", intended_plan: intendedPlan });
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -80,7 +87,23 @@ export function RegisterForm() {
         signup_date: new Date().toISOString(),
       });
 
-      track("signup_complete", { method: "email" });
+      track("signup_complete", { method: "email", intended_plan: intendedPlan });
+
+      if (intendedPlan) {
+        track("signup_checkout_intent", { plan: intendedPlan });
+        try {
+          await openBillingCheckout(null);
+        } catch (err) {
+          // 401 不应该出现 —— 注册成功后 cookie 已下发；其他错误则退回 workspace
+          if (isUnauthenticatedCheckoutError(err)) {
+            router.push("/workspace");
+            return;
+          }
+        }
+        router.push("/workspace");
+        return;
+      }
+
       router.push("/workspace");
     } catch {
       setError(tCommon("networkError"));
