@@ -29,7 +29,37 @@
 
 ## 2026-07-08
 
-### V4-M2-2.2.C：类别标签 i18n 化（backend slug 迁移 + 前端翻译层）
+### V4-出海-M2.2.L：法律五页 locale 完全切换 + cookies/dpa 补正文
+
+- **工作量**: M（10 文件改造 + 2 页正文新增，约 1.2 人天）
+- **状态**: ✅ 已实现 + 本地 tsc + build 通过 + Playwright MCP 双 locale E2E；已 push develop（commit `2b488f2`）+ Erika 部署上线 + prod 验证通过
+
+**需求描述**：
+V4 出海 beta 上线前，法律页面呈现方式与 Shulex 对标：voc.ai/privacy 纯英文 vs voc.ai/cn/privacy 中文。之前 privacy/terms/refund 页是并排中英双列（左中右英），阅读密度大且不符合海外用户习惯；cookies/dpa 是 M3.4 时期为避免 footer 链接 404 建的占位空壳。本次改造：五页统一走 next-intl locale 单语切换（中国 IP → zh，其余 → en，与站点 middleware 一致），并把 cookies/dpa 补齐完整合规正文（GDPR Art. 28 DPA + SCC 2021/914 Module 2 + UK IDTA + GDPR/CCPA/PIPL cookies 合规）。
+
+**实现内容**：
+- [frontend/messages/{zh,en}.json](frontend/messages/en.json)：新增 `legal.*` 命名空间，5 页结构化文案：`legal.terms` / `legal.privacy` / `legal.refund` / `legal.cookies` / `legal.dpa`；每页含 `pageTitle` + `pageSubtitle` + `sections[]`，段落块三种类型：`paragraph` / `bullets` / `ordered`；文案内嵌 4-tag rich-text marker：`<b>` 加粗、`<mail>` mailto、`<link>` 站内链接、`<ext>` 外链
+- 新建 [frontend/src/components/legal/legal-article.tsx](frontend/src/components/legal/legal-article.tsx)：server component，127 行，用 `getMessages()` 读 locale 消息 + 内联 4-tag marker 解析器（白名单模式，未识别 tag 直接透传原文）
+- [frontend/src/app/{terms,privacy,refund,cookies,dpa}/page.tsx](frontend/src/app/privacy/page.tsx)：5 页统一改造为 `async` component，`getTranslations("legal.<page>")` 拿 `pageTitle` / `pageSubtitle`，`generateMetadata` async pattern 让 SEO title/description 也 locale-aware
+- cookies 页正文新增 6 段：Cookies 用途 / 三方 cookie 清单（Cloudflare Analytics、Paddle checkout、Sub-processors DPA）/ 保留期 / 用户控制路径 / GDPR/CCPA/PIPL 合规分析 / 更新条款
+- dpa 页正文新增 12 段：GDPR Art. 28 processor 义务、SCC 2021/914 Module 2 国际传输、UK IDTA、Sub-processors 变更通知期、数据主体权利支持、breach notification 72h、数据返还/删除、审计权、DPO 联系方式等
+
+**涉及岗位及工时**：
+- 前端开发（0.6 人天）：legal-article server component + 5 页 page.tsx 改造 + messages 命名空间接线
+- 内容/合规（0.4 人天）：cookies 6 段 + dpa 12 段的合规文案撰写（GDPR/CCPA/PIPL/SCC/UK IDTA 参考条款）
+- QA（0.2 人天）：Playwright MCP 双 locale E2E（5 页 × 2 locale = 10 次渲染），语言切换器菜单、CJK 污染检查
+
+**风险与验证**：
+- **零后端/DB/环境变量变更** — 纯前端 + i18n 消息文件，无 migration
+- **验证方式**：
+  - 本地 `npx tsc --noEmit` + `npm run build` 通过 ✅
+  - Playwright MCP 五页 × 两 locale 各渲染一次：全部通过，5 en 页均无 CJK 污染，zh 页文案排版符合预期 ✅
+  - 线上（https://www.clueai-reviewlens.com）Erika 部署后二次验证通过 ✅
+- **⚠️ 遗留待办**：五页（含 pricing）`<title>` 出现 `X | ClueAI | ClueAI` 重复 —— root `layout.tsx` template `"%s | ClueAI"` + 各 `page.tsx` `buildMarketingMetadata({ title })` 手写 " | ClueAI" 叠加。属项目历史约定不一致，非本次引入的回归。Erika 决定新开会话独立修复
+
+---
+
+
 
 - **工作量**: M（7 文件改造 + 1 migration + 1 单测 + 3 文档，约 0.8 人天）
 - **状态**: ✅ 已实现 + 本地 tsc + 单测 10/10 通过；待 push + Erika 部署（含 migration 047）+ prod 验证
@@ -1220,3 +1250,26 @@ AliExpress feedback API 被反爬封锁（返回 antiCrawlerContent），Playwri
 | 岗位 | 工时 |
 |------|------|
 | 前端开发 | 0.1h |
+
+---
+
+### Bug 修复：/analysis/sessions/{id}/export/full Content-Disposition latin-1 编码 500
+
+- **工作量**: XS
+- **状态**: 代码完成，待部署验收
+
+**需求描述**：
+M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 XLSX 下载」按钮返回 HTTP 500。api 容器 traceback 定位为 pre-existing bug，跟 M2-2.2.C 无关：`exporter._build_filename()` 生成的中文文件名（`产品编号-版本-全部-分析结果-20260708.xlsx`）直接塞进 `Content-Disposition` header，starlette 用 latin-1 编码时抛 `UnicodeEncodeError: 'latin-1' codec can't encode characters in position 31-32`。此前应该没英文用户点过这个按钮才没暴露。
+
+**实现要点**：
+1. `backend_api/app/routes/export.py` 顶部新增 `from urllib.parse import quote`
+2. `/export/full` 路由 `Content-Disposition` 从 `attachment; filename="{filename}"` 改为 RFC 5987 编码 `attachment; filename*=UTF-8''{quote(filename)}`，Chrome / Firefox / Safari / Edge 全支持 UTF-8 编码文件名
+3. `/export` 路由 filename 是纯 ASCII（`analysis_{id}_{module}.xlsx`），本次不改，避免范围蔓延
+
+**待验证**：Erika 部署后 EN + ZH 两种 locale 各点一次原始评论下载按钮，均需 200 OK 且文件名可正确显示。
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 |
+|------|------|
+| 后端开发 | 0.2h |
