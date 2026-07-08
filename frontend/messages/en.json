@@ -409,6 +409,683 @@
     "quarterly": "This list is reviewed quarterly. We will notify users of material changes.",
     "learnMore": "Learn more"
   },
+  "legal": {
+    "lastUpdatedLabel": "Last Updated",
+    "terms": {
+      "pageTitle": "Terms of Service",
+      "pageSubtitle": "Service scope, responsibilities, and usage rules",
+      "updatedAt": "2026-07-08",
+      "lead": "These Terms govern your use of ClueAI (the \"Service\"). Please read them carefully before using the Service.",
+      "sections": [
+        {
+          "heading": "1. Scope of Service",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "ClueAI provides cross-border e-commerce sellers with:"
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "Intelligent product review analysis (sentiment analysis, dimension extraction, trend insights)",
+                "AI Q&A (natural language queries over review data)",
+                "Ad copy generation (marketing content based on review insights)",
+                "Product comparison analysis",
+                "Alert notifications (Feishu / DingTalk / WeCom Webhook)",
+                "Data export (Excel format)"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "2. Account & Usage Rules",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Each person is limited to one account; accounts may not be transferred or shared",
+                "You are responsible for all activities under your account",
+                "Using the Service for illegal activities or intellectual property infringement is prohibited",
+                "Circumventing quota limits or abusing the API through automated means is prohibited",
+                "Uploading illegal, infringing, or malicious content is prohibited"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "3. Plans & Billing",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Free plan: free to use with quota limits",
+                "Pro / Team plans: monthly or annual subscription, billed through Paddle",
+                "Subscriptions renew automatically; you may cancel at any time (access continues until the end of the current billing cycle)",
+                "Quota resets monthly and does not carry over or qualify for refunds",
+                "Price adjustments will be notified 30 days in advance"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "4. Data Ownership",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Review data you upload remains your property",
+                "AI-generated analysis results belong to you",
+                "We will not use your data to train AI models",
+                "We may use anonymized aggregate data to improve service quality",
+                "<b>Aggregated Analysis Reuse</b>: When reviews you upload have identical content to reviews already analyzed by other users, we may reuse the existing analysis results to reduce operational cost. See Section 4 of the Privacy Policy for details."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "5. Service Availability",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "We target 99.5% monthly uptime but do not guarantee absolute availability",
+                "Scheduled maintenance will be notified 24 hours in advance",
+                "Service interruptions caused by force majeure (network failures, third-party API outages) do not constitute a breach",
+                "AI analysis results are for reference only and do not constitute business advice"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "6. Limitation of Liability",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "The Service is provided \"as is\" without absolute guarantees of analysis accuracy",
+                "Business decisions made based on the Service's analysis results are at your own risk",
+                "Our maximum liability is limited to the total service fees paid by you in the preceding 12 months",
+                "We are not liable for indirect losses or loss of anticipated profits"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "7. Intellectual Property",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "The ClueAI platform software, design, and algorithms are our property",
+                "You may not decompile, reverse engineer, or copy the Service",
+                "User feedback and suggestions may be used to improve the product without additional compensation"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "8. Account Termination",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "You may delete your account at any time; all data will be removed within 30 days",
+                "We reserve the right to suspend or terminate service for violations of this agreement",
+                "Severe violations (e.g., malicious attacks, data scraping) may result in immediate termination without refund"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "9. Dispute Resolution",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "This agreement is governed by the laws of the People's Republic of China",
+                "Disputes shall be resolved through negotiation first",
+                "If negotiation fails, disputes shall be submitted to a court of competent jurisdiction at the defendant's location"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "10. Contact Us",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "For questions or complaints, please contact: <mail>support@clueai-reviewlens.com</mail>"
+            }
+          ]
+        }
+      ]
+    },
+    "privacy": {
+      "pageTitle": "Privacy Policy",
+      "pageSubtitle": "How we collect, use, and protect your data",
+      "updatedAt": "2026-07-08",
+      "lead": "We respect and protect your privacy. This policy explains what information we collect, how we use it, and how you can control your personal information.",
+      "sections": [
+        {
+          "heading": "1. Information We Collect",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "<b>Account Information</b>: Username and email address provided during registration",
+                "<b>Business Data</b>: Product review content you upload, analysis results, and product profiles",
+                "<b>Usage Data</b>: Aggregated statistics such as feature usage frequency, quota consumption, and login times",
+                "<b>Technical Data</b>: IP address, browser type, and device information (for security purposes)"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "2. How We Use Your Information",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Delivering core services including review analysis, AI Q&A, and ad copy generation",
+                "Maintaining account security and service stability",
+                "Improving product features and user experience",
+                "Sending service-related notifications (e.g., quota reminders, system maintenance)"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "3. Third-Party Sharing",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We do not sell your personal data. Third-party processing may occur in the following cases:"
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "<b>AI Analysis</b>: Review content is sent to LLM providers (DeepSeek / OpenAI) for semantic analysis; only text content is transmitted without personally identifiable information",
+                "<b>Payment Processing</b>: Subscription payments are processed through Paddle, which independently handles payment information",
+                "<b>Infrastructure</b>: Data is stored on Supabase (PostgreSQL) and Alibaba Cloud ECS, both with industry-standard security measures",
+                "<b>Legal Requirements</b>: We may disclose necessary information when legally required"
+              ]
+            },
+            {
+              "type": "paragraph",
+              "text": "See the full sub-processor list at <link href=\"/sub-processors\">/sub-processors</link>."
+            }
+          ]
+        },
+        {
+          "heading": "4. Aggregated Analysis Reuse",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "To improve analysis speed and reduce cost, when reviews you upload have <b>identical content</b> to reviews already analyzed by other users (matched via content hash), we may reuse the existing analysis results rather than calling the AI model again."
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "Reuse involves only anonymized analysis output (sentiment, aspect tags, opinion dimensions). <b>No</b> user identity, upload timestamp, or account information is shared across users.",
+                "Reuse does not affect your review quota — quota is consumed based on the number of reviews you upload, regardless of cache hits.",
+                "You may request data deletion via account settings; we will remove the raw reviews you uploaded within 30 days. Anonymized aggregated analysis results may be retained for service delivery."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "5. Data Storage & Security",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Data is encrypted at rest and in transit using TLS/SSL",
+                "API keys are stored with AES/Fernet encryption and cannot be reversed",
+                "Row-Level Security (RLS) is implemented in the database, ensuring complete data isolation between users",
+                "Regular backups are stored encrypted in separate regions"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "6. Data Retention & Deletion",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Your data is retained for the duration of your account",
+                "All personal and business data will be deleted within 60 days after account deletion (60 days is the reversal window)",
+                "You may contact us at any time to request data export or deletion",
+                "Anonymized aggregate statistics (which cannot identify individuals) may be retained for service improvement"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "7. Your Rights",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Under China's Personal Information Protection Law (PIPL), GDPR, and CCPA/CPRA, you have the right to:"
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "Access and copy your personal information",
+                "Correct inaccurate information",
+                "Delete your personal information",
+                "Withdraw consent",
+                "Data portability (export in common formats)"
+              ]
+            },
+            {
+              "type": "paragraph",
+              "text": "To exercise these rights: sign in and visit \"Account & Data\", or email <mail>privacy@clueai-reviewlens.com</mail>."
+            }
+          ]
+        },
+        {
+          "heading": "8. Cookies",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We use essential session cookies to maintain login status. We do not use third-party tracking cookies. See the <link href=\"/cookies\">Cookie Policy</link>."
+            }
+          ]
+        },
+        {
+          "heading": "9. Protection of Minors",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "This Service is designed for business users and is not intended for minors under 16. If we discover that information from minors has been inadvertently collected, it will be deleted immediately."
+            }
+          ]
+        },
+        {
+          "heading": "10. Policy Changes",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We will notify you of policy updates via email or in-app notifications. Continued use of the Service constitutes acceptance of the updated policy."
+            }
+          ]
+        },
+        {
+          "heading": "11. Contact Us",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "For privacy-related inquiries, please contact: <mail>privacy@clueai-reviewlens.com</mail>"
+            }
+          ]
+        }
+      ]
+    },
+    "refund": {
+      "pageTitle": "Refund Policy",
+      "pageSubtitle": "Subscription cancellation, refund conditions, and process",
+      "updatedAt": "2026-07-08",
+      "lead": "Thank you for choosing ClueAI. Please read our refund policy carefully before subscribing.",
+      "sections": [
+        {
+          "heading": "1. Subscription & Billing",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "ClueAI offers three plans: Free, Pro, and Team",
+                "Paid plans are processed through Paddle, with monthly and annual billing options",
+                "Subscriptions renew automatically; you may cancel at any time before the end of the current billing cycle"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "2. Monthly Subscription Refunds",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Monthly subscriptions are <b>non-refundable</b> once payment has been processed",
+                "After cancellation, you may continue using all paid features until the end of the current billing cycle",
+                "After the billing cycle ends, your account will be automatically downgraded to the Free plan"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "3. Annual Subscription Refunds",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Annual subscriptions may be fully refunded within <b>7 days</b> of the initial payment, provided no paid features have been used (zero quota consumption)",
+                "After 7 days or if paid features have been used, refunds are prorated based on the remaining full months (partial months are non-refundable)",
+                "Annual subscriptions used for more than 6 months are non-refundable, but auto-renewal can be cancelled"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "4. Non-Refundable Circumstances",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Account suspension due to violation of Terms of Service",
+                "Consumed analysis quota (quota does not carry over and is non-refundable)",
+                "Charges incurred due to user's own oversight (e.g., forgetting to cancel renewal)",
+                "Price differences from plan downgrades"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "5. Refund Process",
+          "blocks": [
+            {
+              "type": "ordered",
+              "items": [
+                "Send an email to <mail>support@clueai-reviewlens.com</mail> with your account email, subscription type, and reason for the refund",
+                "We will review your refund request within <b>3 business days</b>",
+                "Once approved, the refund will be processed through the original payment channel (Paddle) and is expected to arrive within <b>5–10 business days</b>"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "6. Cancellation",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "You may cancel your subscription at any time in your account settings",
+                "No further charges will be incurred after cancellation",
+                "Service for the current paid period remains unaffected; you may continue using it until expiry",
+                "After expiry, your account will be automatically downgraded to the Free plan; historical data will be retained"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "7. Policy Changes",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We reserve the right to modify this refund policy at any time. Changes will be communicated via website announcements or email notifications. Continued use of the service after modifications constitutes acceptance of the updated policy."
+            }
+          ]
+        },
+        {
+          "heading": "8. Contact Us",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "For any refund-related questions, please contact: <mail>support@clueai-reviewlens.com</mail>"
+            }
+          ]
+        }
+      ]
+    },
+    "cookies": {
+      "pageTitle": "Cookie Policy",
+      "pageSubtitle": "How ClueAI uses cookies and similar technologies",
+      "updatedAt": "2026-07-08",
+      "lead": "This policy explains the cookies used by ClueAI's website and product, their purpose, and how you can manage them. ClueAI does not currently use third-party tracking or advertising cookies.",
+      "sections": [
+        {
+          "heading": "1. What Are Cookies",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Cookies are small text files stored in your browser when you visit a website. They allow the site to \"remember\" state between pages (such as your sign-in or language preference) so you get a coherent experience."
+            }
+          ]
+        },
+        {
+          "heading": "2. Cookies We Use",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "ClueAI uses only the following <b>strictly necessary session cookies</b>:"
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "<b>session_token</b>: Keeps you signed in; cleared on sign-out or when the browser is closed",
+                "<b>NEXT_LOCALE</b>: Remembers your interface language (Chinese / English); lifetime 1 year",
+                "<b>csrf_token</b>: Protects against cross-site request forgery; valid for the session"
+              ]
+            },
+            {
+              "type": "paragraph",
+              "text": "We do <b>not</b> use: advertising cookies, third-party tracking pixels, social media embed cookies, or cross-site behavioural analytics such as Google Analytics (_ga)."
+            }
+          ]
+        },
+        {
+          "heading": "3. Cookies and GDPR / CCPA / PIPL",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Because we only use strictly necessary session cookies (the \"strictly necessary\" category under the GDPR ePrivacy Directive), no consent banner is required in the EU/UK. If we ever introduce non-essential cookies (e.g. analytics or advertising), we will show a consent banner first and allow you to reject them."
+            },
+            {
+              "type": "paragraph",
+              "text": "California residents have the right to opt out of \"the sale of my personal information\" under CCPA. Because we do not use advertising cookies and do not sell data to third parties, no additional action is required."
+            }
+          ]
+        },
+        {
+          "heading": "4. Managing Cookies",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "You can clear or block all cookies at any time from your browser settings",
+                "Blocking <b>session_token</b> will prevent you from staying signed in",
+                "Blocking <b>NEXT_LOCALE</b> will cause the language preference to be re-negotiated on each visit",
+                "Blocking <b>csrf_token</b> will cause all form submissions to fail"
+              ]
+            },
+            {
+              "type": "paragraph",
+              "text": "Cookie management entry points in major browsers: Chrome \"Settings → Privacy and security → Cookies and other site data\"; Safari \"Preferences → Privacy\"; Firefox \"Settings → Privacy & Security\"; Edge \"Settings → Cookies and site permissions\"."
+            }
+          ]
+        },
+        {
+          "heading": "5. Policy Changes",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "This Cookie Policy is updated alongside the Privacy Policy. Any material change will be notified via email or in-app notification."
+            }
+          ]
+        },
+        {
+          "heading": "6. Contact Us",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "For cookie-related questions, please contact: <mail>privacy@clueai-reviewlens.com</mail>"
+            }
+          ]
+        }
+      ]
+    },
+    "dpa": {
+      "pageTitle": "Data Processing Agreement",
+      "pageSubtitle": "GDPR Article 28 DPA for business customers",
+      "updatedAt": "2026-07-08",
+      "lead": "This Data Processing Agreement (\"DPA\") supplements the Terms of Service between you and ClueAI. It applies when reviews you upload contain personal data of EU/UK residents and you, as the GDPR \"Controller\", instruct ClueAI as the \"Processor\" to process such data.",
+      "sections": [
+        {
+          "heading": "1. Definitions",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "<b>Controller</b>: You (the ClueAI customer), who alone or jointly with others determines the purposes and means of processing personal data",
+                "<b>Processor</b>: ClueAI, processing personal data on behalf of the Controller",
+                "<b>Sub-processor</b>: A third party engaged by ClueAI; see <link href=\"/sub-processors\">/sub-processors</link>",
+                "<b>Personal Data</b>: Any information relating to an identified or identifiable natural person, as defined in GDPR Article 4(1)",
+                "<b>Data Breach</b>: A security incident causing accidental or unlawful destruction, loss, alteration, unauthorised disclosure of or access to personal data, as defined in GDPR Article 4(12)"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "2. Scope of Processing",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "<b>Purpose</b>: Providing you with review analysis, AI Q&A, ad copy generation, product comparison, and related services",
+                "<b>Nature</b>: Text content storage, AI model invocation, result generation, aggregated statistics",
+                "<b>Data Types</b>: Review text you upload, registered account information (email/username), usage logs",
+                "<b>Data Subjects</b>: Your end users (e.g. review authors), your staff accounts",
+                "<b>Duration</b>: The term of this DPA, or when you instruct deletion (whichever is earlier)"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "3. Processor Obligations",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Process personal data only on the Controller's documented instructions (including this DPA and the Terms of Service)",
+                "Ensure that persons authorised to process the personal data are bound by confidentiality obligations",
+                "Take the technical and organisational security measures required by GDPR Article 32 (encryption, access control, backups, audit logging)",
+                "Assist the Controller in responding to data subject rights requests (access, rectification, erasure, portability), upon written request",
+                "Assist the Controller in fulfilling Data Protection Impact Assessments (DPIA) and prior consultation obligations under Articles 35–36, upon written request",
+                "Return or delete all personal data at the Controller's option upon termination or expiry of the contract (except where legally required to retain)"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "4. Sub-processors",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "By accepting this DPA you give general authorisation for ClueAI to engage the sub-processors listed at <link href=\"/sub-processors\">/sub-processors</link> as of the effective date of this DPA."
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "When adding or replacing a sub-processor, we update the public list <b>30 days</b> in advance and notify enterprise DPA customers by email",
+                "If you have a reasonable objection to a new sub-processor, you may raise it in writing within <b>14 days</b> of the notification; both parties will negotiate in good faith, and if unresolved you may terminate this DPA and receive a pro-rated refund",
+                "All sub-processors are bound by contractual terms equivalent to or stricter than this DPA"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "5. International Data Transfers",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "ClueAI's primary data storage is on Supabase (AWS ap-southeast-1, Singapore) and Alibaba Cloud ECS (Zhangjiakou). When personal data needs to be transferred from the EU/UK to these regions, we rely on the following legal mechanisms:"
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "EU Standard Contractual Clauses (<b>SCC 2021/914</b>), Module 2 (Controller → Processor)",
+                "UK International Data Transfer Addendum (<b>IDTA</b>) as the UK equivalent of the SCCs",
+                "For sub-processors: see the DPA references for each provider listed at <link href=\"/sub-processors\">/sub-processors</link>"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "6. Security Measures",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Technical and organisational measures adopted by ClueAI include but are not limited to:"
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "Encryption in transit: TLS 1.2+ site-wide; API endpoints enforce HTTPS",
+                "Encryption at rest: Column-level encryption (AES-256) in the database; API keys encrypted with Fernet",
+                "Access control: Row-Level Security (RLS), principle of least privilege, two-factor authentication",
+                "Backups: Encrypted backups stored in a separate region, retained for 30 days",
+                "Audit logging: All sensitive operations logged, retained for at least 90 days",
+                "Staff training: Annual data protection and security awareness training"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "7. Data Breach Notification",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "Notify you within <b>72 hours</b> of becoming aware of a breach affecting your personal data",
+                "Notification includes: the nature of the breach, the estimated categories and number of affected subjects, likely consequences, and mitigation measures taken and planned",
+                "Cooperate with your obligation to report to supervisory authorities"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "8. Audit Rights",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "You have the right (at your own expense) to appoint an independent third-party auditor to audit ClueAI's compliance with this DPA no more than once every 12 months, on <b>30 days</b>' prior written notice. The audit scope is limited to processing activities under this DPA, and the auditor must sign a confidentiality agreement."
+            }
+          ]
+        },
+        {
+          "heading": "9. Liability",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Liability under this DPA is subject to the limitation of liability clauses in the Terms of Service. If applicable law imposes a higher standard (such as GDPR Article 82 data subject damages), that law prevails."
+            }
+          ]
+        },
+        {
+          "heading": "10. Term & Termination",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "This DPA takes effect upon your acceptance and remains in force alongside the Terms of Service",
+                "This DPA terminates automatically when the Terms of Service terminate",
+                "Within <b>60 days</b> after termination, we will return or delete all personal data at your instruction; during this period ClueAI may retain anonymised aggregated data for service improvement"
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "11. Governing Law & Jurisdiction",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "This DPA is governed by the law applicable to the Terms of Service. To the extent it conflicts with EU/UK data protection law, the latter prevails."
+            }
+          ]
+        },
+        {
+          "heading": "12. Signing",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Enterprise customers who need a signed paper DPA can email <mail>privacy@clueai-reviewlens.com</mail> with the company name, DPO contact, and estimated volume. We will countersign and return the document within <b>2 business days</b>."
+            }
+          ]
+        }
+      ]
+    }
+  },
   "categoryLabels": {
     "产品质量": "Product Quality",
     "包装物流": "Packaging & Logistics",
