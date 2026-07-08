@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { createBillingCheckout } from "@/lib/api/browser";
+import { openBillingCheckout, isUnauthenticatedCheckoutError } from "@/lib/billing";
 
 type Props = {
   label?: string;
@@ -18,24 +18,9 @@ export function ProCtaButton({ label = "升级到 Pro", className }: Props) {
   async function handleClick() {
     setIsLoading(true);
     try {
-      const result = await createBillingCheckout();
-      if (!result.checkout_html) return;
-      if (checkoutRef.current) {
-        checkoutRef.current.innerHTML = result.checkout_html;
-        const scripts = Array.from(checkoutRef.current.querySelectorAll("script"));
-        for (const script of scripts) {
-          await new Promise<void>((resolve, reject) => {
-            const next = document.createElement("script");
-            Array.from(script.attributes).forEach((attr) => next.setAttribute(attr.name, attr.value));
-            if (next.src) { next.onload = () => resolve(); next.onerror = () => reject(new Error("加载脚本失败")); }
-            else { next.text = script.textContent || ""; resolve(); }
-            script.replaceWith(next);
-          });
-        }
-      }
+      await openBillingCheckout(checkoutRef.current);
     } catch (err: unknown) {
-      const status = (err as { status?: number }).status;
-      if (status === 401) {
+      if (isUnauthenticatedCheckoutError(err)) {
         router.push("/register?plan=pro");
         return;
       }
