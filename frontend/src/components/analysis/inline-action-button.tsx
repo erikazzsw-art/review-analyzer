@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +27,7 @@ type InlineActionButtonProps = {
   reason?: string;
 };
 
-const OWNER_OPTIONS = ["运营", "产研", "质检", "复盘"] as const;
+const OWNER_KEYS = ["ownerOps", "ownerProduct", "ownerQA", "ownerReview"] as const;
 
 export function InlineActionButton({
   sessionId,
@@ -37,9 +38,11 @@ export function InlineActionButton({
   pct,
   reason,
 }: InlineActionButtonProps) {
+  const t = useTranslations("analysis.action");
+  const ownerOptions = useMemo(() => OWNER_KEYS.map((k) => t(k)), [t]);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [ownerRole, setOwnerRole] = useState("运营");
+  const [ownerRole, setOwnerRole] = useState(ownerOptions[0]);
   const [action, setAction] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -53,7 +56,7 @@ export function InlineActionButton({
         suggestedAction: action.trim() || reason || "",
         sourceProductId: sourceProductId,
         sourceVersion: sourceVersion,
-        sourceBatchLabel: `Session ${sessionId}`,
+        sourceBatchLabel: t("inlineBatchLabelFormat", { sessionId }),
         currentPct: pct ?? null,
         tagName: tag,
         status: "todo",
@@ -88,24 +91,26 @@ export function InlineActionButton({
           className="h-6 gap-1 px-1.5 text-[10px] font-medium text-soft"
         >
           <Plus className="h-3 w-3" />
-          行动
+          {t("inlineButton")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-base">创建行动事项</DialogTitle>
+          <DialogTitle className="text-base">{t("inlineDialogTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="rounded-lg border border-line bg-muted/40 p-3">
-            <div className="text-xs font-medium text-soft">来源问题</div>
+            <div className="text-xs font-medium text-soft">{t("inlineSource")}</div>
             <div className="mt-1 text-sm font-semibold text-ink">{tag}</div>
             {pct !== undefined && (
-              <div className="mt-0.5 text-xs text-soft">{pct.toFixed(1)}% 的评论提及</div>
+              <div className="mt-0.5 text-xs text-soft">
+                {t("inlineMentionedFormat", { pct: pct.toFixed(1) })}
+              </div>
             )}
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-ink">标题</label>
+            <label className="text-xs font-medium text-ink">{t("inlineTitleLabel")}</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -115,9 +120,9 @@ export function InlineActionButton({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-ink">负责角色</label>
+            <label className="text-xs font-medium text-ink">{t("inlineOwnerLabel")}</label>
             <div className="flex flex-wrap gap-1.5">
-              {OWNER_OPTIONS.map((role) => (
+              {ownerOptions.map((role) => (
                 <Button
                   key={role}
                   variant={ownerRole === role ? "default" : "outline"}
@@ -132,11 +137,11 @@ export function InlineActionButton({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-ink">建议措施</label>
+            <label className="text-xs font-medium text-ink">{t("inlineSuggestedLabel")}</label>
             <Textarea
               value={action}
               onChange={(e) => setAction(e.target.value)}
-              placeholder={reason || "描述改进措施..."}
+              placeholder={reason || t("inlineSuggestedPlaceholder")}
               className="min-h-[72px] resize-none text-sm"
             />
           </div>
@@ -149,9 +154,9 @@ export function InlineActionButton({
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : success ? (
-              "已创建 ✓"
+              t("inlineCreated")
             ) : (
-              "创建行动事项"
+              t("inlineCreateBtn")
             )}
           </Button>
         </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
@@ -29,6 +30,7 @@ type HistoryPageProps = {
 export default async function AnalysisHistoryPage({
   searchParams,
 }: HistoryPageProps) {
+  const t = await getTranslations("analysis.history");
   try {
     const params = searchParams ? await searchParams : undefined;
     const productId = params?.product_id?.trim();
@@ -41,13 +43,15 @@ export default async function AnalysisHistoryPage({
     return (
       <AppShell
         currentPath="/analysis/history"
-        title="分析历史"
-        description={`共 ${payload.total} 个分析批次，按产品分组`}
+        title={t("title")}
+        description={t("totalFormat", { total: payload.total })}
       >
         {payload.selected_session_id ? (
           <section className="rounded-card border border-line bg-[#f8fffc] px-5 py-3 text-sm text-soft">
-            当前聚焦批次 ID: {payload.selected_session_id}
-            {payload.selected_product_id ? ` · 产品 ${payload.selected_product_id}` : ""}
+            {t("currentFocus", { sessionId: payload.selected_session_id })}
+            {payload.selected_product_id
+              ? t("currentFocusProduct", { productId: payload.selected_product_id })
+              : ""}
           </section>
         ) : null}
 
@@ -60,11 +64,11 @@ export default async function AnalysisHistoryPage({
               <Table className="mt-3">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead>批次标题</TableHead>
-                    <TableHead className="w-20">版本</TableHead>
-                    <TableHead className="w-28">时间</TableHead>
-                    <TableHead className="w-16">评论</TableHead>
-                    <TableHead className="w-48">操作</TableHead>
+                    <TableHead>{t("headBatchTitle")}</TableHead>
+                    <TableHead className="w-20">{t("headVersion")}</TableHead>
+                    <TableHead className="w-28">{t("headTime")}</TableHead>
+                    <TableHead className="w-16">{t("headReviews")}</TableHead>
+                    <TableHead className="w-48">{t("headActions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -80,13 +84,13 @@ export default async function AnalysisHistoryPage({
                             href={`/analysis/results?session_id=${session.id}`}
                             className="inline-flex items-center rounded-pill bg-ink px-3 py-1.5 text-xs font-semibold text-white"
                           >
-                            看结果
+                            {t("viewResults")}
                           </Link>
                           <Link
                             href={`/analysis/compare?product_id=${encodeURIComponent(session.product_id)}&session_id=${session.id}`}
                             className="inline-flex items-center rounded-pill border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink"
                           >
-                            对比
+                            {t("compareLink")}
                           </Link>
                           <DeleteSessionButton
                             sessionId={session.id}
@@ -102,7 +106,7 @@ export default async function AnalysisHistoryPage({
           ))}
           {payload.items.length === 0 ? (
             <div className="rounded-shell border border-dashed border-line bg-[#fffafb] px-5 py-5 text-sm text-soft">
-              当前没有历史分析批次。
+              {t("empty")}
             </div>
           ) : null}
         </section>
@@ -113,12 +117,12 @@ export default async function AnalysisHistoryPage({
       return (
         <AppShell
           currentPath="/analysis/history"
-          title="分析历史需要先登录。"
-          description="登录后可以直接查看当前账号下的所有分析批次。"
+          title={t("loginTitle")}
+          description={t("loginSubtitle")}
         >
           <EmptyAuthState
-            title="登录后查看分析历史"
-            description="这里会按产品组汇总你上传过的所有分析批次，方便跳转结果页或对比页。"
+            title={t("loginEmptyTitle")}
+            description={t("loginEmptyDesc")}
           />
         </AppShell>
       );

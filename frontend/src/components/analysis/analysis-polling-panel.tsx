@@ -3,13 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, PackageSearch } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { fetchUploadJob } from "@/lib/api/browser";
 import type { UploadJob } from "@/lib/api/types";
 
 type StepStatus = "completed" | "active" | "pending" | "error";
-
-const STEPS = ["排队中", "拉取评论", "分析中", "完成"] as const;
 
 function getStepStatuses(job: UploadJob | null): StepStatus[] {
   if (!job) return ["active", "pending", "pending", "pending"];
@@ -32,26 +31,7 @@ function getStepStatuses(job: UploadJob | null): StepStatus[] {
   return ["active", "pending", "pending", "pending"];
 }
 
-function statusMessage(job: UploadJob | null): string {
-  if (!job) return "正在连接...";
-  if (job.status === "queued" && job.total_rows === 0) return "排队中...";
-  if (job.status === "fetching")
-    return job.error_message || "正在拉取评论...";
-  if (job.status === "processing" || (job.status === "queued" && job.total_rows > 0))
-    return "分析中...";
-  if (job.status === "done") return "分析完成";
-  return "分析失败";
-}
-
-function friendlyError(msg: string | null): string {
-  if (!msg) return "未知错误，请重试";
-  if (msg.toLowerCase().includes("timeout")) return "请求超时，请稍后重试";
-  if (msg.toLowerCase().includes("rate limit")) return "请求过于频繁，请稍后再试";
-  if (msg.toLowerCase().includes("quota")) return msg;
-  return msg;
-}
-
-function StepperStrip({ statuses }: { statuses: StepStatus[] }) {
+function StepperStrip({ statuses, labels }: { statuses: StepStatus[]; labels: string[] }) {
   return (
     <div className="flex w-full max-w-md items-center">
       {statuses.map((s, i) => (
@@ -85,7 +65,7 @@ function StepperStrip({ statuses }: { statuses: StepStatus[] }) {
                     : "text-soft"
               }`}
             >
-              {STEPS[i]}
+              {labels[i]}
             </span>
           </div>
           {/* Connector line */}
@@ -108,10 +88,32 @@ function StepperStrip({ statuses }: { statuses: StepStatus[] }) {
 
 export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
   const router = useRouter();
+  const t = useTranslations("analysis.polling");
   const [job, setJob] = useState<UploadJob | null>(null);
   const [error, setError] = useState("");
   const [isStale, setIsStale] = useState(false);
   const lastStatusRef = useRef<{ status: string; at: number }>({ status: "", at: Date.now() });
+
+  const steps = [t("step1"), t("step2"), t("step3"), t("step4")];
+
+  function statusMessage(job: UploadJob | null): string {
+    if (!job) return t("statusConnecting");
+    if (job.status === "queued" && job.total_rows === 0) return t("statusQueued");
+    if (job.status === "fetching")
+      return job.error_message || t("statusFetching");
+    if (job.status === "processing" || (job.status === "queued" && job.total_rows > 0))
+      return t("statusProcessing");
+    if (job.status === "done") return t("statusDone");
+    return t("statusFailed");
+  }
+
+  function friendlyError(msg: string | null): string {
+    if (!msg) return t("unknownError");
+    if (msg.toLowerCase().includes("timeout")) return t("timeoutError");
+    if (msg.toLowerCase().includes("rate limit")) return t("rateLimitError");
+    if (msg.toLowerCase().includes("quota")) return msg;
+    return msg;
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -148,7 +150,7 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
         timer = window.setTimeout(poll, 2000);
       } catch (err) {
         if (cancelled) return;
-        setError((err as { message?: string }).message || "轮询失败");
+        setError((err as { message?: string }).message || t("pollingFailure"));
         // Retry after error
         timer = window.setTimeout(poll, 5000);
       }
@@ -161,7 +163,7 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [jobId, router]);
+  }, [jobId, router, t]);
 
   const stepStatuses = getStepStatuses(job);
   const progress =
@@ -182,7 +184,7 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
     <section className="rounded-shell border border-line bg-white/84 p-8 shadow-card backdrop-blur">
       <div className="flex flex-col items-center gap-6 text-center">
         {/* Stepper */}
-        {job && <StepperStrip statuses={stepStatuses} />}
+        {job && <StepperStrip statuses={stepStatuses} labels={steps} />}
 
         {/* In-progress states */}
         {isInProgress && !error && (
@@ -193,13 +195,13 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
                 {statusMessage(job)}
               </h2>
               <p className="mt-2 text-sm text-soft">
-                评论正在后台处理，完成后将自动展示结果
+                {t("description")}
               </p>
             </div>
             {job && job.total_rows > 0 && (
               <div className="w-full max-w-sm">
                 <div className="flex items-center justify-between text-xs text-soft">
-                  <span>已处理 {job.processed_rows} / {job.total_rows} 条</span>
+                  <span>{t("processedFormat", { processed: job.processed_rows, total: job.total_rows })}</span>
                   <span>{progress}%</span>
                 </div>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#f3f0f5]">
@@ -210,14 +212,14 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
                 </div>
                 {job.positive_count + job.negative_count > 0 && (
                   <div className="mt-2 text-xs text-soft">
-                    好评 {job.positive_count} · 差评 {job.negative_count}
+                    {t("sentimentSplit", { positive: job.positive_count, negative: job.negative_count })}
                   </div>
                 )}
               </div>
             )}
             {isStale && (
               <div className="rounded-card border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700">
-                处理时间较长，请耐心等待...
+                {t("staleWarning")}
               </div>
             )}
           </>
@@ -231,13 +233,13 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
             </div>
             <div>
               <h2 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-                未找到评论
+                {t("noReviewsTitle")}
               </h2>
               <p className="mt-2 text-sm text-soft">
-                {job.error_message || "该产品暂无可分析的评论"}
+                {job.error_message || t("noReviewsDefaultMsg")}
               </p>
               <p className="mt-3 text-xs text-soft/80">
-                可能原因：产品尚无评论、评论语言非英文（系统仅分析英文评论）、或产品编码有误
+                {t("noReviewsReasons")}
               </p>
             </div>
             <div className="flex gap-3">
@@ -246,14 +248,14 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
                 onClick={() => router.push("/upload")}
                 className="inline-flex min-h-10 items-center justify-center rounded-pill bg-ink px-5 py-2.5 text-sm font-semibold text-white shadow-card"
               >
-                重新尝试
+                {t("retry")}
               </button>
               <button
                 type="button"
                 onClick={() => router.push("/upload")}
                 className="inline-flex min-h-10 items-center justify-center rounded-pill border border-line bg-white px-5 py-2.5 text-sm font-semibold text-ink"
               >
-                更换产品
+                {t("changeProduct")}
               </button>
             </div>
           </>
@@ -267,7 +269,7 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
             </div>
             <div>
               <h2 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-                分析失败
+                {t("statusFailed")}
               </h2>
               <p className="mt-2 text-sm text-[#b44655]">
                 {friendlyError(job?.error_message ?? null)}
@@ -278,7 +280,7 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
               onClick={() => router.push("/upload")}
               className="inline-flex min-h-10 items-center justify-center rounded-pill bg-ink px-5 py-2.5 text-sm font-semibold text-white shadow-card"
             >
-              重新上传
+              {t("retryUpload")}
             </button>
           </>
         )}
@@ -286,7 +288,7 @@ export function AnalysisPollingPanel({ jobId }: { jobId: number }) {
         {/* Network error during polling */}
         {error && isInProgress && (
           <div className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            连接中断，正在重试... ({error})
+            {t("connectionLost", { error })}
           </div>
         )}
       </div>

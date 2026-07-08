@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import type { QaCitation, QaMessage } from "@/lib/api/types";
 
@@ -13,22 +14,22 @@ type ChatMessage = {
   intent?: string | null;
 };
 
-const INTENT_LABELS: Record<string, string> = {
-  aggregate_feedback: "聚合分析",
-  product_compare: "跨产品对比",
-  rating_breakdown: "星级分层",
-  consumer_insight: "消费者洞察",
-  trend_and_emerging: "趋势分析",
-  specific_retrieval: "检索证据",
-  unanswerable: "无法回答",
+const INTENT_KEYS: Record<string, string> = {
+  aggregate_feedback: "intentAgg",
+  product_compare: "intentCompare",
+  rating_breakdown: "intentRating",
+  consumer_insight: "intentInsight",
+  trend_and_emerging: "intentTrend",
+  specific_retrieval: "intentRetrieve",
+  unanswerable: "intentUnanswer",
 };
 
-const RETRIEVAL_LABELS: Record<string, string> = {
-  hybrid: "混合检索",
-  vector: "向量检索",
-  aggregation: "结构化聚合",
-  compare: "跨产品聚合",
-  fallback: "兜底文案",
+const RETRIEVAL_KEYS: Record<string, string> = {
+  hybrid: "retrievalHybrid",
+  vector: "retrievalVector",
+  aggregation: "retrievalAggregation",
+  compare: "retrievalCompare",
+  fallback: "retrievalFallback",
 };
 
 type QaChatAreaProps = {
@@ -59,6 +60,8 @@ export function QaChatArea({ messages, isLoading }: QaChatAreaProps) {
 }
 
 function MessageBubble({ message }: { message: ChatMessage }) {
+  const t = useTranslations("analysis.qa");
+
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
@@ -69,6 +72,9 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     );
   }
 
+  const intentKey = message.intent ? INTENT_KEYS[message.intent] : undefined;
+  const retrievalKey = message.retrieval_method ? RETRIEVAL_KEYS[message.retrieval_method] : undefined;
+
   return (
     <div className="flex justify-start">
       <div className="max-w-[90%]">
@@ -77,14 +83,16 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         </div>
         {(message.intent || message.retrieval_method) && (
           <div className="mt-1 flex flex-wrap gap-2 text-xs text-soft">
-            {message.intent && INTENT_LABELS[message.intent] && (
+            {intentKey && (
               <span className="rounded-full bg-[#fdf1f4] px-2 py-0.5 font-medium text-[#d94d72]">
-                {INTENT_LABELS[message.intent]}
+                {t(intentKey)}
               </span>
             )}
             {message.retrieval_method && (
               <span>
-                {RETRIEVAL_LABELS[message.retrieval_method] ?? `检索方式：${message.retrieval_method}`}
+                {retrievalKey
+                  ? t(retrievalKey)
+                  : t("retrievalOther", { method: message.retrieval_method })}
               </span>
             )}
           </div>
@@ -98,6 +106,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 }
 
 function CitationsCollapse({ citations }: { citations: QaCitation[] }) {
+  const t = useTranslations("analysis.qa");
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -107,7 +116,7 @@ function CitationsCollapse({ citations }: { citations: QaCitation[] }) {
         onClick={() => setExpanded(!expanded)}
         className="text-xs font-medium text-[#4a7dc7] hover:underline"
       >
-        {expanded ? "收起" : `查看 ${citations.length} 条引用评论`}
+        {expanded ? t("citationCollapse") : t("citationExpand", { count: citations.length })}
       </button>
       {expanded && (
         <div className="mt-2 space-y-2">
@@ -117,7 +126,7 @@ function CitationsCollapse({ citations }: { citations: QaCitation[] }) {
               className="rounded-card border border-line bg-[#f9fafb] px-3 py-2.5 text-xs leading-6 text-ink"
             >
               <div className="font-medium text-soft">
-                {c.product_id || "—"} · {c.date || "无日期"} · {c.sentiment || "—"}
+                {c.product_id || "—"} · {c.date || t("noDate")} · {c.sentiment || "—"}
               </div>
               <div className="mt-1">{c.content || ""}</div>
             </div>

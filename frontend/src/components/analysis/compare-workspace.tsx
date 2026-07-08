@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
+import { useTranslations } from "next-intl";
 import {
   downloadCompareExport,
   fetchCompareDataset,
@@ -33,6 +33,8 @@ export function CompareWorkspace({
   initialMode,
   initialGroups,
 }: CompareWorkspaceProps) {
+  const t = useTranslations("analysis.compare");
+  const tCommon = useTranslations("common");
   const [productList, setProductList] = useState<ProductOverview[]>(products);
   const [dataset, setDataset] = useState<AnalysisCompareResponse | null>(initialDataset ?? null);
   const [mode, setMode] = useState<CompareMode>(initialMode ?? "same_product_time");
@@ -57,7 +59,7 @@ export function CompareWorkspace({
       setDataset(response);
     } catch (err) {
       const candidate = err as { message?: string };
-      setError(candidate.message || "对比数据加载失败");
+      setError(candidate.message || t("workspaceLoadFailure"));
       setDataset(null);
     } finally {
       setIsFetching(false);
@@ -75,7 +77,7 @@ export function CompareWorkspace({
       });
     } catch (err) {
       const candidate = err as { message?: string };
-      setError(candidate.message || "XLSX 导出失败");
+      setError(candidate.message || t("workspaceExportFailure"));
     } finally {
       setIsExporting(false);
     }
@@ -98,11 +100,11 @@ export function CompareWorkspace({
     <div className="flex flex-col gap-4">
       {productList.length === 0 ? (
         <section className="rounded-shell border border-dashed border-line bg-[#fffafb] px-6 py-8 text-sm text-soft">
-          还没有可对比的产品。先去
+          {t("workspaceNoProductsPrefix")}
           <Link href="/upload" className="mx-1 font-semibold text-ink underline">
-            上传评论
+            {t("workspaceUploadReviewsLink")}
           </Link>
-          完成一次分析后再回来。
+          {t("workspaceNoProductsSuffix")}
         </section>
       ) : (
         <CompareFilterBar
@@ -129,7 +131,7 @@ export function CompareWorkspace({
               disabled={isExporting}
               className="rounded-pill bg-ink px-5 py-2 text-sm font-semibold text-white shadow-card disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isExporting ? "导出中..." : "⬇ 下载 XLSX"}
+              {isExporting ? tCommon("exporting") : t("workspaceDownloadXlsx")}
             </button>
           </div>
           <CompareDashboard dataset={dataset} />
@@ -137,7 +139,7 @@ export function CompareWorkspace({
         </>
       ) : productList.length > 0 ? (
         <section className="rounded-shell border border-dashed border-line bg-[#fffafb] px-6 py-10 text-sm text-soft">
-          选择 2 个或以上对比对象，点击「生成对比」后这里会出现核心指标、问题/亮点差异、风险/机会和推荐动作。
+          {t("workspaceEmpty")}
         </section>
       ) : null}
 

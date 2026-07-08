@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 import type { QaProduct } from "@/lib/api/types";
 
@@ -11,6 +12,8 @@ type QaProductSelectorProps = {
 };
 
 export function QaProductSelector({ products, selectedIds, onConfirm }: QaProductSelectorProps) {
+  const t = useTranslations("analysis.qa");
+  const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [localSelected, setLocalSelected] = useState<string[]>(selectedIds);
@@ -63,7 +66,7 @@ export function QaProductSelector({ products, selectedIds, onConfirm }: QaProduc
         type="button"
         onClick={() => setOpen(!open)}
         className="flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white text-soft transition hover:border-[#f36f8f] hover:text-ink"
-        title="选择产品"
+        title={t("productSelectorTitle")}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -77,14 +80,14 @@ export function QaProductSelector({ products, selectedIds, onConfirm }: QaProduc
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜索产品名或 ASIN..."
+              placeholder={t("productSelectorSearch")}
               className="w-full rounded border border-line bg-[#f9fafb] px-3 py-1.5 text-sm outline-none focus:border-[#f36f8f]"
               autoFocus
             />
           </div>
           <div className="max-h-60 overflow-y-auto px-1 py-1">
             {filtered.length === 0 ? (
-              <div className="px-3 py-4 text-center text-sm text-soft">未找到匹配产品</div>
+              <div className="px-3 py-4 text-center text-sm text-soft">{t("productSelectorEmpty")}</div>
             ) : (
               filtered.map((product) => {
                 const isActive = localSelected.includes(product.parent_product_id);
@@ -110,7 +113,7 @@ export function QaProductSelector({ products, selectedIds, onConfirm }: QaProduc
                       {product.name || product.parent_product_id}
                     </span>
                     <span className="shrink-0 text-xs text-soft">
-                      {product.review_count} 条
+                      {product.review_count} {t("reviewsUnit")}
                     </span>
                   </button>
                 );
@@ -118,13 +121,15 @@ export function QaProductSelector({ products, selectedIds, onConfirm }: QaProduc
             )}
           </div>
           <div className="flex items-center justify-between border-t border-line px-3 py-2">
-            <span className="text-xs text-soft">已选 {localSelected.length}/5</span>
+            <span className="text-xs text-soft">
+              {t("selectedCountFormat", { count: localSelected.length })}
+            </span>
             <button
               type="button"
               onClick={handleConfirm}
               className="rounded-pill bg-ink px-4 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
             >
-              确认
+              {tCommon("confirm")}
             </button>
           </div>
         </div>

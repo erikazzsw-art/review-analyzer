@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Search, ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { searchProducts } from "@/lib/api/browser";
 import type { ProductSearchItem } from "@/lib/api/types";
@@ -13,6 +14,8 @@ type Props = {
 };
 
 export function ProductSearchCombobox({ value, onChange, placeholder }: Props) {
+  const t = useTranslations("analysis.productSearch");
+  const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<ProductSearchItem[]>([]);
@@ -79,7 +82,7 @@ export function ProductSearchCombobox({ value, onChange, placeholder }: Props) {
             setQuery(e.target.value);
             if (!open) setOpen(true);
           }}
-          placeholder={placeholder || "搜索产品编码 / 名称"}
+          placeholder={placeholder || t("placeholder")}
           className="h-9 w-full rounded-pill border border-line bg-white pl-9 pr-9 text-sm font-medium text-ink shadow-sm focus:border-rose focus:outline-none focus:ring-2 focus:ring-rose/20"
         />
         <ChevronDown
@@ -89,11 +92,11 @@ export function ProductSearchCombobox({ value, onChange, placeholder }: Props) {
       {open && (
         <ul className="absolute left-0 right-0 z-50 mt-1 max-h-72 overflow-auto rounded-card border border-line bg-white py-1 shadow-card">
           {loading && (
-            <li className="px-3 py-2 text-xs text-soft">加载中…</li>
+            <li className="px-3 py-2 text-xs text-soft">{tCommon("loadingEllipsis")}</li>
           )}
           {!loading && items.length === 0 && (
             <li className="px-3 py-2 text-xs text-soft">
-              {query ? `未找到 “${query}” 相关产品` : "暂无产品"}
+              {query ? t("notFoundFormat", { query }) : t("empty")}
             </li>
           )}
           {!loading &&
@@ -108,9 +111,13 @@ export function ProductSearchCombobox({ value, onChange, placeholder }: Props) {
                 <div className="text-sm font-semibold text-ink">{it.parent_product_id}</div>
                 <div className="mt-0.5 flex items-center gap-2 text-xs text-soft">
                   {it.name && <span className="truncate">{it.name}</span>}
-                  <span className="shrink-0">{it.review_count} 评论</span>
+                  <span className="shrink-0">
+                    {it.review_count} {t("reviewsUnit")}
+                  </span>
                   {it.session_count > 0 && (
-                    <span className="shrink-0">· {it.session_count} 批</span>
+                    <span className="shrink-0">
+                      · {it.session_count} {t("sessionsUnit")}
+                    </span>
                   )}
                 </div>
               </li>

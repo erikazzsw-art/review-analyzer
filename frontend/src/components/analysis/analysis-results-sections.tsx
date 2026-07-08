@@ -8,7 +8,7 @@ import {
   Download,
   Loader2,
 } from "lucide-react";
-import * as XLSX from "xlsx";
+import { useTranslations } from "next-intl";
 
 import { ModuleCard } from "@/components/analysis/module-card";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
@@ -64,7 +64,6 @@ type Props = {
   actionCandidates: ActionCandidate[];
   overviewSlot: ReactNode;
   filterBarSlot?: ReactNode;
-  t: Record<string, string>;
   locale: string;
 };
 
@@ -110,6 +109,17 @@ function extractQuotes(row: RowItem): string[] {
   return [];
 }
 
+type TagTableProps = {
+  items: RowItem[];
+  variant: "positive" | "negative" | "neutral";
+  sessionId: number;
+  session: SessionInfo;
+  showAction?: boolean;
+  comments?: Array<Record<string, unknown>>;
+  tagSource?: "highlight_tag" | "issue_tag";
+  locale?: string;
+};
+
 function TagTable({
   items,
   variant,
@@ -119,16 +129,8 @@ function TagTable({
   comments,
   tagSource,
   locale,
-}: {
-  items: RowItem[];
-  variant: "positive" | "negative" | "neutral";
-  sessionId: number;
-  session: SessionInfo;
-  showAction?: boolean;
-  comments?: Array<Record<string, unknown>>;
-  tagSource?: "highlight_tag" | "issue_tag";
-  locale?: string;
-}) {
+}: TagTableProps) {
+  const t = useTranslations("analysis.table");
   const barColor =
     variant === "positive"
       ? "bg-[#10b981]"
@@ -145,9 +147,9 @@ function TagTable({
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <TableHead className="w-10 text-center">#</TableHead>
-          <TableHead className="min-w-[120px]">标签</TableHead>
-          <TableHead className="w-36">提及占比</TableHead>
-          <TableHead>代表评论</TableHead>
+          <TableHead className="min-w-[120px]">{t("tag")}</TableHead>
+          <TableHead className="w-36">{t("mentionPct")}</TableHead>
+          <TableHead>{t("reprComments")}</TableHead>
           <TableHead className="w-24" />
         </TableRow>
       </TableHeader>
@@ -239,9 +241,10 @@ export function AnalysisResultsSections({
   actionCandidates,
   overviewSlot,
   filterBarSlot,
-  t,
   locale,
 }: Props) {
+  const t = useTranslations("analysis");
+  const tTable = useTranslations("analysis.table");
   const [reviewsShown, setReviewsShown] = useState(REVIEWS_PAGE_SIZE);
   const [exportingFull, setExportingFull] = useState(false);
   const canShowActions = sessionId > 0;
@@ -267,13 +270,13 @@ export function AnalysisResultsSections({
   }
 
   const sections = [
-    { id: "profile", label: t.moduleConsumerProfile || "用户画像" },
-    { id: "experience", label: t.moduleUserExperience || "用户体验" },
-    { id: "motives", label: t.modulePurchaseMotives || "消费动机" },
-    { id: "needs", label: t.moduleUnmetNeeds || "未满足的需求" },
-    { id: "recommendations", label: t.moduleRecommendations || "综合建议" },
-    ...(canShowActions ? [{ id: "actions", label: t.tabCreateAction || "创建行动" }] : []),
-    { id: "reviews", label: t.rawReviews || "评论原文" },
+    { id: "profile", label: t("moduleConsumerProfile") },
+    { id: "experience", label: t("moduleUserExperience") },
+    { id: "motives", label: t("modulePurchaseMotives") },
+    { id: "needs", label: t("moduleUnmetNeeds") },
+    { id: "recommendations", label: t("moduleRecommendations") },
+    ...(canShowActions ? [{ id: "actions", label: t("tabCreateAction") }] : []),
+    { id: "reviews", label: t("rawReviews") },
   ];
 
   const positiveTop = Math.min(userExperience.positive.length, 10);
@@ -291,8 +294,8 @@ export function AnalysisResultsSections({
       <section className="flex flex-col gap-3">
         <SectionHeading
           id="profile"
-          title={t.moduleConsumerProfile || "用户画像"}
-          desc={t.moduleConsumerProfileDesc}
+          title={t("moduleConsumerProfile")}
+          desc={t("moduleConsumerProfileDesc")}
         />
         <ModuleCard
           sessionId={sessionId}
@@ -307,8 +310,8 @@ export function AnalysisResultsSections({
             <Table className="mt-4">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-32">维度</TableHead>
-                  <TableHead>详情</TableHead>
+                  <TableHead className="w-32">{tTable("dimension")}</TableHead>
+                  <TableHead>{tTable("detail")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -325,7 +328,7 @@ export function AnalysisResultsSections({
           )}
           {consumerProfile.evidence.length > 0 && (
             <div className="mt-4 rounded-card border border-dashed border-line bg-[#fdfcfe] p-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-soft">{t.evidence}</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-soft">{t("evidence")}</div>
               <div className="mt-2 space-y-1">
                 {consumerProfile.evidence.map((quote, i) => (
                   <p key={`ev-${i}`} className="text-xs italic leading-5 text-soft">
@@ -342,8 +345,8 @@ export function AnalysisResultsSections({
       <section className="flex flex-col gap-3">
         <SectionHeading
           id="experience"
-          title={t.moduleUserExperience || "用户体验"}
-          desc={t.moduleUserExperienceDesc}
+          title={t("moduleUserExperience")}
+          desc={t("moduleUserExperienceDesc")}
         />
         <ModuleCard
           sessionId={sessionId}
@@ -359,7 +362,7 @@ export function AnalysisResultsSections({
               <div className="mb-3 flex items-center gap-2">
                 <ThumbsUp className="h-4 w-4 text-[#059669]" />
                 <span className="text-sm font-semibold text-[#059669]">
-                  {t.positiveFeedback} TOP {positiveTop}
+                  {t("positiveFeedback")} TOP {positiveTop}
                 </span>
               </div>
               <TagTable
@@ -372,14 +375,14 @@ export function AnalysisResultsSections({
                 locale={locale}
               />
               {userExperience.positive.length === 0 && (
-                <p className="text-sm text-soft">{t.noPositive}</p>
+                <p className="text-sm text-soft">{t("noPositive")}</p>
               )}
             </div>
             <div>
               <div className="mb-3 flex items-center gap-2">
                 <ThumbsDown className="h-4 w-4 text-[#dc2626]" />
                 <span className="text-sm font-semibold text-[#dc2626]">
-                  {t.negativeFeedback} TOP {negativeTop}
+                  {t("negativeFeedback")} TOP {negativeTop}
                 </span>
               </div>
               <TagTable
@@ -393,7 +396,7 @@ export function AnalysisResultsSections({
                 locale={locale}
               />
               {userExperience.negative.length === 0 && (
-                <p className="text-sm text-soft">{t.noNegative}</p>
+                <p className="text-sm text-soft">{t("noNegative")}</p>
               )}
             </div>
           </div>
@@ -404,8 +407,8 @@ export function AnalysisResultsSections({
       <section className="flex flex-col gap-3">
         <SectionHeading
           id="motives"
-          title={t.modulePurchaseMotives || "消费动机"}
-          desc={t.modulePurchaseMotivesDesc}
+          title={t("modulePurchaseMotives")}
+          desc={t("modulePurchaseMotivesDesc")}
         />
         <ModuleCard
           sessionId={sessionId}
@@ -434,8 +437,8 @@ export function AnalysisResultsSections({
       <section className="flex flex-col gap-3">
         <SectionHeading
           id="needs"
-          title={t.moduleUnmetNeeds || "未满足的需求"}
-          desc={t.moduleUnmetNeedsDesc}
+          title={t("moduleUnmetNeeds")}
+          desc={t("moduleUnmetNeedsDesc")}
         />
         <ModuleCard
           sessionId={sessionId}
@@ -466,8 +469,8 @@ export function AnalysisResultsSections({
       <section className="flex flex-col gap-3">
         <SectionHeading
           id="recommendations"
-          title={t.moduleRecommendations || "综合建议"}
-          desc={t.moduleRecommendationsDesc}
+          title={t("moduleRecommendations")}
+          desc={t("moduleRecommendationsDesc")}
         />
         <ModuleCard
           sessionId={sessionId}
@@ -497,7 +500,7 @@ export function AnalysisResultsSections({
       {/* Section: 创建行动 */}
       {canShowActions && (
         <section className="flex flex-col gap-3">
-          <SectionHeading id="actions" title={t.tabCreateAction || "创建行动"} />
+          <SectionHeading id="actions" title={t("tabCreateAction")} />
           <CreateActionPanel
             sessionId={sessionId}
             productId={session.product_ref_id}
@@ -513,7 +516,7 @@ export function AnalysisResultsSections({
 
       {/* Section: 评论原文 */}
       <section className="flex flex-col gap-3">
-        <SectionHeading id="reviews" title={t.rawReviews || "评论原文"} />
+        <SectionHeading id="reviews" title={t("rawReviews")} />
         <div className="rounded-shell border border-line bg-white p-5 shadow-card">
           {sessionId > 0 && (
             <div className="mb-3 flex justify-end">
@@ -547,9 +550,9 @@ export function AnalysisResultsSections({
                   return (
                     <div key={String(comment.id ?? i)} className="rounded-card border border-line bg-white px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-soft">{rv(comment.date, t.noDate)}</span>
+                        <span className="text-xs text-soft">{rv(comment.date, t("noDate"))}</span>
                         <span className={`rounded-pill border px-2 py-0.5 text-[10px] font-semibold ${sentimentColor}`}>
-                          {sentiment || t.noSentiment}
+                          {sentiment || t("noSentiment")}
                         </span>
                         {comment.issue_tag ? (
                           <span className="rounded-pill border border-[#fecaca] bg-[#fef2f2] px-2 py-0.5 text-[10px] text-[#b91c1c]">
@@ -575,14 +578,14 @@ export function AnalysisResultsSections({
                       onClick={() => setReviewsShown((n) => n + REVIEWS_PAGE_SIZE)}
                       className="rounded-pill border border-line bg-white px-4 py-2 text-xs font-semibold text-ink shadow-sm hover:bg-[#faf8fb]"
                     >
-                      显示更多（剩余 {comments.length - reviewsShown}）
+                      {t("showMore", { count: comments.length - reviewsShown })}
                     </button>
                   </div>
                 )}
               </>
             ) : (
               <div className="rounded-card border border-dashed border-line bg-[#fdfcfe] px-5 py-8 text-center text-sm text-soft">
-                {t.noReviews}
+                {t("noReviews")}
               </div>
             )}
           </div>

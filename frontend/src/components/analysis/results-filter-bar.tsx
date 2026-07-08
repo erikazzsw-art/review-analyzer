@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Calendar, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   Select,
@@ -24,14 +25,14 @@ type Props = {
   version?: string | null;
 };
 
-const RANGE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "default", label: "默认（当前批次）" },
-  { value: "7d", label: "最近 7 天" },
-  { value: "14d", label: "最近 14 天" },
-  { value: "30d", label: "最近 30 天" },
-  { value: "90d", label: "最近 90 天" },
-  { value: "all", label: "所有时间" },
-  { value: "custom", label: "自定义范围" },
+const RANGE_OPTION_KEYS: Array<{ value: string; key: string }> = [
+  { value: "default", key: "rangeDefault" },
+  { value: "7d", key: "range7d" },
+  { value: "14d", key: "range14d" },
+  { value: "30d", key: "range30d" },
+  { value: "90d", key: "range90d" },
+  { value: "all", key: "rangeAll" },
+  { value: "custom", key: "rangeCustom" },
 ];
 
 export function ResultsFilterBar({
@@ -43,6 +44,8 @@ export function ResultsFilterBar({
   isAggregated,
   version,
 }: Props) {
+  const t = useTranslations("analysis.filterBar");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -120,7 +123,7 @@ export function ResultsFilterBar({
       <div className="flex flex-1 flex-wrap items-center gap-3">
         <div className="flex flex-col gap-1">
           <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
-            产品
+            {t("product")}
           </span>
           <ProductSearchCombobox value={productId} onChange={handleProductChange} />
         </div>
@@ -128,14 +131,14 @@ export function ResultsFilterBar({
         {versions.length > 1 && (
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
-              版本
+              {t("version")}
             </span>
             <Select value={version || "__all__"} onValueChange={handleVersionChange}>
               <SelectTrigger className="h-9 w-32 rounded-pill border-line bg-white text-sm font-medium">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">全部版本</SelectItem>
+                <SelectItem value="__all__">{t("allVersions")}</SelectItem>
                 {versions.map((v) => (
                   <SelectItem key={v.version} value={v.version}>
                     {v.version} ({v.review_count})
@@ -148,7 +151,7 @@ export function ResultsFilterBar({
 
         <div className="flex flex-col gap-1">
           <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
-            时间范围
+            {t("timeRange")}
           </span>
           <div className="relative flex items-center gap-2">
             <Select value={range} onValueChange={handleRangeChange}>
@@ -157,9 +160,9 @@ export function ResultsFilterBar({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {RANGE_OPTIONS.map((opt) => (
+                {RANGE_OPTION_KEYS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.key)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -173,7 +176,7 @@ export function ResultsFilterBar({
                     onChange={(e) => setCustomStart(e.target.value)}
                     className="h-9 rounded-md border border-line bg-white px-2 text-sm"
                   />
-                  <span className="text-xs text-soft">至</span>
+                  <span className="text-xs text-soft">{t("dateSep")}</span>
                   <input
                     type="date"
                     value={customEnd}
@@ -187,7 +190,7 @@ export function ResultsFilterBar({
                     onClick={() => setCustomOpen(false)}
                     className="rounded-pill border border-line bg-white px-3 py-1.5 text-xs text-soft"
                   >
-                    取消
+                    {tCommon("cancel")}
                   </button>
                   <button
                     type="button"
@@ -195,7 +198,7 @@ export function ResultsFilterBar({
                     disabled={!customStart || !customEnd || customStart > customEnd}
                     className="rounded-pill bg-ink px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                   >
-                    应用
+                    {tCommon("apply")}
                   </button>
                 </div>
               </div>
@@ -206,13 +209,13 @@ export function ResultsFilterBar({
         {timeLabel && (
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
-              当前视图
+              {t("currentView")}
             </span>
             <div className="flex h-9 items-center gap-2 rounded-pill bg-[#faf8fb] px-3 text-xs font-medium text-soft">
               <span>{timeLabel}</span>
               {isAggregated && (
                 <span className="rounded-pill bg-rose/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose">
-                  聚合
+                  {t("aggregatedBadge")}
                 </span>
               )}
             </div>
@@ -223,7 +226,7 @@ export function ResultsFilterBar({
       {isPending && (
         <div className="flex items-center gap-1.5 text-xs text-soft">
           <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-          重新加载
+          {tCommon("reloading")}
         </div>
       )}
     </div>

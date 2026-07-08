@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Download, Languages, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { exportModuleXlsx, translateModule } from "@/lib/api/browser";
@@ -29,6 +30,7 @@ type ModuleCardProps = {
 };
 
 export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale, session, showAction, children }: ModuleCardProps) {
+  const tCommon = useTranslations("common");
   const [translatedData, setTranslatedData] = useState<Record<string, unknown> | null>(null);
   const [isTranslated, setIsTranslated] = useState(false);
   const [translating, setTranslating] = useState(false);
@@ -100,7 +102,7 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale,
           ) : (
             <Languages className="h-3 w-3" />
           )}
-          {isTranslated ? "原文" : "翻译"}
+          {isTranslated ? tCommon("showOriginal") : tCommon("translate")}
         </Button>
         <Button
           variant="outline"
@@ -235,6 +237,7 @@ function TranslatedView({
   locale?: string;
   showAction?: boolean;
 }) {
+  const t = useTranslations("analysis");
   const summary = String(data.summary || "");
   const rows = Array.isArray(data.rows) ? data.rows : [];
   const positive = Array.isArray(data.positive) ? data.positive : [];
@@ -279,7 +282,7 @@ function TranslatedView({
         <div className="flex flex-col gap-4">
           {positive.length > 0 && (
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-[#059669]">正向反馈</div>
+              <div className="text-xs font-semibold text-[#059669]">{t("positiveFeedback")}</div>
               {positive.map((row: Record<string, unknown>, i: number) => {
                 const tag = String(row.tag || "");
                 const origTag = String(origPositive[i]?.tag || tag);
@@ -301,7 +304,7 @@ function TranslatedView({
           )}
           {negative.length > 0 && (
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-[#dc2626]">负向反馈</div>
+              <div className="text-xs font-semibold text-[#dc2626]">{t("negativeFeedback")}</div>
               {negative.map((row: Record<string, unknown>, i: number) => {
                 const tag = String(row.tag || "");
                 const origTag = String(origNegative[i]?.tag || tag);
@@ -356,7 +359,7 @@ function TranslatedView({
 
       {evidence.length > 0 && (
         <div className="rounded-card border border-dashed border-line bg-[#fdfcfe] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-soft">证据</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-soft">{t("moduleCardEvidence")}</div>
           <div className="mt-2 space-y-1.5">
             {evidence.map((quote: unknown, i: number) => (
               <p key={i} className="text-xs italic leading-5 text-soft">&ldquo;{String(quote)}&rdquo;</p>

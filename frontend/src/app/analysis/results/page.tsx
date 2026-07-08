@@ -299,41 +299,18 @@ export default async function AnalysisResultsPage({
 
   const actionCandidates = [
     ...(userExperience.negative || []).map((row) => ({
-      label: String(row.tag || row.label || "问题"),
+      label: String(row.tag || row.label || t("negative")),
       detail: String(row.reason || row.detail || row.pct || ""),
       currentPct: typeof row.pct === "number" ? row.pct : Number(row.pct) || null,
       suggestedAction: String(row.reason || row.detail || ""),
     })),
     ...(unmetNeeds.rows || []).map((row) => ({
-      label: String(row.tag || row.label || "需求"),
+      label: String(row.tag || row.label || t("moduleUnmetNeeds")),
       detail: String(row.reason || row.detail || row.summary || row.value || ""),
       currentPct: typeof row.pct === "number" ? row.pct : Number(row.pct) || null,
       suggestedAction: String(row.reason || row.detail || ""),
     })),
   ].slice(0, 8);
-
-  const tStrings: Record<string, string> = {
-    moduleConsumerProfile: t("moduleConsumerProfile"),
-    moduleUserExperience: t("moduleUserExperience"),
-    modulePurchaseMotives: t("modulePurchaseMotives"),
-    moduleUnmetNeeds: t("moduleUnmetNeeds"),
-    moduleRecommendations: t("moduleRecommendations"),
-    moduleConsumerProfileDesc: t("moduleConsumerProfileDesc"),
-    moduleUserExperienceDesc: t("moduleUserExperienceDesc"),
-    modulePurchaseMotivesDesc: t("modulePurchaseMotivesDesc"),
-    moduleUnmetNeedsDesc: t("moduleUnmetNeedsDesc"),
-    moduleRecommendationsDesc: t("moduleRecommendationsDesc"),
-    tabCreateAction: t("tabCreateAction"),
-    evidence: t("evidence"),
-    positiveFeedback: t("positiveFeedback"),
-    negativeFeedback: t("negativeFeedback"),
-    noPositive: t("noPositive"),
-    noNegative: t("noNegative"),
-    rawReviews: t("rawReviews"),
-    noDate: t("noDate"),
-    noSentiment: t("noSentiment"),
-    noReviews: t("noReviews"),
-  };
 
   const isAggregated = Boolean(payload.is_aggregated);
 
@@ -456,7 +433,6 @@ export default async function AnalysisResultsPage({
         actionCandidates={actionCandidates}
         overviewSlot={overviewSlot}
         filterBarSlot={filterBarSlot}
-        t={tStrings}
         locale={locale}
       />
     </AppShell>

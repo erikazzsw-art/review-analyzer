@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import type { CompareFilterGroup, ProductOverview } from "@/lib/api/types";
 
@@ -14,28 +15,28 @@ type CompareFilterBarProps = {
   onSubmit: (mode: CompareMode, groups: CompareFilterGroup[]) => void;
 };
 
-const MODE_LABELS: Record<CompareMode, string> = {
-  same_product_time: "时间环比",
-  same_product_version: "版本对比",
-  multi_product: "多产品对比",
+const MODE_KEYS: Record<CompareMode, string> = {
+  same_product_time: "modeTime",
+  same_product_version: "modeVersion",
+  multi_product: "modeMulti",
 };
 
-const TIME_PRESETS: Array<{ value: string; label: string; days: number }> = [
-  { value: "7", label: "环比 7 天", days: 7 },
-  { value: "14", label: "环比 14 天", days: 14 },
-  { value: "30", label: "环比 30 天", days: 30 },
-  { value: "60", label: "环比 60 天", days: 60 },
-  { value: "custom", label: "自定义", days: -1 },
+const TIME_PRESET_DAYS: Array<{ value: string; key: string; days: number }> = [
+  { value: "7", key: "timePreset7", days: 7 },
+  { value: "14", key: "timePreset14", days: 14 },
+  { value: "30", key: "timePreset30", days: 30 },
+  { value: "60", key: "timePreset60", days: 60 },
+  { value: "custom", key: "timePresetCustom", days: -1 },
 ];
 
-const PRESET_WINDOWS: Array<{ value: string; label: string; days: number }> = [
-  { value: "7d", label: "过去 7 天", days: 7 },
-  { value: "14d", label: "过去 14 天", days: 14 },
-  { value: "30d", label: "过去 30 天", days: 30 },
-  { value: "60d", label: "过去 60 天", days: 60 },
-  { value: "180d", label: "过去 180 天", days: 180 },
-  { value: "all", label: "全部时间", days: 0 },
-  { value: "custom", label: "自定义", days: -1 },
+const PRESET_WINDOW_DAYS: Array<{ value: string; key: string; days: number }> = [
+  { value: "7d", key: "windowPreset7d", days: 7 },
+  { value: "14d", key: "windowPreset14d", days: 14 },
+  { value: "30d", key: "windowPreset30d", days: 30 },
+  { value: "60d", key: "windowPreset60d", days: 60 },
+  { value: "180d", key: "windowPreset180d", days: 180 },
+  { value: "all", key: "windowPresetAll", days: 0 },
+  { value: "custom", key: "windowPresetCustom", days: -1 },
 ];
 
 function isoDaysAgo(days: number, anchor?: string | null): string {
@@ -69,11 +70,11 @@ function emptyRow(): RowState {
   };
 }
 
-function rowsForMode(mode: CompareMode, productId: string): RowState[] {
+function rowsForMode(mode: CompareMode, productId: string, baselineLabel: string, compareLabel: string): RowState[] {
   if (mode === "same_product_version") {
     return [
-      { ...emptyRow(), productId, label: "基准版本" },
-      { ...emptyRow(), productId, label: "对比版本" },
+      { ...emptyRow(), productId, label: baselineLabel },
+      { ...emptyRow(), productId, label: compareLabel },
     ];
   }
   // multi_product
@@ -117,7 +118,7 @@ function timeRowsFromPreset(
   compareStart: string;
   compareEnd: string;
 } {
-  const preset = TIME_PRESETS.find((item) => item.value === presetValue);
+  const preset = TIME_PRESET_DAYS.find((item) => item.value === presetValue);
   if (!preset || preset.value === "custom" || preset.days < 0) {
     // 自定义默认仍以 30 天回退展示
     return {
@@ -145,7 +146,7 @@ function emptyTimeRow(productId: string, anchor?: string | null): TimeRowState {
   };
 }
 
-function timeRowToFilterGroups(row: TimeRowState): CompareFilterGroup[] {
+function timeRowToFilterGroups(row: TimeRowState, baselineLabel: string, compareLabel: string): CompareFilterGroup[] {
   if (!row.productId) return [];
   const versions = row.version ? [row.version] : [];
   return [
@@ -154,14 +155,14 @@ function timeRowToFilterGroups(row: TimeRowState): CompareFilterGroup[] {
       versions,
       dateStart: row.baselineStart || undefined,
       dateEnd: row.baselineEnd || undefined,
-      label: "基准窗口",
+      label: baselineLabel,
     },
     {
       productId: row.productId,
       versions,
       dateStart: row.compareStart || undefined,
       dateEnd: row.compareEnd || undefined,
-      label: "对比窗口",
+      label: compareLabel,
     },
   ];
 }
@@ -173,6 +174,8 @@ export function CompareFilterBar({
   isSubmitting,
   onSubmit,
 }: CompareFilterBarProps) {
+  const t = useTranslations("analysis.compare");
+  const tCommon = useTranslations("common");
   const [mode, setMode] = useState<CompareMode>(initialMode);
   const firstProductId = products[0]?.parent_product_id ?? "";
   const productAnchorMap = useMemo(() => {
@@ -227,12 +230,12 @@ export function CompareFilterBar({
     if (version) {
       const vRange = versionRangeMap.get(`${productId}::${version}`);
       if (vRange && (vRange.earliest || vRange.latest)) {
-        return `评论日期范围 ${vRange.earliest || "…"} ~ ${vRange.latest || "…"}`;
+        return t("dateRangeLabel", { start: vRange.earliest || "…", end: vRange.latest || "…" });
       }
     }
     const range = productRangeMap.get(productId);
     if (!range || (!range.earliest && !range.latest)) return null;
-    return `评论日期范围 ${range.earliest || "…"} ~ ${range.latest || "…"}`;
+    return t("dateRangeLabel", { start: range.earliest || "…", end: range.latest || "…" });
   }
 
   const [rows, setRows] = useState<RowState[]>(() => {
@@ -253,6 +256,8 @@ export function CompareFilterBar({
     return rowsForMode(
       initialMode === "same_product_time" ? "multi_product" : initialMode,
       firstProductId,
+      t("baselineVersion"),
+      t("compareVersion"),
     );
   });
   const [timeRow, setTimeRow] = useState<TimeRowState>(() => {
@@ -311,7 +316,7 @@ export function CompareFilterBar({
     if (nextMode === "same_product_time") {
       setTimeRow(emptyTimeRow(firstProductId, anchorFor(firstProductId)));
     } else {
-      setRows(rowsForMode(nextMode, firstProductId));
+      setRows(rowsForMode(nextMode, firstProductId, t("baselineVersion"), t("compareVersion")));
     }
   }
 
@@ -320,7 +325,7 @@ export function CompareFilterBar({
   }
 
   function applyPreset(index: number, preset: string): void {
-    const target = PRESET_WINDOWS.find((item) => item.value === preset);
+    const target = PRESET_WINDOW_DAYS.find((item) => item.value === preset);
     if (!target) return;
     if (target.value === "custom") {
       updateRow(index, { windowPreset: "custom" });
@@ -369,12 +374,12 @@ export function CompareFilterBar({
   function handleSubmit(): void {
     if (mode === "same_product_time") {
       if (!timeRow.productId) {
-        setError("请先选择一个产品。");
+        setError(t("errorPickProduct"));
         return;
       }
-      const groups = timeRowToFilterGroups(timeRow);
+      const groups = timeRowToFilterGroups(timeRow, t("baselineWindow"), t("compareWindow"));
       if (groups.length < 2) {
-        setError("无法构造对比窗口，请检查日期。");
+        setError(t("errorInvalidWindow"));
         return;
       }
       setError("");
@@ -386,13 +391,13 @@ export function CompareFilterBar({
       .map(rowToFilterGroup)
       .filter((group): group is CompareFilterGroup => Boolean(group));
     if (groups.length < 2) {
-      setError("至少需要 2 个有效的对比对象（请选择产品）。");
+      setError(t("errorMinGroups"));
       return;
     }
     if (mode === "same_product_version") {
       const uniqueProducts = new Set(groups.map((g) => g.productId));
       if (uniqueProducts.size !== 1) {
-        setError("当前模式下所有对比对象必须是同一个产品。");
+        setError(t("errorSameProduct"));
         return;
       }
     }
@@ -405,7 +410,7 @@ export function CompareFilterBar({
     if (mode === "same_product_time") {
       setTimeRow(emptyTimeRow(firstProductId, anchorFor(firstProductId)));
     } else {
-      setRows(rowsForMode(mode, firstProductId));
+      setRows(rowsForMode(mode, firstProductId, t("baselineVersion"), t("compareVersion")));
     }
   }
 
@@ -414,9 +419,9 @@ export function CompareFilterBar({
   return (
     <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">筛选条件</h3>
+        <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">{t("filterConditions")}</h3>
         <div className="flex flex-wrap gap-2">
-          {(Object.keys(MODE_LABELS) as CompareMode[]).map((option) => (
+          {(Object.keys(MODE_KEYS) as CompareMode[]).map((option) => (
             <button
               key={option}
               type="button"
@@ -428,7 +433,7 @@ export function CompareFilterBar({
                   : "border-line bg-white text-soft hover:text-ink",
               ].join(" ")}
             >
-              {MODE_LABELS[option]}
+              {t(MODE_KEYS[option])}
             </button>
           ))}
         </div>
@@ -464,16 +469,16 @@ export function CompareFilterBar({
               >
                 <div className="grid gap-3 md:grid-cols-[120px_1.6fr_1fr_1.2fr_auto]">
                   <div className="flex items-center text-xs font-semibold uppercase tracking-[0.1em] text-soft">
-                    {row.label || `对象 ${index + 1}`}
+                    {row.label || t("objectN", { index: index + 1 })}
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">产品</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{t("product")}</div>
                     <select
                       value={row.productId}
                       onChange={(event) => updateRow(index, { productId: event.target.value, version: "" })}
                       className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
                     >
-                      <option value="">选择产品</option>
+                      <option value="">{t("selectProduct")}</option>
                       {productOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -482,12 +487,12 @@ export function CompareFilterBar({
                     </select>
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">版本</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{t("version")}</div>
                     <select
                       value={row.version}
                       onChange={(event) => {
                         const newVersion = event.target.value;
-                        const preset = PRESET_WINDOWS.find((p) => p.value === row.windowPreset);
+                        const preset = PRESET_WINDOW_DAYS.find((p) => p.value === row.windowPreset);
                         if (preset && preset.days > 0) {
                           const anchor = anchorFor(row.productId, newVersion || undefined);
                           updateRow(index, {
@@ -502,7 +507,7 @@ export function CompareFilterBar({
                       className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
                       disabled={!row.productId}
                     >
-                      <option value="">全部版本</option>
+                      <option value="">{t("allVersions")}</option>
                       {versionOptions.map((option) => (
                         <option key={option} value={option}>
                           {option}
@@ -511,16 +516,16 @@ export function CompareFilterBar({
                     </select>
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">评论时间</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{t("reviewTime")}</div>
                     <div className="mt-1 flex gap-2">
                       <select
                         value={row.windowPreset}
                         onChange={(event) => applyPreset(index, event.target.value)}
                         className="rounded-card border border-line bg-white px-2 py-2 text-xs text-ink outline-none focus:border-[#f36f8f]"
                       >
-                        {PRESET_WINDOWS.map((preset) => (
+                        {PRESET_WINDOW_DAYS.map((preset) => (
                           <option key={preset.value} value={preset.value}>
-                            {preset.label}
+                            {t(preset.key)}
                           </option>
                         ))}
                       </select>
@@ -555,7 +560,7 @@ export function CompareFilterBar({
                         disabled={rows.length <= 2}
                         className="rounded-pill border border-line bg-white px-3 py-1.5 text-xs font-semibold text-soft transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        移除
+                        {tCommon("remove")}
                       </button>
                     ) : null}
                   </div>
@@ -578,14 +583,19 @@ export function CompareFilterBar({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="text-xs text-soft">
           {mode === "same_product_time"
-            ? `基准窗口 ${timeRow.baselineStart || "…"} ~ ${timeRow.baselineEnd || "…"} · 对比窗口 ${timeRow.compareStart || "…"} ~ ${timeRow.compareEnd || "…"}${
-                rangeLabelFor(timeRow.productId)
-                  ? ` · ${rangeLabelFor(timeRow.productId)}`
-                  : ""
-              }`
+            ? (() => {
+                const b1 = timeRow.baselineStart || "…";
+                const b2 = timeRow.baselineEnd || "…";
+                const c1 = timeRow.compareStart || "…";
+                const c2 = timeRow.compareEnd || "…";
+                const rangeText = rangeLabelFor(timeRow.productId);
+                return rangeText
+                  ? t("windowSummaryWithRange", { b1, b2, c1, c2, range: rangeText })
+                  : t("windowSummary", { b1, b2, c1, c2 });
+              })()
             : mode === "same_product_version"
-              ? "同一产品 · 不同版本对比（各版本独立时间窗口）"
-              : `${rows.length} 个对比对象（最多 5 个）`}
+              ? t("sameProductInfo")
+              : t("objectCountFormat", { count: rows.length })}
         </div>
         <div className="flex gap-2">
           {canAddRow ? (
@@ -594,7 +604,7 @@ export function CompareFilterBar({
               onClick={addRow}
               className="rounded-pill border border-line bg-white px-4 py-2 text-sm font-semibold text-ink"
             >
-              + 加一个对比对象
+              {t("addObject")}
             </button>
           ) : null}
           <button
@@ -602,7 +612,7 @@ export function CompareFilterBar({
             onClick={handleReset}
             className="rounded-pill border border-line bg-white px-4 py-2 text-sm font-semibold text-soft"
           >
-            重置
+            {tCommon("reset")}
           </button>
           <button
             type="button"
@@ -610,7 +620,7 @@ export function CompareFilterBar({
             disabled={isSubmitting}
             className="rounded-pill bg-ink px-5 py-2 text-sm font-semibold text-white shadow-card disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "生成中..." : "生成对比"}
+            {isSubmitting ? tCommon("generating") : t("generateBtn")}
           </button>
         </div>
       </div>
@@ -637,6 +647,7 @@ function TimeWindowEditor({
   onPresetChange,
   onCustomChange,
 }: TimeWindowEditorProps) {
+  const t = useTranslations("analysis.compare");
   const versionOptions = row.productId ? productVersionsMap.get(row.productId) ?? [] : [];
   const isCustom = row.presetValue === "custom";
 
@@ -644,13 +655,13 @@ function TimeWindowEditor({
     <div className="mt-4 space-y-3">
       <div className="grid gap-3 rounded-card border border-line bg-white px-4 py-3 md:grid-cols-[1.6fr_1fr_1.2fr]">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">产品</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{t("product")}</div>
           <select
             value={row.productId}
             onChange={(event) => onProductChange(event.target.value)}
             className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
           >
-            <option value="">选择产品</option>
+            <option value="">{t("selectProduct")}</option>
             {productOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -659,14 +670,14 @@ function TimeWindowEditor({
           </select>
         </div>
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">版本</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{t("version")}</div>
           <select
             value={row.version}
             onChange={(event) => onVersionChange(event.target.value)}
             className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
             disabled={!row.productId}
           >
-            <option value="">全部版本</option>
+            <option value="">{t("allVersions")}</option>
             {versionOptions.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -675,15 +686,15 @@ function TimeWindowEditor({
           </select>
         </div>
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">环比口径</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{t("timeBaseMetric")}</div>
           <select
             value={row.presetValue}
             onChange={(event) => onPresetChange(event.target.value)}
             className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-[#f36f8f]"
           >
-            {TIME_PRESETS.map((preset) => (
+            {TIME_PRESET_DAYS.map((preset) => (
               <option key={preset.value} value={preset.value}>
-                {preset.label}
+                {t(preset.key)}
               </option>
             ))}
           </select>
@@ -693,7 +704,7 @@ function TimeWindowEditor({
       {isCustom ? (
         <div className="grid gap-3 rounded-card border border-line bg-white px-4 py-3 md:grid-cols-2">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">基准窗口</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{t("baselineWindow")}</div>
             <div className="mt-1 flex items-center gap-1 text-xs text-soft">
               <input
                 type="date"
@@ -711,7 +722,7 @@ function TimeWindowEditor({
             </div>
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">对比窗口</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{t("compareWindow")}</div>
             <div className="mt-1 flex items-center gap-1 text-xs text-soft">
               <input
                 type="date"

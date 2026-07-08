@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useCallback, type KeyboardEvent } from "react";
+import { useTranslations } from "next-intl";
 
 import type { QaProduct } from "@/lib/api/types";
 import { QaProductSelector } from "./qa-product-selector";
@@ -24,6 +25,7 @@ export function QaInputBar({
   onSubmit,
   disabled,
 }: QaInputBarProps) {
+  const t = useTranslations("analysis.qa");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedProducts = products.filter((p) => selectedIds.includes(p.parent_product_id));
@@ -79,7 +81,7 @@ export function QaInputBar({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={selectedIds.length > 0 ? "输入你的问题..." : "请先点击 + 选择产品"}
+            placeholder={selectedIds.length > 0 ? t("inputPlaceholder") : t("inputSelectFirst")}
             rows={1}
             disabled={disabled}
             className="max-h-32 min-h-[40px] w-full resize-none rounded-card border border-line bg-[#f9fafb] px-4 py-2.5 text-sm outline-none transition focus:border-[#f36f8f] disabled:opacity-60"

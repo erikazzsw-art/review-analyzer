@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { createQaConversation, sendQaMessage } from "@/lib/api/browser";
 import type { QaProduct } from "@/lib/api/types";
@@ -14,6 +15,7 @@ type QaPanelProps = {
 };
 
 export function QaPanel({ products }: QaPanelProps) {
+  const t = useTranslations("analysis.qa");
   const [selectedIds, setSelectedIds] = useState<string[]>(
     products.slice(0, 1).map((p) => p.parent_product_id),
   );
@@ -62,13 +64,13 @@ export function QaPanel({ products }: QaPanelProps) {
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       const candidate = err as { message?: string };
-      setError(candidate.message || "问答失败");
+      setError(candidate.message || t("submitFailure"));
       setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
       setQuestion(q);
     } finally {
       setIsSubmitting(false);
     }
-  }, [question, selectedIds, isSubmitting, conversationId]);
+  }, [question, selectedIds, isSubmitting, conversationId, t]);
 
   const handleProductsChange = useCallback(
     (ids: string[]) => {
