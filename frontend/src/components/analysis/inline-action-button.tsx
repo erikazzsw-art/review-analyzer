@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -27,7 +27,13 @@ type InlineActionButtonProps = {
   reason?: string;
 };
 
-const OWNER_KEYS = ["ownerOps", "ownerProduct", "ownerQA", "ownerReview"] as const;
+// 见 create-action-panel.tsx 顶部注释：owner_role 后端存中文，UI 仅做显示 i18n。
+const OWNER_ROLES = [
+  { value: "运营", labelKey: "ownerOps" },
+  { value: "产研", labelKey: "ownerProduct" },
+  { value: "质检", labelKey: "ownerQA" },
+  { value: "复盘", labelKey: "ownerReview" },
+] as const;
 
 export function InlineActionButton({
   sessionId,
@@ -39,10 +45,9 @@ export function InlineActionButton({
   reason,
 }: InlineActionButtonProps) {
   const t = useTranslations("analysis.action");
-  const ownerOptions = useMemo(() => OWNER_KEYS.map((k) => t(k)), [t]);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [ownerRole, setOwnerRole] = useState(ownerOptions[0]);
+  const [ownerRole, setOwnerRole] = useState<string>(OWNER_ROLES[0].value);
   const [action, setAction] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -122,15 +127,15 @@ export function InlineActionButton({
           <div className="space-y-2">
             <label className="text-xs font-medium text-ink">{t("inlineOwnerLabel")}</label>
             <div className="flex flex-wrap gap-1.5">
-              {ownerOptions.map((role) => (
+              {OWNER_ROLES.map((role) => (
                 <Button
-                  key={role}
-                  variant={ownerRole === role ? "default" : "outline"}
+                  key={role.value}
+                  variant={ownerRole === role.value ? "default" : "outline"}
                   size="sm"
                   className="h-7 px-3 text-xs"
-                  onClick={() => setOwnerRole(role)}
+                  onClick={() => setOwnerRole(role.value)}
                 >
-                  {role}
+                  {t(role.labelKey)}
                 </Button>
               ))}
             </div>

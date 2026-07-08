@@ -22,7 +22,15 @@ type CreateActionPanelProps = {
   candidates: IssueCandidate[];
 };
 
-const OWNER_KEYS = ["ownerOps", "ownerProduct", "ownerQA", "ownerReview"] as const;
+// API 契约：owner_role 后端存中文（workers/jobs.py 默认 "运营"、action_advisor 走 get_dept_label 也返回中文），
+// 前端必须继续发中文值以避免混合语言环境下的聚合/查询错乱。UI 只对显示做 i18n。
+// 完整迁移到 role slug 是独立任务（等 backend migration）。
+const OWNER_ROLES = [
+  { value: "运营", labelKey: "ownerOps" },
+  { value: "产研", labelKey: "ownerProduct" },
+  { value: "质检", labelKey: "ownerQA" },
+  { value: "复盘", labelKey: "ownerReview" },
+] as const;
 
 export function CreateActionPanel({
   sessionId,
@@ -34,10 +42,9 @@ export function CreateActionPanel({
 }: CreateActionPanelProps) {
   const t = useTranslations("analysis.action");
   const tCommon = useTranslations("common");
-  const ownerOptions = useMemo(() => OWNER_KEYS.map((k) => t(k)), [t]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [title, setTitle] = useState("");
-  const [ownerRole, setOwnerRole] = useState(ownerOptions[0]);
+  const [ownerRole, setOwnerRole] = useState<string>(OWNER_ROLES[0].value);
   const [suggestedAction, setSuggestedAction] = useState("");
   const [expectedReviewAt, setExpectedReviewAt] = useState("");
   const [expectedEffectBatch, setExpectedEffectBatch] = useState("");
@@ -150,9 +157,9 @@ export function CreateActionPanel({
             onChange={(event) => setOwnerRole(event.target.value)}
             className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
           >
-            {ownerOptions.map((item) => (
-              <option key={item} value={item}>
-                {item}
+            {OWNER_ROLES.map((item) => (
+              <option key={item.value} value={item.value}>
+                {t(item.labelKey)}
               </option>
             ))}
           </select>
