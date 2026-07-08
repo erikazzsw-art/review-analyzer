@@ -284,6 +284,9 @@ def get_credit_ledger(user_id: int, limit: int = 30) -> list[dict[str, Any]]:
         }
         for row in rows
     ]
+
+
+def get_quota_status(user_id: int, dimension: str) -> dict[str, Any]:
     """获取用户某维度的配额状态，供 API / UI 展示。"""
     dim = PLAN_LIMITS.get(dimension)
     if dim is None:
