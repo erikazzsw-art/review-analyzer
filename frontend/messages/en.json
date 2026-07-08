@@ -1087,16 +1087,16 @@
     }
   },
   "categoryLabels": {
-    "产品质量": "Product Quality",
-    "包装物流": "Packaging & Logistics",
-    "使用体验": "Usage Experience",
-    "客服售后": "Customer Service",
-    "性价比": "Value for Money",
-    "功能需求": "Feature Request",
-    "正面反馈": "Positive Feedback",
-    "单纯好评": "Praise Only",
-    "无效乱码": "Invalid Content",
-    "混合评价": "Mixed Review",
-    "其他": "Other"
+    "product_quality": "Product Quality",
+    "packaging_logistics": "Packaging & Logistics",
+    "user_experience": "Usage Experience",
+    "customer_service": "Customer Service",
+    "value_for_money": "Value for Money",
+    "feature_request": "Feature Request",
+    "positive_feedback": "Positive Feedback",
+    "simple_praise": "Praise Only",
+    "invalid_garbage": "Invalid Content",
+    "mixed": "Mixed Review",
+    "other": "Other"
   }
 }

@@ -1087,16 +1087,16 @@
     }
   },
   "categoryLabels": {
-    "产品质量": "产品质量",
-    "包装物流": "包装物流",
-    "使用体验": "使用体验",
-    "客服售后": "客服售后",
-    "性价比": "性价比",
-    "功能需求": "功能需求",
-    "正面反馈": "正面反馈",
-    "单纯好评": "单纯好评",
-    "无效乱码": "无效乱码",
-    "混合评价": "混合评价",
-    "其他": "其他"
+    "product_quality": "产品质量",
+    "packaging_logistics": "包装物流",
+    "user_experience": "使用体验",
+    "customer_service": "客服售后",
+    "value_for_money": "性价比",
+    "feature_request": "功能需求",
+    "positive_feedback": "正面反馈",
+    "simple_praise": "单纯好评",
+    "invalid_garbage": "无效乱码",
+    "mixed": "混合评价",
+    "other": "其他"
   }
 }

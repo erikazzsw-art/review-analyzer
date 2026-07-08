@@ -4497,6 +4497,17 @@ CREATE TABLE workspace_invitations (
 - [ ] Erika review 关键业务术语（评论分析 / 问题标签 / 行动中心 等）
 - [ ] 现有页面代码改用 `useTranslations` hook 引用 key
 
+**2.2.C 类别标签 i18n 化（backend slug 迁移 + 前端翻译层）** ✅ 2026-07-08 完成
+- [x] Step 1 — [backend_api/app/services/category_grouper.py](backend_api/app/services/category_grouper.py)：新增 `CATEGORY_SLUGS` / `CATEGORY_ZH_LABELS` 常量，`ASPECT_TO_CATEGORY` / `_derive_category` / `aspects_to_legacy_schema` fallback 全部改英文 slug
+- [x] Step 2 — [workers/jobs.py:472](workers/jobs.py#L472)：error 分支 `"无效乱码"` → `"invalid_garbage"`
+- [x] Step 3 — [review_analyzer/analyzer.py](review_analyzer/analyzer.py)：SYSTEM_PROMPT 分类规则改 `slug（中文名）` 双语格式 + 输出格式枚举 + `VALID_CATEGORIES` 改 slug set + `_validate_result` fallback + `_make_unrecognizable` + `PROMPT_VERSION` v2.1 → v2.2
+- [x] Step 4 — 新建 [migrations/047_categories_to_slug.sql](migrations/047_categories_to_slug.sql)：11 条幂等 UPDATE 中文 → slug + 回滚 SQL 注释块（原计划 046 已被占用，改用 047）
+- [x] Step 5 — [frontend/messages/{en,zh}.json](frontend/messages/en.json) categoryLabels 段 11 个 key 全改 slug
+- [x] Step 6 — [frontend/src/components/analysis/download-tag-button.tsx](frontend/src/components/analysis/download-tag-button.tsx) 引入 `useTranslations('categoryLabels')`；[review_analyzer/exporter.py](review_analyzer/exporter.py) 新增 `_category_zh(slug)` helper + `CATEGORY_ZH_LABELS` 复用
+- [x] Step 7 — [backend_api/tests/test_category_grouper.py](backend_api/tests/test_category_grouper.py) 9 个 TEST_CASES 断言改 slug + 新增 `CATEGORY_SLUGS` 白名单 snapshot（10/10 通过）
+- Golden set 500 条回归跳过：`eval_v23_500_metrics.json` 无 per-category 字段；`_derive_category` 是确定性纯字符串派生，不经 LLM
+- ⚠️ 部署顺序：**migration 047 先跑（psycopg2 python 脚本，ECS api 容器无 psql）→ 再重建 api/worker/frontend + nginx reload**
+
 **2.3 Backend i18n + 邮件模板双语（2 天）**
 - [ ] 新建 `backend_api/app/services/i18n.py`（简化 i18n 层）
 - [ ] FastAPI dependency 注入 locale（Accept-Language header + users.locale 字段）

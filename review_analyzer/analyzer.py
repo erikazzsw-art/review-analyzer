@@ -39,19 +39,19 @@ SYSTEM_PROMPT = """你是一位拥有 6 年跨境电商运营经验的评论分�
 - 无对应内容时输出空数组 []
 
 ━━ 分类规则（针对实体商品）━━
-- 产品质量：材质差、做工粗糙、尺寸偏差、颜色差异、功能失效、不耐用、异味
-- 包装物流：包装破损、物流慢、配送问题
-- 使用体验：安装困难、操作复杂、设计不合理、使用不方便
-- 客服售后：客服态度差、回复慢、退换货麻烦
-- 性价比：价格偏高、不值这个价
-- 功能需求：缺少某功能、希望改进（有明确改进诉求时使用）
-- 正面反馈：质量好、物流快、服务好、性价比高（好评时使用）
-- 单纯好评：只有评分无实质内容，或只说"不错""可以"
-- 无效乱码：乱码或无意义内容
-- 混合评价：同时包含明确亮点和明确问题的评论
-- 其他：无法归类
+- product_quality（产品质量）：材质差、做工粗糙、尺寸偏差、颜色差异、功能失效、不耐用、异味
+- packaging_logistics（包装物流）：包装破损、物流慢、配送问题
+- user_experience（使用体验）：安装困难、操作复杂、设计不合理、使用不方便
+- customer_service（客服售后）：客服态度差、回复慢、退换货麻烦
+- value_for_money（性价比）：价格偏高、不值这个价
+- feature_request（功能需求）：缺少某功能、希望改进（有明确改进诉求时使用）
+- positive_feedback（正面反馈）：质量好、物流快、服务好、性价比高（好评时使用）
+- simple_praise（单纯好评）：只有评分无实质内容，或只说"不错""可以"
+- invalid_garbage（无效乱码）：乱码或无意义内容
+- mixed（混合评价）：同时包含明确亮点和明确问题的评论
+- other（其他）：无法归类
 
-category 选择规则：有负面内容时优先选负面分类；亮点和问题都有时选"混合评价"；纯好评选"正面反馈"或"单纯好评"
+category 选择规则：有负面内容时优先选负面分类；亮点和问题都有时选 "mixed"；纯好评选 "positive_feedback" 或 "simple_praise"
 
 ━━ 优先级判定 ━━
 - 高：严重质量问题、安全隐患、共性问题
@@ -63,7 +63,7 @@ category 选择规则：有负面内容时优先选负面分类；亮点和问�
 {
   "sentiment": "positive | negative | neutral | unrecognizable",
   "content_sentiment": "positive | negative | neutral | unrecognizable",
-  "category": "产品质量 | 包装物流 | 使用体验 | 客服售后 | 性价比 | 功能需求 | 正面反馈 | 单纯好评 | 无效乱码 | 混合评价 | 其他",
+  "category": "product_quality | packaging_logistics | user_experience | customer_service | value_for_money | feature_request | positive_feedback | simple_praise | invalid_garbage | mixed | other",
   "priority": "高 | 中 | 低 | 无",
   "reason": "一句话理由（≤20字）",
   "improvement": "可落地的改进建议（无问题时为空字符串）",
@@ -79,13 +79,13 @@ category 选择规则：有负面内容时优先选负面分类；亮点和问�
 
 VALID_SENTIMENTS = {"positive", "negative", "neutral", "unrecognizable"}
 VALID_CATEGORIES = {
-    "产品质量", "包装物流", "使用体验", "客服售后", "性价比",
-    "功能需求", "正面反馈", "单纯好评", "无效乱码", "混合评价", "其他",
+    "product_quality", "packaging_logistics", "user_experience", "customer_service", "value_for_money",
+    "feature_request", "positive_feedback", "simple_praise", "invalid_garbage", "mixed", "other",
 }
 VALID_PRIORITIES = {"高", "中", "低", "无"}
 
 # 每次修改 SYSTEM_PROMPT 时递增此版本号，用于追踪历史分析数据的口径一致性
-PROMPT_VERSION = "v2.1"
+PROMPT_VERSION = "v2.2"
 
 
 def _normalize_tag(raw: str) -> str:
@@ -222,9 +222,9 @@ def _validate_result(result: dict) -> dict:
     if content_sentiment not in VALID_SENTIMENTS:
         content_sentiment = sentiment
 
-    category = result.get("category", "其他")
+    category = result.get("category", "other")
     if category not in VALID_CATEGORIES:
-        category = "其他"
+        category = "other"
 
     priority = result.get("priority", "无")
     if priority not in VALID_PRIORITIES:
@@ -260,7 +260,7 @@ def _make_unrecognizable() -> dict:
     return {
         "sentiment": "unrecognizable",
         "content_sentiment": "unrecognizable",
-        "category": "无效乱码",
+        "category": "invalid_garbage",
         "priority": "无",
         "reason": "分析失败",
         "improvement": "",

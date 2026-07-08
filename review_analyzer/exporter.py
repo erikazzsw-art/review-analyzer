@@ -8,7 +8,16 @@ from datetime import datetime
 
 import xlsxwriter
 
+from backend_api.app.services.category_grouper import CATEGORY_ZH_LABELS
+
 from .database import get_comments, get_session_by_id
+
+
+def _category_zh(slug: str | None) -> str:
+    """slug → 中文人类可读标签；未知 slug 原样返回，空值返回空串."""
+    if not slug:
+        return ""
+    return CATEGORY_ZH_LABELS.get(slug, slug)
 
 
 def _build_filename(session: dict, ext: str) -> str:
@@ -71,7 +80,7 @@ def _build_comments_data(comments: list[dict]) -> tuple[list[str], list[list[str
             c.get("reviewer", "") or "",
             c.get("source", "") or "",
             c.get("sentiment", ""),
-            c.get("category", ""),
+            _category_zh(c.get("category")),
             c.get("priority", ""),
             c.get("reason", ""),
             c.get("improvement", ""),

@@ -1,6 +1,7 @@
 "use client";
 
 import { FileDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as XLSX from "xlsx";
 
 function tagMatchesComment(
@@ -23,6 +24,7 @@ function downloadTagReviews(
   comments: Array<Record<string, unknown>>,
   tagSource: "highlight_tag" | "issue_tag",
   locale: string,
+  translateCategory: (slug: string) => string,
 ) {
   const matched = comments.filter((c) => tagMatchesComment(tag, c, tagSource));
   const headers =
@@ -31,6 +33,7 @@ function downloadTagReviews(
       : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags"];
   const data: (string | number)[][] = [headers];
   matched.forEach((c, idx) => {
+    const categorySlug = String(c.category || "");
     data.push([
       idx + 1,
       String(c.content || ""),
@@ -39,7 +42,7 @@ function downloadTagReviews(
       String(c.reviewer || ""),
       String(c.source || ""),
       String(c.sentiment || ""),
-      String(c.category || ""),
+      categorySlug ? translateCategory(categorySlug) : "",
       String(c.priority || ""),
       String(c.reason || ""),
       String(c.improvement || ""),
@@ -64,12 +67,20 @@ export function DownloadTagButton({
   tagSource: "highlight_tag" | "issue_tag";
   locale: string;
 }) {
+  const t = useTranslations("categoryLabels");
+  const translateCategory = (slug: string): string => {
+    try {
+      return t(slug);
+    } catch {
+      return slug;
+    }
+  };
   const count = comments.filter((c) => tagMatchesComment(tag, c, tagSource)).length;
 
   return (
     <button
       type="button"
-      onClick={() => count > 0 && downloadTagReviews(tag, comments, tagSource, locale)}
+      onClick={() => count > 0 && downloadTagReviews(tag, comments, tagSource, locale, translateCategory)}
       disabled={count === 0}
       className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
       title={count > 0 ? `Download ${count} reviews` : "No matching reviews"}

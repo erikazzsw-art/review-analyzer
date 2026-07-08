@@ -29,7 +29,41 @@
 
 ## 2026-07-08
 
-### V4-M6-6.9.1：侧边栏 Credits 升级按钮 + 套餐升级弹窗
+### V4-M2-2.2.C：类别标签 i18n 化（backend slug 迁移 + 前端翻译层）
+
+- **工作量**: M（7 文件改造 + 1 migration + 1 单测 + 3 文档，约 0.8 人天）
+- **状态**: ✅ 已实现 + 本地 tsc + 单测 10/10 通过；待 push + Erika 部署（含 migration 047）+ prod 验证
+
+**需求描述**：
+V4 出海 beta 上线前最后一处硬编码中文。`comments.category` 字段一直存 11 个中文分类名（产品质量/包装物流/使用体验/客服售后/性价比/功能需求/正面反馈/单纯好评/无效乱码/混合评价/其他），前端下载 Excel 与后端导出直接裸展示，英文用户导出的 Excel「Category」列全是中文，分析结果对英文用户不可用。改造为：backend 输出稳定英文 slug（业务标识符）→ i18n 层按 locale 映射中/英标签 → 前端 `t()` 消费；同时打通 M4-pre 阶段建的死代码 `messages/{zh,en}.json` `categoryLabels` 命名空间。
+
+**实现内容**：
+- [backend_api/app/services/category_grouper.py](backend_api/app/services/category_grouper.py)：新增 `CATEGORY_SLUGS`（11 slug tuple）+ `CATEGORY_ZH_LABELS`（slug → 中文标签 map），`ASPECT_TO_CATEGORY` 值全改 slug，`_derive_category` 所有 return 改 slug，`aspects_to_legacy_schema` fallback `"其他"` → `"other"` / `"无效乱码"` → `"invalid_garbage"`
+- [workers/jobs.py:472](workers/jobs.py#L472)：error 分支 `"无效乱码"` → `"invalid_garbage"`
+- [review_analyzer/analyzer.py](review_analyzer/analyzer.py)：SYSTEM_PROMPT 分类规则改 `slug（中文名）` 双语格式（LLM 仍能理解中文语义描述） + 输出格式 JSON 枚举改 slug + `VALID_CATEGORIES` 改 slug set + `_validate_result` fallback 改 `"other"` + `_make_unrecognizable` 改 `"invalid_garbage"` + `PROMPT_VERSION` v2.1 → v2.2
+- [migrations/047_categories_to_slug.sql](migrations/047_categories_to_slug.sql)：11 条幂等 UPDATE 中文 → slug + 回滚 SQL 注释块（原计划 046 已被 `046_add_scraped_title.sql` 占用，改用 047）
+- [frontend/messages/{en,zh}.json](frontend/messages/en.json) `categoryLabels` 段 11 个 key 全改 slug（value 保持原英/中文标签）
+- [frontend/src/components/analysis/download-tag-button.tsx](frontend/src/components/analysis/download-tag-button.tsx)：引入 `useTranslations('categoryLabels')`，导出 Excel 时把 slug 翻译成对应 locale 的可读标签
+- [review_analyzer/exporter.py](review_analyzer/exporter.py)：新建 `_category_zh(slug)` helper，从 category_grouper 引入 `CATEGORY_ZH_LABELS`，Streamlit 老路径继续显示中文
+- [backend_api/tests/test_category_grouper.py](backend_api/tests/test_category_grouper.py)：9 个 TEST_CASES 全改 slug 断言 + 新增 `CATEGORY_SLUGS` 白名单 snapshot 测试（10/10 通过）
+
+**涉及岗位及工时**：
+- 后端开发（0.4 人天）：category_grouper / analyzer / worker / exporter / migration / 单测
+- 前端开发（0.2 人天）：messages i18n key 改造 + download-tag-button useTranslations 接入
+- QA（0.2 人天）：本地上传验证 slug 写入 + en/zh 两语言导出 Excel 分类列人工核对（待部署后跑）
+
+**风险与验证**：
+- **⚠️ 高风险 — 数据库 migration**：一次性 UPDATE 所有历史 comments 的 category 字段。已通过 Explore 全库确认无 SQL 查询按中文字面量过滤 `comments.category`，仅写入 + 读取回渲染，就地 UPDATE 安全，无需 dual-read 兼容层。
+- **部署顺序**：**先跑 migration 047（psycopg2 python 脚本，ECS api 容器无 psql），再重建 api/worker/frontend + nginx reload**。migration 与部署之间的空窗期即使有分析任务完成也写的是新 slug，历史数据由 UPDATE 一次性收敛。
+- **Golden Set 500 条回归跳过**：`eval_v23_500_metrics.json` 无 per-category 字段；`_derive_category` 是 aspects → slug 的确定性纯字符串派生，不经 LLM，中→slug 只改字面量。
+- **验证方式**：
+  - 本地 `python3 backend_api/tests/test_category_grouper.py` 10/10 通过 ✅
+  - 本地 `npx tsc --noEmit` 通过 ✅
+  - 待 Erika 部署后用测试账号 `惜_clueai / test123456` 登录 https://www.clueai-reviewlens.com ，用 en cookie + zh cookie 各跑一次上传 + 导出 Excel，验证「Category」/「分类」列分别显示英/中文人类可读标签
+
+---
+
+
 
 - **工作量**: S（2 文件，0.5 人天）
 - **状态**: ✅ 已实现 + 类型检查 + dev preview 验证；待 push + Erika 部署 + prod 验证

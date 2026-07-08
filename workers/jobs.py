@@ -469,7 +469,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 result = {
                     "sentiment": "unrecognizable",
                     "content_sentiment": "unrecognizable",
-                    "category": "无效乱码",
+                    "category": "invalid_garbage",
                     "priority": "无",
                     "reason": "",
                     "improvement": "",
