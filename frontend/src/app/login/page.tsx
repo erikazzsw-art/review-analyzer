@@ -7,7 +7,7 @@ import { AuthLayout } from "@/components/auth/auth-layout";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "登录 | ReviewLens",
+  title: "登录",
   description: "登录 ReviewLens，进入评论分析工作台。",
 });
 

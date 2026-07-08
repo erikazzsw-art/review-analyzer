@@ -3,7 +3,7 @@ import { UploadForm } from "@/components/upload/upload-form";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Upload | ClueAI",
+  title: "Upload",
   description: "Upload review data for analysis.",
 });
 

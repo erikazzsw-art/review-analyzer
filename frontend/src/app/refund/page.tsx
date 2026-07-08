@@ -8,7 +8,7 @@ import { buildMarketingMetadata } from "@/lib/seo";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("legal.refund");
   return buildMarketingMetadata({
-    title: `${t("pageTitle")} | ClueAI`,
+    title: t("pageTitle"),
     description: t("pageSubtitle"),
     path: "/refund",
   });

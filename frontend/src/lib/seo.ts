@@ -51,6 +51,9 @@ export function buildMarketingMetadata(input: {
 }): Metadata {
   const canonicalUrl = absoluteUrl(input.path);
   const imageUrl = absoluteUrl(ogImagePath);
+  // <title> 由 root layout 的 title.template ("%s | ClueAI") 统一追加品牌名，
+  // 但 openGraph.title / twitter.title 不受 template 影响，需要手动拼接以保留品牌信息。
+  const brandedTitle = `${input.title} | ClueAI`;
 
   return {
     title: input.title,
@@ -59,7 +62,7 @@ export function buildMarketingMetadata(input: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: input.title,
+      title: brandedTitle,
       description: input.description,
       url: canonicalUrl,
       siteName: "ClueAI",
@@ -75,7 +78,7 @@ export function buildMarketingMetadata(input: {
     },
     twitter: {
       card: "summary_large_image",
-      title: input.title,
+      title: brandedTitle,
       description: input.description,
       images: [imageUrl],
     },

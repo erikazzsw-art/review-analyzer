@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code when working with code in this repository.
 
+> **平行文件**：`CODEX.md` 是给 Codex CLI 读的项目规则，与本文件平行存在。若修改本文件的会话/协作规则，请同步更新 `CODEX.md`（内容可略有差异，但机密保护规则、部署职责分离、分支策略必须一致）。
+
 ## 核心会话规则
 
 1. **决策确认**：遇到不确定的设计问题，必须先询问 Erika
@@ -96,7 +98,26 @@ This file provides guidance to Claude Code when working with code in this reposi
 - 参数化查询：SQL 必须用 `%s` 占位符（psycopg2），禁止拼接
 - 密码存储：使用 `bcrypt`，禁止明文或 MD5
 - API Key 加密：使用 `cryptography.fernet`
-- 禁止提交：`.env`、`*.db` 文件
+- 机密防护：本地已装 pre-commit hook（`.git/hooks/pre-commit`），commit 时自动扫描机密文件与明文密钥；完整清单见下方「机密保护规则」
+
+## 本地文档与目录约定（2026-07 生效）
+
+Erika 2026-07-08 约定：本地散落的探索性文档、截图、临时脚本统一收拢，只留必要文件进 git。
+
+| 目录 | 用途 | 是否进 git |
+|------|------|-----------|
+| 根目录 | `PROGRESS_V2.md` / `TEST_LOG.md` / `README.md` / `CLAUDE.md` / `CODEX.md` / `需求记录/CHANGELOG.md` 等主线文档 | ✔ 跟代码一起 push |
+| `docs/` | 团队规范 / 正式技术文档（api-guide / database-guide / git-commit 等） | ✔ 跟代码一起 push（不强制单独 push） |
+| `notes/` | Erika 个人笔记 / 探索性 md / 一次性调研 / 面试稿 / 方法论 | ✘ 永不进 git（`.gitignore` 挡住） |
+| `scratch/` | 临时脚本 / 实验数据 / 一次性 SQL | ✘ 永不进 git |
+| `.playwright-mcp/` | Playwright MCP 截图 / snapshot / 控制台日志 | ✘ 永不进 git |
+
+规则：
+
+1. **新写的 md 一律先落 `notes/`**，等它稳定成"团队规范"再 `git mv notes/xxx.md docs/xxx.md`
+2. **`docs/` 里的文档不强制单独 push**，等下次有代码变更时顺带带上（避免"文档 only" commit 触发 CI）
+3. **根目录不再新增探索性 md**，只保留上表列出的主线文档
+4. 详细约定见 `notes/README.md`（本地可见）
 
 ## 机密保护规则（强制 · 项目特定）
 
@@ -114,16 +135,36 @@ This file provides guidance to Claude Code when working with code in this reposi
 ### 禁止跟踪的文件清单
 
 ```
+# 机密类
 .env
 .env.local
 .env.production
+.env.*
 review_analyzer/.env
 backend_api/.env
 deploy/.env*
+frontend/.env*
+.streamlit/secrets.toml
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+id_rsa*
+
+# 数据库/数据类
 *.db
+
+# 本地文档 / 探索产物（2026-07-08 新增）
+/notes/                 # Erika 个人笔记
+/scratch/               # 临时脚本 / 实验
+.playwright-mcp/        # Playwright MCP 产物
+/*.png /*.jpg /*.jpeg   # 根目录截图（frontend/ 下资源不受影响）
+/node_modules/          # 根目录误装的 node_modules
 ```
 
-`.gitignore` 必须覆盖以上全部。新增任何 `.env*` 文件前，先确认 `.gitignore` 已经匹配。
+`.gitignore` 必须覆盖以上全部。新增任何 `.env*` 或本地文档目录前，先确认 `.gitignore` 已经匹配。
 
 ### 已知历史雷区（2026-06 排查结果）
 
@@ -132,12 +173,27 @@ deploy/.env*
 - 远程 `origin = https://github.com/erikazzsw-art/review-analyzer.git` 是 **public**
 - 上述 4 个机密均需轮换；轮换前禁止再做任何"清理 git 历史"的操作
 
-### 每次 commit 前的强制扫描
+### 每次 commit 前的机密扫描（已自动化）
+
+**本地 pre-commit hook 已装好**（`.git/hooks/pre-commit`，2026-07-08 生效）。
+
+- 每次 `git commit` 会**自动**扫描 staged 文件名 + staged 内容
+- 命中机密 → **拒绝提交**，输出 ✘ 行号 + 命中类型
+- Claude Code **严禁使用** `git commit --no-verify` 绕过；误报只能改成占位符后重试
+- Hook 覆盖的机密类型：`.env` / `.pem` / `.key` / `credentials.json` 等文件；`sk-...` / `AIza...` / `ghp_...` / `xox[baprs]-...` / postgres 连接串明文密码 / `AES_SECRET_KEY=...` / Feishu webhook token 等明文
+
+**hook 不进 git**（`.git/hooks/` 是 git 内部目录）。换机器 / 新 clone 后需重新装，装法见 [`docs/git-commit.md`](docs/git-commit.md) 的「Pre-commit hook 安装 / 恢复」节。
+
+### 手动扫描（fallback）
+
+如果 hook 未装、或需要在 commit 前预先自查，用下面命令（regex 与 hook 同版本）：
 
 ```bash
-# 一行扫描：staged 内容 + 待添加文件名
-git diff --cached --name-only | grep -E "(\.env$|secrets\.toml$|credentials|\.pem$|\.key$)" && echo "❌ 含机密文件，停手" || echo "✅ 文件名 OK"
-git diff --cached | grep -E "sk-[a-zA-Z0-9]{20,}|postgres(ql)?://[^@]+:[^@:]+@|AES_SECRET_KEY=[A-Za-z0-9+/=_-]{20,}|DEEPSEEK_API_KEY=sk-" && echo "❌ 含明文机密，停手" || echo "✅ 内容 OK"
+# 1. 文件名扫描
+git diff --cached --name-only | grep -E "(\.env(\.[^/]+)?$|secrets\.toml$|credentials.*\.json$|.*\.pem$|.*\.key$)" | grep -v "\.env\.example$" && echo "❌ 含机密文件，停手" || echo "✅ 文件名 OK"
+
+# 2. 内容扫描（含 postgres 占位符白名单：<REF>:<PASSWORD>@ 不会误报）
+git diff --cached | grep -E "sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{20,}|ghp_[A-Za-z0-9]{20,}|postgres(ql)?://[^[:space:]:@<>]+:[^[:space:]@<>]+@|AES_SECRET_KEY=[A-Za-z0-9+/=_-]{20,}|open\.feishu\.cn/open-apis/bot/v2/hook/[A-Za-z0-9-]{20,}" && echo "❌ 含明文机密，停手" || echo "✅ 内容 OK"
 ```
 
 任一行报 ❌ → **立即中止 commit，告诉 Erika 是哪一行**，不要尝试自动 fix。

@@ -6,7 +6,7 @@ import { AuthLayout } from "@/components/auth/auth-layout";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "找回密码 | ReviewLens",
+  title: "找回密码",
   description: "通过邮箱验证重置 ReviewLens 账号密码。",
 });
 

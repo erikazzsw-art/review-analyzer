@@ -16,7 +16,7 @@ import {
 import type { WorkspaceRole, WorkspaceSummary } from "@/lib/api/types";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Today's Workspace | ClueAI",
+  title: "Today's Workspace",
   description: "Authenticated workspace for review operations and follow-up tracking.",
 });
 

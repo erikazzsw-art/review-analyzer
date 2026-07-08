@@ -4,7 +4,7 @@ import { MarketingShell } from "@/components/marketing/marketing-shell";
 import { buildMarketingMetadata } from "@/lib/seo";
 
 export const metadata = buildMarketingMetadata({
-  title: "Try the Flow | ClueAI",
+  title: "Try the Flow",
   description:
     "Preview the full review-to-action flow before you register for the workspace.",
   path: "/trial",
