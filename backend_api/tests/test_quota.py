@@ -29,6 +29,20 @@ def test_get_limit_free_upload_rows():
     assert _get_limit("upload_rows_per_file", "free") == 500
 
 
+# ── starter plan (regression: PLAN_LIMITS 曾漏配 starter 导致 fallback 到 free) ──
+
+def test_get_limit_starter_not_fallback_to_free():
+    # 抽三个关键维度确认 starter 不再和 free 同值
+    assert _get_limit("review_analyze", "starter") == 5000
+    assert _get_limit("ask_review", "starter") == 50
+    assert _get_limit("upload_rows_per_file", "starter") == 1000
+
+def test_starter_all_dimensions_have_key():
+    from review_analyzer.quota import PLAN_LIMITS
+    missing = [d for d, cfg in PLAN_LIMITS.items() if "starter" not in cfg["limits"]]
+    assert not missing, f"缺 starter key 的维度: {missing}"
+
+
 # ── per_request (no DB) ───────────────────────────────────────────────────────
 
 def test_per_request_within_limit():
