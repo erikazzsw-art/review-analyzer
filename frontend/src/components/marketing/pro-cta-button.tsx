@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { openBillingCheckout, isUnauthenticatedCheckoutError } from "@/lib/billing";
 
@@ -10,7 +11,8 @@ type Props = {
   className?: string;
 };
 
-export function ProCtaButton({ label = "升级到 Pro", className }: Props) {
+export function ProCtaButton({ label, className }: Props) {
+  const t = useTranslations("marketing.proCta");
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const checkoutRef = useRef<HTMLDivElement | null>(null);
@@ -37,7 +39,7 @@ export function ProCtaButton({ label = "升级到 Pro", className }: Props) {
         disabled={isLoading}
         className={className}
       >
-        {isLoading ? "处理中..." : label}
+        {isLoading ? t("loading") : (label ?? t("defaultLabel"))}
       </button>
       <div ref={checkoutRef} className="hidden" aria-hidden="true" />
     </>

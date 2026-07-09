@@ -3,6 +3,7 @@ import { DeleteVariantButton } from "@/components/products/delete-variant-button
 import { getProductDetail, isApiError } from "@/lib/api/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -13,10 +14,12 @@ export default async function ProductDetailPage({ params }: Props) {
   const productId = parseInt(id, 10);
   if (isNaN(productId)) notFound();
 
+  const t = await getTranslations("products");
+
   try {
     const { product, variants } = await getProductDetail(productId);
 
-    const name = (product.name as string) || (product.parent_product_id as string) || "未命名产品";
+    const name = (product.name as string) || (product.parent_product_id as string) || t("detail.unnamedProduct");
     const brand = product.brand as string | null;
     const rating = product.rating != null ? Number(product.rating) : null;
     const imageUrl = product.image_url as string | null;
@@ -26,11 +29,11 @@ export default async function ProductDetailPage({ params }: Props) {
     const reviewsTotal = product.reviews_total as number | null;
 
     return (
-      <AppShell currentPath="/products" title={name} description="产品详情与变体列表">
-        {/* 产品头部信息 */}
+      <AppShell currentPath="/products" title={name} description={t("detail.pageDescription")}>
+        {/* Product header */}
         <div className="rounded-shell border border-line bg-white/90 p-6 shadow-card backdrop-blur">
           <div className="flex flex-col gap-6 md:flex-row md:items-start">
-            {/* 产品图片 */}
+            {/* Product image */}
             <div className="h-48 w-48 flex-shrink-0 overflow-hidden rounded-card border border-line bg-gray-50">
               {imageUrl ? (
                 <img src={imageUrl} alt={name} className="h-full w-full object-contain p-2" />
@@ -43,16 +46,16 @@ export default async function ProductDetailPage({ params }: Props) {
               )}
             </div>
 
-            {/* 产品信息 */}
+            {/* Product info */}
             <div className="flex-1">
               <h1 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-ink">
                 {name}
               </h1>
-              {brand && <p className="mt-1 text-sm text-soft">品牌：{brand}</p>}
-              {category && <p className="mt-1 text-sm text-soft">类目：{category}</p>}
-              <p className="mt-1 text-sm text-soft">ASIN：{parentProductId}</p>
+              {brand && <p className="mt-1 text-sm text-soft">{t("detail.brand")}：{brand}</p>}
+              {category && <p className="mt-1 text-sm text-soft">{t("detail.category")}：{category}</p>}
+              <p className="mt-1 text-sm text-soft">{t("detail.asin")}：{parentProductId}</p>
 
-              {/* 评分 */}
+              {/* Rating */}
               {rating != null && (
                 <div className="mt-3 flex items-center gap-2">
                   <div className="flex">
@@ -64,38 +67,38 @@ export default async function ProductDetailPage({ params }: Props) {
                   </div>
                   <span className="text-sm font-semibold text-ink">{rating.toFixed(1)}</span>
                   {ratingsTotal != null && (
-                    <span className="text-xs text-soft">({ratingsTotal} 评分)</span>
+                    <span className="text-xs text-soft">{t("detail.ratingCount", { count: ratingsTotal })}</span>
                   )}
                 </div>
               )}
 
               {reviewsTotal != null && (
-                <p className="mt-2 text-sm text-soft">{reviewsTotal} 条评论</p>
+                <p className="mt-2 text-sm text-soft">{t("detail.reviewCount", { count: reviewsTotal })}</p>
               )}
 
-              {/* 操作按钮 */}
+              {/* Action buttons */}
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
                   href={`/analysis/results?product_id=${parentProductId}`}
                   className="inline-flex items-center rounded-pill bg-ink px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:opacity-90"
                 >
-                  查看评论分析
+                  {t("detail.viewAnalysis")}
                 </Link>
                 <Link
                   href="/products"
                   className="inline-flex items-center rounded-pill border border-line bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:bg-gray-50"
                 >
-                  返回产品列表
+                  {t("detail.backToList")}
                 </Link>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 变体表格 */}
+        {/* Variant table */}
         <div className="rounded-shell border border-line bg-white/90 p-6 shadow-card backdrop-blur">
           <h2 className="font-heading text-lg font-bold text-ink">
-            变体列表 ({variants.length})
+            {t("detail.variantList", { count: variants.length })}
           </h2>
 
           {variants.length > 0 ? (
@@ -103,16 +106,16 @@ export default async function ProductDetailPage({ params }: Props) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-wider text-soft">
-                    <th className="px-3 py-3">图片</th>
-                    <th className="px-3 py-3">ASIN</th>
-                    <th className="px-3 py-3">变体名</th>
-                    <th className="px-3 py-3">品牌</th>
-                    <th className="px-3 py-3">价格</th>
-                    <th className="px-3 py-3">销量</th>
-                    <th className="px-3 py-3">销售额</th>
-                    <th className="px-3 py-3">FBA</th>
-                    <th className="px-3 py-3">上架日期</th>
-                    <th className="px-3 py-3">操作</th>
+                    <th className="px-3 py-3">{t("detail.tableImage")}</th>
+                    <th className="px-3 py-3">{t("detail.tableAsin")}</th>
+                    <th className="px-3 py-3">{t("detail.tableVariantName")}</th>
+                    <th className="px-3 py-3">{t("detail.tableBrand")}</th>
+                    <th className="px-3 py-3">{t("detail.tablePrice")}</th>
+                    <th className="px-3 py-3">{t("detail.tableSales")}</th>
+                    <th className="px-3 py-3">{t("detail.tableRevenue")}</th>
+                    <th className="px-3 py-3">{t("detail.tableFba")}</th>
+                    <th className="px-3 py-3">{t("detail.tableListDate")}</th>
+                    <th className="px-3 py-3">{t("detail.tableActions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -145,7 +148,7 @@ export default async function ProductDetailPage({ params }: Props) {
                         <DeleteVariantButton
                           productId={productId}
                           variantId={v.id as number}
-                          variantName={(v.name as string) || (v.child_asin as string) || "未命名变体"}
+                          variantName={(v.name as string) || (v.child_asin as string) || t("detail.unnamedVariant")}
                         />
                       </td>
                     </tr>
@@ -155,7 +158,7 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           ) : (
             <p className="mt-4 text-sm text-soft">
-              暂无变体数据。通过 ASIN 抓取时勾选「抓取所有变体」可自动填充。
+              {t("detail.noVariants")}
             </p>
           )}
         </div>

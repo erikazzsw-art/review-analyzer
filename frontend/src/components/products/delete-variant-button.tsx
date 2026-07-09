@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { deleteVariant } from "@/lib/api/browser";
 
@@ -13,6 +14,7 @@ type DeleteVariantButtonProps = {
 };
 
 export function DeleteVariantButton({ productId, variantId, variantName }: DeleteVariantButtonProps) {
+  const t = useTranslations("products.deleteVariant");
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -32,14 +34,14 @@ export function DeleteVariantButton({ productId, variantId, variantName }: Delet
   if (confirming) {
     return (
       <div className="inline-flex items-center gap-2">
-        <span className="text-xs text-[#d94d72]">确认？</span>
+        <span className="text-xs text-[#d94d72]">{t("confirmText")}</span>
         <button
           type="button"
           disabled={deleting}
           onClick={handleDelete}
           className="rounded-pill bg-[#d94d72] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
         >
-          {deleting ? "删除中…" : "删除"}
+          {deleting ? t("deleting") : t("deleteButton")}
         </button>
         <button
           type="button"
@@ -47,7 +49,7 @@ export function DeleteVariantButton({ productId, variantId, variantName }: Delet
           onClick={() => setConfirming(false)}
           className="rounded-pill border border-line bg-white px-3 py-1 text-xs font-semibold text-soft"
         >
-          取消
+          {t("cancelButton")}
         </button>
       </div>
     );
@@ -57,7 +59,7 @@ export function DeleteVariantButton({ productId, variantId, variantName }: Delet
     <button
       type="button"
       onClick={() => setConfirming(true)}
-      aria-label={`删除变体 ${variantName}`}
+      aria-label={t("ariaLabel", { name: variantName })}
       className="inline-flex items-center justify-center rounded-pill p-1.5 text-soft transition hover:bg-[#fff5f7] hover:text-[#d94d72]"
     >
       <Trash2 className="h-3.5 w-3.5" />

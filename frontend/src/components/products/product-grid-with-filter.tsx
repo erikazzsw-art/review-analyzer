@@ -2,26 +2,18 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { ProductOverview } from "@/lib/api/types";
 import { DeleteProductButton } from "@/components/products/delete-product-button";
 
-const PLATFORM_TABS = [
-  { value: "all", label: "全部" },
-  { value: "amazon", label: "Amazon" },
-  { value: "aliexpress", label: "AliExpress" },
-  { value: "shopee", label: "Shopee" },
-  { value: "ebay", label: "eBay" },
-  { value: "walmart", label: "Walmart" },
-] as const;
-
 type PlatformFilter = "all" | "amazon" | "aliexpress" | "shopee" | "ebay" | "walmart";
 
-const lifecycleLabels: Record<string, string> = {
-  research: "调研期",
-  launch: "新品期",
-  growth: "成长期",
-  mature: "成熟期",
-  decline: "衰退期",
+const lifecycleKeys: Record<string, string> = {
+  research: "lifecycleResearch",
+  launch: "lifecycleLaunch",
+  growth: "lifecycleGrowth",
+  mature: "lifecycleMature",
+  decline: "lifecycleDecline",
 };
 
 function normalizePlatform(platform: string | null): "amazon" | "aliexpress" | "shopee" | "ebay" | "walmart" | "other" {
@@ -45,8 +37,8 @@ function getPlatformBadge(platform: string | null) {
   return null;
 }
 
-function StarRating({ rating }: { rating: number | null }) {
-  if (rating == null) return <span className="text-xs text-soft">暂无评分</span>;
+function StarRating({ rating, t }: { rating: number | null; t: (key: string, values?: Record<string, string | number | Date>) => string }) {
+  if (rating == null) return <span className="text-xs text-soft">{t("grid.noRating")}</span>;
   const fullStars = Math.floor(rating);
   const hasHalf = rating - fullStars >= 0.3;
   return (
@@ -63,9 +55,10 @@ function StarRating({ rating }: { rating: number | null }) {
   );
 }
 
-function ProductCard({ product }: { product: ProductOverview }) {
+function ProductCard({ product, t }: { product: ProductOverview; t: (key: string, values?: Record<string, string | number | Date>) => string }) {
   const title = product.name || product.parent_product_id;
-  const lifecycle = lifecycleLabels[product.lifecycle_stage || ""] || product.lifecycle_stage || "";
+  const lifecycleKey = lifecycleKeys[product.lifecycle_stage || ""];
+  const lifecycle = lifecycleKey ? t(`create.${lifecycleKey}`) : (product.lifecycle_stage || "");
   const badge = getPlatformBadge(product.platform);
 
   return (
@@ -73,7 +66,7 @@ function ProductCard({ product }: { product: ProductOverview }) {
       <Link
         href={`/products/${product.id}`}
         className="absolute inset-0 z-0"
-        aria-label={`查看 ${title} 详情`}
+        aria-label={t("grid.viewDetailAriaLabel", { title })}
       />
 
       <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
@@ -93,7 +86,7 @@ function ProductCard({ product }: { product: ProductOverview }) {
 
         {product.session_count > 0 && (
           <span className="absolute right-2 top-2 rounded-pill bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[#f36f8f] shadow-sm backdrop-blur">
-            有分析
+            {t("grid.hasAnalysis")}
           </span>
         )}
 
@@ -119,11 +112,11 @@ function ProductCard({ product }: { product: ProductOverview }) {
           <p className="text-xs text-soft">{product.brand}</p>
         )}
 
-        <StarRating rating={product.rating} />
+        <StarRating rating={product.rating} t={t} />
 
         <div className="mt-auto flex items-center justify-between pt-2 text-xs text-soft">
-          <span>{product.reviews_total ?? product.review_count} 条评论</span>
-          <span>{product.variant_count} 个变体</span>
+          <span>{product.reviews_total ?? product.review_count} {t("grid.reviewsUnit")}</span>
+          <span>{product.variant_count} {t("grid.variantsUnit")}</span>
         </div>
 
         <div className="relative z-10 mt-2 flex justify-end">
@@ -137,7 +130,17 @@ function ProductCard({ product }: { product: ProductOverview }) {
 }
 
 export function ProductGridWithFilter({ products }: { products: ProductOverview[] }) {
+  const t = useTranslations("products");
   const [filter, setFilter] = useState<PlatformFilter>("all");
+
+  const PLATFORM_TABS = [
+    { value: "all" as const, label: t("grid.tabAll") },
+    { value: "amazon" as const, label: "Amazon" },
+    { value: "aliexpress" as const, label: "AliExpress" },
+    { value: "shopee" as const, label: "Shopee" },
+    { value: "ebay" as const, label: "eBay" },
+    { value: "walmart" as const, label: "Walmart" },
+  ];
 
   const filtered = useMemo(() => {
     if (filter === "all") return products;
@@ -169,11 +172,12 @@ export function ProductGridWithFilter({ products }: { products: ProductOverview[
             <ProductCard
               key={`${product.parent_product_id}-${product.id ?? "archived"}`}
               product={product}
+              t={t}
             />
           ))}
         </section>
       ) : (
-        <p className="text-sm text-soft py-8 text-center">该平台下暂无产品</p>
+        <p className="text-sm text-soft py-8 text-center">{t("grid.noProductsInPlatform")}</p>
       )}
     </>
   );

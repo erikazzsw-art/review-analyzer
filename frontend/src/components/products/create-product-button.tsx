@@ -3,20 +3,22 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { createProduct, type ProductCreatePayload } from "@/lib/api/browser";
 
-const lifecycleOptions = [
-  { value: "research", label: "调研期" },
-  { value: "launch", label: "新品期" },
-  { value: "growth", label: "成长期" },
-  { value: "mature", label: "成熟期" },
-  { value: "decline", label: "衰退期" },
-];
+const lifecycleKeys = [
+  { value: "research", key: "lifecycleResearch" },
+  { value: "launch", key: "lifecycleLaunch" },
+  { value: "growth", key: "lifecycleGrowth" },
+  { value: "mature", key: "lifecycleMature" },
+  { value: "decline", key: "lifecycleDecline" },
+] as const;
 
-const platformOptions = ["Amazon", "eBay", "Shopee", "AliExpress", "Walmart", "其他"];
+const platformOptions = ["Amazon", "eBay", "Shopee", "AliExpress", "Walmart"];
 
 export function CreateProductButton() {
+  const t = useTranslations("products.create");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -67,7 +69,7 @@ export function CreateProductButton() {
         className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-ink/90"
       >
         <Plus className="h-4 w-4" />
-        新建产品
+        {t("createButton")}
       </button>
     );
   }
@@ -79,19 +81,19 @@ export function CreateProductButton() {
         className="w-full max-w-lg rounded-shell border border-line bg-white p-6 shadow-card"
       >
         <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-          新建产品组
+          {t("createTitle")}
         </h3>
 
         <div className="mt-6 space-y-4">
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              产品 ID（必填）
+              {t("productIdLabel")}
             </label>
             <input
               type="text"
               value={form.parent_product_id}
               onChange={(e) => updateField("parent_product_id", e.target.value)}
-              placeholder="如 ASIN / SKU 编号"
+              placeholder={t("productIdPlaceholder")}
               className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
               required
             />
@@ -99,13 +101,13 @@ export function CreateProductButton() {
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              产品名称
+              {t("productNameLabel")}
             </label>
             <input
               type="text"
               value={form.name ?? ""}
               onChange={(e) => updateField("name", e.target.value)}
-              placeholder="可选，便于识别"
+              placeholder={t("productNamePlaceholder")}
               className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
             />
           </div>
@@ -113,7 +115,7 @@ export function CreateProductButton() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                平台
+                {t("platformLabel")}
               </label>
               <select
                 value={form.platform ?? "Amazon"}
@@ -123,20 +125,21 @@ export function CreateProductButton() {
                 {platformOptions.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
+                <option value="其他">{t("platformOther")}</option>
               </select>
             </div>
 
             <div>
               <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                生命周期
+                {t("lifecycleLabel")}
               </label>
               <select
                 value={form.lifecycle_stage ?? "growth"}
                 onChange={(e) => updateField("lifecycle_stage", e.target.value)}
                 className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
               >
-                {lifecycleOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                {lifecycleKeys.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{t(opt.key)}</option>
                 ))}
               </select>
             </div>
@@ -144,13 +147,13 @@ export function CreateProductButton() {
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              类目
+              {t("categoryLabel")}
             </label>
             <input
               type="text"
               value={form.category ?? ""}
               onChange={(e) => updateField("category", e.target.value)}
-              placeholder="如 电子配件、家居用品"
+              placeholder={t("categoryPlaceholder")}
               className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
             />
           </div>
@@ -163,14 +166,14 @@ export function CreateProductButton() {
             disabled={submitting}
             className="inline-flex min-h-11 items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-soft"
           >
-            取消
+            {t("cancelButton")}
           </button>
           <button
             type="submit"
             disabled={submitting || !form.parent_product_id.trim()}
             className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card disabled:opacity-50"
           >
-            {submitting ? "创建中…" : "创建"}
+            {submitting ? t("creating") : t("createSubmitButton")}
           </button>
         </div>
       </form>

@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 
 interface LedgerEntry {
   id: number;
@@ -13,26 +14,13 @@ interface LedgerEntry {
   created_at: string | null;
 }
 
-const REASON_LABEL: Record<string, string> = {
-  monthly_grant: "Monthly grant",
-  trial: "Trial credits",
-  topup: "Top-up",
-  refund: "Refund",
-  review_analyze: "Review analysis",
-  ask: "Ask Reviews",
-  insight: "Insight",
-  copywriter: "Ad copy",
-  translate: "Translation",
-  export: "Export",
-  competitor: "Competitor analysis",
-};
-
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }
 
 export function CreditLedgerDrawer({ open, onOpenChange }: Props) {
+  const t = useTranslations("credit");
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -60,12 +48,12 @@ export function CreditLedgerDrawer({ open, onOpenChange }: Props) {
       {/* Drawer */}
       <aside className="fixed bottom-0 right-0 top-0 z-[110] flex w-full max-w-sm flex-col border-l border-line bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <h2 className="text-base font-semibold text-ink">Credit History</h2>
+          <h2 className="text-base font-semibold text-ink">{t("ledger.title")}</h2>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
             className="rounded p-1 text-soft hover:bg-line"
-            aria-label="Close"
+            aria-label={t("ledger.close")}
           >
             <X size={18} />
           </button>
@@ -79,7 +67,7 @@ export function CreditLedgerDrawer({ open, onOpenChange }: Props) {
               ))}
             </div>
           ) : entries.length === 0 ? (
-            <p className="mt-8 text-center text-sm text-soft">No transactions yet.</p>
+            <p className="mt-8 text-center text-sm text-soft">{t("ledger.emptyState")}</p>
           ) : (
             <ul className="space-y-2">
               {entries.map((e) => {
@@ -90,6 +78,7 @@ export function CreditLedgerDrawer({ open, onOpenChange }: Props) {
                       day: "numeric",
                     })
                   : "";
+                const reasonKey = `reasonLabel.${e.reason}` as const;
                 return (
                   <li
                     key={e.id}
@@ -97,12 +86,12 @@ export function CreditLedgerDrawer({ open, onOpenChange }: Props) {
                   >
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium text-ink">
-                        {REASON_LABEL[e.reason] ?? e.reason}
+                        {t(reasonKey)}
                       </div>
                       <div className="text-[11px] text-soft">
                         {date}
                         {e.ref_id ? ` · ${e.ref_id.slice(0, 8)}` : ""}
-                        {" · bal "}{e.balance_after.toLocaleString()}
+                        {" · "}{t("ledger.balancePrefix")}{" "}{e.balance_after.toLocaleString()}
                       </div>
                     </div>
                     <span

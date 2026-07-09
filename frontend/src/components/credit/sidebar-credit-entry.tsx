@@ -2,6 +2,7 @@
 
 import { Coins } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import type { QuotaItem } from "@/lib/api/server";
 import { QuotaDialog } from "@/components/quota/quota-dialog";
@@ -26,6 +27,7 @@ function derivePlan(monthlyGrant: number): PlanKey {
 }
 
 export function SidebarCreditEntry() {
+  const t = useTranslations("credit.sidebar");
   const [quotaOpen, setQuotaOpen] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -63,18 +65,18 @@ export function SidebarCreditEntry() {
           type="button"
           onClick={() => setQuotaOpen(true)}
           className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
-          aria-label="Credit balance"
+          aria-label={t("creditsLabel")}
         >
           <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
             <Coins size={15} />
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="truncate text-xs font-semibold text-ink">Credits</span>
+            <span className="truncate text-xs font-semibold text-ink">{t("creditsLabel")}</span>
             {data ? (
               <span className="truncate text-[11px] text-soft">
                 {data.balance.toLocaleString()}
                 {data.is_trial && data.days_left !== null
-                  ? ` · Trial ${data.days_left}d left`
+                  ? ` · ${t("trialDaysLeft", { days: data.days_left })}`
                   : ` / ${data.monthly_grant.toLocaleString()}`}
               </span>
             ) : (
@@ -88,7 +90,7 @@ export function SidebarCreditEntry() {
             onClick={() => setUpgradeOpen(true)}
             className="self-center whitespace-nowrap text-xs font-semibold text-rose hover:underline"
           >
-            Upgrade
+            {t("upgradeButton")}
           </button>
         )}
       </div>

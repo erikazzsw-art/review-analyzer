@@ -4,26 +4,32 @@ import { CreateProductButton } from "@/components/products/create-product-button
 import { ProductGridWithFilter } from "@/components/products/product-grid-with-filter";
 import { getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
+import { getTranslations } from "next-intl/server";
 
-export const metadata = buildNoIndexMetadata({
-  title: "Product Management | ClueAI",
-  description: "Authenticated product groups, variants, and review assets.",
-});
+export async function generateMetadata() {
+  const t = await getTranslations("products.page");
+  return buildNoIndexMetadata({
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+  });
+}
 
 export default async function ProductsPage() {
+  const t = await getTranslations("products");
+
   try {
     const response = await getProducts();
     return (
       <AppShell
         currentPath="/products"
-        title="产品管理"
-        description="浏览所有产品档案，点击卡片查看详情和变体信息。"
+        title={t("page.title")}
+        description={t("page.description")}
       >
         <div className="flex items-center justify-between gap-4">
           <section className="grid flex-1 gap-4 md:grid-cols-3">
             <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                产品总数
+                {t("page.totalProducts")}
               </div>
               <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
                 {response.total}
@@ -31,7 +37,7 @@ export default async function ProductsPage() {
             </div>
             <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                总评论数
+                {t("page.totalReviews")}
               </div>
               <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
                 {response.items.reduce((sum, p) => sum + (p.reviews_total ?? p.review_count), 0)}
@@ -39,7 +45,7 @@ export default async function ProductsPage() {
             </div>
             <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                总变体数
+                {t("page.totalVariants")}
               </div>
               <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
                 {response.items.reduce((sum, p) => sum + p.variant_count, 0)}
@@ -54,10 +60,10 @@ export default async function ProductsPage() {
         ) : (
           <section className="rounded-shell border border-dashed border-line bg-white/80 px-6 py-10 shadow-card backdrop-blur">
             <h2 className="font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-              还没有产品档案
+              {t("page.emptyTitle")}
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-8 text-soft">
-              当前账号下还没有产品组。通过自动抓取评论时会自动创建产品档案，或点击右上角手动添加。
+              {t("page.emptyDescription")}
             </p>
             <div className="mt-6">
               <CreateProductButton />
@@ -71,12 +77,12 @@ export default async function ProductsPage() {
       return (
         <AppShell
           currentPath="/products"
-          title="产品管理"
-          description="登录后查看产品档案。"
+          title={t("page.loginTitle")}
+          description={t("page.loginDescription")}
         >
           <EmptyAuthState
-            title="登录后查看产品组、变体和评论资产"
-            description="登录后可以看到从自动抓取沉淀的产品数据。"
+            title={t("page.loginEmptyTitle")}
+            description={t("page.loginEmptyDesc")}
           />
         </AppShell>
       );

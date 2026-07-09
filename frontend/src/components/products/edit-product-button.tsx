@@ -3,18 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pencil } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { updateProduct, type ProductUpdatePayload } from "@/lib/api/browser";
 
-const lifecycleOptions = [
-  { value: "research", label: "调研期" },
-  { value: "launch", label: "新品期" },
-  { value: "growth", label: "成长期" },
-  { value: "mature", label: "成熟期" },
-  { value: "decline", label: "衰退期" },
-];
+const lifecycleKeys = [
+  { value: "research", key: "lifecycleResearch" },
+  { value: "launch", key: "lifecycleLaunch" },
+  { value: "growth", key: "lifecycleGrowth" },
+  { value: "mature", key: "lifecycleMature" },
+  { value: "decline", key: "lifecycleDecline" },
+] as const;
 
-const platformOptions = ["Amazon", "eBay", "Shopee", "AliExpress", "Walmart", "其他"];
+const platformOptions = ["Amazon", "eBay", "Shopee", "AliExpress", "Walmart"];
 
 type EditProductButtonProps = {
   productId: number;
@@ -32,6 +33,7 @@ type EditProductButtonProps = {
 };
 
 export function EditProductButton({ productId, initial }: EditProductButtonProps) {
+  const t = useTranslations("products");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -77,7 +79,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
         className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-ink transition hover:border-ink/30"
       >
         <Pencil className="h-3.5 w-3.5" />
-        编辑
+        {t("edit.editButton")}
       </button>
     );
   }
@@ -89,13 +91,13 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
         className="w-full max-w-lg rounded-shell border border-line bg-white p-6 shadow-card"
       >
         <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-          编辑产品
+          {t("edit.editTitle")}
         </h3>
 
         <div className="mt-6 space-y-4">
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              产品名称
+              {t("edit.productNameLabel")}
             </label>
             <input
               type="text"
@@ -108,7 +110,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                平台
+                {t("edit.platformLabel")}
               </label>
               <select
                 value={form.platform ?? "Amazon"}
@@ -118,20 +120,21 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
                 {platformOptions.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
+                <option value="其他">{t("create.platformOther")}</option>
               </select>
             </div>
 
             <div>
               <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                生命周期
+                {t("edit.lifecycleLabel")}
               </label>
               <select
                 value={form.lifecycle_stage ?? "growth"}
                 onChange={(e) => updateField("lifecycle_stage", e.target.value)}
                 className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
               >
-                {lifecycleOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                {lifecycleKeys.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{t(`create.${opt.key}`)}</option>
                 ))}
               </select>
             </div>
@@ -139,7 +142,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              类目
+              {t("edit.categoryLabel")}
             </label>
             <input
               type="text"
@@ -151,7 +154,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              核心卖点
+              {t("edit.coreSellingPointsLabel")}
             </label>
             <textarea
               value={form.core_selling_points ?? ""}
@@ -163,7 +166,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              主要竞品
+              {t("edit.mainCompetitorsLabel")}
             </label>
             <textarea
               value={form.main_competitors ?? ""}
@@ -181,14 +184,14 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
             disabled={submitting}
             className="inline-flex min-h-11 items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-soft"
           >
-            取消
+            {t("edit.cancelButton")}
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card disabled:opacity-50"
           >
-            {submitting ? "保存中…" : "保存"}
+            {submitting ? t("edit.saving") : t("edit.saveButton")}
           </button>
         </div>
       </form>
