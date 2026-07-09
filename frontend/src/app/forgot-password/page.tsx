@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
-export const metadata = buildNoIndexMetadata({
-  title: "找回密码",
-  description: "通过邮箱验证重置 ReviewLens 账号密码。",
-});
+export async function generateMetadata() {
+  const t = await getTranslations("auth");
+  return buildNoIndexMetadata({
+    title: t("forgotMetaTitle"),
+    description: t("forgotMetaDescription"),
+  });
+}
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("auth");

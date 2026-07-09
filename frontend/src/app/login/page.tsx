@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
 import { LoginForm } from "@/components/auth/login-form";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
-export const metadata = buildNoIndexMetadata({
-  title: "登录",
-  description: "登录 ReviewLens，进入评论分析工作台。",
-});
+export async function generateMetadata() {
+  const t = await getTranslations("auth");
+  return buildNoIndexMetadata({
+    title: t("loginMetaTitle"),
+    description: t("loginMetaDescription"),
+  });
+}
 
 export default function LoginPage() {
   const t = useTranslations("auth");

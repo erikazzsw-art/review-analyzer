@@ -1,15 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 function AuthShowcase() {
+  const t = useTranslations("auth");
   return (
     <div className="rounded-card border border-line bg-white/80 p-6 shadow-card backdrop-blur">
       <div className="mb-4 flex items-center justify-between">
         <span className="text-xs font-bold uppercase tracking-widest text-soft">
-          评论趋势分析
+          {t("showcaseTitle")}
         </span>
         <span className="rounded-pill bg-[#e8f8f4] px-2 py-0.5 text-[10px] font-bold text-[#2e9680]">
-          实时更新
+          {t("showcaseLive")}
         </span>
       </div>
       <svg className="w-full" viewBox="0 0 280 120" fill="none">
@@ -46,13 +48,13 @@ function AuthShowcase() {
       </svg>
       <div className="mt-3 flex gap-4 text-[10px] text-soft">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-1.5 w-3 rounded-full bg-mint" /> 好评上升
+          <span className="inline-block h-1.5 w-3 rounded-full bg-mint" /> {t("showcasePositive")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-1.5 w-3 rounded-full bg-rose" /> 差评下降
+          <span className="inline-block h-1.5 w-3 rounded-full bg-rose" /> {t("showcaseNegative")}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-1.5 w-3 rounded-full bg-lavender" /> 改进措施
+          <span className="inline-block h-1.5 w-3 rounded-full bg-lavender" /> {t("showcaseActions")}
         </span>
       </div>
     </div>
@@ -64,6 +66,7 @@ type AuthLayoutProps = {
 };
 
 export function AuthLayout({ children }: AuthLayoutProps) {
+  const t = useTranslations("auth");
   return (
     <div className="flex min-h-screen">
       {/* Left: Product showcase */}
@@ -86,10 +89,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {/* Bottom: Value proposition */}
         <div className="max-w-sm">
           <h2 className="font-heading text-xl font-bold text-ink">
-            评论洞察驱动产品迭代
+            {t("showcaseHeading")}
           </h2>
           <p className="mt-2 text-sm leading-6 text-soft">
-            从多平台评论分析到行动推送，再到数据验证闭环。让用户的声音真正转化为产品优化的行动力。
+            {t("showcaseBody")}
           </p>
         </div>
 

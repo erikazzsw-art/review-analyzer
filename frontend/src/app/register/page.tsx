@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
 import { RegisterForm } from "@/components/auth/register-form";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
-export const metadata = buildNoIndexMetadata({
-  title: "注册",
-  description: "创建 ReviewLens 账号，开始智能评论分析。",
-});
+export async function generateMetadata() {
+  const t = await getTranslations("auth");
+  return buildNoIndexMetadata({
+    title: t("registerMetaTitle"),
+    description: t("registerMetaDescription"),
+  });
+}
 
 export default function RegisterPage() {
   const t = useTranslations("auth");

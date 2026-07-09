@@ -130,7 +130,20 @@
     "codePlaceholder": "请输入 6 位验证码",
     "useOtherEmail": "使用其他邮箱",
     "confirmReset": "确认重置",
-    "confirmingReset": "重置中..."
+    "confirmingReset": "重置中...",
+    "showcaseTitle": "评论趋势分析",
+    "showcaseLive": "实时更新",
+    "showcasePositive": "好评上升",
+    "showcaseNegative": "差评下降",
+    "showcaseActions": "改进措施",
+    "showcaseHeading": "评论洞察驱动产品迭代",
+    "showcaseBody": "从多平台评论分析到行动推送，再到数据验证闭环。让用户的声音真正转化为产品优化的行动力。",
+    "loginMetaTitle": "登录",
+    "loginMetaDescription": "登录 ReviewLens，进入评论分析工作台。",
+    "registerMetaTitle": "注册",
+    "registerMetaDescription": "创建 ReviewLens 账号，开始智能评论分析。",
+    "forgotMetaTitle": "找回密码",
+    "forgotMetaDescription": "通过邮箱验证重置 ReviewLens 账号密码。"
   },
   "sidebar": {
     "groupCore": "核心",

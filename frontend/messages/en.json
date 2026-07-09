@@ -130,7 +130,20 @@
     "codePlaceholder": "Enter 6-digit code",
     "useOtherEmail": "Use a different email",
     "confirmReset": "Confirm Reset",
-    "confirmingReset": "Resetting..."
+    "confirmingReset": "Resetting...",
+    "showcaseTitle": "Review Trend Analysis",
+    "showcaseLive": "Live",
+    "showcasePositive": "Positive trending up",
+    "showcaseNegative": "Negative trending down",
+    "showcaseActions": "Improvements",
+    "showcaseHeading": "Review insights drive product iteration",
+    "showcaseBody": "From multi-platform review analysis to action alerts, then to data-verified closed loops. Turn user voices into real product improvement.",
+    "loginMetaTitle": "Log In",
+    "loginMetaDescription": "Log in to ReviewLens and access your review analytics workspace.",
+    "registerMetaTitle": "Sign Up",
+    "registerMetaDescription": "Create a ReviewLens account and start analyzing reviews instantly.",
+    "forgotMetaTitle": "Reset Password",
+    "forgotMetaDescription": "Reset your ReviewLens account password via email verification."
   },
   "sidebar": {
     "groupCore": "Core",
