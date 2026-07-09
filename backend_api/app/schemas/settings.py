@@ -63,6 +63,8 @@ class SettingsUpdatePayload(BaseModel):
 
 class BillingCheckoutPayload(BaseModel):
     success_url: str | None = None
+    plan_key: str = "pro"
+    period: str = "monthly"
 
 
 class BillingCheckoutResponse(BaseModel):

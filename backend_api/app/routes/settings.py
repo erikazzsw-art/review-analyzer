@@ -205,11 +205,11 @@ def create_billing_checkout(
     user_id = int(current_user["id"])
     email = str(current_user.get("email") or "")
     success_url = payload.success_url or f"{os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')}/settings?billing=success"
-    checkout_html = get_checkout_html(user_id, email, success_url)
+    checkout_html = get_checkout_html(user_id, email, success_url, payload.plan_key, payload.period)
     return BillingCheckoutResponse(
         checkout_html=checkout_html,
         configured=is_billing_configured(),
-        plan="pro",
+        plan=payload.plan_key,
     )
 
 
