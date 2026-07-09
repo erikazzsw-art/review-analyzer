@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Fragment, useRef, useState } from "react";
 import { Check, Minus } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 import {
   Dialog,
@@ -151,7 +151,7 @@ export function UpgradePricingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl gap-0 overflow-hidden rounded-shell border-line bg-white p-0 shadow-card">
+      <DialogContent closeLabel={t("close")} className="max-h-[90vh] max-w-4xl gap-0 overflow-hidden rounded-shell border-line bg-white p-0 shadow-card">
         <DialogHeader className="space-y-3 border-b border-line px-6 pb-4 pt-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <DialogTitle className="font-heading text-xl font-extrabold tracking-[-0.03em] text-ink">
@@ -189,7 +189,7 @@ export function UpgradePricingDialog({
                       : "bg-emerald-100 text-emerald-700",
                   ].join(" ")}
                 >
-                  {t("annualDiscount")}
+                  -20%
                 </span>
               </button>
             </div>
@@ -208,8 +208,8 @@ export function UpgradePricingDialog({
                 plan.monthlyUsd === 0
                   ? ""
                   : billingCycle === "annual"
-                  ? t("perMonthAnnual")
-                  : t("perMonth");
+                  ? "/mo, billed annually"
+                  : "/mo";
 
               let cta: React.ReactNode = null;
               if (isCurrent) {
@@ -249,8 +249,8 @@ export function UpgradePricingDialog({
                     {checkoutLoading === key
                       ? t("loading")
                       : isPaidCurrent
-                      ? t("upgradePlan")
-                      : t("upgradeNow")}
+                      ? t("upgrade")
+                      : t("getStarted")}
                   </button>
                 );
               }
@@ -287,12 +287,12 @@ export function UpgradePricingDialog({
                   </div>
 
                   <div className="mt-1 text-xs text-soft">
-                    {plan.credits.toLocaleString()} {t("creditsPerMonth")}
+                    {plan.credits.toLocaleString()} credits / {t("month")}
                   </div>
 
                   {billingCycle === "annual" && plan.annualTotalUsd > 0 && (
                     <div className="mt-0.5 text-[11px] text-soft">
-                      {t("annualTotal", { total: plan.annualTotalUsd })}
+                      ${plan.annualTotalUsd} {t("billedAnnually")}
                     </div>
                   )}
 
@@ -309,7 +309,7 @@ export function UpgradePricingDialog({
                           className="mt-0.5 shrink-0 text-[#4a7dc7]"
                           strokeWidth={2.5}
                         />
-                        <span>{t(`planHighlight${suffix}` as Parameters<typeof t>[0])}</span>
+                        <span>{t(`highlight.${suffix}` as Parameters<typeof t>[0])}</span>
                       </li>
                     ))}
                   </ul>
@@ -318,7 +318,7 @@ export function UpgradePricingDialog({
             })}
           </div>
 
-          {/* Feature comparison table */}
+          {/* Comparison table */}
           <div className="mt-8 overflow-x-auto">
             <table className="min-w-full border-separate border-spacing-0 text-sm">
               <thead>
@@ -329,16 +329,16 @@ export function UpgradePricingDialog({
                   >
                     {t("comparisonTitle")}
                   </th>
-                  {PLAN_ORDER.map((planKey) => (
+                  {PLAN_ORDER.map((key) => (
                     <th
-                      key={planKey}
+                      key={key}
                       scope="col"
                       className={[
                         "border-b border-line px-4 py-3 text-center text-xs font-semibold",
-                        planKey === "pro" ? "text-[#d94d72]" : "text-ink",
+                        key === "pro" ? "text-[#d94d72]" : "text-ink",
                       ].join(" ")}
                     >
-                      {t(`planName.${planKey}` as Parameters<typeof t>[0])}
+                      {t(`planName.${key}` as Parameters<typeof t>[0])}
                     </th>
                   ))}
                 </tr>
@@ -352,7 +352,7 @@ export function UpgradePricingDialog({
                         colSpan={5}
                         className="sticky left-0 bg-hero-wash px-4 py-2 text-left text-xs font-semibold text-soft"
                       >
-                        {t(`comparisonGroup.${group.titleKey}` as Parameters<typeof t>[0])}
+                        {t(`groupTitle.${group.titleKey}` as Parameters<typeof t>[0])}
                       </th>
                     </tr>
                     {group.rows.map((row) => (
@@ -361,7 +361,7 @@ export function UpgradePricingDialog({
                           scope="row"
                           className="sticky left-0 z-10 bg-white px-4 py-2.5 text-left text-xs font-medium text-ink"
                         >
-                          {t(`comparisonRow.${row.labelKey}` as Parameters<typeof t>[0])}
+                          {t(`rowLabel.${row.labelKey}` as Parameters<typeof t>[0])}
                         </th>
                         {PLAN_ORDER.map((planKey) => {
                           const value = row.values[planKey];
@@ -397,7 +397,7 @@ export function UpgradePricingDialog({
             onClick={onOpenLedger}
             className="text-xs font-semibold text-rose hover:underline"
           >
-            {t("viewLedger")}
+            {t("viewLedger")} →
           </button>
         </div>
 

@@ -7,7 +7,7 @@ import { getActionItems, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Action Center | ClueAI",
+  title: "Action Center",
   description: "Authenticated action tracking and ownership handoff.",
 });
 

@@ -7,7 +7,7 @@ import { getQaProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Review Q&A | ClueAI",
+  title: "Review Q&A",
   description: "Authenticated question answering over review evidence.",
 });
 

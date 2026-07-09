@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Analysis History | ClueAI",
+  title: "Analysis History",
   description: "Authenticated history of uploaded review batches.",
 });
 

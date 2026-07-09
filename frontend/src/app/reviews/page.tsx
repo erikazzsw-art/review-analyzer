@@ -5,7 +5,7 @@ import { getReviewTrackers, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Follow-up Tracking | ClueAI",
+  title: "Follow-up Tracking",
   description: "Authenticated follow-up validation and review tracking.",
 });
 

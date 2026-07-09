@@ -5,7 +5,7 @@ import { getCopywriterPlatforms, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Marketing Copy | ClueAI",
+  title: "Marketing Copy",
   description: "Authenticated copy generation for products and campaigns.",
 });
 

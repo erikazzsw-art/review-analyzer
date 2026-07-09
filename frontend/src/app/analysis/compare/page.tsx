@@ -8,7 +8,7 @@ import { getCompareLatest, getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Compare Analysis | ClueAI",
+  title: "Compare Analysis",
   description: "Authenticated compare view for products, batches, and versions.",
 });
 

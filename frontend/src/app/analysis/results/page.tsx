@@ -24,7 +24,7 @@ import { isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Analysis Results | ClueAI",
+  title: "Analysis Results",
   description: "Authenticated analysis results for a single review batch.",
 });
 
