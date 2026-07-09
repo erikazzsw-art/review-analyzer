@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-PADDLE_CLIENT_TOKEN = os.getenv("PADDLE_CLIENT_TOKEN", "")
+# Fix E: 兼容 PADDLE_CLIENT_TOKEN 和 NEXT_PUBLIC_PADDLE_CLIENT_TOKEN 两种命名
+PADDLE_CLIENT_TOKEN = os.environ.get("PADDLE_CLIENT_TOKEN") or os.environ.get("NEXT_PUBLIC_PADDLE_CLIENT_TOKEN") or ""
 PADDLE_PRICE_ID = os.getenv("PADDLE_PRICE_ID", "")
 
 # Fix E: 兼容 PADDLE_ENVIRONMENT 和 NEXT_PUBLIC_PADDLE_ENV 两种命名
