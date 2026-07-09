@@ -20,9 +20,13 @@ export function BillingPanel({ billing }: Props) {
   async function handleCheckout() {
     setError(""); setMessage(""); setIsLoading(true);
     try {
-      const result = await openBillingCheckout(checkoutRef.current);
+      const result = await openBillingCheckout(checkoutRef.current, "pro", "monthly");
+      if (!result.configured) {
+        setMessage(t("notConfigured"));
+        return;
+      }
       if (!result.hasHtml) {
-        setMessage(result.configured ? t("notReturned") : t("notConfigured"));
+        setMessage(t("notReturned"));
         return;
       }
       setMessage(t("checkoutOpened"));

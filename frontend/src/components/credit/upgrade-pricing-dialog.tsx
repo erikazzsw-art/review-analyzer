@@ -130,18 +130,23 @@ export function UpgradePricingDialog({
     setError("");
     setCheckoutLoading(planKey);
     try {
-      const result = await openBillingCheckout(checkoutRef.current);
+      const result = await openBillingCheckout(checkoutRef.current, planKey, billingCycle);
+      if (!result.configured) {
+        setError("Payment not enabled yet. Please contact hello@clueai.co.");
+        return;
+      }
       if (!result.hasHtml) {
-        onOpenChange(false);
+        setError("You already have an active subscription. Manage from Settings.");
         return;
       }
     } catch (err) {
       if (isUnauthenticatedCheckoutError(err)) {
         onOpenChange(false);
-        router.push(`/register?plan=${planKey}`);
+        router.push(`/register?plan=${planKey}&period=${billingCycle}`);
         return;
       }
       setError((err as { message?: string }).message || "Operation failed, please try again");
+      console.error("[billing] checkout failed", err);
     } finally {
       setCheckoutLoading(null);
     }

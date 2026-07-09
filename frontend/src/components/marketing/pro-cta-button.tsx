@@ -20,12 +20,19 @@ export function ProCtaButton({ label, className }: Props) {
   async function handleClick() {
     setIsLoading(true);
     try {
-      await openBillingCheckout(checkoutRef.current);
-    } catch (err: unknown) {
-      if (isUnauthenticatedCheckoutError(err)) {
-        router.push("/register?plan=pro");
+      const result = await openBillingCheckout(checkoutRef.current, "pro", "monthly");
+      if (!result.configured) {
         return;
       }
+      if (!result.hasHtml) {
+        return;
+      }
+    } catch (err: unknown) {
+      if (isUnauthenticatedCheckoutError(err)) {
+        router.push("/register?plan=pro&period=monthly");
+        return;
+      }
+      console.error("[billing] checkout failed", err);
     } finally {
       setIsLoading(false);
     }

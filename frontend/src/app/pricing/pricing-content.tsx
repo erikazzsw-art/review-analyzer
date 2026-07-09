@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { openBillingCheckout, isUnauthenticatedCheckoutError } from "@/lib/billing";
-import { ADD_ONS, PLANS, TRIAL_CREDITS, TRIAL_DAYS, formatPrice, type BillingPeriod } from "@/lib/pricing";
+import { ADD_ONS, PLANS, TRIAL_CREDITS, TRIAL_DAYS, formatPrice, type BillingPeriod, type PlanKey } from "@/lib/pricing";
 
 const PLAN_FEATURES: Record<string, string[]> = {
   free: [
@@ -62,19 +62,30 @@ const CHECK_ICON = (
 export default function PricingContent() {
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string>("");
   const router = useRouter();
   const checkoutRef = useRef<HTMLDivElement | null>(null);
 
-  async function handlePaidPlanClick(planKey: "starter" | "pro") {
+  async function handlePaidPlanClick(planKey: PlanKey) {
+    setError("");
     setCheckoutLoading(planKey);
     try {
-      await openBillingCheckout(checkoutRef.current);
-    } catch (err) {
-      if (isUnauthenticatedCheckoutError(err)) {
-        router.push(`/register?plan=${planKey}`);
+      const result = await openBillingCheckout(checkoutRef.current, planKey, period);
+      if (!result.configured) {
+        setError("Payment not enabled yet. Please contact hello@clueai.co.");
         return;
       }
-      router.push(`/register?plan=${planKey}`);
+      if (!result.hasHtml) {
+        setError("You already have an active subscription. Manage from Settings.");
+        return;
+      }
+    } catch (err) {
+      if (isUnauthenticatedCheckoutError(err)) {
+        router.push(`/register?plan=${planKey}&period=${period}`);
+        return;
+      }
+      setError((err as { message?: string }).message || "Operation failed, please try again.");
+      console.error("[billing] checkout failed", err);
     } finally {
       setCheckoutLoading(null);
     }
@@ -124,6 +135,10 @@ export default function PricingContent() {
             </span>
           </button>
         </div>
+
+        {error && (
+          <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>
+        )}
       </div>
 
       {/* Plan cards */}

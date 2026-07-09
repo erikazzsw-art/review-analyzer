@@ -48,7 +48,9 @@ export function RegisterForm() {
   const allRulesPassed = Object.values(strength).every(Boolean);
 
   const rawPlan = searchParams.get("plan");
+  const rawPeriod = searchParams.get("period");
   const intendedPlan = rawPlan && PAID_PLAN_KEYS.has(rawPlan) ? rawPlan : null;
+  const intendedPeriod = (rawPeriod === "monthly" || rawPeriod === "annual") ? rawPeriod : "monthly";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -92,7 +94,7 @@ export function RegisterForm() {
       if (intendedPlan) {
         track("signup_checkout_intent", { plan: intendedPlan });
         try {
-          await openBillingCheckout(null);
+          await openBillingCheckout(null, intendedPlan as "starter" | "pro", intendedPeriod as "monthly" | "annual");
         } catch (err) {
           // 401 不应该出现 —— 注册成功后 cookie 已下发；其他错误则退回 workspace
           if (isUnauthenticatedCheckoutError(err)) {

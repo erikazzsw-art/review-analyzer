@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { createBillingCheckout } from "@/lib/api/browser";
+import { openBillingCheckout } from "@/lib/billing";
 import type { QuotaItem } from "@/lib/api/server";
 import {
   Dialog,
@@ -195,23 +195,10 @@ function ManageSubscriptionButton({ onDone }: { onDone: () => void }) {
   async function handleManage() {
     setError(""); setLoading(true);
     try {
-      const result = await createBillingCheckout();
-      if (!result.checkout_html) {
+      const result = await openBillingCheckout(checkoutRef.current, "pro", "monthly");
+      if (!result.configured || !result.hasHtml) {
         onDone();
         return;
-      }
-      if (checkoutRef.current) {
-        checkoutRef.current.innerHTML = result.checkout_html;
-        const scripts = Array.from(checkoutRef.current.querySelectorAll("script"));
-        for (const script of scripts) {
-          await new Promise<void>((resolve, reject) => {
-            const next = document.createElement("script");
-            Array.from(script.attributes).forEach((attr) => next.setAttribute(attr.name, attr.value));
-            if (next.src) { next.onload = () => resolve(); next.onerror = () => reject(new Error("脚本加载失败")); }
-            else { next.text = script.textContent || ""; resolve(); }
-            script.replaceWith(next);
-          });
-        }
       }
     } catch (err) {
       setError((err as { message?: string }).message || "操作失败");
