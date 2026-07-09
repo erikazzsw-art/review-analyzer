@@ -1,4 +1,5 @@
 import { createBillingCheckout } from "@/lib/api/browser";
+import type { BillingPeriod, PlanKey } from "@/lib/pricing";
 
 /**
  * 拉起 Paddle checkout overlay。
@@ -10,9 +11,10 @@ import { createBillingCheckout } from "@/lib/api/browser";
  * 调用方约定：
  * - 宿主容器建议 hidden + aria-hidden，Paddle overlay 自己会 fixed 定位。
  * - host 为 null 时会创建一个临时容器挂到 document.body。
- * - 401 会抛 { status: 401, message } —— 调用方通常应跳 /register?plan=<key> 或 /login。
+ * - 401 会抛 { status: 401, message } —— 调用方通常应跳 /register?plan=<key>&period=<period> 或 /login。
+ * - 若 !configured 表示后端未启用 Paddle；若 configured 但 !hasHtml 表示用户已有有效订阅。
  *
- * @returns { checkout_html: string, configured: boolean } —— checkout_html 为空表示后端未启用 Paddle
+ * @returns OpenCheckoutResult
  */
 export type OpenCheckoutResult = {
   ok: boolean;
@@ -22,10 +24,15 @@ export type OpenCheckoutResult = {
 
 export async function openBillingCheckout(
   host?: HTMLElement | null,
+  planKey?: PlanKey,
+  period?: BillingPeriod,
 ): Promise<OpenCheckoutResult> {
-  const result = await createBillingCheckout();
+  const result = await createBillingCheckout({ planKey, period });
+  if (!result.configured) {
+    return { ok: false, configured: false, hasHtml: false };
+  }
   if (!result.checkout_html) {
-    return { ok: false, configured: Boolean(result.configured), hasHtml: false };
+    return { ok: false, configured: true, hasHtml: false };
   }
 
   let container = host ?? null;

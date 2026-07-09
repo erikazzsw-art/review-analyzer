@@ -803,7 +803,9 @@ export async function generateCopywriter(payload: {
   return (await response.json()) as CopywriterGenerateResponse;
 }
 
-export async function createBillingCheckout(): Promise<BillingCheckoutResponse> {
+export async function createBillingCheckout(
+  opts: { planKey?: string; period?: string } = {},
+): Promise<BillingCheckoutResponse> {
   const response = await fetch(`${getApiBaseUrl()}/billing/checkout`, {
     method: "POST",
     credentials: "include",
@@ -812,6 +814,8 @@ export async function createBillingCheckout(): Promise<BillingCheckoutResponse> 
     },
     body: JSON.stringify({
       success_url: typeof window !== "undefined" ? `${window.location.origin}/settings?billing=success` : "",
+      plan_key: opts.planKey ?? "pro",
+      period: opts.period ?? "monthly",
     }),
   });
 
