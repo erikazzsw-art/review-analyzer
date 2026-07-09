@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { fetchByAsin } from "@/lib/api/browser";
 import { track } from "@/lib/analytics";
@@ -46,40 +47,41 @@ type FormState = {
   fetchAllVariants: boolean;
 };
 
-const VALIDATION: Record<Platform, { pattern: RegExp; hint: string; placeholder: string; maxLength: number }> = {
+const VALIDATION: Record<Platform, { pattern: RegExp; hintKey: string; placeholderKey: string; maxLength: number }> = {
   amazon: {
     pattern: /^[A-Z0-9]{10}$/,
-    hint: "ASIN 必须为 10 位字母数字组合",
-    placeholder: "例如：B0DFHB98KJ（ASIN）",
+    hintKey: "amazonHint",
+    placeholderKey: "amazonPlaceholder",
     maxLength: 10,
   },
   aliexpress: {
     pattern: /^\d{12,16}$/,
-    hint: "Product ID 必须为 12-16 位数字",
-    placeholder: "例如：1005006714526748（Product ID）",
+    hintKey: "aliexpressHint",
+    placeholderKey: "aliexpressPlaceholder",
     maxLength: 16,
   },
   shopee: {
     pattern: /^\d{5,15}\.\d{5,15}$/,
-    hint: "格式：商品ID.店铺ID（如 23388006672.673355029）",
-    placeholder: "例如：23388006672.673355029",
+    hintKey: "shopeeHint",
+    placeholderKey: "shopeePlaceholder",
     maxLength: 31,
   },
   ebay: {
     pattern: /^\d{9,15}$/,
-    hint: "eBay Item Number 必须为 9-15 位数字",
-    placeholder: "例如：256218498498（Item Number）",
+    hintKey: "ebayHint",
+    placeholderKey: "ebayPlaceholder",
     maxLength: 15,
   },
   walmart: {
     pattern: /^[A-Za-z0-9]{6,13}$/,
-    hint: "Walmart Product ID 必须为 6-13 位字母数字",
-    placeholder: "例如：5127405080（Product ID）",
+    hintKey: "walmartHint",
+    placeholderKey: "walmartPlaceholder",
     maxLength: 13,
   },
 };
 
 export function AsinFetchPanel() {
+  const t = useTranslations("upload.asinFetch");
   const router = useRouter();
   const [form, setForm] = useState<FormState>({
     platform: "amazon",
@@ -114,12 +116,19 @@ export function AsinFetchPanel() {
       router.push(`/analysis/results?job_id=${result.job_id}`);
     } catch (err) {
       const candidate = err as { message?: string };
-      setError(candidate.message || "评论拉取任务创建失败");
+      setError(candidate.message || t("submitFail"));
       track("asin_fetch_fail", { error: candidate.message || "unknown" });
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const fetchAllLabel =
+    form.platform === "amazon"
+      ? t("fetchAllAmazon")
+      : form.platform === "shopee"
+        ? t("fetchAllShopee")
+        : t("fetchAllOther");
 
   return (
     <div className="space-y-6">
@@ -143,7 +152,7 @@ export function AsinFetchPanel() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-semibold text-ink">产品编码</span>
+          <span className="text-sm font-semibold text-ink">{t("productCodeLabel")}</span>
           <input
             value={form.productCode}
             onChange={(e) => {
@@ -158,17 +167,17 @@ export function AsinFetchPanel() {
               setForm((c) => ({ ...c, productCode: val }));
             }}
             className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm font-mono outline-none transition focus:border-[#f36f8f]"
-            placeholder={validation.placeholder}
+            placeholder={t(validation.placeholderKey)}
             maxLength={validation.maxLength}
           />
           {form.productCode.length > 0 && !isValidCode && (
-            <span className="text-xs text-[#c45863]">{validation.hint}</span>
+            <span className="text-xs text-[#c45863]">{t(validation.hintKey)}</span>
           )}
         </label>
 
         {form.platform === "amazon" && (
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-ink">站点</span>
+            <span className="text-sm font-semibold text-ink">{t("marketplaceLabel")}</span>
             <select
               value={form.marketplace}
               onChange={(e) => setForm((c) => ({ ...c, marketplace: e.target.value }))}
@@ -183,7 +192,7 @@ export function AsinFetchPanel() {
 
         {form.platform === "shopee" && (
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-ink">地区</span>
+            <span className="text-sm font-semibold text-ink">{t("regionLabel")}</span>
             <select
               value={form.marketplace}
               onChange={(e) => setForm((c) => ({ ...c, marketplace: e.target.value }))}
@@ -198,7 +207,7 @@ export function AsinFetchPanel() {
 
         {form.platform === "ebay" && (
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-ink">站点</span>
+            <span className="text-sm font-semibold text-ink">{t("marketplaceLabel")}</span>
             <select
               value={form.marketplace}
               onChange={(e) => setForm((c) => ({ ...c, marketplace: e.target.value }))}
@@ -213,7 +222,7 @@ export function AsinFetchPanel() {
 
         {form.platform === "walmart" && (
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-ink">站点</span>
+            <span className="text-sm font-semibold text-ink">{t("marketplaceLabel")}</span>
             <select
               value={form.marketplace}
               onChange={(e) => setForm((c) => ({ ...c, marketplace: e.target.value }))}
@@ -227,12 +236,12 @@ export function AsinFetchPanel() {
         )}
 
         <label className={`space-y-2 ${form.platform !== "aliexpress" ? "md:col-span-2" : ""}`}>
-          <span className="text-sm font-semibold text-ink">产品名称（可选）</span>
+          <span className="text-sm font-semibold text-ink">{t("productNameLabel")}</span>
           <input
             value={form.productName}
             onChange={(e) => setForm((c) => ({ ...c, productName: e.target.value }))}
             className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-            placeholder={form.platform === "amazon" ? "留空则自动从 Amazon 获取" : "留空则使用 Product ID 标识"}
+            placeholder={form.platform === "amazon" ? t("productNamePlaceholderAmazon") : t("productNamePlaceholderOther")}
           />
         </label>
 
@@ -243,13 +252,7 @@ export function AsinFetchPanel() {
             onChange={(e) => setForm((c) => ({ ...c, fetchAllVariants: e.target.checked }))}
             className="h-4 w-4 rounded border-line text-[#f36f8f] accent-[#f36f8f]"
           />
-          <span className="text-sm text-ink/80">
-            {form.platform === "amazon"
-              ? "抓取所有变体（自动识别同款所有子 ASIN 并合并分析）"
-              : form.platform === "shopee"
-                ? "抓取所有星级评论（含 1-5 星全覆盖）"
-                : "抓取所有 SKU 变体评论（按 SKU 标签分类）"}
-          </span>
+          <span className="text-sm text-ink/80">{fetchAllLabel}</span>
         </label>
       </div>
 
@@ -265,7 +268,7 @@ export function AsinFetchPanel() {
         disabled={!canSubmit}
         className="inline-flex min-h-12 items-center justify-center rounded-pill bg-ink px-6 py-3 text-sm font-semibold text-white shadow-card transition disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "提交中..." : "拉取评论并分析"}
+        {isSubmitting ? t("submitBtnLoading") : t("submitBtn")}
       </button>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   PageTabs,
   PageTabsList,
@@ -17,12 +18,13 @@ import { AlertsTab } from "@/components/observability/alerts-tab";
 import type { TimeRange } from "@/components/observability/types";
 
 export default function ObservabilityPage() {
+  const t = useTranslations("settings.observability");
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-ink">系统可观测</h1>
+        <h1 className="text-2xl font-bold text-ink">{t("title")}</h1>
         <TimeRangeSelect value={timeRange} onChange={setTimeRange} />
       </div>
 
@@ -32,11 +34,11 @@ export default function ObservabilityPage() {
 
       <PageTabs defaultValue="overview" className="mt-6">
         <PageTabsList>
-          <PageTabsTrigger value="overview">概览</PageTabsTrigger>
-          <PageTabsTrigger value="cost">成本</PageTabsTrigger>
-          <PageTabsTrigger value="jobs">任务</PageTabsTrigger>
-          <PageTabsTrigger value="cache">缓存</PageTabsTrigger>
-          <PageTabsTrigger value="alerts">告警</PageTabsTrigger>
+          <PageTabsTrigger value="overview">{t("tabOverview")}</PageTabsTrigger>
+          <PageTabsTrigger value="cost">{t("tabCost")}</PageTabsTrigger>
+          <PageTabsTrigger value="jobs">{t("tabJobs")}</PageTabsTrigger>
+          <PageTabsTrigger value="cache">{t("tabCache")}</PageTabsTrigger>
+          <PageTabsTrigger value="alerts">{t("tabAlerts")}</PageTabsTrigger>
         </PageTabsList>
 
         <PageTabsContent value="overview">

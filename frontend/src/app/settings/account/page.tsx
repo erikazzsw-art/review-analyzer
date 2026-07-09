@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import {
   deleteMyAccount,
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 type Banner = { kind: "success" | "error"; text: string } | null;
 
 export default function AccountSettingsPage() {
+  const t = useTranslations("settings.account");
   const router = useRouter();
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -46,11 +48,11 @@ export default function AccountSettingsPage() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      setBanner({ kind: "success", text: "数据已导出并触发下载。" });
+      setBanner({ kind: "success", text: t("exportSuccess") });
     } catch (err) {
       setBanner({
         kind: "error",
-        text: (err as { message?: string })?.message || "导出失败",
+        text: (err as { message?: string })?.message || t("exportFail"),
       });
     } finally {
       setExporting(false);
@@ -60,7 +62,7 @@ export default function AccountSettingsPage() {
   async function handleUpdate(): Promise<void> {
     setBanner(null);
     if (!currentPassword) {
-      setBanner({ kind: "error", text: "请输入当前密码以完成校验。" });
+      setBanner({ kind: "error", text: t("updateNeedCurrent") });
       return;
     }
     const payload: {
@@ -74,14 +76,14 @@ export default function AccountSettingsPage() {
     if (newPassword) payload.new_password = newPassword;
 
     if (!payload.username && !payload.email && !payload.new_password) {
-      setBanner({ kind: "error", text: "至少填写一项待修改字段。" });
+      setBanner({ kind: "error", text: t("updateNeedField") });
       return;
     }
 
     setSaving(true);
     try {
       await updateMyProfile(payload);
-      setBanner({ kind: "success", text: "账号信息已更新。" });
+      setBanner({ kind: "success", text: t("updateSuccess") });
       setNewUsername("");
       setNewEmail("");
       setNewPassword("");
@@ -89,7 +91,7 @@ export default function AccountSettingsPage() {
     } catch (err) {
       setBanner({
         kind: "error",
-        text: (err as { message?: string })?.message || "更新失败",
+        text: (err as { message?: string })?.message || t("updateFail"),
       });
     } finally {
       setSaving(false);
@@ -99,14 +101,14 @@ export default function AccountSettingsPage() {
   async function handleDelete(): Promise<void> {
     setBanner(null);
     if (deleteConfirm.trim().toUpperCase() !== "DELETE") {
-      setBanner({ kind: "error", text: '请在确认框中输入大写 "DELETE"。' });
+      setBanner({ kind: "error", text: t("deleteNeedText") });
       return;
     }
     if (!deletePassword) {
-      setBanner({ kind: "error", text: "请输入当前密码以确认删除。" });
+      setBanner({ kind: "error", text: t("deleteNeedPassword") });
       return;
     }
-    if (!window.confirm("确定要永久删除账号吗？此操作不可撤销。")) {
+    if (!window.confirm(t("deleteConfirmPrompt"))) {
       return;
     }
     setDeleting(true);
@@ -119,7 +121,7 @@ export default function AccountSettingsPage() {
     } catch (err) {
       setBanner({
         kind: "error",
-        text: (err as { message?: string })?.message || "删除失败",
+        text: (err as { message?: string })?.message || t("deleteFail"),
       });
       setDeleting(false);
     }
@@ -129,13 +131,13 @@ export default function AccountSettingsPage() {
     <div className="mx-auto max-w-3xl space-y-6 px-6 py-10">
       <header>
         <div className="inline-flex rounded-pill bg-[#eef6ff] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#4a7dc7]">
-          MY ACCOUNT
+          {t("badge")}
         </div>
         <h1 className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-          账号与数据
+          {t("title")}
         </h1>
         <p className="mt-3 text-sm leading-7 text-soft">
-          管理自己的账号信息，导出个人数据快照，或永久注销账号。所有操作都要求当前密码，防止 cookie 被劫持后擅自改动。
+          {t("description")}
         </p>
       </header>
 
@@ -153,10 +155,10 @@ export default function AccountSettingsPage() {
 
       <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
         <h2 className="font-heading text-xl font-extrabold tracking-[-0.03em] text-ink">
-          导出我的数据
+          {t("exportTitle")}
         </h2>
         <p className="mt-2 text-sm leading-7 text-soft">
-          下载 JSON 快照：账号信息、订阅、上传批次、产品档案、行动、复盘、推送设置、ASIN 监控列表。评论明细因体量原因不含在此快照中，需在「历史记录 / 下载」页单独导出。
+          {t("exportDesc")}
         </p>
         <div className="mt-4">
           <Button
@@ -165,56 +167,56 @@ export default function AccountSettingsPage() {
             disabled={exporting}
             className="min-h-11 rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card hover:bg-ink/90"
           >
-            {exporting ? "导出中..." : "下载 JSON 快照"}
+            {exporting ? t("exportBtnLoading") : t("exportBtn")}
           </Button>
         </div>
       </section>
 
       <section className="rounded-shell border border-line bg-white/84 p-6 shadow-card backdrop-blur">
         <h2 className="font-heading text-xl font-extrabold tracking-[-0.03em] text-ink">
-          修改账号信息
+          {t("updateTitle")}
         </h2>
         <p className="mt-2 text-sm leading-7 text-soft">
-          修改用户名、邮箱或密码。任一项修改都需要输入当前密码校验身份。
+          {t("updateDesc")}
         </p>
         <div className="mt-4 space-y-4">
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-ink">当前密码 *</span>
+            <span className="text-sm font-semibold text-ink">{t("currentPasswordLabel")}</span>
             <Input
               type="password"
               value={currentPassword}
               onChange={(event) => setCurrentPassword(event.target.value)}
               className="rounded-card border-line bg-white text-sm"
-              placeholder="用于校验身份"
+              placeholder={t("currentPasswordPlaceholder")}
             />
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-ink">新用户名</span>
+            <span className="text-sm font-semibold text-ink">{t("newUsernameLabel")}</span>
             <Input
               value={newUsername}
               onChange={(event) => setNewUsername(event.target.value)}
               className="rounded-card border-line bg-white text-sm"
-              placeholder="留空表示不修改"
+              placeholder={t("newUsernamePlaceholder")}
             />
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-ink">新邮箱</span>
+            <span className="text-sm font-semibold text-ink">{t("newEmailLabel")}</span>
             <Input
               type="email"
               value={newEmail}
               onChange={(event) => setNewEmail(event.target.value)}
               className="rounded-card border-line bg-white text-sm"
-              placeholder="留空表示不修改"
+              placeholder={t("newEmailPlaceholder")}
             />
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-ink">新密码</span>
+            <span className="text-sm font-semibold text-ink">{t("newPasswordLabel")}</span>
             <Input
               type="password"
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
               className="rounded-card border-line bg-white text-sm"
-              placeholder="至少 6 位，含字母 / 数字 / 特殊字符 / 大写"
+              placeholder={t("newPasswordPlaceholder")}
             />
           </label>
           <div>
@@ -224,7 +226,7 @@ export default function AccountSettingsPage() {
               disabled={saving}
               className="min-h-11 rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card hover:bg-ink/90"
             >
-              {saving ? "保存中..." : "保存修改"}
+              {saving ? t("updateBtnLoading") : t("updateBtn")}
             </Button>
           </div>
         </div>
@@ -232,15 +234,14 @@ export default function AccountSettingsPage() {
 
       <section className="rounded-shell border border-[#f5c6cb] bg-white/84 p-6 shadow-card backdrop-blur">
         <h2 className="font-heading text-xl font-extrabold tracking-[-0.03em] text-[#b44655]">
-          删除账号（不可撤销）
+          {t("deleteTitle")}
         </h2>
         <p className="mt-2 text-sm leading-7 text-soft">
-          执行后：登录凭证立即失效，用户名 / 邮箱 / 密码从数据库清除；上传批次、评论、产品档案等业务数据保留但已无法识别真人。如有活跃的 Paddle 订阅，请在删除前手动前往
-          Paddle 后台取消，否则会继续扣款。
+          {t("deleteDesc")}
         </p>
         <div className="mt-4 space-y-4">
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-ink">当前密码 *</span>
+            <span className="text-sm font-semibold text-ink">{t("currentPasswordLabel")}</span>
             <Input
               type="password"
               value={deletePassword}
@@ -250,7 +251,7 @@ export default function AccountSettingsPage() {
           </label>
           <label className="block space-y-2">
             <span className="text-sm font-semibold text-ink">
-              请输入 <code className="font-mono">DELETE</code> 确认
+              {t("deleteConfirmLabel")} <code className="font-mono">DELETE</code> {t("deleteConfirmSuffix")}
             </span>
             <Input
               value={deleteConfirm}
@@ -266,7 +267,7 @@ export default function AccountSettingsPage() {
               disabled={deleting}
               className="min-h-11 rounded-pill bg-[#b44655] px-5 py-3 text-sm font-semibold text-white shadow-card hover:bg-[#b44655]/90"
             >
-              {deleting ? "删除中..." : "永久删除账号"}
+              {deleting ? t("deleteBtnLoading") : t("deleteBtn")}
             </Button>
           </div>
         </div>
