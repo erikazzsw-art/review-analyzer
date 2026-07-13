@@ -6,7 +6,8 @@ import * as XLSX from "xlsx";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { exportModuleXlsx, translateModule } from "@/lib/api/browser";
+import { exportModuleXlsx } from "@/lib/api/browser";
+import { useTranslatedContent } from "@/hooks/useTranslatedContent";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
 import { DownloadTagButton } from "@/components/analysis/download-tag-button";
 
@@ -31,36 +32,23 @@ type ModuleCardProps = {
 
 export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale, session, showAction, children }: ModuleCardProps) {
   const tCommon = useTranslations("common");
-  const [translatedData, setTranslatedData] = useState<Record<string, unknown> | null>(null);
-  const [isTranslated, setIsTranslated] = useState(false);
-  const [translating, setTranslating] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  async function handleTranslate() {
-    if (isTranslated) {
-      setIsTranslated(false);
-      return;
-    }
-    if (translatedData) {
-      setIsTranslated(true);
-      return;
-    }
-    setTranslating(true);
-    try {
-      const result = await translateModule({
-        sessionId,
-        moduleKey,
-        content: moduleData,
-        targetLang: "zh",
-      });
-      setTranslatedData(result.translated);
-      setIsTranslated(true);
-    } catch {
-      // silently fail
-    } finally {
-      setTranslating(false);
-    }
-  }
+  const {
+    translatedData,
+    isLoading: translating,
+    isFallback,
+    needsTranslation,
+    showTranslation,
+    toggleTranslation,
+  } = useTranslatedContent({
+    moduleKey,
+    sessionId,
+    content: moduleData,
+  });
+
+  const showTranslatedContent =
+    needsTranslation && showTranslation && translatedData != null && !isFallback;
 
   async function handleExport() {
     setExporting(true);
@@ -90,20 +78,23 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale,
     <section className="relative rounded-shell border border-line bg-white p-6 shadow-card">
       {/* Toolbar */}
       <div className="absolute right-4 top-4 flex items-center gap-1.5">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleTranslate}
-          disabled={translating}
-          className="h-7 gap-1 px-2.5 text-[11px]"
-        >
-          {translating ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
+        {needsTranslation && translatedData != null && !translating && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleTranslation}
+            className="h-7 gap-1 px-2.5 text-[11px]"
+          >
             <Languages className="h-3 w-3" />
-          )}
-          {isTranslated ? tCommon("showOriginal") : tCommon("translate")}
-        </Button>
+            {showTranslation ? tCommon("showOriginal") : tCommon("translate")}
+          </Button>
+        )}
+        {needsTranslation && translating && (
+          <span className="flex items-center gap-1 text-[11px] text-soft">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            {tCommon("translating")}
+          </span>
+        )}
         <Button
           variant="outline"
           size="sm"
@@ -122,9 +113,9 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale,
 
       {/* Content */}
       <div className="pt-8">
-        {isTranslated && translatedData ? (
+        {showTranslatedContent ? (
           <TranslatedView
-            data={translatedData}
+            data={translatedData!}
             originalData={moduleData}
             moduleKey={moduleKey}
             sessionId={sessionId}
