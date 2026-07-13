@@ -43,6 +43,8 @@
   "content_scripts": [
     {
       "matches": [
+        "*://127.0.0.1:*/*",
+        "*://localhost:*/*",
         "*://*.amazon.com/*",
         "*://*.amazon.co.uk/*",
         "*://*.amazon.de/*",

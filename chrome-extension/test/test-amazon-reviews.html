@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Amazon Review Test Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .test-banner { background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+    [data-hook="review"] { border: 1px solid #ddd; padding: 16px; margin: 16px 0; border-radius: 4px; }
+    .a-profile-name { font-weight: bold; color: #007185; }
+    .a-icon-alt { color: #c45500; }
+    [data-hook="review-title"] { font-size: 16px; font-weight: bold; margin: 8px 0; }
+    [data-hook="review-body"] { font-size: 14px; line-height: 1.5; margin: 8px 0; }
+    [data-hook="review-date"] { color: #565959; font-size: 12px; }
+    [data-hook="avp-badge"] { background: #c45500; color: white; padding: 2px 6px; font-size: 11px; border-radius: 3px; }
+    [data-hook="helpful-vote-statement"] { color: #565959; font-size: 12px; }
+    i[data-hook="review-star-rating"] { display: inline-block; margin-right: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="test-banner">
+  🧪 <strong>Amazon Review Test Page</strong> — 用于验证 Chrome 扩展提取逻辑
+</div>
+
+<div id="cm_cr-review_list">
+
+  <!-- Review 1: complete with all fields -->
+  <div data-hook="review" id="R1ABC123DEF456" class="review">
+    <div class="a-profile">
+      <span class="a-profile-name">John Doe</span>
+    </div>
+    <div class="a-row">
+      <i data-hook="review-star-rating" class="a-icon a-icon-star">
+        <span class="a-icon-alt">5.0 out of 5 stars</span>
+      </i>
+    </div>
+    <a data-hook="review-title" class="a-link-normal" href="/gp/customer-reviews/R1ABC123DEF456/">
+      <span>Absolutely love this product!</span>
+    </a>
+    <span data-hook="review-body" class="a-size-base review-text">
+      <span>This is the best purchase I have made all year. The quality is outstanding and the delivery was super fast. Highly recommend to everyone looking for a reliable option.</span>
+    </span>
+    <div class="a-row">
+      <span data-hook="review-date" class="a-size-base a-color-secondary">Reviewed in the United States on January 15, 2025</span>
+    </div>
+    <span data-hook="avp-badge">Verified Purchase</span>
+    <div class="a-row">
+      <span data-hook="helpful-vote-statement" class="a-size-base a-color-tertiary">123 people found this helpful</span>
+    </div>
+  </div>
+
+  <!-- Review 2: 4 stars, no verified badge -->
+  <div data-hook="review" id="R2XYZ789ABC012" class="review">
+    <div class="a-profile">
+      <span class="a-profile-name">Jane Smith</span>
+    </div>
+    <div class="a-row">
+      <i data-hook="review-star-rating" class="a-icon a-icon-star">
+        <span class="a-icon-alt">4.0 out of 5 stars</span>
+      </i>
+    </div>
+    <a data-hook="review-title" class="a-link-normal" href="/gp/customer-reviews/R2XYZ789ABC012/">
+      <span>Good but could be better</span>
+    </a>
+    <span data-hook="review-body" class="a-size-base review-text">
+      <span>Overall a solid product. The build quality is good but the instructions were a bit confusing. Took me a while to figure out the setup process.</span>
+    </span>
+    <div class="a-row">
+      <span data-hook="review-date" class="a-size-base a-color-secondary">Reviewed in the United States on March 3, 2025</span>
+    </div>
+    <div class="a-row">
+      <span data-hook="helpful-vote-statement" class="a-size-base a-color-tertiary">One person found this helpful</span>
+    </div>
+  </div>
+
+  <!-- Review 3: 3 stars, verified, German-style rating in alt text -->
+  <div data-hook="review" id="R3DEF456GHI789" class="review">
+    <div class="a-profile">
+      <span class="a-profile-name">Carlos Garcia</span>
+    </div>
+    <div class="a-row">
+      <i data-hook="review-star-rating" class="a-icon a-icon-star">
+        <span class="a-icon-alt">3.0 out of 5 stars</span>
+      </i>
+    </div>
+    <a data-hook="review-title" class="a-link-normal" href="/gp/customer-reviews/R3DEF456GHI789/">
+      <span>It's okay, nothing special</span>
+    </a>
+    <span data-hook="review-body" class="a-size-base review-text">
+      <span>Decent product for the price. Does what it says, but don't expect premium quality. The color is slightly different from the photos.</span>
+    </span>
+    <div class="a-row">
+      <span data-hook="review-date" class="a-size-base a-color-secondary">Reviewed in the United States on December 10, 2024</span>
+    </div>
+    <span data-hook="avp-badge">Verified Purchase</span>
+    <div class="a-row">
+      <span data-hook="helpful-vote-statement" class="a-size-base a-color-tertiary">5 people found this helpful</span>
+    </div>
+  </div>
+
+  <!-- Review 4: minimal fields - just rating, title, body -->
+  <div data-hook="review" id="R4JKL012MNO345" class="review">
+    <div class="a-profile">
+      <span class="a-profile-name">Anonymous Customer</span>
+    </div>
+    <div class="a-row">
+      <i data-hook="review-star-rating" class="a-icon a-icon-star">
+        <span class="a-icon-alt">1.0 out of 5 stars</span>
+      </i>
+    </div>
+    <a data-hook="review-title" class="a-link-normal" href="/gp/customer-reviews/R4JKL012MNO345/">
+      <span>Terrible experience</span>
+    </a>
+    <span data-hook="review-body" class="a-size-base review-text">
+      <span>Broke after one week. Very disappointed.</span>
+    </span>
+    <div class="a-row">
+      <span data-hook="review-date" class="a-size-base a-color-secondary">Reviewed in the United States on June 1, 2025</span>
+    </div>
+  </div>
+
+  <!-- Review 5: 5 stars, verified, no helpful -->
+  <div data-hook="review" id="R5PQR678STU901" class="review">
+    <div class="a-profile">
+      <span class="a-profile-name">Emily Wilson</span>
+    </div>
+    <div class="a-row">
+      <i data-hook="review-star-rating" class="a-icon a-icon-star">
+        <span class="a-icon-alt">5.0 out of 5 stars</span>
+      </i>
+    </div>
+    <a data-hook="review-title" class="a-link-normal" href="/gp/customer-reviews/R5PQR678STU901/">
+      <span>Perfect gift idea</span>
+    </a>
+    <span data-hook="review-body" class="a-size-base review-text">
+      <span>Bought this as a birthday gift and the recipient absolutely loved it! The packaging was beautiful and the product exceeded expectations.</span>
+    </span>
+    <div class="a-row">
+      <span data-hook="review-date" class="a-size-base a-color-secondary">Reviewed in the United States on July 4, 2025</span>
+    </div>
+    <span data-hook="avp-badge">Verified Purchase</span>
+  </div>
+
+</div>
+
+</body>
+</html>
