@@ -128,6 +128,11 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale,
           children
         )}
       </div>
+
+      {/* AI Transparency Label */}
+      <p className="mt-4 border-t border-line pt-3 text-center text-[10px] text-soft/70">
+        {tCommon("aiDisclaimer")}
+      </p>
     </section>
   );
 }
@@ -202,6 +207,14 @@ function buildClientXlsx(
     const ws = XLSX.utils.aoa_to_sheet([headers]);
     XLSX.utils.book_append_sheet(wb, ws, moduleKey);
   }
+
+  // AI Transparency disclaimer row (California AI Transparency Act AB 2013)
+  const aiNote =
+    locale === "zh"
+      ? "AI 生成分析 · 基于 OpenAI GPT-4o-mini"
+      : "Analysis powered by AI (OpenAI GPT-4o-mini)";
+  const wsNote = XLSX.utils.aoa_to_sheet([[], [aiNote]]);
+  XLSX.utils.book_append_sheet(wb, wsNote, locale === "zh" ? "AI 标注" : "AI Notice");
 
   const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
   return new Blob([buf], {

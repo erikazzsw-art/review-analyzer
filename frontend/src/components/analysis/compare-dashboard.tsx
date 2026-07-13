@@ -358,6 +358,12 @@ function DimensionSection({ dataset, groups, gridTemplate }: DimensionSectionPro
       const ws = XLSX.utils.aoa_to_sheet(rows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, t("xlsxSheetName"));
+
+      // AI Transparency disclaimer (California AI Transparency Act AB 2013)
+      const aiNote = "Analysis powered by AI (OpenAI GPT-4o-mini)";
+      const wsNote = XLSX.utils.aoa_to_sheet([[], [aiNote]]);
+      XLSX.utils.book_append_sheet(wb, wsNote, "AI Notice");
+
       const date = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `${t("xlsxFilename", { date })}.xlsx`);
     } finally {

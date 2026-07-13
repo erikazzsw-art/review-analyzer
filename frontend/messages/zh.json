@@ -26,7 +26,8 @@
     "generating": "生成中...",
     "creating": "创建中...",
     "reloading": "重新加载",
-    "networkError": "网络错误，请稍后重试。"
+    "networkError": "网络错误，请稍后重试。",
+    "aiDisclaimer": "🤖 AI 生成分析 · 基于 GPT-4o-mini"
   },
   "header": {
     "pricing": "定价",
@@ -708,6 +709,8 @@
     },
     "showMore": "显示更多（剩余 {count}）",
     "moduleCardEvidence": "证据",
+    "aiDisclaimer": "🤖 AI 生成分析 · 基于 GPT-4o-mini",
+    "aiExportDisclaimer": "AI 生成分析 · 基于 OpenAI GPT-4o-mini",
     "polling": {
       "step1": "排队中",
       "step2": "拉取评论",

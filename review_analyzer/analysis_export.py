@@ -55,6 +55,8 @@ def export_result_module_to_xlsx(
         sheet.write(content_start + offset, 1, row[1], cell_fmt)
         sheet.write(content_start + offset, 2, row[2], cell_fmt)
 
+    _add_ai_disclaimer_sheet(workbook)
+
     workbook.close()
     output.seek(0)
     filename = (
@@ -62,6 +64,20 @@ def export_result_module_to_xlsx(
         f"{module_name}-{datetime.now().strftime('%Y%m%d')}.xlsx"
     )
     return output.getvalue(), filename
+
+
+def _add_ai_disclaimer_sheet(workbook: xlsxwriter.Workbook) -> None:
+    """Add AI transparency disclaimer sheet (California AI Transparency Act AB 2013)."""
+    ws = workbook.add_worksheet("AI Notice / AI 标注")
+    ws.set_column("A:A", 60)
+    note_fmt = workbook.add_format({
+        "font_size": 10,
+        "italic": True,
+        "font_color": "#888888",
+        "valign": "vcenter",
+    })
+    ws.write(0, 0, "Analysis powered by AI (OpenAI GPT-4o-mini)", note_fmt)
+    ws.write(1, 0, "AI 生成分析 · 基于 OpenAI GPT-4o-mini", note_fmt)
 
 
 def export_compare_page_to_xlsx(dataset: dict[str, Any], context: dict[str, Any]) -> tuple[bytes, str]:
@@ -105,6 +121,8 @@ def export_compare_page_to_xlsx(dataset: dict[str, Any], context: dict[str, Any]
                 for idx, column in enumerate(columns):
                     sheet.write(row_index, idx, str(child.get(column, "")), cell_fmt)
             row_index += 1
+
+    _add_ai_disclaimer_sheet(workbook)
 
     workbook.close()
     output.seek(0)

@@ -26,7 +26,8 @@
     "generating": "Generating...",
     "creating": "Creating...",
     "reloading": "Reloading",
-    "networkError": "Network error. Please try again."
+    "networkError": "Network error. Please try again.",
+    "aiDisclaimer": "🤖 AI-generated analysis · Powered by GPT-4o-mini"
   },
   "header": {
     "pricing": "Pricing",
@@ -708,6 +709,8 @@
     },
     "showMore": "Show more ({count} remaining)",
     "moduleCardEvidence": "Evidence",
+    "aiDisclaimer": "🤖 AI-generated analysis · Powered by GPT-4o-mini",
+    "aiExportDisclaimer": "Analysis powered by AI (OpenAI GPT-4o-mini)",
     "polling": {
       "step1": "Queued",
       "step2": "Fetching Reviews",

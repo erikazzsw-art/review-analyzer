@@ -287,6 +287,11 @@ export function AnalysisResultsSections({
       {filterBarSlot}
       <SectionAnchorNav sections={sections} offsetTop={130} />
 
+      {/* AI Transparency Label (California AI Transparency Act AB 2013) */}
+      <div className="rounded-card border border-[#e5e0eb] bg-[#faf9fb] px-4 py-2.5 text-center text-[11px] leading-5 text-soft">
+        {t("aiDisclaimer")}
+      </div>
+
       {/* Hero: 概览（无标题、无锚点） */}
       <section>{overviewSlot}</section>
 

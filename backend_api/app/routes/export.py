@@ -184,6 +184,11 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
         ws.title = module_key
         ws.append(headers)
 
+    # AI Transparency disclaimer (California AI Transparency Act AB 2013)
+    ai_sheet = wb.create_sheet(title="AI Notice" if locale == "en" else "AI 标注")
+    ai_note = "Analysis powered by AI (OpenAI GPT-4o-mini)" if locale == "en" else "AI 生成分析 · 基于 OpenAI GPT-4o-mini"
+    ai_sheet.append([ai_note])
+
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)

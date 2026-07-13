@@ -227,6 +227,18 @@ def export_to_xlsx(
         for col_idx, val in enumerate(row_data):
             ws4.write(row_idx, col_idx, val, cell_fmt)
 
+    # AI Transparency disclaimer (California AI Transparency Act AB 2013)
+    ws_ai = workbook.add_worksheet("AI Notice / AI 标注")
+    ws_ai.set_column("A:A", 60)
+    ai_note_fmt = workbook.add_format({
+        "font_size": 10,
+        "italic": True,
+        "font_color": "#888888",
+        "valign": "vcenter",
+    })
+    ws_ai.write(0, 0, "Analysis powered by AI (OpenAI GPT-4o-mini)", ai_note_fmt)
+    ws_ai.write(1, 0, "AI 生成分析 · 基于 OpenAI GPT-4o-mini", ai_note_fmt)
+
     workbook.close()
     output.seek(0)
     return output.getvalue(), filename

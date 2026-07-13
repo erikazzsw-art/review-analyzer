@@ -53,6 +53,15 @@ function downloadTagReviews(
   const ws = XLSX.utils.aoa_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, tag.slice(0, 31));
+
+  // AI Transparency disclaimer row (California AI Transparency Act AB 2013)
+  const aiNote =
+    locale === "zh"
+      ? "AI 生成分析 · 基于 OpenAI GPT-4o-mini"
+      : "Analysis powered by AI (OpenAI GPT-4o-mini)";
+  const wsNote = XLSX.utils.aoa_to_sheet([[], [aiNote]]);
+  XLSX.utils.book_append_sheet(wb, wsNote, locale === "zh" ? "AI 标注" : "AI Notice");
+
   XLSX.writeFile(wb, `${tag}_reviews_${matched.length}.xlsx`);
 }
 
