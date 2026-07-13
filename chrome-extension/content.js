@@ -412,17 +412,59 @@
   });
 
   // ═══════════════════════════════════════════════════════════════
-  // Expose extractReviews to window for DevTools testing
+  // Bridge: expose extractReviews to MAIN world via window.postMessage
+  //
+  // Manifest V3 content scripts run in ISOLATED world by default.
+  // DevTools Console runs in MAIN world, so window.__REVIEWLENS__
+  // set directly is invisible. We use window.postMessage to bridge:
+  // MAIN world posts request → ISOLATED world runs extraction →
+  // posts result back.
   // ═══════════════════════════════════════════════════════════════
 
-  window.__REVIEWLENS__ = {
-    extractReviews,
-    detectPageType,
-    getMarketplace,
-    SELECTOR_SETS,
-    MARKETPLACE_MAP,
-  };
+  // Listen for extraction requests from MAIN world (page)
+  window.addEventListener('message', (e) => {
+    if (
+      e.data &&
+      e.data.__rl_type === '__rl_extract_request__' &&
+      e.source === window
+    ) {
+      const result = extractReviews();
+      window.postMessage(
+        { __rl_type: '__rl_extract_result__', __rl_payload: result },
+        '*'
+      );
+    }
+  });
+
+  // Inject bridge script into MAIN world (runs in page's JS context)
+  function injectBridge() {
+    const script = document.createElement('script');
+    script.textContent = `
+      (function() {
+        window.__REVIEWLENS__ = {
+          extractReviews: function() {
+            return new Promise(function(resolve) {
+              var handler = function(e) {
+                if (e.data && e.data.__rl_type === '__rl_extract_result__') {
+                  window.removeEventListener('message', handler);
+                  resolve(e.data.__rl_payload);
+                }
+              };
+              window.addEventListener('message', handler);
+              window.postMessage({ __rl_type: '__rl_extract_request__' }, '*');
+            });
+          }
+        };
+      })();
+    `;
+    (document.head || document.documentElement).appendChild(script);
+    script.remove();
+  }
+
+  injectBridge();
 
   console.log('[ReviewLens CS] Content script loaded —', pageType);
-  console.log('[ReviewLens CS] DevTools: use window.__REVIEWLENS__.extractReviews() to test');
+  console.log(
+    '[ReviewLens CS] DevTools: await window.__REVIEWLENS__.extractReviews() to test'
+  );
 })();
