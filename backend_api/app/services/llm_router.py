@@ -4,9 +4,10 @@
 - locale="en"（海外）：GPT-4o-mini → DeepSeek → Qwen
 - locale="zh"（国内）：DeepSeek → GPT-4o-mini → Qwen
 
-熔断机制：
-- 连续 N 次失败（默认 3）自动切换到下一个模型
-- 冷却期（默认 60s）过后自动尝试恢复主模型
+熔断机制（V4-出海-M4.3 硬化）：
+- 每模型独立配置：threshold / cooldown（ModelConfig 字段）
+- 半开探测：冷却期满后放行 1 条请求 → 成功则关闭熔断，失败则重新计时
+- OpenAI 429：解析 Retry-After header + 指数退避（初始 1s，最大 30s，最多 3 次）
 - 所有切换写入日志，便于监控
 
 业务代码调用 `router_completion()` 替代直接 OpenAI 调用，无感知切换。
@@ -17,15 +18,38 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from threading import Lock
 from typing import Any
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 logger = logging.getLogger(__name__)
 
 CIRCUIT_BREAK_THRESHOLD = 3
 COOLDOWN_SECONDS = 60.0
+
+# OpenAI 生产硬化常量
+OPENAI_MAX_RETRIES = 3
+OPENAI_RETRY_BASE_DELAY = 1.0
+OPENAI_RETRY_MAX_DELAY = 30.0
+
+
+def _parse_retry_after(exc: Exception) -> float:
+    """从 RateLimitError 响应头解析 Retry-After（秒）；解析失败返回 1.0."""
+    try:
+        headers = getattr(getattr(exc, "response", None), "headers", None) or {}
+        raw = headers.get("Retry-After", "1")
+        try:
+            return float(raw)
+        except (ValueError, TypeError):
+            # HTTP-date 格式
+            retry_dt = parsedate_to_datetime(raw)
+            wait = (retry_dt - datetime.now(timezone.utc)).total_seconds()
+            return max(0.0, wait)
+    except Exception:
+        return 1.0
 
 
 @dataclass
@@ -35,6 +59,8 @@ class ModelConfig:
     base_url: str
     api_key_env: str
     timeout: float = 30.0
+    circuit_threshold: int = 3
+    circuit_cooldown: float = 60.0
 
 
 _DEEPSEEK = ModelConfig(
@@ -42,18 +68,24 @@ _DEEPSEEK = ModelConfig(
     model_id="deepseek-chat",
     base_url="https://api.deepseek.com",
     api_key_env="DEEPSEEK_API_KEY",
+    circuit_threshold=5,
+    circuit_cooldown=60.0,
 )
 _OPENAI = ModelConfig(
     name="openai",
     model_id="gpt-4o-mini",
     base_url="https://api.openai.com/v1",
     api_key_env="OPENAI_API_KEY",
+    circuit_threshold=3,
+    circuit_cooldown=30.0,
 )
 _QWEN = ModelConfig(
     name="qwen",
     model_id="qwen-plus",
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
     api_key_env="Qwen_API_KEY",
+    circuit_threshold=3,
+    circuit_cooldown=120.0,
 )
 
 MODELS_EN: list[ModelConfig] = [_OPENAI, _DEEPSEEK, _QWEN]
@@ -74,6 +106,7 @@ class _CircuitState:
     consecutive_failures: int = 0
     tripped_at: float = 0.0
     is_open: bool = False
+    is_half_open: bool = False
 
 
 @dataclass
@@ -120,29 +153,48 @@ class LLMRouter:
         state = self._states[model.name]
         if not state.is_open:
             return True
-        if time.time() - state.tripped_at >= self.cooldown:
-            state.is_open = False
-            state.consecutive_failures = 0
-            logger.info("llm_router: %s circuit closed (cooldown expired), retrying", model.name)
+        # 冷却期满 → 进入半开状态，允许一次探测请求
+        cooldown = getattr(model, "circuit_cooldown", self.cooldown)
+        if time.time() - state.tripped_at >= cooldown:
+            with self._lock:
+                if state.is_open and time.time() - state.tripped_at >= cooldown:
+                    state.is_open = False
+                    state.is_half_open = True
+            logger.info("llm_router: %s circuit half-open (cooldown expired), allowing 1 probe", model.name)
             return True
         return False
 
     def _record_success(self, model: ModelConfig) -> None:
         with self._lock:
             state = self._states[model.name]
+            was_half_open = state.is_half_open
             state.consecutive_failures = 0
             state.is_open = False
+            state.is_half_open = False
+            if was_half_open:
+                logger.info("llm_router: %s half-open probe SUCCESS, circuit closed", model.name)
 
     def _record_failure(self, model: ModelConfig) -> None:
         with self._lock:
             state = self._states[model.name]
             state.consecutive_failures += 1
-            if state.consecutive_failures >= self.threshold:
+            threshold = getattr(model, "circuit_threshold", self.threshold)
+            cooldown = getattr(model, "circuit_cooldown", self.cooldown)
+            if state.is_half_open:
+                # 半开探测失败 → 立即重新熔断
+                state.is_open = True
+                state.tripped_at = time.time()
+                state.is_half_open = False
+                logger.warning(
+                    "llm_router: %s half-open probe FAILED, circuit re-opened for %.0fs",
+                    model.name, cooldown,
+                )
+            elif state.consecutive_failures >= threshold:
                 state.is_open = True
                 state.tripped_at = time.time()
                 logger.warning(
-                    "llm_router: %s circuit OPEN after %d consecutive failures",
-                    model.name, state.consecutive_failures,
+                    "llm_router: %s circuit OPEN after %d consecutive failures (threshold=%d)",
+                    model.name, state.consecutive_failures, threshold,
                 )
 
     def completion(
@@ -177,25 +229,43 @@ class LLMRouter:
             if client is None:
                 continue
 
-            try:
-                kwargs: dict[str, Any] = {
-                    "model": model.model_id,
-                    "messages": messages,
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                }
-                if response_format:
-                    kwargs["response_format"] = response_format
+            kwargs: dict[str, Any] = {
+                "model": model.model_id,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+            if response_format:
+                kwargs["response_format"] = response_format
 
-                resp = client.chat.completions.create(**kwargs)
-                self._record_success(model)
-                self._log_cache_stats(model, resp)
-                return resp, model.name
-            except Exception as e:
-                err_msg = f"{model.name}: {str(e)[:150]}"
-                errors.append(err_msg)
-                logger.warning("llm_router: %s failed: %s", model.name, str(e)[:200])
-                self._record_failure(model)
+            # 429 指数退避重试（最多 3 次），仅针对 RateLimitError
+            last_exc: Exception | None = None
+            for attempt in range(OPENAI_MAX_RETRIES):
+                try:
+                    resp = client.chat.completions.create(**kwargs)
+                    self._record_success(model)
+                    self._log_cache_stats(model, resp)
+                    return resp, model.name
+                except RateLimitError as e:
+                    last_exc = e
+                    if attempt == OPENAI_MAX_RETRIES - 1:
+                        break  # 最后一次重试也失败了 → 退出 retry 循环
+                    retry_after = _parse_retry_after(e)
+                    wait = min(max(retry_after, OPENAI_RETRY_BASE_DELAY) * (2 ** attempt), OPENAI_RETRY_MAX_DELAY)
+                    logger.warning(
+                        "llm_router: %s 429 rate limited, retry %d/%d in %.1fs (Retry-After: %.0fs)",
+                        model.name, attempt + 1, OPENAI_MAX_RETRIES, wait, retry_after,
+                    )
+                    time.sleep(wait)
+                except Exception as e:
+                    last_exc = e
+                    break  # 非 429 错误不重试，直接尝试下一个模型
+
+            # 所有重试或非 429 错误 → 记录失败
+            err_msg = f"{model.name}: {str(last_exc)[:150]}" if last_exc else f"{model.name}: unknown error"
+            errors.append(err_msg)
+            logger.warning("llm_router: %s failed: %s", model.name, str(last_exc)[:200] if last_exc else "unknown")
+            self._record_failure(model)
 
         raise RuntimeError(
             f"All LLM models exhausted. Errors: {'; '.join(errors)}"
@@ -228,6 +298,9 @@ class LLMRouter:
                 "has_api_key": has_key,
                 "consecutive_failures": state.consecutive_failures,
                 "circuit_open": state.is_open,
+                "circuit_half_open": state.is_half_open,
+                "circuit_threshold": getattr(model, "circuit_threshold", self.threshold),
+                "circuit_cooldown": getattr(model, "circuit_cooldown", self.cooldown),
             }
         return result
 

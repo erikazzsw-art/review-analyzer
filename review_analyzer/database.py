@@ -1729,6 +1729,20 @@ MODEL_COST_PER_MILLION: dict[str, tuple[float, float]] = {
 }
 
 
+def _provider_from_model_name(model_name: str) -> str:
+    """从 model_name 反推 provider 名称."""
+    if not model_name:
+        return "unknown"
+    name = model_name.lower()
+    if "deepseek" in name:
+        return "deepseek"
+    if "gpt" in name or "openai" in name:
+        return "openai"
+    if "qwen" in name:
+        return "qwen"
+    return name
+
+
 def _estimate_cost_yuan(model_name: str, tokens_in: int, tokens_out: int) -> float:
     costs = MODEL_COST_PER_MILLION.get(model_name, (1.0, 8.0))
     return (tokens_in * costs[0] + tokens_out * costs[1]) / 1_000_000
@@ -1743,18 +1757,21 @@ def log_llm_usage(
     comment_id: int | None = None,
     sub_category: str | None = None,
     cache_hit: bool = False,
+    provider: str | None = None,
 ) -> None:
     cost = _estimate_cost_yuan(model_name, tokens_in, tokens_out) if not cache_hit else 0.0
+    if provider is None:
+        provider = _provider_from_model_name(model_name)
     conn = get_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 """INSERT INTO llm_usage_log
                    (user_id, session_id, comment_id, model_name, tokens_in, tokens_out,
-                    cost_yuan, sub_category, cache_hit)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    cost_yuan, sub_category, cache_hit, provider)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (user_id, session_id, comment_id, model_name, tokens_in, tokens_out,
-                 cost, sub_category, cache_hit),
+                 cost, sub_category, cache_hit, provider),
             )
             conn.commit()
     finally:
@@ -1774,13 +1791,14 @@ def log_llm_usage_batch(
                 cur,
                 """INSERT INTO llm_usage_log
                    (user_id, session_id, comment_id, model_name, tokens_in, tokens_out,
-                    cost_yuan, sub_category, cache_hit)
+                    cost_yuan, sub_category, cache_hit, provider)
                    VALUES %s""",
                 [
                     (
                         r["user_id"], r.get("session_id"), r.get("comment_id"),
                         r["model_name"], r.get("tokens_in", 0), r.get("tokens_out", 0),
                         r.get("cost_yuan", 0), r.get("sub_category"), r.get("cache_hit", False),
+                        r.get("provider") or _provider_from_model_name(r.get("model_name", "")),
                     )
                     for r in rows
                 ],

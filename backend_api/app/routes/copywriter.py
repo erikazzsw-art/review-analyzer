@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from openai import OpenAI
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.copywriter import (
@@ -19,6 +18,7 @@ from backend_api.app.schemas.copywriter import (
     CopywriterTypePayload,
 )
 from backend_api.app.services.ideal_profile_cache import get_or_generate_ideal_profile
+from backend_api.app.services.llm_router import router_completion
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_comments
 from review_analyzer.paddle_billing import is_pro_user
@@ -296,15 +296,24 @@ def _generate_copy_item(
     prompt: str,
 ) -> CopywriterGeneratedItemPayload:
     try:
-        client = OpenAI(api_key=get_api_key(user_id), base_url="https://api.deepseek.com/v1", timeout=30.0)
-        resp = client.chat.completions.create(
-            model="deepseek-chat",
+        resp, model_name = router_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             max_tokens=300,
-            response_format={"type": "json_object"},
+            locale="en",
         )
-        result = json.loads(resp.choices[0].message.content)
+        content = resp.choices[0].message.content.strip()
+
+        # JSON 解析 + 抢救：GPT-4o-mini 偶尔加 markdown fence
+        try:
+            result = json.loads(content)
+        except json.JSONDecodeError:
+            match = re.search(r"\{.*\}", content, re.DOTALL)
+            if match:
+                result = json.loads(match.group())
+            else:
+                raise
+
         en_text = str(result.get("en") or "")
         zh_text = str(result.get("zh") or "")
     except Exception as exc:
@@ -377,17 +386,26 @@ def _generate_ideal_profile(user_id: int, review_summary: str) -> dict[str, Any]
 
 输出格式为 JSON：{{"features": ["特性1", ...], "price_range": "...", "logistics": "...", "packaging": "...", "service": "...", "summary": "一段完整的选品建议"}}
 
+Output raw JSON only. No markdown fences, no explanation outside the JSON object.
+
 {review_summary}"""
     try:
-        client = OpenAI(api_key=get_api_key(user_id), base_url="https://api.deepseek.com/v1", timeout=30.0)
-        resp = client.chat.completions.create(
-            model="deepseek-chat",
+        resp, model_name = router_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             max_tokens=600,
-            response_format={"type": "json_object"},
+            locale="en",
         )
-        return json.loads(resp.choices[0].message.content) or {}
+        content = resp.choices[0].message.content.strip()
+
+        # JSON 解析 + 抢救
+        try:
+            return json.loads(content) or {}
+        except json.JSONDecodeError:
+            match = re.search(r"\{.*\}", content, re.DOTALL)
+            if match:
+                return json.loads(match.group()) or {}
+            raise
     except Exception as exc:
         return {"summary": f"Generation failed: {exc}"}
 

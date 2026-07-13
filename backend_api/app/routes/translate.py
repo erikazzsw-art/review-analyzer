@@ -3,15 +3,16 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 from typing import Any
 
 import psycopg2.extras
 from fastapi import APIRouter, Depends, HTTPException, status
-from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
 from pydantic import BaseModel
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.services.budget_guard import assert_budget
+from backend_api.app.services.llm_router import router_completion
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_connection, log_llm_usage
 from review_analyzer.quota import credit_consume, InsufficientCreditsError, quota_check
@@ -147,13 +148,7 @@ def _translate_payload(
 ) -> dict[str, Any] | None:
     lang_name = "Chinese" if target_lang == "zh" else "English"
     try:
-        client = OpenAI(
-            api_key=get_api_key(user_id),
-            base_url="https://api.deepseek.com/v1",
-            timeout=30.0,
-        )
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        resp, model_name = router_completion(
             messages=[
                 {
                     "role": "system",
@@ -161,29 +156,48 @@ def _translate_payload(
                         f"Translate ALL text values in the following JSON to {lang_name}. "
                         "Keep the JSON structure and keys exactly the same. "
                         "Only translate string values — leave numbers, booleans, nulls unchanged. "
-                        "Return ONLY the translated JSON object, no markdown."
+                        "Output raw JSON only. No markdown fences, no explanation outside the JSON object."
                     ),
                 },
                 {"role": "user", "content": json.dumps(content, ensure_ascii=False)},
             ],
             temperature=0.1,
             max_tokens=3000,
-            response_format={"type": "json_object"},
+            locale="en",
         )
+
+        # 记录 LLM 用量
         try:
-            usage = getattr(response, "usage", None)
+            usage = getattr(resp, "usage", None)
             if usage is not None:
+                actual_model = getattr(resp, "model", model_name)
                 log_llm_usage(
                     user_id=user_id,
-                    model_name="deepseek-chat",
+                    model_name=actual_model,
                     tokens_in=int(getattr(usage, "prompt_tokens", 0) or 0),
                     tokens_out=int(getattr(usage, "completion_tokens", 0) or 0),
                     session_id=session_id,
                     sub_category="translate",
+                    provider=model_name,
                 )
         except Exception:
             logger.exception("translate: log_llm_usage failed")
-        payload = json.loads(response.choices[0].message.content.strip())
+
+        # JSON 解析 + 抢救：GPT-4o-mini 偶尔加 markdown fence
+        text = resp.choices[0].message.content.strip()
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            match = re.search(r"\{.*\}", text, re.DOTALL)
+            if match:
+                payload = json.loads(match.group())
+            else:
+                logger.error("translate: JSON parse failed, text=%s", text[:200])
+                return None
         return payload if isinstance(payload, dict) else None
-    except (APIError, APITimeoutError, AuthenticationError, json.JSONDecodeError, ValueError, TypeError):
+    except RuntimeError as e:
+        logger.error("translate: all LLM models exhausted: %s", e)
+        return None
+    except (json.JSONDecodeError, ValueError, TypeError) as e:
+        logger.error("translate: json decode error: %s", e)
         return None
