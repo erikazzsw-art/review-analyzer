@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClueAI ReviewLens</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <span class="logo">🔍</span>
+      <h1 class="title">ClueAI ReviewLens</h1>
+    </header>
+
+    <!-- Page status -->
+    <section class="status-section">
+      <div class="status-row">
+        <span class="status-label">当前页面</span>
+        <span id="pageTypeBadge" class="badge badge--loading">检测中…</span>
+      </div>
+      <p id="pageUrl" class="page-url"></p>
+    </section>
+
+    <!-- Action -->
+    <section class="action-section">
+      <button id="scrapeBtn" class="btn btn--primary" disabled>
+        📥 抓取评论
+      </button>
+      <p id="actionHint" class="action-hint"></p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="version">v0.1.0</span>
+      <a href="https://www.clueai-reviewlens.com" target="_blank" class="footer-link">
+        ClueAI ReviewLens
+      </a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

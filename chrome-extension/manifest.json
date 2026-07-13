@@ -1,0 +1,86 @@
+{
+  "manifest_version": 3,
+  "name": "ClueAI ReviewLens",
+  "version": "0.1.0",
+  "description": "一键抓取 Amazon 评论，智能分析评论情感与关键词",
+  "author": "ClueAI",
+  "homepage_url": "https://www.clueai-reviewlens.com",
+
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "downloads"
+  ],
+
+  "host_permissions": [
+    "*://*.amazon.com/*",
+    "*://*.amazon.co.uk/*",
+    "*://*.amazon.de/*",
+    "*://*.amazon.fr/*",
+    "*://*.amazon.es/*",
+    "*://*.amazon.it/*",
+    "*://*.amazon.co.jp/*",
+    "*://*.amazon.ca/*",
+    "*://*.amazon.in/*",
+    "*://*.amazon.com.au/*",
+    "*://*.amazon.com.br/*",
+    "*://*.amazon.com.mx/*",
+    "*://*.amazon.nl/*",
+    "*://*.amazon.se/*",
+    "*://*.amazon.pl/*",
+    "*://*.amazon.sg/*",
+    "*://*.amazon.ae/*",
+    "*://*.amazon.sa/*",
+    "*://*.amazon.tr/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.amazon.com/*",
+        "*://*.amazon.co.uk/*",
+        "*://*.amazon.de/*",
+        "*://*.amazon.fr/*",
+        "*://*.amazon.es/*",
+        "*://*.amazon.it/*",
+        "*://*.amazon.co.jp/*",
+        "*://*.amazon.ca/*",
+        "*://*.amazon.in/*",
+        "*://*.amazon.com.au/*",
+        "*://*.amazon.com.br/*",
+        "*://*.amazon.com.mx/*",
+        "*://*.amazon.nl/*",
+        "*://*.amazon.se/*",
+        "*://*.amazon.pl/*",
+        "*://*.amazon.sg/*",
+        "*://*.amazon.ae/*",
+        "*://*.amazon.sa/*",
+        "*://*.amazon.tr/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ClueAI ReviewLens — 抓取 Amazon 评论",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
