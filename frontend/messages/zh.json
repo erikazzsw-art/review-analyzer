@@ -143,7 +143,10 @@
     "registerMetaTitle": "注册",
     "registerMetaDescription": "创建 ReviewLens 账号，开始智能评论分析。",
     "forgotMetaTitle": "找回密码",
-    "forgotMetaDescription": "通过邮箱验证重置 ReviewLens 账号密码。"
+    "forgotMetaDescription": "通过邮箱验证重置 ReviewLens 账号密码。",
+    "ageConfirm": "我已年满 18 周岁",
+    "agreeTerms": "我同意<terms>服务条款</terms>和<privacy>隐私政策</privacy>",
+    "marketingOptIn": "向我发送产品更新和使用技巧（可选）"
   },
   "sidebar": {
     "groupCore": "核心",

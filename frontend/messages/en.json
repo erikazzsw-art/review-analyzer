@@ -143,7 +143,10 @@
     "registerMetaTitle": "Sign Up",
     "registerMetaDescription": "Create a ReviewLens account and start analyzing reviews instantly.",
     "forgotMetaTitle": "Reset Password",
-    "forgotMetaDescription": "Reset your ReviewLens account password via email verification."
+    "forgotMetaDescription": "Reset your ReviewLens account password via email verification.",
+    "ageConfirm": "I am 18 years or older",
+    "agreeTerms": "I agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
+    "marketingOptIn": "Send me product updates and tips (optional)"
   },
   "sidebar": {
     "groupCore": "Core",

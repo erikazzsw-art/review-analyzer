@@ -97,7 +97,21 @@ def register(payload: RegisterRequest, response: Response) -> AuthResponse:
             detail="Email already exists.",
         )
 
-    user_id = create_user(username, _hash_password(payload.password), email)
+    # V4-出海-M2.5: 后端二次校验 — age_confirmed 必须为 True
+    if not payload.age_confirmed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Age confirmation is required.",
+        )
+
+    user_id = create_user(
+        username,
+        _hash_password(payload.password),
+        email,
+        terms_version=payload.terms_version,
+        age_confirmed=payload.age_confirmed,
+        marketing_opt_in=payload.marketing_opt_in,
+    )
     _init_trial_credits(user_id)
     user = get_user_by_id(user_id)
     if not user:

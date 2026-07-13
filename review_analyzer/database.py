@@ -179,13 +179,49 @@ def init_db() -> None:
 # Users CRUD
 # ============================================================
 
-def create_user(username: str, password_hash: str, email: str) -> int:
+def create_user(
+    username: str,
+    password_hash: str,
+    email: str,
+    *,
+    locale: str = "en-US",
+    terms_version: str | None = None,
+    age_confirmed: bool = False,
+    marketing_opt_in: bool = False,
+) -> int:
+    """创建用户，支持 V4-出海合规字段。
+
+    Args:
+        age_confirmed: 后端二次校验；若为 False，调用方应在调用前拒绝。
+    """
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
     conn = get_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s) RETURNING id",
-                (username, password_hash, email),
+                """
+                INSERT INTO users (
+                    username, password_hash, email,
+                    locale,
+                    terms_accepted_at, terms_version,
+                    age_confirmed_at,
+                    marketing_opt_in, marketing_opt_in_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    username,
+                    password_hash,
+                    email,
+                    locale,
+                    now,
+                    terms_version,
+                    now if age_confirmed else None,
+                    marketing_opt_in,
+                    now if marketing_opt_in else None,
+                ),
             )
             user_id = cur.fetchone()[0]
             conn.commit()
@@ -227,6 +263,21 @@ def get_user_plan(user_id: int) -> str:
     except psycopg2.errors.UndefinedColumn:
         conn.rollback()
         return "free"
+    finally:
+        conn.close()
+
+
+def get_paddle_customer_id(user_id: int) -> str | None:
+    """获取用户的 Paddle customer ID，用于 Paddle Retain (pwCustomer)。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT paddle_customer_id FROM users WHERE id = %s", (user_id,))
+            row = cur.fetchone()
+            return str(row[0]) if row and row[0] else None
+    except psycopg2.errors.UndefinedColumn:
+        conn.rollback()
+        return None
     finally:
         conn.close()
 

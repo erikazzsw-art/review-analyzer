@@ -21,6 +21,10 @@ class RegisterRequest(BaseModel):
     username: str = Field(min_length=2, max_length=64)
     password: str = Field(min_length=6, max_length=128)
     email: str = Field(min_length=3, max_length=255)
+    # V4-出海-M2.5: 注册合规字段（前端必选/可选，后端二次校验）
+    terms_version: str | None = None
+    age_confirmed: bool = False
+    marketing_opt_in: bool = False
 
     @field_validator("password")
     @classmethod

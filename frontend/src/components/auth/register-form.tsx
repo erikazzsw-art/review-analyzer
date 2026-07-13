@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -43,9 +44,14 @@ export function RegisterForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  // V4-出海-M2.5: 注册合规勾选
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
 
   const strength = checkPasswordStrength(password);
   const allRulesPassed = Object.values(strength).every(Boolean);
+  const canSubmit = allRulesPassed && ageConfirmed && termsAgreed;
 
   const rawPlan = searchParams.get("plan");
   const rawPeriod = searchParams.get("period");
@@ -58,8 +64,8 @@ export function RegisterForm() {
       return;
     }
 
-    if (!allRulesPassed) {
-      setError(t("passwordTooWeak"));
+    if (!canSubmit) {
+      if (!allRulesPassed) setError(t("passwordTooWeak"));
       return;
     }
 
@@ -72,7 +78,14 @@ export function RegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          terms_version: "1.0",
+          age_confirmed: true,
+          marketing_opt_in: marketingOptIn,
+        }),
       });
 
       if (!res.ok) {
@@ -191,6 +204,45 @@ export function RegisterForm() {
           </ul>
         )}
       </div>
+      {/* V4-出海-M2.5: 注册合规勾选框 */}
+      <div className="space-y-2">
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={ageConfirmed}
+            onChange={(e) => setAgeConfirmed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-line text-lavender accent-lavender focus:ring-lavender/20"
+          />
+          <span className="text-sm text-ink/80">{t("ageConfirm")}</span>
+        </label>
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={termsAgreed}
+            onChange={(e) => setTermsAgreed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-line text-lavender accent-lavender focus:ring-lavender/20"
+          />
+          <span className="text-sm text-ink/80">
+            {t.rich("agreeTerms", {
+              terms: (chunks: React.ReactNode) => (
+                <Link href="/terms" className="text-lavender underline hover:text-lavender/80">{chunks}</Link>
+              ),
+              privacy: (chunks: React.ReactNode) => (
+                <Link href="/privacy" className="text-lavender underline hover:text-lavender/80">{chunks}</Link>
+              ),
+            })}
+          </span>
+        </label>
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={marketingOptIn}
+            onChange={(e) => setMarketingOptIn(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-line text-lavender accent-lavender focus:ring-lavender/20"
+          />
+          <span className="text-sm text-ink/80">{t("marketingOptIn")}</span>
+        </label>
+      </div>
       {error && (
         <p className="text-sm text-red-600" role="alert">
           {error}
@@ -198,7 +250,7 @@ export function RegisterForm() {
       )}
       <Button
         type="submit"
-        disabled={loading}
+        disabled={loading || !canSubmit}
         className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90"
       >
         {loading ? t("registerLoading") : t("registerButton")}
