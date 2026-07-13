@@ -12,10 +12,19 @@ import { LocaleSwitcher } from "@/components/ui/locale-switcher";
 import { FeedbackTrigger } from "@/components/feedback/FeedbackWidget";
 import { SidebarCreditEntry } from "@/components/credit/sidebar-credit-entry";
 import { SidebarUserMenu } from "@/components/app/sidebar-user-menu";
+import { TermsGate } from "@/components/terms/terms-gate";
 
-type MeData = { username: string; plan: string; is_admin: boolean };
+const CURRENT_TERMS_VERSION = "2.0";
 
-function useMe(): MeData | null {
+type MeData = {
+  username: string;
+  plan: string;
+  is_admin: boolean;
+  terms_accepted_at: string | null;
+  terms_version: string | null;
+};
+
+function useMe(): { me: MeData | null; showTermsGate: boolean } {
   const [me, setMe] = useState<MeData | null>(null);
   useEffect(() => {
     fetch("/api/me", { credentials: "include" })
@@ -23,7 +32,10 @@ function useMe(): MeData | null {
       .then((d) => { if (d) setMe(d as MeData); })
       .catch(() => {});
   }, []);
-  return me;
+
+  // V4-出海-M2.5: 老用户 terms_version 为空或过期 → 弹出 Terms Gate
+  const showTermsGate = me !== null && me.terms_version !== CURRENT_TERMS_VERSION;
+  return { me, showTermsGate };
 }
 
 type SidebarProps = {
@@ -33,7 +45,7 @@ type SidebarProps = {
 export function Sidebar({ currentPath }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslations("sidebar");
-  const me = useMe();
+  const { me, showTermsGate } = useMe();
 
   const isAdmin = me?.is_admin ?? false;
 
@@ -142,6 +154,9 @@ export function Sidebar({ currentPath }: SidebarProps) {
 
   return (
     <>
+      {/* V4-出海-M2.5-C: Terms Gate — 老用户登录后必须补同意才能继续 */}
+      <TermsGate open={showTermsGate} />
+
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 hidden h-screen w-[260px] border-r border-line bg-white md:block">
         {navContent}

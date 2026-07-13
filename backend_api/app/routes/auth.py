@@ -6,10 +6,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import bcrypt
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
-from backend_api.app.deps import clear_auth_cookies, set_auth_cookies
+from backend_api.app.deps import clear_auth_cookies, get_current_user, set_auth_cookies
 from backend_api.app.schemas.auth import (
+    AcceptTermsRequest,
     AuthResponse,
     LoginRequest,
     MessageResponse,
@@ -225,3 +226,43 @@ def confirm_password_reset(payload: PasswordResetConfirmRequest) -> MessageRespo
     mark_token_used(int(token_row["id"]))
     update_user_password(int(user["id"]), _hash_password(payload.new_password))
     return MessageResponse(message="Password reset successful.")
+
+
+# V4-出海-M2.5: Terms 版本常量，用于判断老用户是否需要补同意
+CURRENT_TERMS_VERSION = "2.0"
+
+
+@router.post("/accept-terms", response_model=MessageResponse)
+def accept_terms(
+    payload: AcceptTermsRequest,
+    current_user: dict = Depends(get_current_user),
+) -> MessageResponse:
+    """接受 Terms of Service / Privacy Policy（幂等）。
+
+    老用户登录后如 terms_version 为空/过期，前端弹出 Terms Gate modal，
+    用户勾选同意后调用本端点。已接受同版本则直接返回 already_accepted。
+    """
+    user_id = int(current_user["id"])
+    existing_version = current_user.get("terms_version")
+
+    # 幂等：已接受同版本直接返回成功
+    if existing_version == payload.terms_version:
+        return MessageResponse(
+            message="Terms already accepted for this version.",
+        )
+
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET terms_accepted_at = %s, terms_version = %s WHERE id = %s",
+                (now, payload.terms_version, user_id),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return MessageResponse(message="Terms accepted.")

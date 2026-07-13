@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import ipaddress
 import json
+import logging
 import os
+import time as _time
 from datetime import datetime
 from typing import Any
 
@@ -21,6 +24,7 @@ from backend_api.app.schemas.settings import (
 )
 from review_analyzer.auth import load_user_api_key, save_user_api_key
 from review_analyzer.database import (
+    get_paddle_customer_id,
     get_setting,
     get_user_plan,
     set_setting,
@@ -93,6 +97,94 @@ def _load_api_key(user_id: int) -> str:
     if user_key:
         return user_key
     return str(get_setting(user_id, "api_key") or "")
+
+
+logger = logging.getLogger(__name__)
+
+# Paddle webhook IP allowlist — fetched from https://api.paddle.com/ips (the source of truth)
+# Cached in-process with a 1-hour TTL; refreshed on first request if cache is cold.
+_paddle_ips: list[ipaddress.IPv4Network] | None = None
+_paddle_ips_fetched_at: float = 0.0
+_PADDLE_IPS_TTL = 3600  # 1 hour
+
+
+def _fetch_paddle_ips() -> list[ipaddress.IPv4Network]:
+    """Fetch current Paddle webhook source IPs from api.paddle.com/ips.
+
+    Returns a list of IPv4Network objects (all /32 CIDRs at time of writing).
+    On network failure, logs a warning and returns an empty list — the caller
+    should decide whether to fail open or closed.
+    """
+    import urllib.request
+
+    try:
+        req = urllib.request.Request(
+            "https://api.paddle.com/ips",
+            headers={"Accept": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+        cidrs = body.get("data", {}).get("ipv4_cidrs", [])
+        networks = [ipaddress.IPv4Network(cidr) for cidr in cidrs if cidr]
+        logger.info("Paddle IPs refreshed: %d CIDRs", len(networks))
+        return networks
+    except Exception as exc:
+        logger.warning("Failed to fetch Paddle IPs: %s", exc)
+        return []
+
+
+def _get_paddle_ips() -> list[ipaddress.IPv4Network]:
+    """Return the cached Paddle IP allowlist, refreshing if stale."""
+    global _paddle_ips, _paddle_ips_fetched_at
+    now = _time.time()
+    if _paddle_ips is not None and (now - _paddle_ips_fetched_at) < _PADDLE_IPS_TTL:
+        return _paddle_ips
+    networks = _fetch_paddle_ips()
+    if networks:
+        _paddle_ips = networks
+        _paddle_ips_fetched_at = now
+    # If fetch failed, keep stale cache (if any) rather than fail open
+    return _paddle_ips or []
+
+
+def _validate_paddle_ip(request: Request) -> bool:
+    """Check that the request originates from a known Paddle webhook IP.
+
+    Reads the client IP from X-Forwarded-For (trusting nginx), falling back
+    to request.client. Returns True if the IP matches a known Paddle CIDR.
+    """
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    client_ip_str = ""
+    if forwarded:
+        # X-Forwarded-For: client, proxy1, proxy2 — take the leftmost
+        client_ip_str = forwarded.split(",")[0].strip()
+    if not client_ip_str:
+        client = request.client
+        if client and client.host:
+            client_ip_str = client.host
+    if not client_ip_str:
+        logger.warning("Paddle webhook: cannot determine client IP")
+        return False
+
+    try:
+        client_ip = ipaddress.IPv4Address(client_ip_str)
+    except ValueError:
+        logger.warning("Paddle webhook: invalid client IP %s", client_ip_str)
+        return False
+
+    allowed = _get_paddle_ips()
+    if not allowed:
+        # No IP list available (first fetch failed, no cache) — log and allow
+        # to avoid permanent breakage, but this should be rare.
+        logger.warning("Paddle webhook: IP allowlist empty, cannot validate %s", client_ip_str)
+        return False
+
+    for network in allowed:
+        if client_ip in network:
+            return True
+
+    logger.warning("Paddle webhook: IP %s not in allowlist", client_ip_str)
+    return False
 
 
 def _verify_paddle_signature(raw_body: bytes, signature: str, secret: str) -> bool:
@@ -205,7 +297,8 @@ def create_billing_checkout(
     user_id = int(current_user["id"])
     email = str(current_user.get("email") or "")
     success_url = payload.success_url or f"{os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')}/settings?billing=success"
-    checkout_html = get_checkout_html(user_id, email, success_url, payload.plan_key, payload.period)
+    paddle_customer_id = get_paddle_customer_id(user_id)
+    checkout_html = get_checkout_html(user_id, email, success_url, payload.plan_key, payload.period, paddle_customer_id)
     return BillingCheckoutResponse(
         checkout_html=checkout_html,
         configured=is_billing_configured(),
@@ -215,6 +308,10 @@ def create_billing_checkout(
 
 @router.post("/billing/webhook", response_model=BillingWebhookResponse)
 async def billing_webhook_route(request: Request) -> BillingWebhookResponse:
+    # 1. Validate source IP against Paddle's published allowlist
+    if not _validate_paddle_ip(request):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Untrusted source IP.")
+
     try:
         raw_body = await request.body()
         body = json.loads(raw_body.decode("utf-8")) if raw_body else {}

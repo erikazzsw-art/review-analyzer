@@ -109,6 +109,9 @@ def get_me(current_user: dict = Depends(get_current_user)) -> UserPayload:
         email=str(current_user.get("email") or ""),
         plan=get_user_plan(user_id),
         is_admin=is_admin,
+        locale=str(current_user.get("locale") or "") or None,
+        terms_accepted_at=_iso_or_none(current_user.get("terms_accepted_at")),
+        terms_version=str(current_user.get("terms_version") or "") or None,
     )
 
 

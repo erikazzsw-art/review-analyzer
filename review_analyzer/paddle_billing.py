@@ -49,21 +49,27 @@ def get_checkout_html(
     success_url: str,
     plan_key: str = "pro",
     period: str = "monthly",
+    paddle_customer_id: str | None = None,
 ) -> str:
     """生成 Paddle.js overlay checkout 的 HTML 片段。
 
     根据 plan_key + period 解析 price_id；若对应 price_id 为空则返回空字符串，
     触发前端 !configured 分支。
+
+    paddle_customer_id 用于 Paddle Retain：回头客识别，传入已登录用户的 Paddle customer ID。
     """
     price_id = _resolve_price_id(plan_key, period)
     if not price_id:
         return ""
     environment_line = 'Paddle.Environment.set("sandbox");' if _env == "sandbox" else ""
+    pw_customer_line = ""
+    if paddle_customer_id:
+        pw_customer_line = f"\n        pwCustomer: {{ id: {json.dumps(paddle_customer_id)} }},"
     return f"""
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
     <script type="text/javascript">
       {environment_line}
-      Paddle.Initialize({{
+      Paddle.Initialize({{{pw_customer_line}
         token: {json.dumps(PADDLE_CLIENT_TOKEN)}
       }});
       Paddle.Checkout.open({{

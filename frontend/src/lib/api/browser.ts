@@ -1145,6 +1145,22 @@ export async function updateMyProfile(
   return response.json();
 }
 
+// V4-出海-M2.5: Terms Gate — 老用户补同意 Terms
+export async function acceptTerms(
+  termsVersion: string,
+): Promise<{ ok: boolean; message: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/auth/accept-terms`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ terms_version: termsVersion }),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
 export async function deleteMyAccount(
   payload: import("./types").MeDeletePayload,
 ): Promise<{ ok: boolean; message: string }> {

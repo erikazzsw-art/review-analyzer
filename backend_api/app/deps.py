@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import HTTPException, Request, Response, status
 
 from backend_api.app.config import get_settings
+from backend_api.app.services.i18n import get_user_locale
 from review_analyzer.database import get_user_by_id
 
 
@@ -174,6 +175,15 @@ def get_current_user(request: Request) -> dict[str, Any]:
     access_token = request.cookies.get(settings.access_cookie_name)
     refresh_token = request.cookies.get(settings.refresh_cookie_name)
     return _get_authenticated_user(access_token, refresh_token)
+
+
+def get_locale(request: Request) -> str:
+    """FastAPI dependency: 从请求推断用户 UI 语言偏好.
+
+    优先级: cookie NEXT_LOCALE > Accept-Language > 默认 "en-US".
+    返回完整 locale tag（"en-US" / "zh-CN"），用于邮件模板选择 / 后端文案.
+    """
+    return get_user_locale(request)
 
 
 def get_admin_user(request: Request) -> dict[str, Any]:

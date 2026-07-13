@@ -146,7 +146,12 @@
     "forgotMetaDescription": "Reset your ReviewLens account password via email verification.",
     "ageConfirm": "I am 18 years or older",
     "agreeTerms": "I agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
-    "marketingOptIn": "Send me product updates and tips (optional)"
+    "marketingOptIn": "Send me product updates and tips (optional)",
+    "termsGateTitle": "Terms Update",
+    "termsGateSubtitle": "Please review and accept to continue",
+    "termsGateDescription": "We've updated our Terms of Service and Privacy Policy to comply with international regulations (GDPR, CCPA, PIPL). Please review and accept the updated terms to continue using ReviewLens.",
+    "termsGateSubmit": "Accept & Continue",
+    "termsGateSubmitting": "Submitting..."
   },
   "sidebar": {
     "groupCore": "Core",

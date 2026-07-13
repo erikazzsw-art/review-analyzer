@@ -146,7 +146,12 @@
     "forgotMetaDescription": "通过邮箱验证重置 ReviewLens 账号密码。",
     "ageConfirm": "我已年满 18 周岁",
     "agreeTerms": "我同意<terms>服务条款</terms>和<privacy>隐私政策</privacy>",
-    "marketingOptIn": "向我发送产品更新和使用技巧（可选）"
+    "marketingOptIn": "向我发送产品更新和使用技巧（可选）",
+    "termsGateTitle": "协议更新",
+    "termsGateSubtitle": "请审阅并接受后继续使用",
+    "termsGateDescription": "我们已更新《用户协议》和《隐私协议》以符合国际法规（GDPR、CCPA、PIPL）要求。请仔细阅读并接受更新后的条款，以继续使用 ReviewLens。",
+    "termsGateSubmit": "接受并继续",
+    "termsGateSubmitting": "提交中..."
   },
   "sidebar": {
     "groupCore": "核心",

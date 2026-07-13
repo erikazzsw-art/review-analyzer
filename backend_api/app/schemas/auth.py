@@ -58,6 +58,13 @@ class UserPayload(BaseModel):
     email: str = ""
     plan: str = "free"
     is_admin: bool = False
+    locale: str | None = None
+    terms_accepted_at: str | None = None
+    terms_version: str | None = None
+
+
+class AcceptTermsRequest(BaseModel):
+    terms_version: str = Field(min_length=1, max_length=32)
 
 
 class AuthResponse(BaseModel):
