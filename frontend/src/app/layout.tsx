@@ -5,6 +5,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import "@/app/globals.css";
 import { getMetadataBaseUrl, ogImagePath } from "@/lib/seo";
 import { AnalyticsProvider } from "@/components/app/AnalyticsProvider";
+import { CookieBanner } from "@/components/CookieBanner";
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBaseUrl(),
@@ -59,6 +60,7 @@ export default async function RootLayout({
       <body>
         <NextIntlClientProvider messages={messages}>
           <AnalyticsProvider>{children}</AnalyticsProvider>
+          <CookieBanner />
         </NextIntlClientProvider>
       </body>
     </html>

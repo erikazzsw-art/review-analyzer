@@ -614,7 +614,8 @@
         "weekly": "Weekly",
         "manual": "Manual"
       }
-    }
+    },
+    "uploadNotice": "Reviews you upload will be anonymized before analysis. We do not store personally identifiable information. See our <link href=\"/privacy\">Privacy Policy</link>."
   },
   "workspace": {
     "title": "Today's Workspace",
@@ -995,6 +996,10 @@
     },
     "responseTime": "We typically respond within 1–2 business days."
   },
+  "cookieBanner": {
+    "text": "We use essential cookies for authentication and analytics. By continuing, you agree to our <link href=\"/cookies\">Cookie Policy</link>.",
+    "accept": "Accept"
+  },
   "subProcessors": {
     "title": "Sub-Processor List",
     "description": "Third-party service providers that process personal data on our behalf.",
@@ -1152,6 +1157,70 @@
             {
               "type": "paragraph",
               "text": "For questions or complaints, please contact: <mail>support@clueai-reviewlens.com</mail>"
+            }
+          ]
+        },
+        {
+          "heading": "11. Age Restriction (18+)",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "You must be at least 18 years old to use this Service. By creating an account, you represent and warrant that you are 18 years of age or older. If we discover that a user is under 18, we will terminate their account and delete all associated data within 30 days. If you are a parent or guardian and become aware that a minor under 18 has created an account, please contact us immediately at <mail>support@clueai-reviewlens.com</mail>."
+            }
+          ]
+        },
+        {
+          "heading": "12. Prohibited Use Cases",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "In addition to the general usage rules in Section 2, the following specific use cases are strictly prohibited:"
+            },
+            {
+              "type": "bullets",
+              "items": [
+                "<b>Medical & Health</b>: You may not use this Service to analyse reviews for medical devices, pharmaceuticals, dietary supplements, or any health-related products where analysis output could be construed as medical advice, diagnosis, or treatment recommendation.",
+                "<b>Financial & Legal</b>: You may not use this Service to generate financial advice, investment recommendations, credit assessments, insurance underwriting decisions, or legal advice. AI-generated analysis is not a substitute for professional financial or legal counsel.",
+                "<b>Employment & Housing</b>: You may not use this Service to evaluate individuals for employment, housing, credit, or insurance eligibility in a manner that could result in discriminatory outcomes under applicable law.",
+                "<b>High-Risk Automated Decision-Making</b>: You may not use this Service for fully automated decisions that produce legal effects or similarly significant effects on individuals, unless you maintain meaningful human review of every AI-generated output.",
+                "<b>Content Scraping & Resale</b>: You may not scrape, extract, or resell review data or analysis results obtained through this Service as a standalone data product or API service to third parties.",
+                "<b>Illegal or Harmful Content</b>: You may not upload reviews containing illegal content, hate speech, child sexual abuse material (CSAM), or content that promotes violence or terrorism."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "13. Governing Law & Arbitration",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "These Terms of Service are governed by and construed in accordance with the laws of the Hong Kong Special Administrative Region of the People's Republic of China, without regard to its conflict of law provisions. The United Nations Convention on Contracts for the International Sale of Goods (CISG) does not apply."
+            },
+            {
+              "type": "paragraph",
+              "text": "Any dispute, controversy, or claim arising out of or relating to these Terms, or the breach, termination, or invalidity thereof, shall be resolved as follows:"
+            },
+            {
+              "type": "ordered",
+              "items": [
+                "<b>Negotiation</b>: The parties shall first attempt to resolve the dispute through good-faith informal negotiation for a period of at least 30 days. To initiate negotiation, send a written notice describing the claim to <mail>support@clueai-reviewlens.com</mail>.",
+                "<b>Arbitration</b>: If the dispute is not resolved through negotiation within 30 days, it shall be referred to and finally resolved by binding arbitration administered by the Hong Kong International Arbitration Centre (HKIAC) under the HKIAC Administered Arbitration Rules in force when the Notice of Arbitration is submitted. The seat of arbitration shall be Hong Kong. The arbitration shall be conducted in English by a single arbitrator mutually agreed upon by both parties.",
+                "<b>Exceptions</b>: Either party may seek injunctive or other equitable relief in any court of competent jurisdiction to prevent infringement, misappropriation, or violation of intellectual property rights or confidential information, without first engaging in the negotiation or arbitration procedures described above.",
+                "<b>Class Action Waiver</b>: To the fullest extent permitted by applicable law, all claims must be brought in the parties' individual capacity and not as a plaintiff or class member in any purported class action, collective action, or representative proceeding. The arbitrator may not consolidate more than one person's claims."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "14. Amazon Trademark Disclaimer",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Amazon, Amazon Ads, Amazon.com, the Amazon logo, and all related trademarks, service marks, and trade dress are the exclusive property of Amazon.com, Inc. or its affiliates. All other trademarks, product names, and company names or logos cited on this website are the property of their respective owners."
+            },
+            {
+              "type": "paragraph",
+              "text": "ClueAI is an independent third-party analytics service. We are not affiliated with, endorsed by, sponsored by, or in any way officially connected with Amazon.com, Inc. or any of its subsidiaries or affiliates. References to Amazon on this website are for descriptive and informational purposes only and do not imply any endorsement, sponsorship, or partnership. Any data sourced from Amazon is obtained through licensed third-party data providers (DataForSEO and Rainforest API) and is used in compliance with their respective terms of service."
             }
           ]
         }
@@ -1314,6 +1383,64 @@
             {
               "type": "paragraph",
               "text": "For privacy-related inquiries, please contact: <mail>privacy@clueai-reviewlens.com</mail>"
+            }
+          ]
+        },
+        {
+          "heading": "12. EU/EEA Exclusion",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Our services are not directed to users in the European Union, United Kingdom, or European Economic Area countries. By using this Service, you confirm that you are not located in the EU, UK, or EEA. We do not knowingly collect or process personal data of individuals in these regions. If we become aware that a user is located in an EU/EEA country or the UK, we will restrict access and delete any associated personal data within 30 days."
+            }
+          ]
+        },
+        {
+          "heading": "13. Amazon Trademark Disclaimer",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Amazon, Amazon Ads, Amazon.com, and all related marks are trademarks of Amazon.com, Inc. or its affiliates. ClueAI is an independent service and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. Any references to Amazon products, services, or trademarks are for descriptive purposes only and do not imply any partnership or endorsement."
+            }
+          ]
+        },
+        {
+          "heading": "14. AI Training Data",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "We do not use customer review data to train, fine-tune, or improve AI/ML models beyond the scope of the analysis services you have requested. Our AI providers (DeepSeek, OpenAI, and Anthropic via AWS Bedrock) have contractually committed not to use customer-submitted content for model training. Analysis results are generated solely for the purpose of delivering our service to you and are not retained for model improvement unless explicitly authorised by you in writing."
+            }
+          ]
+        },
+        {
+          "heading": "15. Governing Law",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "This Privacy Policy is governed by and construed in accordance with the laws of the Hong Kong Special Administrative Region of the People's Republic of China, without regard to its conflict of law provisions. For users accessing the Service from other jurisdictions, you are responsible for compliance with local laws to the extent applicable."
+            }
+          ]
+        },
+        {
+          "heading": "16. Dispute Resolution",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "Any disputes, controversies, or claims arising out of or relating to this Privacy Policy shall first be resolved through good-faith negotiation. If the dispute cannot be resolved within 30 days, it shall be referred to and finally resolved by arbitration administered by the Hong Kong International Arbitration Centre (HKIAC) under the HKIAC Administered Arbitration Rules in force when the Notice of Arbitration is submitted. The seat of arbitration shall be Hong Kong. The arbitration proceedings shall be conducted in English. The arbitral award shall be final and binding on both parties."
+            }
+          ]
+        },
+        {
+          "heading": "17. Age 18+ & AI Transparency",
+          "blocks": [
+            {
+              "type": "bullets",
+              "items": [
+                "<b>Age Requirement</b>: You must be at least 18 years old to use this Service. We do not knowingly collect personal information from individuals under 18. If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately at <mail>privacy@clueai-reviewlens.com</mail> and we will delete such information within 30 days.",
+                "<b>AI-Generated Content Disclosure</b>: Analysis results, summaries, recommendations, and ad copy generated by this Service are produced using artificial intelligence (including but not limited to large language models provided by DeepSeek, OpenAI, and Anthropic via AWS Bedrock). AI-generated content is for informational and reference purposes only and does not constitute professional advice. You should independently verify critical information before making business decisions based on AI output. In accordance with the California AI Transparency Act (2026), we clearly label AI-generated content where technically feasible.",
+                "<b>AI Safety Guardrails</b>: Our AI systems are configured to refuse requests for medical diagnosis, legal advice, financial investment recommendations, and other prohibited use cases. If reviews submitted by you contain personally identifiable information (such as names, email addresses, phone numbers, or government ID numbers), our system automatically redacts or anonymises this information before sending it to AI providers."
+              ]
             }
           ]
         }

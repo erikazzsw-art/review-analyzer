@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useMessages, useTranslations } from "next-intl";
 
 import { AsinFetchPanel } from "@/components/upload/asin-fetch-panel";
 import { AsinWatchlistPanel } from "@/components/upload/asin-watchlist-panel";
@@ -14,6 +14,7 @@ import {
 import type { DuplicateBatchError } from "@/lib/api/browser";
 import { track } from "@/lib/analytics";
 import type { TaxonomyCategoriesResponse, UploadJob } from "@/lib/api/types";
+import { renderInline } from "@/lib/render-inline";
 
 type UploadMode = "file" | "asin" | "watchlist";
 
@@ -73,6 +74,7 @@ function CategoryHitBanner({
 export function UploadForm() {
   const router = useRouter();
   const t = useTranslations("upload");
+  const messages = useMessages();
   const [uploadMode, setUploadMode] = useState<UploadMode>("file");
   const [file, setFile] = useState<File | null>(null);
   const [job, setJob] = useState<UploadJob | null>(null);
@@ -461,6 +463,9 @@ export function UploadForm() {
         </div>
         </>
         )}
+        <p className="mt-4 text-xs leading-5 text-soft/70">
+          {renderInline((messages as Record<string, Record<string, string>>)?.upload?.uploadNotice ?? "")}
+        </p>
       </div>
     </section>
   );
