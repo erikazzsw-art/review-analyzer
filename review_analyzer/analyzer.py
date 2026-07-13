@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-from openai import AuthenticationError, OpenAI
+from openai import AuthenticationError
 
 from .config import CATEGORY_TAGS, DEFAULT_CATEGORY, TAG_NORMALIZE_MAP
 
@@ -76,6 +77,9 @@ category 选择规则：有负面内容时优先选负面分类；亮点和问�
 - content_sentiment：纯基于评论文字内容的情感判断（无评论内容时与 sentiment 相同）
 - issue_tags：负面问题标签数组，无问题时为 []
 - highlight_tags：正面亮点标签数组，无亮点时为 []"""
+
+# JSON 输出强化指令（追加到 SYSTEM_PROMPT 末尾，确保所有模型输出纯 JSON）
+SYSTEM_PROMPT += "\n\nRespond with raw JSON only. No markdown fences, no explanation outside the JSON object."
 
 VALID_SENTIMENTS = {"positive", "negative", "neutral", "unrecognizable"}
 VALID_CATEGORIES = {
@@ -189,27 +193,43 @@ def build_prompt(
     return "\n".join(parts)
 
 
-def _call_deepseek_api(prompt: str, api_key: str) -> dict:
-    """调用 DeepSeek API，超时 30 秒，返回解析后的 JSON dict。"""
-    client = OpenAI(
-        api_key=api_key,
-        base_url="https://api.deepseek.com/v1",
-        timeout=30.0,
-    )
+def _call_llm(system_prompt: str, user_prompt: str, locale: str = "en") -> dict:
+    """通过 LLM Router 调用分析，带 markdown fence 抢救逻辑。
 
-    response = client.chat.completions.create(
-        model="deepseek-chat",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
+    locale="en" 走 GPT-4o-mini 优先链，"zh" 走 DeepSeek 优先链。
+    GPT-4o-mini 偶尔在 JSON 外加 markdown fence，用正则兜底提取。
+    """
+    from backend_api.app.services.llm_router import router_completion
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    resp, model_name = router_completion(
+        messages=messages,
         temperature=0.1,
         max_tokens=600,
-        response_format={"type": "json_object"},
+        locale=locale,
     )
 
-    content = response.choices[0].message.content.strip()
-    return json.loads(content)
+    content = resp.choices[0].message.content.strip()
+
+    # 尝试直接解析 JSON
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        pass
+
+    # 抢救：GPT-4o-mini 偶尔加 markdown fence，用正则兜底提取
+    match = re.search(r'\{.*\}', content, re.DOTALL)
+    if match:
+        return json.loads(match.group())
+
+    raise json.JSONDecodeError(
+        f"Failed to parse JSON (len={len(content)}): {content[:200]}",
+        content, 0,
+    )
 
 
 def _validate_result(result: dict) -> dict:
@@ -274,17 +294,21 @@ def analyze_comment(
     category: str,
     api_key: str,
     rating: int | None = None,
+    locale: str = "en",
 ) -> dict:
     """
-    单条评论分析：构建 Prompt → 调用 API → 解析返回。
+    单条评论分析：构建 Prompt → 调用 LLM Router → 解析返回。
     返回格式符合 AI 输出字段规范。
     JSON 解析失败时重试 1 次。
+
+    locale="en" 走 GPT-4o-mini 优先链，"zh" 走 DeepSeek 优先链（默认 en，海外优先）。
+    api_key 保留用于向后兼容，实际调用走 llm_router（从环境变量读取 Key）。
     """
     prompt = build_prompt(comment, category, rating)
 
     for attempt in range(2):
         try:
-            result = _call_deepseek_api(prompt, api_key)
+            result = _call_llm(SYSTEM_PROMPT, prompt, locale)
             return _validate_result(result)
         except AuthenticationError:
             raise
@@ -309,6 +333,7 @@ def _analyze_one(
     item: dict,
     category: str,
     api_key: str,
+    locale: str = "en",
 ) -> tuple[int, dict]:
     """分析单条评论，返回 (索引, 合并结果)。供线程池调用。"""
     content = item.get("content", "").strip()
@@ -324,7 +349,7 @@ def _analyze_one(
             rating = None
 
     try:
-        analysis = analyze_comment(content, category, api_key, rating)
+        analysis = analyze_comment(content, category, api_key, rating, locale=locale)
     except AuthenticationError:
         raise
     except Exception as e:
@@ -340,13 +365,17 @@ def analyze_batch(
     api_key: str,
     progress_callback: callable | None = None,
     max_workers: int = 10,
+    locale: str = "en",
 ) -> list[dict]:
     """
-    批量分析，带进度回调。并发调用 DeepSeek API 提升性能。
+    批量分析，带进度回调。通过 LLM Router 自动 fallback。
     无效 API Key 时抛出异常停止分析。
 
     comments 中每个 dict 需包含 "content" 字段，可选 "rating" 字段。
     返回列表中每个 dict 包含原始字段 + AI 分析结果字段。
+
+    locale="en" 走 GPT-4o-mini 优先链，"zh" 走 DeepSeek 优先链（默认 en，海外优先）。
+    api_key 保留用于向后兼容，实际调用走 llm_router（从环境变量读取 Key）。
     """
     import time
 
@@ -365,7 +394,7 @@ def analyze_batch(
             idx, merged = future.result()
             results[idx] = merged
         except AuthenticationError:
-            auth_error = ValueError("API Key 无效，请检查您的 DeepSeek API Key 设置")
+            auth_error = ValueError("API Key 无效，请检查您的 LLM API Key 设置")
             return
         except Exception as e:
             logger.error(f"并发分析异常: {e}")
@@ -377,7 +406,7 @@ def analyze_batch(
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
         for i, item in enumerate(comments):
-            f = executor.submit(_analyze_one, i, item, category, api_key)
+            f = executor.submit(_analyze_one, i, item, category, api_key, locale)
             f.add_done_callback(on_done)
             futures.append(f)
 
