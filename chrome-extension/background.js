@@ -66,6 +66,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true; // keep channel open for async sendResponse
     }
 
+    // ── Step 11: forward EXTRACT_REVIEWS to content script ──
+    case 'EXTRACT_REVIEWS': {
+      (async () => {
+        try {
+          const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
+          if (!tab || !tab.id) {
+            sendResponse({
+              reviews: [],
+              stats: { total_found: 0, total_extracted: 0, error: 'no_active_tab' },
+            });
+            return;
+          }
+
+          // Forward to content script in the active tab
+          const result = await chrome.tabs.sendMessage(tab.id, {
+            type: 'EXTRACT_REVIEWS',
+          });
+          sendResponse(result);
+        } catch (err) {
+          console.error('[ReviewLens BG] Error forwarding EXTRACT_REVIEWS:', err);
+          sendResponse({
+            reviews: [],
+            stats: { total_found: 0, total_extracted: 0, error: String(err) },
+          });
+        }
+      })();
+      return true; // keep channel open for async sendResponse
+    }
+
     default: {
       sendResponse({ received: false, error: `Unknown message type: ${message.type}` });
       break;
