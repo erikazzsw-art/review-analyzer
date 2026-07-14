@@ -14,13 +14,35 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Validate Secrets
+        run: |
+          missing=""
+          if [ -z "${{ secrets.ECS_HOST }}" ]; then missing="$missing ECS_HOST"; fi
+          if [ -z "${{ secrets.ECS_USER }}" ]; then missing="$missing ECS_USER"; fi
+          if [ -z "${{ secrets.ECS_SSH_KEY }}" ]; then missing="$missing ECS_SSH_KEY"; fi
+          if [ -z "${{ secrets.ECS_DEPLOY_PATH }}" ]; then missing="$missing ECS_DEPLOY_PATH"; fi
+          if [ -n "$missing" ]; then
+            echo "::error::Missing secrets:$missing"
+            exit 1
+          fi
+          echo "All required secrets are present"
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.ECS_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          printf 'Host ecs\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/deploy_key\n  StrictHostKeyChecking no\n' \
-            "${{ secrets.ECS_HOST }}" "${{ secrets.ECS_USER }}" > ~/.ssh/config
+          cat > ~/.ssh/config << 'ENDCONFIG'
+          Host ecs
+            HostName ECS_HOST_PLACEHOLDER
+            User ECS_USER_PLACEHOLDER
+            IdentityFile ~/.ssh/deploy_key
+            StrictHostKeyChecking no
+          ENDCONFIG
+          sed -i "s/ECS_HOST_PLACEHOLDER/${{ secrets.ECS_HOST }}/" ~/.ssh/config
+          sed -i "s/ECS_USER_PLACEHOLDER/${{ secrets.ECS_USER }}/" ~/.ssh/config
+          echo "SSH config written:"
+          cat ~/.ssh/config | sed 's/IdentityFile.*/IdentityFile ***/'
 
       - name: Deploy
         run: |
