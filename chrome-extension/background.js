@@ -98,6 +98,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true; // keep channel open for async sendResponse
     }
 
+    // ── Step 12: pagination result forwarded from content script ──
+    case 'EXTRACT_REVIEWS_RESULT': {
+      const tabId = sender.tab?.id;
+      console.log(
+        '[ReviewLens BG] 分页提取结果: tabId=' + tabId +
+        ', count=' + message.count +
+        ', total=' + message.total +
+        ', url=' + message.url
+      );
+      // Store review count for future popup queries
+      if (tabId != null) {
+        const existing = tabPageInfo.get(tabId) || {};
+        tabPageInfo.set(tabId, {
+          ...existing,
+          reviewCount: message.total,
+          lastExtraction: message.timestamp,
+        });
+      }
+      sendResponse({ received: true });
+      break;
+    }
+
     default: {
       sendResponse({ received: false, error: `Unknown message type: ${message.type}` });
       break;

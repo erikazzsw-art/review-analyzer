@@ -4,7 +4,8 @@
  * Injected into Amazon product/review pages.
  * Step 10: detect page type and report to service worker.
  * Step 11: multi-selector fallback + review DOM extraction.
- * Future steps: pagination handling, CSV export, popup trigger.
+ * Step 12: MutationObserver pagination + postMessage bridge to background.
+ * Future steps: CSV export, popup trigger.
  */
 
 (function () {
@@ -409,6 +410,39 @@
       sendResponse(result);
       return true;
     }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // Page-level postMessage listener (Step 12)
+  //
+  // inject.js runs in the MAIN world and uses window.postMessage
+  // to notify this content script (ISOLATED world) when new reviews
+  // are detected via MutationObserver (AJAX page turns).
+  // We forward the result to the background service worker.
+  // ═══════════════════════════════════════════════════════════════
+
+  window.addEventListener('message', function (event) {
+    // Only accept messages from the same window
+    if (event.source !== window) return;
+
+    var data = event.data;
+    if (!data || data.type !== 'REVIEWLENS_NEW_REVIEWS') return;
+
+    console.log(
+      '[ReviewLens CS] 收到分页通知:',
+      data.count, '条新评论，累计', data.total, '条'
+    );
+
+    // Forward to background service worker
+    chrome.runtime.sendMessage({
+      type: 'EXTRACT_REVIEWS_RESULT',
+      count: data.count,
+      total: data.total,
+      url: window.location.href,
+      timestamp: Date.now(),
+    }).catch(function () {
+      // Service worker may not be ready; that's fine
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════

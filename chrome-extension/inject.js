@@ -234,7 +234,78 @@
       extractReviews: extractReviews,
       detectPageType: detectPageType,
       getMarketplace: getMarketplace,
+      allReviews: [],
+      seenIds: new Set(),
     };
+
+    var api = window.__REVIEWLENS__;
+
+    // ═══════════════════════════════════════════════════════════════
+    // Pagination: MutationObserver for AJAX page turns (Step 12)
+    // ═══════════════════════════════════════════════════════════════
+
+    var debounceTimer = null;
+
+    /**
+     * Handle new DOM content detected by MutationObserver.
+     * Extracts all reviews currently on the page, deduplicates
+     * against seenIds, and accumulates into allReviews.
+     */
+    function handleNewDOM() {
+      var result = extractReviews();
+      var newReviews = [];
+
+      for (var i = 0; i < result.reviews.length; i++) {
+        var review = result.reviews[i];
+        if (!api.seenIds.has(review.review_id)) {
+          api.seenIds.add(review.review_id);
+          newReviews.push(review);
+        }
+      }
+
+      if (newReviews.length > 0) {
+        api.allReviews = api.allReviews.concat(newReviews);
+        console.log(
+          '[ReviewLens MAIN] 新评论 ' + newReviews.length + ' 条，累计 ' + api.allReviews.length + ' 条'
+        );
+
+        window.postMessage(
+          {
+            type: 'REVIEWLENS_NEW_REVIEWS',
+            count: newReviews.length,
+            total: api.allReviews.length,
+          },
+          '*'
+        );
+      }
+    }
+
+    /**
+     * Start MutationObserver on the review list container.
+     * On Amazon, the review list is inside #cm_cr-review_list.
+     * childList + subtree captures AJAX page turns.
+     */
+    function startObserver() {
+      var target = document.querySelector('#cm_cr-review_list');
+      if (!target) {
+        console.warn('[ReviewLens MAIN] MutationObserver: 找不到 #cm_cr-review_list，跳过分页监听');
+        return;
+      }
+
+      var observer = new MutationObserver(function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(handleNewDOM, 500);
+      });
+
+      observer.observe(target, { childList: true, subtree: true });
+      console.log('[ReviewLens MAIN] MutationObserver 已启动，监听分页变化');
+    }
+
+    // Initial extraction + start observer after DOM settles
+    setTimeout(function () {
+      handleNewDOM();
+      startObserver();
+    }, 1000);
 
     console.log('[ReviewLens MAIN] window.__REVIEWLENS__ ready ✓');
   } catch (e) {
