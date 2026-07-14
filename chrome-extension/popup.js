@@ -223,7 +223,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ── Upload to API button (Step 15) ──
-  apiUploadBtn.addEventListener('click', async () => {
+  if (apiUploadBtn) {
+    apiUploadBtn.addEventListener('click', async () => {
     apiUploadBtn.disabled = true;
     apiUploadBtn.textContent = '⏳ 上传中…';
 
@@ -260,6 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       apiUploadBtn.disabled = false;
     }
   });
+  } // end if (apiUploadBtn)
 
   // ── UI helpers ──
 
