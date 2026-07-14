@@ -5,11 +5,6 @@ on:
     branches: [develop]
   workflow_dispatch:
 
-env:
-  DEPLOY_HOST: ${{ secrets.ECS_HOST }}
-  DEPLOY_USER: ${{ secrets.ECS_USER }}
-  DEPLOY_PATH: ${{ secrets.ECS_DEPLOY_PATH }}
-
 jobs:
   ci-gate:
     uses: ./.github/workflows/ci.yml
@@ -24,19 +19,14 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.ECS_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          cat >> ~/.ssh/config <<EOF
-          Host ecs
-            HostName ${{ env.DEPLOY_HOST }}
-            User ${{ env.DEPLOY_USER }}
-            IdentityFile ~/.ssh/deploy_key
-            StrictHostKeyChecking no
-          EOF
+          printf 'Host ecs\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/deploy_key\n  StrictHostKeyChecking no\n' \
+            "${{ secrets.ECS_HOST }}" "${{ secrets.ECS_USER }}" > ~/.ssh/config
 
       - name: Deploy
         run: |
           ssh ecs << 'DEPLOY_SCRIPT'
             set -e
-            cd ${{ env.DEPLOY_PATH }}
+            cd ${{ secrets.ECS_DEPLOY_PATH }}
 
             echo "[1/4] Tagging current images for rollback..."
             # Capture images into variable to avoid pipeline exit-code issues
@@ -67,7 +57,7 @@ jobs:
 
           # Check API health (via docker compose exec — container port 8000, not exposed to host)
           for i in $(seq 1 $MAX_RETRIES); do
-            STATUS=$(ssh ecs "cd ${{ env.DEPLOY_PATH }} && docker compose exec -T api curl -sf -o /dev/null -w '%{http_code}' http://localhost:8000/health" || echo "000")
+            STATUS=$(ssh ecs "cd ${{ secrets.ECS_DEPLOY_PATH }} && docker compose exec -T api curl -sf -o /dev/null -w '%{http_code}' http://localhost:8000/health" || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "API health check passed (attempt $i)"
               break
@@ -82,7 +72,7 @@ jobs:
 
           # Check frontend (via docker compose exec — container port 3000, not exposed to host)
           for i in $(seq 1 $MAX_RETRIES); do
-            STATUS=$(ssh ecs "cd ${{ env.DEPLOY_PATH }} && docker compose exec -T frontend wget -q -O /dev/null http://127.0.0.1:3000 && echo 200 || echo 000")
+            STATUS=$(ssh ecs "cd ${{ secrets.ECS_DEPLOY_PATH }} && docker compose exec -T frontend wget -q -O /dev/null http://127.0.0.1:3000 && echo 200 || echo 000")
             if [ "$STATUS" = "200" ]; then
               echo "Frontend health check passed (attempt $i)"
               break
@@ -102,7 +92,7 @@ jobs:
         run: |
           ssh ecs << 'ENDSSH'
             set -e
-            cd ${{ env.DEPLOY_PATH }}
+            cd ${{ secrets.ECS_DEPLOY_PATH }}
 
             echo "Health check failed — rolling back to previous version"
 
