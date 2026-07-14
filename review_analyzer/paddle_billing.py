@@ -77,7 +77,8 @@ def get_checkout_html(
         customer: {{ email: {json.dumps(user_email)} }},
         customData: {{ user_id: {json.dumps(str(user_id))} }},
         settings: {{
-          successUrl: {json.dumps(success_url)}
+          successUrl: {json.dumps(success_url)},
+          locale: "en"
         }}
       }});
     </script>
