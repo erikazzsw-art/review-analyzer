@@ -70,6 +70,13 @@
     }
   ],
 
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["*://127.0.0.1:*/*", "*://localhost:*/*", "*://*.amazon.com/*", "*://*.amazon.co.uk/*", "*://*.amazon.de/*", "*://*.amazon.fr/*", "*://*.amazon.es/*", "*://*.amazon.it/*", "*://*.amazon.co.jp/*", "*://*.amazon.ca/*", "*://*.amazon.in/*", "*://*.amazon.com.au/*", "*://*.amazon.com.br/*", "*://*.amazon.com.mx/*", "*://*.amazon.nl/*", "*://*.amazon.se/*", "*://*.amazon.pl/*", "*://*.amazon.sg/*", "*://*.amazon.ae/*", "*://*.amazon.sa/*", "*://*.amazon.tr/*"]
+    }
+  ],
+
   "action": {
     "default_popup": "popup.html",
     "default_title": "ClueAI ReviewLens — 抓取 Amazon 评论",
