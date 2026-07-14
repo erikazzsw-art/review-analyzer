@@ -6,7 +6,51 @@
  * Step 13: stores scraped reviews per tab, generates CSV, handles downloads.
  * Step 14-1: passes degradation info from content script to popup.
  * Step 14-2: anti-crawl throttle + CAPTCHA detection + consecutive-zero tracking.
+ * Step 15: direct upload to ClueAI API (POST /reviews/plugin-upload).
  */
+
+// ── Step 15: Marketplace TLD → code mapping ──
+const MARKETPLACE_TLD_MAP = {
+  '.com': 'us', '.co.uk': 'uk', '.de': 'de', '.fr': 'fr',
+  '.es': 'es', '.it': 'it', '.co.jp': 'jp', '.ca': 'ca',
+  '.in': 'in', '.com.au': 'au', '.com.br': 'br', '.com.mx': 'mx',
+  '.nl': 'nl', '.se': 'se', '.pl': 'pl', '.sg': 'sg',
+  '.ae': 'ae', '.sa': 'sa', '.tr': 'tr',
+};
+
+/**
+ * Extract ASIN from an Amazon URL.
+ * Supports /dp/<ASIN> and /product-reviews/<ASIN> patterns.
+ */
+function extractAsin(url) {
+  if (!url) return null;
+  // /dp/B0XXXXXXX
+  let m = url.match(/\/dp\/([A-Z0-9]{10})/i);
+  if (m) return m[1];
+  // /product-reviews/B0XXXXXXX
+  m = url.match(/\/product-reviews\/([A-Z0-9]{10})/i);
+  if (m) return m[1];
+  return null;
+}
+
+/**
+ * Detect marketplace code from an Amazon URL hostname.
+ * e.g. www.amazon.com → us, www.amazon.co.uk → uk
+ */
+function detectMarketplace(url) {
+  if (!url) return 'us';
+  try {
+    const hostname = new URL(url).hostname;
+    // Match the longest TLD suffix first (e.g. .co.uk before .uk)
+    const suffixes = Object.keys(MARKETPLACE_TLD_MAP).sort((a, b) => b.length - a.length);
+    for (const suffix of suffixes) {
+      if (hostname.endsWith(suffix)) {
+        return MARKETPLACE_TLD_MAP[suffix];
+      }
+    }
+  } catch (_) { /* fall through */ }
+  return 'us'; // default
+}
 
 // Store the latest page info reported by content scripts, keyed by tabId
 const tabPageInfo = new Map();
@@ -373,6 +417,116 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     }
 
+    // ── Step 15: Upload reviews directly to ClueAI API ──
+    case 'UPLOAD_TO_API': {
+      (async () => {
+        try {
+          const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
+          if (!tab || !tab.id) {
+            sendResponse({ success: false, error: 'no_active_tab' });
+            return;
+          }
+
+          const stored = tabReviews.get(tab.id);
+          if (!stored || stored.reviews.length === 0) {
+            sendResponse({ success: false, error: 'no_reviews' });
+            return;
+          }
+
+          const asin = extractAsin(tab.url);
+          const marketplace = detectMarketplace(tab.url);
+
+          // Read API base URL from storage, default to production
+          let apiBaseUrl = 'https://api.clueai-reviewlens.com';
+          try {
+            const storage = await chrome.storage.local.get('apiBaseUrl');
+            if (storage.apiBaseUrl) {
+              apiBaseUrl = storage.apiBaseUrl;
+            }
+          } catch (_) { /* use default */ }
+
+          // Build request body
+          const requestBody = {
+            asin: asin || '',
+            marketplace: marketplace,
+            platform: 'amazon',
+            product_name: null,
+            page_url: tab.url || '',
+            reviews: stored.reviews.map((r) => ({
+              review_id: r.review_id || '',
+              body: r.body || '',
+              rating: typeof r.rating === 'number' ? r.rating : null,
+              date: r.date || null,
+              reviewer: r.reviewer || null,
+              title: r.title || null,
+              verified: !!r.verified,
+              helpful_count: typeof r.helpful_count === 'number' ? r.helpful_count : null,
+            })),
+          };
+
+          const response = await fetch(apiBaseUrl + '/reviews/plugin-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(requestBody),
+          });
+
+          if (response.status === 401) {
+            sendResponse({
+              success: false,
+              error: 'needs_login',
+              message: '请先登录 ClueAI',
+            });
+            return;
+          }
+
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            sendResponse({
+              success: false,
+              error: 'api_error',
+              message: 'API 返回错误 (' + response.status + '): ' + errorText.slice(0, 200),
+            });
+            return;
+          }
+
+          const result = await response.json();
+
+          // Clear stored reviews on successful upload
+          tabReviews.delete(tab.id);
+          const pageInfo = tabPageInfo.get(tab.id) || {};
+          tabPageInfo.set(tab.id, { ...pageInfo, reviewCount: 0 });
+
+          // Step 14-2: also reset throttle/zero counters for this tab
+          tabLastScrapeTime.delete(tab.id);
+          tabConsecutiveZeros.delete(tab.id);
+
+          sendResponse({
+            success: true,
+            ok: result.ok,
+            job_id: result.job_id,
+            asin: result.asin,
+            marketplace: result.marketplace,
+            total_received: result.total_received,
+            new_reviews: result.new_reviews,
+            duplicate_count: result.duplicate_count,
+            message: result.message,
+          });
+        } catch (err) {
+          console.error('[ReviewLens BG] Upload error:', err);
+          sendResponse({
+            success: false,
+            error: 'network_error',
+            message: '网络错误：' + (err.message || '无法连接到服务器'),
+          });
+        }
+      })();
+      return true;
+    }
+
     // ── Step 13: Clear stored reviews for a tab ──
     case 'CLEAR_REVIEWS': {
       (async () => {
@@ -542,4 +696,4 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabConsecutiveZeros.delete(tabId); // Step 14-2
 });
 
-console.log('[ReviewLens BG] Service worker registered — v14.2 throttle+CAPTCHA active');
+console.log('[ReviewLens BG] Service worker registered — v15 API upload active');

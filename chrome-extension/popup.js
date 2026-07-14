@@ -4,6 +4,7 @@
  * Step 13: One-click review scraping, progress display, CSV export.
  * Step 14-1: Degradation detection UI — shows page structure change warnings.
  * Step 14-2: Anti-crawl — CAPTCHA detection, throttle countdown, consecutive-zero warnings.
+ * Step 15: direct upload to ClueAI API (POST /reviews/plugin-upload).
  * Communicates with background service worker for all operations.
  */
 
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const exportSection = document.getElementById('exportSection');
   const exportBtn = document.getElementById('exportBtn');
   const resetBtn = document.getElementById('resetBtn');
+  const apiUploadBtn = document.getElementById('apiUploadBtn');
 
   // Step 14-1: Degradation UI elements
   const degradeSection = document.getElementById('degradeSection');
@@ -220,6 +222,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ── Upload to API button (Step 15) ──
+  apiUploadBtn.addEventListener('click', async () => {
+    apiUploadBtn.disabled = true;
+    apiUploadBtn.textContent = '⏳ 上传中…';
+
+    try {
+      const result = await uploadToApi();
+      if (result.success) {
+        actionHint.textContent =
+          '✓ 上传成功：' + result.new_reviews + ' 条新评论（跳过 ' + result.duplicate_count + ' 条重复）';
+        actionHint.className = 'action-hint action-hint--info';
+        // Clear local progress since reviews are now on the server
+        updateProgressUI(0);
+        showExportUI(false);
+        apiUploadBtn.textContent = '✅ 上传完成';
+        setTimeout(() => {
+          apiUploadBtn.textContent = '☁️ 上传到 ClueAI';
+          apiUploadBtn.disabled = false;
+        }, 3000);
+      } else if (result.error === 'needs_login') {
+        actionHint.textContent = '请先登录 clueai-reviewlens.com';
+        actionHint.className = 'action-hint action-hint--muted';
+        apiUploadBtn.textContent = '☁️ 上传到 ClueAI';
+        apiUploadBtn.disabled = false;
+      } else {
+        actionHint.textContent = '❌ 上传失败：' + (result.message || result.error || '未知错误');
+        actionHint.className = 'action-hint action-hint--muted';
+        apiUploadBtn.textContent = '☁️ 上传到 ClueAI';
+        apiUploadBtn.disabled = false;
+      }
+    } catch (err) {
+      console.error('[ReviewLens Popup] Upload error:', err);
+      actionHint.textContent = '❌ 上传失败：' + (err.message || '未知错误');
+      actionHint.className = 'action-hint action-hint--muted';
+      apiUploadBtn.textContent = '☁️ 上传到 ClueAI';
+      apiUploadBtn.disabled = false;
+    }
+  });
+
   // ── UI helpers ──
 
   function setScrapingUI(active) {
@@ -373,6 +414,29 @@ async function clearReviews() {
           return;
         }
         resolve(response || { success: false });
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+/**
+ * Upload accumulated reviews to ClueAI API (Step 15)
+ */
+async function uploadToApi() {
+  return new Promise((resolve, reject) => {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        reject(new Error('chrome.runtime.sendMessage not available'));
+        return;
+      }
+      chrome.runtime.sendMessage({ type: 'UPLOAD_TO_API' }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response || { success: false, error: 'no_response' });
       });
     } catch (err) {
       reject(err);

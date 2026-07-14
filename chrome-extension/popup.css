@@ -206,6 +206,20 @@ body {
   background: #fef2f2;
 }
 
+/* Step 15: Upload to API button */
+.btn--upload {
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  color: #ffffff;
+}
+
+.btn--upload:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6d28d9, #4f46e5);
+}
+
+.btn--upload:active:not(:disabled) {
+  background: linear-gradient(135deg, #5b21b6, #4338ca);
+}
+
 .action-hint {
   font-size: 12px;
   color: #6b7280;
