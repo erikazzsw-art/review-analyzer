@@ -4,6 +4,7 @@
  * Manifest V3 service worker.
  * Coordinates communication between popup and content scripts.
  * Step 13: stores scraped reviews per tab, generates CSV, handles downloads.
+ * Step 14-1: passes degradation info from content script to popup.
  */
 
 // Store the latest page info reported by content scripts, keyed by tabId
@@ -51,6 +52,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               pageType: cached.pageType,
               url: cached.url,
               source: 'content_script',
+              degradation: cached.degradation || null,
             });
             return;
           }
@@ -60,6 +62,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             pageType: detectPageTypeFromUrl(tab.url || ''),
             url: tab.url || '',
             source: 'url_fallback',
+            degradation: null,
           });
         } catch (err) {
           console.error('[ReviewLens BG] Error getting page info:', err);
@@ -140,6 +143,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               lastExtraction: Date.now(),
             });
 
+            // Step 14-1: store degradation info so popup can show it proactively
+            if (result?.stats?.degraded) {
+              const pageInfo = tabPageInfo.get(tab.id) || {};
+              tabPageInfo.set(tab.id, {
+                ...pageInfo,
+                degradation: {
+                  degraded: true,
+                  degrade_reason: result.stats.degrade_reason,
+                  degrade_detail: result.stats.degrade_detail,
+                  page_type: result.stats.page_type,
+                  timestamp: Date.now(),
+                },
+              });
+            } else {
+              // Clear degradation if extraction succeeded
+              const pageInfo = tabPageInfo.get(tab.id);
+              if (pageInfo?.degradation) {
+                tabPageInfo.set(tab.id, { ...pageInfo, degradation: null });
+              }
+            }
+
             sendResponse({
               success: true,
               new_reviews: newCount,
@@ -147,6 +171,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               stats: result.stats,
             });
           } else {
+            // Step 14-1: store degradation info even when no new reviews
+            if (result?.stats?.degraded) {
+              const pageInfo = tabPageInfo.get(tab.id) || {};
+              tabPageInfo.set(tab.id, {
+                ...pageInfo,
+                degradation: {
+                  degraded: true,
+                  degrade_reason: result.stats.degrade_reason,
+                  degrade_detail: result.stats.degrade_detail,
+                  page_type: result.stats.page_type,
+                  timestamp: Date.now(),
+                },
+              });
+            }
+
             sendResponse({
               success: true,
               new_reviews: 0,

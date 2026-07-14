@@ -11,6 +11,9 @@
 (function () {
   'use strict';
 
+  // @@VERSION: 2026-07-14-v3 — Step 14-1: degradation detection
+  console.log('[ReviewLens CS] content.js loaded — version 2026-07-14-v3');
+
   // ═══════════════════════════════════════════════════════════════
   // Page Type Detection (Step 10)
   // ═══════════════════════════════════════════════════════════════
@@ -43,16 +46,18 @@
   const pageType = detectPageType();
 
   // Report to service worker on script injection
-  if (chrome.runtime?.sendMessage) {
-    chrome.runtime
-      .sendMessage({
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    try {
+      chrome.runtime.sendMessage({
         type: 'PAGE_TYPE_DETECTED',
         pageType,
         url: window.location.href,
-      })
-      .catch(() => {
+      }).catch(() => {
         // Service worker may not be ready yet; that's fine
       });
+    } catch {
+      // chrome.runtime may not be available
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -320,10 +325,40 @@
   // ═══════════════════════════════════════════════════════════════
 
   /**
+   * Degradation reason enum values (Step 14-1).
+   * @enum {string}
+   */
+  const DEGRADE_REASON = {
+    NO_SELECTOR_MATCH: 'no_selector_match',
+    EMPTY_CONTAINERS: 'empty_containers',
+    SELECTOR_PARSE_ERROR: 'selector_parse_error',
+    TIMEOUT: 'timeout',
+  };
+
+  /**
+   * Human-readable degradation details keyed by reason (Step 14-1).
+   */
+  const DEGRADE_DETAIL_MAP = {
+    no_selector_match:
+      '已尝试 3 组选择器（data-hook-v1 / data-hook-v2 / class-fallback），均未匹配到评论容器。页面 DOM 结构可能已更新。',
+    empty_containers: '',
+    selector_parse_error:
+      '选择器语法异常，可能被 CSP 拦截或页面环境限制。',
+    timeout:
+      '单页提取超时（> 30 秒），页面可能包含异常数量的评论或脚本阻塞。',
+  };
+
+  /** Max extraction time before timeout degradation (Step 14-1) */
+  var MAX_EXTRACTION_TIME_MS = 30000;
+
+  /**
    * Extract all reviews from the current page.
    *
    * Tries each selector set in priority order. The first set
    * that produces >0 container matches is used for extraction.
+   *
+   * When all selectors fail, degradation info is attached to stats
+   * so the popup can show an appropriate message (Step 14-1).
    *
    * @returns {{ reviews: Array<object>, stats: object }}
    */
@@ -332,6 +367,7 @@
 
     let selectedSet = null;
     let containers = [];
+    const selectorErrors = [];
 
     for (const selectorSet of SELECTOR_SETS) {
       try {
@@ -341,15 +377,27 @@
           containers = Array.from(nodes);
           break;
         }
-      } catch {
-        // Invalid selector, skip to next set
+      } catch (err) {
+        selectorErrors.push({ setName: selectorSet.name, error: String(err) });
         continue;
       }
     }
 
-    // No selector set matched — return empty
+    // ── No selector set matched → degradation ──
     if (!selectedSet || containers.length === 0) {
       const elapsed = Math.round(performance.now() - startTime);
+      var degradeReason, degradeDetail;
+
+      if (selectorErrors.length === SELECTOR_SETS.length) {
+        // All selector sets threw parse errors (e.g. CSP blocked)
+        degradeReason = DEGRADE_REASON.SELECTOR_PARSE_ERROR;
+        degradeDetail = DEGRADE_DETAIL_MAP.selector_parse_error;
+      } else {
+        // Selectors ran but matched nothing
+        degradeReason = DEGRADE_REASON.NO_SELECTOR_MATCH;
+        degradeDetail = DEGRADE_DETAIL_MAP.no_selector_match;
+      }
+
       return {
         reviews: [],
         stats: {
@@ -359,24 +407,73 @@
           extraction_time_ms: elapsed,
           marketplace: getMarketplace(),
           page_type: detectPageType(),
+          degraded: true,
+          degrade_reason: degradeReason,
+          degrade_detail: degradeDetail,
         },
       };
     }
 
+    // ── Extract reviews from matched containers ──
     const reviews = [];
     let failed = 0;
+    let emptyCount = 0;
 
     for (let i = 0; i < containers.length; i++) {
       try {
         const review = extractOneReview(containers[i], selectedSet, i);
         reviews.push(review);
+        // Track containers that yielded no meaningful content
+        if (!review.body && review.rating == null && !review.title) {
+          emptyCount++;
+        }
       } catch (err) {
         failed++;
+        emptyCount++;
         console.warn('[ReviewLens CS] Failed to extract review at index', i, err);
       }
     }
 
     const elapsed = Math.round(performance.now() - startTime);
+
+    // ── Timeout check (Step 14-1) ──
+    if (elapsed > MAX_EXTRACTION_TIME_MS) {
+      return {
+        reviews: [],
+        stats: {
+          total_found: containers.length,
+          total_extracted: 0,
+          total_failed: failed,
+          selector_set_used: selectedSet.name,
+          extraction_time_ms: elapsed,
+          marketplace: getMarketplace(),
+          page_type: detectPageType(),
+          degraded: true,
+          degrade_reason: DEGRADE_REASON.TIMEOUT,
+          degrade_detail: DEGRADE_DETAIL_MAP.timeout,
+        },
+      };
+    }
+
+    // ── Empty containers check (Step 14-1): all containers produced empty reviews ──
+    if (reviews.length > 0 && emptyCount === containers.length) {
+      return {
+        reviews: [],
+        stats: {
+          total_found: containers.length,
+          total_extracted: 0,
+          total_failed: failed,
+          selector_set_used: selectedSet.name,
+          extraction_time_ms: elapsed,
+          marketplace: getMarketplace(),
+          page_type: detectPageType(),
+          degraded: true,
+          degrade_reason: DEGRADE_REASON.EMPTY_CONTAINERS,
+          degrade_detail:
+            '选择器匹配到 ' + containers.length + ' 个评论容器，但所有容器内评论字段（正文/评分/标题）均为空。页面结构可能已变更。',
+        },
+      };
+    }
 
     return {
       reviews,
@@ -388,6 +485,7 @@
         extraction_time_ms: elapsed,
         marketplace: getMarketplace(),
         page_type: detectPageType(),
+        degraded: false,
       },
     };
   }
@@ -396,7 +494,8 @@
   // Message Handling
   // ═══════════════════════════════════════════════════════════════
 
-  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     // ── Step 10: page detection ──
     if (message.type === 'DETECT_PAGE') {
       sendResponse({
@@ -426,6 +525,7 @@
       return true; // keep channel open for async
     }
   });
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // PostMessage bridge: inject.js (MAIN world) ↔ content.js (ISOLATED)
@@ -523,6 +623,10 @@
       return;
     }
     try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.getURL) {
+        console.error('[ReviewLens CS] injectMainWorld: chrome.runtime.getURL not available');
+        return;
+      }
       const script = document.createElement('script');
       script.src = chrome.runtime.getURL('inject.js');
       script.setAttribute('data-marketplace-map', JSON.stringify(MARKETPLACE_MAP));

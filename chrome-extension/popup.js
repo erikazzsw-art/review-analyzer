@@ -2,6 +2,7 @@
  * ClueAI ReviewLens — Popup Script
  *
  * Step 13: One-click review scraping, progress display, CSV export.
+ * Step 14-1: Degradation detection UI — shows page structure change warnings.
  * Communicates with background service worker for all operations.
  */
 
@@ -18,6 +19,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const exportBtn = document.getElementById('exportBtn');
   const resetBtn = document.getElementById('resetBtn');
 
+  // Step 14-1: Degradation UI elements
+  const degradeSection = document.getElementById('degradeSection');
+  const degradeNotice = document.getElementById('degradeNotice');
+  const degradeIcon = document.getElementById('degradeIcon');
+  const degradeText = document.getElementById('degradeText');
+  const feedbackLink = document.getElementById('feedbackLink');
+
   // ── State ──
   let isScraping = false;
   let currentPageInfo = null;
@@ -27,9 +35,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Detect page type
     currentPageInfo = await getPageInfo();
     updatePageTypeUI(currentPageInfo);
-    updateActionUI(currentPageInfo);
 
-    // 2. Check if reviews already exist for this tab
+    // 2. Check for stored degradation info (Step 14-1)
+    if (currentPageInfo.degradation?.degraded) {
+      showDegradationUI(currentPageInfo.degradation, currentPageInfo.url);
+      updateActionUIForDegradation(currentPageInfo);
+    } else {
+      updateActionUI(currentPageInfo);
+    }
+
+    // 3. Check if reviews already exist for this tab
     const status = await getScrapeStatus();
     if (status.total_reviews > 0) {
       updateProgressUI(status.total_reviews);
@@ -55,6 +70,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       const result = await startScraping();
 
       if (result.success) {
+        // Step 14-1: Check for degradation first
+        if (result.stats?.degraded) {
+          const degradation = {
+            degraded: true,
+            degrade_reason: result.stats.degrade_reason,
+            degrade_detail: result.stats.degrade_detail,
+            page_type: result.stats.page_type || currentPageInfo?.pageType,
+          };
+          hideDegradationUI();
+          showDegradationUI(degradation, currentPageInfo?.url);
+          updateActionUIForDegradation(currentPageInfo);
+          return;
+        }
+
+        // Normal success path — clear any previous degradation
+        hideDegradationUI();
         updateProgressUI(result.total_reviews);
         showExportUI(true);
 
@@ -67,8 +98,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             '📋 未发现新评论（已累计 ' + result.total_reviews + ' 条）。翻页后请再次点击抓取。';
           actionHint.className = 'action-hint';
         } else {
-          actionHint.textContent = '⚠️ 当前页面未检测到评论。请确认您在 Amazon 评论页面。';
+          // Step 14-1: degraded=false but 0 reviews — gentle reminder
+          actionHint.textContent =
+            'ℹ️ 当前页面未检测到评论。如果您确认在评论页，请尝试刷新后重试。';
           actionHint.className = 'action-hint action-hint--muted';
+          scrapeBtn.disabled = false;
         }
       } else {
         actionHint.textContent = '❌ 抓取失败：' + (result.error || '未知错误');
@@ -182,13 +216,21 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function getPageInfo() {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: 'GET_PAGE_INFO' }, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        resolve({ pageType: 'unknown', url: null });
         return;
       }
-      resolve(response || { pageType: 'unknown', url: null });
-    });
+      chrome.runtime.sendMessage({ type: 'GET_PAGE_INFO' }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response || { pageType: 'unknown', url: null });
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
@@ -197,14 +239,24 @@ async function getPageInfo() {
  */
 async function getScrapeStatus() {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type: 'GET_SCRAPE_STATUS' }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.error('[ReviewLens Popup] getScrapeStatus error:', chrome.runtime.lastError);
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        console.warn('[ReviewLens Popup] chrome.runtime.sendMessage not available');
         resolve({ total_reviews: 0, reviews: [], page_info: null });
         return;
       }
-      resolve(response || { total_reviews: 0, reviews: [], page_info: null });
-    });
+      chrome.runtime.sendMessage({ type: 'GET_SCRAPE_STATUS' }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('[ReviewLens Popup] getScrapeStatus error:', chrome.runtime.lastError);
+          resolve({ total_reviews: 0, reviews: [], page_info: null });
+          return;
+        }
+        resolve(response || { total_reviews: 0, reviews: [], page_info: null });
+      });
+    } catch (err) {
+      console.error('[ReviewLens Popup] getScrapeStatus exception:', err);
+      resolve({ total_reviews: 0, reviews: [], page_info: null });
+    }
   });
 }
 
@@ -213,13 +265,21 @@ async function getScrapeStatus() {
  */
 async function startScraping() {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: 'START_SCRAPING' }, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        reject(new Error('chrome.runtime.sendMessage not available'));
         return;
       }
-      resolve(response || { success: false, error: 'no_response' });
-    });
+      chrome.runtime.sendMessage({ type: 'START_SCRAPING' }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response || { success: false, error: 'no_response' });
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
@@ -228,13 +288,21 @@ async function startScraping() {
  */
 async function exportCsv() {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: 'EXPORT_CSV' }, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        reject(new Error('chrome.runtime.sendMessage not available'));
         return;
       }
-      resolve(response || { success: false, error: 'no_response' });
-    });
+      chrome.runtime.sendMessage({ type: 'EXPORT_CSV' }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response || { success: false, error: 'no_response' });
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
@@ -243,13 +311,21 @@ async function exportCsv() {
  */
 async function clearReviews() {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: 'CLEAR_REVIEWS' }, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        reject(new Error('chrome.runtime.sendMessage not available'));
         return;
       }
-      resolve(response || { success: false });
-    });
+      chrome.runtime.sendMessage({ type: 'CLEAR_REVIEWS' }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response || { success: false });
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
@@ -328,5 +404,113 @@ function updateActionUI(pageInfo) {
   } else {
     scrapeBtn.disabled = true;
     actionHint.textContent = '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Degradation UI (Step 14-1)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Display degradation notice based on extraction stats.
+ * @param {object} degradation — { degraded, degrade_reason, degrade_detail, page_type }
+ * @param {string} [tabUrl] — the actual tab URL (not popup URL)
+ */
+function showDegradationUI(degradation, tabUrl) {
+  const degradeSection = document.getElementById('degradeSection');
+  const degradeNotice = document.getElementById('degradeNotice');
+  const degradeIcon = document.getElementById('degradeIcon');
+  const degradeText = document.getElementById('degradeText');
+  const feedbackLink = document.getElementById('feedbackLink');
+  const scrapeBtn = document.getElementById('scrapeBtn');
+  const actionHint = document.getElementById('actionHint');
+
+  degradeSection.hidden = false;
+  scrapeBtn.disabled = true;
+  actionHint.textContent = '';
+
+  const pageType = degradation.page_type || 'reviews';
+
+  if (pageType === 'reviews') {
+    // Reviews page — structure may have changed, show warning + feedback link
+    degradeNotice.className = 'degrade-notice degrade-notice--warning';
+    degradeIcon.textContent = '⚠️';
+    degradeText.textContent =
+      '此页面评论结构已变化，扩展暂无法提取。我们会尽快适配。';
+    feedbackLink.hidden = false;
+    // Build feedback link with the actual tab URL
+    try {
+      var fbUrl = tabUrl || '';
+      feedbackLink.href =
+        'https://www.clueai-reviewlens.com/feedback?reason=' +
+        encodeURIComponent(degradation.degrade_reason || '') +
+        '&url=' + encodeURIComponent(fbUrl);
+    } catch (_) {
+      feedbackLink.href = 'https://www.clueai-reviewlens.com/feedback';
+    }
+  } else if (pageType === 'product') {
+    // Product page — no review list, guide user to reviews page
+    degradeNotice.className = 'degrade-notice degrade-notice--info';
+    degradeIcon.textContent = 'ℹ️';
+    degradeText.textContent =
+      '产品页未检测到评论列表。请切换到评论页（/product-reviews/...）后重试。';
+    feedbackLink.hidden = true;
+  } else {
+    // Other pages (amazon_other, not_amazon, etc.)
+    degradeNotice.className = 'degrade-notice degrade-notice--info';
+    degradeIcon.textContent = 'ℹ️';
+    degradeText.textContent = '当前页面不支持评论提取，请前往 Amazon 评论页面。';
+    feedbackLink.hidden = true;
+  }
+
+  // Append technical detail for diagnostics
+  if (degradation.degrade_detail) {
+    // Remove any previously appended detail
+    var oldDetail = degradeText.querySelector('.degrade-detail');
+    if (oldDetail) oldDetail.remove();
+    var detailEl = document.createElement('p');
+    detailEl.className = 'degrade-detail';
+    detailEl.textContent = degradation.degrade_detail;
+    degradeText.appendChild(detailEl);
+  }
+}
+
+/**
+ * Hide the degradation notice.
+ */
+function hideDegradationUI() {
+  const degradeSection = document.getElementById('degradeSection');
+  const feedbackLink = document.getElementById('feedbackLink');
+  const degradeText = document.getElementById('degradeText');
+
+  if (degradeSection) degradeSection.hidden = true;
+  if (feedbackLink) feedbackLink.hidden = true;
+  // Clear any previously appended detail paragraph
+  if (degradeText) {
+    const detailEl = degradeText.querySelector('.degrade-detail');
+    if (detailEl) detailEl.remove();
+  }
+}
+
+/**
+ * Update the action button for degraded state (Step 14-1).
+ * Grey out the scrape button and show the appropriate hint.
+ */
+function updateActionUIForDegradation(pageInfo) {
+  const scrapeBtn = document.getElementById('scrapeBtn');
+  const actionHint = document.getElementById('actionHint');
+
+  scrapeBtn.disabled = true;
+  scrapeBtn.textContent = '📥 抓取评论';
+
+  const pageType = pageInfo.pageType || 'reviews';
+
+  if (pageType === 'reviews') {
+    actionHint.textContent = '';
+  } else if (pageType === 'product') {
+    actionHint.textContent = '';
+  } else {
+    actionHint.textContent = '请前往 Amazon 评论页面使用此功能';
+    actionHint.className = 'action-hint action-hint--muted';
   }
 }
