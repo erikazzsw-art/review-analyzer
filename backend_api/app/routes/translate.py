@@ -13,9 +13,8 @@ from pydantic import BaseModel
 from backend_api.app.deps import get_current_user
 from backend_api.app.services.budget_guard import assert_budget
 from backend_api.app.services.llm_router import router_completion
-from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_connection, log_llm_usage
-from review_analyzer.quota import credit_consume, InsufficientCreditsError, quota_check
+from review_analyzer.quota import InsufficientCreditsError, credit_consume, quota_check
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +134,7 @@ def translate_module(
     try:
         credit_consume(user_id, 1, "translate")
     except InsufficientCreditsError as e:
-        raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left")
+        raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left") from e
     _save_cached(cache_key, user_id, body.session_id, body.module_key, body.target_lang, translated)
     return TranslateModuleResponse(translated=translated)
 

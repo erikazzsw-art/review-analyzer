@@ -561,7 +561,7 @@ def refill_monthly_credits() -> dict[str, Any]:
             )
             users = cur.fetchall()
 
-        for user_id, plan, monthly_grant in users:
+        for user_id, _plan, monthly_grant in users:
             try:
                 with conn.cursor() as cur:
                     # balance 重置为 monthly_grant（不结转）

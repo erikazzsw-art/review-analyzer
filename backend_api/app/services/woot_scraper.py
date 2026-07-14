@@ -2,6 +2,23 @@
 
 woot.com 托管了 Amazon 评论的镜像数据，支持按星级/排序分页。
 每个 ASIN 通常可获取 40-50 条唯一评论（跨星级+排序组合去重）。
+
+数据质量说明（2026-07-14 验证，ASIN B08BX7FV5L）：
+- SubmissionDate: 始终为 /Date(0)/（epoch zero），不可用；实际日期在 OriginDescription
+- SubmissionDateStr: 始终为 "January 01, 1970"（fallback 值），不可用
+- Id: 始终为 null，无独立 review_id
+- MediaUrls: 始终为空数组
+- MarketplaceId: 始终为 null
+- ImageUrls: 部分评论有值（m.media-amazon.com CDN），多数为空
+
+扩展兼容性（Step 14-4）：
+- Rating: 扩展从 "X.X out of 5 stars" 文本解析为 float，Woot API 返回 int (1-5)，
+  统一格式中 rating 为数值类型，下游消费方需兼容 int/float
+- Date: 两方均从 OriginDescription（"Reviewed in the United States on Month DD, YYYY"）
+  解析为 ISO 8601，格式一致
+- Helpful Count: 扩展从 "X people found this helpful" DOM 文本解析，Woot API 提供
+  HelpfulVotes (int)，已映射为 helpful_count
+- Verified: 扩展检测 DOM 元素，Woot API 提供 IsVerifiedPurchase (bool)，一致
 """
 from __future__ import annotations
 
@@ -49,7 +66,19 @@ def _is_within_years(date_str: str, years: int = 2) -> bool:
 
 
 def _parse_woot_review(raw: dict[str, Any]) -> dict[str, Any]:
-    """将 woot.com 返回的评论转为内部统一格式。"""
+    """将 woot.com 返回的评论转为内部统一格式。
+
+    字段映射（Woot API → 统一格式）：
+    - Author → reviewer
+    - OverallRating (int) → rating
+    - HelpfulVotes (int) → helpful_count
+    - IsVerifiedPurchase (bool) → verified_purchase
+    - OriginDescription → date (ISO 8601)
+    - Text → content
+    - Title → title
+    - ImageUrls → image_urls
+    - Id → review_id（woot.com 始终为 null）
+    """
     origin = raw.get("OriginDescription", "")
     date_str = _parse_date(origin)
     return {
@@ -59,6 +88,8 @@ def _parse_woot_review(raw: dict[str, Any]) -> dict[str, Any]:
         "reviewer": raw.get("Author", ""),
         "title": raw.get("Title", ""),
         "verified_purchase": raw.get("IsVerifiedPurchase", False),
+        "helpful_count": raw.get("HelpfulVotes", 0),
+        "image_urls": raw.get("ImageUrls", []),
         "reviewer_id": "",
         "review_id": "",
     }

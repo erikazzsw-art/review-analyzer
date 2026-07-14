@@ -59,7 +59,7 @@ from review_analyzer.product_store import (
     upsert_product_from_api,
     upsert_variant_from_api,
 )
-from review_analyzer.quota import credit_consume, InsufficientCreditsError
+from review_analyzer.quota import InsufficientCreditsError, credit_consume, quota_consume
 from review_analyzer.rag import embed_session_comments
 
 from .queue import get_queue
@@ -820,8 +820,8 @@ def _post_analysis_smart_push(
     escalation_actions: list[dict] = []
     if escalation_results:
         from backend_api.app.services.action_advisor import create_escalation_action
-        from review_analyzer.push_snapshot_store import get_recent_snapshots, mark_escalated
         from review_analyzer.aspect_taxonomy import get_aspect_label_zh
+        from review_analyzer.push_snapshot_store import get_recent_snapshots, mark_escalated
 
         for esc in escalation_results:
             recent = get_recent_snapshots(user_id, product_ref_id, limit=esc_config.consecutive_count)

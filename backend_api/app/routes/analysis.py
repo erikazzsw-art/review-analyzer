@@ -168,7 +168,7 @@ def get_aggregated_results(
             try:
                 credit_consume(user_id, 6, "insight", product_id)
             except InsufficientCreditsError as e:
-                raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left")
+                raise HTTPException(status_code=402, detail=f"Not enough credits: {e.needed} needed, {e.balance} left") from e
     else:
         modules_raw = {}
 
