@@ -296,7 +296,8 @@ def create_billing_checkout(
 ) -> BillingCheckoutResponse:
     user_id = int(current_user["id"])
     email = str(current_user.get("email") or "")
-    success_url = payload.success_url or f"{os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')}/settings?billing=success"
+    plan_key = payload.plan_key or "pro"
+    success_url = payload.success_url or f"{os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')}/payment/success?plan={plan_key}"
     paddle_customer_id = get_paddle_customer_id(user_id)
     checkout_html = get_checkout_html(user_id, email, success_url, payload.plan_key, payload.period, paddle_customer_id)
     return BillingCheckoutResponse(

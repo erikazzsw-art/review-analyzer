@@ -813,7 +813,7 @@ export async function createBillingCheckout(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      success_url: typeof window !== "undefined" ? `${window.location.origin}/settings?billing=success` : "",
+      success_url: typeof window !== "undefined" ? `${window.location.origin}/payment/success?plan=${opts.planKey ?? "pro"}` : "",
       plan_key: opts.planKey ?? "pro",
       period: opts.period ?? "monthly",
     }),
