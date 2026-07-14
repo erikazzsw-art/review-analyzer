@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
   workflow_dispatch:
 
 env:
@@ -43,9 +43,9 @@ jobs:
               docker tag "$img" "${img}:rollback" 2>/dev/null || true
             done
 
-            # Pull latest code
-            git fetch origin main
-            git reset --hard origin/main
+            # Pull latest code (develop branch)
+            git fetch origin develop
+            git reset --hard origin/develop
 
             # Build and restart
             docker compose up -d --build --remove-orphans
@@ -120,7 +120,7 @@ jobs:
               "from": "ClueAI Deploy <deploy@clueai-reviewlens.com>",
               "to": "${{ secrets.DEPLOY_NOTIFY_EMAIL }}",
               "subject": "✅ 部署成功 - ClueAI",
-              "html": "<h2>部署成功</h2><p><b>分支</b>: main<br><b>提交</b>: ${{ github.sha }}<br><b>触发者</b>: ${{ github.actor }}<br><b>时间</b>: '"$(date -u '+%Y-%m-%d %H:%M UTC')"'</p>"
+              "html": "<h2>部署成功</h2><p><b>分支</b>: ${{ github.ref_name }}<br><b>提交</b>: ${{ github.sha }}<br><b>触发者</b>: ${{ github.actor }}<br><b>时间</b>: '"$(date -u '+%Y-%m-%d %H:%M UTC')"'</p>"
             }' || echo "Email notification failed (non-critical)"
 
       - name: Notify Email - Failure
@@ -133,5 +133,5 @@ jobs:
               "from": "ClueAI Deploy <deploy@clueai-reviewlens.com>",
               "to": "${{ secrets.DEPLOY_NOTIFY_EMAIL }}",
               "subject": "❌ 部署失败 - ClueAI",
-              "html": "<h2>部署失败</h2><p><b>分支</b>: main<br><b>提交</b>: ${{ github.sha }}<br><b>触发者</b>: ${{ github.actor }}<br><b>日志</b>: <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">查看详情</a></p>"
+              "html": "<h2>部署失败</h2><p><b>分支</b>: ${{ github.ref_name }}<br><b>提交</b>: ${{ github.sha }}<br><b>触发者</b>: ${{ github.actor }}<br><b>日志</b>: <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">查看详情</a></p>"
             }' || echo "Email notification failed (non-critical)"
