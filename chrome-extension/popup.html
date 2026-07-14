@@ -10,7 +10,7 @@
   <div class="container">
     <!-- Header -->
     <header class="header">
-      <span class="logo">🔍</span>
+      <span class="logo">CA</span>
       <h1 class="title">ClueAI ReviewLens</h1>
     </header>
 
@@ -29,6 +29,27 @@
         📥 抓取评论
       </button>
       <p id="actionHint" class="action-hint"></p>
+    </section>
+
+    <!-- Progress (Step 13) -->
+    <section class="progress-section" id="progressSection" hidden>
+      <div class="progress-header">
+        <span class="progress-label">已抓取</span>
+        <span class="progress-count" id="progressCount">0 条</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+      </div>
+    </section>
+
+    <!-- Export (Step 13) -->
+    <section class="export-section" id="exportSection" hidden>
+      <button id="exportBtn" class="btn btn--secondary">
+        📥 导出 CSV
+      </button>
+      <button id="resetBtn" class="btn btn--ghost">
+        🗑 清除数据
+      </button>
     </section>
 
     <!-- Footer -->

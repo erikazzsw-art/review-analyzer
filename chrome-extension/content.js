@@ -5,7 +5,7 @@
  * Step 10: detect page type and report to service worker.
  * Step 11: multi-selector fallback + review DOM extraction.
  * Step 12: MutationObserver pagination + postMessage bridge to background.
- * Future steps: CSV export, popup trigger.
+ * Step 13: two-way postMessage bridge for accumulated reviews from inject.js.
  */
 
 (function () {
@@ -413,42 +413,92 @@
       sendResponse(result);
       return true;
     }
+
+    // ── Step 13: get accumulated reviews from inject.js ──
+    if (message.type === 'GET_ACCUMULATED_REVIEWS') {
+      requestAccumulatedReviews()
+        .then((reviews) => {
+          sendResponse({ success: true, reviews });
+        })
+        .catch((err) => {
+          sendResponse({ success: false, error: String(err) });
+        });
+      return true; // keep channel open for async
+    }
   });
 
   // ═══════════════════════════════════════════════════════════════
-  // Page-level postMessage listener (Step 12)
+  // PostMessage bridge: inject.js (MAIN world) ↔ content.js (ISOLATED)
   //
-  // inject.js runs in the MAIN world and uses window.postMessage
-  // to notify this content script (ISOLATED world) when new reviews
-  // are detected via MutationObserver (AJAX page turns).
-  // We forward the result to the background service worker.
+  // Step 12: inject.js notifies content.js of new pagination reviews.
+  // Step 13: content.js can query inject.js for accumulated reviews.
   // ═══════════════════════════════════════════════════════════════
+
+  // Pending requests for inject.js queries (keyed by requestId)
+  var pendingRequests = {};
 
   window.addEventListener('message', function (event) {
     // Only accept messages from the same window
     if (event.source !== window) return;
 
     var data = event.data;
-    if (!data || data.type !== 'REVIEWLENS_NEW_REVIEWS') return;
+    if (!data) return;
 
-    console.log(
-      '[ReviewLens CS] 收到分页通知:',
-      data.count, '条新评论，累计', data.total, '条'
-    );
+    // ── Step 12: pagination notification from inject.js ──
+    if (data.type === 'REVIEWLENS_NEW_REVIEWS') {
+      console.log(
+        '[ReviewLens CS] 收到分页通知:',
+        data.count, '条新评论，累计', data.total, '条'
+      );
 
-    // Forward to background service worker
-    if (chrome.runtime?.sendMessage) {
-      chrome.runtime.sendMessage({
-        type: 'EXTRACT_REVIEWS_RESULT',
-        count: data.count,
-        total: data.total,
-        url: window.location.href,
-        timestamp: Date.now(),
-      }).catch(function () {
-        // Service worker may not be ready; that's fine
-      });
+      // Forward to background service worker
+      if (chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'EXTRACT_REVIEWS_RESULT',
+          count: data.count,
+          total: data.total,
+          url: window.location.href,
+          timestamp: Date.now(),
+        }).catch(function () {
+          // Service worker may not be ready; that's fine
+        });
+      }
+    }
+
+    // ── Step 13: response from inject.js with accumulated reviews ──
+    if (data.type === 'REVIEWLENS_REVIEWS_RESPONSE') {
+      var requestId = data.requestId;
+      if (requestId && pendingRequests[requestId]) {
+        clearTimeout(pendingRequests[requestId].timer);
+        pendingRequests[requestId].resolve(data.reviews || []);
+        delete pendingRequests[requestId];
+      }
     }
   });
+
+  /**
+   * Request accumulated reviews from inject.js (MAIN world).
+   * Uses postMessage with a unique requestId for response matching.
+   * Returns a Promise that resolves with the reviews array.
+   */
+  function requestAccumulatedReviews() {
+    return new Promise(function (resolve, reject) {
+      var requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+      // Set a timeout to avoid hanging indefinitely
+      var timer = setTimeout(function () {
+        delete pendingRequests[requestId];
+        resolve([]); // resolve empty rather than reject — inject.js may not be loaded
+      }, 2000);
+
+      pendingRequests[requestId] = { resolve: resolve, reject: reject, timer: timer };
+
+      window.postMessage(
+        { type: 'REVIEWLENS_GET_REVIEWS', requestId: requestId },
+        '*'
+      );
+    });
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // Bridge: inject extraction logic into MAIN world via <script src>

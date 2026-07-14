@@ -307,6 +307,32 @@
       console.log('[ReviewLens MAIN] MutationObserver 已启动，监听分页变化');
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Listen for review requests from content script (Step 13)
+    //
+    // content.js (ISOLATED world) sends postMessage to request the
+    // accumulated reviews. We respond with the full allReviews array.
+    // ═══════════════════════════════════════════════════════════════
+
+    window.addEventListener('message', function (event) {
+      // Only accept messages from the same window
+      if (event.source !== window) return;
+
+      var data = event.data;
+      if (!data || data.type !== 'REVIEWLENS_GET_REVIEWS') return;
+
+      // Respond with accumulated reviews
+      window.postMessage(
+        {
+          type: 'REVIEWLENS_REVIEWS_RESPONSE',
+          requestId: data.requestId,
+          reviews: api.allReviews,
+          total: api.allReviews.length,
+        },
+        '*'
+      );
+    });
+
     // Initial extraction + start observer after DOM settles
     // Only start MutationObserver on review pages to avoid spurious warnings
     setTimeout(function () {
