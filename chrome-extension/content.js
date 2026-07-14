@@ -21,8 +21,9 @@
    */
   function detectPageType() {
     const url = window.location.href;
+    const isLocalTest = /localhost|127\.0\.0\.1/.test(url);
 
-    if (!/amazon\./.test(url)) {
+    if (!/amazon\./.test(url) && !isLocalTest) {
       return 'not_amazon';
     }
 

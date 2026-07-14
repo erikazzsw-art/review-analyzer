@@ -43,10 +43,11 @@
 
     function detectPageType() {
       var url = window.location.href;
-      if (!/amazon\./.test(url)) return 'not_amazon';
+      var isLocalTest = /localhost|127\.0\.0\.1/.test(url);
+      if (!/amazon\./.test(url) && !isLocalTest) return 'not_amazon';
       if (/\/dp\/[A-Z0-9]{10}/i.test(url)) return 'product';
       if (/\/product-reviews\//i.test(url)) return 'reviews';
-      return 'amazon_other';
+      return isLocalTest ? 'amazon_other' : 'amazon_other';
     }
 
     // ═══════════════════════════════════════════════════════════════
