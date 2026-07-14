@@ -103,15 +103,15 @@ logger = logging.getLogger(__name__)
 
 # Paddle webhook IP allowlist — fetched from https://api.paddle.com/ips (the source of truth)
 # Cached in-process with a 1-hour TTL; refreshed on first request if cache is cold.
-_paddle_ips: list[ipaddress.IPv4Network] | None = None
+_paddle_ips: list[ipaddress.IPv4Network | ipaddress.IPv6Network] | None = None
 _paddle_ips_fetched_at: float = 0.0
 _PADDLE_IPS_TTL = 3600  # 1 hour
 
 
-def _fetch_paddle_ips() -> list[ipaddress.IPv4Network]:
+def _fetch_paddle_ips() -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
     """Fetch current Paddle webhook source IPs from api.paddle.com/ips.
 
-    Returns a list of IPv4Network objects (all /32 CIDRs at time of writing).
+    Returns a list of IPv4Network and IPv6Network objects.
     On network failure, logs a warning and returns an empty list — the caller
     should decide whether to fail open or closed.
     """
@@ -124,16 +124,24 @@ def _fetch_paddle_ips() -> list[ipaddress.IPv4Network]:
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
             body = json.loads(resp.read().decode("utf-8"))
-        cidrs = body.get("data", {}).get("ipv4_cidrs", [])
-        networks = [ipaddress.IPv4Network(cidr) for cidr in cidrs if cidr]
-        logger.info("Paddle IPs refreshed: %d CIDRs", len(networks))
+        networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
+        for cidr in body.get("data", {}).get("ipv4_cidrs", []):
+            if cidr:
+                networks.append(ipaddress.IPv4Network(cidr))
+        for cidr in body.get("data", {}).get("ipv6_cidrs", []):
+            if cidr:
+                networks.append(ipaddress.IPv6Network(cidr))
+        logger.info("Paddle IPs refreshed: %d CIDRs (v4:%d v6:%d)",
+                    len(networks),
+                    len(body.get("data", {}).get("ipv4_cidrs", [])),
+                    len(body.get("data", {}).get("ipv6_cidrs", [])))
         return networks
     except Exception as exc:
         logger.warning("Failed to fetch Paddle IPs: %s", exc)
         return []
 
 
-def _get_paddle_ips() -> list[ipaddress.IPv4Network]:
+def _get_paddle_ips() -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
     """Return the cached Paddle IP allowlist, refreshing if stale."""
     global _paddle_ips, _paddle_ips_fetched_at
     now = _time.time()
@@ -152,6 +160,12 @@ def _validate_paddle_ip(request: Request) -> bool:
 
     Reads the client IP from X-Forwarded-For (trusting nginx), falling back
     to request.client. Returns True if the IP matches a known Paddle CIDR.
+
+    IPv6 handling (2026-07-14): Paddle may send webhooks from IPv6 addresses
+    but their /ips API only publishes IPv4 CIDRs at present.  When we cannot
+    match an IPv6 address against the (empty) IPv6 allowlist we return True
+    so the request can proceed to HMAC signature verification — the primary
+    security layer.
     """
     forwarded = request.headers.get("X-Forwarded-For", "")
     client_ip_str = ""
@@ -166,22 +180,41 @@ def _validate_paddle_ip(request: Request) -> bool:
         logger.warning("Paddle webhook: cannot determine client IP")
         return False
 
+    # Parse as IPv4 or IPv6
     try:
-        client_ip = ipaddress.IPv4Address(client_ip_str)
+        client_ip: ipaddress.IPv4Address | ipaddress.IPv6Address = ipaddress.IPv4Address(client_ip_str)
     except ValueError:
-        logger.warning("Paddle webhook: invalid client IP %s", client_ip_str)
-        return False
+        try:
+            client_ip = ipaddress.IPv6Address(client_ip_str)
+        except ValueError:
+            logger.warning("Paddle webhook: invalid client IP %s", client_ip_str)
+            return False
 
     allowed = _get_paddle_ips()
     if not allowed:
-        # No IP list available (first fetch failed, no cache) — log and allow
-        # to avoid permanent breakage, but this should be rare.
         logger.warning("Paddle webhook: IP allowlist empty, cannot validate %s", client_ip_str)
         return False
 
-    for network in allowed:
-        if client_ip in network:
+    # Separate v4 and v6 allowlist entries
+    v4_networks = [n for n in allowed if isinstance(n, ipaddress.IPv4Network)]
+    v6_networks = [n for n in allowed if isinstance(n, ipaddress.IPv6Network)]
+
+    if isinstance(client_ip, ipaddress.IPv6Address):
+        if not v6_networks:
+            # Paddle /ips API doesn't publish IPv6 CIDRs yet — fall through
+            # to HMAC signature verification instead of blocking.
+            logger.info(
+                "Paddle webhook: no IPv6 allowlist entries, "
+                "deferring to HMAC signature for %s", client_ip_str
+            )
             return True
+        for network in v6_networks:
+            if client_ip in network:
+                return True
+    else:
+        for network in v4_networks:
+            if client_ip in network:
+                return True
 
     logger.warning("Paddle webhook: IP %s not in allowlist", client_ip_str)
     return False
