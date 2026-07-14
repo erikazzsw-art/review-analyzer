@@ -34,25 +34,30 @@ jobs:
 
       - name: Deploy
         run: |
-          ssh ecs << 'ENDSSH'
+          ssh ecs << 'DEPLOY_SCRIPT'
             set -e
             cd ${{ env.DEPLOY_PATH }}
 
-            # Tag current images for rollback
-            docker compose ps --format '{{.Image}}' | while read img; do
-              docker tag "$img" "${img}:rollback" 2>/dev/null || true
-            done
+            echo "[1/4] Tagging current images for rollback..."
+            # Capture images into variable to avoid pipeline exit-code issues
+            IMAGES=$(docker compose ps --format '{{.Image}}' 2>/dev/null || true)
+            if [ -n "$IMAGES" ]; then
+              echo "$IMAGES" | while read -r img; do
+                [ -n "$img" ] && docker tag "$img" "${img}:rollback" 2>/dev/null || true
+              done
+            fi
 
-            # Pull latest code (develop branch)
+            echo "[2/4] Pulling latest code (develop)..."
             git fetch origin develop
             git reset --hard origin/develop
 
-            # Build and restart
-            docker compose up -d --build --remove-orphans
+            echo "[3/4] Building and restarting containers..."
+            docker compose up -d --build --remove-orphans 2>&1
 
-            # Wait for services to stabilize
+            echo "[4/4] Waiting for services to stabilize..."
             sleep 10
-          ENDSSH
+            echo "Deploy completed."
+          DEPLOY_SCRIPT
 
       - name: Health Check
         id: healthcheck
