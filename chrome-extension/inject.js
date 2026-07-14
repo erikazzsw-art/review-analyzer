@@ -13,6 +13,11 @@
   'use strict';
 
   try {
+    // Dedup: if already injected (e.g. content script re-ran), skip
+    if (window.__REVIEWLENS__) {
+      return;
+    }
+
     // ── Read configuration from the script tag's data attributes ──
     var scriptTag = document.currentScript;
     if (!scriptTag) {
@@ -302,9 +307,12 @@
     }
 
     // Initial extraction + start observer after DOM settles
+    // Only start MutationObserver on review pages to avoid spurious warnings
     setTimeout(function () {
       handleNewDOM();
-      startObserver();
+      if (detectPageType() === 'reviews') {
+        startObserver();
+      }
     }, 1000);
 
     console.log('[ReviewLens MAIN] window.__REVIEWLENS__ ready ✓');

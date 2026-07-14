@@ -42,15 +42,17 @@
   const pageType = detectPageType();
 
   // Report to service worker on script injection
-  chrome.runtime
-    .sendMessage({
-      type: 'PAGE_TYPE_DETECTED',
-      pageType,
-      url: window.location.href,
-    })
-    .catch(() => {
-      // Service worker may not be ready yet; that's fine
-    });
+  if (chrome.runtime?.sendMessage) {
+    chrome.runtime
+      .sendMessage({
+        type: 'PAGE_TYPE_DETECTED',
+        pageType,
+        url: window.location.href,
+      })
+      .catch(() => {
+        // Service worker may not be ready yet; that's fine
+      });
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // Marketplace Mapping
@@ -434,15 +436,17 @@
     );
 
     // Forward to background service worker
-    chrome.runtime.sendMessage({
-      type: 'EXTRACT_REVIEWS_RESULT',
-      count: data.count,
-      total: data.total,
-      url: window.location.href,
-      timestamp: Date.now(),
-    }).catch(function () {
-      // Service worker may not be ready; that's fine
-    });
+    if (chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: 'EXTRACT_REVIEWS_RESULT',
+        count: data.count,
+        total: data.total,
+        url: window.location.href,
+        timestamp: Date.now(),
+      }).catch(function () {
+        // Service worker may not be ready; that's fine
+      });
+    }
   });
 
   // ═══════════════════════════════════════════════════════════════
@@ -462,6 +466,11 @@
   // ═══════════════════════════════════════════════════════════════
 
   function injectMainWorld() {
+    // Dedup: check if inject.js was already injected
+    if (window.__REVIEWLENS__) {
+      console.log('[ReviewLens CS] injectMainWorld: already injected, skipped');
+      return;
+    }
     try {
       const script = document.createElement('script');
       script.src = chrome.runtime.getURL('inject.js');
