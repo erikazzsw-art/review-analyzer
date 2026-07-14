@@ -346,6 +346,75 @@ body {
   color: #1d4ed8;
 }
 
+/* ── Anti-Crawl Notice (Step 14-2) ── */
+.anticrawl-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.anticrawl-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.anticrawl-notice--captcha {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.anticrawl-notice--throttle {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.anticrawl-notice--zeros {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.anticrawl-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.anticrawl-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.anticrawl-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #374151;
+  margin: 0;
+}
+
+.anticrawl-notice--captcha .anticrawl-text {
+  color: #991b1b;
+}
+
+.anticrawl-notice--throttle .anticrawl-text {
+  color: #92400e;
+}
+
+.anticrawl-notice--zeros .anticrawl-text {
+  color: #92400e;
+}
+
+.anticrawl-sub {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
 /* ── Export Section (Step 13) ── */
 .export-section {
   display: flex;

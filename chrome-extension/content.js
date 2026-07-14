@@ -11,8 +11,8 @@
 (function () {
   'use strict';
 
-  // @@VERSION: 2026-07-14-v3 — Step 14-1: degradation detection
-  console.log('[ReviewLens CS] content.js loaded — version 2026-07-14-v3');
+  // @@VERSION: 2026-07-14-v4 — Step 14-2: CAPTCHA detection + anti-crawl
+  console.log('[ReviewLens CS] content.js loaded — version 2026-07-14-v4');
 
   // ═══════════════════════════════════════════════════════════════
   // Page Type Detection (Step 10)
@@ -321,6 +321,32 @@
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // CAPTCHA Detection (Step 14-2)
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Detect Amazon CAPTCHA / Robot Check page.
+   * Checks multiple DOM indicators; returns true if ≥ 2 match.
+   * @returns {boolean}
+   */
+  function detectCaptcha() {
+    try {
+      var indicators = [
+        document.title.includes('Robot Check'),
+        document.title.includes('CAPTCHA'),
+        !!document.querySelector('form[action*="validateCaptcha"]'),
+        !!document.querySelector('#captchacharacters'),
+        !!document.querySelector('img[src*="captcha"]'),
+        document.body.innerText.includes('Type the characters you see'),
+        document.body.innerText.includes('Enter the characters'),
+      ];
+      return indicators.filter(Boolean).length >= 2;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // Core: extractReviews() — main entry point
   // ═══════════════════════════════════════════════════════════════
 
@@ -364,6 +390,26 @@
    */
   function extractReviews() {
     const startTime = performance.now();
+
+    // ── Step 14-2: CAPTCHA check before anything else ──
+    if (detectCaptcha()) {
+      return {
+        reviews: [],
+        stats: {
+          total_found: 0,
+          total_extracted: 0,
+          selector_set_used: null,
+          extraction_time_ms: Math.round(performance.now() - startTime),
+          marketplace: getMarketplace(),
+          page_type: detectPageType(),
+          captcha_detected: true,
+          degraded: true,
+          degrade_reason: 'captcha',
+          degrade_detail:
+            'Amazon CAPTCHA / Robot Check 页面检测到验证码，无法自动抓取。请手动完成验证码后刷新页面重试。',
+        },
+      };
+    }
 
     let selectedSet = null;
     let containers = [];
@@ -510,6 +556,12 @@
     if (message.type === 'EXTRACT_REVIEWS') {
       const result = extractReviews();
       sendResponse(result);
+      return true;
+    }
+
+    // ── Step 14-2: standalone CAPTCHA detection ──
+    if (message.type === 'DETECT_CAPTCHA') {
+      sendResponse({ captcha_detected: detectCaptcha() });
       return true;
     }
 

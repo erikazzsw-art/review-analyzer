@@ -3,6 +3,7 @@
  *
  * Step 13: One-click review scraping, progress display, CSV export.
  * Step 14-1: Degradation detection UI — shows page structure change warnings.
+ * Step 14-2: Anti-crawl — CAPTCHA detection, throttle countdown, consecutive-zero warnings.
  * Communicates with background service worker for all operations.
  */
 
@@ -26,9 +27,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const degradeText = document.getElementById('degradeText');
   const feedbackLink = document.getElementById('feedbackLink');
 
+  // Step 14-2: Anti-crawl UI elements
+  const antiCrawlSection = document.getElementById('antiCrawlSection');
+  const antiCrawlNotice = document.getElementById('antiCrawlNotice');
+  const antiCrawlIcon = document.getElementById('antiCrawlIcon');
+  const antiCrawlText = document.getElementById('antiCrawlText');
+  const antiCrawlSub = document.getElementById('antiCrawlSub');
+
   // ── State ──
   let isScraping = false;
   let currentPageInfo = null;
+  let throttleTimer = null; // Step 14-2: countdown interval ref
+  let skipUIRestore = false; // Step 14-2: prevent finally block from undoing anti-crawl UI
 
   // ── Initialization ──
   try {
@@ -51,6 +61,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       showExportUI(true);
       updateHintForExistingReviews(status.total_reviews);
     }
+
+    // 4. Step 14-2: Check throttle + consecutive zeros on init
+    if (status.throttled) {
+      showAntiCrawlUI('throttle', { wait_ms: status.throttle_wait_ms });
+      startThrottleCountdown(status.throttle_wait_ms);
+    } else if (status.consecutive_zeros >= 3) {
+      // Show warning but keep button enabled (user can still try)
+      actionHint.textContent =
+        '⚠️ 连续 ' + status.consecutive_zeros + ' 次未提取到评论。可能触发了 Amazon 反爬限制，建议等待 5 分钟后重试。';
+      actionHint.className = 'action-hint action-hint--muted';
+    }
   } catch (err) {
     console.error('[ReviewLens Popup] Init error:', err);
     pageTypeBadge.textContent = '检测失败';
@@ -65,9 +86,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     isScraping = true;
     setScrapingUI(true);
+    hideAntiCrawlUI(); // Step 14-2: clear any previous anti-crawl notice
 
     try {
       const result = await startScraping();
+
+      // ── Step 14-2: Handle throttled response ──
+      if (result.throttled) {
+        skipUIRestore = true;
+        hideDegradationUI();
+        showAntiCrawlUI('throttle', { wait_ms: result.wait_ms });
+        startThrottleCountdown(result.wait_ms);
+        return;
+      }
+
+      // ── Step 14-2: Handle CAPTCHA detection ──
+      if (result.captcha_detected) {
+        skipUIRestore = true;
+        hideDegradationUI();
+        showAntiCrawlUI('captcha');
+        updateActionUIForDegradation(currentPageInfo);
+        return;
+      }
 
       if (result.success) {
         // Step 14-1: Check for degradation first
@@ -98,10 +138,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             '📋 未发现新评论（已累计 ' + result.total_reviews + ' 条）。翻页后请再次点击抓取。';
           actionHint.className = 'action-hint';
         } else {
-          // Step 14-1: degraded=false but 0 reviews — gentle reminder
-          actionHint.textContent =
-            'ℹ️ 当前页面未检测到评论。如果您确认在评论页，请尝试刷新后重试。';
-          actionHint.className = 'action-hint action-hint--muted';
+          // Step 14-2: Check consecutive zeros warning
+          if (result.consecutive_zeros >= 3) {
+            actionHint.textContent =
+              '⚠️ 连续 ' + result.consecutive_zeros + ' 次未提取到评论。可能触发了 Amazon 反爬限制，建议等待 5 分钟后重试。';
+            actionHint.className = 'action-hint action-hint--muted';
+          } else {
+            // Step 14-1: degraded=false but 0 reviews — gentle reminder
+            actionHint.textContent =
+              'ℹ️ 当前页面未检测到评论。如果您确认在评论页，请尝试刷新后重试。';
+            actionHint.className = 'action-hint action-hint--muted';
+          }
           scrapeBtn.disabled = false;
         }
       } else {
@@ -114,7 +161,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       actionHint.className = 'action-hint action-hint--muted';
     } finally {
       isScraping = false;
-      setScrapingUI(false);
+      // Step 14-2: skip UI restore when anti-crawl is active (countdown/CAPTCHA manages the button)
+      if (!skipUIRestore) {
+        setScrapingUI(false);
+      }
+      skipUIRestore = false;
     }
   });
 
@@ -513,4 +564,110 @@ function updateActionUIForDegradation(pageInfo) {
     actionHint.textContent = '请前往 Amazon 评论页面使用此功能';
     actionHint.className = 'action-hint action-hint--muted';
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Anti-Crawl UI (Step 14-2)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Display anti-crawl notice.
+ * @param {'captcha'|'throttle'|'zeros'} type — warning type
+ * @param {object} [extra] — extra data (wait_ms for throttle, count for zeros)
+ */
+function showAntiCrawlUI(type, extra) {
+  hideDegradationUI(); // CAPTCHA/throttle takes priority over degradation
+
+  const antiCrawlSection = document.getElementById('antiCrawlSection');
+  const antiCrawlNotice = document.getElementById('antiCrawlNotice');
+  const antiCrawlIcon = document.getElementById('antiCrawlIcon');
+  const antiCrawlText = document.getElementById('antiCrawlText');
+  const antiCrawlSub = document.getElementById('antiCrawlSub');
+
+  antiCrawlSection.hidden = false;
+  antiCrawlSub.hidden = true;
+
+  switch (type) {
+    case 'captcha':
+      antiCrawlNotice.className = 'anticrawl-notice anticrawl-notice--captcha';
+      antiCrawlIcon.textContent = '🛑';
+      antiCrawlText.textContent =
+        '检测到验证码。Amazon 已限制当前页面的自动抓取。请手动完成验证码后刷新页面重试。';
+      break;
+
+    case 'throttle': {
+      const waitSec = Math.ceil((extra?.wait_ms || 3000) / 1000);
+      antiCrawlNotice.className = 'anticrawl-notice anticrawl-notice--throttle';
+      antiCrawlIcon.textContent = '⏳';
+      antiCrawlText.textContent =
+        '抓取过于频繁，请等待 ' + waitSec + ' 秒后重试。';
+      break;
+    }
+
+    case 'zeros':
+      antiCrawlNotice.className = 'anticrawl-notice anticrawl-notice--zeros';
+      antiCrawlIcon.textContent = '⚠️';
+      antiCrawlText.textContent =
+        '连续 ' + (extra?.count || 3) + ' 次未提取到评论。可能触发了 Amazon 反爬限制，建议等待 5 分钟后重试。';
+      break;
+  }
+}
+
+/**
+ * Hide the anti-crawl notice and clear any running countdown.
+ */
+function hideAntiCrawlUI() {
+  const antiCrawlSection = document.getElementById('antiCrawlSection');
+  if (antiCrawlSection) antiCrawlSection.hidden = true;
+  if (throttleTimer) {
+    clearInterval(throttleTimer);
+    throttleTimer = null;
+  }
+}
+
+/**
+ * Start a countdown timer on the scrape button.
+ * Button stays disabled until countdown reaches 0.
+ * @param {number} waitMs — milliseconds to wait
+ */
+function startThrottleCountdown(waitMs) {
+  // Clear any existing timer
+  if (throttleTimer) {
+    clearInterval(throttleTimer);
+    throttleTimer = null;
+  }
+
+  const scrapeBtn = document.getElementById('scrapeBtn');
+  const antiCrawlText = document.getElementById('antiCrawlText');
+  scrapeBtn.disabled = true;
+
+  let remaining = Math.ceil(waitMs / 1000);
+
+  const updateCountdown = () => {
+    if (remaining <= 0) {
+      clearInterval(throttleTimer);
+      throttleTimer = null;
+      scrapeBtn.disabled = false;
+      scrapeBtn.textContent = '📥 抓取评论';
+      hideAntiCrawlUI();
+      // Restore normal hint text
+      const actionHint = document.getElementById('actionHint');
+      if (actionHint && currentPageInfo &&
+          (currentPageInfo.pageType === 'product' || currentPageInfo.pageType === 'reviews')) {
+        actionHint.textContent = '点击按钮抓取当前页面的评论数据';
+        actionHint.className = 'action-hint';
+      }
+      return;
+    }
+
+    scrapeBtn.textContent = '⏳ 等待 ' + remaining + ' 秒';
+    if (antiCrawlText) {
+      antiCrawlText.textContent =
+        '抓取过于频繁，请等待 ' + remaining + ' 秒后重试。';
+    }
+    remaining--;
+  };
+
+  updateCountdown(); // immediate first update
+  throttleTimer = setInterval(updateCountdown, 1000);
 }

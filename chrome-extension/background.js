@@ -5,6 +5,7 @@
  * Coordinates communication between popup and content scripts.
  * Step 13: stores scraped reviews per tab, generates CSV, handles downloads.
  * Step 14-1: passes degradation info from content script to popup.
+ * Step 14-2: anti-crawl throttle + CAPTCHA detection + consecutive-zero tracking.
  */
 
 // Store the latest page info reported by content scripts, keyed by tabId
@@ -12,6 +13,14 @@ const tabPageInfo = new Map();
 
 // Store accumulated reviews keyed by tabId (Step 13)
 const tabReviews = new Map();
+
+// ── Step 14-2: Anti-crawl rate limiting ──
+/** Minimum interval (ms) between two scrapes on the same tab */
+const MIN_SCRAPE_INTERVAL_MS = 3000;
+/** Timestamp of last scrape per tab */
+const tabLastScrapeTime = new Map();
+/** Consecutive zero-result scrape count per tab */
+const tabConsecutiveZeros = new Map();
 
 /**
  * Listen for messages from content scripts and popup
@@ -105,6 +114,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     // ── Step 13: Start scraping + accumulate reviews ──
+    // Step 14-2: throttle + CAPTCHA + consecutive-zero tracking
     case 'START_SCRAPING': {
       (async () => {
         try {
@@ -117,10 +127,66 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
+          // ── Step 14-2: Throttle check ──
+          const now = Date.now();
+          const lastTime = tabLastScrapeTime.get(tab.id) || 0;
+          const elapsed = now - lastTime;
+          if (elapsed < MIN_SCRAPE_INTERVAL_MS) {
+            sendResponse({
+              success: false,
+              throttled: true,
+              wait_ms: MIN_SCRAPE_INTERVAL_MS - elapsed,
+              total_reviews: (tabReviews.get(tab.id) || {}).reviews?.length || 0,
+            });
+            return;
+          }
+
+          // ── Step 14-2: Pre-check CAPTCHA before scraping ──
+          try {
+            const captchaCheck = await chrome.tabs.sendMessage(tab.id, {
+              type: 'DETECT_CAPTCHA',
+            });
+            if (captchaCheck?.captcha_detected) {
+              // Update last scrape time even for CAPTCHA (avoids hammering)
+              tabLastScrapeTime.set(tab.id, now);
+              sendResponse({
+                success: false,
+                captcha_detected: true,
+                total_reviews: (tabReviews.get(tab.id) || {}).reviews?.length || 0,
+                stats: {
+                  captcha_detected: true,
+                  degraded: true,
+                  degrade_reason: 'captcha',
+                  degrade_detail:
+                    'Amazon CAPTCHA / Robot Check 页面检测到验证码，无法自动抓取。',
+                },
+              });
+              return;
+            }
+          } catch (_) {
+            // Content script may not be injected; proceed anyway
+          }
+
           // Trigger extraction in content script
           const result = await chrome.tabs.sendMessage(tab.id, {
             type: 'EXTRACT_REVIEWS',
           });
+
+          // ── Step 14-2: Update last scrape time ──
+          tabLastScrapeTime.set(tab.id, Date.now());
+
+          // ── Step 14-2: Track consecutive zeros ──
+          const reviewCount = result?.reviews?.length || 0;
+          if (reviewCount === 0) {
+            const zeros = (tabConsecutiveZeros.get(tab.id) || 0) + 1;
+            tabConsecutiveZeros.set(tab.id, zeros);
+          } else {
+            tabConsecutiveZeros.set(tab.id, 0);
+          }
+          const consecutiveZeros = tabConsecutiveZeros.get(tab.id) || 0;
+
+          // Check for CAPTCHA in extraction result (fallback)
+          const captchaDetected = result?.stats?.captcha_detected || false;
 
           // Accumulate reviews in tab storage (dedup by review_id)
           if (result && result.reviews && result.reviews.length > 0) {
@@ -169,6 +235,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               new_reviews: newCount,
               total_reviews: stored.reviews.length,
               stats: result.stats,
+              captcha_detected: captchaDetected,
+              consecutive_zeros: consecutiveZeros,
             });
           } else {
             // Step 14-1: store degradation info even when no new reviews
@@ -191,6 +259,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               new_reviews: 0,
               total_reviews: (tabReviews.get(tab.id) || {}).reviews?.length || 0,
               stats: result?.stats || null,
+              captcha_detected: captchaDetected,
+              consecutive_zeros: consecutiveZeros,
             });
           }
         } catch (err) {
@@ -217,10 +287,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const stored = tabReviews.get(tab.id);
           const pageInfo = tabPageInfo.get(tab.id);
 
+          // Step 14-2: Include throttle + zero-count info
+          const now = Date.now();
+          const lastTime = tabLastScrapeTime.get(tab.id) || 0;
+          const elapsed = now - lastTime;
+          const throttled = elapsed < MIN_SCRAPE_INTERVAL_MS;
+          const throttleWaitMs = throttled ? MIN_SCRAPE_INTERVAL_MS - elapsed : 0;
+
           sendResponse({
             total_reviews: stored ? stored.reviews.length : 0,
             reviews: stored ? stored.reviews : [],
             page_info: pageInfo || null,
+            // Step 14-2
+            throttled: throttled,
+            throttle_wait_ms: throttleWaitMs,
+            consecutive_zeros: tabConsecutiveZeros.get(tab.id) || 0,
           });
         } catch (err) {
           console.error('[ReviewLens BG] Error in GET_SCRAPE_STATUS:', err);
@@ -457,6 +538,8 @@ function escapeCsvField(value) {
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabPageInfo.delete(tabId);
   tabReviews.delete(tabId);
+  tabLastScrapeTime.delete(tabId);   // Step 14-2
+  tabConsecutiveZeros.delete(tabId); // Step 14-2
 });
 
-console.log('[ReviewLens BG] Service worker registered');
+console.log('[ReviewLens BG] Service worker registered — v14.2 throttle+CAPTCHA active');
