@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Degradation Test</title></head>
+<body>
+<h1>Step 14-1: Degradation Detection Test</h1>
+
+<!-- Scenario A: Normal reviews page (Amazon-simulated DOM) -->
+<div id="scenario-normal">
+  <h2>Scenario A: Normal Amazon reviews page (should succeed)</h2>
+  <div data-hook="review">
+    <i data-hook="review-star-rating"><span class="a-icon-alt">5.0 out of 5 stars</span></i>
+    <a data-hook="review-title"><span>Great product</span></a>
+    <span data-hook="review-body"><span>This is an amazing product, highly recommend!</span></span>
+    <span data-hook="review-date">Reviewed on January 15, 2025</span>
+    <span class="a-profile-name">John D.</span>
+    <span data-hook="avp-badge">Verified Purchase</span>
+    <span data-hook="helpful-vote-statement">123 people found this helpful</span>
+  </div>
+  <div data-hook="review">
+    <i data-hook="review-star-rating"><span class="a-icon-alt">4.0 out of 5 stars</span></i>
+    <a data-hook="review-title"><span>Good but not perfect</span></a>
+    <span data-hook="review-body"><span>Works well, but could be better.</span></span>
+    <span data-hook="review-date">Reviewed on December 10, 2024</span>
+    <span class="a-profile-name">Sarah M.</span>
+  </div>
+</div>
+
+<!-- Scenario B: Degraded page (no Amazon review containers) -->
+<div id="scenario-degraded">
+  <h2>Scenario B: Changed DOM structure (should trigger degradation)</h2>
+  <div class="new-amazon-structure">
+    <div class="customer-feedback-card">
+      <span class="star-score">5 Stars</span>
+      <p class="feedback-text">Amazon changed everything!</p>
+    </div>
+  </div>
+</div>
+
+<!-- Scenario C: Empty containers (containers exist but no content) -->
+<div id="scenario-empty">
+  <h2>Scenario C: Empty containers (should trigger empty_containers)</h2>
+  <div data-hook="review">
+    <!-- No rating, no title, no body -->
+  </div>
+  <div data-hook="review">
+    <!-- Also empty -->
+  </div>
+</div>
+
+<div id="results" style="margin-top:20px; padding:10px; background:#f0f0f0; font-family:monospace; white-space:pre-wrap;"></div>
+
+<script>
+// Copy the relevant functions from content.js for testing
+const SELECTOR_SETS = [
+  { name: 'data-hook-v1', container: '[data-hook="review"]', rating: '[data-hook="review-star-rating"] .a-icon-alt', title: '[data-hook="review-title"]', body: '[data-hook="review-body"]', date: '[data-hook="review-date"]', author: '.a-profile-name', verified: '[data-hook="avp-badge"]', helpful: '[data-hook="helpful-vote-statement"]' },
+  { name: 'data-hook-v2', container: 'div[data-hook="review"]', rating: 'i[data-hook="review-star-rating"] span', title: 'a[data-hook="review-title"] span:last-child', body: 'span[data-hook="review-body"] span', date: 'span[data-hook="review-date"]', author: 'span.a-profile-name', verified: 'span[data-hook="avp-badge"]', helpful: 'span[data-hook="helpful-vote-statement"]' },
+  { name: 'class-fallback', container: '.review', rating: '.review-rating .a-icon-alt, i.a-icon-star .a-icon-alt', title: '.review-title', body: '.review-text, .review-body', date: '.review-date', author: '.author', verified: '.avp-badge', helpful: '.helpful-votes' },
+];
+
+function getText(parent, selector) {
+  if (!parent || !selector) return '';
+  try { const el = parent.querySelector(selector); return el ? (el.textContent || '').trim() : ''; } catch { return ''; }
+}
+
+function parseRating(text) {
+  if (!text) return null;
+  let match = text.match(/(\d+[.,]?\d*)\s*out\s*of/i);
+  if (match) return parseFloat(match[1].replace(',', '.'));
+  match = text.match(/^(\d+[.,]?\d*)/);
+  if (match) return parseFloat(match[1].replace(',', '.'));
+  return null;
+}
+
+function extractReviews(rootEl) {
+  const selectorErrors = [];
+  let selectedSet = null, containers = [];
+  for (const set of SELECTOR_SETS) {
+    try {
+      const nodes = rootEl.querySelectorAll(set.container);
+      if (nodes.length > 0) { selectedSet = set; containers = Array.from(nodes); break; }
+    } catch (err) { selectorErrors.push({ setName: set.name, error: String(err) }); }
+  }
+
+  // Degradation: no containers
+  if (!selectedSet || containers.length === 0) {
+    const degradeReason = selectorErrors.length === SELECTOR_SETS.length ? 'selector_parse_error' : 'no_selector_match';
+    return { reviews: [], stats: { degraded: true, degrade_reason: degradeReason, selector_set_used: null, total_found: 0 } };
+  }
+
+  const reviews = [];
+  let emptyCount = 0;
+  for (let i = 0; i < containers.length; i++) {
+    const c = containers[i];
+    const body = getText(c, selectedSet.body);
+    const rating = parseRating(getText(c, selectedSet.rating));
+    const title = getText(c, selectedSet.title);
+    if (!body && rating == null && !title) emptyCount++;
+    reviews.push({ body, rating, title });
+  }
+
+  // Degradation: empty containers
+  if (reviews.length > 0 && emptyCount === containers.length) {
+    return { reviews: [], stats: { degraded: true, degrade_reason: 'empty_containers', selector_set_used: selectedSet.name, total_found: containers.length } };
+  }
+
+  return { reviews, stats: { degraded: false, selector_set_used: selectedSet.name, total_found: containers.length, total_extracted: reviews.length } };
+}
+
+// Run tests
+const results = [];
+
+['scenario-normal', 'scenario-degraded', 'scenario-empty'].forEach(id => {
+  const root = document.getElementById(id);
+  const heading = root.querySelector('h2').textContent;
+  const result = extractReviews(root);
+  results.push({
+    scenario: heading,
+    degraded: result.stats.degraded,
+    degrade_reason: result.stats.degrade_reason || 'N/A',
+    selector_set_used: result.stats.selector_set_used || 'none',
+    total_found: result.stats.total_found,
+    total_extracted: result.stats.total_extracted || 0,
+    first_review: result.reviews[0] || null,
+  });
+});
+
+document.getElementById('results').textContent = JSON.stringify(results, null, 2);
+</script>
+</body>
+</html>

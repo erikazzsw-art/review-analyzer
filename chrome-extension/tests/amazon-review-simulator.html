@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon.com: Customer Reviews - Simulated Product</title>
+  <!-- Simulates real Amazon review page DOM structure for extension testing -->
+</head>
+<body>
+  <!-- Simulated Amazon review page header -->
+  <div id="cm_cr-review_list">
+    <!-- Review 1: 5-star, verified, helpful, long text -->
+    <div data-hook="review" id="R1A2B3C4D5E6F7G8" data-review-id="R1A2B3C4D5E6F7G8">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">5.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>Absolutely love this charging cable!</span>
+      </a>
+      <span data-hook="review-body">
+        <span>I've been using this iPhone 15 charging cable for about three weeks now and it's been fantastic. The braided design feels very premium and durable. Charging speed is exactly as advertised — fast charge works perfectly with my 20W adapter. The 6-foot length is ideal for my nightstand setup. Much better quality than the Apple original cable at a fraction of the price. Highly recommended for anyone looking for a reliable USB-C cable!</span>
+      </span>
+      <span data-hook="review-date">Reviewed in the United States on June 15, 2026</span>
+      <span class="a-profile-name">TechGuru2026</span>
+      <span data-hook="avp-badge">Verified Purchase</span>
+      <span data-hook="helpful-vote-statement">247 people found this helpful</span>
+    </div>
+
+    <!-- Review 2: 4-star, no verified badge, non-English characters -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">4.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>Bon câble, mais un peu court</span>
+      </a>
+      <span data-hook="review-body">
+        <span>Le câble est de bonne qualité et la charge rapide fonctionne bien. Cependant, j'aurais préféré une version plus longue. La version 3ft est vraiment trop courte pour une utilisation confortable depuis mon canapé. À part ça, le produit est solide et bien fini. Les connecteurs s'emboîtent parfaitement. 😊👍</span>
+      </span>
+      <span data-hook="review-date">Reviewed in France on May 28, 2026</span>
+      <span class="a-profile-name">Pierre L.</span>
+      <span data-hook="helpful-vote-statement">One person found this helpful</span>
+    </div>
+
+    <!-- Review 3: 3-star, with special characters , emoji -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">3.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>Decent but overhyped — had issues with USB-C port fit</span>
+      </a>
+      <span data-hook="review-body">
+        <span>The cable works "most" of the time. I've noticed that the USB-C connector is a bit loose on my iPhone 15 Pro Max — sometimes it disconnects if I move the phone while charging. The braiding is nice though, and it hasn't frayed after 2 months. For $9.99 it's... fine? But I expected better based on the 4.8-star average. The seller's customer service was responsive when I reached out. Temperature during fast charging: ~38°C (measured with IR thermometer). 3/5 — average product, amazing marketing.</span>
+      </span>
+      <span data-hook="review-date">Reviewed in the United States on April 3, 2026</span>
+      <span class="a-profile-name">HonestReviewer99</span>
+      <span data-hook="avp-badge">Verified Purchase</span>
+      <span data-hook="helpful-vote-statement">1,523 people found this helpful</span>
+    </div>
+
+    <!-- Review 4: 2-star, German locale, with umlauts -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">2.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>Leider nach 2 Monaten defekt</span>
+      </a>
+      <span data-hook="review-body">
+        <span>Ich habe das Kabel für mein Büro gekauft. Die erste Woche war alles super — schnelles Laden, gute Haptik. Aber nach etwa 8 Wochen hat es an der Zugentlastung am USB-C-Stecker angefangen zu wackeln. Jetzt lädt es nur noch, wenn ich das Kabel in einer bestimmten Position halte. Sehr schade, denn die Verarbeitung sah anfangs wirklich hochwertig aus. Vielleicht hatte ich nur ein Montagsprodukt. Für den Preis hätte ich mehr erwartet. Rückgabe ist leider nicht mehr möglich.</span>
+      </span>
+      <span data-hook="review-date">Reviewed in Germany on March 12, 2026</span>
+      <span class="a-profile-name">Markus K.</span>
+      <span data-hook="avp-badge">Verified Purchase</span>
+      <span data-hook="helpful-vote-statement">53 people found this helpful</span>
+    </div>
+
+    <!-- Review 5: 5-star, minimal text -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">5.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>Good</span>
+      </a>
+      <span data-hook="review-body">
+        <span>Works great!</span>
+      </span>
+      <span data-hook="review-date">Reviewed in the United States on July 1, 2026</span>
+      <span class="a-profile-name">Alex</span>
+    </div>
+
+    <!-- Review 6: 1-star, very long text -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">1.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>DO NOT BUY — Stopped working after 3 days, customer service unresponsive</span>
+      </a>
+      <span data-hook="review-body">
+        <span>I rarely write reviews but this product was so bad I had to warn others. Ordered on June 20th, arrived June 23rd, stopped working June 26th. Three. Days. The cable doesn't just charge slowly — it doesn't charge at all anymore. My phone actually LOST battery while plugged in because it kept connecting and disconnecting rapidly (you know that annoying ding-ding-ding sound). I contacted the seller through Amazon messages — no response after 4 days. I tried their website contact form — bounced back as undeliverable. The QR code on the packaging leads to a dead link. This is clearly a dropshipped product with zero quality control and fake reviews. I've reported the listing to Amazon. Save your money and buy Anker or Cable Matters instead. Even the AmazonBasics cable is better than this junk.</span>
+      </span>
+      <span data-hook="review-date">Reviewed in the United States on June 27, 2026</span>
+      <span class="a-profile-name">DisappointedCustomer</span>
+      <span data-hook="helpful-vote-statement">892 people found this helpful</span>
+    </div>
+
+    <!-- Review 7: 4-star, Vine review simulation (no verified badge) -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">4.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>Vine Customer Review: Good value USB-C cable with minor drawbacks</span>
+      </a>
+      <span data-hook="review-body">
+        <span>I received this product through the Amazon Vine program. Overall, it's a solid USB-C charging cable. Data transfer speeds are USB 2.0 (480 Mbps) which is expected at this price point. The braided jacket feels similar to Anker's PowerLine series. My one complaint: the USB-C connector housing is slightly oversized, so it doesn't fit with some thicker phone cases. I had to remove my OtterBox to get a secure connection. For case-free users or those with slim cases, this won't be an issue. Testing notes: charged an iPhone 15 from 20% to 80% in about 35 minutes with a 30W adapter. Temperature maxed at 41°C at the connector — within safe range. Would I buy it at full price? Probably yes, but there are better options if you can spend $5 more.</span>
+      </span>
+      <span data-hook="review-date">Reviewed in the United States on May 15, 2026</span>
+      <span class="a-profile-name">VineVoice</span>
+      <span data-hook="helpful-vote-statement">112 people found this helpful</span>
+    </div>
+
+    <!-- Review 8: 5-star, Japanese reviewer name -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">5.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>Perfect cable for travel — compact and reliable</span>
+      </a>
+      <span data-hook="review-body">
+        <span>I bought this cable specifically for my international travel kit. It's been through 6 countries, countless airport security checks, and being stuffed into overpacked bags. Still works perfectly. The 3ft length is actually perfect for travel — long enough to reach from a hotel outlet to the nightstand, short enough not to tangle. Paired it with a GaN charger and it's the ultimate compact setup. Minor nitpick: the velcro cable tie it comes with is flimsy. I replaced it with a reusable silicone tie. For $7.99 this is unbeatable value.</span>
+      </span>
+      <span data-hook="review-date">Reviewed in the United States on February 20, 2026</span>
+      <span class="a-profile-name">田中太郎</span>
+      <span data-hook="avp-badge">Verified Purchase</span>
+      <span data-hook="helpful-vote-statement">38 people found this helpful</span>
+    </div>
+
+    <!-- Review 9: 4-star, with image mentions and complex formatting -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">4.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>Fast charging confirmed with USB tester — see my data below</span>
+      </a>
+      <span data-hook="review-body">
+        <span>I tested this cable with a USB-C power meter (KJ-128D). Here are the results:
+        - iPhone 15: 19.8W peak (9V/2.2A) — matches Apple's 20W spec
+        - Samsung S24: 24.1W peak (9V/2.67A) — Super Fast Charging triggered
+        - iPad Air M2: 28.5W peak (14.5V/1.97A) — impressive for a $10 cable
+
+        Voltage drop at 3A: 0.32V (excellent — anything under 0.5V is good)
+        E-marker chip: Present, reports 20V/5A (100W) capability
+
+        The cable is honestly overbuilt for what most people need. I wouldn't hesitate to use this with a laptop at up to 60W. The only reason I'm giving 4 stars instead of 5 is that the connector fit is slightly tighter than the USB-IF spec, which might cause extra wear on device ports over time. This is based on measuring insertion force with a force gauge (~18N vs the spec maximum of 35N — within spec but on the high side). For reference, Apple's OEM cable measures ~12N.</span>
+      </span>
+      <span data-hook="review-date">Reviewed in the United States on January 8, 2026</span>
+      <span class="a-profile-name">ElectronicsEngineer</span>
+      <span data-hook="avp-badge">Verified Purchase</span>
+      <span data-hook="helpful-vote-statement">3,401 people found this helpful</span>
+    </div>
+
+    <!-- Review 10: 3-star, empty-ish body edge case -->
+    <div data-hook="review">
+      <i data-hook="review-star-rating">
+        <span class="a-icon-alt">3.0 out of 5 stars</span>
+      </i>
+      <a data-hook="review-title">
+        <span>It's a cable</span>
+      </a>
+      <span data-hook="review-body">
+        <span>Does what it says. Nothing special.</span>
+      </span>
+      <span data-hook="review-date">Reviewed in the United States on July 10, 2026</span>
+      <span class="a-profile-name">minimalist</span>
+    </div>
+  </div>
+
+  <!-- Test indicator -->
+  <div id="test-indicator" style="position:fixed; top:10px; right:10px; background:green; color:white; padding:4px 8px; border-radius:4px; font-size:12px; z-index:99999;">
+    TEST PAGE: amazon-review-simulator
+  </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Amazon.com: Customer Reviews - Degraded DOM Structure</title>
+</head>
+<body>
+  <!-- Simulates a page where Amazon has changed the DOM structure -->
+  <!-- Uses a different review format that our selectors DON'T match -->
+  <div id="new-review-format-2027">
+    <article class="customer-review-card" data-testid="review-card">
+      <div class="review-header">
+        <div class="review-score" aria-label="5 stars">★★★★★</div>
+        <h3 class="review-headline">Great product, new Amazon format</h3>
+      </div>
+      <div class="review-content">
+        <p class="review-text-content">Amazon updated their review layout and now our extension can't find reviews with the old selectors.</p>
+      </div>
+      <div class="review-footer">
+        <span class="reviewer-name-display">NewFormatUser</span>
+        <span class="review-date-display">July 2026</span>
+        <span class="verified-badge-new">✓ Verified Purchase</span>
+      </div>
+    </article>
+
+    <article class="customer-review-card" data-testid="review-card">
+      <div class="review-header">
+        <div class="review-score" aria-label="3 stars">★★★☆☆</div>
+        <h3 class="review-headline">Another review in the new format</h3>
+      </div>
+      <div class="review-content">
+        <p class="review-text-content">This is completely different from the data-hook based structure. Our selectors should fail gracefully.</p>
+      </div>
+      <div class="review-footer">
+        <span class="reviewer-name-display">BetaTester</span>
+        <span class="review-date-display">June 2026</span>
+      </div>
+    </article>
+  </div>
+
+  <div id="test-indicator" style="position:fixed; top:10px; right:10px; background:orange; color:white; padding:4px 8px; border-radius:4px; font-size:12px; z-index:99999;">
+    TEST PAGE: Degraded DOM (no matching selectors)
+  </div>
+</body>
+</html>
