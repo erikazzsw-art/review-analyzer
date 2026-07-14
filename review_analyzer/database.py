@@ -833,6 +833,24 @@ def get_existing_hashes(user_id: int, product_id: str) -> set[str]:
         conn.close()
 
 
+def get_existing_plugin_review_keys(user_id: int, asin: str) -> set[str]:
+    """返回用户对指定 ASIN 已有的 (reviewer, date) 去重键集合。
+
+    用于 Chrome 扩展插件上传时的去重（Step 15）。
+    去重键格式："{reviewer}|{date}"，与插件上传请求中的 reviewer + date 对应。
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT reviewer, date FROM comments WHERE user_id = %s AND product_id = %s",
+                (user_id, asin),
+            )
+            return {f"{r[0] or ''}|{r[1] or ''}" for r in cur.fetchall()}
+    finally:
+        conn.close()
+
+
 def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
     """按 content_hash 去重后统计产品级指标。"""
     sql = """

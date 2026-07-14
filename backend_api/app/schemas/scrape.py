@@ -44,3 +44,38 @@ class AsinFetchResponse(BaseModel):
     marketplace: str
     message: str
     variant_count: int | None = None
+
+
+# ── Step 15: Chrome 扩展插件上传 ──
+
+class PluginReviewItem(BaseModel):
+    """单条插件抓取的评论。"""
+    review_id: str
+    body: str = Field(..., min_length=1, description="评论正文")
+    rating: float | None = None
+    date: str = Field(..., description="评论日期字符串")
+    reviewer: str | None = None
+    title: str | None = None
+    verified: bool | None = None
+    helpful_count: int | None = None
+
+
+class PluginUploadRequest(BaseModel):
+    """Chrome 扩展直传评论的请求体。"""
+    asin: str = Field(..., min_length=1, max_length=31, description="Amazon ASIN")
+    marketplace: str = Field(default="us", pattern=r"^[a-z]{2}$")
+    platform: str = Field(default="amazon", description="平台标识")
+    product_name: str | None = None
+    page_url: str | None = None
+    reviews: list[PluginReviewItem] = Field(..., min_length=1, max_length=5000)
+
+
+class PluginUploadResponse(BaseModel):
+    ok: bool = True
+    job_id: int
+    asin: str
+    marketplace: str
+    total_received: int
+    new_reviews: int
+    duplicate_count: int
+    message: str

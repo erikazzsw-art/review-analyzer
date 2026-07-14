@@ -77,6 +77,12 @@ PLAN_LIMITS: dict[str, dict[str, Any]] = {
         "limits": {"free": 20, "starter": 200, "pro_early": 200, "pro": 200, "team": 500},
         "type": "hard",
     },
+    "plugin_upload": {
+        "unit": "条",
+        "period": "per_request",
+        "limits": {"free": 100, "starter": 1000, "pro_early": 1000, "pro": 1000, "team": 5000},
+        "type": "hard",
+    },
 }
 
 _OVER_QUOTA_MESSAGES: dict[str, str] = {
@@ -91,6 +97,7 @@ _OVER_QUOTA_MESSAGES: dict[str, str] = {
     "upload_rows_per_file": "Free 单文件最多 {limit} 条，请拆分上传或升级 Pro",
     "asin_fetch": "今日 ASIN 自动拉取已用完（{used}/{limit} 次），明天再试或升级 Pro",
     "translate": "今日翻译次数已用完（{used}/{limit} 次），明天再试或升级 Pro",
+    "plugin_upload": "插件单次上传最多 {limit} 条，请减少评论数量或升级 Pro",
 }
 
 
