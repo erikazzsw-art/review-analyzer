@@ -78,8 +78,9 @@ jobs:
           RETRY_DELAY=10
 
           # Check API health (via docker compose exec — container port 8000, not exposed to host)
+          # api container is a slim Python image without curl; use Python urllib instead
           for i in $(seq 1 $MAX_RETRIES); do
-            STATUS=$(ssh ecs "cd ${{ secrets.ECS_DEPLOY_PATH }} && docker compose exec -T api curl -sf -o /dev/null -w '%{http_code}' http://localhost:8000/health" || echo "000")
+            STATUS=$(ssh ecs "cd ${{ secrets.ECS_DEPLOY_PATH }} && docker compose exec -T api python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').getcode()==200 else 1)\" && echo 200 || echo 000")
             if [ "$STATUS" = "200" ]; then
               echo "API health check passed (attempt $i)"
               break
@@ -93,8 +94,9 @@ jobs:
           done
 
           # Check frontend (via docker compose exec — container port 3000, not exposed to host)
+          # frontend container is a node image without wget; use node http instead
           for i in $(seq 1 $MAX_RETRIES); do
-            STATUS=$(ssh ecs "cd ${{ secrets.ECS_DEPLOY_PATH }} && docker compose exec -T frontend wget -q -O /dev/null http://127.0.0.1:3000 && echo 200 || echo 000")
+            STATUS=$(ssh ecs "cd ${{ secrets.ECS_DEPLOY_PATH }} && docker compose exec -T frontend node -e \"require('http').get('http://127.0.0.1:3000',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\" && echo 200 || echo 000")
             if [ "$STATUS" = "200" ]; then
               echo "Frontend health check passed (attempt $i)"
               break
