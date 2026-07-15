@@ -102,6 +102,7 @@ def get_categories(
     mapping = _load_static_mapping()
     sc_to_cat: dict[str, str] = mapping.get("sub_category_to_category", {})
     cat_labels: dict[str, str] = mapping.get("category_labels", {})
+    display_names: dict[str, str] = mapping.get("sub_category_display_names", {})
 
     db_subs = _load_db_sub_categories()
     if not db_subs:
@@ -109,6 +110,10 @@ def get_categories(
         notice = "taxonomy DB 暂时不可用，已退回静态映射；分析链路 fallback 通用模板仍可工作"
     else:
         notice = None
+
+    def _label(sub: str) -> str:
+        """返回 sub_category 的中文显示名，无映射时回退到原始值."""
+        return display_names.get(sub, sub)
 
     grouped: dict[str, list[str]] = {key: [] for key in cat_labels}
     unknown: list[str] = []
@@ -124,6 +129,7 @@ def get_categories(
             category_key=key,
             category_label=cat_labels[key],
             sub_categories=sorted(subs),
+            sub_category_labels={s: _label(s) for s in subs},
         )
         for key, subs in grouped.items()
         if subs

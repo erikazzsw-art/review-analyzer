@@ -42,21 +42,24 @@ type FormState = {
 
 function CategoryHitBanner({
   categoryValue,
+  displayName,
   hit,
   supportedCount,
   supportedCategories,
   t,
 }: {
   categoryValue: string;
+  displayName: string;
   hit: { categoryKey: string; categoryLabel: string } | null;
   supportedCount: number;
   supportedCategories: TaxonomyCategoriesResponse["supported_categories"];
   t: (key: string) => string;
 }): React.ReactNode {
+  const label = displayName || categoryValue;
   if (hit && hit.categoryKey !== "other") {
     return (
       <div className="rounded-card border border-[#cbe9d8] bg-[#eef9f3] px-3 py-2 text-xs leading-5 text-[#3d8b74]">
-        ✅ <span className="font-semibold">{categoryValue}</span> {t("categoryHitSuccess")}
+        ✅ <span className="font-semibold">{label}</span> {t("categoryHitSuccess")}
         <span className="mx-1 font-semibold">{hit.categoryLabel}</span>
         {t("categoryHitSuffix")}
       </div>
@@ -65,7 +68,7 @@ function CategoryHitBanner({
   const labels = supportedCategories.map((g) => g.category_label).join(" / ");
   return (
     <div className="rounded-card border border-[#f6dbb4] bg-[#fff6e6] px-3 py-2 text-xs leading-5 text-[#9a6118]">
-      ⚠️ <span className="font-semibold">{categoryValue}</span> {t("categoryHitFallback")}
+      ⚠️ <span className="font-semibold">{label}</span> {t("categoryHitFallback")}
       {supportedCount} {t("categoryHitFallbackSuffix")}（{t("categoryHitSupported")}：{labels}）
     </div>
   );
@@ -142,6 +145,20 @@ export function UploadForm() {
     if (!group) return [];
     return [...group.sub_categories].sort((a, b) => a.localeCompare(b, "zh-Hans"));
   }, [taxonomy, form.parentCategory]);
+
+  const currentGroupLabels = useMemo(() => {
+    if (!taxonomy || !form.parentCategory) {
+      return {} as Record<string, string>;
+    }
+    const group = taxonomy.supported_categories.find(
+      (g) => g.category_key === form.parentCategory,
+    );
+    return group?.sub_category_labels ?? ({} as Record<string, string>);
+  }, [taxonomy, form.parentCategory]);
+
+  function subCategoryDisplay(sub: string): string {
+    return currentGroupLabels[sub] || sub;
+  }
 
   const categoryHit = useMemo(() => {
     const trimmed = form.category.trim();
@@ -341,13 +358,14 @@ export function UploadForm() {
             >
               {filteredSubCategories.map((sub) => (
                 <option key={sub} value={sub}>
-                  {sub}
+                  {subCategoryDisplay(sub)}
                 </option>
               ))}
             </select>
             {taxonomy && form.category.trim().length > 0 && (
               <CategoryHitBanner
                 categoryValue={form.category.trim()}
+                displayName={subCategoryDisplay(form.category.trim())}
                 hit={categoryHit}
                 supportedCount={taxonomy.total_sub_categories}
                 supportedCategories={taxonomy.supported_categories}

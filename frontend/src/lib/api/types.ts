@@ -726,6 +726,7 @@ export type TaxonomyCategoryGroup = {
   category_key: string;
   category_label: string;
   sub_categories: string[];
+  sub_category_labels: Record<string, string>;
 };
 
 export type TaxonomyCategoriesResponse = {
