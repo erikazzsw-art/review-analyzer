@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ClueAI ReviewLens",
-  "version": "0.2.0",
-  "description": "一键抓取 Amazon 评论，直传 ClueAI 智能分析评论情感与关键词",
+  "version": "0.3.0",
+  "description": "One-click Amazon review scraping with AI sentiment & keyword analysis by ClueAI. 一键抓取 Amazon 评论，AI 智能分析情感与关键词。",
   "author": "ClueAI",
   "homepage_url": "https://www.clueai-reviewlens.com",
 

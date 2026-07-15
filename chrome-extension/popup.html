@@ -11,21 +11,31 @@
     <!-- Header -->
     <header class="header">
       <span class="logo">CA</span>
-      <h1 class="title">ClueAI ReviewLens</h1>
+      <h1 class="title" data-i18n="app_title">ClueAI ReviewLens</h1>
+      <button id="langToggle" class="lang-toggle" type="button" title="Switch to English">EN</button>
     </header>
+
+    <!-- Login status (Step 16) -->
+    <section class="login-section" id="loginSection">
+      <div class="login-row">
+        <span class="login-dot" id="loginDot"></span>
+        <span class="login-text" id="loginText" data-i18n="login_checking">检测登录状态…</span>
+        <button id="loginBtn" class="btn-link" type="button" data-i18n="login_btn" hidden>去登录</button>
+      </div>
+    </section>
 
     <!-- Page status -->
     <section class="status-section">
       <div class="status-row">
-        <span class="status-label">当前页面</span>
-        <span id="pageTypeBadge" class="badge badge--loading">检测中…</span>
+        <span class="status-label" data-i18n="status_page_label">当前页面</span>
+        <span id="pageTypeBadge" class="badge badge--loading" data-i18n="badge_detecting">检测中…</span>
       </div>
       <p id="pageUrl" class="page-url"></p>
     </section>
 
     <!-- Action -->
     <section class="action-section">
-      <button id="scrapeBtn" class="btn btn--primary" disabled>
+      <button id="scrapeBtn" class="btn btn--primary" disabled data-i18n="scrape_btn">
         📥 抓取评论
       </button>
       <p id="actionHint" class="action-hint"></p>
@@ -37,7 +47,7 @@
         <span class="degrade-icon" id="degradeIcon">⚠️</span>
         <p class="degrade-text" id="degradeText"></p>
       </div>
-      <a id="feedbackLink" class="feedback-link" href="#" target="_blank" hidden>
+      <a id="feedbackLink" class="feedback-link" href="#" target="_blank" data-i18n="feedback_link" hidden>
         📋 反馈此页面
       </a>
     </section>
@@ -56,8 +66,8 @@
     <!-- Progress (Step 13) -->
     <section class="progress-section" id="progressSection" hidden>
       <div class="progress-header">
-        <span class="progress-label">已抓取</span>
-        <span class="progress-count" id="progressCount">0 条</span>
+        <span class="progress-label" data-i18n="progress_label">已抓取</span>
+        <span class="progress-count" id="progressCount">0</span>
       </div>
       <div class="progress-bar-track">
         <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
@@ -66,26 +76,27 @@
 
     <!-- Export (Step 13) + Upload (Step 15) -->
     <section class="export-section" id="exportSection" hidden>
-      <button id="exportBtn" class="btn btn--secondary">
+      <button id="exportBtn" class="btn btn--secondary" data-i18n="export_btn">
         📥 导出 CSV
       </button>
-      <button id="apiUploadBtn" class="btn btn--upload">
+      <button id="apiUploadBtn" class="btn btn--upload" data-i18n="upload_btn">
         ☁️ 上传到 ClueAI
       </button>
-      <button id="resetBtn" class="btn btn--ghost">
+      <button id="resetBtn" class="btn btn--ghost" data-i18n="reset_btn">
         🗑 清除数据
       </button>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
-      <span class="version">v0.1.0</span>
-      <a href="https://www.clueai-reviewlens.com" target="_blank" class="footer-link">
+      <span class="version">v0.3.0</span>
+      <a href="https://www.clueai-reviewlens.com" target="_blank" class="footer-link" data-i18n="footer_link">
         ClueAI ReviewLens
       </a>
     </footer>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
