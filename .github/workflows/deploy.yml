@@ -12,7 +12,6 @@ jobs:
   deploy:
     needs: ci-gate
     runs-on: ubuntu-latest
-    environment: Clueai_CD
     timeout-minutes: 15
     steps:
       - name: Validate Secrets
