@@ -27,7 +27,365 @@
 
 ---
 
+## 2026-07-15
+
+### Bug 修复：GitHub Actions CD 自动部署管道打通（3 个根因串联）
+
+- **工作量**: S（1 个 workflow 文件改动 + secret 配置 + 3 轮触发验证，约 0.5 人天）
+- **状态**: ✅ CD 全绿，自动部署链路（Validate Secrets → SSH → Deploy → Health Check）端到端打通
+
+**需求描述**：
+GitHub Actions CD 管道（push develop / workflow_dispatch 触发自动部署到阿里云 ECS）连环报错无法完成一次成功部署，修复后打通自动化部署。
+
+修复内容：
+- **根因 1（Missing secrets）**：workflow 引用 4 个独立 secret（`ECS_HOST`/`ECS_USER`/`ECS_SSH_KEY`/`ECS_DEPLOY_PATH`），此前只配了一个 `Clueai_CD` → Erika 补齐 4 个 Repository secret。
+- **根因 2（Permission denied publickey，exit 255）**：`ECS_SSH_KEY` secret 粘贴时 PEM 换行/尾行被破坏 → Configure SSH 步骤写 key 由 `echo` 改为 `printf '%s\n'` 保证尾部换行（commit `4add680`）+ Erika 重新粘贴 secret。
+- **根因 3（health check 5 次全败 + 误回滚，exit 1）**：健康检查用 `curl`/`wget`，但 api 是精简 Python 镜像、frontend 是 node 镜像，容器内无这两个工具 → 改用容器原生运行时：API 用 `python urllib`、frontend 用 `node http`（commit `4a20370`）。
+
+**涉及岗位及工时**：
+- DevOps：0.5 人天（诊断 3 个根因 + workflow 修复 + secret 配置指导 + 3 轮触发验证）
+
+**安全事件**：排查中私钥曾被误粘贴到终端（zsh 逐行执行 PEM 行），泄露仅限本地 scrollback + `~/.zsh_history`，未进 git/远程，Erika 已清除。
+
+### 新功能：Chrome 扩展 Step 16 — 多市场（UK/CA）+ UI 双语 + 登录校验 + Web Store 上架材料
+
+- **工作量**: M（扩展前端 5 文件改动 + 后端复用 + 新增打包脚本/测试/上架材料，约 2 人天）
+- **状态**: ✅ 代码全部完成 + 本地测试通过（人工上架步骤待 Erika 执行）
+
+**需求描述**：
+Chrome 扩展（ClueAI ReviewLens）出海阻塞项 Step 16，让扩展支持英国/加拿大站点、界面中英双语、扩展内识别 ClueAI 登录状态，并准备好 Chrome Web Store 上架所需的全套材料。
+
+实现内容：
+- **多市场（UK/CA）**：核实 `chrome-extension/manifest.json`（host_permissions / content_scripts / web_accessible_resources）及 `content.js` MARKETPLACE_MAP、`background.js` MARKETPLACE_TLD_MAP 均已覆盖 co.uk/.ca；UK/CA 英文日期由 `parseDateToISO` 正确解析。新增 `chrome-extension/tests/multimarket.test.js`（7 项：结构覆盖 + 日期/marketplace 解析，全绿）
+- **i18n 双语 UI**：新增 `chrome-extension/i18n.js`（zh-CN/en-US 消息字典 + `{param}` 插值 + locale 持久化）；`popup.html` 加 `data-i18n` 标签、语言切换按钮、登录状态区；`popup.js` 全量改用 `I18N.t()`，切换语言实时重渲染，首次按浏览器语言自动选择
+- **登录校验（Cookie 透传）**：实际系统为 httponly session cookie（非 OAuth），扩展 `credentials:'include'` 自动带 cookie；`background.js` 新增 `CHECK_LOGIN` handler（`GET /me`）+ 抽出 `getApiBaseUrl()` 复用；popup 三态登录指示灯（绿/橙/灰）
+- **Web Store 上架**：`scripts/build_extension_zip.sh`（allowlist 打包，产出 36K zip）；`docs/chrome-web-store-submission.md`（中英文案 / 隐私政策 / 权限说明 / 数据用途 / 检查清单 / 拒审预案）；manifest 0.2.0→0.3.0，description 改双语
+
+**修改/新增文件**：
+- 新增：`chrome-extension/i18n.js`、`chrome-extension/tests/multimarket.test.js`、`scripts/build_extension_zip.sh`、`docs/chrome-web-store-submission.md`
+- 修改：`chrome-extension/popup.js`、`popup.html`、`popup.css`、`background.js`、`manifest.json`、`.gitignore`
+
+**本地测试**：`multimarket.test.js` 7 项全绿；既有 E2E `e2e-full-pipeline.spec.js` 11 项全绿；4 个扩展 JS `node --check` 通过。
+
+**Push + code-review**：推送前走 `/code-review`（high effort），发现并修复语言切换 bug —— popup 语言切换回调无条件调用 `updateActionUI()`，会在抓取中/限流倒计时状态下把抓取按钮重新启用、清掉反爬提示（详见 TEST_LOG 同日条目）。修复后合入本批推送。代码已 push develop（commit `6889a70`，仅 9 个代码文件，文档按策略留本地）；扩展不经 docker，无需 ECS 部署。
+
+**待 Erika 手动**：Chrome Web Store 开发者注册（$5）+ 上传 zip + 填表 + 提交审核（材料见 `docs/chrome-web-store-submission.md`）。
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 | 具体工作 |
+|------|------|---------|
+| 前端开发 | 8h | i18n 模块 + popup 全量国际化 + 语言切换 + 登录指示灯 UI |
+| 后端开发 | 1.5h | CHECK_LOGIN handler + getApiBaseUrl 复用（复用现有 /me + cookie 链路）|
+| DevOps | 2h | 打包脚本 + .gitignore + 本地冒烟流程 |
+| 产品经理 | 4.5h | Web Store 全套上架材料（文案/隐私政策/权限说明/检查清单）|
+
+### 新功能：woot 出海版禁用 — ENABLE_WOOT_SCRAPER 环境变量门控
+
+- **工作量**: S（2 文件改动 + 1 新建 + 占位符模板，约 0.2 人天）
+- **状态**: ✅ 代码完成 + push develop（CB `cb29f78`），prod `deploy/.env` 已加 `ENABLE_WOOT_SCRAPER=false`
+
+**需求描述**：
+woot.com 评论抓取仅限国内环境（US marketplace only，~50 条/ASIN），出海 prod 默认禁用，防止海外用户误触 woot 返回空评论。用户应使用 Chrome 扩展上传替代。
+
+实现内容：
+- `backend_api/app/services/review_scraper.py` 新增 `_woot_enabled()` 门控函数，读取 `ENABLE_WOOT_SCRAPER`（默认 `false`），Amazon 路径调用 woot 前先判断，禁用时返回空列表 + 日志提示用 Chrome 扩展上传
+- `deploy/.env.example` 新建 — 全部部署环境变量的占位符模板，包含 `ENABLE_WOOT_SCRAPER=false`
+- `.gitignore` 加 `!deploy/.env.example` 白名单
+- 前端确认无"免费抓取"UI 需要隐藏
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 | 具体工作 |
+|------|------|---------|
+| 后端开发 | 1h | `_woot_enabled()` 门控 + review_scraper.py Amazon 分支改造 |
+| DevOps | 0.6h | `deploy/.env.example` 模板 + `.gitignore` 白名单 + prod `.env` 同步 |
+
+---
+
+### Bug 修复：Chrome 扩展 Step 16 code-review 3 个遗留边界项
+
+- **工作量**: S（扩展背景脚本 3 项修复 + popup/CSS/i18n 配套，约 0.3 人天）
+- **状态**: ✅ push develop + CD 全绿
+
+**需求描述**：
+Step 16 `storage.session` 迁移引入的 3 个 code-review 边界项逐一修复：① saveTabReviews 配额错误静默丢失 → 回传 `storage_error` 到 popup 显示可见警告（i18n 中英双语 + CSS 琥珀色样式）；② load→mutate→save 异步链缺串行化 → 新增 `withTabLock()` per-tab Promise 锁包裹 `START_SCRAPING` 和 `STORE_REVIEWS` handler 的读写循环；③ tabLastScrapeTime/tabConsecutiveZeros 内存 Map 未持久化 → 新增 `loadTabMeta/saveTabMeta/deleteTabMeta` storage.session helper，6 个读写点全部迁移，SW 重启后 throttle 和 consecutive-zero 防护不再失效。
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 | 具体工作 |
+|------|------|---------|
+| 前端开发 | 1.2h | background.js 3 项修复（+~85 行 helper + handler 重构）+ popup.js storage_error 检测 + i18n.js 双 key + popup.css 样式 |
+| 测试 | 0.3h | node --check 三文件 + multimarket.test.js 7/7 + pre-commit 机密扫描 |
+
+---
+
+## 2026-07-14
+
+### 新功能：支付成功页面 + 支付后套餐自动激活
+
+- **工作量**: S（前端 1 新页面 + 前后端各 1 文件改 redirect URL，约 0.5 人天）
+- **状态**: ✅ 全部完成 + push develop + 部署 + 线上验证通过
+
+**需求描述**：
+用户通过 Paddle 支付后，原流程重定向到 `/settings?billing=success` → `/settings/billing` → `/settings` → `/settings/push`，无任何成功反馈，且套餐需等待 webhook 异步更新。本次新增专用支付成功页面，支付后直接展示套餐详情并轮询等待激活。
+
+实现内容：
+- 新建 `frontend/src/app/payment/success/page.tsx`：三态 UI（pending 琥珀脉冲动画 / activated 绿色 Sparkles 图标 / error 联系客服提示）；每 2s 轮询 `GET /api/billing` 检测 `plan === planKey`，最多 40s；展示套餐名、月 credits、价格；提供"Go to workspace"和"Configure push notifications"跳转
+- 修改 `frontend/src/lib/api/browser.ts`：success_url 从 `/settings?billing=success` 改为 `/payment/success?plan=${opts.planKey}`
+- 修改 `backend_api/app/routes/settings.py`：后端默认 success_url 同步更新为 `/payment/success?plan={plan_key}`
+- Paddle Dashboard webhook URL 已确认配置为 `https://api.clueai-reviewlens.com/api/billing/webhook`
+
+**线上验证**（2026-07-14 惜_clueai/test123456）：
+- 支付成功页 `/payment/success?plan=starter` 正常渲染 ✅
+- 套餐从 free 更新为 starter ✅
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 | 具体工作 |
+|------|------|---------|
+| 前端开发 | 2h | payment/success 页面开发（三态 UI + 轮询逻辑 + PlanPricing/MONTHLY_GRANT 数据展示）|
+| 后端开发 | 0.5h | settings.py success_url 默认值修复 + Paddle webhook 配置确认 |
+
+---
+
+## 2026-07-13
+
+### 新功能：V4-出海 M4 4.1 analyzer.py 接入 LLM Router + JSON 输出硬化
+
+- **工作量**: S（单模块 1 文件 + 轻量重构，约 0.3 人天）
+- **状态**: ✅ 全部完成 + 26/26 测试通过 + push develop + 部署
+
+**需求描述**：
+V4 出海 M4 最后一个直连 DeepSeek 的模块（`review_analyzer/analyzer.py`）接入 LLM Router。此前 M4-pre 已完成 `llm_router.py` 双 locale 链路（MODELS_EN: GPT-4o-mini→DeepSeek→Qwen; MODELS_ZH: DeepSeek→GPT-4o-mini→Qwen）并集成了 `deep_analyzer.py` 和 `insight_engine.py`。本次是收尾任务，确保遗留的 Streamlit 分析路径也走 Router。
+
+实现内容：
+- 移除 `from openai import OpenAI`，仅保留 `AuthenticationError`
+- 新增 `_call_llm()` 函数：内部 `import router_completion`（懒加载避免循环引用），`locale="en"` 走 GPT-4o-mini 优先链，`"zh"` 走 DeepSeek 优先链
+- JSON 输出硬化：SYSTEM_PROMPT 末尾追加 "Respond with raw JSON only. No markdown fences, no explanation outside the JSON object." + markdown fence 正则抢救（`re.search(r'\{.*\}', content, re.DOTALL)`）
+- 所有分析入口（`analyze_comment` / `_analyze_one` / `analyze_batch`）新增 `locale` 参数透传，默认 "en"（海外优先）
+- `api_key` 参数保留向后兼容（Streamlit 仍传），实际调用走 llm_router（从环境变量读取 Key）
+- 错误提示更新："DeepSeek API Key" → "LLM API Key"
+- 移除 `response_format={"type": "json_object"}`（DeepSeek 支持不完整，改用文本 + 正则提取）
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 | 具体工作 |
+|------|------|---------|
+| 后端开发 | 1.5h | `_call_llm()` 实现、SYSTEM_PROMPT 硬化、locale 参数透传、markdown fence 抢救、测试验证 |
+| 算法工程师 | 0.5h | JSON 输出保证策略（强化指令 + fence rescue）、rescue 4 模式验证 |
+
+---
+
+### 新功能：V4-出海 M2.7 展示层翻译（分析结果中文自动翻译）
+
+- **工作量**: S（跨前后端 2 文件 + hook + ModuleCard 改造，约 0.5 人天）
+- **状态**: ✅ 全部完成 + tsc/next build 通过 + 本地验证
+
+**需求描述**：
+V4 出海 M2.6 已决策分析结果只存英文，M2.7 在前端展示层实现按 locale 自动翻译——中文用户看到中文分析结果，英文用户看到原文。翻译调用后端已有 `POST /api/translate/module` 端点（DeepSeek, temperature=0.1），后端 `translate_cache` 表按内容 SHA256 去重，相同内容不重复消耗 credit。
+
+前端实现：
+- 新建 `frontend/src/hooks/useTranslatedContent.ts` — 翻译 hook，检测 locale=zh 自动调用翻译 API，翻译失败时静默 fallback 英文原文，不白屏
+- 改造 `frontend/src/components/analysis/module-card.tsx` — 接入 hook，英文用户无变化；中文用户自动翻译展示，右上角出现 原文/翻译 切换按钮
+
+不改动：
+- translate.py 端点（已可用）
+- translate_cache 表结构
+- LLM 分析链路（仍只写英文）
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 | 具体工作 |
+|------|------|---------|
+| 前端开发 | 2h | useTranslatedContent hook、ModuleCard 改造、tsc/build 验证 |
+| 后端开发 | 0h | 复用已有 translate.py + translate_cache（M2.6 已就绪） |
+| 产品经理 | 0.5h | 验收标准确认（中英切换 / 翻译失败 fallback / 缓存不重复消耗 credit） |
+
+---
+
+### 新功能：V4-出海 M2.5-B accept-terms 端点 + M2.5-C Terms Gate 老用户合规拦截
+
+- **工作量**: M（跨前后端 12 文件 + 2 commit + 线上验证，约 1.2 人天）
+- **状态**: ✅ 全部完成 + ruff/tsc 通过 + push develop + 部署 + 线上 Playwright 端到端验证通过
+
+**需求描述**：
+V4 出海合规闭环 — 确保所有用户（新+老）都接受过更新后的 Terms of Service 和 Privacy Policy（版本 2.0，包含 GDPR/CCPA/PIPL 合规条款）。
+
+M2.5-B 后端：
+- `POST /auth/accept-terms` 端点：接收 `terms_version`，写入 `users.terms_accepted_at` + `terms_version`，幂等（同版本重复调用返回 already_accepted）
+- `GET /me` 响应扩展：新增 `terms_accepted_at`、`terms_version`、`locale` 三个字段
+- `CURRENT_TERMS_VERSION = "2.0"` 常量统一管理
+- `AcceptTermsRequest` Pydantic schema
+- `UserPayload` 扩展 3 个字段
+
+M2.5-C 前端：
+- 新建 `frontend/src/components/terms/terms-gate.tsx` — 全屏不可关闭 modal（z-[9999]），含两个必选勾选框（18+ 确认 + 同意协议）、i18n 双语支持（`t.rich` 渲染 Terms/Privacy 链接）、调用 `acceptTerms("2.0")` 成功后关闭
+- 新建 `frontend/src/lib/api/browser.ts` 中 `acceptTerms()` 函数
+- 改造 `frontend/src/components/app/sidebar.tsx` — `useMe()` hook 扩展返回 `showTermsGate` 布尔值（`terms_version !== "2.0"` 且 `me !== null`），JSX 挂载 `<TermsGate open={showTermsGate} />`
+- i18n：`auth` 段新增 5 个 key（termsGateTitle / termsGateSubtitle / termsGateDescription / termsGateSubmit / termsGateSubmitting），en + zh 双语言
+
+Bug 修复（部署后）：
+- 遗漏 `backend_api/app/services/i18n.py` 导致 API 全部 502，补提交后恢复正常
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 | 具体工作 |
+|------|------|---------|
+| 前端开发 | 4h | TermsGate 组件、Sidebar useMe 改造、acceptTerms API、i18n key 定义、en/zh 文案 |
+| 后端开发 | 3h | accept-terms 端点、GET /me 扩展、UserPayload/AcceptTermsRequest schema、i18n.py 服务层 |
+| 产品经理 | 0.5h | 需求验收标准定义 |
+
+---
+
+### 新功能：V4-出海 M2.5-D CookieBanner + 上传页数据告知 + M2.4-A Privacy 合规条款 + M2.4-B Terms 合规条款
+
+- **工作量**: M（新组件 2 + i18n 文案双侧 + 4 页面改动 + inline parser 提取，约 0.8 人天）
+- **状态**: ✅ 全部完成 + tsc 通过 + 本地 Playwright E2E 验收通过 + 待 push develop
+
+**需求描述**：
+V4 出海合规三项收尾任务：
+- **M2.5-D**：首次访问 Cookie 同意横幅（底部固定栏 + localStorage 持久化，Accept 后刷新不再出现）+ 上传页数据匿名化告知小字
+- **M2.4-A**：Privacy Policy 补全 6 项合规条款（EU/EEA Exclusion、Amazon Disclaimer、AI Training Data、Governing Law、Dispute Resolution、Age 18+ & AI Transparency），从 11 sections → 17 sections
+- **M2.4-B**：Terms of Service 补全 4 项合规条款（Age Restriction 18+、Prohibited Use Cases、Governing Law & Arbitration、Amazon Trademark Disclaimer），从 10 sections → 14 sections
+
+**实现内容**（8 文件）：
+1. 新建 `frontend/src/components/CookieBanner.tsx` — 底部固定横幅（`fixed bottom-0`），首次访问 `localStorage` 检查后显示，Accept 写入 `cookie_consent=true` 并消失，i18n 双语支持
+2. 新建 `frontend/src/lib/render-inline.tsx` — 从 `legal-article.tsx` 提取出的共享内联富文本解析器（支持 `<b>` / `<mail>` / `<link href>` / `<ext href>` 标签）
+3. 改造 `frontend/src/app/layout.tsx` — `<NextIntlClientProvider>` 内挂载 `<CookieBanner />`
+4. 改造 `frontend/src/components/upload/upload-form.tsx` — 上传区域下方添加数据告知小字："您上传的评论将在分析前进行匿名化处理。我们不存储个人身份信息。详见我们的 [隐私政策]"
+5. 更新 `frontend/messages/en.json` — +cookieBanner（text + accept）+ upload.uploadNotice + legal.privacy 6 新 sections + legal.terms 4 新 sections
+6. 更新 `frontend/messages/zh.json` — 同上中文翻译
+7. 更新 `PROGRESS_V2.md` — M2 进度 65%→~80%（2.4 合规条款✅ / 2.5 全部✅）
+
+**技术细节**：
+- `next-intl`（use-intl）内置消息解析器拒绝自定义 XML 标签（如 `<link href="...">`），导致 `t("text")` 抛出 `INVALID_TAG` 错误并回退显示 key 名
+- 解决方案：使用 `useMessages()` 获取原始 JSON 字符串绕过 use-intl 解析器，再传递给 `renderInline()` 处理富文本标签
+- 该模式与 `LegalArticle` 组件一致（直接读取 messages 而非通过 useTranslations）
+
+**验收结果**（本地 Playwright E2E，2026-07-13）：
+- CookieBanner 首次显示 ✅ | Accept 消失 ✅ | 刷新后不出现 ✅
+- /privacy：17 sections ✅（十二~十七为新增合规条款）
+- /terms：14 sections ✅（十一~十四为新增合规条款）
+- 上传页数据告知小字 + 隐私政策链接 ✅
+- 零控制台错误 ✅
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 | 具体工作 |
+|------|------|---------|
+| 前端开发 | 3h | CookieBanner 组件、render-inline 提取、layout 挂载、upload-form 数据告知、i18n key 定义 |
+| 产品经理 | 0.5h | 合规文案审阅（Privacy 6 + Terms 4 sections 双语） |
+| QA | 0.5h | Playwright E2E 本地验收（4 项全部通过） |
+
+---
+
+## 2026-07-09
+
+### Bug 修复：Paddle 支付 6 项根因系统性修复（含 PADDLE_CLIENT_TOKEN 命名兼容）
+
+- **工作量**: M（11 文件跨前后端 + 4 commit 分阶段落地 + 2 轮部署验证，约 1.2 人天）
+- **状态**: ✅ 全部修复 + tsc/ruff 通过 + 4 commit push develop + Erika 部署 + Prod Playwright MCP 端到端验证 Paddle overlay 正常拉起
+
+**需求描述**：
+生产环境 Paddle 支付链路存在 6 个根因导致用户无法完成升级付费：
+- R1：前端部署过旧导致升级弹窗显示裸 i18n key
+- R2：后端 `createBillingCheckout` 硬编码 tier，所有套餐按钮都拉起 Pro Monthly
+- R3：`billing.ts` 未检查 `configured` 字段就注入 HTML，未配置时静默失败
+- R4：5 个 CTA catch 处理器不一致，部分静默吞错无用户反馈
+- R5：env var 命名不匹配 — ECS 使用 `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`，后端读的是 `PADDLE_CLIENT_TOKEN`
+- R6：`quota-dialog.tsx` 手写 fetch 绕过 billing helper，与其他入口行为不一致
+
+**实现内容**（11 文件，4 commit）：
+1. `e749a05`（R1）：修复 products 页面标题双重 ClueAI 和升级弹窗翻译 key 不匹配
+2. `690413e` / `48f08de` / `deb763c`（R2-R4 + R6）：
+   - `review_analyzer/paddle_billing.py`：新增 6 个 price_id 常量 + `_resolve_price_id(plan_key, period)` 映射 + `get_checkout_html()` 接受 plan_key/period 参数
+   - `backend_api/app/schemas/settings.py` + `routes/settings.py`：BillingCheckoutPayload 新增 plan_key/period 字段
+   - `frontend/src/lib/billing.ts`：`openBillingCheckout` 检查 `configured` → false 返回 `{ok:false}` → true 但无 html 返回 `{hasHtml:false}`
+   - `frontend/src/lib/api/browser.ts`：`createBillingCheckout` 接受并转发 plan_key/period
+   - 6 个入口统一走 `openBillingCheckout`：pricing-content.tsx / pro-cta-button.tsx / billing-panel.tsx / upgrade-pricing-dialog.tsx / quota-dialog.tsx（从手写 fetch 迁移）/ register-form.tsx（解析 ?period= 参数）
+3. `1611000`（R5）：`paddle_billing.py` 新增 `os.environ.get("PADDLE_CLIENT_TOKEN") or os.environ.get("NEXT_PUBLIC_PADDLE_CLIENT_TOKEN") or ""` fallback（同时对 `PADDLE_ENVIRONMENT`/`NEXT_PUBLIC_PADDLE_ENV` 做同样兼容）
+
+**涉及岗位及工时**：
+- 后端开发（0.4 人天）：paddle_billing.py 重构 + settings schema/route 扩展 + env var 兼容
+- 前端开发（0.6 人天）：billing helper 重构 + 6 入口统一 + register 闭环 + pricing 错误状态
+- QA（0.2 人天）：2 轮 Playwright MCP 端到端验证（configured 检查 + Paddle overlay 拉起 + price_id 正确性）
+
+**验证结果**（Prod，2026-07-09 部署后 Playwright MCP + 惜_clueai/test123456）：
+- `POST /api/billing/checkout` → `configured: true` ✅
+- `checkout_html` 含有效 `Paddle.Initialize({ token: "live_..." })` ✅
+- Starter Monthly → price_id `pri_01kwxwtav7n1vy5vc906v0ywnr` 正确解析 ✅
+- Paddle overlay iframe 完整弹出：订单概览 / US$12.00 / 邮箱预填 / 国家选择 / 继续按钮 ✅
+- 无 console 错误 ✅
+
+---
+
+### V4-出海-M2.2 全站 i18n Commit 4/4：auth + edge cases
+
+- **工作量**: S（3 page + 1 component 重构 + messages 双侧 +13 key，约 0.3 人天）
+- **状态**: ✅ 已实现 + 本地 tsc 通过 + push develop（commit `e5a1d42`）+ Erika 部署上线 + Prod Playwright MCP 双 locale 验证通过
+
+**需求描述**：
+V4 出海 beta 全站 i18n 第 4 批（最后一批）。auth-layout.tsx 是 auth 模块共用的左半区品牌展示组件，左侧包含 SVG 图（3 个中文注释保留）+ 趋势标签 + 底部价值主张文案，共 7 个硬编码中文字符串；login / register / forgot-password 三个页面的 metadata（`<title>` / `<meta name="description">`）原本是静态 `export const metadata`，无法随 locale 切换。
+
+**实现内容**：
+1. [auth-layout.tsx](frontend/src/components/auth/auth-layout.tsx)：`AuthShowcase()` 内联组件 5 个字符串（`showcaseTitle` / `showcaseLive` / `showcasePositive` / `showcaseNegative` / `showcaseActions`）+ `AuthLayout()` 2 个字符串（`showcaseHeading` / `showcaseBody`）→ `t()`；3 个 SVG 注释保留中文
+2. [login/page.tsx](frontend/src/app/login/page.tsx) / [register/page.tsx](frontend/src/app/register/page.tsx) / [forgot-password/page.tsx](frontend/src/app/forgot-password/page.tsx)：`export const metadata = buildNoIndexMetadata({title: "登录"})` → `export async function generateMetadata()` + `await getTranslations("auth")`
+3. [frontend/messages/{en,zh}.json](frontend/messages/en.json)：auth namespace 各新增 13 个 key（showcase* × 7 + *MetaTitle × 3 + *MetaDescription × 3），双侧 54 key 完全对齐
+4. Edge case sweep：`grep -rn` 扫 `components/auth/` + `app/{login,register,forgot-password}/`，零中文遗漏
+
+**涉及岗位及工时**：
+- 前端开发（0.3 人天）：1 component + 3 page metadata 动态化 + messages 补齐 + edge sweep
+
+**验证结果**（Prod Playwright MCP，惜_clueai/test123456）：
+- EN locale（cookie `NEXT_LOCALE=en`）：
+  - Login page title: `Log In | ClueAI` ✅ | Showcase: `Review Trend Analysis / Live / Positive trending up / Negative trending down / Improvements` ✅ | Heading: `Review insights drive product iteration` ✅
+  - Register page title: `Sign Up | ClueAI` ✅
+  - Forgot password page title: `Reset Password | ClueAI` ✅
+- ZH locale（cookie `NEXT_LOCALE=zh`）：
+  - Login page title: `登录 | ClueAI` ✅ | Showcase: `评论趋势分析 / 实时更新 / 好评上升 / 差评下降 / 改进措施` ✅ | Heading: `评论洞察驱动产品迭代` ✅
+  - Forgot password page: `找回密码 | ClueAI` ✅ | Content: `重置密码 / 输入注册邮箱，我们将发送重置链接` ✅
+- 三页 showcase 组件共用 auth-layout，EN/ZH 切换全部字符串正确 ✅
+
+---
+
 ## 2026-07-08
+
+### V4-出海-M2.2 全站 i18n Commit 1/4：analysis 模块
+
+- **工作量**: M（23 文件重构 + 2 messages 双侧新增 ~258 key，约 0.8 人天）
+- **状态**: ✅ 已实现 + 本地 tsc 通过 + push develop（commit `ee940b4` + fix `6cd4263`）+ Erika 部署上线 + Prod Playwright MCP 双 locale 验证通过
+
+**需求描述**：
+V4 出海 beta 全站硬编码中文提取到 `useTranslations()` 的第一步。全量分 4 个 commit 落地（analysis / settings + upload / marketing + credit / auth + edge），本次是第 1 批 —— 分析结果页 / 对比页 / 历史页 / 行动项面板等 23 个文件。核心难点是 `create-action-panel.tsx` + `inline-action-button.tsx` 的 `owner_role` 字段：后端 `workers/jobs.py` 默认存中文 `"运营"`，`action_advisor.get_dept_label` 也返回中文，前端如果直接把 value 改成英文 slug 会破坏混合语言环境下的聚合/查询逻辑（完整迁移到 slug 是独立任务，等 backend migration 后跟 M2.3 一起做）。
+
+**实现内容**：
+1. [frontend/messages/{zh,en}.json](frontend/messages/en.json)：双侧各新增 ~258 行 key（`analysis.polling` / `compare` / `action` / `session` / `qa` / `filterBar` / `productSearch` / `history` 命名空间 + `common.*` 扩展）
+2. `frontend/src/app/analysis/{compare,history,results}/page.tsx`：3 个 page 全部接入 `useTranslations`
+3. `frontend/src/components/analysis/*.tsx`：17 个组件重构（polling / results-sections / compare-* / action / session / qa-* / module-card / product-search / filter-bar）
+4. **API 契约保留模式**（关键）：[create-action-panel.tsx](frontend/src/components/analysis/create-action-panel.tsx) + [inline-action-button.tsx](frontend/src/components/analysis/inline-action-button.tsx) 的 `OWNER_ROLES` 常量改造为 `{ value: "运营", labelKey: "ownerOps" }` 格式：
+   - state 存中文 value（`useState<string>(OWNER_ROLES[0].value)`）
+   - 提交时 payload `ownerRole: ownerRole`（仍是中文，后端契约不变）
+   - UI 渲染 `<option>{t(item.labelKey)}</option>` / `variant={ownerRole === role.value ? "default" : "outline"}`（i18n key 走 `ownerOps` / `ownerProduct` / `ownerQA` / `ownerReview`）
+5. 分两次 commit：`ee940b4` 主体重构 + `6cd4263` owner_role 契约修复补丁
+
+**涉及岗位及工时**：
+- 前端开发（0.6 人天）：23 文件 tsx 重构 + messages 双侧 key 补齐 + owner_role API 契约保留改造
+- 翻译校对（0.1 人天）：258 key 的英文文案对齐
+- QA（0.1 人天）：Playwright MCP 双 locale E2E（`/analysis/history` + `/analysis/results?session_id=92`）
+
+**风险与验证**：
+- **零后端/DB/环境变量变更** — 纯前端 + i18n messages 文件，无 migration
+- **验证方式**（Prod，2026-07-08 部署后 Playwright MCP + 惜_clueai/test123456 登录 https://www.clueai-reviewlens.com）：
+  - `/analysis/history` — 中→英切换后头部（`分析历史`→`Analysis history`）、表头（`批次标题/版本/时间/评论/操作`→`Batch title/Version/Time/Reviews/Actions`）、操作按钮（`看结果/对比/删除`→`View results/Compare/Delete`）全部 i18n ✅
+  - `/analysis/results?session_id=92` — 7 个 tab（User Profile / User Experience / Buying Motives / Unmet Needs / Recommendations / Create Action / Raw Reviews）+ 5 个 stat 卡（Total Reviews / Positive Rate / Negative Rate / Rating / Purpose）+ 6 个 section header + Create Action 面板（Choose issue / Action title / Owner role / Expected review date / Expected effect batch / Suggested action / Create action）+ Translate/XLSX buttons 全部 i18n ✅
+  - Owner role 下拉打开菜单显示 `Ops / PM/R&D / QA / Review`（英文标签），但内部 state 保留中文 value ✅
+- **已知遗留**：
+  - 表格数据里残余的 `日常评论分析 | N条` 是 backend session_label（后端存储字段），在 M2.3 独立任务范围内
+  - Commit 2 (settings + upload) / Commit 3 (marketing + credit) / Commit 4 (auth + edge) 仍在做，分别在新会话续做（stash@{0} 里有 Commit 2 半成品，`push-settings-panel.tsx` / `smart-push-settings.tsx` / `golden-set/page.tsx` 三处仍有残余中文需补齐）
+  - 3 个法律页 metadata（terms/privacy/refund）的 `export const metadata` 无法用 `useTranslations`（Next.js metadata 静态限制），随 M2.3 独立任务处理；11 个 `categoryLabels` 已在 2.2.C 迁移完成
+
+---
 
 ### Bug 修复：Credit History drawer 被 Workspace 页面盖住
 
@@ -221,6 +579,56 @@ M6 引入 Starter 档时，`review_analyzer/quota.py::PLAN_LIMITS` 每个维度�
 - 套餐额度组件 + workspace 页面正常 ✅
 
 **待确认**：升级时是否应立即将 balance 重置为 new_monthly_grant（"即时发放当月余额"）？当前实现只更新 monthly_grant，不动 balance。
+
+---
+
+### Bug 修复：Paddle checkout 点 "Get Pro" 错误跳 `/register?plan=pro`（M6 收尾付费路径 hotfix）
+
+- **工作量**: S（新建 1 helper + 4 入口 refactor + 注册闭环，约 0.5 人天）
+- **状态**: ✅ 已修复 + 本地 tsc 通过 + push develop（分支 `fix/paddle-checkout-401-redirect`，4 commit：`690413e` + `48f08de` + `deb763c` + C4）+ Erika 合入 develop 并部署上线 + Prod 登录场景验证通过
+
+**需求描述**：
+所有用户（**包括已登录的 free 用户**）点 Pro 套餐 "升级" / "Get Pro" 按钮时被直接跳到 `/register?plan=pro`，无法原地拉起 Paddle checkout overlay。付费主路径断裂，登录 free 用户从 Sidebar / Pricing / 落地页 / Settings 任一入口都无法完成升级。期望行为：
+- **已登录用户**（含 free）→ 原地拉起 Paddle overlay
+- **未登录用户** → 跳 `/register?plan=pro` → 注册成功后自动拉起 Paddle
+
+**根因**：
+`upgrade-pricing-dialog.tsx` / `pricing-content.tsx` / `pro-cta-button.tsx` / `billing-panel.tsx` 4 个 Pro 入口的 free 分支硬编码 `<Link href="/register?plan=pro">`，跳过了 "先尝试拉起 Paddle → 401 才 fallback register" 的顺序判断；注册页也没有从 `?plan=xxx` 恢复购买意图的能力。
+
+**实现内容**（4 commit）：
+1. `690413e` — 新建 [frontend/src/lib/billing.ts](frontend/src/lib/billing.ts)（+69 行）：
+   - `openBillingCheckout(host?)` → 返回 `{ok, configured, hasHtml}`，封装 `createBillingCheckout` API → 注入 `checkout_html` → 遍历 `<script>` 用 `replaceWith` 触发 Paddle inline script 执行
+   - `isUnauthenticatedCheckoutError(err)` → 检查 `err.status === 401`
+2. `48f08de` — 核心修复（+65 / -53）：[upgrade-pricing-dialog.tsx](frontend/src/components/credit/upgrade-pricing-dialog.tsx) + [pricing-content.tsx](frontend/src/app/pricing/pricing-content.tsx)：
+   - 移除 "free 用户跳 `<Link href="/register">`" 分支
+   - 合并为统一 `handlePaidCheckout(planKey)`：先调 `openBillingCheckout` → 401 才 fallback 到 `/register?plan=xxx`
+   - 加 `<div ref={checkoutRef} className="hidden" aria-hidden="true" />` 挂 Paddle script
+3. `deb763c` — 注册闭环（+30 / -4）：
+   - [register/page.tsx](frontend/src/app/register/page.tsx) 包 `<Suspense fallback={null}>`（Next.js 15 `useSearchParams` 硬约束）
+   - [register-form.tsx](frontend/src/components/auth/register-form.tsx) `PAID_PLAN_KEYS = new Set(["starter", "pro"])` + 读 `searchParams.get("plan")` 记为 `intendedPlan`
+   - 注册成功后 `if (intendedPlan)` → `openBillingCheckout(null)` 自动拉起 Paddle
+   - 埋点：新增 `signup_checkout_intent` 事件；`signup_click` / `signup_complete` 附 `intended_plan`
+4. C4 — 落地页 + 设置页 refactor：[pro-cta-button.tsx](frontend/src/components/marketing/pro-cta-button.tsx) + [billing-panel.tsx](frontend/src/components/settings/billing-panel.tsx) 统一改走 `openBillingCheckout` helper，401 fallback 到 `/register?plan=pro`
+
+**涉及岗位及工时**：
+- 前端开发（0.4 人天）：billing helper 抽取 + 4 入口 refactor + register 闭环 + Suspense 兼容
+- QA（0.1 人天）：Playwright MCP 登录状态验证 + 网络面板核对 checkout 请求
+
+**风险与验证**：
+- **零后端/DB 变更** — 纯前端 helper 抽取 + 入口 refactor；无 migration；`/api/billing/checkout` 端点未动
+- **Prod 验证结果**（2026-07-08 惜_clueai / test123456 登录 https://www.clueai-reviewlens.com）：
+  - ✅ Pricing 页 Pro 卡片渲染为 `<button "Get Pro">`（旧代码是 `<Link>`），证明 develop 已合入并部署成功
+  - ✅ 点 Get Pro 不再跳 `/register?plan=pro`
+  - ✅ `POST /api/billing/checkout` 返回 200，`checkout_html` 下发
+  - ✅ billing helper 成功注入 script 并触发 Paddle inline JS 执行
+- **独立发现问题**（非本次 PR 范围，pre-existing 配置缺失）：
+  - Paddle SDK 控制台报 `Uncaught Error: [PADDLE BILLING] You must specify your Paddle Seller ID or token within the Paddle.Initialize() method.`
+  - 后端返回体 `checkout_html` 里 `Paddle.Initialize({ token: "" })`，同时 `"configured": false`
+  - 根因：prod 环境 `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`（或后端对应变量）为空，`deploy/.env` 需补配置
+  - 该问题独立开任务处理，本次不修改 `deploy/.env`
+- **待补验证**：
+  - ⏸ workspace 顶栏 Upgrade 按钮预期行为（打开 dialog 还是跳 `/pricing`）—— 待 Erika 确认后补
+  - ⏸ 未登录场景闭环：清 cookie → `/pricing` 点 Get Pro → 应跳 `/register?plan=pro` → 注册成功应自动拉起 Paddle（受 token 配置阻塞，只能观察到 "尝试拉起 → SDK 报 seller ID 错误" 行为）
 
 ---
 
@@ -1303,3 +1711,190 @@ M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 X
 | 岗位 | 工时 |
 |------|------|
 | 后端开发 | 0.2h |
+
+---
+
+## 2026-07-09
+
+### V4-出海-M2.2 Commit 2/4: settings + upload 模块 i18n 重构
+
+- **工作量**: L
+- **状态**: 完成
+
+**需求描述**：
+全站 i18n 第 2/4 批次：settings 模块（7 个子命名空间：billing/account/push/goldenSet/observability/layout/common）+ upload 模块（3 个子命名空间：page/asinFetch/asinWatchlist）全量接入 next-intl `useTranslations`/`getTranslations`。messages zh/en 各 +598 行，zh/en 100% key 对齐。
+
+**实现要点**：
+1. 11 个 tsx 文件接入：billing-panel/push-settings-panel/account/golden-set/observability/push/push-layout/asin-fetch-panel/asin-watchlist-panel/upload-page
+2. push-settings-panel.tsx 移除硬编码 DEPT_LABELS/FREQUENCY_OPTIONS/DAY_OPTIONS/PLATFORM_OPTIONS/PLATFORM_META，改为静态 key 数组 + runtime `t()` 查找
+3. asin-fetch-panel.tsx VALIDATION 表 hint/placeholder 改 i18n key 引用
+4. asin-watchlist-panel.tsx relativeTime() 重写为 ICU message format
+5. 删除 2 个死代码文件（settings-panel.tsx + smart-push-settings.tsx，合计 -622 行）
+6. billing-panel.tsx rebase 冲突解决（origin/develop 已将 createBillingCheckout 重构为 openBillingCheckout）
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 |
+|------|------|
+| 前端开发 | 4h |
+| 代码审查 | 0.5h |
+
+---
+
+### V4-出海-M2.2 Commit 3/4: marketing + products + credit 模块 i18n 重构
+
+- **工作量**: L
+- **状态**: ✅ 已实现 + 本地 tsc/build 通过 + push develop（commit `d30cc0d`）+ Erika 部署上线 + Prod Playwright MCP 双 locale 验证通过
+
+**需求描述**：
+全站 i18n 第 3/4 批次：marketing 模块（pricing-faq/trust-signal/pro-cta-button 3 组件）+ credit 模块（credit-ledger-drawer/sidebar-credit-entry/upgrade-pricing-dialog 3 组件）+ products 模块（page/[id]/grid/create/edit/delete/deleteVariant 9 文件）全量接入 next-intl `useTranslations`/`getTranslations`。messages zh/en 各 +220 行（~250 key），zh/en 100% key 对齐。
+
+**实现要点**：
+1. **Marketing**：pricing-faq.tsx 6 组 Q&A 全部 i18n；trust-signal.tsx "已支持主流跨境电商平台" → `t("label")`；pro-cta-button.tsx "升级到 Pro"/"处理中..." → `t("defaultLabel")`/`t("loading")`
+2. **Credit**：credit-ledger-drawer.tsx 移除 `REASON_LABEL` 常量 map，动态 `t("reasonLabel.${reason}")`；sidebar-credit-entry.tsx Credits/试用天数/Upgrade 全双语；upgrade-pricing-dialog.tsx **大重构**：移除所有硬编码中文（`PLAN_NAME_CN`/`PLAN_HIGHLIGHTS`/`COMPARISON_GROUPS`），改为 key-based 结构 + `resolveComparisonValue()` helper（boolean→icons/numeric→as-is/string→`t("comparisonValue.${value}")`），plan highlights 数组 flatten 为独立 key（next-intl v4 不支持数组）
+3. **Products**：server component `generateMetadata()` + page body 走 `await getTranslations()`；client component grid 传 `t` prop（含 ICU interpolation 类型适配）；create/edit/delete/deleteVariant 全部 i18n；lifecycle options 走 `lifecycleKeys` mapping；platform "其他" 用 `t("platformOther")` value="其他" 保持向后兼容
+
+**涉及岗位及工时**：
+
+| 岗位 | 工时 |
+|------|------|
+| 前端开发 | 5h |
+| 翻译校对 | 0.3h |
+| QA（Playwright MCP 双 locale E2E） | 0.5h |
+
+**验证结论**（2026-07-09 Prod Playwright MCP + 惜_clueai/test123456）：
+- ✅ EN locale：Products list/detail/delete 全英文；Pricing FAQ 6 Q&A 英文；Upgrade dialog plan 名/对比表/功能行全英文
+- ✅ ZH locale：全部切换中文正确（产品管理/新建产品/积分/升级套餐/功能对比/月付/年付/最受欢迎）
+- ✅ 双 locale cookie 持久化正常；EN→ZH→EN 切换无 key 缺失
+
+**已知遗留**：
+- Pricing 页主体（pricing-content.tsx）不在 Commit 3 范围，仍为英文
+- Page title 双重 `| ClueAI | ClueAI` pre-existing bug
+- Upgrade dialog close 按钮未走 i18n（Radix 默认 aria-label）
+- Commit 4/4（auth + edge cases）待做
+
+---
+
+## 2026-07-09
+
+### 付费转化 bug 深度修复（Paddle tier × CTA 错误处理统一）
+
+- **工作量**：~3.5h（含深度根因分析 + 后端 tier 解析 + 前端 5 CTA 统一 + 线上 Playwright 验证）
+- **需求描述**：
+  - 修复 6 项根因（R1~R6），覆盖 Paddle 升级弹窗裸 i18n key、tier 硬编码导致全部拉起 Pro Monthly、5 处 CTA 点击无反应等线上付费转化阻断问题
+  - 后端新增 plan_key/period 入参 + 6 路 price_id 解析；前端 billing.ts 新增 configured 前置检查 + 5 CTA 统一错误处理
+  - 关联 Jul 8 的 bcfa655/deb763c/48f08de/690413e 四个 commit（CTA 统一 + i18n，但未部署导致 prod bug）
+  - Step 0 前置：Erika 手动补齐 5 个 price_id 到 deploy/.env 和本地 .env
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 后端开发（Python/FastAPI） | 0.8h |
+  | 前端开发（Next.js/React） | 1.5h |
+  | QA（Playwright MCP 线上 E2E） | 0.7h |
+  | 文档更新 | 0.5h |
+
+**验证结论**（2026-07-09 Prod Playwright MCP）：
+- ✅ plan_key/period 正确透传（Starter Monthly / Pro Annual / Pro Monthly 三组验证通过）
+- ✅ 后端 6 路 price_id 解析正确（每种 tier×period 返回不同 priceId）
+- ✅ !configured 错误信息 "Payment not enabled yet." 正常显示（不再沉默无反应）
+- ✅ 零 JavaScript console 错误
+- ⚠️ 生产 deploy/.env 缺少 PADDLE_CLIENT_TOKEN，所有 tier 的 Paddle overlay 无法拉起（需 Erika 补齐此 env var）
+
+**变更文件（11 个）**：
+- 后端：`settings.py`（route+schema）、`paddle_billing.py`
+- 前端 lib：`billing.ts`、`browser.ts`
+- 前端组件：`pro-cta-button.tsx`、`pricing-content.tsx`、`billing-panel.tsx`、`upgrade-pricing-dialog.tsx`、`quota-dialog.tsx`、`register-form.tsx`
+
+## 2026-07-13
+
+### V4-出海-M2.5-A：注册表单合规改造（3 勾选框 + 后端写入）
+
+- **工作量**：~2h（前端 register-form.tsx + i18n 双语文案 + 后端 schema/route/database 4 文件）
+- **需求描述**：
+  - 注册表单 password 字段下方新增 3 个 checkbox："我已年满 18 周岁"（必选）、"我同意服务条款和隐私政策"（必选+内联 Link，`t.rich` 渲染）、"向我发送产品更新"（可选）
+  - 后端 `RegisterRequest` 新增 `terms_version` / `age_confirmed` / `marketing_opt_in` 三字段
+  - `create_user()` 扩展签名支持合规字段 INSERT（locale=默认 en-US, terms_accepted_at=now, age_confirmed_at=now, marketing_opt_in 按需）
+  - `register()` 增加 age_confirmed 后端二次校验（False → 400）
+  - 不涉及 terms-gate / CookieBanner / 法律页面内容（后续 M2.5-B/C/D）
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 后端开发（Python/FastAPI） | 0.5h |
+  | 前端开发（Next.js/React/next-intl） | 1.0h |
+  | i18n 翻译 | 0.3h |
+  | 文档更新 | 0.2h |
+
+**变更文件（7 个）**：
+- 后端：`backend_api/app/schemas/auth.py`、`backend_api/app/routes/auth.py`、`review_analyzer/database.py`
+- 前端：`frontend/src/components/auth/register-form.tsx`、`frontend/messages/en.json`、`frontend/messages/zh.json`
+- 进度追踪：`PROGRESS_V2.md`（M2.5 节勾选完成项）
+
+## 2026-07-14
+
+### Chrome 插件 Step 12：MutationObserver 分页处理
+
+- **工作量**：~1.5h（inject.js 分页监听 + content.js 消息桥接 + background.js handler）
+- **需求描述**：
+  - `inject.js` 新增 `allReviews[]` 和 `seenIds Set` 实现跨页累积去重；MutationObserver 监听 `#cm_cr-review_list`（`childList + subtree`），防抖 500ms 后触发提取，通过 `window.postMessage({ type: 'REVIEWLENS_NEW_REVIEWS', count, total })` 通知 content.js；页面加载后 1s 自动启动初始提取 + Observer
+  - `content.js` 新增 `window.addEventListener('message')` 监听 `REVIEWLENS_NEW_REVIEWS`，收到后转发 `EXTRACT_REVIEWS_RESULT` 到 background.js
+  - `background.js` 新增 `EXTRACT_REVIEWS_RESULT` handler，记录每个 tab 的 `reviewCount` + `lastExtraction`
+  - 数据流：Amazon AJAX 翻页 → MutationObserver(MAIN world) → postMessage → content.js(ISOLATED world) → chrome.runtime.sendMessage → background.js
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 前端/插件开发（JS） | 1.2h |
+  | 文档更新 | 0.3h |
+
+**变更文件（3 个）**：
+- `chrome-extension/inject.js`（+71 行：allReviews/seenIds/MutationObserver/handleNewDOM/startObserver）
+- `chrome-extension/content.js`（+36 行：REVIEWLENS_NEW_REVIEWS 监听 + 转发）
+- `chrome-extension/background.js`（+22 行：EXTRACT_REVIEWS_RESULT handler）
+
+### Chrome 插件 Step 14-2：反爬限流 + CAPTCHA 检测 + 连续零结果追踪
+
+- **工作量**：~2.0h（background.js 限流 + content.js CAPTCHA 检测 + popup 三种反爬 UI + CSS）
+- **需求描述**：
+  - `background.js`: 新增 `MIN_SCRAPE_INTERVAL_MS=3000` 频率限流（同 tab 间隔 < 3s 返回 `throttled`），抓取前先 `DETECT_CAPTCHA` 预检，记录 `tabLastScrapeTime`/`tabConsecutiveZeros`（连续 3 次 0 条触发警告）
+  - `content.js`: 新增 `detectCaptcha()` 检测 7 项 DOM 指标（title/form/img/body text），≥2 匹配即判定 CAPTCHA 页面；`extractReviews()` 优先检查 CAPTCHA；新增 `DETECT_CAPTCHA` 消息处理器
+  - `popup.js`: 三种反爬 UI 提示（🛑 CAPTCHA 红色禁用/⏳ 频率限制黄色倒计时/⚠️ 连续零结果黄色警告）；`skipUIRestore` 标志位防止 finally 块覆盖倒计时状态
+  - `popup.html + popup.css`: 新增 `#antiCrawlSection` 区块及三种样式
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 插件开发（JS/CSS/HTML） | 1.8h |
+  | 文档更新 | 0.2h |
+
+**变更文件（5 个）**：
+- `chrome-extension/background.js`（+98 行：MIN_SCRAPE_INTERVAL_MS/限流/CAPTCHA 预检/zeros 追踪/GET_SCRAPE_STATUS 扩展/cleanup 扩展）
+- `chrome-extension/content.js`（+55 行：detectCaptcha/DETECT_CAPTCHA handler/extractReviews CAPTCHA 优先检查）
+- `chrome-extension/popup.js`（+108 行：showAntiCrawlUI/hideAntiCrawlUI/startThrottleCountdown/GET_SCRAPE_STATUS 处理/初始化限流检测）
+- `chrome-extension/popup.html`（+10 行：#antiCrawlSection 区块）
+- `chrome-extension/popup.css`（+68 行：.anticrawl-* 全套样式）
+
+### Step 14-4: Woot/Amazon 数据一致性验证 + Parser 修复
+
+- **工作量**：~1.0h（Woot API 交叉验证 + helpful_count 缺失修复 + 文档）
+- **需求描述**：
+  - 对 Woot API (`/review/Reviews/{asin}`) 和 Chrome Extension Amazon DOM 解析器进行跨平台字段交叉验证
+  - 验证标的：ASIN B08BX7FV5L（Amazon Fire HD 10 2021），Woot API 返回 10 条评论
+  - 交叉验证 4 个核心字段：
+    | 字段 | Woot API | 扩展 (Amazon DOM) | 一致性 |
+    |------|---------|-------------------|--------|
+    | Rating | `OverallRating` int (1-5) | 文本解析 "X.X out of 5 stars" → float | ✅ 一致 |
+    | Date (ISO) | `OriginDescription` → strptime | 同一格式 → `new Date()`+regex | ✅ 一致 |
+    | Helpful Count | `HelpfulVotes` int | DOM 文本解析 "X people found..." | ❌ **Woot 后端未映射** |
+    | Verified | `IsVerifiedPurchase` bool | DOM 元素检测 | ✅ 一致 |
+  - 额外发现：`SubmissionDate` 始终为 `/Date(0)/`（不可用）、`Id` 始终为 null、`MediaUrls` 始终为空数组
+  - 对 B09BG5L7WW / B0CRY8L7HZ 测试返回 404，确认 Woot API 仅覆盖部分 ASIN
+  - 修复：`woot_scraper.py:_parse_woot_review` 新增 `helpful_count`（从 `HelpfulVotes`）和 `image_urls`（从 `ImageUrls`）映射
+  - 补充模块 docstring 数据质量说明
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 后端开发（Python） | 0.3h |
+  | 数据验证（Playwright MCP + WebFetch） | 0.5h |
+  | 文档更新（TEST_LOG + CHANGELOG） | 0.2h |
+
+**变更文件（2 个）**：
+- `backend_api/app/services/woot_scraper.py`（+22 行：helpful_count/image_urls 映射 + docstring 数据质量说明）
+- `TEST_LOG.md`（+1 行修复记录）
