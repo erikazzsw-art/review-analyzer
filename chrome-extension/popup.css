@@ -312,6 +312,11 @@ body {
   font-weight: 500;
 }
 
+.action-hint--warning {
+  color: #d97706;
+  font-weight: 500;
+}
+
 /* ── Progress Section (Step 13) ── */
 .progress-section {
   display: flex;

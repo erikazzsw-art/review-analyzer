@@ -221,6 +221,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
           scrapeBtn.disabled = false;
         }
+
+        // Fix #3: Storage quota exceeded — override hint with visible warning
+        if (result.storage_error) {
+          actionHint.textContent = t('storage_quota_warning');
+          actionHint.className = 'action-hint action-hint--warning';
+        }
       } else {
         actionHint.textContent = t('scrape_failed', { msg: result.error || t('err_unknown') });
         actionHint.className = 'action-hint action-hint--muted';

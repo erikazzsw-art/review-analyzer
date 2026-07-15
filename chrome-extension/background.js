@@ -10,6 +10,9 @@
  *
  * Fix 2026-07-15: Use chrome.storage.session to survive service worker restarts.
  *                 Add sendMessageWithTimeout() to prevent hung Promise on dead tabs.
+ * Fix #3 #4 #5 (2026-07-15): saveTabReviews propagates quota errors (#3),
+ *                 per-tab serialisation lock prevents lost updates (#4),
+ *                 anti-crawl state (lastScrapeTime, consecutiveZeros) persisted (#5).
  */
 
 // ── Step 15: Marketplace TLD → code mapping ──
@@ -68,18 +71,13 @@ function detectMarketplace(url) {
   return 'us'; // default
 }
 
-// ── In-memory caches (will be lost on SW restart; use storage for durables) ──
-
-// Store the latest page info reported by content scripts, keyed by tabId
+// ── In-memory cache (lost on SW restart; non-critical page info) ──
 const tabPageInfo = new Map();
 
 // ── Step 14-2: Anti-crawl rate limiting ──
 /** Minimum interval (ms) between two scrapes on the same tab */
 const MIN_SCRAPE_INTERVAL_MS = 3000;
-/** Timestamp of last scrape per tab */
-const tabLastScrapeTime = new Map();
-/** Consecutive zero-result scrape count per tab */
-const tabConsecutiveZeros = new Map();
+// Anti-crawl state (lastScrapeTime, consecutiveZeros) persisted via loadTabMeta/saveTabMeta (#5)
 
 // ── Fix 2026-07-15: Timeout wrapper for chrome.tabs.sendMessage ──
 /**
@@ -141,7 +139,10 @@ async function saveTabReviews(tabId, stored) {
     });
   } catch (err) {
     console.warn('[ReviewLens BG] Failed to persist tabReviews:', err);
+    // Fix #3: propagate quota / storage errors so popup can warn the user
+    return { ok: false, error: err?.message?.includes('QUOTA') ? 'quota_exceeded' : 'storage_error' };
   }
+  return { ok: true };
 }
 
 /**
@@ -150,6 +151,71 @@ async function saveTabReviews(tabId, stored) {
 async function deleteTabReviews(tabId) {
   try {
     await chrome.storage.session.remove(`tabReviews_${tabId}`);
+  } catch (_) { /* ignore */ }
+}
+
+// ── Fix #4 (2026-07-15): Per-tab serialisation lock ──
+// Prevents lost updates when read→mutate→write runs concurrently for the same tab.
+// The popup serialises scrapes via the isScraping flag, and STORE_REVIEWS is a
+// reserved handler with no callers today — so contention is nil in practice.
+// The lock is belt-and-suspenders for correctness under future concurrent use.
+const tabLocks = new Map();
+
+/**
+ * Serialise async operations on the same tab to prevent lost updates.
+ * @param {number} tabId
+ * @param {() => Promise<any>} fn
+ * @returns {Promise<any>} resolves with fn()'s return value
+ */
+async function withTabLock(tabId, fn) {
+  const prev = tabLocks.get(tabId) || Promise.resolve();
+  let release;
+  const next = new Promise(resolve => { release = resolve; });
+  tabLocks.set(tabId, next);
+  try {
+    await prev;
+    return await fn();
+  } finally {
+    release();
+  }
+}
+
+// ── Fix #5 (2026-07-15): Persist anti-crawl state to survive SW restarts ──
+// tabLastScrapeTime and tabConsecutiveZeros were in-memory Maps, lost on restart.
+// Now persisted in chrome.storage.session, same as tabReviews.
+
+/**
+ * Load anti-crawl metadata for a tab from storage.session.
+ * @returns {{ lastScrapeTime: number, consecutiveZeros: number }}
+ */
+async function loadTabMeta(tabId) {
+  try {
+    const key = `tabMeta_${tabId}`;
+    const result = await chrome.storage.session.get(key);
+    return result[key] || { lastScrapeTime: 0, consecutiveZeros: 0 };
+  } catch (_) {
+    return { lastScrapeTime: 0, consecutiveZeros: 0 };
+  }
+}
+
+/**
+ * Persist anti-crawl metadata for a tab to storage.session.
+ */
+async function saveTabMeta(tabId, meta) {
+  try {
+    const key = `tabMeta_${tabId}`;
+    await chrome.storage.session.set({ [key]: meta });
+  } catch (err) {
+    console.warn('[ReviewLens BG] Failed to persist tabMeta:', err);
+  }
+}
+
+/**
+ * Delete anti-crawl metadata for a tab from storage.session.
+ */
+async function deleteTabMeta(tabId) {
+  try {
+    await chrome.storage.session.remove(`tabMeta_${tabId}`);
   } catch (_) { /* ignore */ }
 }
 
@@ -246,6 +312,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // ── Step 13: Start scraping + accumulate reviews ──
     // Step 14-2: throttle + CAPTCHA + consecutive-zero tracking
+    // Fix #3 #4 #5 (2026-07-15): lock serialises, anti-crawl state persisted, quota errors propagated
     case 'START_SCRAPING': {
       (async () => {
         try {
@@ -258,19 +325,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
+          // ── Fix #4: Serialise the entire scrape flow per tab ──
+          const result = await withTabLock(tab.id, async () => {
+
+          // ── Fix #5: Load anti-crawl state from storage.session ──
+          const meta = await loadTabMeta(tab.id);
+
           // ── Step 14-2: Throttle check ──
           const now = Date.now();
-          const lastTime = tabLastScrapeTime.get(tab.id) || 0;
-          const elapsed = now - lastTime;
+          const elapsed = now - meta.lastScrapeTime;
           if (elapsed < MIN_SCRAPE_INTERVAL_MS) {
             const stored = await loadTabReviews(tab.id);
-            sendResponse({
+            return {
               success: false,
               throttled: true,
               wait_ms: MIN_SCRAPE_INTERVAL_MS - elapsed,
               total_reviews: stored?.reviews?.length || 0,
-            });
-            return;
+            };
           }
 
           // ── Step 14-2: Pre-check CAPTCHA before scraping ──
@@ -280,9 +351,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }, 5000);
             if (captchaCheck?.captcha_detected) {
               // Update last scrape time even for CAPTCHA (avoids hammering)
-              tabLastScrapeTime.set(tab.id, now);
+              meta.lastScrapeTime = now;
+              await saveTabMeta(tab.id, meta);
               const stored = await loadTabReviews(tab.id);
-              sendResponse({
+              return {
                 success: false,
                 captcha_detected: true,
                 total_reviews: stored?.reviews?.length || 0,
@@ -293,57 +365,52 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   degrade_detail:
                     'Amazon CAPTCHA / Robot Check 页面检测到验证码，无法自动抓取。',
                 },
-              });
-              return;
+              };
             }
           } catch (_) {
             // Content script may not be injected; proceed anyway
           }
 
           // Trigger extraction in content script (with timeout)
-          let result;
+          let extraction;
           try {
-            result = await sendMessageWithTimeout(tab.id, {
+            extraction = await sendMessageWithTimeout(tab.id, {
               type: 'EXTRACT_REVIEWS',
             }, 20000);
           } catch (timeoutErr) {
             console.warn('[ReviewLens BG] EXTRACT_REVIEWS timed out:', timeoutErr.message);
-            sendResponse({
+            return {
               success: false,
               error: 'content_script_timeout',
               error_message: '页面响应超时，请刷新页面后重试。',
-            });
-            return;
+            };
           }
 
-          // ── Step 14-2: Update last scrape time ──
-          tabLastScrapeTime.set(tab.id, Date.now());
-
-          // ── Step 14-2: Track consecutive zeros ──
-          const reviewCount = result?.reviews?.length || 0;
+          // ── Step 14-2: Update anti-crawl state (#5: to storage.session) ──
+          meta.lastScrapeTime = Date.now();
+          const reviewCount = extraction?.reviews?.length || 0;
           if (reviewCount === 0) {
-            const zeros = (tabConsecutiveZeros.get(tab.id) || 0) + 1;
-            tabConsecutiveZeros.set(tab.id, zeros);
+            meta.consecutiveZeros = (meta.consecutiveZeros || 0) + 1;
           } else {
-            tabConsecutiveZeros.set(tab.id, 0);
+            meta.consecutiveZeros = 0;
           }
-          const consecutiveZeros = tabConsecutiveZeros.get(tab.id) || 0;
+          await saveTabMeta(tab.id, meta);
 
           // Check for CAPTCHA in extraction result (fallback)
-          const captchaDetected = result?.stats?.captcha_detected || false;
+          const captchaInResult = extraction?.stats?.captcha_detected || false;
 
           // Accumulate reviews in persistent storage (dedup by review_id)
-          if (result && result.reviews && result.reviews.length > 0) {
+          if (extraction && extraction.reviews && extraction.reviews.length > 0) {
             const stored = (await loadTabReviews(tab.id)) || { reviews: [], seenIds: new Set() };
             let newCount = 0;
-            for (const review of result.reviews) {
+            for (const review of extraction.reviews) {
               if (!stored.seenIds.has(review.review_id)) {
                 stored.seenIds.add(review.review_id);
                 stored.reviews.push(review);
                 newCount++;
               }
             }
-            await saveTabReviews(tab.id, stored);
+            const saveResult = await saveTabReviews(tab.id, stored);
 
             // Update page info with review count
             const pageInfo = tabPageInfo.get(tab.id) || {};
@@ -354,15 +421,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             });
 
             // Step 14-1: store degradation info so popup can show it proactively
-            if (result?.stats?.degraded) {
+            if (extraction?.stats?.degraded) {
               const pageInfo2 = tabPageInfo.get(tab.id) || {};
               tabPageInfo.set(tab.id, {
                 ...pageInfo2,
                 degradation: {
                   degraded: true,
-                  degrade_reason: result.stats.degrade_reason,
-                  degrade_detail: result.stats.degrade_detail,
-                  page_type: result.stats.page_type,
+                  degrade_reason: extraction.stats.degrade_reason,
+                  degrade_detail: extraction.stats.degrade_detail,
+                  page_type: extraction.stats.page_type,
                   timestamp: Date.now(),
                 },
               });
@@ -374,40 +441,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               }
             }
 
-            sendResponse({
+            return {
               success: true,
               new_reviews: newCount,
               total_reviews: stored.reviews.length,
-              stats: result.stats,
-              captcha_detected: captchaDetected,
-              consecutive_zeros: consecutiveZeros,
-            });
-          } else {
-            // Step 14-1: store degradation info even when no new reviews
-            if (result?.stats?.degraded) {
+              stats: extraction.stats,
+              captcha_detected: captchaInResult,
+              consecutive_zeros: meta.consecutiveZeros,
+              // Fix #3: propagate storage errors so popup can warn
+              storage_error: saveResult.ok ? undefined : saveResult.error,
+            };
+          }
+
+            // No new reviews — still track degradation
+            if (extraction?.stats?.degraded) {
               const pageInfo = tabPageInfo.get(tab.id) || {};
               tabPageInfo.set(tab.id, {
                 ...pageInfo,
                 degradation: {
                   degraded: true,
-                  degrade_reason: result.stats.degrade_reason,
-                  degrade_detail: result.stats.degrade_detail,
-                  page_type: result.stats.page_type,
+                  degrade_reason: extraction.stats.degrade_reason,
+                  degrade_detail: extraction.stats.degrade_detail,
+                  page_type: extraction.stats.page_type,
                   timestamp: Date.now(),
                 },
               });
             }
 
             const stored = await loadTabReviews(tab.id);
-            sendResponse({
+            return {
               success: true,
               new_reviews: 0,
               total_reviews: stored?.reviews?.length || 0,
-              stats: result?.stats || null,
-              captcha_detected: captchaDetected,
-              consecutive_zeros: consecutiveZeros,
-            });
-          }
+              stats: extraction?.stats || null,
+              captcha_detected: captchaInResult,
+              consecutive_zeros: meta.consecutiveZeros,
+            };
+          }); // end withTabLock
+
+          sendResponse(result);
         } catch (err) {
           console.error('[ReviewLens BG] Error in START_SCRAPING:', err);
           sendResponse({ success: false, error: String(err) });
@@ -432,10 +504,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const stored = await loadTabReviews(tab.id);
           const pageInfo = tabPageInfo.get(tab.id);
 
-          // Step 14-2: Include throttle + zero-count info
+          // Step 14-2: Include throttle + zero-count info (#5: from storage.session)
+          const meta = await loadTabMeta(tab.id);
           const now = Date.now();
-          const lastTime = tabLastScrapeTime.get(tab.id) || 0;
-          const elapsed = now - lastTime;
+          const elapsed = now - meta.lastScrapeTime;
           const throttled = elapsed < MIN_SCRAPE_INTERVAL_MS;
           const throttleWaitMs = throttled ? MIN_SCRAPE_INTERVAL_MS - elapsed : 0;
 
@@ -443,10 +515,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             total_reviews: stored ? stored.reviews.length : 0,
             reviews: stored ? stored.reviews : [],
             page_info: pageInfo || null,
-            // Step 14-2
             throttled: throttled,
             throttle_wait_ms: throttleWaitMs,
-            consecutive_zeros: tabConsecutiveZeros.get(tab.id) || 0,
+            consecutive_zeros: meta.consecutiveZeros,
           });
         } catch (err) {
           console.error('[ReviewLens BG] Error in GET_SCRAPE_STATUS:', err);
@@ -595,9 +666,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const pageInfo = tabPageInfo.get(tab.id) || {};
           tabPageInfo.set(tab.id, { ...pageInfo, reviewCount: 0 });
 
-          // Step 14-2: also reset throttle/zero counters for this tab
-          tabLastScrapeTime.delete(tab.id);
-          tabConsecutiveZeros.delete(tab.id);
+          // Step 14-2: also reset throttle/zero counters for this tab (#5: from storage.session)
+          await deleteTabMeta(tab.id);
 
           sendResponse({
             success: true,
@@ -695,10 +765,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     // ── Step 13: Store reviews data sent from content script ──
+    // Fix #4: serialised via per-tab lock (currently no concurrent callers; belt-and-suspenders)
     case 'STORE_REVIEWS': {
       const tabId = sender.tab?.id;
       if (tabId != null && message.reviews && message.reviews.length > 0) {
-        (async () => {
+        withTabLock(tabId, async () => {
           const stored = (await loadTabReviews(tabId)) || { reviews: [], seenIds: new Set() };
           let newCount = 0;
           for (const review of message.reviews) {
@@ -722,7 +793,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             ', total=' + stored.reviews.length + ', tabId=' + tabId
           );
           sendResponse({ received: true });
-        })();
+        }).catch((err) => {
+          console.error('[ReviewLens BG] STORE_REVIEWS error:', err);
+          sendResponse({ received: false, error: String(err) });
+        });
         return true;
       }
       sendResponse({ received: true });
@@ -840,9 +914,9 @@ function escapeCsvField(value) {
 // Clean up stale tab info when tabs close
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabPageInfo.delete(tabId);
-  tabLastScrapeTime.delete(tabId);   // Step 14-2
-  tabConsecutiveZeros.delete(tabId); // Step 14-2
-  deleteTabReviews(tabId);           // Fix 2026-07-15: clean session storage too
+  deleteTabMeta(tabId);    // Fix #5 (2026-07-15): clean anti-crawl state from storage.session
+  tabLocks.delete(tabId);  // Fix #4 (2026-07-15): clean serialisation lock
+  deleteTabReviews(tabId); // Fix 2026-07-15: clean reviews from storage.session
 });
 
-console.log('[ReviewLens BG] Service worker registered — v16 session-storage + timeout fix');
+console.log('[ReviewLens BG] Service worker registered — v16 fix-#3-quota-#4-lock-#5-anticrawl-persist');

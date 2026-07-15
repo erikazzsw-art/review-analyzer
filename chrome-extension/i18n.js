@@ -84,6 +84,8 @@
       scrape_failed: '❌ 抓取失败：{msg}',
       scrape_timeout: '后台响应超时，请重试',
       err_unknown: '未知错误',
+      // Fix #3: storage quota exceeded warning
+      storage_quota_warning: '⚠️ 存储空间不足，评论数量已达上限。请先上传已有评论再继续抓取。',
 
       // ── Export / upload results ──
       export_done: '✅ 已导出 {n} 条评论到 {filename}',
@@ -164,6 +166,8 @@
       scrape_failed: '❌ Scrape failed: {msg}',
       scrape_timeout: 'Background timed out, please retry',
       err_unknown: 'Unknown error',
+      // Fix #3: storage quota exceeded warning
+      storage_quota_warning: '⚠️ Storage quota exceeded — review limit reached. Upload existing reviews before continuing.',
 
       // ── Export / upload results ──
       export_done: '✅ Exported {n} reviews to {filename}',
