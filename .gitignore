@@ -11,6 +11,7 @@ review_analyzer/.env
 backend_api/.env
 deploy/.env
 deploy/.env.*
+!deploy/.env.example
 frontend/.env
 frontend/.env.local
 frontend/.env.production

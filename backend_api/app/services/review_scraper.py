@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from backend_api.app.services.aliexpress_scraper import fetch_aliexpress_reviews
@@ -19,6 +20,14 @@ from backend_api.app.services.walmart_scraper import fetch_walmart_reviews
 from backend_api.app.services.woot_scraper import fetch_woot_reviews
 
 logger = logging.getLogger(__name__)
+
+
+def _woot_enabled() -> bool:
+    """woot.com 抓取仅限国内环境（US marketplace only，~50 条/ASIN）。
+
+    出海 prod 默认禁用，需显式设置 ENABLE_WOOT_SCRAPER=true 才启用。
+    """
+    return os.getenv("ENABLE_WOOT_SCRAPER", "false").lower() == "true"
 
 
 class ReviewScraperError(Exception):
@@ -60,6 +69,13 @@ async def fetch_reviews(
         if not reviews:
             logger.warning("No reviews found for Shopee item %s", product_id)
     else:
+        if not _woot_enabled():
+            logger.info(
+                "woot.com scraper disabled (ENABLE_WOOT_SCRAPER != true); "
+                "skipping ASIN %s — use Chrome extension upload instead",
+                product_id,
+            )
+            return []
         reviews = await fetch_woot_reviews(product_id, max_years=max_years)
         if not reviews:
             logger.warning("No reviews found for ASIN %s via woot.com", product_id)
