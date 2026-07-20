@@ -39,7 +39,7 @@ def _discover_categories(golden_set_version: str) -> list[str]:
         return []
     categories = []
     for d in sorted(base.iterdir()):
-        if d.is_dir() and (d / f"ai_annotated_{len(list(d.glob('ai_annotated_*.csv')))}").exists() or list(d.glob("ai_annotated_*.csv")):
+        if d.is_dir() and list(d.glob("ai_annotated_*.csv")):
             categories.append(d.name)
     return categories
 

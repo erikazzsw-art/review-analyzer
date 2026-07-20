@@ -44,8 +44,10 @@ def load_golden_set(version: str = "v1.0", category: str | None = None) -> pd.Da
 def _load_category_golden_set(base: Path) -> pd.DataFrame:
     """Load a category-specific golden set (v1.1+ format).
 
-    Simpler format: just ai_annotated_*.csv with ai_sentiment as gold truth.
-    If review_progress.json exists, use the same flow as v1.0.
+    Supports two states:
+      - Pre-review: annotation_status == "ai_pending_review", gold = ai_sentiment
+      - Post-review: annotation_status == "reviewed", gold = reviewed_sentiment
+    If review_progress.json exists, delegates to _load_v1_golden_set.
     """
     csv_files = sorted(base.glob("ai_annotated_*.csv"))
     if not csv_files:
@@ -58,11 +60,28 @@ def _load_category_golden_set(base: Path) -> pd.DataFrame:
         return _load_v1_golden_set(base)
 
     df = pd.read_csv(annotated_path)
-    if "annotation_status" in df.columns:
-        df = df[df["annotation_status"] == "ai_pending_review"].copy()
 
-    if "gold_sentiment" not in df.columns:
-        df["gold_sentiment"] = df.get("ai_sentiment", pd.Series(dtype=str))
+    # 判断是否为人工仲裁后的锁定版 golden set
+    has_reviewed = (
+        "annotation_status" in df.columns
+        and (df["annotation_status"] == "reviewed").any()
+    )
+
+    if has_reviewed:
+        # 人工仲裁后：以 reviewed_sentiment 为 gold truth，不过滤行
+        if "reviewed_sentiment" in df.columns:
+            df["gold_sentiment"] = df["reviewed_sentiment"].fillna(
+                df.get("ai_sentiment", pd.Series(dtype=str))
+            )
+        else:
+            df["gold_sentiment"] = df.get("ai_sentiment", pd.Series(dtype=str))
+    else:
+        # 预标注未审核：仅保留 ai_pending_review 行，以 ai_sentiment 为 gold
+        if "annotation_status" in df.columns:
+            df = df[df["annotation_status"] == "ai_pending_review"].copy()
+        if "gold_sentiment" not in df.columns:
+            df["gold_sentiment"] = df.get("ai_sentiment", pd.Series(dtype=str))
+
     if "review_action" not in df.columns:
         df["review_action"] = "accept"
     if "sub_category" not in df.columns:
