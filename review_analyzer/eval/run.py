@@ -1,5 +1,6 @@
 """评测 CLI — CI 入口.
 
+# CI trigger: pet golden set v1.1 reviewed status support (2026-07-20)
 用法:
     python3 -m review_analyzer.eval.run --prompt-version v2.1 --golden-set v1.0
     python3 -m review_analyzer.eval.run --prompt-version v2.1 --golden-set v1.1 --category pet
