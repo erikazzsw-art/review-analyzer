@@ -1256,7 +1256,7 @@ def plugin_upload_listing(
                     # product_listings table doesn't exist yet; non-fatal
                     pass
 
-            # 3. 批量 upsert 变体
+            # 3. 批量 upsert 变体（手动 SELECT → INSERT/UPDATE，不依赖 ON CONFLICT 索引）
             variant_count = 0
             for var in variants:
                 child_asin = (var.get("asin") or "").strip().upper()
@@ -1264,35 +1264,57 @@ def plugin_upload_listing(
                     continue
 
                 try:
+                    # 查找已有变体：优先匹配 (user_id, platform, child_asin)
                     cur.execute(
-                        """INSERT INTO product_variants
-                           (user_id, product_id, child_asin, variant_sku, platform, color, size, style, material, status)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                           ON CONFLICT (user_id, platform, child_asin)
-                           WHERE platform IS NOT NULL AND child_asin IS NOT NULL
-                           DO UPDATE SET
-                               product_id = EXCLUDED.product_id,
-                               color = COALESCE(EXCLUDED.color, product_variants.color),
-                               size = COALESCE(EXCLUDED.size, product_variants.size),
-                               style = COALESCE(EXCLUDED.style, product_variants.style),
-                               material = COALESCE(EXCLUDED.material, product_variants.material)""",
-                        (
-                            user_id,
-                            product_id,
-                            child_asin,
-                            child_asin,
-                            platform,
-                            var.get("color"),
-                            var.get("size"),
-                            var.get("style"),
-                            var.get("material"),
-                            "active",
-                        ),
+                        """SELECT id FROM product_variants
+                           WHERE user_id = %s AND platform = %s AND child_asin = %s
+                           LIMIT 1""",
+                        (user_id, platform, child_asin),
                     )
+                    existing = cur.fetchone()
+                    if existing:
+                        cur.execute(
+                            """UPDATE product_variants SET
+                               product_id = %s,
+                               color = COALESCE(%s, color),
+                               size = COALESCE(%s, size),
+                               style = COALESCE(%s, style),
+                               material = COALESCE(%s, material),
+                               status = 'active'
+                               WHERE id = %s""",
+                            (
+                                product_id,
+                                var.get("color"),
+                                var.get("size"),
+                                var.get("style"),
+                                var.get("material"),
+                                existing[0],
+                            ),
+                        )
+                    else:
+                        cur.execute(
+                            """INSERT INTO product_variants
+                               (user_id, product_id, child_asin, variant_sku, platform,
+                                color, size, style, material, status)
+                               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                            (
+                                user_id,
+                                product_id,
+                                child_asin,
+                                child_asin,
+                                platform,
+                                var.get("color"),
+                                var.get("size"),
+                                var.get("style"),
+                                var.get("material"),
+                                "active",
+                            ),
+                        )
                     variant_count += 1
-                except psycopg2.errors.UndefinedTable:
+                except Exception:
                     conn.rollback()
-                    break
+                    # variant insert/update failed; skip this variant and continue
+                    continue
 
             conn.commit()
 
