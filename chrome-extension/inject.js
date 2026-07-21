@@ -233,11 +233,435 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // Step 11.5: Product Listing Extraction
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Extract a value from DOM using primary + fallback selectors.
+     * Returns the first non-empty match, or '' if none.
+     */
+    function extractField(selectors) {
+      for (var i = 0; i < selectors.length; i++) {
+        try {
+          var el = document.querySelector(selectors[i]);
+          if (el) {
+            var text = (el.textContent || '').trim();
+            if (text) return text;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      return '';
+    }
+
+    /**
+     * Extract all bullet point texts from the page.
+     */
+    function extractBulletPoints() {
+      var selectors = ['#feature-bullets li', '#featurebullets_feature_div li', '.a-unordered-list.a-vertical li'];
+      for (var s = 0; s < selectors.length; s++) {
+        try {
+          var nodes = document.querySelectorAll(selectors[s]);
+          if (nodes.length > 0) {
+            var points = [];
+            for (var i = 0; i < nodes.length; i++) {
+              var text = (nodes[i].textContent || '').trim();
+              if (text && text.length > 2) {
+                points.push(text);
+              }
+            }
+            if (points.length > 0) return points;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      return [];
+    }
+
+    /**
+     * Extract current price from the page.
+     * Handles deal prices, sale prices, and regular prices.
+     */
+    function extractPrice() {
+      // Try the primary price first (.a-price .a-offscreen, excluding text-price)
+      try {
+        var priceEls = document.querySelectorAll('.a-price .a-offscreen');
+        for (var i = 0; i < priceEls.length; i++) {
+          var parent = priceEls[i].closest('.a-price');
+          if (parent && parent.classList.contains('a-text-price')) continue;
+          var text = (priceEls[i].textContent || '').trim();
+          if (text) return text;
+        }
+      } catch (e) {}
+
+      var fallbacks = ['#priceblock_ourprice', '#priceblock_dealprice', '#price_inside_buybox',
+                        '.a-price span[aria-hidden="true"]', '[data-a-size="xl"] .a-price .a-offscreen'];
+      return extractField(fallbacks);
+    }
+
+    /**
+     * Extract original/list price (strikethrough).
+     */
+    function extractOriginalPrice() {
+      var selectors = [
+        '.a-price.a-text-price .a-offscreen',
+        '#listPrice',
+        '.basisPrice .a-offscreen',
+        'span.priceBlockStrikePriceString',
+      ];
+      return extractField(selectors);
+    }
+
+    /**
+     * Parse price text like "$19.99" or "¥1,980" to {amount, currency}.
+     */
+    function parsePriceText(text) {
+      if (!text) return { amount: null, currency: 'USD' };
+      var cleaned = text.replace(/[\s ]/g, '').trim();
+      var match = cleaned.match(/^([^\d]*)([\d,]+\.?\d*)/);
+      if (!match) return { amount: null, currency: 'USD' };
+      var symbol = match[1];
+      var numStr = match[2].replace(/,/g, '');
+      var amount = parseFloat(numStr);
+      if (isNaN(amount)) return { amount: null, currency: 'USD' };
+      var currencyMap = { '$': 'USD', '£': 'GBP', '€': 'EUR', '¥': 'JPY' };
+      var currency = currencyMap[symbol] || symbol || 'USD';
+      return { amount: amount, currency: currency };
+    }
+
+    /**
+     * Extract main product listing information from the current page.
+     */
+    function extractProductListing() {
+      var startTime = performance.now();
+      var priceText = extractPrice();
+      var origPriceText = extractOriginalPrice();
+      var priceParsed = parsePriceText(priceText);
+      var origParsed = parsePriceText(origPriceText);
+
+      var bulletPoints = extractBulletPoints();
+      var ratingText = extractField(['#acrPopover .a-icon-alt', '[data-hook="rating-out-of-text"]',
+                                      '.a-icon-star .a-icon-alt', '#averageCustomerReviews .a-icon-alt']);
+      var rating = null;
+      if (ratingText) {
+        var ratingMatch = ratingText.match(/(\d+[.,]?\d*)/);
+        if (ratingMatch) rating = parseFloat(ratingMatch[1].replace(',', '.'));
+      }
+
+      var ratingsTotalText = extractField(['#acrCustomerReviewText', '[data-hook="total-review-count"]']);
+      var ratingsTotal = null;
+      if (ratingsTotalText) {
+        var rtMatch = ratingsTotalText.match(/([\d,]+)/);
+        if (rtMatch) ratingsTotal = parseInt(rtMatch[1].replace(/,/g, ''), 10);
+      }
+
+      // Extract ASIN from URL or hidden input
+      var asin = '';
+      try {
+        var urlMatch = window.location.href.match(/\/dp\/([A-Z0-9]{10})/i);
+        if (urlMatch) asin = urlMatch[1];
+        if (!asin) {
+          var asinInput = document.querySelector('input[name="ASIN"], input[id="ASIN"]');
+          if (asinInput) asin = asinInput.value || '';
+        }
+      } catch (e) {}
+
+      var brandText = extractField(['#bylineInfo', '[data-csa-c="brand-name"]', '#brand']);
+      var brand = brandText.replace(/^(Brand:|品牌:|Visit the\s*|访问\s*|Store|商店)/gi, '').trim();
+      if (/^about this item$/i.test(brand)) brand = '';
+
+      var description = extractField(['#productDescription', '[data-csa-c="product-description"]',
+                                       '#aplus_feature_div .aplus-v2']);
+
+      var mainImageUrl = '';
+      var imgSelectors = ['#imgTagWrapperId img', '#landingImage', '#imgBlkFront', '.imgTagWrapper img'];
+      for (var is = 0; is < imgSelectors.length; is++) {
+        try {
+          var imgEl = document.querySelector(imgSelectors[is]);
+          if (imgEl) {
+            var src = imgEl.getAttribute('src') || imgEl.src || '';
+            if (src && /^(https?:)?\/\//.test(src)) {
+              mainImageUrl = src;
+              break;
+            }
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+
+      var sellerName = extractField(['#merchant-info', '#sellerProfileTriggerId', '[data-csa-c-seller-name]']);
+      var availability = extractField(['#availability', '#availability span', '.a-size-medium.a-color-success']);
+      var dimensions = extractField(['#productDetails_techSpec_section_1', '.prodDetSectionEntry']);
+
+      // Parse BSR
+      var bestSellerRank = [];
+      var bsrText = extractField(['#SalesRank', '#detailBulletsWrapper_feature_div']);
+      if (bsrText) {
+        var bsrRegex = /#(\d[\d,]*)\s*(?:in|en)\s+([^(\n]+?)(?:\s*\(|$)/gi;
+        var bsrMatch;
+        while ((bsrMatch = bsrRegex.exec(bsrText)) !== null) {
+          bestSellerRank.push({
+            category: bsrMatch[2].trim(),
+            rank: parseInt(bsrMatch[1].replace(/,/g, ''), 10),
+          });
+        }
+      }
+
+      var elapsed = Math.round(performance.now() - startTime);
+
+      return {
+        asin: asin,
+        marketplace: getMarketplace(),
+        url: window.location.href,
+        title: extractField(['#productTitle', '[data-csa-c="product-title"]', '#title']),
+        price: priceParsed.amount,
+        price_currency: priceParsed.currency,
+        price_text: priceText,
+        original_price: origParsed.amount,
+        original_price_text: origPriceText,
+        rating: rating,
+        ratings_total: ratingsTotal,
+        brand: brand,
+        bullet_points: bulletPoints,
+        main_image_url: mainImageUrl,
+        description: description,
+        seller_name: sellerName,
+        availability: availability,
+        dimensions: dimensions,
+        best_seller_rank: bestSellerRank,
+        extraction_time_ms: elapsed,
+      };
+    }
+
+    /**
+     * Extract variation ASINs and their attributes from the product page.
+     *
+     * Strategy A (preferred): Parse from internal JSON in <script> tags.
+     * Strategy B (fallback): Parse from DOM swatch/twister components.
+     */
+    function extractVariationAsins() {
+      var parentAsin = '';
+      try {
+        var urlMatch = window.location.href.match(/\/dp\/([A-Z0-9]{10})/i);
+        if (urlMatch) parentAsin = urlMatch[1];
+      } catch (e) {}
+
+      if (!parentAsin) {
+        return { parent_asin: '', variants: [], variation_dimensions: [] };
+      }
+
+      // ── Strategy A: Parse from script tag JSON ──
+      try {
+        var scripts = document.querySelectorAll('script[type="text/javascript"]');
+        for (var i = 0; i < scripts.length; i++) {
+          var text = scripts[i].textContent || '';
+
+          // Try dimensionValuesDisplayData
+          var jsonMatch = text.match(/"dimensionValuesDisplayData"\s*:\s*(\[[\s\S]*?\])\s*[\n;,}]/);
+          if (!jsonMatch) {
+            jsonMatch = text.match(/"dimensionValuesDisplayData"\s*:\s*(\[[^\]]*\])/);
+          }
+          if (jsonMatch) {
+            try {
+              var dimData = JSON.parse(jsonMatch[1]);
+              var variants = _parseDimensionDisplayData(dimData);
+              if (variants && variants.length > 0) {
+                return {
+                  parent_asin: parentAsin,
+                  variants: variants,
+                  variation_dimensions: _getVariationDimensions(variants),
+                };
+              }
+            } catch (e) {}
+          }
+
+          // Try asinVariationValues
+          var altMatch = text.match(/"asinVariationValues"\s*:\s*(\{[^}]+\})/);
+          if (!altMatch) {
+            altMatch = text.match(/"asinVariants"\s*:\s*(\[[^\]]*\])/);
+          }
+          if (altMatch) {
+            try {
+              var altData = JSON.parse(altMatch[1]);
+              var altVariants = _parseAsinVariants(altData);
+              if (altVariants && altVariants.length > 0) {
+                return {
+                  parent_asin: parentAsin,
+                  variants: altVariants,
+                  variation_dimensions: _getVariationDimensions(altVariants),
+                };
+              }
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
+      // ── Strategy B: DOM swatch parsing ──
+      var dimSelectors = [
+        { selector: '#variation_color_name li[data-defaultasin], #color_name li[data-defaultasin]', name: 'color' },
+        { selector: '#variation_size_name li[data-defaultasin], #size_name li[data-defaultasin]', name: 'size' },
+        { selector: '#variation_style_name li[data-defaultasin], #style_name li[data-defaultasin]', name: 'style' },
+        { selector: '#variation_material_name li[data-defaultasin]', name: 'material' },
+      ];
+
+      var dimMaps = [];
+      for (var d = 0; d < dimSelectors.length; d++) {
+        try {
+          var nodes = document.querySelectorAll(dimSelectors[d].selector);
+          if (nodes.length > 0) {
+            var items = [];
+            for (var n = 0; n < nodes.length; n++) {
+              var dasin = nodes[n].getAttribute('data-defaultasin') || nodes[n].getAttribute('data-dp-url');
+              if (dasin) {
+                var asinClean = dasin;
+                var asinMatch = dasin.match(/\/dp\/([A-Z0-9]{10})/i);
+                if (asinMatch) asinClean = asinMatch[1];
+                var label = (nodes[n].textContent || '').trim();
+                items.push({ asin: asinClean, value: label || '' });
+              }
+            }
+            if (items.length > 0) {
+              dimMaps.push({ name: dimSelectors[d].name, values: items });
+            }
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+
+      if (dimMaps.length > 0) {
+        var cartVariants = _cartesianProduct(dimMaps);
+        return {
+          parent_asin: parentAsin,
+          variants: cartVariants,
+          variation_dimensions: dimMaps.map(function(dm) { return dm.name; }),
+        };
+      }
+
+      // ── Strategy C: twister swatchSelect elements ──
+      try {
+        var twisterEls = document.querySelectorAll('#twister .swatchSelect[data-defaultasin]');
+        if (twisterEls.length > 0) {
+          var twisterVariants = [];
+          for (var t = 0; t < twisterEls.length; t++) {
+            var tasin = twisterEls[t].getAttribute('data-defaultasin') || '';
+            var tlabel = (twisterEls[t].textContent || '').trim();
+            if (tasin && /^[A-Z0-9]{10}$/i.test(tasin)) {
+              twisterVariants.push({ asin: tasin, label: tlabel || '' });
+            }
+          }
+          if (twisterVariants.length > 0) {
+            return {
+              parent_asin: parentAsin,
+              variants: twisterVariants,
+              variation_dimensions: [],
+            };
+          }
+        }
+      } catch (e) {}
+
+      return { parent_asin: parentAsin, variants: [], variation_dimensions: [] };
+    }
+
+    /**
+     * Parse dimensionValuesDisplayData structure into variant list.
+     */
+    function _parseDimensionDisplayData(data) {
+      var variants = [];
+      if (!Array.isArray(data)) return variants;
+      for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var asin = item.asin || '';
+        if (!asin || !/^[A-Z0-9]{10}$/i.test(asin)) continue;
+        var variant = { asin: asin };
+        if (Array.isArray(item.dimensionValues)) {
+          for (var j = 0; j < item.dimensionValues.length; j++) {
+            variant['dim_' + j] = item.dimensionValues[j];
+          }
+        }
+        if (item.color) variant.color = item.color;
+        if (item.size) variant.size = item.size;
+        if (item.style) variant.style = item.style;
+        variants.push(variant);
+      }
+      return variants;
+    }
+
+    /**
+     * Parse asinVariationValues into variant list.
+     */
+    function _parseAsinVariants(data) {
+      if (Array.isArray(data)) {
+        return data.map(function(v) {
+          return typeof v === 'object' ? v : { asin: v || '' };
+        }).filter(function(v) { return v.asin && /^[A-Z0-9]{10}$/i.test(v.asin); });
+      }
+      if (typeof data === 'object') {
+        var result = [];
+        Object.keys(data).forEach(function(key) {
+          result.push({ asin: key, value: data[key] });
+        });
+        return result;
+      }
+      return [];
+    }
+
+    /**
+     * Deduce variation dimension names from variant attributes.
+     */
+    function _getVariationDimensions(variants) {
+      if (!variants || variants.length === 0) return [];
+      var dims = [];
+      var sample = variants[0];
+      if (sample.color !== undefined) dims.push('color');
+      if (sample.size !== undefined) dims.push('size');
+      if (sample.style !== undefined) dims.push('style');
+      if (sample.material !== undefined) dims.push('material');
+      for (var key in sample) {
+        if (/^dim_\d+$/.test(key)) dims.push(key);
+      }
+      return dims;
+    }
+
+    /**
+     * Generate Cartesian product from dimension maps.
+     */
+    function _cartesianProduct(dimMaps) {
+      if (dimMaps.length === 0) return [];
+
+      var product = [{}];
+      for (var d = 0; d < dimMaps.length; d++) {
+        var dim = dimMaps[d];
+        var next = [];
+        for (var p = 0; p < product.length; p++) {
+          for (var v = 0; v < dim.values.length; v++) {
+            var entry = {};
+            for (var key in product[p]) {
+              entry[key] = product[p][key];
+            }
+            entry[dim.name] = dim.values[v].value;
+            if (dimMaps.length === 1) {
+              entry.asin = dim.values[v].asin;
+            }
+            next.push(entry);
+          }
+        }
+        product = next;
+      }
+      return product;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // Expose on window for DevTools access
     // ═══════════════════════════════════════════════════════════════
 
     window.__REVIEWLENS__ = {
       extractReviews: extractReviews,
+      extractProductListing: extractProductListing,
+      extractVariationAsins: extractVariationAsins,
       detectPageType: detectPageType,
       getMarketplace: getMarketplace,
       allReviews: [],
@@ -319,18 +743,49 @@
       if (event.source !== window) return;
 
       var data = event.data;
-      if (!data || data.type !== 'REVIEWLENS_GET_REVIEWS') return;
+      if (!data) return;
 
-      // Respond with accumulated reviews
-      window.postMessage(
-        {
-          type: 'REVIEWLENS_REVIEWS_RESPONSE',
-          requestId: data.requestId,
-          reviews: api.allReviews,
-          total: api.allReviews.length,
-        },
-        '*'
-      );
+      // ── Step 13: accumulated reviews request ──
+      if (data.type === 'REVIEWLENS_GET_REVIEWS') {
+        window.postMessage(
+          {
+            type: 'REVIEWLENS_REVIEWS_RESPONSE',
+            requestId: data.requestId,
+            reviews: api.allReviews,
+            total: api.allReviews.length,
+          },
+          '*'
+        );
+        return;
+      }
+
+      // ── Step 11.5: product listing request ──
+      if (data.type === 'REVIEWLENS_GET_LISTING') {
+        var listing = extractProductListing();
+        window.postMessage(
+          {
+            type: 'REVIEWLENS_LISTING_RESPONSE',
+            requestId: data.requestId,
+            listing: listing,
+          },
+          '*'
+        );
+        return;
+      }
+
+      // ── Step 11.5: variation ASINs request ──
+      if (data.type === 'REVIEWLENS_GET_VARIATIONS') {
+        var variations = extractVariationAsins();
+        window.postMessage(
+          {
+            type: 'REVIEWLENS_VARIATIONS_RESPONSE',
+            requestId: data.requestId,
+            variations: variations,
+          },
+          '*'
+        );
+        return;
+      }
     });
 
     // Initial extraction + start observer after DOM settles

@@ -32,6 +32,197 @@ body {
   padding: 16px;
 }
 
+/* ── Tab Bar (Step 11.5) ── */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e8ecf1;
+  margin-bottom: -4px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+  color: #4b5563;
+}
+
+.tab-btn--active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.tab-content[hidden] {
+  display: none !important;
+}
+
+/* ── Listing Tab (Step 11.5) ── */
+.listing-name-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.listing-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.listing-name-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d8dce3;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1a1a2e;
+  background: #f9fafb;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.listing-name-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background: #ffffff;
+}
+
+.listing-name-input::placeholder {
+  color: #c4c9d0;
+}
+
+.listing-preview-section {
+  width: 100%;
+}
+
+.listing-details {
+  width: 100%;
+}
+
+.listing-summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f9fafb;
+  border: 1px solid #e8ecf1;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.listing-summary:hover {
+  background: #f3f4f6;
+}
+
+.listing-preview-content {
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #374151;
+  background: #f9fafb;
+  border: 1px solid #e8ecf1;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.listing-field {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.listing-field-label {
+  font-weight: 600;
+  color: #4b5563;
+  white-space: nowrap;
+  min-width: 56px;
+}
+
+.listing-field-value {
+  color: #374151;
+  word-break: break-all;
+}
+
+.listing-field-value--truncated {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listing-variants {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e8ecf1;
+}
+
+.listing-variants-title {
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 4px;
+}
+
+.listing-variant-item {
+  font-size: 11px;
+  color: #6b7280;
+  padding-left: 8px;
+}
+
+.listing-success-section {
+  width: 100%;
+}
+
+.listing-success-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+}
+
+.listing-success-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.listing-success-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #166534;
+  margin: 0;
+}
+
+.listing-view-link {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.listing-view-link:hover {
+  text-decoration: underline;
+}
+
 /* ── Header ── */
 .header {
   display: flex;

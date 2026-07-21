@@ -576,6 +576,18 @@
         });
       return true; // keep channel open for async
     }
+
+    // ── Step 11.5: extract product listing from inject.js ──
+    if (message.type === 'EXTRACT_LISTING') {
+      requestListing()
+        .then((listing) => {
+          sendResponse({ success: true, listing });
+        })
+        .catch((err) => {
+          sendResponse({ success: false, error: String(err) });
+        });
+      return true; // keep channel open for async
+    }
   });
   }
 
@@ -626,6 +638,26 @@
         delete pendingRequests[requestId];
       }
     }
+
+    // ── Step 11.5: listing/variations response from inject.js ──
+    if (data.type === 'REVIEWLENS_LISTING_RESPONSE' || data.type === 'REVIEWLENS_VARIATIONS_RESPONSE') {
+      var requestId = data.requestId;
+      if (requestId && pendingRequests[requestId]) {
+        // Collect listing + variations responses; resolve when both arrive
+        var entry = pendingRequests[requestId];
+        if (data.type === 'REVIEWLENS_LISTING_RESPONSE') {
+          entry.listing = data.listing || null;
+        } else {
+          entry.variations = data.variations || null;
+        }
+        // Resolve when both have arrived (or after timeout in requestListing)
+        if (entry.listing !== undefined && entry.variations !== undefined) {
+          clearTimeout(entry.timer);
+          entry.resolve({ listing: entry.listing, variations: entry.variations });
+          delete pendingRequests[requestId];
+        }
+      }
+    }
   });
 
   /**
@@ -647,6 +679,48 @@
 
       window.postMessage(
         { type: 'REVIEWLENS_GET_REVIEWS', requestId: requestId },
+        '*'
+      );
+    });
+  }
+
+  /**
+   * Request product listing + variations from inject.js (MAIN world).
+   * Sends two parallel postMessage requests and waits for both responses.
+   * Returns a Promise that resolves with { listing, variations }.
+   * Step 11.5: Product listing scrape.
+   */
+  function requestListing() {
+    return new Promise(function (resolve, reject) {
+      var requestId = 'lst_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+      var timer = setTimeout(function () {
+        // Resolve with whatever we got so far
+        var entry = pendingRequests[requestId];
+        if (entry) {
+          entry.resolve({
+            listing: entry.listing || null,
+            variations: entry.variations || null,
+          });
+          delete pendingRequests[requestId];
+        }
+      }, 3000);
+
+      pendingRequests[requestId] = {
+        resolve: resolve,
+        reject: reject,
+        timer: timer,
+        listing: undefined,
+        variations: undefined,
+      };
+
+      // Request both listing and variations in parallel
+      window.postMessage(
+        { type: 'REVIEWLENS_GET_LISTING', requestId: requestId },
+        '*'
+      );
+      window.postMessage(
+        { type: 'REVIEWLENS_GET_VARIATIONS', requestId: requestId },
         '*'
       );
     });

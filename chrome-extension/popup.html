@@ -15,6 +15,12 @@
       <button id="langToggle" class="lang-toggle" type="button" title="Switch to English">EN</button>
     </header>
 
+    <!-- Tab switcher (Step 11.5) -->
+    <nav class="tab-bar" id="tabBar">
+      <button class="tab-btn" data-tab="listing" data-i18n="tab_listing">📊 产品信息</button>
+      <button class="tab-btn" data-tab="reviews" data-i18n="tab_reviews">💬 评论</button>
+    </nav>
+
     <!-- Login status (Step 16) -->
     <section class="login-section" id="loginSection">
       <div class="login-row">
@@ -24,6 +30,8 @@
       </div>
     </section>
 
+    <!-- ═══ Reviews Tab Content ═══ -->
+    <div id="reviewsTabContent" class="tab-content" hidden>
     <!-- Page status -->
     <section class="status-section">
       <div class="status-row">
@@ -86,6 +94,57 @@
         🗑 清除数据
       </button>
     </section>
+    </div><!-- end reviewsTabContent -->
+
+    <!-- ═══ Listing Tab Content (Step 11.5) ═══ -->
+    <div id="listingTabContent" class="tab-content" hidden>
+    <!-- Product name input (user fills manually) -->
+    <section class="listing-name-section">
+      <label class="listing-label" for="productNameInput" data-i18n="listing_name_label">产品名称</label>
+      <input type="text" id="productNameInput" class="listing-name-input"
+             placeholder="请输入产品名称（如：XX品牌蓝牙耳机）"
+             data-i18n-placeholder="listing_name_placeholder">
+    </section>
+
+    <!-- Listing action button -->
+    <section class="action-section">
+      <button id="listingScrapeBtn" class="btn btn--primary" data-i18n="listing_scrape_btn">
+        🔍 提取产品信息
+      </button>
+      <p id="listingActionHint" class="action-hint"></p>
+    </section>
+
+    <!-- Listing preview (collapsible) -->
+    <section id="listingPreviewSection" class="listing-preview-section" hidden>
+      <details id="listingPreviewDetails" class="listing-details">
+        <summary class="listing-summary" data-i18n="listing_preview_title">
+          📋 抓取结果预览
+        </summary>
+        <div id="listingPreviewContent" class="listing-preview-content">
+        </div>
+      </details>
+    </section>
+
+    <!-- Upload button -->
+    <section class="action-section" id="listingUploadSection" hidden>
+      <button id="listingUploadBtn" class="btn btn--upload" data-i18n="listing_upload_btn">
+        ☁️ 上传到产品管理
+      </button>
+    </section>
+
+    <!-- Upload success -->
+    <section id="listingUploadSuccess" class="listing-success-section" hidden>
+      <div class="listing-success-notice">
+        <span class="listing-success-icon">✅</span>
+        <div>
+          <p class="listing-success-text" data-i18n="listing_upload_success">上传成功</p>
+          <a id="listingViewProductLink" class="listing-view-link" href="#" target="_blank" data-i18n="listing_view_product">
+            查看产品 →
+          </a>
+        </div>
+      </div>
+    </section>
+    </div><!-- end listingTabContent -->
 
     <!-- Footer -->
     <footer class="footer">

@@ -154,6 +154,43 @@ async function deleteTabReviews(tabId) {
   } catch (_) { /* ignore */ }
 }
 
+// ── Step 11.5: Listing storage helpers ──
+
+/**
+ * Load stored listing data for a tab from chrome.storage.session.
+ * Returns { listing, variations, productName, uploadStatus } or null.
+ */
+async function loadTabListing(tabId) {
+  try {
+    const key = `tabListing_${tabId}`;
+    const result = await chrome.storage.session.get(key);
+    return result[key] || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Save listing data for a tab to chrome.storage.session.
+ */
+async function saveTabListing(tabId, data) {
+  try {
+    const key = `tabListing_${tabId}`;
+    await chrome.storage.session.set({ [key]: data });
+  } catch (err) {
+    console.warn('[ReviewLens BG] Failed to persist tabListing:', err);
+  }
+}
+
+/**
+ * Delete stored listing data for a tab from chrome.storage.session.
+ */
+async function deleteTabListing(tabId) {
+  try {
+    await chrome.storage.session.remove(`tabListing_${tabId}`);
+  } catch (_) { /* ignore */ }
+}
+
 // ── Fix #4 (2026-07-15): Per-tab serialisation lock ──
 // Prevents lost updates when read→mutate→write runs concurrently for the same tab.
 // The popup serialises scrapes via the isScraping flag, and STORE_REVIEWS is a
@@ -825,6 +862,264 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     }
 
+    // ── Step 11.5: Start listing extraction ──
+    case 'START_LISTING_SCRAPING': {
+      (async () => {
+        try {
+          const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
+          if (!tab || !tab.id) {
+            sendResponse({ success: false, error: 'no_active_tab' });
+            return;
+          }
+
+          // Check anti-crawl throttle
+          const meta = await loadTabMeta(tab.id);
+          const now = Date.now();
+          const elapsed = now - meta.lastScrapeTime;
+          if (elapsed < MIN_SCRAPE_INTERVAL_MS) {
+            const stored = await loadTabListing(tab.id);
+            sendResponse({
+              success: false,
+              throttled: true,
+              wait_ms: MIN_SCRAPE_INTERVAL_MS - elapsed,
+              listing: stored?.listing || null,
+              variations: stored?.variations || null,
+            });
+            return;
+          }
+
+          // Update throttle timestamp
+          meta.lastScrapeTime = now;
+          await saveTabMeta(tab.id, meta);
+
+          // Forward to content script with timeout
+          const result = await sendMessageWithTimeout(tab.id, {
+            type: 'EXTRACT_LISTING',
+          }, 20000);
+
+          if (result && result.success) {
+            // Store listing data in session storage
+            const listingData = {
+              listing: result.listing || null,
+              variations: result.variations || null,
+              scrapedAt: Date.now(),
+              url: tab.url || '',
+              asin: result.listing?.asin || extractAsin(tab.url) || '',
+              marketplace: result.listing?.marketplace || detectMarketplace(tab.url),
+            };
+            await saveTabListing(tab.id, listingData);
+
+            sendResponse({
+              success: true,
+              listing: result.listing,
+              variations: result.variations,
+              asin: listingData.asin,
+              marketplace: listingData.marketplace,
+            });
+          } else {
+            sendResponse({
+              success: false,
+              error: result?.error || 'listing_extraction_failed',
+              listing: null,
+              variations: null,
+            });
+          }
+        } catch (err) {
+          console.error('[ReviewLens BG] Error in START_LISTING_SCRAPING:', err);
+          sendResponse({ success: false, error: String(err) });
+        }
+      })();
+      return true;
+    }
+
+    // ── Step 11.5: Get listing status for popup ──
+    case 'GET_LISTING_STATUS': {
+      (async () => {
+        try {
+          const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
+          if (!tab || !tab.id) {
+            sendResponse({ listing: null, variations: null, asin: null });
+            return;
+          }
+
+          const stored = await loadTabListing(tab.id);
+          if (stored) {
+            // Verify the stored listing is for the same URL
+            if (stored.url === tab.url) {
+              sendResponse({
+                listing: stored.listing,
+                variations: stored.variations,
+                asin: stored.asin,
+                marketplace: stored.marketplace,
+                productName: stored.productName || '',
+                uploadStatus: stored.uploadStatus || null,
+                scrapedAt: stored.scrapedAt,
+              });
+              return;
+            }
+          }
+
+          // No stored data or URL changed — return empty
+          sendResponse({
+            listing: null,
+            variations: null,
+            asin: extractAsin(tab.url) || '',
+            marketplace: detectMarketplace(tab.url),
+            productName: '',
+            uploadStatus: null,
+          });
+        } catch (err) {
+          console.error('[ReviewLens BG] Error in GET_LISTING_STATUS:', err);
+          sendResponse({ listing: null, variations: null, asin: null, error: String(err) });
+        }
+      })();
+      return true;
+    }
+
+    // ── Step 11.5: Upload listing data to ClueAI API ──
+    case 'UPLOAD_LISTING_TO_API': {
+      (async () => {
+        try {
+          const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
+          if (!tab || !tab.id) {
+            sendResponse({ success: false, error: 'no_active_tab' });
+            return;
+          }
+
+          const stored = await loadTabListing(tab.id);
+          if (!stored || !stored.listing) {
+            sendResponse({ success: false, error: 'no_listing_data' });
+            return;
+          }
+
+          // Validate required fields
+          const productName = (message.productName || '').trim();
+          if (!productName) {
+            sendResponse({ success: false, error: 'product_name_required' });
+            return;
+          }
+
+          const apiBaseUrl = await getApiBaseUrl();
+          const listing = stored.listing;
+
+          // Build request body matching PluginListingUploadRequest schema
+          const requestBody = {
+            parent_asin: stored.asin || listing.asin || '',
+            name: productName,
+            marketplace: stored.marketplace || listing.marketplace || 'us',
+            platform: 'amazon',
+            listing: {
+              title: listing.title || null,
+              price: listing.price || null,
+              price_currency: listing.price_currency || 'USD',
+              original_price: listing.original_price || null,
+              rating: listing.rating || null,
+              ratings_total: listing.ratings_total || null,
+              brand: listing.brand || null,
+              bullet_points: listing.bullet_points || [],
+              main_image_url: listing.main_image_url || null,
+              description: listing.description || null,
+              best_seller_rank: listing.best_seller_rank || [],
+              dimensions: listing.dimensions || null,
+              weight: listing.weight || null,
+              seller_name: listing.seller_name || null,
+              availability: listing.availability || null,
+            },
+            variants: (stored.variations?.variants || []).map((v) => ({
+              asin: v.asin || '',
+              color: v.color || null,
+              size: v.size || null,
+              style: v.style || null,
+              material: v.material || null,
+            })),
+          };
+
+          const response = await fetch(apiBaseUrl + '/products/plugin-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(requestBody),
+          });
+
+          if (response.status === 401) {
+            sendResponse({
+              success: false,
+              error: 'needs_login',
+              message: '请先登录 ClueAI',
+            });
+            return;
+          }
+
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            sendResponse({
+              success: false,
+              error: 'api_error',
+              message: 'API 返回错误 (' + response.status + '): ' + errorText.slice(0, 200),
+            });
+            return;
+          }
+
+          const result = await response.json();
+
+          // Update stored listing with upload status
+          stored.productName = productName;
+          stored.uploadStatus = { success: true, productId: result.product_id, timestamp: Date.now() };
+          await saveTabListing(tab.id, stored);
+
+          sendResponse({
+            success: true,
+            product_id: result.product_id,
+            variant_count: result.variant_count,
+            listing_updated: result.listing_updated,
+            message: result.message || '上传成功',
+          });
+        } catch (err) {
+          console.error('[ReviewLens BG] Listing upload error:', err);
+          sendResponse({
+            success: false,
+            error: 'network_error',
+            message: '网络错误：' + (err.message || '无法连接到服务器'),
+          });
+        }
+      })();
+      return true;
+    }
+
+    // ── Step 11.5: Clear stored listing name (update product name in stored data) ──
+    case 'UPDATE_LISTING_NAME': {
+      (async () => {
+        try {
+          const [tab] = await chrome.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
+          if (!tab || !tab.id) {
+            sendResponse({ success: false, error: 'no_active_tab' });
+            return;
+          }
+          const stored = await loadTabListing(tab.id);
+          if (stored) {
+            stored.productName = (message.productName || '').trim();
+            await saveTabListing(tab.id, stored);
+          }
+          sendResponse({ success: true });
+        } catch (err) {
+          sendResponse({ success: false, error: String(err) });
+        }
+      })();
+      return true;
+    }
+
     default: {
       sendResponse({ received: false, error: `Unknown message type: ${message.type}` });
       break;
@@ -917,6 +1212,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   deleteTabMeta(tabId);    // Fix #5 (2026-07-15): clean anti-crawl state from storage.session
   tabLocks.delete(tabId);  // Fix #4 (2026-07-15): clean serialisation lock
   deleteTabReviews(tabId); // Fix 2026-07-15: clean reviews from storage.session
+  deleteTabListing(tabId); // Step 11.5: clean listing data from storage.session
 });
 
 console.log('[ReviewLens BG] Service worker registered — v16 fix-#3-quota-#4-lock-#5-anticrawl-persist');

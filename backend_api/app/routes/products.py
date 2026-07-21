@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.products import (
+    PluginListingUploadRequest,
     ProductSearchItem,
     ProductSearchResponse,
     ProductsResponsePayload,
@@ -25,6 +26,7 @@ from review_analyzer.product_store import (
     get_product_overview_rows,
     get_variants,
     move_variant_to_parent,
+    plugin_upload_listing,
     update_product,
 )
 
@@ -324,3 +326,36 @@ def get_parent_analysis_route(
         "product": existing,
         "analysis": analysis,
     }
+
+
+# ── Step 11.5: Chrome 插件 Listing 上传 ──
+
+
+@router.post("/plugin-upload", status_code=status.HTTP_200_OK)
+def plugin_upload_listing_route(
+    body: PluginListingUploadRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Chrome 插件上传 Amazon 产品 listing 数据。
+
+    接收扩展抓取的产品 listing 信息 + 变体 ASIN，自动创建/更新产品档案。
+    产品使用用户手动填写的 name，parent_product_id 使用 Amazon ASIN。
+    """
+    user_id = int(current_user["id"])
+
+    try:
+        result = plugin_upload_listing(
+            user_id=user_id,
+            parent_asin=body.parent_asin,
+            name=body.name,
+            platform=body.platform,
+            marketplace=body.marketplace,
+            listing=body.listing.model_dump(exclude_none=True) if body.listing else None,
+            variants=[v.model_dump(exclude_none=True) for v in body.variants] if body.variants else [],
+        )
+        return result
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc

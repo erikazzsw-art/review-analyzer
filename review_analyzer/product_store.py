@@ -1095,6 +1095,229 @@ def move_variant_to_parent(
         conn.close()
 
 
+# ──────────────────────────────────────────────────────
+# Step 11.5: Chrome 插件 Listing 上传
+# ──────────────────────────────────────────────────────
+
+
+def plugin_upload_listing(
+    user_id: int,
+    parent_asin: str,
+    name: str,
+    platform: str = "amazon",
+    marketplace: str = "us",
+    listing: dict[str, Any] | None = None,
+    variants: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """处理 Chrome 插件的产品 listing 上传。
+
+    1. 按 parent_asin 查找或创建产品（name 为用户手动填写）
+    2. Upsert listing 详情到 product_listings 表
+    3. 批量 upsert 变体到 product_variants 表
+
+    Args:
+        user_id: 当前用户 ID
+        parent_asin: Amazon 父 ASIN
+        name: 用户填写的产品名称
+        platform: 平台（默认 amazon）
+        marketplace: 市场（默认 us）
+        listing: listing 详情 dict
+        variants: 变体列表 [{asin, color, size, style, material}, ...]
+
+    Returns:
+        { product_id, variant_count, listing_updated, message }
+    """
+    if not parent_asin or not parent_asin.strip():
+        raise ValueError("parent_asin is required")
+    if not name or not name.strip():
+        raise ValueError("name is required")
+
+    parent_asin = parent_asin.strip().upper()
+    name = name.strip()
+    listing = listing or {}
+    variants = variants or []
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            # 1. 查找已有产品（按 parent_asin，即 ASIN 作为唯一标识）
+            cur.execute(
+                "SELECT id FROM products WHERE user_id = %s AND parent_product_id = %s",
+                (user_id, parent_asin),
+            )
+            row = cur.fetchone()
+            if row:
+                product_id = int(row[0])
+                # 更新产品名称（用户随时可以修改）
+                cur.execute(
+                    """UPDATE products
+                       SET name = %s, platform = COALESCE(platform, %s)
+                       WHERE id = %s""",
+                    (name, platform, product_id),
+                )
+                product_created = False
+            else:
+                # 新建产品
+                cur.execute(
+                    """INSERT INTO products
+                       (user_id, parent_product_id, name, platform, lifecycle_stage, current_version)
+                       VALUES (%s, %s, %s, %s, %s, %s)
+                       RETURNING id""",
+                    (user_id, parent_asin, name, platform, "growth", "V1"),
+                )
+                product_id = int(cur.fetchone()[0])
+                product_created = True
+
+            # 2. Upsert listing 详情到 product_listings
+            listing_updated = False
+            if listing:
+                bullet_points = listing.get("bullet_points") or []
+                if isinstance(bullet_points, list):
+                    bullet_points_json = psycopg2.extras.Json(bullet_points)
+                else:
+                    bullet_points_json = psycopg2.extras.Json([])
+
+                best_seller_rank = listing.get("best_seller_rank") or []
+                if isinstance(best_seller_rank, list):
+                    bsr_json = psycopg2.extras.Json(best_seller_rank)
+                else:
+                    bsr_json = psycopg2.extras.Json([])
+
+                # 更新 products 表中的快速字段（用于列表页展示）
+                cur.execute(
+                    """UPDATE products SET
+                       brand = COALESCE(%s, brand),
+                       image_url = COALESCE(%s, image_url),
+                       rating = COALESCE(%s, rating),
+                       ratings_total = COALESCE(%s, ratings_total),
+                       scraped_title = COALESCE(%s, scraped_title)
+                       WHERE id = %s""",
+                    (
+                        listing.get("brand"),
+                        listing.get("main_image_url"),
+                        listing.get("rating"),
+                        listing.get("ratings_total"),
+                        listing.get("title"),
+                        product_id,
+                    ),
+                )
+
+                # Upsert into product_listings
+                try:
+                    cur.execute(
+                        """INSERT INTO product_listings
+                           (product_id, parent_asin, marketplace, title, price, price_currency,
+                            original_price, rating, ratings_total, brand, bullet_points,
+                            main_image_url, description, best_seller_rank, dimensions, weight,
+                            seller_name, availability, scraped_at)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                           ON CONFLICT (product_id) DO UPDATE SET
+                               marketplace = EXCLUDED.marketplace,
+                               title = EXCLUDED.title,
+                               price = EXCLUDED.price,
+                               price_currency = EXCLUDED.price_currency,
+                               original_price = EXCLUDED.original_price,
+                               rating = EXCLUDED.rating,
+                               ratings_total = EXCLUDED.ratings_total,
+                               brand = EXCLUDED.brand,
+                               bullet_points = EXCLUDED.bullet_points,
+                               main_image_url = EXCLUDED.main_image_url,
+                               description = EXCLUDED.description,
+                               best_seller_rank = EXCLUDED.best_seller_rank,
+                               dimensions = EXCLUDED.dimensions,
+                               weight = EXCLUDED.weight,
+                               seller_name = EXCLUDED.seller_name,
+                               availability = EXCLUDED.availability,
+                               scraped_at = NOW()""",
+                        (
+                            product_id,
+                            parent_asin,
+                            marketplace,
+                            listing.get("title"),
+                            listing.get("price"),
+                            listing.get("price_currency", "USD"),
+                            listing.get("original_price"),
+                            listing.get("rating"),
+                            listing.get("ratings_total"),
+                            listing.get("brand"),
+                            bullet_points_json,
+                            listing.get("main_image_url"),
+                            listing.get("description"),
+                            bsr_json,
+                            listing.get("dimensions"),
+                            listing.get("weight"),
+                            listing.get("seller_name"),
+                            listing.get("availability"),
+                        ),
+                    )
+                    listing_updated = True
+                except psycopg2.errors.UndefinedTable:
+                    conn.rollback()
+                    # product_listings table doesn't exist yet; non-fatal
+                    pass
+
+            # 3. 批量 upsert 变体
+            variant_count = 0
+            for var in variants:
+                child_asin = (var.get("asin") or "").strip().upper()
+                if not child_asin or not _is_valid_asin(child_asin, platform):
+                    continue
+
+                try:
+                    cur.execute(
+                        """INSERT INTO product_variants
+                           (user_id, product_id, child_asin, variant_sku, platform, color, size, style, material, status)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                           ON CONFLICT (user_id, platform, child_asin)
+                           WHERE platform IS NOT NULL AND child_asin IS NOT NULL
+                           DO UPDATE SET
+                               product_id = EXCLUDED.product_id,
+                               color = COALESCE(EXCLUDED.color, product_variants.color),
+                               size = COALESCE(EXCLUDED.size, product_variants.size),
+                               style = COALESCE(EXCLUDED.style, product_variants.style),
+                               material = COALESCE(EXCLUDED.material, product_variants.material)""",
+                        (
+                            user_id,
+                            product_id,
+                            child_asin,
+                            child_asin,
+                            platform,
+                            var.get("color"),
+                            var.get("size"),
+                            var.get("style"),
+                            var.get("material"),
+                            "active",
+                        ),
+                    )
+                    variant_count += 1
+                except psycopg2.errors.UndefinedTable:
+                    conn.rollback()
+                    break
+
+            conn.commit()
+
+            return {
+                "product_id": product_id,
+                "variant_count": variant_count,
+                "listing_updated": listing_updated,
+                "message": (
+                    "产品已创建并上传成功"
+                    if product_created
+                    else "产品信息已更新"
+                ),
+            }
+    finally:
+        conn.close()
+
+
+def _is_valid_asin(asin: str, platform: str) -> bool:
+    """Check if a string looks like a valid ASIN for the given platform."""
+    import re
+    if platform.lower() == "amazon":
+        return bool(re.match(r"^B[A-Z0-9]{9}$", asin))
+    return len(asin) >= 4
+
+
 def get_parent_variant_analysis(
     user_id: int, product_id: int
 ) -> dict[str, Any]:

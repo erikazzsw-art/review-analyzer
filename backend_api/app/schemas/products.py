@@ -109,3 +109,51 @@ class ProductVersionsResponse(BaseModel):
     items: list[ProductVersionItem]
     total: int
     product_id: str
+
+
+# ── Step 11.5: Chrome 插件 Listing 上传 ──
+
+class ListingDataPayload(BaseModel):
+    """产品 listing 详情（由 Chrome 扩展抓取）。"""
+    title: str | None = None
+    price: float | None = None
+    price_currency: str = "USD"
+    original_price: float | None = None
+    rating: float | None = None
+    ratings_total: int | None = None
+    brand: str | None = None
+    bullet_points: list[str] = []
+    main_image_url: str | None = None
+    description: str | None = None
+    best_seller_rank: list[dict[str, object]] = []
+    dimensions: str | None = None
+    weight: str | None = None
+    seller_name: str | None = None
+    availability: str | None = None
+
+
+class VariantPayload(BaseModel):
+    """单个变体 ASIN + 属性。"""
+    asin: str
+    color: str | None = None
+    size: str | None = None
+    style: str | None = None
+    material: str | None = None
+
+
+class PluginListingUploadRequest(BaseModel):
+    """Chrome 插件上传产品 listing 请求。"""
+    parent_asin: str
+    name: str  # 用户在 popup 中填写的产品名称（必填）
+    marketplace: str = "us"
+    platform: str = "amazon"
+    listing: ListingDataPayload | None = None
+    variants: list[VariantPayload] = []
+
+
+class PluginListingUploadResponse(BaseModel):
+    """Chrome 插件上传产品 listing 响应。"""
+    product_id: int
+    variant_count: int
+    listing_updated: bool
+    message: str

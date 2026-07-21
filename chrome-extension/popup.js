@@ -379,6 +379,333 @@ document.addEventListener('DOMContentLoaded', async () => {
     actionHint.textContent = t('hint_existing', { total });
     actionHint.className = 'action-hint action-hint--info';
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Step 11.5: Listing Tab Logic
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── Listing DOM refs ──
+  const tabBar = document.getElementById('tabBar');
+  const reviewsTabContent = document.getElementById('reviewsTabContent');
+  const listingTabContent = document.getElementById('listingTabContent');
+  const listingScrapeBtn = document.getElementById('listingScrapeBtn');
+  const listingActionHint = document.getElementById('listingActionHint');
+  const listingPreviewSection = document.getElementById('listingPreviewSection');
+  const listingPreviewContent = document.getElementById('listingPreviewContent');
+  const listingUploadSection = document.getElementById('listingUploadSection');
+  const listingUploadBtn = document.getElementById('listingUploadBtn');
+  const listingUploadSuccess = document.getElementById('listingUploadSuccess');
+  const listingViewProductLink = document.getElementById('listingViewProductLink');
+  const productNameInput = document.getElementById('productNameInput');
+
+  let currentTab = 'listing'; // Default to listing tab
+  let listingData = null; // Cached listing data for current tab
+  let isListingScraping = false;
+  let isListingUploading = false;
+
+  // ── Tab switching ──
+  if (tabBar) {
+    tabBar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      const tab = btn.getAttribute('data-tab');
+      if (tab === currentTab) return;
+      switchTab(tab);
+    });
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    // Update button states
+    tabBar.querySelectorAll('.tab-btn').forEach((btn) => {
+      const active = btn.getAttribute('data-tab') === tab;
+      btn.classList.toggle('tab-btn--active', active);
+    });
+    // Show/hide content
+    const showReviews = tab === 'reviews';
+    reviewsTabContent.hidden = !showReviews;
+    listingTabContent.hidden = showReviews;
+
+    // If switching to listing tab, init listing data
+    if (tab === 'listing') {
+      initListingTab();
+    }
+  }
+
+  // ── Listing tab initialization ──
+  async function initListingTab() {
+    // Check page type first
+    if (!currentPageInfo) {
+      try { currentPageInfo = await getPageInfo(); } catch (_) {}
+    }
+
+    if (currentPageInfo && currentPageInfo.pageType !== 'product') {
+      listingScrapeBtn.disabled = true;
+      listingActionHint.textContent = t('listing_hint_not_product');
+      listingActionHint.className = 'action-hint action-hint--muted';
+      return;
+    }
+
+    // Load existing listing data for this tab
+    try {
+      const status = await getListingStatus();
+      if (status && status.listing) {
+        listingData = status;
+        renderListingPreview(status);
+        listingPreviewSection.hidden = false;
+        listingScrapeBtn.textContent = t('listing_scrape_btn_redo');
+        listingActionHint.textContent = '';
+        listingUploadSection.hidden = false;
+        updateListingUploadButton();
+
+        // Restore product name
+        if (status.productName && productNameInput) {
+          productNameInput.value = status.productName;
+        }
+
+        // Show upload success if previously uploaded
+        if (status.uploadStatus && status.uploadStatus.success) {
+          showListingUploadSuccess(status.uploadStatus.productId);
+        }
+      } else {
+        listingScrapeBtn.disabled = false;
+        listingScrapeBtn.textContent = t('listing_scrape_btn');
+        listingActionHint.textContent = t('listing_hint_click');
+        listingActionHint.className = 'action-hint';
+      }
+    } catch (_) {
+      listingScrapeBtn.disabled = false;
+      listingScrapeBtn.textContent = t('listing_scrape_btn');
+    }
+  }
+
+  // ── Listing scrape button ──
+  if (listingScrapeBtn) {
+    listingScrapeBtn.addEventListener('click', async () => {
+      if (isListingScraping) return;
+      isListingScraping = true;
+      listingScrapeBtn.disabled = true;
+      listingScrapeBtn.textContent = t('listing_scrape_btn_scraping');
+      listingActionHint.textContent = '';
+      listingUploadSuccess.hidden = true;
+
+      try {
+        const result = await startListingScraping();
+
+        if (result.throttled) {
+          listingActionHint.textContent = t('anticrawl_throttle', { n: Math.ceil(result.wait_ms / 1000) });
+          listingActionHint.className = 'action-hint action-hint--muted';
+          listingScrapeBtn.textContent = t('listing_scrape_btn');
+          listingScrapeBtn.disabled = true;
+          return;
+        }
+
+        if (result.success && result.listing) {
+          listingData = { listing: result.listing, variations: result.variations };
+          renderListingPreview(result);
+          listingPreviewSection.hidden = false;
+          listingUploadSection.hidden = false;
+          listingActionHint.textContent = t('listing_scrape_done');
+          listingActionHint.className = 'action-hint action-hint--info';
+          listingScrapeBtn.textContent = t('listing_scrape_btn_redo');
+          updateListingUploadButton();
+        } else {
+          listingActionHint.textContent = t('listing_scrape_failed', { msg: result.error || t('err_unknown') });
+          listingActionHint.className = 'action-hint action-hint--muted';
+          listingScrapeBtn.textContent = t('listing_scrape_btn');
+        }
+      } catch (err) {
+        console.error('[ReviewLens Popup] Listing scrape error:', err);
+        listingActionHint.textContent = t('listing_scrape_failed', { msg: err.message || t('err_unknown') });
+        listingActionHint.className = 'action-hint action-hint--muted';
+        listingScrapeBtn.textContent = t('listing_scrape_btn');
+      } finally {
+        isListingScraping = false;
+        listingScrapeBtn.disabled = false;
+      }
+    });
+  }
+
+  // ── Product name input ──
+  if (productNameInput) {
+    productNameInput.addEventListener('input', () => {
+      updateListingUploadButton();
+      // Persist name to background
+      const name = productNameInput.value.trim();
+      if (chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'UPDATE_LISTING_NAME',
+          productName: name,
+        }).catch(() => {});
+      }
+    });
+  }
+
+  function updateListingUploadButton() {
+    if (!listingUploadBtn) return;
+    const hasName = productNameInput && productNameInput.value.trim().length > 0;
+    const hasData = listingData && listingData.listing;
+    listingUploadBtn.disabled = !hasName || !hasData || isListingUploading;
+  }
+
+  // ── Listing upload button ──
+  if (listingUploadBtn) {
+    listingUploadBtn.addEventListener('click', async () => {
+      if (isListingUploading) return;
+      const name = productNameInput ? productNameInput.value.trim() : '';
+      if (!name) {
+        listingActionHint.textContent = t('listing_name_required');
+        listingActionHint.className = 'action-hint action-hint--muted';
+        return;
+      }
+
+      isListingUploading = true;
+      listingUploadBtn.disabled = true;
+      listingUploadBtn.textContent = t('listing_upload_btn_uploading');
+
+      try {
+        const result = await uploadListingToApi(name);
+
+        if (result.success) {
+          showListingUploadSuccess(result.product_id);
+          listingActionHint.textContent = t('listing_upload_done_hint');
+          listingActionHint.className = 'action-hint action-hint--info';
+          listingUploadBtn.textContent = t('listing_upload_btn_done');
+        } else if (result.error === 'needs_login') {
+          listingActionHint.textContent = t('login_hint_required');
+          listingActionHint.className = 'action-hint action-hint--muted';
+          listingUploadBtn.textContent = t('listing_upload_btn');
+          checkLogin().then(renderLoginState);
+        } else {
+          listingActionHint.textContent = t('upload_failed', { msg: result.message || result.error || t('err_unknown') });
+          listingActionHint.className = 'action-hint action-hint--muted';
+          listingUploadBtn.textContent = t('listing_upload_btn');
+        }
+      } catch (err) {
+        console.error('[ReviewLens Popup] Listing upload error:', err);
+        listingActionHint.textContent = t('upload_failed', { msg: t('upload_err_network') });
+        listingActionHint.className = 'action-hint action-hint--muted';
+        listingUploadBtn.textContent = t('listing_upload_btn');
+      } finally {
+        isListingUploading = false;
+        updateListingUploadButton();
+      }
+    });
+  }
+
+  function showListingUploadSuccess(productId) {
+    listingUploadSuccess.hidden = false;
+    if (listingViewProductLink && productId) {
+      const baseUrl = 'https://www.clueai-reviewlens.com';
+      listingViewProductLink.href = baseUrl + '/products?highlight=' + encodeURIComponent(productId);
+    }
+  }
+
+  // ── Render listing preview ──
+  function renderListingPreview(data) {
+    if (!listingPreviewContent) return;
+    const listing = data.listing || {};
+    const variations = data.variations || {};
+
+    let html = '';
+
+    // Title
+    if (listing.title) {
+      html += '<div class="listing-field">' +
+        '<span class="listing-field-label">' + t('listing_field_title') + '</span>' +
+        '<span class="listing-field-value listing-field-value--truncated">' + escHtml(listing.title) + '</span>' +
+        '</div>';
+    }
+
+    // Price
+    if (listing.price_text) {
+      html += '<div class="listing-field">' +
+        '<span class="listing-field-label">' + t('listing_field_price') + '</span>' +
+        '<span class="listing-field-value">' + escHtml(listing.price_text) +
+        (listing.original_price_text ? ' <s style="color:#9ca3af;font-size:11px">' + escHtml(listing.original_price_text) + '</s>' : '') +
+        '</span></div>';
+    }
+
+    // Rating
+    if (listing.rating != null) {
+      html += '<div class="listing-field">' +
+        '<span class="listing-field-label">' + t('listing_field_rating') + '</span>' +
+        '<span class="listing-field-value">' + listing.rating + '⭐' +
+        (listing.ratings_total ? ' (' + listing.ratings_total.toLocaleString() + ' ' + t('listing_field_ratings') + ')' : '') +
+        '</span></div>';
+    }
+
+    // Brand
+    if (listing.brand) {
+      html += '<div class="listing-field">' +
+        '<span class="listing-field-label">' + t('listing_field_brand') + '</span>' +
+        '<span class="listing-field-value">' + escHtml(listing.brand) + '</span></div>';
+    }
+
+    // ASIN
+    if (listing.asin || data.asin) {
+      html += '<div class="listing-field">' +
+        '<span class="listing-field-label">ASIN</span>' +
+        '<span class="listing-field-value">' + escHtml(listing.asin || data.asin) + '</span></div>';
+    }
+
+    // Marketplace
+    if (listing.marketplace || data.marketplace) {
+      html += '<div class="listing-field">' +
+        '<span class="listing-field-label">' + t('listing_field_marketplace') + '</span>' +
+        '<span class="listing-field-value">' + escHtml((listing.marketplace || data.marketplace).toUpperCase()) + '</span></div>';
+    }
+
+    // Bullet points
+    if (listing.bullet_points && listing.bullet_points.length > 0) {
+      html += '<div class="listing-field"><span class="listing-field-label">' + t('listing_field_bullets') + '</span>' +
+        '<span class="listing-field-value">' + listing.bullet_points.length + ' ' + t('listing_field_items') + '</span></div>';
+    }
+
+    // Variations
+    const variants = variations.variants || [];
+    if (variants.length > 0 || (variations.variation_dimensions && variations.variation_dimensions.length > 0)) {
+      html += '<div class="listing-variants">' +
+        '<div class="listing-variants-title">' + t('listing_field_variants') + ' (' + variants.length + ' ' + t('listing_field_items') + ')</div>';
+      var maxShow = Math.min(variants.length, 8);
+      for (var vi = 0; vi < maxShow; vi++) {
+        var v = variants[vi];
+        var parts = [];
+        if (v.color) parts.push(v.color);
+        if (v.size) parts.push(v.size);
+        if (v.style) parts.push(v.style);
+        var label = parts.length > 0 ? parts.join(' / ') + ': ' : '';
+        html += '<div class="listing-variant-item">' + escHtml(label + v.asin) + '</div>';
+      }
+      if (variants.length > maxShow) {
+        html += '<div class="listing-variant-item" style="color:#9ca3af">… ' + t('listing_more_variants', { n: variants.length - maxShow }) + '</div>';
+      }
+      html += '</div>';
+    }
+
+    // Description
+    if (listing.description) {
+      var desc = listing.description.length > 150 ? listing.description.slice(0, 150) + '…' : listing.description;
+      html += '<div class="listing-field" style="margin-top:6px">' +
+        '<span class="listing-field-label">' + t('listing_field_desc') + '</span>' +
+        '<span class="listing-field-value">' + escHtml(desc) + '</span></div>';
+    }
+
+    listingPreviewContent.innerHTML = html || t('listing_no_data');
+  }
+
+  // ── Update listing upload button on page type change ──
+  // If page isn't a product page, disable listing scrape
+  if (currentPageInfo && currentPageInfo.pageType !== 'product') {
+    listingScrapeBtn.disabled = true;
+  }
+
+  // ── Initial tab setup: listing tab for product pages, reviews for everything else ──
+  if (currentPageInfo && currentPageInfo.pageType === 'product') {
+    switchTab('listing');
+  } else {
+    switchTab('reviews');
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -636,6 +963,102 @@ async function uploadToApi() {
       reject(err);
     }
   });
+}
+
+/**
+ * Get listing status for the active tab (Step 11.5).
+ */
+async function getListingStatus() {
+  return new Promise((resolve) => {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        resolve({ listing: null, variations: null });
+        return;
+      }
+      chrome.runtime.sendMessage({ type: 'GET_LISTING_STATUS' }, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve({ listing: null, variations: null });
+          return;
+        }
+        resolve(response || { listing: null, variations: null });
+      });
+    } catch (_) {
+      resolve({ listing: null, variations: null });
+    }
+  });
+}
+
+/**
+ * Trigger listing extraction on the active tab (Step 11.5).
+ */
+async function startListingScraping() {
+  return new Promise((resolve, reject) => {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        reject(new Error('chrome.runtime.sendMessage not available'));
+        return;
+      }
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(new Error(t('scrape_timeout')));
+      }, 30000);
+
+      chrome.runtime.sendMessage({ type: 'START_LISTING_SCRAPING' }, (response) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response || { success: false, error: 'no_response' });
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+/**
+ * Upload listing data to ClueAI API (Step 11.5).
+ * @param {string} productName — user-provided product name
+ */
+async function uploadListingToApi(productName) {
+  return new Promise((resolve, reject) => {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+        reject(new Error('chrome.runtime.sendMessage not available'));
+        return;
+      }
+      chrome.runtime.sendMessage({
+        type: 'UPLOAD_LISTING_TO_API',
+        productName: productName,
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve(response || { success: false, error: 'no_response' });
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+/**
+ * Escape HTML special characters for safe rendering (Step 11.5).
+ */
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // ═══════════════════════════════════════════════════════════════
