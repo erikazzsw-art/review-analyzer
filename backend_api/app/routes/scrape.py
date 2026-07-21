@@ -280,8 +280,9 @@ def asin_analysis_status(
     用于跨用户缓存复用：后台透明检查该 ASIN 是否已有分析结果，
     不暴露其他用户的分析内容，仅返回缓存命中统计。
     """
-    from review_analyzer.database import get_connection
     import psycopg2.extras
+
+    from review_analyzer.database import get_connection
 
     conn = get_connection()
     try:
