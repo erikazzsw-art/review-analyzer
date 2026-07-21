@@ -2,11 +2,10 @@ import { useTranslations } from "next-intl";
 
 const platforms = [
   { name: "Amazon", icon: "🛒" },
+  { name: "AliExpress", icon: "📦" },
   { name: "eBay", icon: "🏷️" },
   { name: "Shopee", icon: "🧡" },
-  { name: "AliExpress", icon: "📦" },
   { name: "Walmart", icon: "🏪" },
-  { name: "TikTok Shop", icon: "🎵" },
 ];
 
 export function TrustSignal() {

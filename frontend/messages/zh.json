@@ -30,27 +30,52 @@
     "aiDisclaimer": "🤖 AI 生成分析 · 基于 GPT-4o-mini"
   },
   "header": {
+    "features": "功能",
     "pricing": "定价",
+    "blog": "博客",
     "trial": "体验流程",
     "login": "登录",
-    "register": "注册"
+    "register": "免费试用"
   },
   "marketing": {
     "eyebrow": "分析 → 行动 → 复盘",
     "title": "ReviewLens",
     "subtitle": "从评论洞察到产品行动的完整闭环",
-    "description": "支持 Amazon、Shopee、TikTok Shop 等多平台，兼容 Excel / CSV / API 多种上传方式。自动分析评论，输出 Top 问题与亮点，推送飞书到责任人，跟进改进落地，用数据复盘优化效果。",
+    "description": "支持 Amazon、Shopee、AliExpress 等多平台，兼容 Excel / CSV / API 多种上传方式。自动分析评论，输出 Top 问题与亮点，推送飞书到责任人，跟进改进落地，用数据复盘优化效果。",
     "ctaPrimary": "免费注册",
     "ctaSecondary": "已有账号？登录",
+    "heroEyebrow": "分析 → 行动 → 复盘 · 一个系统串起来",
+    "heroH1Line1": "评论不该只是数据，",
+    "heroH1Line2": "它应该是行动。",
+    "heroSubtitleShort": "AI 分析差评 → 自动归类问题 → 生成改版行动项",
+    "heroCtaPrimary": "免费试用",
+    "heroCtaSecondary": "查看演示",
+    "heroNoCreditCard": "无需信用卡 · 3 分钟上手",
+    "heroBadgeImproved": "已改善 12 个问题",
+    "heroBadgeWeekly": "本周新增 247 条",
+    "trustStats": "已分析 500,000+ 条评论 · 服务 2,000+ 跨境卖家",
+    "howItWorks": {
+      "label": "工作原理",
+      "step1Title": "上传评论",
+      "step1Desc": "CSV 拖拽或浏览器插件一键采集",
+      "step2Title": "AI 分析",
+      "step2Desc": "情感、主题、风险自动识别",
+      "step3Title": "行动改版",
+      "step3Desc": "生成可追踪的改版任务"
+    },
+    "bottomCta": {
+      "text": "准备好让评论驱动你的产品改版？",
+      "button": "免费开始"
+    },
     "value1Title": "多源接入，智能分析",
-    "value1Desc": "支持 Amazon、Shopee、TikTok Shop 等平台，Excel / CSV / API 多种方式上传，AI 自动提炼 Top 10 问题与亮点。",
+    "value1Desc": "支持 Amazon、Shopee、AliExpress 等平台，Excel / CSV / API 多种方式上传，AI 自动提炼 Top 10 问题与亮点。",
     "value2Title": "精准推送，责任到人",
     "value2Desc": "产品问题自动推送飞书，匹配对应部门负责人，撰写解决措施并跟进落实进度。",
     "value3Title": "数据复盘，验证闭环",
     "value3Desc": "措施落地后自动追踪同类评论变化，用前后数据对比验证改进是否真正有效。",
-    "heroInsight": "评论洞察",
+    "heroInsight": "分析概览",
     "heroSentiment": "情感分布",
-    "heroActions": "措施跟进",
+    "heroAspects": "分析维度",
     "heroReview": "复盘验证",
     "heroNegative": "负面",
     "heroNeutral": "中性",
@@ -58,14 +83,16 @@
     "heroReviews": "条评论",
     "heroImprovement": "改进后下降 62%",
     "heroLaunched": "措施上线",
-    "heroCatPackaging": "包装",
-    "heroCatLogistics": "物流",
-    "heroCatQuality": "质量",
-    "heroCatFunction": "功能",
-    "heroCatDescription": "描述",
-    "heroActionPackaging": "包装加固",
-    "heroActionManual": "说明书优化",
-    "heroActionSize": "尺寸标注",
+    "heroMetricReviews": "总评论",
+    "heroMetricPositive": "好评率",
+    "heroMetricNegative": "差评率",
+    "heroMetricRating": "评分",
+    "heroAspectUsability": "易用性",
+    "heroAspectValue": "性价比",
+    "heroAspectDurability": "耐用性",
+    "heroAspectBuild": "做工质量",
+    "heroAspectPackaging": "包装",
+    "heroAspectFit": "尺寸适配",
     "heroNegativeRate": "差评率",
     "pricingFaq": {
       "title": "常见问题",
@@ -84,6 +111,12 @@
     },
     "trustSignal": {
       "label": "已支持主流跨境电商平台"
+    },
+    "testimonial": {
+      "quote": "用了 ReviewLens 三个月，差评率从 18% 降到 7%。以前看评论要花一整天，现在每天早上 5 分钟扫一眼仪表盘就够了。",
+      "avatarInitial": "王",
+      "authorName": "跨境卖家老王",
+      "authorTitle": "· 3C配件类目"
     },
     "proCta": {
       "defaultLabel": "升级到 Pro",
@@ -115,6 +148,12 @@
     "registerSubtitle": "注册后立即开始使用评论分析",
     "registerButton": "注 册",
     "registerLoading": "注册中...",
+    "googleSignUp": "使用 Google 注册",
+    "orDivider": "或",
+    "confirmPassword": "确认密码",
+    "confirmPasswordPlaceholder": "请再次输入密码",
+    "passwordMismatch": "两次输入的密码不一致",
+    "agreeTermsShort": "注册即表示同意<terms>服务条款</terms>和<privacy>隐私政策</privacy>",
     "forgotPassword": "忘记密码？",
     "noAccount": "还没有账号？",
     "hasAccount": "已有账号？",
@@ -998,6 +1037,46 @@
     "contact": "联系我们",
     "refund": "退款政策",
     "amazonDisclaimer": "Amazon 及 Amazon 徽标是 Amazon.com, Inc. 或其附属公司的商标。ClueAI 与 Amazon 无任何关联。"
+  },
+  "features": {
+    "label": "功能",
+    "title": "六大模块，覆盖评论分析全流程",
+    "tabs": {
+      "dashboard": {
+        "name": "仪表盘",
+        "title": "多产品仪表盘",
+        "desc": "跨产品对比，一眼定位问题品类"
+      },
+      "ask": {
+        "name": "Ask 问评论",
+        "title": "AI 智能问答",
+        "desc": "用自然语言提问，秒级获取精准洞察"
+      },
+      "analysis": {
+        "name": "评论分析",
+        "title": "深度评论分析",
+        "desc": "情感、主题、风险自动识别与归类"
+      },
+      "action": {
+        "name": "行动中心",
+        "title": "改版行动看板",
+        "desc": "差评自动生成追踪任务，责任到人"
+      },
+      "compare": {
+        "name": "版本对比",
+        "title": "改版前后对比",
+        "desc": "导入前后数据对比，验证改版真实效果"
+      },
+      "review": {
+        "name": "复盘追踪",
+        "title": "复盘时间线",
+        "desc": "按时间线追踪每条改版措施的落地与验证"
+      }
+    },
+    "bottomCta": {
+      "text": "准备试试？",
+      "button": "免费开始"
+    }
   },
   "contact": {
     "title": "联系我们",

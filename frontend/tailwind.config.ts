@@ -18,6 +18,13 @@ const config: Config = {
         roseSoft: "var(--rose-soft)",
         lavender: "var(--lavender)",
         mint: "var(--mint)",
+        // V3 新增语义色值
+        amber: "#e5a63b",
+        amberSoft: "rgba(229,166,59,0.08)",
+        glass: {
+          white: "rgba(255,255,255,0.6)",
+          border: "rgba(255,255,255,0.8)",
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
@@ -55,6 +62,7 @@ const config: Config = {
       boxShadow: {
         card: "var(--shadow-card)",
         glow: "var(--shadow-glow)",
+        glass: "0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)",
       },
       borderRadius: {
         lg: "var(--radius)",

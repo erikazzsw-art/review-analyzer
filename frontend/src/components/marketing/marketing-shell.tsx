@@ -23,9 +23,12 @@ export function MarketingShell({
   cta,
 }: MarketingShellProps) {
   return (
-    <div className="min-h-screen bg-hero-wash">
+    <div className="relative min-h-screen page-bg-warm overflow-hidden">
+      {/* V3 浮动 blob 装饰 */}
+      <div className="blob-rose absolute -top-32 -left-32 z-0" />
+      <div className="blob-lavender absolute top-20 -right-24 z-0" />
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 pb-16 pt-4 lg:px-10">
+      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 pb-16 pt-4 lg:px-10">
         <section className="rounded-shell border border-line bg-card px-7 py-8 shadow-card backdrop-blur md:px-10 md:py-10">
           {/* Top row: title area + CTA */}
           <div className="flex items-start justify-between gap-6">

@@ -1,4 +1,7 @@
+import { BottomCta } from "@/components/marketing/bottom-cta";
 import { PricingFaq } from "@/components/marketing/pricing-faq";
+import { SiteFooter } from "@/components/marketing/site-footer";
+import { SiteHeader } from "@/components/marketing/site-header";
 import { buildMarketingMetadata } from "@/lib/seo";
 
 import PricingContent from "./pricing-content";
@@ -13,8 +16,11 @@ export const metadata = buildMarketingMetadata({
 export default function PricingPage() {
   return (
     <>
+      <SiteHeader />
       <PricingContent />
       <PricingFaq />
+      <BottomCta />
+      <SiteFooter />
     </>
   );
 }

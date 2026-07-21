@@ -26,7 +26,7 @@ export function ValueGrid() {
       {items.map((item, index) => (
         <article
           key={item.title}
-          className="rounded-card border border-line bg-white/84 px-6 py-6 shadow-card"
+          className="rounded-card border border-line bg-white/84 px-6 py-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.1)]"
         >
           <div className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${item.accent}`}>
             {index + 1}

@@ -49,7 +49,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
 
 const CHECK_ICON = (
   <svg
-    className="mt-0.5 h-4 w-4 shrink-0 text-[#4a7dc7]"
+    className="mt-0.5 h-4 w-4 shrink-0 text-[#4fb99f]"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -92,27 +92,33 @@ export default function PricingContent() {
   }
 
   return (
-    <div className="bg-hero-wash">
+    <div className="page-bg-warm relative overflow-hidden">
+      {/* Floating blobs */}
+      <div className="blob-rose pointer-events-none absolute -top-32 -left-32 z-0" />
+      <div className="blob-lavender pointer-events-none absolute top-32 -right-24 z-0" />
       <div ref={checkoutRef} className="hidden" aria-hidden="true" />
       {/* Header */}
-      <div className="mx-auto max-w-7xl px-6 pb-10 pt-20 text-center lg:px-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#4a7dc7]">
-          Pricing
-        </p>
-        <h1 className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.03em] text-ink lg:text-5xl">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 pt-20 text-center lg:px-10">
+        {/* Section label pill */}
+        <div className="mb-6 flex justify-center">
+          <span className="glass-rose inline-flex rounded-pill px-4 py-1.5 text-[13px] font-medium uppercase tracking-[0.05em] text-[#f36f8f]">
+            Pricing
+          </span>
+        </div>
+        <h1 className="font-heading text-4xl font-extrabold tracking-[-0.02em] text-ink md:text-[44px]">
           Simple, transparent pricing.
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-base text-soft">
+        <p className="mx-auto mt-3 max-w-xl text-base text-soft">
           Start with {TRIAL_CREDITS.toLocaleString()} free credits — {TRIAL_DAYS} days, no credit card required.
         </p>
 
         {/* Monthly / Annual toggle */}
-        <div className="mt-8 inline-flex items-center gap-1 rounded-full border border-line bg-white p-1 shadow-card">
+        <div className="mt-8 inline-flex items-center gap-1 rounded-full border border-[rgba(255,255,255,0.8)] bg-white/60 p-1 backdrop-blur">
           <button
             onClick={() => setPeriod("monthly")}
             className={[
-              "rounded-full px-4 py-1.5 text-sm font-semibold transition",
-              period === "monthly" ? "bg-ink text-white" : "text-soft hover:text-ink",
+              "rounded-full px-5 py-2 text-sm font-semibold transition-all",
+              period === "monthly" ? "bg-[#f36f8f] text-white shadow-[0_4px_12px_rgba(243,111,143,0.3)]" : "text-soft hover:text-ink",
             ].join(" ")}
           >
             Monthly
@@ -120,15 +126,15 @@ export default function PricingContent() {
           <button
             onClick={() => setPeriod("annual")}
             className={[
-              "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition",
-              period === "annual" ? "bg-ink text-white" : "text-soft hover:text-ink",
+              "flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold transition-all",
+              period === "annual" ? "bg-[#f36f8f] text-white shadow-[0_4px_12px_rgba(243,111,143,0.3)]" : "text-soft hover:text-ink",
             ].join(" ")}
           >
             Annual
             <span
               className={[
                 "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                period === "annual" ? "bg-[#d94d72] text-white" : "bg-emerald-100 text-emerald-700",
+                period === "annual" ? "bg-white/20 text-white" : "bg-[#4fb99f]/15 text-[#4fb99f]",
               ].join(" ")}
             >
               −20%
@@ -142,10 +148,11 @@ export default function PricingContent() {
       </div>
 
       {/* Plan cards */}
-      <div className="mx-auto grid w-full max-w-7xl gap-5 px-6 pb-16 sm:grid-cols-2 lg:grid-cols-4 lg:px-10">
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-5 px-6 pb-16 sm:grid-cols-2 lg:grid-cols-4 lg:px-10">
         {(["free", "starter", "pro", "team"] as const).map((key) => {
           const plan = PLANS[key];
           const isPro = key === "pro";
+          const isFree = key === "free";
           const price = formatPrice(plan, period);
           const perMonth = period === "annual" && plan.monthlyUsd > 0 ? "/mo, billed annually" : plan.monthlyUsd > 0 ? "/month" : "";
 
@@ -153,22 +160,24 @@ export default function PricingContent() {
             <article
               key={key}
               className={[
-                "relative flex flex-col rounded-shell border p-6 shadow-card",
-                isPro ? "border-2 border-[#d94d72] bg-white" : "border-line bg-white/86",
+                "relative flex flex-col rounded-[24px] p-6 transition-all duration-300 hover:-translate-y-1",
+                isPro
+                  ? "glass-white border-2 border-[#f36f8f] shadow-[0_0_32px_rgba(243,111,143,0.2)]"
+                  : "glass-white",
               ].join(" ")}
             >
               {isPro && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-pill bg-[#d94d72] px-4 py-1 text-xs font-bold tracking-wider text-white">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-pill bg-[#f36f8f] px-4 py-1 text-xs font-bold tracking-wider text-white shadow-[0_4px_12px_rgba(243,111,143,0.35)]">
                   Most popular ⭐
                 </div>
               )}
 
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-soft">
+              <div className="text-sm font-semibold uppercase tracking-[0.08em] text-soft">
                 {plan.name}
               </div>
 
               <div className="mt-3 flex items-baseline gap-1.5">
-                <span className="font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
+                <span className={`font-heading text-4xl font-extrabold tracking-[-0.04em] ${isFree ? "text-[#4fb99f]" : "text-ink"}`}>
                   {price}
                 </span>
                 {perMonth && (
@@ -190,10 +199,10 @@ export default function PricingContent() {
                 <Link
                   href={key === "free" ? "/register" : `/register?plan=${key}`}
                   className={[
-                    "mt-5 inline-flex min-h-10 w-full items-center justify-center rounded-pill px-4 py-2.5 text-sm font-semibold shadow-card transition",
+                    "mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-[12px] px-6 py-3 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]",
                     isPro
-                      ? "bg-[#d94d72] text-white hover:bg-[#c4405f]"
-                      : "border border-line bg-white text-ink hover:border-ink/20",
+                      ? "bg-[#f36f8f] text-white shadow-[0_8px_24px_rgba(243,111,143,0.35)] hover:shadow-[0_12px_28px_rgba(243,111,143,0.45)]"
+                      : "border border-[rgba(255,255,255,0.8)] bg-white/60 text-ink hover:border-[#f36f8f]/30 hover:text-[#f36f8f]",
                   ].join(" ")}
                 >
                   {key === "free" ? "Get started free" : "Get Team"}
@@ -204,10 +213,10 @@ export default function PricingContent() {
                   onClick={() => handlePaidPlanClick(key)}
                   disabled={checkoutLoading !== null}
                   className={[
-                    "mt-5 inline-flex min-h-10 w-full items-center justify-center rounded-pill px-4 py-2.5 text-sm font-semibold shadow-card transition disabled:opacity-60",
+                    "mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-[12px] px-6 py-3 text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60",
                     isPro
-                      ? "bg-[#d94d72] text-white hover:bg-[#c4405f]"
-                      : "border border-line bg-white text-ink hover:border-ink/20",
+                      ? "bg-[#f36f8f] text-white shadow-[0_8px_24px_rgba(243,111,143,0.35)] hover:shadow-[0_12px_28px_rgba(243,111,143,0.45)]"
+                      : "border border-[rgba(255,255,255,0.8)] bg-white/60 text-ink hover:border-[#f36f8f]/30 hover:text-[#f36f8f]",
                   ].join(" ")}
                 >
                   {checkoutLoading === key ? "Loading…" : `Get ${plan.name}`}
@@ -234,8 +243,8 @@ export default function PricingContent() {
       </div>
 
       {/* Add-ons section */}
-      <div className="mx-auto max-w-7xl px-6 pb-16 lg:px-10">
-        <div className="rounded-shell border border-line bg-white p-8 shadow-card">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 lg:px-10">
+        <div className="glass-white p-8">
           <h2 className="font-heading text-2xl font-bold tracking-[-0.02em] text-ink">
             Need more credits?
           </h2>
@@ -247,7 +256,7 @@ export default function PricingContent() {
             {ADD_ONS.map((addon) => (
               <div
                 key={addon.credits}
-                className="flex items-center justify-between rounded-xl border border-line bg-hero-wash p-4"
+                className="flex items-center justify-between rounded-[16px] border border-[rgba(255,255,255,0.8)] bg-white/50 p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div>
                   <div className="font-semibold text-ink">
@@ -257,7 +266,7 @@ export default function PricingContent() {
                     ${(addon.priceUsd / addon.credits * 1000).toFixed(1)} per 1K credits
                   </div>
                 </div>
-                <div className="text-xl font-extrabold text-ink">${addon.priceUsd}</div>
+                <div className="font-heading text-xl font-extrabold text-ink">${addon.priceUsd}</div>
               </div>
             ))}
           </div>
@@ -269,8 +278,8 @@ export default function PricingContent() {
       </div>
 
       {/* Enterprise row */}
-      <div className="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
-        <div className="flex flex-col items-center justify-between gap-4 rounded-shell border border-line bg-white p-8 shadow-card sm:flex-row">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-20 lg:px-10">
+        <div className="glass-white flex flex-col items-center justify-between gap-4 p-8 sm:flex-row">
           <div>
             <h3 className="font-heading text-xl font-bold text-ink">Enterprise</h3>
             <p className="mt-1 text-sm text-soft">
@@ -279,7 +288,7 @@ export default function PricingContent() {
           </div>
           <a
             href="mailto:hello@clueai.co"
-            className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-pill border border-line bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-card transition hover:border-ink/20"
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[12px] border border-[#f36f8f] bg-white/60 px-6 py-3 text-sm font-semibold text-[#f36f8f] transition-all hover:scale-[1.02] hover:bg-white/80 active:scale-[0.98]"
           >
             Contact us
           </a>

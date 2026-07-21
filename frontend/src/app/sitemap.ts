@@ -5,6 +5,7 @@ import { absoluteUrl } from "@/lib/seo";
 const marketingRoutes = [
   { path: "/", priority: 1, changeFrequency: "weekly" as const },
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" as const },
+  { path: "/case-studies", priority: 0.8, changeFrequency: "monthly" as const },
   { path: "/trial", priority: 0.8, changeFrequency: "monthly" as const },
 ];
 

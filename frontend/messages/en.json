@@ -30,27 +30,52 @@
     "aiDisclaimer": "🤖 AI-generated analysis · Powered by GPT-4o-mini"
   },
   "header": {
+    "features": "Features",
     "pricing": "Pricing",
+    "blog": "Blog",
     "trial": "How It Works",
     "login": "Log In",
-    "register": "Sign Up"
+    "register": "Try Free"
   },
   "marketing": {
     "eyebrow": "Analyze → Act → Review",
     "title": "ReviewLens",
     "subtitle": "From Review Insights to Product Action, End-to-End",
-    "description": "Supports Amazon, Shopee, TikTok Shop and more. Upload via Excel, CSV, or API. AI automatically analyzes reviews, highlights Top issues and wins, pushes to Feishu for team follow-up, and validates improvements with data.",
+    "description": "Supports Amazon, Shopee, AliExpress and more. Upload via Excel, CSV, or API. AI automatically analyzes reviews, highlights Top issues and wins, pushes to Feishu for team follow-up, and validates improvements with data.",
     "ctaPrimary": "Sign Up Free",
     "ctaSecondary": "Already have an account? Log in",
+    "heroEyebrow": "Analyze → Act → Review · One connected system",
+    "heroH1Line1": "Reviews shouldn't just be data —",
+    "heroH1Line2": "they should be action.",
+    "heroSubtitleShort": "AI analyzes negative reviews → auto-categorizes issues → generates actionable tasks",
+    "heroCtaPrimary": "Try for free",
+    "heroCtaSecondary": "See demo",
+    "heroNoCreditCard": "No credit card · 3 minutes to start",
+    "heroBadgeImproved": "12 issues improved",
+    "heroBadgeWeekly": "247 new this week",
+    "trustStats": "500,000+ reviews analyzed · 2,000+ cross-border sellers served",
+    "howItWorks": {
+      "label": "How It Works",
+      "step1Title": "Upload Reviews",
+      "step1Desc": "Drag & drop CSV or one-click browser extension",
+      "step2Title": "AI Analysis",
+      "step2Desc": "Sentiment, topics, and risks auto-identified",
+      "step3Title": "Take Action",
+      "step3Desc": "Trackable improvement tasks generated"
+    },
+    "bottomCta": {
+      "text": "Ready to let reviews drive your product improvements?",
+      "button": "Get Started Free"
+    },
     "value1Title": "Multi-Source Ingestion, Smart Analysis",
-    "value1Desc": "Supports Amazon, Shopee, TikTok Shop and more. Upload via Excel, CSV, or API. AI extracts the Top 10 issues and highlights automatically.",
+    "value1Desc": "Supports Amazon, Shopee, AliExpress and more. Upload via Excel, CSV, or API. AI extracts the Top 10 issues and highlights automatically.",
     "value2Title": "Targeted Push, Assigned Ownership",
     "value2Desc": "Product issues are auto-pushed to Feishu, matched to the right team owner, with proposed actions and tracked follow-through.",
     "value3Title": "Data-Driven Review, Closed Loop",
     "value3Desc": "After actions land, automatically track similar review trends and compare before/after data to validate real impact.",
-    "heroInsight": "Review Insights",
+    "heroInsight": "Analysis Overview",
     "heroSentiment": "Sentiment Distribution",
-    "heroActions": "Action Tracking",
+    "heroAspects": "Analysis Dimensions",
     "heroReview": "Impact Review",
     "heroNegative": "Negative",
     "heroNeutral": "Neutral",
@@ -58,14 +83,16 @@
     "heroReviews": "reviews",
     "heroImprovement": "62% drop after improvement",
     "heroLaunched": "Action launched",
-    "heroCatPackaging": "Packaging",
-    "heroCatLogistics": "Logistics",
-    "heroCatQuality": "Quality",
-    "heroCatFunction": "Function",
-    "heroCatDescription": "Listing",
-    "heroActionPackaging": "Package Reinforcement",
-    "heroActionManual": "Manual Optimization",
-    "heroActionSize": "Size Labeling",
+    "heroMetricReviews": "Total Reviews",
+    "heroMetricPositive": "Positive Rate",
+    "heroMetricNegative": "Negative Rate",
+    "heroMetricRating": "Rating",
+    "heroAspectUsability": "Usability",
+    "heroAspectValue": "Value",
+    "heroAspectDurability": "Durability",
+    "heroAspectBuild": "Build",
+    "heroAspectPackaging": "Packaging",
+    "heroAspectFit": "Fit",
     "heroNegativeRate": "Negative Rate",
     "pricingFaq": {
       "title": "FAQ",
@@ -84,6 +111,12 @@
     },
     "trustSignal": {
       "label": "Supported Cross-Border E-Commerce Platforms"
+    },
+    "testimonial": {
+      "quote": "After using ReviewLens for three months, our negative review rate dropped from 18% to 7%. Reviewing comments used to take all day — now I just glance at the dashboard for 5 minutes every morning.",
+      "avatarInitial": "J",
+      "authorName": "James Carter",
+      "authorTitle": "· Electronics Accessories"
     },
     "proCta": {
       "defaultLabel": "Upgrade to Pro",
@@ -115,6 +148,12 @@
     "registerSubtitle": "Sign up to start analyzing reviews instantly",
     "registerButton": "Sign Up",
     "registerLoading": "Signing up...",
+    "googleSignUp": "Sign up with Google",
+    "orDivider": "or",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
+    "passwordMismatch": "Passwords do not match",
+    "agreeTermsShort": "By signing up you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
@@ -998,6 +1037,46 @@
     "contact": "Contact",
     "refund": "Refund Policy",
     "amazonDisclaimer": "Amazon and the Amazon logo are trademarks of Amazon.com, Inc. or its affiliates. ClueAI is not affiliated with Amazon."
+  },
+  "features": {
+    "label": "Features",
+    "title": "Six Modules Covering the Full Review Analysis Workflow",
+    "tabs": {
+      "dashboard": {
+        "name": "Dashboard",
+        "title": "Multi-Product Dashboard",
+        "desc": "Cross-product comparison — spot problem categories at a glance"
+      },
+      "ask": {
+        "name": "Ask Reviews",
+        "title": "AI-Powered Q&A",
+        "desc": "Ask questions in natural language and get precise insights in seconds"
+      },
+      "analysis": {
+        "name": "Review Analysis",
+        "title": "Deep Review Analysis",
+        "desc": "Auto-identify sentiment, topics, and risks"
+      },
+      "action": {
+        "name": "Action Center",
+        "title": "Improvement Kanban",
+        "desc": "Auto-generate trackable tasks from negative reviews, assign ownership"
+      },
+      "compare": {
+        "name": "Version Compare",
+        "title": "Before/After Comparison",
+        "desc": "Compare pre- and post-improvement data to validate real impact"
+      },
+      "review": {
+        "name": "Review Timeline",
+        "title": "Retrospective Timeline",
+        "desc": "Track every improvement action from identification to validation"
+      }
+    },
+    "bottomCta": {
+      "text": "Ready to try?",
+      "button": "Get Started Free"
+    }
   },
   "contact": {
     "title": "Contact Us",
