@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { CreateProductButton } from "@/components/products/create-product-button";
-import { ProductGridWithFilter } from "@/components/products/product-grid-with-filter";
+import { ProductTreeView } from "@/components/products/product-tree-view";
 import { getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
@@ -56,7 +56,7 @@ export default async function ProductsPage() {
         </div>
 
         {response.items.length > 0 ? (
-          <ProductGridWithFilter products={response.items} />
+          <ProductTreeView products={response.items} />
         ) : (
           <section className="rounded-shell border border-dashed border-line bg-white/80 px-6 py-10 shadow-card backdrop-blur">
             <h2 className="font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">

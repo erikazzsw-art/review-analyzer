@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import {
   addAsinWatchlist,
+  checkAsinAvailability,
   deleteAsinWatchlistItem,
   fetchAsinWatchlist,
   triggerAsinFetchNow,
@@ -38,6 +39,10 @@ export function AsinWatchlistPanel() {
   const [addFrequency, setAddFrequency] = useState<"daily" | "weekly" | "manual">("daily");
   const [submitting, setSubmitting] = useState(false);
   const [fetchingId, setFetchingId] = useState<number | null>(null);
+  const [asinAvail, setAsinAvail] = useState<{
+    checking: boolean;
+    result: { available: boolean; suggestion?: string } | null;
+  }>({ checking: false, result: null });
 
   function relativeTime(dateStr: string | null): string {
     if (!dateStr) return t("neverFetched");
@@ -64,6 +69,34 @@ export function AsinWatchlistPanel() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Real-time ASIN availability check for Amazon platform
+  useEffect(() => {
+    if (addPlatform !== "amazon" || !addInput.trim()) {
+      setAsinAvail({ checking: false, result: null });
+      return;
+    }
+    const asins = addInput.split(/[\n,;]/).map((s) => s.trim().toUpperCase()).filter(Boolean);
+    const validAsin = asins.find((s) => s.length === 10 && /^[A-Z0-9]{10}$/.test(s));
+    if (!validAsin) {
+      setAsinAvail({ checking: false, result: null });
+      return;
+    }
+    let cancelled = false;
+    setAsinAvail((prev) => ({ ...prev, checking: true }));
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await checkAsinAvailability(validAsin, addPlatform, addMarketplace);
+        if (!cancelled) setAsinAvail({ checking: false, result: res });
+      } catch {
+        if (!cancelled) setAsinAvail({ checking: false, result: null });
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [addInput, addPlatform, addMarketplace]);
 
   function validateInput(): string[] {
     const raw = addInput.split(/[\n,;]/).map((s) => s.trim()).filter(Boolean);
@@ -178,6 +211,19 @@ export function AsinWatchlistPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Amazon availability banner */}
+      <div className="rounded-card border border-amber-200 bg-amber-50/80 p-4">
+        <div className="flex items-start gap-3">
+          <svg className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <div>
+            <p className="text-sm font-semibold text-amber-900">{t("amazonBanner")}</p>
+            <p className="mt-1 text-xs text-amber-700">{t("amazonBannerDetail")}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Add form */}
       <div className="rounded-card border border-line bg-white p-5 space-y-4">
         <h3 className="text-sm font-semibold text-ink">{t("addTitle")}</h3>
@@ -209,6 +255,26 @@ export function AsinWatchlistPanel() {
               className="w-full rounded-card border border-line bg-white px-3 py-2 text-sm font-mono outline-none transition focus:border-[#f36f8f] resize-none"
               placeholder={t(addPlaceholderKey)}
             />
+            {/* ASIN availability indicator */}
+            {addPlatform === "amazon" && asinAvail.result && (
+              <p
+                className={`text-xs mt-1 ${
+                  asinAvail.result.available
+                    ? "text-[#3d8b74]"
+                    : "text-[#b44655]"
+                }`}
+              >
+                {asinAvail.result.available
+                  ? t("asinAvailable")
+                  : t("asinUnavailable")}
+                {asinAvail.result.suggestion && (
+                  <span className="ml-1 text-soft">{asinAvail.result.suggestion}</span>
+                )}
+              </p>
+            )}
+            {addPlatform === "amazon" && asinAvail.checking && (
+              <p className="text-xs text-soft mt-1">{t("availabilityChecking")}</p>
+            )}
           </div>
           <div className="space-y-2">
             {addPlatform === "amazon" && (

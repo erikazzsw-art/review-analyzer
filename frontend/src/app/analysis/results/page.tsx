@@ -14,6 +14,7 @@ import {
 import { AppShell } from "@/components/app/app-shell";
 import { AnalysisPollingPanel } from "@/components/analysis/analysis-polling-panel";
 import { AnalysisResultsSections } from "@/components/analysis/analysis-results-sections";
+import { AnalysisTabSwitcher } from "@/components/analysis/analysis-tab-switcher";
 import { ResultsFilterBar } from "@/components/analysis/results-filter-bar";
 import {
   getAnalysisHistory,
@@ -414,27 +415,39 @@ export default async function AnalysisResultsPage({
     </div>
   );
 
+  const productRefId = (payload.session as { product_ref_id?: number | null }).product_ref_id;
+
+  const resultsContent = (
+    <AnalysisResultsSections
+      sessionId={sessionId || 0}
+      session={payload.session}
+      consumerProfile={consumerProfile}
+      userExperience={userExperience}
+      purchaseMotives={purchaseMotives}
+      unmetNeeds={unmetNeeds}
+      recommendations={recommendations}
+      modules={payload.modules || {}}
+      comments={payload.comments}
+      actionCandidates={actionCandidates}
+      overviewSlot={overviewSlot}
+      filterBarSlot={filterBarSlot}
+      locale={locale}
+    />
+  );
+
   return (
     <AppShell
       currentPath="/analysis/results"
       title={t("title")}
       description={t("description")}
     >
-      <AnalysisResultsSections
-        sessionId={sessionId || 0}
-        session={payload.session}
-        consumerProfile={consumerProfile}
-        userExperience={userExperience}
-        purchaseMotives={purchaseMotives}
-        unmetNeeds={unmetNeeds}
-        recommendations={recommendations}
-        modules={payload.modules || {}}
-        comments={payload.comments}
-        actionCandidates={actionCandidates}
-        overviewSlot={overviewSlot}
-        filterBarSlot={filterBarSlot}
-        locale={locale}
-      />
+      {productRefId != null && productRefId > 0 ? (
+        <AnalysisTabSwitcher productId={productRefId}>
+          {resultsContent}
+        </AnalysisTabSwitcher>
+      ) : (
+        resultsContent
+      )}
     </AppShell>
   );
 }

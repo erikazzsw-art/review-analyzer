@@ -1100,6 +1100,42 @@ export async function deleteVariant(productId: number, variantId: number): Promi
   }
 }
 
+export async function moveVariant(
+  productId: number,
+  variantId: number,
+  targetProductId: number,
+): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/products/${productId}/variants/${variantId}/move`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target_product_id: targetProductId }),
+    },
+  );
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
+export async function checkAsinAvailability(
+  asin: string,
+  platform = "amazon",
+  marketplace = "us",
+): Promise<{ asin: string; platform: string; available: boolean; suggestion?: string }> {
+  const search = new URLSearchParams({ asin, platform, marketplace });
+  const response = await fetch(
+    `${getApiBaseUrl()}/reviews/check-asin-availability?${search.toString()}`,
+    { credentials: "include" },
+  );
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
 export async function fetchDownloads(): Promise<import("./types").DownloadRecord[]> {
   const response = await fetch(`${getApiBaseUrl()}/downloads`, {
     credentials: "include",

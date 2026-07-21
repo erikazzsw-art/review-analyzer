@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app/app-shell";
 import { DeleteVariantButton } from "@/components/products/delete-variant-button";
+import { MoveVariantButton } from "@/components/products/move-variant-button";
 import { ProductDetailTabs } from "@/components/products/product-detail-tabs";
 import { getProductDetail, isApiError } from "@/lib/api/server";
 import Link from "next/link";
@@ -165,11 +166,18 @@ export default async function ProductDetailPage({ params }: Props) {
                       <td className="px-3 py-3 text-soft">—</td>
                       <td className="px-3 py-3 text-soft">{(v.listing_date as string) || "—"}</td>
                       <td className="px-3 py-3">
-                        <DeleteVariantButton
-                          productId={productId}
-                          variantId={v.id as number}
-                          variantName={(v.name as string) || (v.child_asin as string) || t("detail.unnamedVariant")}
-                        />
+                        <div className="flex items-center gap-1">
+                          <MoveVariantButton
+                            productId={productId}
+                            variantId={v.id as number}
+                            variantName={(v.name as string) || (v.child_asin as string) || t("detail.unnamedVariant")}
+                          />
+                          <DeleteVariantButton
+                            productId={productId}
+                            variantId={v.id as number}
+                            variantName={(v.name as string) || (v.child_asin as string) || t("detail.unnamedVariant")}
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))}

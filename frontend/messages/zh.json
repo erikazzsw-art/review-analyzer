@@ -620,7 +620,12 @@
         "daily": "每日",
         "weekly": "每周",
         "manual": "手动"
-      }
+      },
+      "amazonBanner": "亚马逊自动抓取仅支持部分 ASIN，若抓取失败建议使用 Chrome 插件。",
+      "amazonBannerDetail": "系统会优先尝试自动抓取，对于无法自动抓取的 ASIN，结果不做保证。",
+      "asinAvailable": "✓ 此 ASIN 可以自动抓取",
+      "asinUnavailable": "✗ 此 ASIN 可能无法自动抓取",
+      "availabilityChecking": "正在检测可用性…"
     },
     "uploadNotice": "您上传的评论将在分析前进行匿名化处理。我们不存储个人身份信息。详见我们的 <link href=\"/privacy\">隐私政策</link>。"
   },
@@ -706,6 +711,15 @@
     "negativeRate": "差评率",
     "sentimentSourceNote": "（基于内容分析）",
     "pageDescription": "按产品、版本和评论时间窗口筛选，对比核心指标、TOP 问题 / 亮点，下载 XLSX 报表。",
+    "tabCurrentUpload": "本次上传",
+    "tabParentAnalysis": "父变体整体",
+    "parentAnalysisLoading": "正在加载父变体分析…",
+    "parentAnalysisNoData": "暂无父变体分析数据",
+    "parentAnalysisNoDataDesc": "该父变体下的子 ASIN 均无分析结果，请先上传评论或使用自动抓取。",
+    "parentAnalysisUnrecognizable": "无法识别",
+    "parentAnalysisDateRange": "时间范围",
+    "parentAnalysisInProgress": "{count} 个 ASIN 分析中",
+    "parentAnalysisAsinList": "子 ASIN 列表（{count}）",
     "table": {
       "tag": "标签",
       "mentionPct": "提及占比",
@@ -2057,6 +2071,29 @@
       "deleting": "删除中…",
       "cancelButton": "取消",
       "ariaLabel": "删除变体 {name}"
+    },
+    "tree": {
+      "expand": "展开子 ASIN",
+      "collapse": "收起子 ASIN",
+      "viewDetail": "详情",
+      "colProduct": "产品",
+      "colPlatform": "平台",
+      "colRating": "评分",
+      "colReviews": "评论数",
+      "colVariants": "变体数",
+      "colStatus": "状态",
+      "colActions": "操作"
+    },
+    "moveVariant": {
+      "button": "移动到其他父产品",
+      "ariaLabel": "移动变体 {name}",
+      "title": "移动变体",
+      "description": "为「{name}」选择目标父产品",
+      "searchPlaceholder": "搜索产品名称或 ID…",
+      "noResults": "未找到匹配的产品",
+      "success": "变体移动成功",
+      "error": "移动变体失败",
+      "cancel": "取消"
     }
   },
   "categoryLabels": {

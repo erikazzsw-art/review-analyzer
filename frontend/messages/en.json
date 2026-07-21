@@ -620,7 +620,12 @@
         "daily": "Daily",
         "weekly": "Weekly",
         "manual": "Manual"
-      }
+      },
+      "amazonBanner": "Amazon auto-fetch only supports certain ASINs. If fetching fails, use the Chrome extension instead.",
+      "amazonBannerDetail": "The system will attempt auto-fetching first. For ASINs that cannot be fetched automatically, results are not guaranteed.",
+      "asinAvailable": "✓ This ASIN can be auto-fetched",
+      "asinUnavailable": "✗ This ASIN may not be auto-fetchable",
+      "availabilityChecking": "Checking availability…"
     },
     "uploadNotice": "Reviews you upload will be anonymized before analysis. We do not store personally identifiable information. See our <link href=\"/privacy\">Privacy Policy</link>."
   },
@@ -706,6 +711,15 @@
     "negativeRate": "Negative Rate",
     "sentimentSourceNote": " (from content analysis)",
     "pageDescription": "Filter by product, version, and review time window; compare core metrics and top issues/highlights, and download XLSX reports.",
+    "tabCurrentUpload": "Current Upload",
+    "tabParentAnalysis": "Parent Variant Overall",
+    "parentAnalysisLoading": "Loading parent analysis…",
+    "parentAnalysisNoData": "No parent analysis data",
+    "parentAnalysisNoDataDesc": "No analysis results for any child ASIN under this parent variant. Upload reviews or use auto-fetch first.",
+    "parentAnalysisUnrecognizable": "Unrecognizable",
+    "parentAnalysisDateRange": "Date Range",
+    "parentAnalysisInProgress": "{count} ASIN(s) analyzing",
+    "parentAnalysisAsinList": "Child ASINs ({count})",
     "table": {
       "tag": "Tag",
       "mentionPct": "Mention Share",
@@ -2057,6 +2071,29 @@
       "deleting": "Deleting…",
       "cancelButton": "Cancel",
       "ariaLabel": "Delete variant {name}"
+    },
+    "tree": {
+      "expand": "Expand child ASINs",
+      "collapse": "Collapse child ASINs",
+      "viewDetail": "Details",
+      "colProduct": "Product",
+      "colPlatform": "Platform",
+      "colRating": "Rating",
+      "colReviews": "Reviews",
+      "colVariants": "Variants",
+      "colStatus": "Status",
+      "colActions": "Actions"
+    },
+    "moveVariant": {
+      "button": "Move to another parent",
+      "ariaLabel": "Move variant {name}",
+      "title": "Move Variant",
+      "description": "Select a target parent product for \"{name}\"",
+      "searchPlaceholder": "Search products by name or ID…",
+      "noResults": "No matching products found",
+      "success": "Variant moved successfully",
+      "error": "Failed to move variant",
+      "cancel": "Cancel"
     }
   },
   "categoryLabels": {

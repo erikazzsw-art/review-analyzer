@@ -230,6 +230,7 @@ export type AnalysisResultsResponse = {
 };
 
 export type ProductSearchItem = {
+  id: number | null;
   parent_product_id: string;
   name: string | null;
   review_count: number;

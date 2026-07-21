@@ -159,6 +159,7 @@ CREATE TABLE IF NOT EXISTS product_variants (
     product_id INTEGER NOT NULL REFERENCES products(id),
     variant_sku TEXT NOT NULL,
     child_asin TEXT,
+    platform TEXT,
     color TEXT,
     size TEXT,
     style TEXT,
@@ -253,3 +254,13 @@ CREATE INDEX IF NOT EXISTS idx_review_trackers_user_id ON review_trackers(user_i
 CREATE INDEX IF NOT EXISTS idx_review_trackers_product_id ON review_trackers(product_id);
 CREATE INDEX IF NOT EXISTS idx_review_trackers_status ON review_trackers(user_id, result_status);
 CREATE INDEX IF NOT EXISTS idx_comparison_reports_user_id ON comparison_reports(user_id);
+
+-- V5.8: product_variants platform 字段 + 联合唯一索引 (Migration 050)
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS platform TEXT;
+DROP INDEX IF EXISTS uq_product_variants_user_child_asin;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_product_variants_user_platform_child_asin
+    ON product_variants (user_id, platform, child_asin)
+    WHERE platform IS NOT NULL AND child_asin IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_product_variants_platform
+    ON product_variants (platform)
+    WHERE platform IS NOT NULL;
