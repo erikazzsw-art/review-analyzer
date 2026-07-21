@@ -148,7 +148,7 @@ def main():
 
     # Read CSV
     rows: list[dict[str, str]] = []
-    with open(INPUT_CSV, "r", encoding="utf-8") as f:
+    with open(INPUT_CSV, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             rows.append(row)
