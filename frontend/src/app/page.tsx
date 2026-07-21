@@ -20,8 +20,44 @@ export const metadata = buildMarketingMetadata({
 export default function HomePage() {
   const t = useTranslations("marketing");
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://clueai-reviewlens.com/#website",
+        url: "https://clueai-reviewlens.com",
+        name: "ClueAI ReviewLens",
+        description:
+          "跨境电商评论智能分析 SaaS — 从评论分析到产品行动的完整闭环",
+        inLanguage: "zh-CN",
+        publisher: {
+          "@id": "https://clueai-reviewlens.com/#organization",
+        },
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://clueai-reviewlens.com/#organization",
+        name: "ClueAI",
+        url: "https://clueai-reviewlens.com",
+        logo: "https://clueai-reviewlens.com/opengraph-image",
+        sameAs: [],
+        contactPoint: {
+          "@type": "ContactPoint",
+          email: "support@clueai-reviewlens.com",
+          contactType: "customer support",
+          availableLanguage: ["Chinese", "English"],
+        },
+      },
+    ],
+  };
+
   return (
     <div className="page-bg-warm relative overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />{" "}
       {/* V3 浮动 blob 装饰 */}
       <div className="blob-rose pointer-events-none absolute -top-32 -left-32 z-0" />
       <div className="blob-lavender pointer-events-none absolute top-32 -right-24 z-0" />

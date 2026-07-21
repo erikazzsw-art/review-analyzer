@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
-
 import { LegalLayout, type TocItem } from "@/components/legal/legal-layout";
+import { buildMarketingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildMarketingMetadata({
   title: "Privacy Policy — ClueAI ReviewLens Extension",
   description:
     "Privacy policy for the ClueAI ReviewLens Chrome extension.",
-};
+  path: "/privacy-extension",
+});
 
 const TOC_ITEMS: TocItem[] = [
   { id: "what-we-access", label: "What We Access" },
