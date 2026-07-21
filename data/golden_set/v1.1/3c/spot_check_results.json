@@ -1,0 +1,204 @@
+[
+  {
+    "review_id": "3C-007399",
+    "content": "Literally doesn’t charge your phone, won’t work at all. Save your $8 please what a freaking ripoff!",
+    "rating": 1,
+    "annotation": {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "charging_speed",
+          "polarity": "negative",
+          "evidence_span": "doesn’t charge your phone, won’t work at all",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "value_for_money",
+          "polarity": "negative",
+          "evidence_span": "Save your $8 please what a freaking ripoff!",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-006180",
+    "content": "Perfect length, flexible and durable.",
+    "rating": 5,
+    "annotation": {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "durability",
+          "polarity": "positive",
+          "evidence_span": "flexible and durable",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-040631",
+    "content": "This one works great. I upgraded a phone and wanted another charger because I didn’t know that apple phones had switched. These work great. They aren’t super fast chargers but they get the job done",
+    "rating": 5,
+    "annotation": {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "charging_speed",
+          "polarity": "neutral",
+          "evidence_span": "They aren’t super fast chargers but they get the job done",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "compatibility",
+          "polarity": "positive",
+          "evidence_span": "I upgraded a phone and wanted another charger because I didn’t know that apple phones had switched",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-012435",
+    "content": "Just one of the chargers works for my Iphone",
+    "rating": 3,
+    "annotation": {
+      "sentiment": "neutral",
+      "aspects": [
+        {
+          "key": "compatibility",
+          "polarity": "negative",
+          "evidence_span": "Just one of the chargers works for my Iphone",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-013531",
+    "content": "Stopped working after a few weeks. They initially worked amazing but then just stopped. Outside the return window and I’m very disappointed!",
+    "rating": 1,
+    "annotation": {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "durability",
+          "polarity": "negative",
+          "evidence_span": "Stopped working after a few weeks",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-007860",
+    "content": "🔥 🔥 🔥 HAZARD!!!!!!!!! I purchased these less than 4 months ago. Today, as I am sitting here charging my phone my iPhone alerted me that the accessory could not work. Hmmm, I go to take the cord out of",
+    "rating": 1,
+    "annotation": {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "build_quality",
+          "polarity": "negative",
+          "evidence_span": "it was HOT and started smoking along with the charging block",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "durability",
+          "polarity": "negative",
+          "evidence_span": "I purchased these less than 4 months ago",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "safety",
+          "polarity": "negative",
+          "evidence_span": "FIRE HAZARD",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-009479",
+    "content": "Only one of the chargers worked",
+    "rating": 3,
+    "annotation": {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "charging_speed",
+          "polarity": "negative",
+          "evidence_span": "Only one of the chargers worked",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-008874",
+    "content": "Son muy buenos y carga rápido muchísimas gracias",
+    "rating": 5,
+    "annotation": {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "charging_speed",
+          "polarity": "positive",
+          "evidence_span": "carga rápido",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-006499",
+    "content": "Exactly as advertised- works great!!  Cords are nice and long.  😊",
+    "rating": 5,
+    "annotation": {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "build_quality",
+          "polarity": "positive",
+          "evidence_span": "works great",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "other",
+          "polarity": "positive",
+          "evidence_span": "Cords are nice and long",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  },
+  {
+    "review_id": "3C-007627",
+    "content": "Cord is good quality, color to match , fast charge.",
+    "rating": 4,
+    "annotation": {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "build_quality",
+          "polarity": "positive",
+          "evidence_span": "Cord is good quality",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "aesthetics",
+          "polarity": "positive",
+          "evidence_span": "color to match",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "charging_speed",
+          "polarity": "positive",
+          "evidence_span": "fast charge",
+          "evidence_level": "certain"
+        }
+      ]
+    }
+  }
+]
