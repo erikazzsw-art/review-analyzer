@@ -129,9 +129,14 @@ def register(payload: RegisterRequest, response: Response) -> AuthResponse:
 
 @router.post("/login", response_model=AuthResponse)
 def login(payload: LoginRequest, response: Response) -> AuthResponse:
-    username = payload.username.strip()
+    username_or_email = payload.username.strip()
     try:
-        user = get_user_by_username(username)
+        # 支持邮箱登录：输入含 @ 则先按 email 查，找不到再按 username 查
+        user = None
+        if "@" in username_or_email:
+            user = get_user_by_email(username_or_email)
+        if not user:
+            user = get_user_by_username(username_or_email)
     except DatabaseConnectionUnavailable as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
