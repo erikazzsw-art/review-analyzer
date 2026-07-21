@@ -149,6 +149,9 @@
     "registerButton": "Sign Up",
     "registerLoading": "Signing up...",
     "googleSignUp": "Sign up with Google",
+    "googleLogin": "Sign in with Google",
+    "rememberMe": "Remember me",
+    "loginEmailPlaceholder": "Enter your email address",
     "orDivider": "or",
     "confirmPassword": "Confirm Password",
     "confirmPasswordPlaceholder": "Re-enter your password",
@@ -1096,7 +1099,25 @@
       "email": "hello@clueai-reviewlens.com",
       "description": "Partnerships, press, or anything else that doesn't fit the above."
     },
-    "responseTime": "We typically respond within 1–2 business days."
+    "responseTime": "We typically respond within 1–2 business days.",
+    "form": {
+      "title": "Send us a message",
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "subject": "Subject",
+      "subjectPlaceholder": "Select a topic",
+      "message": "Message",
+      "messagePlaceholder": "How can we help you?",
+      "submit": "Send Message",
+      "sending": "Sending...",
+      "sent": "Message sent! We'll get back to you soon."
+    },
+    "info": {
+      "emailTitle": "Email Us",
+      "replyTitle": "Reply Time"
+    }
   },
   "cookieBanner": {
     "text": "We use essential cookies for authentication and analytics. By continuing, you agree to our <link href=\"/cookies\">Cookie Policy</link>.",
@@ -2187,5 +2208,27 @@
     "invalid_garbage": "Invalid Content",
     "mixed": "Mixed Review",
     "other": "Other"
+  },
+  "trial": {
+    "pageEyebrow": "Free Trial",
+    "pageTitle": "Start Your Review Analysis Journey",
+    "step1": "Upload",
+    "step1Keyword": "CSV or browser extension, one-click",
+    "step2": "Analyze",
+    "step2Keyword": "Sentiment, topics, risks auto-detected",
+    "step3": "Act",
+    "step3Keyword": "Trackable improvement tasks generated",
+    "benefitSecure": "Data Secure",
+    "benefitFast": "Fast Analysis",
+    "benefitGrowth": "Growth Driven",
+    "formTitle": "Start Free Trial",
+    "formSubtitle": "No credit card required. Cancel anytime.",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Create a password",
+    "startTrial": "Start Trial",
+    "starting": "Starting…",
+    "hasAccount": "Already have an account?",
+    "goLogin": "Log in",
+    "agreeTermsShort": "By signing up you agree to our <terms>Terms</terms> and <privacy>Privacy</privacy>"
   }
 }

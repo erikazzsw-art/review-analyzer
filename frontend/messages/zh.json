@@ -149,6 +149,9 @@
     "registerButton": "注 册",
     "registerLoading": "注册中...",
     "googleSignUp": "使用 Google 注册",
+    "googleLogin": "使用 Google 登录",
+    "rememberMe": "记住我",
+    "loginEmailPlaceholder": "请输入邮箱地址",
     "orDivider": "或",
     "confirmPassword": "确认密码",
     "confirmPasswordPlaceholder": "请再次输入密码",
@@ -1096,7 +1099,25 @@
       "email": "hello@clueai-reviewlens.com",
       "description": "合作、媒体或其他不属于上述分类的问题。"
     },
-    "responseTime": "我们通常在 1–2 个工作日内回复。"
+    "responseTime": "我们通常在 1–2 个工作日内回复。",
+    "form": {
+      "title": "发送消息",
+      "name": "姓名",
+      "namePlaceholder": "请输入你的姓名",
+      "email": "邮箱",
+      "emailPlaceholder": "you@example.com",
+      "subject": "主题",
+      "subjectPlaceholder": "请选择主题",
+      "message": "留言",
+      "messagePlaceholder": "请描述你的问题或需求",
+      "submit": "发送消息",
+      "sending": "发送中...",
+      "sent": "消息已发送！我们会尽快回复你。"
+    },
+    "info": {
+      "emailTitle": "邮件联系",
+      "replyTitle": "回复时间"
+    }
   },
   "cookieBanner": {
     "text": "我们使用必要的 Cookie 进行身份验证和分析。继续使用即表示您同意我们的 <link href=\"/cookies\">Cookie 政策</link>。",
@@ -2187,5 +2208,27 @@
     "invalid_garbage": "无效乱码",
     "mixed": "混合评价",
     "other": "其他"
+  },
+  "trial": {
+    "pageEyebrow": "免费试用",
+    "pageTitle": "开启你的评论分析之旅",
+    "step1": "上传评论",
+    "step1Keyword": "CSV 拖拽或浏览器插件，一键采集",
+    "step2": "AI 分析",
+    "step2Keyword": "情感、主题、风险自动识别",
+    "step3": "行动改版",
+    "step3Keyword": "生成可追踪的改版任务",
+    "benefitSecure": "数据安全",
+    "benefitFast": "快速分析",
+    "benefitGrowth": "增长导向",
+    "formTitle": "开始免费试用",
+    "formSubtitle": "无需信用卡，随时取消",
+    "emailPlaceholder": "输入你的邮箱地址",
+    "passwordPlaceholder": "设置密码",
+    "startTrial": "开始试用",
+    "starting": "开始中…",
+    "hasAccount": "已有账户？",
+    "goLogin": "登录",
+    "agreeTermsShort": "注册即表示同意我们的 <terms>服务条款</terms> 和 <privacy>隐私政策</privacy>"
   }
 }
