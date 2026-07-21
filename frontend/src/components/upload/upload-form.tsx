@@ -276,14 +276,20 @@ export function UploadForm() {
         <>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-ink">{t("productId")}</span>
+            <span className="text-sm font-semibold text-ink">
+              {form.platform === "Amazon" ? t("asinLabel") : form.platform === "AliExpress" ? t("aliexpressProductIdLabel") : t("productId")}
+            </span>
             <input
               value={form.productId}
               onChange={(event) =>
                 setForm((current) => ({ ...current, productId: event.target.value }))
               }
               className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-              placeholder={t("productIdPlaceholder")}
+              placeholder={
+                form.platform === "Amazon" ? t("asinPlaceholder") :
+                form.platform === "AliExpress" ? t("aliexpressProductIdPlaceholder") :
+                t("productIdPlaceholder")
+              }
             />
           </label>
           <label className="space-y-2">

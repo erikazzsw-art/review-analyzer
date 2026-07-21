@@ -492,6 +492,10 @@
     "modeWatchlist": "Auto-Fetch",
     "productId": "Product ID",
     "productIdPlaceholder": "e.g. SKU-1001",
+    "asinLabel": "ASIN",
+    "asinPlaceholder": "e.g. B0DFHB98KJ (10-char Amazon ASIN)",
+    "aliexpressProductIdLabel": "Product ID",
+    "aliexpressProductIdPlaceholder": "e.g. 1005006714526748 (AliExpress Product ID)",
     "productName": "Product Name",
     "productNamePlaceholder": "e.g. Wireless Bluetooth Earbuds",
     "platform": "Platform",
@@ -566,7 +570,9 @@
       "fetchAllOther": "Fetch reviews from all SKU variants (grouped by SKU tag)",
       "submitBtn": "Fetch reviews & analyze",
       "submitBtnLoading": "Submitting...",
-      "submitFail": "Failed to create review-fetch job"
+      "submitFail": "Failed to create review-fetch job",
+      "amazonAvailabilityTip": "⚠️ Amazon auto-fetch only supports certain ASINs. If it fails, try the Chrome extension instead.",
+      "amazonAvailabilityDetail": "The system will attempt auto-fetch first; if unavailable, it will suggest alternative methods."
     },
     "asinWatchlist": {
       "loadFail": "Load failed",
@@ -1981,7 +1987,19 @@
       "tableActions": "Actions",
       "noVariants": "No variant data yet. When fetching reviews via ASIN, check \"Fetch all variants\" to auto-populate.",
       "unnamedVariant": "Unnamed Variant",
-      "unnamedProduct": "Unnamed Product"
+      "unnamedProduct": "Unnamed Product",
+      "tabVariants": "Variants",
+      "tabAnalysis": "Overall Analysis",
+      "totalReviews": "Total Reviews",
+      "positive": "Positive",
+      "negative": "Negative",
+      "unrecognizable": "Unrecognizable",
+      "dateRange": "Date Range",
+      "inProgress": "{count} ASIN(s) analyzing",
+      "noData": "No analysis data",
+      "noDataDesc": "No analysis results for any child ASIN under this parent variant. Upload reviews or use auto-fetch first.",
+      "loading": "Loading…",
+      "loadError": "Failed to load"
     },
     "grid": {
       "tabAll": "All",

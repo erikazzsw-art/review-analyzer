@@ -17,11 +17,14 @@ from backend_api.app.schemas.products import (
 from review_analyzer.database import get_connection
 from review_analyzer.product_store import (
     create_product,
+    create_variant,
     delete_product,
     delete_variant,
+    get_parent_variant_analysis,
     get_product_by_id,
     get_product_overview_rows,
     get_variants,
+    move_variant_to_parent,
     update_product,
 )
 
@@ -241,4 +244,83 @@ def get_product_detail(
     return {
         "product": product,
         "variants": variants,
+    }
+
+
+# ── 5.8.2: 父变体 & 子 ASIN 管理 ──
+
+
+class AddVariantRequest(BaseModel):
+    child_asin: str
+    variant_sku: str | None = None
+    name: str | None = None
+    platform: str | None = None
+
+
+class MoveVariantRequest(BaseModel):
+    target_product_id: int
+
+
+@router.post("/{product_id}/variants", status_code=status.HTTP_201_CREATED)
+def add_variant_route(
+    product_id: int,
+    body: AddVariantRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """手动添加子 ASIN 变体到父产品。"""
+    user_id = int(current_user["id"])
+    existing = get_product_by_id(user_id, product_id)
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found.",
+        )
+    data = body.model_dump(exclude_none=True)
+    data["variant_sku"] = data.get("variant_sku") or body.child_asin
+    data["platform"] = data.get("platform") or existing.get("platform")
+    try:
+        variant_id = create_variant(user_id, product_id, data)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    return {"variant_id": variant_id, "child_asin": body.child_asin}
+
+
+@router.patch("/{product_id}/variants/{variant_id}/move")
+def move_variant_route(
+    product_id: int,
+    variant_id: int,
+    body: MoveVariantRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """将变体移动到另一个父产品下。"""
+    user_id = int(current_user["id"])
+    result = move_variant_to_parent(user_id, variant_id, body.target_product_id)
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.get("message", "移动失败"),
+        )
+    return result
+
+
+@router.get("/{product_id}/parent-analysis")
+def get_parent_analysis_route(
+    product_id: int,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """父变体整体分析 — 聚合当前用户所有子 ASIN 的分析数据。"""
+    user_id = int(current_user["id"])
+    existing = get_product_by_id(user_id, product_id)
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found.",
+        )
+    analysis = get_parent_variant_analysis(user_id, product_id)
+    return {
+        "product": existing,
+        "analysis": analysis,
     }

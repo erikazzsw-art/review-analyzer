@@ -492,6 +492,10 @@
     "modeWatchlist": "定时自动抓取",
     "productId": "产品编号",
     "productIdPlaceholder": "例如：SKU-1001",
+    "asinLabel": "ASIN",
+    "asinPlaceholder": "例如：B0DFHB98KJ（10位亚马逊商品编码）",
+    "aliexpressProductIdLabel": "Product ID",
+    "aliexpressProductIdPlaceholder": "例如：1005006714526748（速卖通商品ID）",
     "productName": "产品名称",
     "productNamePlaceholder": "例如：无线蓝牙耳机",
     "platform": "平台",
@@ -566,7 +570,9 @@
       "fetchAllOther": "抓取所有 SKU 变体评论（按 SKU 标签分类）",
       "submitBtn": "拉取评论并分析",
       "submitBtnLoading": "提交中...",
-      "submitFail": "评论拉取任务创建失败"
+      "submitFail": "评论拉取任务创建失败",
+      "amazonAvailabilityTip": "⚠️ 亚马逊自动抓取仅支持部分 ASIN，若抓取失败建议使用 Chrome 插件。",
+      "amazonAvailabilityDetail": "系统会优先尝试自动抓取；若该 ASIN 不可用，页面将提示使用备用方案。"
     },
     "asinWatchlist": {
       "loadFail": "加载失败",
@@ -1981,7 +1987,19 @@
       "tableActions": "操作",
       "noVariants": "暂无变体数据。通过 ASIN 抓取时勾选「抓取所有变体」可自动填充。",
       "unnamedVariant": "未命名变体",
-      "unnamedProduct": "未命名产品"
+      "unnamedProduct": "未命名产品",
+      "tabVariants": "变体列表",
+      "tabAnalysis": "整体分析",
+      "totalReviews": "总评论数",
+      "positive": "正面",
+      "negative": "负面",
+      "unrecognizable": "无法识别",
+      "dateRange": "时间范围",
+      "inProgress": "{count} 个 ASIN 分析中",
+      "noData": "暂无分析数据",
+      "noDataDesc": "该父变体下的子 ASIN 均无分析结果，请先上传评论或使用自动抓取。",
+      "loading": "加载中…",
+      "loadError": "加载失败"
     },
     "grid": {
       "tabAll": "全部",

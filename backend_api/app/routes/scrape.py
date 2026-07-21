@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from threading import Thread
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.scrape import (
@@ -208,3 +208,106 @@ def plugin_upload(
         duplicate_count=duplicate_count,
         message=f"Plugin upload queued: {new_count} new reviews (skipped {duplicate_count} duplicates).",
     )
+
+
+# ── 5.8.3: 亚马逊可用性检查 ──
+
+
+@router.get("/reviews/check-asin-availability")
+def check_asin_availability(
+    asin: str = Query(..., min_length=1, max_length=20),
+    platform: str = Query(default="amazon", max_length=20),
+    marketplace: str = Query(default="us", max_length=5),
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """检查指定 ASIN 是否可通过自动抓取获取评论。
+
+    返回:
+    - available: 是否可自动抓取
+    - suggestion: 不可用时的建议文案
+    """
+    from review_analyzer.database import get_connection
+
+    user_id = int(current_user["id"])
+
+    # 仅 Amazon 平台支持自动抓取
+    if platform.lower() != "amazon":
+        return {
+            "asin": asin,
+            "platform": platform,
+            "available": False,
+            "suggestion": "当前平台暂不支持自动抓取，请使用文件上传或 Chrome 插件。",
+        }
+
+    # 检查是否已有抓取记录（通过 upload_jobs 的 source_channel = 'api'）
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT COUNT(*) FROM upload_jobs
+                   WHERE user_id = %s
+                     AND source_filename = %s
+                     AND source_channel = 'api'
+                     AND status = 'done'""",
+                (user_id, f"rainforest:{asin}"),
+            )
+            row = cur.fetchone()
+            has_history = (row[0] if row else 0) > 0
+    finally:
+        conn.close()
+
+    return {
+        "asin": asin,
+        "platform": platform,
+        "marketplace": marketplace,
+        "available": True,  # Amazon 默认标记为可尝试
+        "has_prior_success": has_history,
+        "suggestion": None if has_history else "该 ASIN 暂未通过自动抓取成功获取评论，若抓取失败建议使用 Chrome 插件。",
+    }
+
+
+# ── 5.8.4: 跨用户缓存复用 — platform + ASIN 联合查询 ──
+
+
+@router.get("/reviews/asin-analysis-status")
+def asin_analysis_status(
+    asin: str = Query(..., min_length=1, max_length=20),
+    platform: str = Query(default="amazon", max_length=20),
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """查询指定 platform+ASIN 的分析缓存状态（内部使用，前端不展示提示）。
+
+    用于跨用户缓存复用：后台透明检查该 ASIN 是否已有分析结果，
+    不暴露其他用户的分析内容，仅返回缓存命中统计。
+    """
+    from review_analyzer.database import get_connection
+    import psycopg2.extras
+
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # 查询该 ASIN 下所有评论的缓存命中情况（不限制 user_id，跨用户复用）
+            cur.execute(
+                """SELECT
+                    COUNT(*) as total_comments,
+                    COUNT(*) FILTER (WHERE sentiment IS NOT NULL) as analyzed_comments,
+                    COUNT(*) FILTER (WHERE is_cached = true) as cached_comments
+                   FROM comments
+                   WHERE product_id = %s
+                     AND source_variant_asin = %s""",
+                (asin, asin),
+            )
+            row = cur.fetchone()
+            stats = dict(row) if row else {}
+
+            return {
+                "asin": asin,
+                "platform": platform,
+                "has_cached_analysis": (stats.get("analyzed_comments", 0) or 0) > 0,
+                "total_comments": stats.get("total_comments", 0) or 0,
+                "analyzed_comments": stats.get("analyzed_comments", 0) or 0,
+                "cached_comments": stats.get("cached_comments", 0) or 0,
+                # 不暴露其他用户信息，仅返回统计数字
+            }
+    finally:
+        conn.close()

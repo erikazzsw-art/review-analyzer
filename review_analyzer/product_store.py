@@ -250,14 +250,16 @@ def create_variant(user_id: int, product_id: int, data: dict[str, Any]) -> int:
 
             cur.execute(
                 """INSERT INTO product_variants
-                   (user_id, product_id, variant_sku, child_asin, color, size, style, material, status, launched_at)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   (user_id, product_id, variant_sku, child_asin, platform,
+                    color, size, style, material, status, launched_at)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                    RETURNING id""",
                 (
                     user_id,
                     product_id,
                     data.get("variant_sku"),
                     data.get("child_asin"),
+                    data.get("platform"),
                     data.get("color"),
                     data.get("size"),
                     data.get("style"),
@@ -337,16 +339,21 @@ def upsert_product_from_api(user_id: int, data: dict[str, Any]) -> int:
 
 
 def upsert_variant_from_api(user_id: int, product_id: int, data: dict[str, Any]) -> int:
-    """从 Rainforest API 数据 upsert 变体记录，返回 variant_id。"""
+    """从 Rainforest API 数据 upsert 变体记录，返回 variant_id。
+
+    使用 (user_id, platform, child_asin) 联合唯一索引（050 migration），
+    支持同一 ASIN 在不同平台下独立存在。
+    """
+    platform = data.get("platform", "amazon")
     conn = get_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
                 """INSERT INTO product_variants
-                   (user_id, product_id, child_asin, variant_sku, name, brand,
+                   (user_id, product_id, child_asin, variant_sku, platform, name, brand,
                     image_url, price, price_currency, status)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                   ON CONFLICT (user_id, child_asin) WHERE child_asin IS NOT NULL DO UPDATE SET
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   ON CONFLICT (user_id, platform, child_asin) WHERE platform IS NOT NULL AND child_asin IS NOT NULL DO UPDATE SET
                        name = COALESCE(EXCLUDED.name, product_variants.name),
                        brand = COALESCE(EXCLUDED.brand, product_variants.brand),
                        image_url = COALESCE(EXCLUDED.image_url, product_variants.image_url),
@@ -358,6 +365,7 @@ def upsert_variant_from_api(user_id: int, product_id: int, data: dict[str, Any])
                     product_id,
                     data.get("child_asin"),
                     data.get("child_asin"),
+                    platform,
                     data.get("name"),
                     data.get("brand"),
                     data.get("image_url"),
@@ -745,5 +753,405 @@ def _get_pending_review_count(user_id: int, product_id: int | None) -> int:
     except psycopg2.errors.UndefinedTable:
         conn.rollback()
         return 0
+    finally:
+        conn.close()
+
+
+# ──────────────────────────────────────────────────────
+# 5.8 产品管理功能增强 — 上传归并 + 变体管理
+# ──────────────────────────────────────────────────────
+
+
+def _detect_identifier_column(
+    columns: list[str], sample_values: list[list[Any]], platform: str
+) -> str | None:
+    """在 CSV 列中自动检测标识码列名。
+
+    Args:
+        columns: CSV 列名列表（已标准化为小写）
+        sample_values: 每列的前 N 个样本值
+        platform: 平台 (amazon / aliexpress / ebay / shopee / walmart)
+
+    Returns:
+        检测到的最佳匹配列名，未找到返回 None
+    """
+    import re
+
+    # 1. 按列名关键词匹配
+    _COLUMN_KEYWORDS: dict[str, list[str]] = {
+        "amazon": ["asin", "child_asin", "product_id", "item_id"],
+        "aliexpress": ["product_id", "item_id", "productid", "itemid"],
+        "ebay": ["product_id", "item_id", "epid"],
+        "shopee": ["product_id", "item_id", "shopid"],
+        "walmart": ["product_id", "item_id", "wpid", "sku"],
+    }
+    keywords = _COLUMN_KEYWORDS.get(platform.lower(), ["product_id", "item_id"])
+
+    for kw in keywords:
+        for col in columns:
+            col_clean = col.strip().lower().replace(" ", "_").replace("-", "_")
+            if col_clean == kw or kw in col_clean:
+                return col
+
+    # 2. ASIN 正则兜底（仅 Amazon）：^B[A-Z0-9]{9}$
+    if platform.lower() == "amazon":
+        asin_re = re.compile(r"^B[A-Z0-9]{9}$")
+        for col in columns:
+            col_idx = columns.index(col)
+            vals = [str(v).strip().upper() for v in sample_values[col_idx] if v is not None]
+            if vals and all(asin_re.match(v) for v in vals[:5] if v):
+                return col
+
+    # 3. AliExpress 纯数字长串兜底（8-16位数字）
+    if platform.lower() == "aliexpress":
+        num_re = re.compile(r"^\d{8,16}$")
+        for col in columns:
+            col_idx = columns.index(col)
+            vals = [str(v).strip() for v in sample_values[col_idx] if v is not None]
+            if vals and all(num_re.match(v) for v in vals[:5] if v):
+                return col
+
+    return None
+
+
+def _extract_unique_identifiers(
+    rows: list[dict[str, Any]], id_column: str, platform: str
+) -> list[str]:
+    """从 CSV 行数据中提取唯一标识码列表。"""
+    import re
+
+    seen: set[str] = set()
+    result: list[str] = []
+
+    for row in rows:
+        raw = str(row.get(id_column, "")).strip()
+        if not raw:
+            continue
+
+        if platform.lower() == "amazon":
+            # 标准化 ASIN 为大写
+            val = raw.upper()
+            if re.match(r"^B[A-Z0-9]{9}$", val):
+                if val not in seen:
+                    seen.add(val)
+                    result.append(val)
+        elif platform.lower() == "aliexpress":
+            val = raw
+            if re.match(r"^\d{8,16}$", val):
+                if val not in seen:
+                    seen.add(val)
+                    result.append(val)
+        else:
+            # 其他平台：接受非空值
+            val = raw
+            if val not in seen:
+                seen.add(val)
+                result.append(val)
+
+    return result
+
+
+def find_or_create_parent_product(
+    user_id: int, parent_name: str, platform: str, category: str | None = None
+) -> int:
+    """按名称 + 平台查找或创建父产品，返回 product_id (DB PK)。
+
+    查找逻辑：先按 parent_product_id（=parent_name）匹配，无则创建。
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            # 查找已有产品
+            cur.execute(
+                "SELECT id FROM products WHERE user_id = %s AND parent_product_id = %s",
+                (user_id, parent_name),
+            )
+            row = cur.fetchone()
+            if row:
+                product_id = int(row[0])
+                # 如果已有产品但 platform 为空，补充 platform
+                cur.execute(
+                    "UPDATE products SET platform = COALESCE(platform, %s) WHERE id = %s",
+                    (platform, product_id),
+                )
+                conn.commit()
+                return product_id
+
+            # 不存在则创建
+            cur.execute(
+                """INSERT INTO products
+                   (user_id, parent_product_id, name, platform, category, lifecycle_stage, current_version)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)
+                   RETURNING id""",
+                (
+                    user_id,
+                    parent_name,
+                    parent_name,
+                    platform,
+                    category,
+                    "growth",
+                    "V1",
+                ),
+            )
+            product_id = int(cur.fetchone()[0])
+            conn.commit()
+            return product_id
+    finally:
+        conn.close()
+
+
+def _find_existing_variant_parent(
+    user_id: int, child_asin: str, platform: str
+) -> int | None:
+    """查找指定 ASIN 在当前用户+平台下是否已有归属父产品。
+
+    Returns:
+        已有父产品的 product_id (DB PK)，无则返回 None
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT product_id FROM product_variants
+                   WHERE user_id = %s AND platform = %s AND child_asin = %s
+                   LIMIT 1""",
+                (user_id, platform, child_asin),
+            )
+            row = cur.fetchone()
+            return int(row[0]) if row else None
+    finally:
+        conn.close()
+
+
+def _get_parent_product_name(user_id: int, product_id: int) -> str:
+    """获取产品的 parent_product_id（显示名）。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT parent_product_id FROM products WHERE user_id = %s AND id = %s",
+                (user_id, product_id),
+            )
+            row = cur.fetchone()
+            return str(row[0]) if row else "未知产品"
+    finally:
+        conn.close()
+
+
+def upsert_product_variant_for_upload(
+    user_id: int,
+    platform: str,
+    child_asin: str,
+    parent_name: str,
+    category: str | None = None,
+) -> dict[str, Any]:
+    """上传时 upsert 单个子 ASIN 变体，自动处理归并冲突。
+
+    归并规则：
+    - ASIN 重叠 > 名称匹配：若 child_asin 已属于其他父产品 → 不创建新变体，标记为"已归入 [原父产品]"
+    - 无冲突：在 parent_name 对应的产品下创建/更新变体
+
+    Returns:
+        {
+            "child_asin": str,
+            "action": "new" | "existing" | "merged_to_other",
+            "parent_name": str,
+            "variant_id": int | None,
+            "message": str,
+        }
+    """
+    # 1. 检查 ASIN 是否已有归属（ASIN 重叠检查）
+    existing_parent_id = _find_existing_variant_parent(user_id, child_asin, platform)
+    if existing_parent_id is not None:
+        existing_parent_name = _get_parent_product_name(user_id, existing_parent_id)
+        # ASIN 已存在 → 不创建新记录，返回现有归属
+        if existing_parent_name == parent_name:
+            return {
+                "child_asin": child_asin,
+                "action": "existing",
+                "parent_name": parent_name,
+                "variant_id": None,
+                "message": f"ASIN {child_asin} 已存在于父产品 [{parent_name}] 下",
+            }
+        else:
+            # ASIN 属于其他父产品 → 按"ASIN 重叠 > 名称匹配"，归入已有父产品
+            return {
+                "child_asin": child_asin,
+                "action": "merged_to_other",
+                "parent_name": existing_parent_name,
+                "variant_id": None,
+                "message": f"ASIN {child_asin} 已归入父产品 [{existing_parent_name}]（按 ASIN 优先规则）",
+            }
+
+    # 2. 无冲突：查找/创建父产品，再创建变体
+    parent_product_id = find_or_create_parent_product(
+        user_id, parent_name, platform, category
+    )
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO product_variants
+                   (user_id, product_id, variant_sku, child_asin, platform, status)
+                   VALUES (%s, %s, %s, %s, %s, %s)
+                   ON CONFLICT (user_id, platform, child_asin)
+                   WHERE platform IS NOT NULL AND child_asin IS NOT NULL
+                   DO UPDATE SET
+                       product_id = EXCLUDED.product_id,
+                       variant_sku = COALESCE(NULLIF(EXCLUDED.variant_sku, ''), product_variants.variant_sku)
+                   RETURNING id""",
+                (
+                    user_id,
+                    parent_product_id,
+                    child_asin,
+                    child_asin,
+                    platform,
+                    "active",
+                ),
+            )
+            variant_id = int(cur.fetchone()[0])
+            conn.commit()
+            return {
+                "child_asin": child_asin,
+                "action": "new",
+                "parent_name": parent_name,
+                "variant_id": variant_id,
+                "message": f"ASIN {child_asin} 已归入父产品 [{parent_name}]",
+            }
+    finally:
+        conn.close()
+
+
+def batch_upsert_variants_for_upload(
+    user_id: int,
+    platform: str,
+    identifiers: list[str],
+    parent_name: str,
+    category: str | None = None,
+) -> list[dict[str, Any]]:
+    """批量处理上传中的变体归并，返回每个标识码的处理结果列表。"""
+    results: list[dict[str, Any]] = []
+    for child_asin in identifiers:
+        result = upsert_product_variant_for_upload(
+            user_id, platform, child_asin, parent_name, category
+        )
+        results.append(result)
+    return results
+
+
+def move_variant_to_parent(
+    user_id: int, variant_id: int, target_product_id: int
+) -> dict[str, Any]:
+    """将变体移动到另一个父产品下。
+
+    Args:
+        user_id: 当前用户
+        variant_id: 要移动的变体 ID
+        target_product_id: 目标父产品的 DB PK
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # 验证变体属于当前用户
+            cur.execute(
+                "SELECT * FROM product_variants WHERE id = %s AND user_id = %s",
+                (variant_id, user_id),
+            )
+            variant = cur.fetchone()
+            if not variant:
+                return {"success": False, "message": "变体不存在或无权操作"}
+
+            # 验证目标产品属于当前用户
+            cur.execute(
+                "SELECT * FROM products WHERE id = %s AND user_id = %s",
+                (target_product_id, user_id),
+            )
+            target = cur.fetchone()
+            if not target:
+                return {"success": False, "message": "目标父产品不存在或无权操作"}
+
+            old_product_id = int(variant["product_id"])
+
+            # 移动变体
+            cur.execute(
+                "UPDATE product_variants SET product_id = %s WHERE id = %s",
+                (target_product_id, variant_id),
+            )
+            conn.commit()
+
+            old_name = _get_parent_product_name(user_id, old_product_id)
+            target_name = _get_parent_product_name(user_id, target_product_id)
+
+            return {
+                "success": True,
+                "variant_id": variant_id,
+                "child_asin": variant.get("child_asin"),
+                "from_parent": old_name,
+                "to_parent": target_name,
+                "message": f"变体 {variant.get('child_asin')} 已从 [{old_name}] 移动到 [{target_name}]",
+            }
+    finally:
+        conn.close()
+
+
+def get_parent_variant_analysis(
+    user_id: int, product_id: int
+) -> dict[str, Any]:
+    """获取父变体下所有子 ASIN 的聚合分析数据（仅当前用户）。
+
+    从 sessions/comments 表中聚合当前用户该产品的所有分析结果。
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # 获取该产品下的所有变体
+            cur.execute(
+                "SELECT child_asin, id FROM product_variants WHERE user_id = %s AND product_id = %s AND child_asin IS NOT NULL",
+                (user_id, product_id),
+            )
+            variants = [dict(r) for r in cur.fetchall()]
+
+            # 聚合该产品所有 session 的分析数据
+            cur.execute(
+                """SELECT
+                    COUNT(*) as total_reviews,
+                    COUNT(CASE WHEN sentiment = 'positive' THEN 1 END) as positive_count,
+                    COUNT(CASE WHEN sentiment = 'negative' THEN 1 END) as negative_count,
+                    COUNT(CASE WHEN sentiment = 'unrecognizable' THEN 1 END) as unrecognizable_count,
+                    MAX(date) as latest_date,
+                    MIN(date) as earliest_date
+                   FROM comments
+                   WHERE user_id = %s AND product_id = (
+                       SELECT parent_product_id FROM products WHERE id = %s AND user_id = %s
+                   )""",
+                (user_id, product_id, user_id),
+            )
+            stats = dict(cur.fetchone() or {})
+
+            # 获取分析中的 ASIN 数量
+            cur.execute(
+                """SELECT COUNT(DISTINCT uj.id) as in_progress_count
+                   FROM upload_jobs uj
+                   WHERE uj.user_id = %s
+                     AND uj.status IN ('queued', 'processing')
+                     AND uj.payload_json->>'platform' = (
+                         SELECT platform FROM products WHERE id = %s AND user_id = %s
+                     )""",
+                (user_id, product_id, user_id),
+            )
+            in_progress = dict(cur.fetchone() or {})
+
+            return {
+                "variants": variants,
+                "total_reviews": stats.get("total_reviews", 0) or 0,
+                "positive_count": stats.get("positive_count", 0) or 0,
+                "negative_count": stats.get("negative_count", 0) or 0,
+                "unrecognizable_count": stats.get("unrecognizable_count", 0) or 0,
+                "latest_date": str(stats.get("latest_date") or ""),
+                "earliest_date": str(stats.get("earliest_date") or ""),
+                "in_progress_asin_count": in_progress.get("in_progress_count", 0) or 0,
+                "has_data": (stats.get("total_reviews", 0) or 0) > 0,
+            }
     finally:
         conn.close()

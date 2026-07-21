@@ -132,6 +132,14 @@ export function AsinFetchPanel() {
 
   return (
     <div className="space-y-6">
+      {/* 5.8.3: 亚马逊可用性提示 */}
+      {form.platform === "amazon" && (
+        <div className="rounded-card border border-[#f6dbb4] bg-[#fff8ed] px-4 py-3 text-sm leading-6 text-[#9a6118]">
+          <p className="font-semibold">{t("amazonAvailabilityTip")}</p>
+          <p className="mt-1 text-xs opacity-80">{t("amazonAvailabilityDetail")}</p>
+        </div>
+      )}
+
       {/* 平台选择器 */}
       <div className="flex gap-1 rounded-card border border-line p-1 w-fit">
         {PLATFORMS.map((p) => (

@@ -23,6 +23,11 @@ from review_analyzer.database import (
     update_upload_job,
 )
 from review_analyzer.parser import parse_file
+from review_analyzer.product_store import (
+    _detect_identifier_column,
+    _extract_unique_identifiers,
+    batch_upsert_variants_for_upload,
+)
 from review_analyzer.quota import quota_check, quota_check_atomic
 from workers.jobs import enqueue_upload_job_task, process_upload_job
 
@@ -135,6 +140,27 @@ def create_uploads(
 
     batch_hash = compute_batch_hash(comments, category)
 
+    # ── 5.8: 平台感知 — CSV 标识码自动识别与变体归并 ──
+    variant_merge_result = None
+    if platform and product_name and comments:
+        csv_columns = list(parsed_df.columns)
+        sample_values = [
+            [str(parsed_df.iloc[i, j]) if i < len(parsed_df) else "" for i in range(min(5, len(parsed_df)))]
+            for j in range(len(csv_columns))
+        ]
+        id_column = _detect_identifier_column(csv_columns, sample_values, platform)
+        if id_column:
+            identifiers = _extract_unique_identifiers(comments, id_column, platform)
+            if identifiers:
+                variant_merge_result = batch_upsert_variants_for_upload(
+                    user_id, platform, identifiers,
+                    parent_name=product_name,
+                    category=category,
+                )
+                # 用识别到的第一个标识码作为 product_id 的前缀补充
+                if not product_id or product_id == product_name:
+                    product_id = product_name
+
     payload = {
         "source_filename": source_file.filename or "upload",
         "product_id": product_id,
@@ -152,7 +178,30 @@ def create_uploads(
         "batch_hash": batch_hash,
         "locale": get_analysis_locale(request),
     }
-    return _enqueue_upload_job(user_id, payload)
+
+    response_data = _enqueue_upload_job(user_id, payload)
+
+    # 附加变体归并结果到响应
+    if variant_merge_result:
+        new_count = sum(1 for r in variant_merge_result if r["action"] == "new")
+        existing_count = sum(1 for r in variant_merge_result if r["action"] == "existing")
+        merged_count = sum(1 for r in variant_merge_result if r["action"] == "merged_to_other")
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "job": response_data.job.model_dump(),
+                "message": response_data.message,
+                "variant_merge": {
+                    "identifiers_found": len(identifiers) if variant_merge_result else 0,
+                    "new_variants": new_count,
+                    "existing_variants": existing_count,
+                    "merged_to_other": merged_count,
+                    "details": variant_merge_result,
+                },
+            },
+        )
+
+    return response_data
 
 
 @router.post("/analysis/jobs", response_model=UploadJobResponse)

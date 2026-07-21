@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app/app-shell";
 import { DeleteVariantButton } from "@/components/products/delete-variant-button";
+import { ProductDetailTabs } from "@/components/products/product-detail-tabs";
 import { getProductDetail, isApiError } from "@/lib/api/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -95,13 +96,32 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Variant table */}
-        <div className="rounded-shell border border-line bg-white/90 p-6 shadow-card backdrop-blur">
-          <h2 className="font-heading text-lg font-bold text-ink">
-            {t("detail.variantList", { count: variants.length })}
-          </h2>
+        {/* 5.8.2: 父变体 & 子 ASIN 管理 — Tab 切换 */}
+        <ProductDetailTabs
+          productId={productId}
+          variantCount={variants.length}
+          labels={{
+            tabVariants: t("detail.tabVariants"),
+            tabAnalysis: t("detail.tabAnalysis"),
+            totalReviews: t("detail.totalReviews"),
+            positive: t("detail.positive"),
+            negative: t("detail.negative"),
+            unrecognizable: t("detail.unrecognizable"),
+            dateRange: t("detail.dateRange"),
+            inProgress: t("detail.inProgress"),
+            noData: t("detail.noData"),
+            noDataDesc: t("detail.noDataDesc"),
+            loading: t("detail.loading"),
+            error: t("detail.loadError"),
+          }}
+        >
+          {/* Variant table — variants tab content */}
+          <div>
+            <h2 className="font-heading text-lg font-bold text-ink">
+              {t("detail.variantList", { count: variants.length })}
+            </h2>
 
-          {variants.length > 0 ? (
+            {variants.length > 0 ? (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -161,7 +181,8 @@ export default async function ProductDetailPage({ params }: Props) {
               {t("detail.noVariants")}
             </p>
           )}
-        </div>
+          </div>
+        </ProductDetailTabs>
       </AppShell>
     );
   } catch (error) {
