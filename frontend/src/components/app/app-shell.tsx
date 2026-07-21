@@ -37,9 +37,11 @@ export function AppShell({
           <h1 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-ink md:text-3xl">
             {title}
           </h1>
-          <p className="mt-1.5 text-sm leading-6 text-soft md:text-base">
-            {description}
-          </p>
+          {description && (
+            <p className="mt-1.5 text-sm leading-6 text-soft md:text-base">
+              {description}
+            </p>
+          )}
         </header>
 
         <main className="flex flex-col gap-4 px-6 pb-20 pt-4 lg:gap-5 lg:px-10">

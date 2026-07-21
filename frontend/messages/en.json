@@ -962,7 +962,43 @@
       "productSelectorSearch": "Search product name or ASIN...",
       "productSelectorEmpty": "No matching product",
       "selectedCountFormat": "Selected {count}/5",
-      "reviewsUnit": "reviews"
+      "reviewsUnit": "reviews",
+      "faqTitle": "Frequently Asked Questions",
+      "faqContact": "Didn't find your answer? <link>Contact us</link>",
+      "faq": [
+        {
+          "question": "What is review analysis?",
+          "answer": "Review analysis uses AI to automatically extract key information from buyer reviews, including sentiment trends, high-frequency keywords, pros and cons summaries, and rating distributions — helping sellers understand product reputation without reading every review."
+        },
+        {
+          "question": "Which platforms are supported?",
+          "answer": "We currently support Amazon reviews across all major marketplaces including US, UK, Germany, and Japan. Shopify, eBay, and Walmart integrations are coming soon."
+        },
+        {
+          "question": "How accurate are the results?",
+          "answer": "Powered by the DeepSeek large language model, our sentiment analysis achieves over 90% accuracy. For clear-cut pros/cons extraction and topic classification, accuracy exceeds 95%. We continuously optimize our models and update the Golden Set for calibration."
+        },
+        {
+          "question": "How do I upload review data?",
+          "answer": "You can use our Chrome extension to scrape Amazon product reviews in one click, or manually enter an ASIN link on the product management page. The system automatically deduplicates and fetches the latest reviews."
+        },
+        {
+          "question": "What's the difference between Free and Pro plans?",
+          "answer": "The Free plan allows 50 reviews per month with basic sentiment analysis and keyword extraction. The Pro plan offers unlimited reviews, multi-product comparison, review Q&A, deep insight reports, and historical batch management."
+        },
+        {
+          "question": "Is my data secure?",
+          "answer": "Data security is our top priority. All data transmission uses HTTPS encryption. The database employs Supabase Row-Level Security (RLS) so each user can only access their own data. We never use your review data for model training."
+        },
+        {
+          "question": "Which languages are supported?",
+          "answer": "The interface supports English and Chinese. For review analysis, we support all major languages found on Amazon, including English, Chinese, Japanese, German, French, Spanish, and Italian. The AI automatically detects the language and performs analysis accordingly."
+        },
+        {
+          "question": "How do I interpret the analysis report?",
+          "answer": "The report includes a sentiment overview (positive/neutral/negative ratio), high-frequency keyword cloud, pros and cons categorization, rating distribution chart, and competitor comparison. Every conclusion comes with cited original reviews — click to view the source and ensure traceability."
+        }
+      ]
     },
     "filterBar": {
       "rangeDefault": "Default (current batch)",
@@ -1039,7 +1075,27 @@
     "subProcessors": "Sub-processors",
     "contact": "Contact",
     "refund": "Refund Policy",
-    "amazonDisclaimer": "Amazon and the Amazon logo are trademarks of Amazon.com, Inc. or its affiliates. ClueAI is not affiliated with Amazon."
+    "amazonDisclaimer": "Amazon and the Amazon logo are trademarks of Amazon.com, Inc. or its affiliates. ClueAI is not affiliated with Amazon.",
+    "products": "Products",
+    "resources": "Resources",
+    "company": "Company",
+    "subscribe": "Subscribe",
+    "subscribeDesc": "Get product updates and industry insights delivered to your inbox.",
+    "emailPlaceholder": "Your email address",
+    "subscribeButton": "Subscribe",
+    "subscribeSuccess": "Thanks for subscribing!",
+    "productFeatures": "Features",
+    "productPricing": "Pricing",
+    "productExtension": "Chrome Extension",
+    "resourceBlog": "Blog",
+    "resourceCases": "Case Studies",
+    "resourceQa": "Help Center",
+    "resourceApi": "API Docs",
+    "companyAbout": "About Us",
+    "companyContact": "Contact",
+    "companyPrivacy": "Privacy",
+    "companyTerms": "Terms",
+    "copyright": "© 2026 ReviewLens. All rights reserved."
   },
   "features": {
     "label": "Features",

@@ -117,7 +117,7 @@ export async function LegalArticle({ page }: LegalArticleProps) {
       </p>
       {content.lead ? <p>{renderInline(content.lead)}</p> : null}
       {content.sections.map((section, sIdx) => (
-        <section key={sIdx}>
+        <section key={sIdx} id={`legal-section-${sIdx}`}>
           <h2>{section.heading}</h2>
           {section.blocks.map((block, bIdx) => renderBlock(block, bIdx))}
         </section>

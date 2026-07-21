@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { MarketingShell } from "@/components/marketing/marketing-shell";
+import { LegalLayout } from "@/components/legal/legal-layout";
 
 type SubProcessor = {
   name: string;
@@ -66,92 +66,106 @@ export default function SubProcessorsPage() {
   const t = useTranslations("subProcessors");
 
   return (
-    <MarketingShell title={t("title")} description={t("description")}>
-      <div className="mx-auto max-w-5xl px-4 py-6">
-        <p className="mb-4 text-xs text-muted-foreground">{t("lastUpdated")}</p>
+    <LegalLayout tocItems={[]}>
+      <h1 className="font-heading text-4xl font-extrabold leading-[1.02] tracking-[-0.04em] text-ink">
+        {t("title")}
+      </h1>
+      <p className="mt-4 text-base leading-8 text-soft md:text-lg">
+        {t("description")}
+      </p>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {t("lastUpdated")}
+      </p>
 
-        {/* Desktop table */}
-        <div className="hidden overflow-hidden rounded-xl border border-line bg-white/60 shadow-card backdrop-blur md:block">
-          <table className="w-full text-sm">
-            <thead className="bg-hero-wash">
-              <tr className="border-b border-line text-left font-heading text-xs uppercase tracking-[0.08em] text-soft">
-                <th className="px-5 py-3 font-semibold">{t("provider")}</th>
-                <th className="px-5 py-3 font-semibold">{t("purpose")}</th>
-                <th className="px-5 py-3 font-semibold">{t("region")}</th>
-                <th className="px-5 py-3 font-semibold">{t("dpa")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SUB_PROCESSORS.map((sp, index) => (
-                <tr
-                  key={sp.name}
-                  className={
-                    index !== SUB_PROCESSORS.length - 1
-                      ? "border-b border-line/60"
-                      : ""
-                  }
-                >
-                  <td className="px-5 py-4 font-semibold text-ink">
-                    {sp.name}
-                  </td>
-                  <td className="px-5 py-4 text-soft">{sp.purpose}</td>
-                  <td className="px-5 py-4 text-soft">{sp.region}</td>
-                  <td className="px-5 py-4">
-                    <a
-                      href={sp.dpa}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-semibold text-ink underline decoration-dotted underline-offset-4 hover:opacity-80"
-                    >
-                      {t("learnMore")}
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile cards */}
-        <div className="grid gap-3 md:hidden">
-          {SUB_PROCESSORS.map((sp) => (
-            <div
-              key={sp.name}
-              className="rounded-xl border border-line bg-white/60 p-4 shadow-card backdrop-blur"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-heading text-base font-bold text-ink">
+      {/* Desktop table */}
+      <div className="mt-8 hidden overflow-hidden rounded-xl border border-line/60 md:block">
+        <table className="w-full text-sm">
+          <thead className="bg-hero-wash">
+            <tr className="border-b border-line text-left font-heading text-xs uppercase tracking-[0.08em] text-soft">
+              <th className="px-5 py-3 font-semibold">
+                {t("provider")}
+              </th>
+              <th className="px-5 py-3 font-semibold">
+                {t("purpose")}
+              </th>
+              <th className="px-5 py-3 font-semibold">
+                {t("region")}
+              </th>
+              <th className="px-5 py-3 font-semibold">{t("dpa")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SUB_PROCESSORS.map((sp, index) => (
+              <tr
+                key={sp.name}
+                className={
+                  index !== SUB_PROCESSORS.length - 1
+                    ? "border-b border-line/60"
+                    : ""
+                }
+              >
+                <td className="px-5 py-4 font-semibold text-ink">
                   {sp.name}
-                </h3>
-                <a
-                  href={sp.dpa}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-ink underline decoration-dotted underline-offset-4"
-                >
-                  {t("learnMore")}
-                </a>
-              </div>
-              <dl className="mt-3 space-y-1.5 text-xs">
-                <div className="flex gap-2">
-                  <dt className="min-w-16 text-muted-foreground">
-                    {t("purpose")}
-                  </dt>
-                  <dd className="text-soft">{sp.purpose}</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="min-w-16 text-muted-foreground">
-                    {t("region")}
-                  </dt>
-                  <dd className="text-soft">{sp.region}</dd>
-                </div>
-              </dl>
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-6 text-xs text-muted-foreground">{t("quarterly")}</p>
+                </td>
+                <td className="px-5 py-4 text-soft">{sp.purpose}</td>
+                <td className="px-5 py-4 text-soft">{sp.region}</td>
+                <td className="px-5 py-4">
+                  <a
+                    href={sp.dpa}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-ink underline decoration-dotted underline-offset-4 hover:opacity-80"
+                  >
+                    {t("learnMore")}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </MarketingShell>
+
+      {/* Mobile cards */}
+      <div className="mt-8 grid gap-3 md:hidden">
+        {SUB_PROCESSORS.map((sp) => (
+          <div
+            key={sp.name}
+            className="rounded-xl border border-line/60 p-4"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-heading text-base font-bold text-ink">
+                {sp.name}
+              </h3>
+              <a
+                href={sp.dpa}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-ink underline decoration-dotted underline-offset-4"
+              >
+                {t("learnMore")}
+              </a>
+            </div>
+            <dl className="mt-3 space-y-1.5 text-xs">
+              <div className="flex gap-2">
+                <dt className="min-w-16 text-muted-foreground">
+                  {t("purpose")}
+                </dt>
+                <dd className="text-soft">{sp.purpose}</dd>
+              </div>
+              <div className="flex gap-2">
+                <dt className="min-w-16 text-muted-foreground">
+                  {t("region")}
+                </dt>
+                <dd className="text-soft">{sp.region}</dd>
+              </div>
+            </dl>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-6 text-xs text-muted-foreground">
+        {t("quarterly")}
+      </p>
+    </LegalLayout>
   );
 }

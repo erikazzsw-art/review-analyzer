@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getMessages, getTranslations } from "next-intl/server";
 
 import { LegalArticle } from "@/components/legal/legal-article";
-import { MarketingShell } from "@/components/marketing/marketing-shell";
+import { LegalLayout, type TocItem } from "@/components/legal/legal-layout";
 import { buildMarketingMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,10 +15,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function DpaPage() {
-  const t = await getTranslations("legal.dpa");
+  const messages = await getMessages();
+  const legal = messages.legal as Record<
+    string,
+    { sections?: { heading: string }[] }
+  >;
+  const content = legal.dpa;
+  const tocItems: TocItem[] = (content?.sections ?? []).map((s, i) => ({
+    id: `legal-section-${i}`,
+    label: s.heading,
+  }));
+
   return (
-    <MarketingShell title={t("pageTitle")} description={t("pageSubtitle")}>
+    <LegalLayout tocItems={tocItems}>
       <LegalArticle page="dpa" />
-    </MarketingShell>
+    </LegalLayout>
   );
 }

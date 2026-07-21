@@ -962,7 +962,43 @@
       "productSelectorSearch": "搜索产品名或 ASIN...",
       "productSelectorEmpty": "未找到匹配产品",
       "selectedCountFormat": "已选 {count}/5",
-      "reviewsUnit": "条"
+      "reviewsUnit": "条",
+      "faqTitle": "常见问题",
+      "faqContact": "没找到答案？<link>联系我们</link>",
+      "faq": [
+        {
+          "question": "评论分析是什么？",
+          "answer": "评论分析通过 AI 自动提取买家评论中的关键信息，包括情感倾向、高频关键词、优缺点总结、星级分布等，帮助卖家快速了解产品口碑，无需逐条翻阅评论。"
+        },
+        {
+          "question": "支持哪些平台的评论？",
+          "answer": "目前支持亚马逊（Amazon）各站点的评论分析，包括美国、英国、德国、日本等主要市场。后续将陆续接入 Shopify、eBay、Walmart 等平台。"
+        },
+        {
+          "question": "分析结果有多准确？",
+          "answer": "基于 DeepSeek 大语言模型，情感分析准确率可达 90% 以上。对于明确的优缺点提取和主题归类，准确率超过 95%。我们会持续优化模型并定期更新 Golden Set 进行校准。"
+        },
+        {
+          "question": "如何上传评论数据？",
+          "answer": "你可以通过 Chrome 扩展一键抓取亚马逊产品评论，也可以在产品管理页面手动输入 ASIN 链接。系统会自动去重并拉取最新评论。"
+        },
+        {
+          "question": "免费版和付费版有什么区别？",
+          "answer": "免费版每月可分析 50 条评论，支持基础情感分析和关键词提取。Pro 版不限评论数量，支持多产品对比、评论问答（Q&A）、深度洞察报告、历史批次管理等高级功能。"
+        },
+        {
+          "question": "我的数据安全吗？",
+          "answer": "数据安全是我们的首要关注。所有数据传输使用 HTTPS 加密，数据库采用 Supabase 的行级安全策略（RLS），每个用户只能访问自己的数据。我们不会将你的评论数据用于模型训练。"
+        },
+        {
+          "question": "支持哪些语言？",
+          "answer": "系统界面支持中文和英文。评论分析方面，我们支持亚马逊上所有主流语言的评论，包括英语、中文、日语、德语、法语、西班牙语、意大利语等，AI 会自动识别语言并进行分析。"
+        },
+        {
+          "question": "如何解读分析报告？",
+          "answer": "分析报告包含情感概览（正面/中性/负面比例）、高频关键词云、优缺点归类、星级分布图、竞品对比等模块。每个结论都附带引用的原始评论，点击即可查看原文，确保分析可追溯。"
+        }
+      ]
     },
     "filterBar": {
       "rangeDefault": "默认（当前批次）",
@@ -1039,7 +1075,27 @@
     "subProcessors": "Sub-Processor 清单",
     "contact": "联系我们",
     "refund": "退款政策",
-    "amazonDisclaimer": "Amazon 及 Amazon 徽标是 Amazon.com, Inc. 或其附属公司的商标。ClueAI 与 Amazon 无任何关联。"
+    "amazonDisclaimer": "Amazon 及 Amazon 徽标是 Amazon.com, Inc. 或其附属公司的商标。ClueAI 与 Amazon 无任何关联。",
+    "products": "产品",
+    "resources": "资源",
+    "company": "公司",
+    "subscribe": "订阅",
+    "subscribeDesc": "获取最新产品更新与行业洞察，直接发送到你的邮箱。",
+    "emailPlaceholder": "你的邮箱地址",
+    "subscribeButton": "订阅",
+    "subscribeSuccess": "感谢订阅！",
+    "productFeatures": "功能",
+    "productPricing": "定价",
+    "productExtension": "Chrome 扩展",
+    "resourceBlog": "博客",
+    "resourceCases": "案例研究",
+    "resourceQa": "帮助中心",
+    "resourceApi": "API 文档",
+    "companyAbout": "关于我们",
+    "companyContact": "联系我们",
+    "companyPrivacy": "隐私",
+    "companyTerms": "条款",
+    "copyright": "© 2026 ReviewLens. 保留所有权利。"
   },
   "features": {
     "label": "功能",

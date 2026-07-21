@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { MarketingShell } from "@/components/marketing/marketing-shell";
+
+import { LegalLayout, type TocItem } from "@/components/legal/legal-layout";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — ClueAI ReviewLens Extension",
@@ -7,14 +8,23 @@ export const metadata: Metadata = {
     "Privacy policy for the ClueAI ReviewLens Chrome extension.",
 };
 
+const TOC_ITEMS: TocItem[] = [
+  { id: "what-we-access", label: "What We Access" },
+  { id: "what-we-do-not-do", label: "What We Do Not Do" },
+  { id: "data-storage", label: "Data Storage" },
+  { id: "uploads-to-clueai", label: "Uploads to ClueAI" },
+  { id: "permissions", label: "Permissions" },
+  { id: "contact", label: "Contact" },
+];
+
 export default function PrivacyExtensionPage() {
   return (
-    <MarketingShell
-      title="ClueAI ReviewLens Extension — Privacy Policy"
-      description="Last updated: 2026-07-15"
-    >
-      <article className="prose prose-sm mx-auto max-w-3xl px-4 py-12">
-        <section>
+    <LegalLayout tocItems={TOC_ITEMS}>
+      <article className="prose prose-sm max-w-none">
+        <h1>ClueAI ReviewLens Extension — Privacy Policy</h1>
+        <p className="text-muted-foreground">Last updated: 2026-07-15</p>
+
+        <section id="what-we-access">
           <h2>What We Access</h2>
           <p>
             The extension reads the publicly visible review content (review text,
@@ -24,7 +34,7 @@ export default function PrivacyExtensionPage() {
           </p>
         </section>
 
-        <section>
+        <section id="what-we-do-not-do">
           <h2>What We Do Not Do</h2>
           <ul>
             <li>We do not track your browsing history.</li>
@@ -39,7 +49,7 @@ export default function PrivacyExtensionPage() {
           </ul>
         </section>
 
-        <section>
+        <section id="data-storage">
           <h2>Data Storage</h2>
           <p>
             Scraped reviews are stored locally in your browser (
@@ -48,7 +58,7 @@ export default function PrivacyExtensionPage() {
           </p>
         </section>
 
-        <section>
+        <section id="uploads-to-clueai">
           <h2>Uploads to ClueAI</h2>
           <p>
             If you choose &ldquo;Upload to ClueAI,&rdquo; the scraped review data
@@ -60,7 +70,7 @@ export default function PrivacyExtensionPage() {
           </p>
         </section>
 
-        <section>
+        <section id="permissions">
           <h2>Permissions</h2>
           <p>
             See the permission justifications in the Chrome Web Store listing for
@@ -68,7 +78,7 @@ export default function PrivacyExtensionPage() {
           </p>
         </section>
 
-        <section>
+        <section id="contact">
           <h2>Contact</h2>
           <p>
             Questions? Contact us at{" "}
@@ -78,6 +88,6 @@ export default function PrivacyExtensionPage() {
           </p>
         </section>
       </article>
-    </MarketingShell>
+    </LegalLayout>
   );
 }

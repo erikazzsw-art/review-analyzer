@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { QaPanel } from "@/components/analysis/qa-panel";
+import { QaFaqAccordion } from "@/components/analysis/qa-faq-accordion";
 import { getQaProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
@@ -18,9 +19,10 @@ export default async function QaPage() {
       <AppShell
         currentPath="/qa"
         title="问评论"
-        description="选择产品，围绕评论自由提问，支持多轮追问。"
+        description=""
       >
         <QaPanel products={products} />
+        <QaFaqAccordion />
       </AppShell>
     );
   } catch (error) {

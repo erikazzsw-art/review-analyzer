@@ -80,13 +80,13 @@ export function ForgotPasswordForm() {
   }
 
   const inputClassName =
-    "mt-1 border-line bg-white text-ink focus-visible:ring-lavender/20 focus-visible:border-lavender";
+    "mt-1 border-line bg-white/80 text-ink focus-visible:ring-rose/20 focus-visible:border-rose rounded-xl";
 
   if (step === "done") {
     return (
       <div className="space-y-4 text-center">
         <p className="text-sm text-ink">{t("resetSent")}</p>
-        <Button href="/login" className="rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
+        <Button href="/login" className="rounded-pill bg-rose px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-rose/90">
           {t("goLogin")}
         </Button>
       </div>
@@ -137,7 +137,7 @@ export function ForgotPasswordForm() {
             {error}
           </p>
         )}
-        <Button type="submit" disabled={loading} className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
+        <Button type="submit" disabled={loading} className="w-full rounded-pill bg-rose px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-rose/90">
           {loading ? t("confirmingReset") : t("confirmReset")}
         </Button>
         <button
@@ -173,7 +173,7 @@ export function ForgotPasswordForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={loading} className="w-full rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-ink/90">
+      <Button type="submit" disabled={loading} className="w-full rounded-pill bg-rose px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-rose/90">
         {loading ? t("sendingResetLink") : t("sendResetLink")}
       </Button>
     </form>
