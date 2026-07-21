@@ -129,6 +129,10 @@ export default async function ProductDetailPage({ params }: Props) {
                   <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-wider text-soft">
                     <th className="px-3 py-3">{t("detail.tableImage")}</th>
                     <th className="px-3 py-3">{t("detail.tableAsin")}</th>
+                    <th className="px-3 py-3">{t("detail.tableColor")}</th>
+                    <th className="px-3 py-3">{t("detail.tableSize")}</th>
+                    <th className="px-3 py-3">{t("detail.tableStyle")}</th>
+                    <th className="px-3 py-3">{t("detail.tableMaterial")}</th>
                     <th className="px-3 py-3">{t("detail.tableVariantName")}</th>
                     <th className="px-3 py-3">{t("detail.tableBrand")}</th>
                     <th className="px-3 py-3">{t("detail.tablePrice")}</th>
@@ -154,6 +158,10 @@ export default async function ProductDetailPage({ params }: Props) {
                         )}
                       </td>
                       <td className="px-3 py-3 font-mono text-xs">{(v.child_asin as string) || "—"}</td>
+                      <td className="px-3 py-3 text-xs">{(v.color as string) || "—"}</td>
+                      <td className="px-3 py-3 text-xs">{(v.size as string) || "—"}</td>
+                      <td className="px-3 py-3 text-xs">{(v.style as string) || "—"}</td>
+                      <td className="px-3 py-3 text-xs">{(v.material as string) || "—"}</td>
                       <td className="max-w-[200px] truncate px-3 py-3">{(v.name as string) || (v.variant_sku as string) || "—"}</td>
                       <td className="px-3 py-3">{(v.brand as string) || "—"}</td>
                       <td className="px-3 py-3">
@@ -161,10 +169,10 @@ export default async function ProductDetailPage({ params }: Props) {
                           ? `${(v.price_currency as string) || "$"}${(v.price as number).toFixed(2)}`
                           : "—"}
                       </td>
-                      <td className="px-3 py-3 text-soft">—</td>
-                      <td className="px-3 py-3 text-soft">—</td>
-                      <td className="px-3 py-3 text-soft">—</td>
-                      <td className="px-3 py-3 text-soft">{(v.listing_date as string) || "—"}</td>
+                      <td className="px-3 py-3">{(v.sales_volume != null) ? String(v.sales_volume) : "—"}</td>
+                      <td className="px-3 py-3">{v.sales_revenue != null ? `${(v.price_currency as string) || "$"}${(v.sales_revenue as number).toFixed(2)}` : "—"}</td>
+                      <td className="px-3 py-3">{(v.is_fba as boolean) ? "FBA" : "FBM"}</td>
+                      <td className="px-3 py-3">{(v.listing_date as string) || "—"}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1">
                           <MoveVariantButton

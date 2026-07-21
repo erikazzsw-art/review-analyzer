@@ -467,7 +467,9 @@
           if (jsonMatch) {
             try {
               var dimData = JSON.parse(jsonMatch[1]);
-              var variants = _parseDimensionDisplayData(dimData);
+              // Extract dimension names from the same script tag
+              var dimNames = _extractDimensionNames(text);
+              var variants = _parseDimensionDisplayData(dimData, dimNames);
               if (variants && variants.length > 0) {
                 return {
                   parent_asin: parentAsin,
@@ -533,7 +535,12 @@
       }
 
       if (dimMaps.length > 0) {
-        var cartVariants = _cartesianProduct(dimMaps);
+        // For multi-dimension: try to build an ASIN map from script data
+        var asinMap = null;
+        if (dimMaps.length >= 2) {
+          asinMap = _buildAsinMapFromScripts();
+        }
+        var cartVariants = _cartesianProduct(dimMaps, asinMap);
         return {
           parent_asin: parentAsin,
           variants: cartVariants,
@@ -569,7 +576,7 @@
     /**
      * Parse dimensionValuesDisplayData structure into variant list.
      */
-    function _parseDimensionDisplayData(data) {
+    function _parseDimensionDisplayData(data, dimensionNames) {
       var variants = [];
       if (!Array.isArray(data)) return variants;
       for (var i = 0; i < data.length; i++) {
@@ -579,12 +586,15 @@
         var variant = { asin: asin };
         if (Array.isArray(item.dimensionValues)) {
           for (var j = 0; j < item.dimensionValues.length; j++) {
-            variant['dim_' + j] = item.dimensionValues[j];
+            // Map numeric index to actual dimension name (color/size/style/material)
+            var dimName = (dimensionNames && dimensionNames[j]) ? dimensionNames[j] : ('dim_' + j);
+            variant[dimName] = item.dimensionValues[j];
           }
         }
         if (item.color) variant.color = item.color;
         if (item.size) variant.size = item.size;
         if (item.style) variant.style = item.style;
+        if (item.material) variant.material = item.material;
         variants.push(variant);
       }
       return variants;
@@ -627,9 +637,63 @@
     }
 
     /**
+     * Extract dimension names from a script tag text.
+     * Looks for "dimensions":["Color","Size"] or "dimensionLabels":["Color","Size"]
+     * Returns an array of lowercase names, or null if not found.
+     */
+    function _extractDimensionNames(text) {
+      try {
+        // Try "dimensions":["Color","Size"]
+        var m = text.match(/"dimensions"\s*:\s*\[([^\]]*)\]/);
+        if (!m) {
+          // Try "dimensionLabels":["Color","Size"]
+          m = text.match(/"dimensionLabels"\s*:\s*\[([^\]]*)\]/);
+        }
+        if (!m) {
+          // Try "dimensionDisplayLabels":["Color","Size"]
+          m = text.match(/"dimensionDisplayLabels"\s*:\s*\[([^\]]*)\]/);
+        }
+        if (m) {
+          var names = JSON.parse('[' + m[1] + ']');
+          return names.map(function(n) { return String(n).toLowerCase().replace(/[^a-z]/gi, ''); });
+        }
+      } catch(e) {}
+      return null;
+    }
+
+    /**
+     * Build an ASIN→dimension mapping from script tags.
+     * Searches for dimensionValuesDisplayData entries and builds a map
+     * keyed by dimension value combination (e.g. "Black|Large" → "B0XXX").
+     */
+    function _buildAsinMapFromScripts() {
+      try {
+        var scripts = document.querySelectorAll('script[type="text/javascript"]');
+        for (var i = 0; i < scripts.length; i++) {
+          var text = scripts[i].textContent || '';
+          var pattern = /"asin"\s*:\s*"([A-Z0-9]{10})"\s*,\s*"dimensionValues"\s*:\s*\[([^\]]*)\]/g;
+          var map = {};
+          var match;
+          while ((match = pattern.exec(text)) !== null) {
+            var asin = match[1];
+            var rawValues = match[2];
+            var dimValues = rawValues.split(',').map(function(s) {
+              return s.replace(/["'\s]/g, '');
+            }).filter(function(s) { return s.length > 0; });
+            if (dimValues.length > 0) {
+              map[dimValues.join('|')] = asin;
+            }
+          }
+          if (Object.keys(map).length > 0) return map;
+        }
+      } catch(e) {}
+      return null;
+    }
+
+    /**
      * Generate Cartesian product from dimension maps.
      */
-    function _cartesianProduct(dimMaps) {
+    function _cartesianProduct(dimMaps, asinMap) {
       if (dimMaps.length === 0) return [];
 
       var product = [{}];
@@ -651,7 +715,81 @@
         }
         product = next;
       }
+
+      // Multi-dimension: try to assign ASINs for each combination
+      if (dimMaps.length > 1) {
+        for (var pi = 0; pi < product.length; pi++) {
+          var entry = product[pi];
+          if (entry.asin) continue;
+
+          // 1. Try asinMap lookup (key: "value1|value2|...")
+          if (asinMap) {
+            var keys = [];
+            for (var di = 0; di < dimMaps.length; di++) {
+              keys.push(entry[dimMaps[di].name] || '');
+            }
+            var mapKey = keys.join('|');
+            if (asinMap[mapKey] && /^[A-Z0-9]{10}$/i.test(asinMap[mapKey])) {
+              entry.asin = asinMap[mapKey];
+              continue;
+            }
+            // Also try reversed key order
+            var revKey = keys.reverse().join('|');
+            if (asinMap[revKey] && /^[A-Z0-9]{10}$/i.test(asinMap[revKey])) {
+              entry.asin = asinMap[revKey];
+              continue;
+            }
+          }
+
+          // 2. Try DOM li element data attributes
+          entry.asin = _findAsinByCombination(dimMaps, entry);
+        }
+      }
+
       return product;
+    }
+
+    /**
+     * Try to find an ASIN by matching dimension combination against
+     * DOM swatch li elements' data attributes.
+     */
+    function _findAsinByCombination(dimMaps, entry) {
+      try {
+        // Iterate each dimension and look for the matching swatch li
+        for (var di = 0; di < dimMaps.length; di++) {
+          var dim = dimMaps[di];
+          var targetValue = entry[dim.name];
+          if (!targetValue) continue;
+          var selectors = [
+            '#variation_' + dim.name + '_name li',
+            '#' + dim.name + '_name li'
+          ];
+          for (var si = 0; si < selectors.length; si++) {
+            try {
+              var lis = document.querySelectorAll(selectors[si]);
+              for (var li = 0; li < lis.length; li++) {
+                var title = (lis[li].getAttribute('title') || '').trim();
+                var alt = (lis[li].getAttribute('aria-label') || '').trim();
+                var imgAlt = '';
+                try {
+                  var img = lis[li].querySelector('img');
+                  if (img) imgAlt = (img.getAttribute('alt') || '').trim();
+                } catch(e) {}
+                if (title === targetValue || alt === targetValue || imgAlt === targetValue) {
+                  var dasin = lis[li].getAttribute('data-defaultasin') ||
+                              lis[li].getAttribute('data-csa-c-item-id') ||
+                              lis[li].getAttribute('data-asin') ||
+                              '';
+                  if (dasin && /^[A-Z0-9]{10}$/i.test(dasin)) {
+                    return dasin;
+                  }
+                }
+              }
+            } catch(e) {}
+          }
+        }
+      } catch(e) {}
+      return '';
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -172,6 +172,9 @@ function ProductRow({
                           {v.name || v.variant_sku}
                         </span>
                       )}
+                      <span className="ml-2 text-xs text-soft/60">
+                        {[v.color, v.size].filter(Boolean).join(" · ") || null}
+                      </span>
                     </div>
                   </div>
                 </span>
