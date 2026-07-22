@@ -501,6 +501,108 @@
         }
       } catch (e) {}
 
+      // ── Strategy D: Parse colorToAsin from ImageBlockBTF / twister-js-init-dpx-data ──
+      // Newer Amazon pages embed variation data as a colorToAsin JSON object
+      // inside script registrations like ImageBlockBTF. The object contains
+      // nested {asin:"B0XXX"} entries, so we use brace-counting instead of regex.
+      try {
+        var scripts2 = document.querySelectorAll('script[type="text/javascript"]');
+        for (var j = 0; j < scripts2.length; j++) {
+          var txt2 = scripts2[j].textContent || '';
+          if (txt2.length < 200) continue;
+
+          // ── D1: colorToAsin JSON object ──
+          // Find the key, then use brace-counting to extract the full nested object
+          var ctaIdx = txt2.indexOf('"colorToAsin"');
+          if (ctaIdx === -1) ctaIdx = txt2.indexOf('"color_to_asin"');
+          if (ctaIdx > -1) {
+            // Find the opening { after the key
+            var colonPos = txt2.indexOf(':', ctaIdx);
+            var openPos = txt2.indexOf('{', colonPos);
+            if (openPos > -1) {
+              var ctaJson = _extractBalancedJson(txt2, openPos);
+              if (ctaJson) {
+                try {
+                  var ctaObj = JSON.parse(ctaJson);
+                  var colorKeys = Object.keys(ctaObj);
+                  if (colorKeys.length > 0) {
+                    var ctaVariants = [];
+                    for (var c = 0; c < colorKeys.length; c++) {
+                      var colorName = colorKeys[c];
+                      var entry = ctaObj[colorName];
+                      var entryAsin = '';
+                      if (typeof entry === 'string') {
+                        entryAsin = entry;
+                      } else if (entry && entry.asin) {
+                        entryAsin = entry.asin;
+                      }
+                      if (entryAsin && /^[A-Z0-9]{10}$/i.test(entryAsin)) {
+                        ctaVariants.push({ asin: entryAsin, color: colorName });
+                      }
+                    }
+                    if (ctaVariants.length > 0) {
+                      var paMatch = txt2.match(/"parentAsin"\s*:\s*"([A-Z0-9]{10})"/i);
+                      var ctaParentAsin = (paMatch && paMatch[1]) ? paMatch[1] : parentAsin;
+
+                      var vdMatch = txt2.match(/"visualDimensions"\s*:\s*\[([^\]]*)\]/);
+                      var ctaDims = ['color'];
+                      if (vdMatch) {
+                        try {
+                          var vdParsed = JSON.parse('[' + vdMatch[1] + ']');
+                          ctaDims = vdParsed.map(function(d) {
+                            var s = String(d).toLowerCase();
+                            return s.replace(/_name$/, '').replace(/_/g, ' ');
+                          });
+                        } catch (e) {}
+                      }
+
+                      return {
+                        parent_asin: ctaParentAsin,
+                        variants: ctaVariants,
+                        variation_dimensions: ctaDims,
+                      };
+                    }
+                  }
+                } catch (e) {}
+              }
+            }
+          }
+
+          // ── D2: asinToColor (reversed mapping, less common) ──
+          var atcIdx = txt2.indexOf('"asinToColor"');
+          if (atcIdx > -1) {
+            var atcColon = txt2.indexOf(':', atcIdx);
+            var atcOpen = txt2.indexOf('{', atcColon);
+            if (atcOpen > -1) {
+              var atcJson = _extractBalancedJson(txt2, atcOpen);
+              if (atcJson) {
+                try {
+                  var atcObj = JSON.parse(atcJson);
+                  var atcKeys = Object.keys(atcObj);
+                  if (atcKeys.length > 0) {
+                    var atcVariants = [];
+                    for (var k = 0; k < atcKeys.length; k++) {
+                      var atcAsin = atcKeys[k];
+                      var atcColor = atcObj[atcAsin];
+                      if (atcAsin && /^[A-Z0-9]{10}$/i.test(atcAsin)) {
+                        atcVariants.push({ asin: atcAsin, color: String(atcColor || '') });
+                      }
+                    }
+                    if (atcVariants.length > 0) {
+                      return {
+                        parent_asin: parentAsin,
+                        variants: atcVariants,
+                        variation_dimensions: ['color'],
+                      };
+                    }
+                  }
+                } catch (e) {}
+              }
+            }
+          }
+        }
+      } catch (e) {}
+
       // ── Strategy B: DOM swatch parsing ──
       var dimSelectors = [
         { selector: '#variation_color_name li[data-defaultasin], #color_name li[data-defaultasin]', name: 'color' },
@@ -571,6 +673,57 @@
       } catch (e) {}
 
       return { parent_asin: parentAsin, variants: [], variation_dimensions: [] };
+    }
+
+    /**
+     * Extract a balanced JSON object/array string from text starting at openPos.
+     * Uses brace/bracket counting with string/escape awareness to handle
+     * nested objects and arrays correctly.
+     *
+     * @param {string} text - The full text to extract from
+     * @param {number} openPos - Position of the opening { or [
+     * @returns {string|null} The balanced JSON substring, or null on failure
+     */
+    function _extractBalancedJson(text, openPos) {
+      var openChar = text[openPos];
+      var closeChar = openChar === '{' ? '}' : openChar === '[' ? ']' : null;
+      if (!closeChar) return null;
+
+      var depth = 0;
+      var inString = false;
+      var escaped = false;
+
+      for (var i = openPos; i < text.length; i++) {
+        var ch = text[i];
+
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+
+        if (ch === '\\') {
+          escaped = true;
+          continue;
+        }
+
+        if (ch === '"' && !escaped) {
+          inString = !inString;
+          continue;
+        }
+
+        if (inString) continue;
+
+        if (ch === openChar) {
+          depth++;
+        } else if (ch === closeChar) {
+          depth--;
+          if (depth === 0) {
+            return text.substring(openPos, i + 1);
+          }
+        }
+      }
+
+      return null; // unbalanced
     }
 
     /**

@@ -11,8 +11,8 @@
 (function () {
   'use strict';
 
-  // @@VERSION: 2026-07-14-v4 — Step 14-2: CAPTCHA detection + anti-crawl
-  console.log('[ReviewLens CS] content.js loaded — version 2026-07-14-v4');
+  // @@VERSION: 2026-07-22-v5 — Strategy D: colorToAsin parsing (ImageBlockBTF)
+  console.log('[ReviewLens CS] content.js loaded — version 2026-07-22-v5');
 
   // ═══════════════════════════════════════════════════════════════
   // Page Type Detection (Step 10)
