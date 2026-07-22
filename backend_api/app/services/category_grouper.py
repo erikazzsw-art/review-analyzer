@@ -69,6 +69,41 @@ ASPECT_TO_CATEGORY: dict[str, str] = {
     "instructions": "user_experience",
     "customer_service": "customer_service",
     "value_for_money": "value_for_money",
+    # beauty / personal care dynamic taxonomy keys
+    "efficacy": "product_quality",
+    "cleansing_efficacy": "product_quality",
+    "cleaning_efficacy": "product_quality",
+    "spf_efficacy": "product_quality",
+    "ingredients": "product_quality",
+    "lengthening_effect": "product_quality",
+    "volumizing_effect": "product_quality",
+    "curl_hold": "product_quality",
+    "separation_definition": "product_quality",
+    "clumping": "product_quality",
+    "smudge_resistance": "product_quality",
+    "waterproof_performance": "product_quality",
+    "flaking": "product_quality",
+    "longevity": "product_quality",
+    "color_payoff": "product_quality",
+    "skin_compatibility": "user_experience",
+    "scalp_compatibility": "user_experience",
+    "eye_sensitivity": "user_experience",
+    "texture": "user_experience",
+    "formula_texture": "user_experience",
+    "scent": "user_experience",
+    "absorption": "user_experience",
+    "moisturizing": "user_experience",
+    "moisturizing_after_wash": "user_experience",
+    "hair_feel_after": "user_experience",
+    "foam": "user_experience",
+    "residue": "user_experience",
+    "noise": "user_experience",
+    "vibration_strength": "user_experience",
+    "battery_life": "user_experience",
+    "charging": "user_experience",
+    "brush_head_quality": "user_experience",
+    "removal_ease": "user_experience",
+    "brush_applicator": "user_experience",
     "other": "other",
 }
 
@@ -146,7 +181,8 @@ def _derive_priority(aspects: list[dict[str, Any]], sentiment: str) -> str:
     neg_aspects = [a for a in aspects if a.get("polarity") == "negative"]
     if not neg_aspects:
         return "无"
-    has_safety = any(a.get("key") == "safety" for a in neg_aspects)
+    high_risk_keys = {"safety", "skin_compatibility", "scalp_compatibility", "eye_sensitivity"}
+    has_safety = any(a.get("key") in high_risk_keys for a in neg_aspects)
     if has_safety:
         return "高"
     has_certain = any(a.get("evidence_level") == "certain" for a in neg_aspects)

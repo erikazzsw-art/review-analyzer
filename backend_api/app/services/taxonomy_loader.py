@@ -122,11 +122,12 @@ def resolve_aspects(sub_category: str) -> tuple[list[dict[str, str]], bool]:
     if not rows:
         return get_fallback_aspects(), False
 
-    aspects = [
-        {"key": k, "label_zh": v, "boundary_note": bn}
-        for k, v, bn in rows
-        if k != "other"
-    ]
+    aspects: list[dict[str, str]] = []
+    for row in rows:
+        k, v = row[0], row[1]
+        bn = row[2] if len(row) > 2 else ""
+        if k != "other":
+            aspects.append({"key": k, "label_zh": v, "boundary_note": bn})
     aspects.append({"key": "other", "label_zh": "其他", "boundary_note": ""})
     return aspects, True
 

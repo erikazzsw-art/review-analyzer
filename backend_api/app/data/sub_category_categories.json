@@ -62,7 +62,8 @@
     "Women's Underwear": "女士内裤",
     "baby footed pajamas": "婴儿连脚睡衣",
     "iPhone Charger": "iPhone 充电器",
-    "mens Underwear": "男士内裤"
+    "mens Underwear": "男士内裤",
+    "睫毛膏": "睫毛膏"
   },
   "sub_category_to_category": {
     "Allergy Immune Bites": "pet",
@@ -137,6 +138,7 @@
     "口红": "beauty",
     "洗发水": "beauty",
     "电动牙刷": "beauty",
+    "睫毛膏": "beauty",
     "不粘锅": "kitchen",
     "刀具套装": "kitchen",
     "保温杯": "kitchen",
@@ -155,5 +157,5 @@
   },
   "generated_at": "2026-06-30",
   "source": "data/taxonomy/v1.0/<category>/*.yaml (sub_category 字段)",
-  "total_sub_categories": 87
+  "total_sub_categories": 88
 }

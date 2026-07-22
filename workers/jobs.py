@@ -27,6 +27,7 @@ from backend_api.app.services.review_pool import (
     pool_lookup,
     pool_write,
 )
+from backend_api.app.services.sub_category_inference import infer_sub_category_from_payload
 from backend_api.app.services.taxonomy_coverage_monitor import (
     build_coverage_warning,
     compute_taxonomy_coverage,
@@ -70,6 +71,39 @@ PROMPT_VERSION = DEFAULT_ANNOTATE_VERSION  # "v2.1"
 ANALYZER_VERSION = "v4_deep"
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_job_taxonomy(
+    payload: dict[str, Any],
+    product_id: str,
+) -> tuple[str, list[dict[str, str]], bool]:
+    """Resolve taxonomy for an upload job, with narrow product-text inference."""
+    raw_sub_category = str(payload.get("category") or "").strip()
+    if raw_sub_category:
+        aspects, hit = resolve_aspects(raw_sub_category)
+        if hit:
+            return raw_sub_category, aspects, True
+    else:
+        aspects, hit = [], False
+
+    inferred = infer_sub_category_from_payload(payload, product_id)
+    if inferred and inferred != raw_sub_category:
+        inferred_aspects, inferred_hit = resolve_aspects(inferred)
+        if inferred_hit:
+            logger.info(
+                "upload taxonomy inferred: raw=%r inferred=%r product_id=%r",
+                raw_sub_category or None,
+                inferred,
+                product_id,
+            )
+            return inferred, inferred_aspects, True
+
+    if raw_sub_category:
+        return raw_sub_category, aspects, False
+
+    fallback = "家具家居"
+    fallback_aspects, fallback_hit = resolve_aspects(fallback)
+    return fallback, fallback_aspects, fallback_hit
 
 
 def _build_comments(
@@ -116,6 +150,12 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         variant_ref_id = job.get("variant_ref_id") or payload.get("variant_ref_id")
         # V6-locale: 从 payload 取 locale，无则默认 en（海外优先）
         locale = str(payload.get("locale") or "en")
+        sub_category, aspects, taxonomy_hit = _resolve_job_taxonomy(payload, product_id)
+        category_for_storage = (
+            sub_category
+            if taxonomy_hit
+            else (str(payload.get("category") or "").strip() or None)
+        )
 
         update_upload_job(user_id, job_id, {"status": "processing"})
 
@@ -127,7 +167,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         else:
             batch_hash = payload.get("batch_hash")
             if not batch_hash and comments_payload:
-                batch_hash = compute_batch_hash(comments_payload, payload.get("category"))
+                batch_hash = compute_batch_hash(comments_payload, sub_category)
 
             # batch_hash 重复时复用已有 session（同一用户+产品+相同评论集）
             if batch_hash:
@@ -155,7 +195,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                             "parent_product_id": product_id,
                             "name": payload.get("product_name"),
                             "platform": payload.get("platform"),
-                            "category": payload.get("category"),
+                            "category": category_for_storage,
                             "lifecycle_stage": "growth",
                             "current_version": version,
                             "owner_role": "运营",
@@ -176,7 +216,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "total_reviews": len(comments_payload),
                     "positive_count": 0,
                     "negative_count": 0,
-                    "category": payload.get("category"),
+                    "category": category_for_storage,
                     "prompt_version": PROMPT_VERSION,
                     "version_notes": payload.get("version_notes"),
                     "workflow_purpose": workflow_purpose,
@@ -187,7 +227,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             )
 
             comments_to_insert = _build_comments(
-                comments_payload, product_id, version, payload.get("category")
+                comments_payload, product_id, version, sub_category
             )
             for comment in comments_to_insert:
                 comment["session_id"] = session_id
@@ -229,8 +269,6 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 except Exception:
                     logger.debug("progress_callback: DB write failed (non-fatal), current=%d", current)
 
-            sub_category = str(payload.get("category") or "家具家居")
-            aspects, taxonomy_hit = resolve_aspects(sub_category)
             aspects_block = render_aspects_block(aspects)
             calibration_block = build_calibration_block(sub_category)
             if calibration_block:
@@ -1101,6 +1139,10 @@ def _fetch_amazon_path(
     product_info, variants_list = loop.run_until_complete(
         fetch_product_variants(asin, marketplace=marketplace)
     )
+    if product_info.get("title") and not payload.get("scraped_title"):
+        payload["scraped_title"] = product_info.get("title")
+    if product_info.get("category") and not payload.get("category"):
+        payload["category"] = product_info.get("category")
 
     user_product_name = payload.get("product_name") or f"ASIN: {asin}"
 

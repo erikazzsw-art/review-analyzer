@@ -1,0 +1,202 @@
+# 睫毛膏 Aspect Taxonomy v1.0
+# 生成时间: 2026-07-22 (轻量接入，参考跨境电商睫毛膏评论高频维度)
+sub_category: 睫毛膏
+aspect_count: 18
+aspects:
+- key: lengthening_effect
+  label_zh: 纤长效果
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "睫毛是否被拉长、是否有 lash extension 效果；不含浓密（归 volumizing_effect）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: volumizing_effect
+  label_zh: 浓密效果
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "睫毛是否显得更浓密、更有存在感；不含纤长（归 lengthening_effect）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: curl_hold
+  label_zh: 卷翘定型
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "卷翘、上扬、定型能力，尤其是否塌睫毛；不含持妆时长（归 longevity）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: separation_definition
+  label_zh: 根根分明
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "刷后睫毛是否分明、自然、不粘连；粘成团或蟑螂腿归 clumping"
+  top_phrases: []
+  sample_reviews: []
+
+- key: clumping
+  label_zh: 结块粘连
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "结块、粘连、厚重成团、spider lashes；不含掉渣（归 flaking）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: smudge_resistance
+  label_zh: 防晕染
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "是否晕到眼下、蹭黑、panda eyes；防水场景单独归 waterproof_performance"
+  top_phrases: []
+  sample_reviews: []
+
+- key: waterproof_performance
+  label_zh: 防水性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "遇水、出汗、流泪后的保持能力；日常不晕染归 smudge_resistance"
+  top_phrases: []
+  sample_reviews: []
+
+- key: flaking
+  label_zh: 掉渣飞粉
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "干后碎屑、掉渣、落到眼下；不含膏体结块（归 clumping）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: longevity
+  label_zh: 持妆时长
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "整天佩戴后的整体保持度；具体晕染/掉渣分别归 smudge_resistance 或 flaking"
+  top_phrases: []
+  sample_reviews: []
+
+- key: removal_ease
+  label_zh: 卸妆难易
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "是否容易用温水/卸妆产品卸除，是否拉扯睫毛；不含防水能力"
+  top_phrases: []
+  sample_reviews: []
+
+- key: brush_applicator
+  label_zh: 刷头设计
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "刷头形状、刷毛、上手控制、是否容易刷到眼皮；不含膏体质地"
+  top_phrases: []
+  sample_reviews: []
+
+- key: formula_texture
+  label_zh: 膏体质地
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "膏体干湿度、轻重、顺滑度、是否太干或太稀；不含刷头设计"
+  top_phrases: []
+  sample_reviews: []
+
+- key: eye_sensitivity
+  label_zh: 眼部刺激
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "是否刺激眼睛、过敏、流泪、隐形眼镜不适；不含普通气味喜好"
+  top_phrases: []
+  sample_reviews: []
+
+- key: color_payoff
+  label_zh: 黑度/显色
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "颜色浓度、黑度、棕黑色是否符合预期；不含纤长浓密效果"
+  top_phrases: []
+  sample_reviews: []
+
+- key: packaging
+  label_zh: 包装
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "外包装、管身、封口、到货状态；运输损坏可归 shipping_damage（若出现）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: value_for_money
+  label_zh: 性价比
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "价格、容量、使用效果之间的匹配感"
+  top_phrases: []
+  sample_reviews: []
+
+- key: customer_service
+  label_zh: 客服
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "售后、退款、换货、客服沟通体验"
+  top_phrases: []
+  sample_reviews: []
+
+- key: other
+  label_zh: 其他
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "不属于以上任何维度的评论内容（兜底）"
+  top_phrases: []
+  sample_reviews: []
