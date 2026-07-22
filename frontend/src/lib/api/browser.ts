@@ -78,13 +78,38 @@ export function describeRequestError(err: unknown, target: string): string {
 
 async function parseError(response: Response): Promise<ApiError> {
   let message = `Request failed with status ${response.status}.`;
+  const fallback = response.clone();
   try {
     const payload = (await response.json()) as { detail?: string };
     if (payload.detail) {
       message = payload.detail;
     }
-  } catch {}
+  } catch {
+    try {
+      const text = (await fallback.text()).replace(/\s+/g, " ").trim();
+      if (text) {
+        message = `${message} ${text.slice(0, 160)}`;
+      }
+    } catch {}
+  }
   return { status: response.status, message };
+}
+
+async function parseJsonBody<T>(response: Response): Promise<T> {
+  const fallback = response.clone();
+  try {
+    return (await response.json()) as T;
+  } catch {
+    let preview = "";
+    try {
+      preview = (await fallback.text()).replace(/\s+/g, " ").trim().slice(0, 160);
+    } catch {}
+    const contentType = response.headers.get("content-type") || "unknown content-type";
+    throw {
+      status: response.status,
+      message: `Expected JSON from ${response.url || "API response"}, received ${contentType}${preview ? `: ${preview}` : ""}`,
+    } satisfies ApiError;
+  }
 }
 
 export async function submitUploadJob(params: {
@@ -231,7 +256,7 @@ export async function fetchAnalysisCompare(params?: {
     throw await parseError(response);
   }
 
-  return (await response.json()) as AnalysisCompareResponse;
+  return parseJsonBody<AnalysisCompareResponse>(response);
 }
 
 export async function fetchAnalysisHistory(productId?: string): Promise<AnalysisHistoryResponse> {
@@ -319,7 +344,7 @@ export async function fetchCompareDataset(
     throw await parseError(response);
   }
 
-  return (await response.json()) as AnalysisCompareResponse;
+  return parseJsonBody<AnalysisCompareResponse>(response);
 }
 
 export async function downloadCompareExport(request: CompareExportRequest): Promise<void> {
@@ -369,7 +394,7 @@ export async function fetchCompareHistory(
   if (!response.ok) {
     throw await parseError(response);
   }
-  return (await response.json()) as CompareHistoryResponse;
+  return parseJsonBody<CompareHistoryResponse>(response);
 }
 
 export async function fetchCompareHistoryEntry(
@@ -382,7 +407,7 @@ export async function fetchCompareHistoryEntry(
   if (!response.ok) {
     throw await parseError(response);
   }
-  return (await response.json()) as CompareLatestResponse;
+  return parseJsonBody<CompareLatestResponse>(response);
 }
 
 export async function deleteCompareHistory(fingerprint: string): Promise<void> {
@@ -978,7 +1003,7 @@ export async function fetchProductList(): Promise<import("./types").ProductsResp
   if (!response.ok) {
     throw await parseError(response);
   }
-  return (await response.json()) as import("./types").ProductsResponse;
+  return parseJsonBody<import("./types").ProductsResponse>(response);
 }
 
 export async function triggerAsinFetchNow(
@@ -1014,7 +1039,7 @@ export async function translateModule(params: {
   if (!response.ok) {
     throw await parseError(response);
   }
-  return (await response.json()) as { translated: Record<string, unknown> };
+  return parseJsonBody<{ translated: Record<string, unknown> }>(response);
 }
 
 export async function exportModuleXlsx(sessionId: number, moduleKey: string, locale?: string): Promise<Blob> {

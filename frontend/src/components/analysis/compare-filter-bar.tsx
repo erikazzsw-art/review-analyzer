@@ -39,14 +39,35 @@ const PRESET_WINDOW_DAYS: Array<{ value: string; key: string; days: number }> = 
   { value: "custom", key: "windowPresetCustom", days: -1 },
 ];
 
+function normalizeIsoDate(value?: string | null): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+
+  const datePrefix = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (datePrefix) {
+    const parsed = new Date(`${datePrefix[1]}T00:00:00Z`);
+    return Number.isNaN(parsed.getTime()) ? null : datePrefix[1];
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 10);
+}
+
+function anchorDate(anchor?: string | null): Date {
+  const normalized = normalizeIsoDate(anchor);
+  return normalized ? new Date(`${normalized}T00:00:00Z`) : new Date();
+}
+
 function isoDaysAgo(days: number, anchor?: string | null): string {
-  const base = anchor ? new Date(`${anchor}T00:00:00Z`) : new Date();
+  const base = anchorDate(anchor);
   base.setUTCDate(base.getUTCDate() - days);
   return base.toISOString().slice(0, 10);
 }
 
 function todayIso(anchor?: string | null): string {
-  if (anchor) return anchor;
+  const normalized = normalizeIsoDate(anchor);
+  if (normalized) return normalized;
   return new Date().toISOString().slice(0, 10);
 }
 
