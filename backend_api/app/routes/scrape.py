@@ -193,10 +193,13 @@ def plugin_upload(
             else:
                 asin_match_source = "unknown"
         unique_reviews.append({
+            "review_id": r.review_id,
             "content": r.body,
             "rating": r.rating,
             "date": r.date,
+            "date_iso": r.date_iso,
             "reviewer": r.reviewer or "",
+            "title": r.title or "",
             "source": f"Amazon {req.marketplace.upper()}",
             "source_channel": "chrome_extension",
             "source_variant_asin": resolved_asin,

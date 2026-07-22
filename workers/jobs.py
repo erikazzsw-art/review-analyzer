@@ -133,6 +133,36 @@ def _build_comments(
     return comments
 
 
+def _comments_payload_by_hash(
+    payload_comments: list[dict[str, Any]],
+    category: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    by_hash: dict[str, dict[str, Any]] = {}
+    for comment in payload_comments:
+        content = str(comment.get("content") or "")
+        rating = comment.get("rating")
+        content_hash = compute_content_hash(content, rating, category)
+        by_hash.setdefault(content_hash, comment)
+    return by_hash
+
+
+def _merge_pool_source_comments(
+    db_comments: list[dict[str, Any]],
+    payload_comments: list[dict[str, Any]],
+    category: str | None = None,
+) -> list[dict[str, Any]]:
+    payload_by_hash = _comments_payload_by_hash(payload_comments, category)
+    merged: list[dict[str, Any]] = []
+    for comment in db_comments:
+        content_hash = str(comment.get("content_hash") or "")
+        payload_comment = payload_by_hash.get(content_hash, {})
+        item = {**comment, **payload_comment}
+        if content_hash:
+            item["content_hash"] = content_hash
+        merged.append(item)
+    return merged
+
+
 def process_upload_job(user_id: int, job_id: int) -> None:
     trace = JobTrace(job_id=job_id, user_id=user_id)
     try:
@@ -697,10 +727,15 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             _backfill_market = str(payload.get("marketplace") or "us")
             # 只要 product_id 非空即回填（CSV / API 都参与）
             if _backfill_key:
+                pool_source_comments = _merge_pool_source_comments(
+                    unprocessed,
+                    comments_payload,
+                    sub_category,
+                )
                 # 首先写入 review_pool（若 CSV 是新数据，pool_write 会 upsert）
                 pool_write(
                     _backfill_platform, _backfill_key, _backfill_market,
-                    unprocessed,
+                    pool_source_comments,
                     scraper_source=payload.get("source_channel") or "csv",
                 )
                 # 合并 content_hash（来自 unprocessed）和分析结果（来自 results）
@@ -1292,10 +1327,13 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             source_label = "AliExpress"
             comments_payload = [
                 {
+                    "review_id": r.get("review_id", ""),
                     "content": r["content"],
                     "rating": r.get("rating"),
                     "date": r.get("date") or r.get("review_date", ""),
+                    "date_iso": r.get("date_iso"),
                     "reviewer": r.get("reviewer", ""),
+                    "title": r.get("title", ""),
                     "source": "AliExpress",
                     "source_variant_asin": r.get("sku_info") or r.get("source_variant", ""),
                 }
@@ -1305,10 +1343,13 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             source_label = "eBay"
             comments_payload = [
                 {
+                    "review_id": r.get("review_id", ""),
                     "content": r["content"],
                     "rating": r.get("rating"),
                     "date": r.get("date") or r.get("review_date", ""),
+                    "date_iso": r.get("date_iso"),
                     "reviewer": r.get("reviewer", ""),
+                    "title": r.get("title", ""),
                     "source": "eBay",
                     "source_variant_asin": "",
                 }
@@ -1318,10 +1359,13 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             source_label = "Walmart"
             comments_payload = [
                 {
+                    "review_id": r.get("review_id", ""),
                     "content": r["content"],
                     "rating": r.get("rating"),
                     "date": r.get("date") or r.get("review_date", ""),
+                    "date_iso": r.get("date_iso"),
                     "reviewer": r.get("reviewer", ""),
+                    "title": r.get("title", ""),
                     "source": "Walmart",
                     "source_variant_asin": "",
                 }
@@ -1331,10 +1375,13 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             source_label = "Shopee"
             comments_payload = [
                 {
+                    "review_id": r.get("review_id", ""),
                     "content": r["content"],
                     "rating": r.get("rating"),
                     "date": r.get("date") or r.get("review_date", ""),
+                    "date_iso": r.get("date_iso"),
                     "reviewer": r.get("reviewer", ""),
+                    "title": r.get("title", ""),
                     "source": "Shopee",
                     "source_variant_asin": r.get("sku_info") or r.get("source_variant", ""),
                 }
@@ -1344,10 +1391,13 @@ def process_asin_fetch_job(user_id: int, job_id: int) -> None:
             source_label = f"Amazon {marketplace.upper()}"
             comments_payload = [
                 {
+                    "review_id": r.get("review_id", ""),
                     "content": r["content"],
                     "rating": r.get("rating"),
                     "date": r.get("date") or r.get("review_date", ""),
+                    "date_iso": r.get("date_iso"),
                     "reviewer": r.get("reviewer", ""),
+                    "title": r.get("title", ""),
                     "source": source_label,
                     "source_variant_asin": r.get("source_variant_asin") or r.get("source_variant", asin),
                 }

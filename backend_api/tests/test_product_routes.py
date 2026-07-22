@@ -9,6 +9,75 @@ from backend_api.app.main import app
 from review_analyzer.product_store import ProductParentNameConflictError
 
 
+def _overview_row(
+    *,
+    product_id: int | None,
+    parent_product_id: str,
+    name: str | None = None,
+    is_archived_from_sessions: bool = False,
+) -> dict:
+    return {
+        "id": product_id,
+        "parent_product_id": parent_product_id,
+        "name": name,
+        "platform": "amazon",
+        "category": None,
+        "lifecycle_stage": "growth",
+        "current_version": "V1",
+        "core_selling_points": None,
+        "main_competitors": None,
+        "owner_role": None,
+        "production_cycle_days": None,
+        "is_archived_from_sessions": is_archived_from_sessions,
+        "review_count": 0,
+        "positive_rate": 0.0,
+        "negative_rate": 0.0,
+        "top_issue": None,
+        "top_highlight": None,
+        "variant_count": 0,
+        "variants": [],
+        "versions": [],
+        "session_versions": [],
+        "version_date_ranges": {},
+        "session_count": 0,
+        "pending_review_count": 0,
+        "latest_session_label": None,
+        "latest_updated_at": None,
+        "latest_review_date": None,
+        "earliest_review_date": None,
+        "image_url": None,
+        "brand": None,
+        "rating": None,
+        "ratings_total": None,
+        "reviews_total": None,
+    }
+
+
+def test_get_products_excludes_archived_session_rows(monkeypatch):
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_overview_rows",
+        lambda user_id: [
+            _overview_row(product_id=12, parent_product_id="Parent A", name="Desk Lamp"),
+            _overview_row(
+                product_id=None,
+                parent_product_id="Wader",
+                is_archived_from_sessions=True,
+            ),
+        ],
+    )
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.get("/products")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert [item["parent_product_id"] for item in response.json()["items"]] == ["Parent A"]
+
+
 def test_update_product_accepts_parent_product_id(monkeypatch):
     captured: dict[str, object] = {}
 
@@ -169,3 +238,31 @@ def test_search_products_matches_variant_product_name(monkeypatch):
     assert response.json()["items"][0]["variants"] == [
         {"child_asin": "B0ASINMATCH", "name": "Desk Lamp Black"}
     ]
+
+
+def test_search_products_excludes_archived_session_rows(monkeypatch):
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_overview_rows",
+        lambda user_id: [
+            {
+                "id": None,
+                "parent_product_id": "Wader",
+                "name": None,
+                "is_archived_from_sessions": True,
+                "review_count": 340,
+                "session_count": 1,
+                "variants": [],
+            },
+        ],
+    )
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.get("/products/search", params={"q": "wader"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["items"] == []
+    assert response.json()["total"] == 0

@@ -209,6 +209,15 @@ def delete_product(user_id: int, product_id: int) -> bool:
     conn = get_connection()
     try:
         with conn.cursor() as cur:
+            cur.execute(
+                "SELECT parent_product_id FROM products WHERE user_id = %s AND id = %s FOR UPDATE",
+                (user_id, product_id),
+            )
+            product = cur.fetchone()
+            if product is None:
+                return False
+            parent_product_id = str(product[0] or "").strip()
+
             variant_ids_sql = (
                 "SELECT id FROM product_variants WHERE user_id = %s AND product_id = %s"
             )
@@ -216,6 +225,69 @@ def delete_product(user_id: int, product_id: int) -> bool:
             variant_ids = [r[0] for r in cur.fetchall()]
 
             if variant_ids:
+                cur.execute(
+                    """SELECT id FROM sessions
+                       WHERE user_id = %s
+                         AND (
+                             product_ref_id = %s
+                             OR product_id = %s
+                             OR variant_ref_id = ANY(%s)
+                         )""",
+                    (user_id, product_id, parent_product_id, variant_ids),
+                )
+            else:
+                cur.execute(
+                    """SELECT id FROM sessions
+                       WHERE user_id = %s
+                         AND (product_ref_id = %s OR product_id = %s)""",
+                    (user_id, product_id, parent_product_id),
+                )
+            session_ids = [r[0] for r in cur.fetchall()]
+
+            if session_ids:
+                _safe_execute(
+                    cur,
+                    "UPDATE action_items SET session_id = NULL WHERE user_id = %s AND session_id = ANY(%s)",
+                    (user_id, session_ids),
+                )
+                _safe_execute(
+                    cur,
+                    "DELETE FROM upload_jobs WHERE user_id = %s AND session_id = ANY(%s)",
+                    (user_id, session_ids),
+                )
+                _safe_execute(
+                    cur,
+                    "DELETE FROM comments WHERE user_id = %s AND session_id = ANY(%s)",
+                    (user_id, session_ids),
+                )
+                cur.execute(
+                    "DELETE FROM sessions WHERE user_id = %s AND id = ANY(%s)",
+                    (user_id, session_ids),
+                )
+
+            if parent_product_id:
+                _safe_execute(
+                    cur,
+                    "DELETE FROM upload_jobs WHERE user_id = %s AND product_id = %s",
+                    (user_id, parent_product_id),
+                )
+                cur.execute(
+                    "DELETE FROM comments WHERE user_id = %s AND product_id = %s",
+                    (user_id, parent_product_id),
+                )
+
+            _safe_execute(
+                cur,
+                "DELETE FROM upload_jobs WHERE user_id = %s AND product_ref_id = %s",
+                (user_id, product_id),
+            )
+
+            if variant_ids:
+                _safe_execute(
+                    cur,
+                    "DELETE FROM upload_jobs WHERE user_id = %s AND variant_ref_id = ANY(%s)",
+                    (user_id, variant_ids),
+                )
                 _safe_execute(
                     cur,
                     "UPDATE action_items SET variant_id = NULL WHERE variant_id = ANY(%s)",
@@ -282,6 +354,8 @@ def delete_product(user_id: int, product_id: int) -> bool:
             )
             deleted = cur.rowcount > 0
         conn.commit()
+        if deleted:
+            _clear_product_reference_caches()
         return deleted
     finally:
         conn.close()

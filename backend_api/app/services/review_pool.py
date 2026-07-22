@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass
+from datetime import date, datetime, timezone
 from typing import Any
 
 import psycopg2.extras
@@ -29,6 +31,65 @@ class PoolMeta:
 
 
 POOL_MIN_THRESHOLD = 20
+REVIEW_POOL_RETENTION_YEARS = 2
+
+
+def _cutoff_date(years: int = REVIEW_POOL_RETENTION_YEARS) -> date:
+    today = datetime.now(timezone.utc).date()
+    try:
+        return today.replace(year=today.year - years)
+    except ValueError:
+        return today.replace(year=today.year - years, day=28)
+
+
+def _extract_review_date(value: Any) -> date | None:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value or "").strip()
+    if not text:
+        return None
+
+    iso_match = re.search(r"\d{4}-\d{2}-\d{2}", text)
+    if iso_match:
+        try:
+            return datetime.strptime(iso_match.group(0), "%Y-%m-%d").date()
+        except ValueError:
+            return None
+
+    month_match = re.search(
+        r"(January|February|March|April|May|June|July|August|September|October|November|December)"
+        r"\s+\d{1,2},?\s+\d{4}",
+        text,
+        re.IGNORECASE,
+    )
+    if month_match:
+        try:
+            return datetime.strptime(month_match.group(0).replace(",", ""), "%B %d %Y").date()
+        except ValueError:
+            return None
+    return None
+
+
+def _review_date_value(review: dict[str, Any]) -> Any:
+    return review.get("date_iso") or review.get("date") or review.get("review_date")
+
+
+def _normalize_review_date(review: dict[str, Any]) -> str | None:
+    parsed = _extract_review_date(_review_date_value(review))
+    if not parsed or parsed < _cutoff_date():
+        return None
+    return parsed.isoformat()
+
+
+def _normalize_review_id(value: Any) -> str | None:
+    text = str(value or "").strip()
+    return text or None
+
+
+def _recent_pool_date_sql() -> str:
+    return "substring(review_date from '^[0-9]{4}-[0-9]{2}-[0-9]{2}')::date >= %s"
 
 
 def get_pool_meta(
@@ -40,11 +101,26 @@ def get_pool_meta(
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """SELECT platform, product_key, marketplace, total_reviews,
-                          last_scraped_at::text, scraper_source
-                   FROM review_pool_meta
-                   WHERE platform = %s AND product_key = %s AND marketplace = %s""",
-                (platform, product_key, marketplace),
+                f"""SELECT
+                          m.platform,
+                          m.product_key,
+                          m.marketplace,
+                          COALESCE(r.total_reviews, 0) AS total_reviews,
+                          COALESCE(r.last_scraped_at, m.last_scraped_at)::text AS last_scraped_at,
+                          COALESCE(r.scraper_source, m.scraper_source) AS scraper_source
+                   FROM review_pool_meta m
+                   LEFT JOIN LATERAL (
+                       SELECT COUNT(*) AS total_reviews,
+                              MAX(scraped_at) AS last_scraped_at,
+                              MAX(scraper_source) AS scraper_source
+                       FROM review_pool
+                       WHERE platform = m.platform
+                         AND product_key = m.product_key
+                         AND marketplace = m.marketplace
+                         AND {_recent_pool_date_sql()}
+                   ) r ON TRUE
+                   WHERE m.platform = %s AND m.product_key = %s AND m.marketplace = %s""",
+                (_cutoff_date(), platform, product_key, marketplace),
             )
             row = cur.fetchone()
     finally:
@@ -88,9 +164,10 @@ def pool_lookup(
                           sentiment, aspects_json, analyzed_at, analyzer_version
                    FROM review_pool
                    WHERE platform = %s AND product_key = %s AND marketplace = %s
+                     AND """ + _recent_pool_date_sql() + """
                    ORDER BY scraped_at DESC
                    LIMIT %s""",
-                (platform, product_key, marketplace, max_reviews),
+                (platform, product_key, marketplace, _cutoff_date(), max_reviews),
             )
             rows = cur.fetchall()
     finally:
@@ -107,19 +184,50 @@ def pool_write(
     reviews: list[dict[str, Any]],
     scraper_source: str = "",
 ) -> int:
-    """将抓取结果写入池（ON CONFLICT 跳过重复）。返回新插入行数。"""
+    """将抓取结果写入池。
+
+    规则:
+    - 只写入可解析日期且在最近 2 年内的评论。
+    - 同一 platform/marketplace/product_key 下优先按 review_id 去重。
+    - 没有 review_id 时,按 content_hash 去重。
+    """
     if not reviews:
         return 0
 
     conn = get_connection()
     inserted = 0
+    seen_keys: set[str] = set()
     try:
         with conn.cursor() as cur:
             for r in reviews:
                 content = r.get("content", "")
                 rating = r.get("rating")
                 content_hash = compute_content_hash(content, rating)
+                review_date = _normalize_review_date(r)
+                if not review_date:
+                    continue
+                review_id = _normalize_review_id(r.get("review_id"))
+                dedupe_key = f"id:{review_id.lower()}" if review_id else f"hash:{content_hash}"
+                if dedupe_key in seen_keys:
+                    continue
+                seen_keys.add(dedupe_key)
+                cur.execute("SAVEPOINT _pool_write_row")
                 try:
+                    if review_id:
+                        cur.execute(
+                            """SELECT id
+                               FROM review_pool
+                               WHERE platform = %s
+                                 AND product_key = %s
+                                 AND marketplace = %s
+                                 AND review_id = %s
+                               LIMIT 1""",
+                            (platform, product_key, marketplace, review_id),
+                        )
+                        if cur.fetchone():
+                            cur.execute("RELEASE SAVEPOINT _pool_write_row")
+                            continue
+
                     cur.execute(
                         """INSERT INTO review_pool
                            (platform, product_key, marketplace, content, rating,
@@ -131,10 +239,10 @@ def pool_write(
                         (
                             platform, product_key, marketplace,
                             content, rating,
-                            r.get("date") or r.get("review_date", ""),
+                            review_date,
                             r.get("reviewer", ""),
                             r.get("title", ""),
-                            r.get("review_id", ""),
+                            review_id,
                             r.get("source_variant_asin") or r.get("sku_info", ""),
                             content_hash,
                             scraper_source,
@@ -142,27 +250,35 @@ def pool_write(
                     )
                     if cur.rowcount > 0:
                         inserted += 1
+                    cur.execute("RELEASE SAVEPOINT _pool_write_row")
                 except Exception:
                     logger.warning("pool_write: skip row due to error", exc_info=True)
-                    conn.rollback()
+                    cur.execute("ROLLBACK TO SAVEPOINT _pool_write_row")
+                    cur.execute("RELEASE SAVEPOINT _pool_write_row")
                     continue
 
             # 更新 meta 表
             cur.execute(
-                """INSERT INTO review_pool_meta (platform, product_key, marketplace, total_reviews, scraper_source)
+                f"""INSERT INTO review_pool_meta (platform, product_key, marketplace, total_reviews, scraper_source)
                    VALUES (%s, %s, %s,
-                           (SELECT count(*) FROM review_pool WHERE platform=%s AND product_key=%s AND marketplace=%s),
+                           (SELECT count(*) FROM review_pool
+                            WHERE platform=%s AND product_key=%s AND marketplace=%s
+                              AND {_recent_pool_date_sql()}),
                            %s)
                    ON CONFLICT (platform, product_key, marketplace)
                    DO UPDATE SET
-                       total_reviews = (SELECT count(*) FROM review_pool WHERE platform=%s AND product_key=%s AND marketplace=%s),
+                       total_reviews = (SELECT count(*) FROM review_pool
+                                        WHERE platform=%s AND product_key=%s AND marketplace=%s
+                                          AND {_recent_pool_date_sql()}),
                        last_scraped_at = NOW(),
                        scraper_source = EXCLUDED.scraper_source""",
                 (
                     platform, product_key, marketplace,
                     platform, product_key, marketplace,
+                    _cutoff_date(),
                     scraper_source,
                     platform, product_key, marketplace,
+                    _cutoff_date(),
                 ),
             )
             conn.commit()

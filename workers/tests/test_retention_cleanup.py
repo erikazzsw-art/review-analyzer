@@ -259,12 +259,38 @@ def test_block3_iterates_tables_in_leaf_to_root_order(monkeypatch):
 
 
 def test_block3_review_pool_not_touched(monkeypatch):
-    """review_pool 不在硬删清单里 —— 无 PII、纯抓取缓存。"""
+    """用户级硬删不碰 review_pool；全局池由独立保留窗口清理。"""
     assert "review_pool" not in retention_cleanup._HARD_DELETE_TABLES
 
 
 # ---------------------------------------------------------------------------
-# Block 4: analytics_events > 90 天
+# Block 4: review_pool > 2 年
+# ---------------------------------------------------------------------------
+
+
+def test_block4_purges_stale_review_pool(monkeypatch):
+    from review_analyzer import database
+
+    monkeypatch.setattr(database, "get_connection", _fake_conn_factory([[88, 1, 1]]))
+    result = retention_cleanup._block4_purge_review_pool()
+    assert result == {"ok": True, "deleted": 88}
+
+
+def test_block4_review_pool_uses_2_year_threshold(monkeypatch):
+    from review_analyzer import database
+
+    conn = FakeConn([0, 0, 0])
+    monkeypatch.setattr(database, "get_connection", lambda: conn)
+    retention_cleanup._block4_purge_review_pool()
+    assert conn.last_cursor is not None
+    delete_sql = conn.last_cursor.executed[0][0]
+    assert "review_pool" in delete_sql
+    assert "2 years" in delete_sql
+    assert "IS NULL" in delete_sql
+
+
+# ---------------------------------------------------------------------------
+# Block 5: analytics_events > 90 天
 # ---------------------------------------------------------------------------
 
 
@@ -358,7 +384,7 @@ def test_block6_uses_update_not_delete(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_retention_cleanup_job_runs_all_six_blocks(monkeypatch):
+def test_retention_cleanup_job_runs_all_seven_blocks(monkeypatch):
     """一个 block 抛出后,后续 block 仍会跑 + 结果里有 errors。"""
     called: list[str] = []
 
@@ -374,7 +400,8 @@ def test_retention_cleanup_job_runs_all_six_blocks(monkeypatch):
     monkeypatch.setattr(retention_cleanup, "_block1_notify_inactive", make_block("b1"))
     monkeypatch.setattr(retention_cleanup, "_block2_anonymize_notified", make_block("b2", raises=True))
     monkeypatch.setattr(retention_cleanup, "_block3_hard_delete_after_grace", make_block("b3"))
-    monkeypatch.setattr(retention_cleanup, "_block4_purge_analytics_events", make_block("b4"))
+    monkeypatch.setattr(retention_cleanup, "_block4_purge_review_pool", make_block("b4_pool"))
+    monkeypatch.setattr(retention_cleanup, "_block4_purge_analytics_events", make_block("b4_events"))
     monkeypatch.setattr(retention_cleanup, "_block5_purge_llm_usage_log", make_block("b5"))
     monkeypatch.setattr(
         retention_cleanup, "_block6_soft_delete_stale_business_data", make_block("b6")
@@ -382,8 +409,8 @@ def test_retention_cleanup_job_runs_all_six_blocks(monkeypatch):
 
     result = retention_cleanup.retention_cleanup_job()
 
-    # 6 块全都被调用了(b2 崩了不影响 b3-b6)
-    assert called == ["b1", "b2", "b3", "b4", "b5", "b6"]
+    # 7 块全都被调用了(b2 崩了不影响后续 block)
+    assert called == ["b1", "b2", "b3", "b4_pool", "b4_events", "b5", "b6"]
     # 结果结构
     assert result["ok"] is False
     assert len(result["errors"]) == 1
@@ -414,4 +441,5 @@ def test_retention_windows_match_shulex_alignment():
     assert retention_cleanup._DELETION_GRACE_DAYS == 60
     assert retention_cleanup._ANALYTICS_EVENTS_RETENTION_DAYS == 90
     assert retention_cleanup._LLM_USAGE_RETENTION_YEARS == 6
+    assert retention_cleanup._REVIEW_POOL_RETENTION_YEARS == 2
     assert retention_cleanup._SESSIONS_COMMENTS_RETENTION_YEARS == 6

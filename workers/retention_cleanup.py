@@ -5,9 +5,10 @@
     Block 1: inactive >6m + 未通知 → 发预告邮件 + 打时间戳
     Block 2: 已通知 >90d + 仍未登录 → 匿名化 (复用 M3.2 anonymize_user)
     Block 3: deleted_at >60d → 硬删关联业务数据 (不动 review_pool)
-    Block 4: analytics_events >90d → 硬删
-    Block 5: llm_usage_log >6y → 硬删
-    Block 6: sessions/comments >6y AND 行 deleted_at IS NULL → 软删
+    Block 4: review_pool >2y → 硬删全局评论池旧缓存
+    Block 5: analytics_events >90d → 硬删
+    Block 6: llm_usage_log >6y → 硬删
+    Block 7: sessions/comments >6y AND 行 deleted_at IS NULL → 软删
 
 设计要点:
 - 每块独立 try/except,一块失败不影响其他
@@ -17,7 +18,8 @@
 - 每块 SELECT 都带 LIMIT,单日处理量上限保护;下一天继续
 - 单块内部 try/except: rollback 后继续下一 user,不整块中断
 
-不清理: review_pool (无 PII、纯抓取缓存)、users 表本身 (M3.2 已经把 PII 匿名化)。
+用户级硬删不清理 review_pool；review_pool 由独立 2 年窗口按评论日期清理。
+不清理: users 表本身 (M3.2 已经把 PII 匿名化)。
 """
 from __future__ import annotations
 
@@ -39,9 +41,10 @@ _NOTIFY_TO_ANONYMIZE_DAYS = 90
 _DELETION_GRACE_DAYS = 60
 _ANALYTICS_EVENTS_RETENTION_DAYS = 90
 _LLM_USAGE_RETENTION_YEARS = 6
+_REVIEW_POOL_RETENTION_YEARS = 2
 _SESSIONS_COMMENTS_RETENTION_YEARS = 6
 
-# Block 3 硬删的业务表,按 FK 依赖顺序: 叶子先删。review_pool 不在此列 —— 无 PII。
+# Block 3 硬删的业务表,按 FK 依赖顺序: 叶子先删。review_pool 不在此列 —— 全局缓存独立保留。
 _HARD_DELETE_TABLES: tuple[str, ...] = (
     "review_trackers",
     "action_items",
@@ -77,6 +80,7 @@ def retention_cleanup_job() -> dict[str, Any]:
         ("notify_inactive", _block1_notify_inactive),
         ("anonymize_notified", _block2_anonymize_notified),
         ("hard_delete_after_grace", _block3_hard_delete_after_grace),
+        ("purge_review_pool", _block4_purge_review_pool),
         ("purge_analytics_events", _block4_purge_analytics_events),
         ("purge_llm_usage_log", _block5_purge_llm_usage_log),
         ("soft_delete_stale_sessions_comments", _block6_soft_delete_stale_business_data),
@@ -296,7 +300,65 @@ def _block3_hard_delete_after_grace() -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Block 4: analytics_events > 90 天 → 硬删
+# Block 4: review_pool > 2 年 → 硬删全局评论池旧缓存
+# ---------------------------------------------------------------------------
+
+
+def _review_pool_recent_date_sql() -> str:
+    return "substring(review_date from '^[0-9]{4}-[0-9]{2}-[0-9]{2}')::date >= CURRENT_DATE - INTERVAL '2 years'"
+
+
+def _review_pool_stale_date_sql() -> str:
+    return (
+        "substring(review_date from '^[0-9]{4}-[0-9]{2}-[0-9]{2}') IS NULL "
+        "OR substring(review_date from '^[0-9]{4}-[0-9]{2}-[0-9]{2}')::date < CURRENT_DATE - INTERVAL '2 years'"
+    )
+
+
+def _block4_purge_review_pool() -> dict[str, Any]:
+    """全局评论池只保留最近 2 年、日期可解析的评论缓存。"""
+    from review_analyzer.database import get_connection
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"DELETE FROM review_pool WHERE {_review_pool_stale_date_sql()}")
+            deleted = cur.rowcount
+            cur.execute(
+                f"""UPDATE review_pool_meta m
+                    SET total_reviews = COALESCE(r.total_reviews, 0),
+                        last_scraped_at = COALESCE(r.last_scraped_at, m.last_scraped_at)
+                    FROM (
+                        SELECT platform, product_key, marketplace,
+                               COUNT(*) AS total_reviews,
+                               MAX(scraped_at) AS last_scraped_at
+                        FROM review_pool
+                        WHERE {_review_pool_recent_date_sql()}
+                        GROUP BY platform, product_key, marketplace
+                    ) r
+                    WHERE m.platform = r.platform
+                      AND m.product_key = r.product_key
+                      AND m.marketplace = r.marketplace"""
+            )
+            cur.execute(
+                """UPDATE review_pool_meta m
+                   SET total_reviews = 0
+                   WHERE NOT EXISTS (
+                       SELECT 1
+                       FROM review_pool p
+                       WHERE p.platform = m.platform
+                         AND p.product_key = m.product_key
+                         AND p.marketplace = m.marketplace
+                   )"""
+            )
+            conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "deleted": deleted}
+
+
+# ---------------------------------------------------------------------------
+# Block 5: analytics_events > 90 天 → 硬删
 # ---------------------------------------------------------------------------
 
 

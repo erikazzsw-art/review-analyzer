@@ -61,11 +61,19 @@ class ProductUpdateRequest(BaseModel):
     production_cycle_days: int | None = None
 
 
+def _visible_product_rows(rows: list[dict]) -> list[dict]:
+    return [
+        row
+        for row in rows
+        if row.get("id") is not None and not row.get("is_archived_from_sessions")
+    ]
+
+
 @router.get("", response_model=ProductsResponsePayload)
 def get_products_route(
     current_user: dict = Depends(get_current_user),
 ) -> ProductsResponsePayload:
-    items = get_product_overview_rows(int(current_user["id"]))
+    items = _visible_product_rows(get_product_overview_rows(int(current_user["id"])))
     return ProductsResponsePayload(
         items=items,
         total=len(items),
@@ -84,7 +92,7 @@ def search_products_route(
     排序:精确命中优先 → 前缀命中优先 → 评论数降序 → 字母序。
     """
     user_id = int(current_user["id"])
-    rows = get_product_overview_rows(user_id)
+    rows = _visible_product_rows(get_product_overview_rows(user_id))
     q_norm = q.strip().lower()
 
     def _variant_values(row: dict) -> list[str]:

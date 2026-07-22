@@ -59,6 +59,7 @@ class PluginReviewItem(BaseModel):
     body: str = Field(..., min_length=1, description="评论正文")
     rating: float | None = None
     date: str = Field(..., description="评论日期字符串")
+    date_iso: str | None = Field(default=None, description="可选 ISO 日期，用于全局评论池 2 年保留窗口")
     reviewer: str | None = None
     title: str | None = None
     verified: bool | None = None
