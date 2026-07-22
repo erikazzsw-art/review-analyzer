@@ -13,7 +13,11 @@
  * Fix #3 #4 #5 (2026-07-15): saveTabReviews propagates quota errors (#3),
  *                 per-tab serialisation lock prevents lost updates (#4),
  *                 anti-crawl state (lastScrapeTime, consecutiveZeros) persisted (#5).
+ * Fix 2026-07-22 v2: sendToContentScript() with URL guard + dynamic injection fallback.
  */
+
+// @@VERSION: 2026-07-22-v2 — sendToContentScript URL guard + dynamic injection
+console.log('[ReviewLens BG] Service Worker loaded — version 2026-07-22-v2 (sendToContentScript)');
 
 // ── Step 15: Marketplace TLD → code mapping ──
 const MARKETPLACE_TLD_MAP = {
