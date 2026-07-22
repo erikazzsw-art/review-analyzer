@@ -16,8 +16,8 @@
  * Fix 2026-07-22 v2: sendToContentScript() with URL guard + dynamic injection fallback.
  */
 
-// @@VERSION: 2026-07-22-v2 — sendToContentScript URL guard + dynamic injection
-console.log('[ReviewLens BG] Service Worker loaded — version 2026-07-22-v2 (sendToContentScript)');
+// @@VERSION: 2026-07-22-v3 — sendToContentScript simplified: URL guard + clean error, no dynamic injection
+console.log('[ReviewLens BG] Service Worker loaded — version 2026-07-22-v3 (simplified sendToContentScript)');
 
 // ── Step 15: Marketplace TLD → code mapping ──
 const MARKETPLACE_TLD_MAP = {
@@ -108,12 +108,14 @@ function sendMessageWithTimeout(tabId, message, timeoutMs = 15000) {
   });
 }
 
-// ── Fix 2026-07-22: Content script connection guard ──
+// ── Fix 2026-07-22 v3: Content script connection guard (simplified) ──
 /**
- * Send a message to the content script with Amazon URL validation and dynamic
- * injection fallback. If the tab is not an Amazon page, throws immediately.
- * If the content script isn't loaded (e.g. SW restart, page not fully loaded),
- * attempts to inject it dynamically and retries once.
+ * Send a message to the content script with Amazon URL validation.
+ * If the tab is not an Amazon page, throws immediately.
+ * If the content script isn't loaded (e.g. extension was reloaded while
+ * the tab was open), throws a clean user-facing error telling them to
+ * refresh the page. Chrome does not re-inject content scripts into
+ * already-open tabs after an extension reload.
  *
  * @param {object} tab — chrome.tabs.Tab (must have .id and .url)
  * @param {object} message — message to send
@@ -131,25 +133,15 @@ async function sendToContentScript(tab, message, timeoutMs = 15000) {
     return await sendMessageWithTimeout(tab.id, message, timeoutMs);
   } catch (err) {
     const msg = err.message || String(err);
-    // Connection error → content script not loaded; try dynamic injection
+    // Connection error → content script not loaded in this tab.
+    // Common cause: extension was reloaded while the Amazon tab was already
+    // open. Chrome does not re-inject manifest content_scripts into existing
+    // tabs. The fix is to refresh the Amazon page.
     if (msg.includes('Could not establish connection')
         || msg.includes('Receiving end does not exist')) {
-      console.warn('[ReviewLens BG] Content script missing for tab', tab.id,
-        ', attempting dynamic injection');
-      try {
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['content.js'],
-        });
-        // Brief settle time for the injected script to register its listener
-        await new Promise(r => setTimeout(r, 150));
-        return await sendMessageWithTimeout(tab.id, message, timeoutMs);
-      } catch (injectErr) {
-        console.error('[ReviewLens BG] Dynamic injection failed:', injectErr);
-        throw new Error(
-          'CONTENT_INJECT_FAILED:请在 Amazon 商品页面刷新后重试'
-        );
-      }
+      throw new Error(
+        'CONTENT_INJECT_FAILED:请在 Amazon 商品页面刷新后重试'
+      );
     }
     throw err;
   }
