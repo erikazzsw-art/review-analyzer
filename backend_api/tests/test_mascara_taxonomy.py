@@ -8,7 +8,6 @@ import yaml
 from backend_api.app.services.category_grouper import aspects_to_legacy_schema
 from backend_api.app.services.sub_category_inference import infer_sub_category_from_payload
 
-
 ROOT = Path(__file__).resolve().parent.parent.parent
 
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 _SUB_CATEGORY_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("睫毛膏", ("睫毛膏", "mascara")),
 )
