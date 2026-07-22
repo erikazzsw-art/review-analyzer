@@ -61,7 +61,7 @@ test.beforeAll(async () => {
     }
   });
 
-  await new Promise((resolve) => server.listen(TEST_PORT, resolve));
+  await new Promise((resolve) => server.listen(TEST_PORT, '127.0.0.1', resolve));
   console.log(`[E2E] Test server running on port ${TEST_PORT}`);
 });
 
@@ -324,13 +324,25 @@ test.describe('Step 14-3: Full E2E Pipeline', () => {
     await page.goto(PAGES.reviewPage1);
 
     const csvResult = await page.evaluate(() => {
+      const pageAsin = 'B0PAGEASIN';
+      const extractAsin = (url) => {
+        const m = String(url || '').match(/\/(?:dp|gp\/product|product-reviews|portal\/customer-reviews)\/([A-Z0-9]{10})/i);
+        return m ? m[1].toUpperCase() : '';
+      };
       // Extract reviews
       const containers = document.querySelectorAll('[data-hook="review"]');
       const reviews = [];
       for (let i = 0; i < containers.length; i++) {
         const c = containers[i];
+        const formatLink = c.querySelector('a[href*="formatType=current_format"], a[href*="cm_cr_arp_d_rvw_fmt"], [data-hook="format-strip"] a');
+        const reviewVariantAsin = extractAsin(formatLink?.getAttribute('href') || '');
         reviews.push({
           review_id: c.getAttribute('id') || ('rev_' + i),
+          asin: reviewVariantAsin || pageAsin,
+          page_asin: pageAsin,
+          review_variant_asin: reviewVariantAsin,
+          variant_label: (formatLink?.textContent || '').trim(),
+          asin_match_source: reviewVariantAsin ? 'format_link' : 'page_url_fallback',
           body: (c.querySelector('[data-hook="review-body"] span')?.textContent || '').trim(),
           rating: parseFloat(((c.querySelector('[data-hook="review-star-rating"] .a-icon-alt')?.textContent || '').match(/(\d+[.,]?\d*)\s*out\s*of/) || [0,0])[1]) || null,
           date: (c.querySelector('[data-hook="review-date"]')?.textContent || '').trim(),
@@ -348,7 +360,7 @@ test.describe('Step 14-3: Full E2E Pipeline', () => {
       }
 
       // Generate CSV matching background.js format
-      const headers = ['review_id','body','rating','date','date_iso','reviewer','title','verified','helpful_count','marketplace','scraped_at','page_url'];
+      const headers = ['review_id','asin','page_asin','review_variant_asin','variant_label','asin_match_source','body','rating','date','date_iso','reviewer','title','verified','helpful_count','marketplace','scraped_at','page_url'];
       function escapeCsv(value) {
         if (value == null) return '';
         const str = String(value);
@@ -361,7 +373,8 @@ test.describe('Step 14-3: Full E2E Pipeline', () => {
       const rows = [headers.join(',')];
       for (const r of reviews) {
         rows.push([
-          escapeCsv(r.review_id), escapeCsv(r.body), r.rating,
+          escapeCsv(r.review_id), r.asin, r.page_asin, r.review_variant_asin,
+          escapeCsv(r.variant_label), r.asin_match_source, escapeCsv(r.body), r.rating,
           escapeCsv(r.date), '', escapeCsv(r.reviewer), escapeCsv(r.title),
           r.verified, r.helpful_count, 'US', new Date().toISOString(), window.location.href,
         ].join(','));
@@ -373,6 +386,8 @@ test.describe('Step 14-3: Full E2E Pipeline', () => {
         data_rows: reviews.length,
         has_bom: csv.charCodeAt(0) === 0xFEFF,
         total_bytes: csv.length,
+        first_variant_asin: reviews[0].review_variant_asin,
+        all_rows_have_asin: reviews.every((r) => !!r.asin),
         // Verify specific features
         contains_emoji: csv.includes('😊'),
         contains_french: /[àâéèêë]/.test(csv),
@@ -384,9 +399,11 @@ test.describe('Step 14-3: Full E2E Pipeline', () => {
 
     console.log('[T4] CSV Result:', JSON.stringify(csvResult, null, 2));
 
-    expect(csvResult.header_columns).toBe(12);
+    expect(csvResult.header_columns).toBe(17);
     expect(csvResult.data_rows).toBe(10);
     expect(csvResult.has_bom).toBe(true);
+    expect(csvResult.first_variant_asin).toBe('B0CABLE001');
+    expect(csvResult.all_rows_have_asin).toBe(true);
     expect(csvResult.contains_emoji).toBe(true);
     expect(csvResult.contains_french).toBe(true);
     expect(csvResult.contains_german).toBe(true);
@@ -710,11 +727,23 @@ test.describe('T10: Full Integration Pipeline', () => {
     // ═══ Step 5: CSV export format ═══
     await page.goto(PAGES.reviewPage1);
     const csvCheck = await page.evaluate(() => {
+      const pageAsin = 'B0PAGEASIN';
+      const extractAsin = (url) => {
+        const m = String(url || '').match(/\/(?:dp|gp\/product|product-reviews|portal\/customer-reviews)\/([A-Z0-9]{10})/i);
+        return m ? m[1].toUpperCase() : '';
+      };
       const containers = document.querySelectorAll('[data-hook="review"]');
       const reviews = [];
       for (let i = 0; i < containers.length; i++) {
         const c = containers[i];
+        const formatLink = c.querySelector('a[href*="formatType=current_format"], a[href*="cm_cr_arp_d_rvw_fmt"], [data-hook="format-strip"] a');
+        const reviewVariantAsin = extractAsin(formatLink?.getAttribute('href') || '');
         reviews.push({
+          asin: reviewVariantAsin || pageAsin,
+          page_asin: pageAsin,
+          review_variant_asin: reviewVariantAsin,
+          variant_label: (formatLink?.textContent || '').trim(),
+          asin_match_source: reviewVariantAsin ? 'format_link' : 'page_url_fallback',
           body: (c.querySelector('[data-hook="review-body"] span')?.textContent || '').trim(),
           reviewer: (c.querySelector('.a-profile-name')?.textContent || '').trim(),
           title: (c.querySelector('[data-hook="review-title"] span')?.textContent || '').trim(),
@@ -730,10 +759,15 @@ test.describe('T10: Full Integration Pipeline', () => {
         return str;
       }
 
-      const headers = ['review_id','body','rating','date','date_iso','reviewer','title','verified','helpful_count','marketplace','scraped_at','page_url'];
+      const headers = ['review_id','asin','page_asin','review_variant_asin','variant_label','asin_match_source','body','rating','date','date_iso','reviewer','title','verified','helpful_count','marketplace','scraped_at','page_url'];
       const rows = [headers.join(',')];
       for (let i = 0; i < reviews.length; i++) {
-        rows.push([i, escapeCsv(reviews[i].body), '', '', '', escapeCsv(reviews[i].reviewer), escapeCsv(reviews[i].title), '', '', '', '', ''].join(','));
+        rows.push([
+          i, reviews[i].asin, reviews[i].page_asin, reviews[i].review_variant_asin,
+          escapeCsv(reviews[i].variant_label), reviews[i].asin_match_source,
+          escapeCsv(reviews[i].body), '', '', '', escapeCsv(reviews[i].reviewer),
+          escapeCsv(reviews[i].title), '', '', '', '', '',
+        ].join(','));
       }
       const csv = '﻿' + rows.join('\n');
 
@@ -743,6 +777,8 @@ test.describe('T10: Full Integration Pipeline', () => {
         header_cols: lines[0].split(',').length,
         body_rows: lines.length - 1,
         has_bom: csv.charCodeAt(0) === 0xFEFF,
+        has_variant_asin: csv.includes('B0CABLE001'),
+        all_rows_have_asin: reviews.every((r) => !!r.asin),
         special_chars_intact: {
           french: csv.includes('câble'),
           german: csv.includes('für'),
@@ -753,13 +789,15 @@ test.describe('T10: Full Integration Pipeline', () => {
     });
 
     console.log('[T10] Step 5 - CSV:', csvCheck);
-    expect(csvCheck.header_cols).toBe(12);
+    expect(csvCheck.header_cols).toBe(17);
     // body_rows may be >10 because multiline review bodies are
     // correctly quoted in CSV (RFC 4180), causing naive split('\n')
     // to count extra lines. The real test is that all special chars
     // survive the roundtrip.
     expect(csvCheck.body_rows).toBeGreaterThanOrEqual(10);
     expect(csvCheck.has_bom).toBe(true);
+    expect(csvCheck.has_variant_asin).toBe(true);
+    expect(csvCheck.all_rows_have_asin).toBe(true);
     expect(csvCheck.special_chars_intact.french).toBe(true);
     expect(csvCheck.special_chars_intact.german).toBe(true);
     expect(csvCheck.special_chars_intact.japanese).toBe(true);

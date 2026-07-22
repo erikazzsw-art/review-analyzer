@@ -93,6 +93,24 @@
     return MARKETPLACE_MAP[clean] || clean.toUpperCase();
   }
 
+  /**
+   * Extract an ASIN from Amazon product/review/format URLs.
+   * Supports product pages, review pages, and per-review format links.
+   */
+  function extractAsinFromUrl(url) {
+    if (!url) return '';
+    const text = String(url);
+    const patterns = [
+      /\/(?:dp|gp\/product|product-reviews)\/([A-Z0-9]{10})/i,
+      /\/portal\/customer-reviews\/([A-Z0-9]{10})/i,
+    ];
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) return match[1].toUpperCase();
+    }
+    return '';
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // Selector Sets (priority order: first with >0 matches wins)
   // ═══════════════════════════════════════════════════════════════
@@ -164,6 +182,51 @@
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Extract the review-specific variant from Amazon's format strip.
+   * Example link: /portal/customer-reviews/B07TXJHYKB/...formatType=current_format
+   */
+  function extractReviewVariant(container) {
+    const empty = { review_variant_asin: '', variant_label: '' };
+    if (!container) return empty;
+
+    const selectors = [
+      'a[href*="formatType=current_format"]',
+      'a[href*="cm_cr_arp_d_rvw_fmt"]',
+      'a[data-hook="format-strip"]',
+      '[data-hook="format-strip"] a',
+      'a[href*="/portal/customer-reviews/"]',
+    ];
+
+    const seen = new Set();
+    for (const selector of selectors) {
+      let links = [];
+      try {
+        links = Array.from(container.querySelectorAll(selector));
+      } catch {
+        links = [];
+      }
+      for (const link of links) {
+        if (!link || seen.has(link)) continue;
+        seen.add(link);
+
+        const href = link.getAttribute('href') || '';
+        const asin = extractAsinFromUrl(href);
+        const label = (link.textContent || '').replace(/\s+/g, ' ').trim();
+        if (asin) {
+          return {
+            review_variant_asin: asin,
+            variant_label: label,
+          };
+        }
+      }
+    }
+
+    const labelNode = container.querySelector('[data-hook="format-strip"]');
+    const label = labelNode ? (labelNode.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    return { review_variant_asin: '', variant_label: label };
   }
 
   /**
@@ -303,9 +366,19 @@
       getText(container, selectors.rating) ||
       container.getAttribute('aria-label') || '';
     const dateText = getText(container, selectors.date);
+    const pageAsin = extractAsinFromUrl(window.location.href);
+    const variant = extractReviewVariant(container);
+    const resolvedAsin = variant.review_variant_asin || pageAsin;
 
     return {
       review_id: getReviewId(container, index),
+      asin: resolvedAsin,
+      page_asin: pageAsin,
+      review_variant_asin: variant.review_variant_asin,
+      variant_label: variant.variant_label,
+      asin_match_source: variant.review_variant_asin
+        ? 'format_link'
+        : (pageAsin ? 'page_url_fallback' : 'unknown'),
       body: getText(container, selectors.body),
       rating: parseRating(ratingText),
       date: dateText,

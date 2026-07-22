@@ -51,6 +51,11 @@ class AsinFetchResponse(BaseModel):
 class PluginReviewItem(BaseModel):
     """单条插件抓取的评论。"""
     review_id: str
+    asin: str | None = Field(default=None, max_length=31, description="解析后的评论归属 ASIN")
+    page_asin: str | None = Field(default=None, max_length=31, description="评论页 URL 中的 ASIN")
+    review_variant_asin: str | None = Field(default=None, max_length=31, description="评论规格链接中的子 ASIN")
+    variant_label: str | None = Field(default=None, max_length=255, description="评论规格文本，如 Color/Size")
+    asin_match_source: str | None = Field(default=None, max_length=64, description="ASIN 匹配来源")
     body: str = Field(..., min_length=1, description="评论正文")
     rating: float | None = None
     date: str = Field(..., description="评论日期字符串")

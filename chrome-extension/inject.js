@@ -37,6 +37,20 @@
       return MARKETPLACE_MAP[clean] || clean.toUpperCase();
     }
 
+    function extractAsinFromUrl(url) {
+      if (!url) return '';
+      var text = String(url);
+      var patterns = [
+        /\/(?:dp|gp\/product|product-reviews)\/([A-Z0-9]{10})/i,
+        /\/portal\/customer-reviews\/([A-Z0-9]{10})/i,
+      ];
+      for (var p = 0; p < patterns.length; p++) {
+        var match = text.match(patterns[p]);
+        if (match) return match[1].toUpperCase();
+      }
+      return '';
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // Page Type Detection
     // ═══════════════════════════════════════════════════════════════
@@ -71,6 +85,48 @@
       } catch (e) {
         return false;
       }
+    }
+
+    function extractReviewVariant(container) {
+      var empty = { review_variant_asin: '', variant_label: '' };
+      if (!container) return empty;
+
+      var selectors = [
+        'a[href*="formatType=current_format"]',
+        'a[href*="cm_cr_arp_d_rvw_fmt"]',
+        'a[data-hook="format-strip"]',
+        '[data-hook="format-strip"] a',
+        'a[href*="/portal/customer-reviews/"]',
+      ];
+      var seen = [];
+
+      for (var s = 0; s < selectors.length; s++) {
+        var links = [];
+        try {
+          links = Array.prototype.slice.call(container.querySelectorAll(selectors[s]));
+        } catch (e) {
+          links = [];
+        }
+        for (var i = 0; i < links.length; i++) {
+          var link = links[i];
+          if (!link || seen.indexOf(link) !== -1) continue;
+          seen.push(link);
+
+          var href = link.getAttribute('href') || '';
+          var asin = extractAsinFromUrl(href);
+          var label = (link.textContent || '').replace(/\s+/g, ' ').trim();
+          if (asin) {
+            return {
+              review_variant_asin: asin,
+              variant_label: label,
+            };
+          }
+        }
+      }
+
+      var labelNode = container.querySelector('[data-hook="format-strip"]');
+      var labelText = labelNode ? (labelNode.textContent || '').replace(/\s+/g, ' ').trim() : '';
+      return { review_variant_asin: '', variant_label: labelText };
     }
 
     function randomId() {
@@ -194,9 +250,19 @@
             c.getAttribute('aria-label') ||
             '';
           var dateText = getText(c, selectedSet.date);
+          var pageAsin = extractAsinFromUrl(window.location.href);
+          var variant = extractReviewVariant(c);
+          var resolvedAsin = variant.review_variant_asin || pageAsin;
 
           reviews.push({
             review_id: getReviewId(c, i),
+            asin: resolvedAsin,
+            page_asin: pageAsin,
+            review_variant_asin: variant.review_variant_asin,
+            variant_label: variant.variant_label,
+            asin_match_source: variant.review_variant_asin
+              ? 'format_link'
+              : (pageAsin ? 'page_url_fallback' : 'unknown'),
             body: getText(c, selectedSet.body),
             rating: parseRating(ratingText),
             date: dateText,

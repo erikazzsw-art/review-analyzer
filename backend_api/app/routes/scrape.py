@@ -68,6 +68,10 @@ def _resolve_plugin_product_reference(
     return product_id, None, None
 
 
+def _normalize_plugin_asin(value: str | None) -> str:
+    return (value or "").strip().upper()
+
+
 @router.post("/reviews/fetch-by-asin", response_model=AsinFetchResponse)
 def fetch_by_asin(
     req: AsinFetchRequest,
@@ -174,6 +178,20 @@ def plugin_upload(
             duplicate_count += 1
             continue
         existing_keys.add(key)
+        page_asin = _normalize_plugin_asin(r.page_asin) or _normalize_plugin_asin(req.asin)
+        review_asin = _normalize_plugin_asin(r.asin)
+        review_variant_asin = _normalize_plugin_asin(r.review_variant_asin)
+        resolved_asin = review_variant_asin or review_asin or page_asin
+        asin_match_source = r.asin_match_source
+        if not asin_match_source:
+            if review_variant_asin:
+                asin_match_source = "format_link"
+            elif review_asin:
+                asin_match_source = "review_asin"
+            elif page_asin:
+                asin_match_source = "page_url_fallback"
+            else:
+                asin_match_source = "unknown"
         unique_reviews.append({
             "content": r.body,
             "rating": r.rating,
@@ -181,7 +199,11 @@ def plugin_upload(
             "reviewer": r.reviewer or "",
             "source": f"Amazon {req.marketplace.upper()}",
             "source_channel": "chrome_extension",
-            "source_variant_asin": req.asin,
+            "source_variant_asin": resolved_asin,
+            "page_asin": page_asin,
+            "review_variant_asin": review_variant_asin,
+            "variant_label": r.variant_label or "",
+            "asin_match_source": asin_match_source,
         })
 
     new_count = len(unique_reviews)

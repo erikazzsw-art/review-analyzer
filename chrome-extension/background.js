@@ -53,6 +53,9 @@ function extractAsin(url) {
   // /product-reviews/B0XXXXXXX
   m = url.match(/\/product-reviews\/([A-Z0-9]{10})/i);
   if (m) return m[1];
+  // /portal/customer-reviews/B0XXXXXXX per-review format link
+  m = url.match(/\/portal\/customer-reviews\/([A-Z0-9]{10})/i);
+  if (m) return m[1];
   return null;
 }
 
@@ -73,6 +76,36 @@ function detectMarketplace(url) {
     }
   } catch (_) { /* fall through */ }
   return 'us'; // default
+}
+
+/**
+ * Ensure old and new scraped reviews both export/upload with ASIN context.
+ */
+function normalizeReviewAsinFields(review, fallbackUrl) {
+  const pageAsin = (
+    review.page_asin ||
+    extractAsin(review.page_url) ||
+    extractAsin(fallbackUrl) ||
+    ''
+  ).toUpperCase();
+  const reviewVariantAsin = (review.review_variant_asin || '').toUpperCase();
+  const asin = (review.asin || reviewVariantAsin || pageAsin || '').toUpperCase();
+  const asinMatchSource =
+    review.asin_match_source ||
+    (
+      reviewVariantAsin
+        ? 'format_link'
+        : (review.asin ? 'review_asin' : pageAsin ? 'page_url_fallback' : 'unknown')
+    );
+
+  return {
+    ...review,
+    asin,
+    page_asin: pageAsin,
+    review_variant_asin: reviewVariantAsin,
+    variant_label: review.variant_label || '',
+    asin_match_source: asinMatchSource,
+  };
 }
 
 // ── In-memory cache (lost on SW restart; non-critical page info) ──
@@ -649,7 +682,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
-          const csvContent = generateCsv(stored.reviews);
+          const csvContent = generateCsv(stored.reviews, tab.url || '');
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
           const filename = `clueai-reviews-${timestamp}.csv`;
 
@@ -724,16 +757,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             platform: 'amazon',
             product_name: null,
             page_url: tab.url || '',
-            reviews: stored.reviews.map((r) => ({
-              review_id: r.review_id || '',
-              body: r.body || '',
-              rating: typeof r.rating === 'number' ? r.rating : null,
-              date: r.date || null,
-              reviewer: r.reviewer || null,
-              title: r.title || null,
-              verified: !!r.verified,
-              helpful_count: typeof r.helpful_count === 'number' ? r.helpful_count : null,
-            })),
+            reviews: stored.reviews.map((r) => {
+              const enriched = normalizeReviewAsinFields(r, tab.url || '');
+              return {
+                review_id: enriched.review_id || '',
+                asin: enriched.asin,
+                page_asin: enriched.page_asin,
+                review_variant_asin: enriched.review_variant_asin,
+                variant_label: enriched.variant_label,
+                asin_match_source: enriched.asin_match_source,
+                body: enriched.body || '',
+                rating: typeof enriched.rating === 'number' ? enriched.rating : null,
+                date: enriched.date || null,
+                reviewer: enriched.reviewer || null,
+                title: enriched.title || null,
+                verified: !!enriched.verified,
+                helpful_count: typeof enriched.helpful_count === 'number' ? enriched.helpful_count : null,
+              };
+            }),
           };
 
           const response = await fetch(apiBaseUrl + '/reviews/plugin-upload', {
@@ -1237,11 +1278,16 @@ function detectPageTypeFromUrl(url) {
 
 /**
  * Generate CSV content from review objects.
- * Columns match the existing upload template format.
+ * Columns include page-level and per-review ASIN context.
  */
-function generateCsv(reviews) {
+function generateCsv(reviews, fallbackUrl = '') {
   const headers = [
     'review_id',
+    'asin',
+    'page_asin',
+    'review_variant_asin',
+    'variant_label',
+    'asin_match_source',
     'body',
     'rating',
     'date',
@@ -1258,7 +1304,8 @@ function generateCsv(reviews) {
   const rows = [headers.join(',')];
 
   for (const review of reviews) {
-    const row = headers.map((h) => escapeCsvField(review[h]));
+    const enriched = normalizeReviewAsinFields(review, fallbackUrl);
+    const row = headers.map((h) => escapeCsvField(enriched[h]));
     rows.push(row.join(','));
   }
 
