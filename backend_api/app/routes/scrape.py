@@ -14,8 +14,8 @@ from backend_api.app.schemas.scrape import (
 )
 from review_analyzer.database import (
     create_upload_job,
-    get_existing_plugin_review_keys,
     get_connection,
+    get_existing_plugin_review_keys,
     update_upload_job,
 )
 from review_analyzer.quota import quota_check, quota_check_atomic
