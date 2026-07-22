@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { createPortal } from "react-dom";
 
 import { updateProduct, type ProductUpdatePayload } from "@/lib/api/browser";
 
@@ -82,158 +83,166 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
     }
   }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          setError(null);
-          setOpen(true);
-        }}
-        className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-ink transition hover:border-ink/30"
-      >
-        <Pencil className="h-3.5 w-3.5" />
-        {t("edit.editButton")}
-      </button>
-    );
+  const trigger = (
+    <button
+      type="button"
+      onClick={() => {
+        setError(null);
+        setOpen(true);
+      }}
+      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-ink transition hover:border-ink/30"
+    >
+      <Pencil className="h-3.5 w-3.5" />
+      {t("edit.editButton")}
+    </button>
+  );
+
+  if (!open || typeof document === "undefined") {
+    return trigger;
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-4 py-3 sm:py-6">
-      <form
-        onSubmit={handleSubmit}
-        className="mx-auto w-full max-w-lg rounded-shell border border-line bg-white p-6 shadow-card"
-      >
-        <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-          {t("edit.editTitle")}
-        </h3>
+    <>
+      {trigger}
+      {createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/40 px-4 py-3 sm:py-6">
+          <form
+            onSubmit={handleSubmit}
+            className="mx-auto w-full max-w-lg rounded-shell border border-line bg-white p-6 shadow-card"
+          >
+            <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
+              {t("edit.editTitle")}
+            </h3>
 
-        <div className="mt-6">
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                {t("edit.parentProductNameLabel")}
-              </label>
-              <input
-                type="text"
-                value={form.parent_product_id ?? ""}
-                onChange={(e) => updateField("parent_product_id", e.target.value)}
-                placeholder={t("edit.parentProductNamePlaceholder")}
-                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-                required
-              />
-            </div>
+            <div className="mt-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                    {t("edit.parentProductNameLabel")}
+                  </label>
+                  <input
+                    type="text"
+                    value={form.parent_product_id ?? ""}
+                    onChange={(e) => updateField("parent_product_id", e.target.value)}
+                    placeholder={t("edit.parentProductNamePlaceholder")}
+                    className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                    required
+                  />
+                </div>
 
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                {t("edit.productNameLabel")}
-              </label>
-              <input
-                type="text"
-                value={form.name ?? ""}
-                onChange={(e) => updateField("name", e.target.value)}
-                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-              />
-            </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                    {t("edit.productNameLabel")}
+                  </label>
+                  <input
+                    type="text"
+                    value={form.name ?? ""}
+                    onChange={(e) => updateField("name", e.target.value)}
+                    className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                  />
+                </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                  {t("edit.platformLabel")}
-                </label>
-                <select
-                  value={form.platform ?? "Amazon"}
-                  onChange={(e) => updateField("platform", e.target.value)}
-                  className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-                >
-                  {platformOptions.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                  <option value="其他">{t("create.platformOther")}</option>
-                </select>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                      {t("edit.platformLabel")}
+                    </label>
+                    <select
+                      value={form.platform ?? "Amazon"}
+                      onChange={(e) => updateField("platform", e.target.value)}
+                      className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                    >
+                      {platformOptions.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                      <option value="其他">{t("create.platformOther")}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                      {t("edit.lifecycleLabel")}
+                    </label>
+                    <select
+                      value={form.lifecycle_stage ?? "growth"}
+                      onChange={(e) => updateField("lifecycle_stage", e.target.value)}
+                      className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                    >
+                      {lifecycleKeys.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{t(`create.${opt.key}`)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                    {t("edit.categoryLabel")}
+                  </label>
+                  <input
+                    type="text"
+                    value={form.category ?? ""}
+                    onChange={(e) => updateField("category", e.target.value)}
+                    className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                    {t("edit.coreSellingPointsLabel")}
+                  </label>
+                  <textarea
+                    value={form.core_selling_points ?? ""}
+                    onChange={(e) => updateField("core_selling_points", e.target.value)}
+                    rows={2}
+                    className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                    {t("edit.mainCompetitorsLabel")}
+                  </label>
+                  <textarea
+                    value={form.main_competitors ?? ""}
+                    onChange={(e) => updateField("main_competitors", e.target.value)}
+                    rows={2}
+                    className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                  {t("edit.lifecycleLabel")}
-                </label>
-                <select
-                  value={form.lifecycle_stage ?? "growth"}
-                  onChange={(e) => updateField("lifecycle_stage", e.target.value)}
-                  className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-                >
-                  {lifecycleKeys.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{t(`create.${opt.key}`)}</option>
-                  ))}
-                </select>
-              </div>
+              {error && (
+                <p className="mt-4 rounded-card border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </p>
+              )}
             </div>
 
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                {t("edit.categoryLabel")}
-              </label>
-              <input
-                type="text"
-                value={form.category ?? ""}
-                onChange={(e) => updateField("category", e.target.value)}
-                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-              />
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setOpen(false);
+                }}
+                disabled={submitting}
+                className="inline-flex min-h-11 items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-soft"
+              >
+                {t("edit.cancelButton")}
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || !form.parent_product_id?.trim()}
+                className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card disabled:opacity-50"
+              >
+                {submitting ? t("edit.saving") : t("edit.saveButton")}
+              </button>
             </div>
-
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                {t("edit.coreSellingPointsLabel")}
-              </label>
-              <textarea
-                value={form.core_selling_points ?? ""}
-                onChange={(e) => updateField("core_selling_points", e.target.value)}
-                rows={2}
-                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                {t("edit.mainCompetitorsLabel")}
-              </label>
-              <textarea
-                value={form.main_competitors ?? ""}
-                onChange={(e) => updateField("main_competitors", e.target.value)}
-                rows={2}
-                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <p className="mt-4 rounded-card border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </p>
-          )}
-        </div>
-
-        <div className="mt-8 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setOpen(false);
-            }}
-            disabled={submitting}
-            className="inline-flex min-h-11 items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-soft"
-          >
-            {t("edit.cancelButton")}
-          </button>
-          <button
-            type="submit"
-            disabled={submitting || !form.parent_product_id?.trim()}
-            className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card disabled:opacity-50"
-          >
-            {submitting ? t("edit.saving") : t("edit.saveButton")}
-          </button>
-        </div>
-      </form>
-    </div>
+          </form>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
