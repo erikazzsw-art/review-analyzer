@@ -99,18 +99,16 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-4 py-4 sm:py-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-4 py-3 sm:py-6">
       <form
         onSubmit={handleSubmit}
-        className="mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-shell border border-line bg-white shadow-card sm:max-h-[calc(100dvh-4rem)]"
+        className="mx-auto w-full max-w-lg rounded-shell border border-line bg-white p-6 shadow-card"
       >
-        <div className="flex-shrink-0 border-b border-line bg-white px-6 py-5">
-          <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-            {t("edit.editTitle")}
-          </h3>
-        </div>
+        <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
+          {t("edit.editTitle")}
+        </h3>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="mt-6">
           <div className="space-y-4">
             <div>
               <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
@@ -215,7 +213,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
           )}
         </div>
 
-        <div className="flex flex-shrink-0 justify-end gap-3 border-t border-line bg-white px-6 py-4">
+        <div className="mt-8 flex justify-end gap-3">
           <button
             type="button"
             onClick={() => {
