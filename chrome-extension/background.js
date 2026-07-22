@@ -1084,30 +1084,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const apiBaseUrl = await getApiBaseUrl();
           const listing = stored.listing;
 
+          // Normalize: handle both old nested format {listing:{...,variations:...}}
+          // and new flat format {listing, variations} from content.js fix 2026-07-22.
+          const realListing = (listing && listing.listing) ? listing.listing : listing;
+          const realVariations = stored.variations
+            ? stored.variations
+            : (listing && listing.variations)
+              ? listing.variations
+              : {};
+
           // Build request body matching PluginListingUploadRequest schema
           const requestBody = {
-            parent_asin: stored.asin || listing.asin || '',
+            parent_asin: stored.asin || realListing.asin || '',
             name: productName,
-            marketplace: stored.marketplace || listing.marketplace || 'us',
+            marketplace: stored.marketplace || realListing.marketplace || 'us',
             platform: 'amazon',
             listing: {
-              title: listing.title || null,
-              price: listing.price || null,
-              price_currency: listing.price_currency || 'USD',
-              original_price: listing.original_price || null,
-              rating: listing.rating || null,
-              ratings_total: listing.ratings_total || null,
-              brand: listing.brand || null,
-              bullet_points: listing.bullet_points || [],
-              main_image_url: listing.main_image_url || null,
-              description: listing.description || null,
-              best_seller_rank: listing.best_seller_rank || [],
-              dimensions: listing.dimensions || null,
-              weight: listing.weight || null,
-              seller_name: listing.seller_name || null,
-              availability: listing.availability || null,
+              title: realListing.title || null,
+              price: realListing.price || null,
+              price_currency: realListing.price_currency || 'USD',
+              original_price: realListing.original_price || null,
+              rating: realListing.rating || null,
+              ratings_total: realListing.ratings_total || null,
+              brand: realListing.brand || null,
+              bullet_points: realListing.bullet_points || [],
+              main_image_url: realListing.main_image_url || null,
+              description: realListing.description || null,
+              best_seller_rank: realListing.best_seller_rank || [],
+              dimensions: realListing.dimensions || null,
+              weight: realListing.weight || null,
+              seller_name: realListing.seller_name || null,
+              availability: realListing.availability || null,
             },
-            variants: (stored.variations?.variants || []).map((v) => ({
+            variants: (realVariations.variants || []).map((v) => ({
               asin: v.asin || '',
               color: v.color || null,
               size: v.size || null,

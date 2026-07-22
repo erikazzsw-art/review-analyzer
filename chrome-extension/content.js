@@ -581,7 +581,7 @@
     if (message.type === 'EXTRACT_LISTING') {
       requestListing()
         .then((listing) => {
-          sendResponse({ success: true, listing });
+          sendResponse({ success: true, listing: listing.listing, variations: listing.variations });
         })
         .catch((err) => {
           sendResponse({ success: false, error: String(err) });
