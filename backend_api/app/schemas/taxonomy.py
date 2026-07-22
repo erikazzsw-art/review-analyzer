@@ -7,11 +7,11 @@ from pydantic import BaseModel, Field
 class CategoryGroup(BaseModel):
     """单个核心品类下的 sub_category 清单."""
     category_key: str = Field(..., description="品类 key，如 home / 3c / apparel / baby / pet")
-    category_label: str = Field(..., description="品类中文展示名")
+    category_label: str = Field(..., description="按请求 locale 本地化后的品类展示名")
     sub_categories: list[str] = Field(default_factory=list, description="该品类下入库的 sub_category 列表（原始 key，用于提交）")
     sub_category_labels: dict[str, str] = Field(
         default_factory=dict,
-        description="该组内 sub_category → 中文显示名 的映射，前端用此字段渲染下拉选项文本",
+        description="该组内 sub_category → 本地化显示名 的映射，前端用此字段渲染下拉选项文本",
     )
 
 

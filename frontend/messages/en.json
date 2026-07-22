@@ -544,6 +544,7 @@
     "parentCategory": "Category",
     "subCategory": "Sub-Category",
     "categoryLoading": "Loading…",
+    "unknownCategory": "Uncategorized",
     "version": "Version",
     "workflowPurpose": "Purpose",
     "versionNotes": "Version Notes",

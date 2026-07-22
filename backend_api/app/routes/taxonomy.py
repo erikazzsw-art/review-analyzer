@@ -16,7 +16,7 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.taxonomy import (
@@ -24,6 +24,7 @@ from backend_api.app.schemas.taxonomy import (
     SubCategoryProbeResponse,
     TaxonomyCategoriesResponse,
 )
+from backend_api.app.services.locale import get_analysis_locale
 from backend_api.app.services.taxonomy_loader import resolve_aspects
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["taxonomy"])
 
 _MAPPING_PATH = Path(__file__).parent.parent / "data" / "sub_category_categories.json"
+
+
+def _humanize_key(key: str) -> str:
+    if key.lower() == "3c":
+        return "3C"
+    return key.replace("_", " ").replace("-", " ").title()
+
+
+def _localized_category_labels(mapping: dict, locale: str) -> dict[str, str]:
+    base: dict[str, str] = mapping.get("category_labels", {})
+    if not locale.startswith("en"):
+        return base
+    english: dict[str, str] = mapping.get("category_labels_en", {})
+    keys = base.keys() or english.keys()
+    return {key: english.get(key, _humanize_key(key)) for key in keys}
+
+
+def _localized_sub_category_labels(mapping: dict, locale: str) -> dict[str, str]:
+    if locale.startswith("en"):
+        return mapping.get("sub_category_display_names_en", {})
+    return mapping.get("sub_category_display_names", {})
 
 
 @lru_cache(maxsize=1)
@@ -45,6 +67,7 @@ def _load_static_mapping() -> dict:
         return {
             "taxonomy_version": "v1.0",
             "category_labels": {"home": "家居家具"},
+            "category_labels_en": {"home": "Home & Furniture"},
             "sub_category_to_category": {},
             "total_sub_categories": 0,
         }
@@ -92,6 +115,7 @@ def _load_db_sub_categories() -> list[str]:
 
 @router.get("/taxonomy/categories", response_model=TaxonomyCategoriesResponse)
 def get_categories(
+    request: Request,
     _: dict = Depends(get_current_user),
 ) -> TaxonomyCategoriesResponse:
     """返回当前已入库的 sub_category 清单（按 5 核心品类分组）.
@@ -100,9 +124,10 @@ def get_categories(
     保证上传页仍能展示"已支持品类"提示.
     """
     mapping = _load_static_mapping()
+    locale = get_analysis_locale(request)
     sc_to_cat: dict[str, str] = mapping.get("sub_category_to_category", {})
-    cat_labels: dict[str, str] = mapping.get("category_labels", {})
-    display_names: dict[str, str] = mapping.get("sub_category_display_names", {})
+    cat_labels = _localized_category_labels(mapping, locale)
+    display_names = _localized_sub_category_labels(mapping, locale)
 
     db_subs = _load_db_sub_categories()
     if not db_subs:
@@ -112,7 +137,7 @@ def get_categories(
         notice = None
 
     def _label(sub: str) -> str:
-        """返回 sub_category 的中文显示名，无映射时回退到原始值."""
+        """返回 sub_category 的本地化显示名，无映射时回退到原始值."""
         return display_names.get(sub, sub)
 
     grouped: dict[str, list[str]] = {key: [] for key in cat_labels}
@@ -147,6 +172,7 @@ def get_categories(
 
 @router.get("/taxonomy/sub_category", response_model=SubCategoryProbeResponse)
 def probe_sub_category(
+    request: Request,
     name: str = Query(..., min_length=1, description="待探测的 sub_category 名称"),
     _: dict = Depends(get_current_user),
 ) -> SubCategoryProbeResponse:
@@ -156,7 +182,7 @@ def probe_sub_category(
     """
     mapping = _load_static_mapping()
     sc_to_cat: dict[str, str] = mapping.get("sub_category_to_category", {})
-    cat_labels: dict[str, str] = mapping.get("category_labels", {})
+    cat_labels = _localized_category_labels(mapping, get_analysis_locale(request))
 
     aspects, hit = resolve_aspects(name)
     cat_key = sc_to_cat.get(name)

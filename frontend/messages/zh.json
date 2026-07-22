@@ -544,6 +544,7 @@
     "parentCategory": "一级类目",
     "subCategory": "二级类目（子品类）",
     "categoryLoading": "加载中…",
+    "unknownCategory": "未归类",
     "version": "版本号",
     "workflowPurpose": "工作目的",
     "versionNotes": "版本说明",

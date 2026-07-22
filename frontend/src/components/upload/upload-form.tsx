@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMessages, useTranslations } from "next-intl";
+import { useLocale, useMessages, useTranslations } from "next-intl";
 
 import { AsinFetchPanel } from "@/components/upload/asin-fetch-panel";
 import { AsinWatchlistPanel } from "@/components/upload/asin-watchlist-panel";
@@ -13,7 +13,11 @@ import {
 } from "@/lib/api/browser";
 import type { DuplicateBatchError } from "@/lib/api/browser";
 import { track } from "@/lib/analytics";
-import type { TaxonomyCategoriesResponse, UploadJob } from "@/lib/api/types";
+import type {
+  TaxonomyCategoriesResponse,
+  TaxonomyCategoryGroup,
+  UploadJob,
+} from "@/lib/api/types";
 import { renderInline } from "@/lib/render-inline";
 
 type UploadMode = "file" | "asin" | "watchlist";
@@ -39,6 +43,14 @@ type FormState = {
   workflowPurpose: string;
   versionNotes: string;
 };
+
+function sortedSubCategories(group: TaxonomyCategoryGroup): string[] {
+  return [...group.sub_categories].sort((a, b) => {
+    const labelA = group.sub_category_labels[a] || a;
+    const labelB = group.sub_category_labels[b] || b;
+    return labelA.localeCompare(labelB, undefined, { sensitivity: "base" });
+  });
+}
 
 function CategoryHitBanner({
   categoryValue,
@@ -77,6 +89,7 @@ function CategoryHitBanner({
 export function UploadForm() {
   const router = useRouter();
   const t = useTranslations("upload");
+  const locale = useLocale();
   const messages = useMessages();
   const [uploadMode, setUploadMode] = useState<UploadMode>("file");
   const [file, setFile] = useState<File | null>(null);
@@ -98,28 +111,35 @@ export function UploadForm() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchTaxonomyCategories()
+    fetchTaxonomyCategories(locale)
       .then((data) => {
         if (!cancelled) {
           setTaxonomy(data);
           const firstGroup = data.supported_categories[0];
-          if (firstGroup) {
-            const sorted = [...firstGroup.sub_categories].sort((a, b) =>
-              a.localeCompare(b, "zh-Hans"),
-            );
-            setForm((prev) => ({
+          setForm((prev) => {
+            const selectedGroup =
+              data.supported_categories.find((group) => group.category_key === prev.parentCategory) ??
+              firstGroup;
+            if (!selectedGroup) {
+              return prev;
+            }
+            const sorted = sortedSubCategories(selectedGroup);
+            const nextCategory = selectedGroup.sub_categories.includes(prev.category)
+              ? prev.category
+              : sorted[0] ?? "";
+            return {
               ...prev,
-              parentCategory: firstGroup.category_key,
-              category: sorted[0] ?? "",
-            }));
-          }
+              parentCategory: selectedGroup.category_key,
+              category: nextCategory,
+            };
+          });
         }
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [locale]);
 
   const supportedSubCategories = useMemo(() => {
     if (!taxonomy) {
@@ -132,10 +152,10 @@ export function UploadForm() {
       }
     }
     for (const sub of taxonomy.unknown_sub_categories) {
-      m.set(sub, { categoryKey: "other", categoryLabel: "未归类" });
+      m.set(sub, { categoryKey: "other", categoryLabel: t("unknownCategory") });
     }
     return m;
-  }, [taxonomy]);
+  }, [taxonomy, t]);
 
   const filteredSubCategories = useMemo(() => {
     if (!taxonomy || !form.parentCategory) return [];
@@ -143,7 +163,7 @@ export function UploadForm() {
       (g) => g.category_key === form.parentCategory,
     );
     if (!group) return [];
-    return [...group.sub_categories].sort((a, b) => a.localeCompare(b, "zh-Hans"));
+    return sortedSubCategories(group);
   }, [taxonomy, form.parentCategory]);
 
   const currentGroupLabels = useMemo(() => {
@@ -330,9 +350,7 @@ export function UploadForm() {
                 const group = taxonomy?.supported_categories.find(
                   (g) => g.category_key === key,
                 );
-                const sorted = group
-                  ? [...group.sub_categories].sort((a, b) => a.localeCompare(b, "zh-Hans"))
-                  : [];
+                const sorted = group ? sortedSubCategories(group) : [];
                 setForm((current) => ({
                   ...current,
                   parentCategory: key,

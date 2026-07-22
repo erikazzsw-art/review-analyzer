@@ -851,8 +851,9 @@ export async function createBillingCheckout(
   return (await response.json()) as BillingCheckoutResponse;
 }
 
-export async function fetchTaxonomyCategories(): Promise<TaxonomyCategoriesResponse> {
-  const response = await fetch(`${getApiBaseUrl()}/taxonomy/categories`, {
+export async function fetchTaxonomyCategories(locale?: string): Promise<TaxonomyCategoriesResponse> {
+  const localeParam = locale ? `?locale=${encodeURIComponent(locale)}` : "";
+  const response = await fetch(`${getApiBaseUrl()}/taxonomy/categories${localeParam}`, {
     method: "GET",
     credentials: "include",
     cache: "no-store",
