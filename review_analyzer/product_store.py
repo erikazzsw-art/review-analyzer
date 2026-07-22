@@ -231,6 +231,11 @@ def delete_product(user_id: int, product_id: int) -> bool:
                     "UPDATE upload_jobs SET variant_ref_id = NULL WHERE variant_ref_id = ANY(%s)",
                     (variant_ids,),
                 )
+                _safe_execute(
+                    cur,
+                    "UPDATE sessions SET variant_ref_id = NULL WHERE user_id = %s AND variant_ref_id = ANY(%s)",
+                    (user_id, variant_ids),
+                )
 
             _safe_execute(
                 cur,
@@ -266,6 +271,11 @@ def delete_product(user_id: int, product_id: int) -> bool:
                 "UPDATE upload_jobs SET product_ref_id = NULL WHERE product_ref_id = %s",
                 (product_id,),
             )
+            _safe_execute(
+                cur,
+                "UPDATE sessions SET product_ref_id = NULL WHERE user_id = %s AND product_ref_id = %s",
+                (user_id, product_id),
+            )
             cur.execute(
                 "DELETE FROM products WHERE user_id = %s AND id = %s",
                 (user_id, product_id),
@@ -299,6 +309,16 @@ def delete_variant(user_id: int, product_id: int, variant_id: int) -> bool:
             cur.execute(
                 "UPDATE upload_jobs SET variant_ref_id = NULL WHERE variant_ref_id = %s",
                 (variant_id,),
+            )
+            _safe_execute(
+                cur,
+                "UPDATE product_versions SET variant_id = NULL WHERE user_id = %s AND variant_id = %s",
+                (user_id, variant_id),
+            )
+            _safe_execute(
+                cur,
+                "UPDATE sessions SET variant_ref_id = NULL WHERE user_id = %s AND variant_ref_id = %s",
+                (user_id, variant_id),
             )
             cur.execute(
                 "DELETE FROM product_variants WHERE id = %s AND user_id = %s AND product_id = %s",
