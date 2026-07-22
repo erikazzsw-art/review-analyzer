@@ -235,6 +235,11 @@ export type ProductSearchItem = {
   id: number | null;
   parent_product_id: string;
   name: string | null;
+  variant_asins: string[];
+  variants: Array<{
+    child_asin: string;
+    name: string | null;
+  }>;
   review_count: number;
   session_count: number;
   latest_session_id: number | null;

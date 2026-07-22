@@ -699,6 +699,7 @@ def get_comments(
     version: str | None = None,
     date_start: str | None = None,
     date_end: str | None = None,
+    source_variant_asin: str | None = None,
 ) -> list[dict]:
     query = "SELECT * FROM comments WHERE user_id = %s"
     params: list = [user_id]
@@ -717,6 +718,9 @@ def get_comments(
     if date_end is not None:
         query += " AND date <= %s"
         params.append(date_end)
+    if source_variant_asin is not None:
+        query += " AND LOWER(source_variant_asin) = LOWER(%s)"
+        params.append(source_variant_asin)
     query += " ORDER BY id DESC"
     conn = get_connection()
     try:

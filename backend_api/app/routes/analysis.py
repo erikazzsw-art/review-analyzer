@@ -126,6 +126,7 @@ def get_aggregated_results(
     end: str | None = Query(default=None),
     session_id: int | None = Query(default=None),
     version: str | None = Query(default=None),
+    variant_asin: str | None = Query(default=None, max_length=128),
     current_user: dict = Depends(get_current_user),
 ) -> AnalysisResultsPayload:
     """按产品 + 时间范围跨 session 聚合评论 → 跑 LLM 分析 → 返回。
@@ -135,8 +136,9 @@ def get_aggregated_results(
     - custom: start / end 必须 ISO YYYY-MM-DD
     """
     user_id = int(current_user["id"])
+    variant_asin_norm = variant_asin.strip() if variant_asin else None
     start_iso, end_iso, range_label = _resolve_range(
-        user_id, product_id, range or "default", start, end, session_id
+        user_id, product_id, range or "default", start, end, session_id, variant_asin_norm
     )
 
     comments = get_comments(
@@ -146,6 +148,7 @@ def get_aggregated_results(
         version=version or None,
         date_start=start_iso or None,
         date_end=end_iso or None,
+        source_variant_asin=variant_asin_norm,
     )
     for c in comments:
         c.pop("embedding", None)
@@ -153,6 +156,8 @@ def get_aggregated_results(
     time_label = _fmt_time_label(range_label, start_iso, end_iso)
     context = {
         "product_id": product_id,
+        "variant_asin": variant_asin_norm or "",
+        "scope_label": variant_asin_norm or product_id,
         "version": "AGGREGATED",
         "time_label": time_label,
         "workflow_purpose": "",
@@ -180,7 +185,7 @@ def get_aggregated_results(
     }
 
     synthetic_session = _build_synthetic_session(
-        user_id, product_id, comments, start_iso, end_iso, session_id
+        user_id, product_id, comments, start_iso, end_iso, session_id, variant_asin_norm
     )
 
     return AnalysisResultsPayload(
@@ -420,6 +425,7 @@ def _resolve_range(
     start: str | None,
     end: str | None,
     session_id: int | None,
+    variant_asin: str | None = None,
 ) -> tuple[str, str, str]:
     """返回 (start_iso, end_iso, normalized_range_label)。空串表示不加该过滤。"""
 
@@ -451,11 +457,24 @@ def _resolve_range(
             if s and e:
                 return s, e, "default"
             # session 没标 date_range:回退到该 session 评论的实际日期跨度
-            s, e = _comments_date_span(user_id, session_id=int(session["id"]))
+            s, e = _comments_date_span(
+                user_id,
+                session_id=int(session["id"]),
+                variant_asin=variant_asin,
+            )
             if s and e:
                 return s, e, "default"
             # session 存在但日期无法解析 — 不做日期过滤，靠 session_id 查询兜底
             return "", "", "all"
+
+    if variant_asin:
+        s, e = _comments_date_span(
+            user_id,
+            product_id=product_id,
+            variant_asin=variant_asin,
+        )
+        if s and e:
+            return s, e, "default"
 
     # 找该产品最近一个 session 的 date_range
     sessions = get_sessions(user_id, product_id=product_id)
@@ -479,9 +498,15 @@ def _comments_date_span(
     user_id: int,
     session_id: int | None = None,
     product_id: str | None = None,
+    variant_asin: str | None = None,
 ) -> tuple[str, str]:
     """返回 (min_date, max_date)。无评论或无有效日期时返回 ('', '')。"""
-    comments = get_comments(user_id, session_id=session_id, product_id=product_id)
+    comments = get_comments(
+        user_id,
+        session_id=session_id,
+        product_id=product_id,
+        source_variant_asin=variant_asin,
+    )
     dates = [str(c.get("date") or "").strip() for c in comments]
     dates = [d for d in dates if d and d[:4].isdigit()]
     if not dates:
@@ -506,6 +531,7 @@ def _build_synthetic_session(
     start_iso: str,
     end_iso: str,
     session_id: int | None,
+    variant_asin: str | None = None,
 ) -> AnalysisSessionPayload:
     """聚合视图下,构造一个"虚拟" session 给前端渲染头部信息。"""
 
@@ -521,7 +547,7 @@ def _build_synthetic_session(
         user_id=user_id,
         product_id=product_id,
         version="AGGREGATED",
-        auto_title=f"{product_id} · 聚合视图",
+        auto_title=f"{variant_asin or product_id} · 聚合视图",
         custom_title=None,
         date_range_start=start_iso or None,
         date_range_end=end_iso or None,

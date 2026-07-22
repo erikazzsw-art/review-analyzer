@@ -104,6 +104,7 @@ export async function getAnalysisSessionResults(
 
 export async function getAnalysisResults(params: {
   productId: string;
+  variantAsin?: string | null;
   range?: string;
   start?: string | null;
   end?: string | null;
@@ -112,6 +113,9 @@ export async function getAnalysisResults(params: {
 }): Promise<AnalysisResultsResponse> {
   const search = new URLSearchParams();
   search.set("product_id", params.productId);
+  if (params.variantAsin) {
+    search.set("variant_asin", params.variantAsin);
+  }
   if (params.range) {
     search.set("range", params.range);
   }

@@ -38,6 +38,7 @@ type ResultsPageProps = {
     start?: string;
     end?: string;
     version?: string;
+    variant_asin?: string;
   }>;
 };
 
@@ -155,6 +156,7 @@ export default async function AnalysisResultsPage({
   const startParam = (params?.start || "").trim() || null;
   const endParam = (params?.end || "").trim() || null;
   const versionParam = (params?.version || "").trim() || null;
+  const variantAsinParam = (params?.variant_asin || "").trim() || null;
 
   // job 状态轮询 — 上传完成跳到 polling
   if (!sessionId && !productIdParam && jobId) {
@@ -237,6 +239,7 @@ export default async function AnalysisResultsPage({
   try {
     payload = await getAnalysisResults({
       productId: productIdParam,
+      variantAsin: variantAsinParam,
       range: rangeParam,
       start: startParam,
       end: endParam,
@@ -272,6 +275,8 @@ export default async function AnalysisResultsPage({
 
   const context = payload.context as {
     product_id?: string;
+    variant_asin?: string;
+    scope_label?: string;
     version?: string;
     time_label?: string;
     workflow_purpose?: string;
@@ -324,6 +329,7 @@ export default async function AnalysisResultsPage({
       timeLabel={context.time_label}
       isAggregated={isAggregated}
       version={versionParam}
+      variantAsin={context.variant_asin || variantAsinParam}
     />
   );
 

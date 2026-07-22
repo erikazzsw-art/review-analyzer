@@ -1024,7 +1024,7 @@
       "dateSep": "to"
     },
     "productSearch": {
-      "placeholder": "Search product code / name",
+      "placeholder": "Search parent name / product name / ASIN",
       "notFoundFormat": "No products found for \"{query}\"",
       "empty": "No products",
       "reviewsUnit": "reviews",

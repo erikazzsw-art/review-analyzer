@@ -34,7 +34,7 @@ export function MoveVariantButton({ productId, variantId, variantName }: MoveVar
       setSearching(true);
       try {
         const res = await searchProducts(q.trim());
-        setResults((res.items || []).filter((item) => item.id !== productId));
+        setResults((res.items || []).filter((item) => item.id != null && item.id !== productId));
       } catch {
         setResults([]);
       } finally {

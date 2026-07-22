@@ -86,9 +86,17 @@ class ProductsResponsePayload(BaseModel):
     generated_at: datetime
 
 
+class ProductSearchVariantItem(BaseModel):
+    child_asin: str
+    name: str | None = None
+
+
 class ProductSearchItem(BaseModel):
+    id: int | None = None
     parent_product_id: str
     name: str | None = None
+    variant_asins: list[str] = []
+    variants: list[ProductSearchVariantItem] = []
     review_count: int = 0
     session_count: int = 0
     latest_session_id: int | None = None

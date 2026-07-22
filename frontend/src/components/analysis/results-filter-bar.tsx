@@ -17,6 +17,7 @@ import { fetchProductVersions } from "@/lib/api/browser";
 
 type Props = {
   productId: string;
+  variantAsin?: string | null;
   range: string;
   start?: string | null;
   end?: string | null;
@@ -37,6 +38,7 @@ const RANGE_OPTION_KEYS: Array<{ value: string; key: string }> = [
 
 export function ResultsFilterBar({
   productId,
+  variantAsin,
   range,
   start,
   end,
@@ -87,10 +89,12 @@ export function ResultsFilterBar({
     });
   };
 
-  const handleProductChange = (pid: string) => {
-    if (!pid || pid === productId) return;
+  const handleProductChange = (pid: string, options?: { variantAsin?: string | null }) => {
+    const nextVariantAsin = options?.variantAsin || null;
+    if (!pid || (pid === productId && (variantAsin || null) === nextVariantAsin)) return;
     pushParams({
       product_id: pid,
+      variant_asin: nextVariantAsin,
       session_id: null,
       range: "default",
       start: null,
@@ -125,7 +129,11 @@ export function ResultsFilterBar({
           <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
             {t("product")}
           </span>
-          <ProductSearchCombobox value={productId} onChange={handleProductChange} />
+          <ProductSearchCombobox
+            value={productId}
+            variantAsin={variantAsin}
+            onChange={handleProductChange}
+          />
         </div>
 
         {versions.length > 1 && (

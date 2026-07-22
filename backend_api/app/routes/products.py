@@ -11,6 +11,7 @@ from backend_api.app.schemas.products import (
     PluginListingUploadRequest,
     ProductSearchItem,
     ProductSearchResponse,
+    ProductSearchVariantItem,
     ProductsResponsePayload,
     ProductVersionItem,
     ProductVersionsResponse,
@@ -78,30 +79,78 @@ def search_products_route(
     limit: int = Query(default=20, ge=1, le=50),
     current_user: dict = Depends(get_current_user),
 ) -> ProductSearchResponse:
-    """按 parent_product_id / name 模糊匹配,用于结果页产品切换下拉框。
+    """按父体名称 / 子变体 ASIN / 子变体产品名称模糊匹配,用于产品切换搜索框。
 
-    排序:前缀命中优先 → 评论数降序 → 字母序。
+    排序:精确命中优先 → 前缀命中优先 → 评论数降序 → 字母序。
     """
     user_id = int(current_user["id"])
     rows = get_product_overview_rows(user_id)
     q_norm = q.strip().lower()
 
+    def _variant_values(row: dict) -> list[str]:
+        values: list[str] = []
+        seen: set[str] = set()
+        for variant in row.get("variants") or []:
+            if not isinstance(variant, dict):
+                continue
+            for key in ("child_asin", "variant_sku", "name"):
+                value = str(variant.get(key) or "").strip()
+                if value and value.lower() not in seen:
+                    seen.add(value.lower())
+                    values.append(value)
+        return values
+
+    def _search_values(row: dict) -> list[str]:
+        return [
+            str(row.get("parent_product_id") or "").strip(),
+            str(row.get("name") or "").strip(),
+            *_variant_values(row),
+        ]
+
+    def _variant_asins(row: dict) -> list[str]:
+        asins: list[str] = []
+        seen: set[str] = set()
+        for variant in row.get("variants") or []:
+            if not isinstance(variant, dict):
+                continue
+            asin = str(variant.get("child_asin") or "").strip()
+            if asin and asin.lower() not in seen:
+                seen.add(asin.lower())
+                asins.append(asin)
+        return asins
+
+    def _variant_items(row: dict) -> list[ProductSearchVariantItem]:
+        items: list[ProductSearchVariantItem] = []
+        seen: set[str] = set()
+        for variant in row.get("variants") or []:
+            if not isinstance(variant, dict):
+                continue
+            asin = str(variant.get("child_asin") or "").strip()
+            if not asin or asin.lower() in seen:
+                continue
+            seen.add(asin.lower())
+            items.append(
+                ProductSearchVariantItem(
+                    child_asin=asin,
+                    name=(str(variant.get("name") or variant.get("variant_sku") or "") or None),
+                )
+            )
+        return items
+
     def _match(row: dict) -> bool:
         if not q_norm:
             return True
-        pid = str(row.get("parent_product_id") or "").lower()
-        name = str(row.get("name") or "").lower()
-        return q_norm in pid or q_norm in name
+        return any(q_norm in value.lower() for value in _search_values(row))
 
-    matched = [
-        r for r in rows
-        if _match(r) and int(r.get("session_count") or 0) > 0
-    ]
+    matched = [r for r in rows if _match(r)]
 
     def _sort_key(row: dict) -> tuple:
+        values = [value.lower() for value in _search_values(row) if value]
+        exact_hit = 0 if (q_norm and any(value == q_norm for value in values)) else 1
+        prefix_hit = 0 if (q_norm and any(value.startswith(q_norm) for value in values)) else 1
         pid = str(row.get("parent_product_id") or "").lower()
-        prefix_hit = 0 if (q_norm and pid.startswith(q_norm)) else 1
         return (
+            exact_hit,
             prefix_hit,
             -int(row.get("review_count") or 0),
             pid,
@@ -111,8 +160,11 @@ def search_products_route(
 
     items = [
         ProductSearchItem(
+            id=r.get("id"),
             parent_product_id=str(r.get("parent_product_id") or ""),
             name=(str(r.get("name") or "") or None),
+            variant_asins=_variant_asins(r),
+            variants=_variant_items(r),
             review_count=int(r.get("review_count") or 0),
             session_count=int(r.get("session_count") or 0),
             latest_session_id=None,  # latest_session_label 是字符串,不含 id;前端通过 /analysis/history 拿

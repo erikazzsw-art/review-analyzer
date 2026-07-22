@@ -65,3 +65,107 @@ def test_update_product_reports_parent_name_conflict(monkeypatch):
 
     assert response.status_code == 409
     assert response.json()["detail"] == "父体名称已存在，请换一个名称。"
+
+
+def test_search_products_matches_variant_asin(monkeypatch):
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_overview_rows",
+        lambda user_id: [
+            {
+                "id": 12,
+                "parent_product_id": "Parent A",
+                "name": "Desk Lamp",
+                "review_count": 20,
+                "session_count": 1,
+                "variants": [
+                    {"child_asin": "B0ASINMATCH", "variant_sku": "B0ASINMATCH", "name": "Black"},
+                ],
+            },
+            {
+                "id": 13,
+                "parent_product_id": "Parent B",
+                "name": "Other Lamp",
+                "review_count": 50,
+                "session_count": 0,
+                "variants": [],
+            },
+        ],
+    )
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.get("/products/search", params={"q": "b0asinmatch"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["items"] == [
+        {
+            "id": 12,
+            "parent_product_id": "Parent A",
+            "name": "Desk Lamp",
+            "variant_asins": ["B0ASINMATCH"],
+            "variants": [{"child_asin": "B0ASINMATCH", "name": "Black"}],
+            "review_count": 20,
+            "session_count": 1,
+            "latest_session_id": None,
+        }
+    ]
+
+
+def test_search_products_includes_product_management_items_without_sessions(monkeypatch):
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_overview_rows",
+        lambda user_id: [
+            {
+                "id": 12,
+                "parent_product_id": "Parent A",
+                "name": "Desk Lamp",
+                "review_count": 0,
+                "session_count": 0,
+                "variants": [],
+            },
+        ],
+    )
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.get("/products/search", params={"q": "desk"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["parent_product_id"] == "Parent A"
+
+
+def test_search_products_matches_variant_product_name(monkeypatch):
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_overview_rows",
+        lambda user_id: [
+            {
+                "id": 12,
+                "parent_product_id": "Parent A",
+                "name": "Parent Group Name",
+                "review_count": 20,
+                "session_count": 1,
+                "variants": [
+                    {"child_asin": "B0ASINMATCH", "variant_sku": "B0ASINMATCH", "name": "Desk Lamp Black"},
+                ],
+            },
+        ],
+    )
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.get("/products/search", params={"q": "desk lamp black"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["parent_product_id"] == "Parent A"
+    assert response.json()["items"][0]["variants"] == [
+        {"child_asin": "B0ASINMATCH", "name": "Desk Lamp Black"}
+    ]

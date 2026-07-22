@@ -1024,7 +1024,7 @@
       "dateSep": "至"
     },
     "productSearch": {
-      "placeholder": "搜索产品编码 / 名称",
+      "placeholder": "搜索父体名称 / 产品名称 / ASIN",
       "notFoundFormat": "未找到 \"{query}\" 相关产品",
       "empty": "暂无产品",
       "reviewsUnit": "评论",
