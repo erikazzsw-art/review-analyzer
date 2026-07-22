@@ -72,6 +72,10 @@ function rv(value: unknown, fallback = "--"): string {
   return String(value);
 }
 
+function reviewBody(comment: Record<string, unknown>): string {
+  return rv(comment.content || comment.body || comment.comment, "");
+}
+
 function PctBar({ pct, color }: { pct: number; color: string }) {
   return (
     <div className="flex items-center gap-2">
@@ -544,38 +548,74 @@ export function AnalysisResultsSections({
           <div className="space-y-2">
             {comments.length > 0 ? (
               <>
-                {comments.slice(0, reviewsShown).map((comment, i) => {
-                  const sentiment = String(comment.sentiment || "");
-                  const sentimentColor =
-                    sentiment === "positive"
-                      ? "text-[#059669] bg-[#ecfdf5] border-[#a7f3d0]"
-                      : sentiment === "negative"
-                        ? "text-[#dc2626] bg-[#fef2f2] border-[#fecaca]"
-                        : "text-soft bg-[#f8f6fa] border-line";
-                  return (
-                    <div key={String(comment.id ?? i)} className="rounded-card border border-line bg-white px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-soft">{rv(comment.date, t("noDate"))}</span>
-                        <span className={`rounded-pill border px-2 py-0.5 text-[10px] font-semibold ${sentimentColor}`}>
-                          {sentiment || t("noSentiment")}
-                        </span>
-                        {comment.issue_tag ? (
-                          <span className="rounded-pill border border-[#fecaca] bg-[#fef2f2] px-2 py-0.5 text-[10px] text-[#b91c1c]">
-                            {String(comment.issue_tag)}
-                          </span>
-                        ) : null}
-                        {comment.highlight_tag ? (
-                          <span className="rounded-pill border border-[#a7f3d0] bg-[#ecfdf5] px-2 py-0.5 text-[10px] text-[#047857]">
-                            {String(comment.highlight_tag)}
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-1.5 text-sm leading-6 text-ink">
-                        {rv(comment.content, "")}
-                      </p>
-                    </div>
-                  );
-                })}
+                <Table className="min-w-[1040px]">
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-28">{tTable("date")}</TableHead>
+                      <TableHead className="w-20">{tTable("rating")}</TableHead>
+                      <TableHead className="w-32">{tTable("reviewer")}</TableHead>
+                      <TableHead className="w-32">{tTable("source")}</TableHead>
+                      <TableHead className="w-28">{tTable("sentiment")}</TableHead>
+                      <TableHead className="w-56">{tTable("tags")}</TableHead>
+                      <TableHead>{tTable("reviewContent")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {comments.slice(0, reviewsShown).map((comment, i) => {
+                      const sentiment = String(comment.sentiment || "");
+                      const body = reviewBody(comment);
+                      const sentimentColor =
+                        sentiment === "positive"
+                          ? "text-[#059669] bg-[#ecfdf5] border-[#a7f3d0]"
+                          : sentiment === "negative"
+                            ? "text-[#dc2626] bg-[#fef2f2] border-[#fecaca]"
+                            : "text-soft bg-[#f8f6fa] border-line";
+                      return (
+                        <TableRow key={String(comment.id ?? i)} className="align-top">
+                          <TableCell className="text-xs text-soft">
+                            {rv(comment.date, t("noDate"))}
+                          </TableCell>
+                          <TableCell className="text-xs text-ink">
+                            {rv(comment.rating)}
+                          </TableCell>
+                          <TableCell className="max-w-[8rem] truncate text-xs text-ink">
+                            {rv(comment.reviewer)}
+                          </TableCell>
+                          <TableCell className="max-w-[8rem] truncate text-xs text-soft">
+                            {rv(comment.source)}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`rounded-pill border px-2 py-0.5 text-[10px] font-semibold ${sentimentColor}`}>
+                              {sentiment || t("noSentiment")}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1.5">
+                              {comment.issue_tag ? (
+                                <span className="rounded-pill border border-[#fecaca] bg-[#fef2f2] px-2 py-0.5 text-[10px] text-[#b91c1c]">
+                                  {String(comment.issue_tag)}
+                                </span>
+                              ) : null}
+                              {comment.highlight_tag ? (
+                                <span className="rounded-pill border border-[#a7f3d0] bg-[#ecfdf5] px-2 py-0.5 text-[10px] text-[#047857]">
+                                  {String(comment.highlight_tag)}
+                                </span>
+                              ) : null}
+                              {!comment.issue_tag && !comment.highlight_tag ? (
+                                <span className="text-xs text-soft">--</span>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm leading-6 text-ink">
+                            <p className="max-w-[460px]" title={body}>
+                              {truncate(body, 200)}
+                            </p>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
                 {reviewsShown < comments.length && (
                   <div className="flex justify-center pt-2">
                     <button

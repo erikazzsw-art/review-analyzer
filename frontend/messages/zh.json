@@ -767,7 +767,14 @@
       "mentionPct": "提及占比",
       "reprComments": "代表评论",
       "dimension": "维度",
-      "detail": "详情"
+      "detail": "详情",
+      "date": "日期",
+      "rating": "评分",
+      "reviewer": "评论者",
+      "source": "来源",
+      "sentiment": "情感",
+      "tags": "标签",
+      "reviewContent": "评论内容"
     },
     "showMore": "显示更多（剩余 {count}）",
     "moduleCardEvidence": "证据",

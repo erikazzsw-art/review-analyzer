@@ -15,6 +15,7 @@ from backend_api.app.schemas.scrape import (
 from review_analyzer.database import (
     create_upload_job,
     get_existing_plugin_review_keys,
+    get_connection,
     update_upload_job,
 )
 from review_analyzer.quota import quota_check, quota_check_atomic
@@ -26,6 +27,45 @@ from workers.jobs import (
 )
 
 router = APIRouter(tags=["scrape"])
+
+
+def _resolve_plugin_product_reference(
+    user_id: int,
+    asin: str,
+) -> tuple[str, int | None, int | None]:
+    """Map an uploaded ASIN to the user's parent product when one exists."""
+    product_id = asin.strip()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT id, parent_product_id
+                   FROM products
+                   WHERE user_id = %s AND parent_product_id = %s
+                   LIMIT 1""",
+                (user_id, product_id),
+            )
+            row = cur.fetchone()
+            if row:
+                return str(row[1] or product_id), int(row[0]), None
+
+            cur.execute(
+                """SELECT p.id, p.parent_product_id, v.id
+                   FROM products p
+                   JOIN product_variants v ON v.product_id = p.id
+                   WHERE p.user_id = %s
+                     AND v.user_id = %s
+                     AND v.child_asin = %s
+                   LIMIT 1""",
+                (user_id, user_id, product_id),
+            )
+            row = cur.fetchone()
+            if row:
+                return str(row[1] or product_id), int(row[0]), int(row[2])
+    finally:
+        conn.close()
+
+    return product_id, None, None
 
 
 @router.post("/reviews/fetch-by-asin", response_model=AsinFetchResponse)
@@ -116,8 +156,15 @@ def plugin_upload(
     if not allowed:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
 
+    product_id, product_ref_id, variant_ref_id = _resolve_plugin_product_reference(
+        user_id,
+        req.asin,
+    )
+
     # ── 去重：按 (reviewer, date) 检查已有评论 ──
-    existing_keys = get_existing_plugin_review_keys(user_id, req.asin)
+    existing_keys = get_existing_plugin_review_keys(user_id, product_id)
+    if product_id != req.asin:
+        existing_keys.update(get_existing_plugin_review_keys(user_id, req.asin))
 
     unique_reviews: list[dict] = []
     duplicate_count = 0
@@ -161,7 +208,9 @@ def plugin_upload(
         {
             "status": "queued",
             "source_filename": source_label,
-            "product_id": req.asin,
+            "product_id": product_id,
+            "product_ref_id": product_ref_id,
+            "variant_ref_id": variant_ref_id,
             "source_channel": "chrome_extension",
             "version": "V1",
             "total_rows": new_count,
@@ -173,6 +222,7 @@ def plugin_upload(
                 "marketplace": req.marketplace,
                 "platform": req.platform,
                 "product_name": req.product_name or f"Amazon {req.marketplace.upper()}: {req.asin}",
+                "source_variant_asin": req.asin,
                 "page_url": req.page_url,
                 "source_channel": "chrome_extension",
                 "comments": unique_reviews,

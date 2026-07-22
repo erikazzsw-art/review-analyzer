@@ -443,6 +443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       listingScrapeBtn.disabled = true;
       listingActionHint.textContent = t('listing_hint_not_product');
       listingActionHint.className = 'action-hint action-hint--muted';
+      renderReviewsPageLink(false);
       return;
     }
 
@@ -457,6 +458,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         listingActionHint.textContent = '';
         listingUploadSection.hidden = false;
         updateListingUploadButton();
+        renderReviewsPageLink(true);
 
         // Restore product name
         if (status.productName && productNameInput) {
@@ -472,10 +474,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         listingScrapeBtn.textContent = t('listing_scrape_btn');
         listingActionHint.textContent = t('listing_hint_click');
         listingActionHint.className = 'action-hint';
+        renderReviewsPageLink(false);
       }
     } catch (_) {
       listingScrapeBtn.disabled = false;
       listingScrapeBtn.textContent = t('listing_scrape_btn');
+      renderReviewsPageLink(false);
     }
   }
 
@@ -509,6 +513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           listingActionHint.className = 'action-hint action-hint--info';
           listingScrapeBtn.textContent = t('listing_scrape_btn_redo');
           updateListingUploadButton();
+          renderReviewsPageLink(true);
         } else {
           listingActionHint.textContent = t('listing_scrape_failed', { msg: result.error || t('err_unknown') });
           listingActionHint.className = 'action-hint action-hint--muted';
@@ -698,6 +703,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // If page isn't a product page, disable listing scrape
   if (currentPageInfo && currentPageInfo.pageType !== 'product') {
     listingScrapeBtn.disabled = true;
+    renderReviewsPageLink(false);
   }
 
   // ── Initial tab setup: listing tab for product pages, reviews for everything else ──
@@ -776,6 +782,48 @@ function uploadErrorMessage(code) {
     default:
       return t('upload_err_api');
   }
+}
+
+function renderReviewsPageLink(show) {
+  const section = document.getElementById('reviewsLinkSection');
+  const link = document.getElementById('reviewsPageLink');
+  if (!section || !link) return;
+
+  const url = show && currentPageInfo?.pageType === 'product'
+    ? buildReviewsUrl(currentPageInfo.url)
+    : '';
+
+  if (!url) {
+    section.hidden = true;
+    link.removeAttribute('href');
+    return;
+  }
+
+  link.href = url;
+  section.hidden = false;
+}
+
+function buildReviewsUrl(url) {
+  const asin = extractAsinFromUrl(url);
+  if (!asin) return '';
+  const domain = getAmazonDomain(url);
+  return `https://${domain}/product-reviews/${asin}/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews`;
+}
+
+function extractAsinFromUrl(url) {
+  if (!url) return '';
+  const m = String(url).match(/\/(?:dp|gp\/product|product-reviews)\/([A-Z0-9]{10})/i);
+  return m ? m[1].toUpperCase() : '';
+}
+
+function getAmazonDomain(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    if (/amazon\./i.test(hostname)) return hostname;
+  } catch (_) { /* fall through */ }
+
+  const m = String(url || '').match(/https?:\/\/([^/]*amazon\.[^/]+)/i);
+  return m ? m[1] : 'www.amazon.com';
 }
 
 // ═══════════════════════════════════════════════════════════════

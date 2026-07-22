@@ -767,7 +767,14 @@
       "mentionPct": "Mention Share",
       "reprComments": "Representative Reviews",
       "dimension": "Dimension",
-      "detail": "Detail"
+      "detail": "Detail",
+      "date": "Date",
+      "rating": "Rating",
+      "reviewer": "Reviewer",
+      "source": "Source",
+      "sentiment": "Sentiment",
+      "tags": "Tags",
+      "reviewContent": "Review Content"
     },
     "showMore": "Show more ({count} remaining)",
     "moduleCardEvidence": "Evidence",
