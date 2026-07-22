@@ -60,6 +60,7 @@ export type ProductVariant = {
   product_id: number | null;
   variant_sku: string | null;
   child_asin: string | null;
+  platform: string | null;
   color: string | null;
   size: string | null;
   style: string | null;

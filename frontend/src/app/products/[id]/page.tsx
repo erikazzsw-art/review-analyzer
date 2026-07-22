@@ -1,9 +1,11 @@
 import { AppShell } from "@/components/app/app-shell";
 import { DeleteVariantButton } from "@/components/products/delete-variant-button";
+import { DownloadVariantsButton } from "@/components/products/download-variants-button";
 import { EditProductButton } from "@/components/products/edit-product-button";
 import { MoveVariantButton } from "@/components/products/move-variant-button";
 import { ProductDetailTabs } from "@/components/products/product-detail-tabs";
 import { getProductDetail, isApiError } from "@/lib/api/server";
+import type { ProductVariant } from "@/lib/api/types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -20,7 +22,8 @@ export default async function ProductDetailPage({ params }: Props) {
   const t = await getTranslations("products");
 
   try {
-    const { product, variants } = await getProductDetail(productId);
+    const { product, variants: rawVariants } = await getProductDetail(productId);
+    const variants = rawVariants as ProductVariant[];
 
     const parentProductId = product.parent_product_id as string;
     const displayName = (product.name as string | null) ?? null;
@@ -137,9 +140,16 @@ export default async function ProductDetailPage({ params }: Props) {
         >
           {/* Variant table — variants tab content */}
           <div>
-            <h2 className="font-heading text-lg font-bold text-ink">
-              {t("detail.variantList", { count: variants.length })}
-            </h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="font-heading text-lg font-bold text-ink">
+                {t("detail.variantList", { count: variants.length })}
+              </h2>
+              <DownloadVariantsButton
+                parentProductId={parentProductId}
+                parentName={name}
+                variants={variants}
+              />
+            </div>
 
             {variants.length > 0 ? (
             <div className="mt-4 overflow-x-auto">
