@@ -127,27 +127,32 @@ export function MoveVariantButton({ productId, variantId, variantName }: MoveVar
             <div className="mt-3 max-h-60 overflow-y-auto">
               {results.length > 0 ? (
                 <div className="space-y-1">
-                  {results.map((item) => (
-                    <button
-                      key={item.id ?? item.parent_product_id}
-                      type="button"
-                      disabled={submitting}
-                      onClick={() => handleMove(item.id!)}
-                      className="w-full flex items-center justify-between rounded-card border border-line bg-white px-4 py-3 text-left transition hover:border-[#f36f8f]/40 hover:bg-[#faf8fb] disabled:opacity-50"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-ink">
-                          {item.name || item.parent_product_id}
-                        </p>
-                        {item.parent_product_id && (
-                          <p className="text-xs font-mono text-soft">{item.parent_product_id}</p>
+                  {results.map((item) => {
+                    const title = item.parent_product_id || item.name || "";
+                    const secondaryName = item.name && item.name !== title ? item.name : null;
+
+                    return (
+                      <button
+                        key={item.id ?? item.parent_product_id}
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => handleMove(item.id!)}
+                        className="w-full flex items-center justify-between rounded-card border border-line bg-white px-4 py-3 text-left transition hover:border-[#f36f8f]/40 hover:bg-[#faf8fb] disabled:opacity-50"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-ink">
+                            {title}
+                          </p>
+                          {secondaryName && (
+                            <p className="line-clamp-1 text-xs text-soft">{secondaryName}</p>
+                          )}
+                        </div>
+                        {submitting && (
+                          <Loader2 className="h-4 w-4 animate-spin text-soft" />
                         )}
-                      </div>
-                      {submitting && (
-                        <Loader2 className="h-4 w-4 animate-spin text-soft" />
-                      )}
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               ) : query.trim() && !searching ? (
                 <p className="py-4 text-center text-sm text-soft">{t("noResults")}</p>

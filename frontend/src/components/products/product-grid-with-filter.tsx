@@ -56,7 +56,8 @@ function StarRating({ rating, t }: { rating: number | null; t: (key: string, val
 }
 
 function ProductCard({ product, t }: { product: ProductOverview; t: (key: string, values?: Record<string, string | number | Date>) => string }) {
-  const title = product.name || product.parent_product_id;
+  const title = product.parent_product_id || product.name || "";
+  const secondaryName = product.name && product.name !== title ? product.name : null;
   const lifecycleKey = lifecycleKeys[product.lifecycle_stage || ""];
   const lifecycle = lifecycleKey ? t(`create.${lifecycleKey}`) : (product.lifecycle_stage || "");
   const badge = getPlatformBadge(product.platform);
@@ -107,6 +108,10 @@ function ProductCard({ product, t }: { product: ProductOverview; t: (key: string
         <h3 className="line-clamp-2 text-sm font-bold leading-5 text-ink group-hover:text-[#f36f8f]">
           {title}
         </h3>
+
+        {secondaryName && (
+          <p className="line-clamp-2 text-xs leading-5 text-soft">{secondaryName}</p>
+        )}
 
         {product.brand && (
           <p className="text-xs text-soft">{product.brand}</p>

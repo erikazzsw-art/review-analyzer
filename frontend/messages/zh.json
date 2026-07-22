@@ -2147,6 +2147,7 @@
       "brand": "品牌",
       "category": "类目",
       "asin": "ASIN",
+      "parentProductId": "父体名称 / ID",
       "ratingCount": "({count} 评分)",
       "reviewCount": "{count} 条评论",
       "viewAnalysis": "查看评论分析",

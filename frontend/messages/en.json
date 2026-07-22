@@ -2147,6 +2147,7 @@
       "brand": "Brand",
       "category": "Category",
       "asin": "ASIN",
+      "parentProductId": "Parent Name / ID",
       "ratingCount": "({count} ratings)",
       "reviewCount": "{count} reviews",
       "viewAnalysis": "View Review Analysis",

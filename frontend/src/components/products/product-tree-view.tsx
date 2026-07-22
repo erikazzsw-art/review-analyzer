@@ -60,7 +60,8 @@ function ProductRow({
   onToggle: () => void;
   t: (key: string, values?: Record<string, string | number | Date>) => string;
 }) {
-  const title = product.name || product.parent_product_id;
+  const title = product.parent_product_id || product.name || "";
+  const secondaryName = product.name && product.name !== title ? product.name : null;
   const badge = getPlatformBadge(product.platform);
   const hasVariants = (product.variants?.length ?? 0) > 0;
   const Chevron = expanded ? ChevronDown : ChevronRight;
@@ -100,6 +101,9 @@ function ProductRow({
               >
                 {title}
               </Link>
+              {secondaryName && (
+                <p className="line-clamp-1 max-w-xl text-xs text-soft">{secondaryName}</p>
+              )}
               {product.brand && (
                 <p className="text-xs text-soft">{product.brand}</p>
               )}
