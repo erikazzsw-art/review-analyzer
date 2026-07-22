@@ -152,6 +152,7 @@ export default async function ProductDetailPage({ params }: Props) {
                     <th className="px-3 py-3">{t("detail.tableVariantName")}</th>
                     <th className="px-3 py-3">{t("detail.tableBrand")}</th>
                     <th className="px-3 py-3">{t("detail.tablePrice")}</th>
+                    <th className="px-3 py-3">{t("detail.tableReviews")}</th>
                     <th className="px-3 py-3">{t("detail.tableSales")}</th>
                     <th className="px-3 py-3">{t("detail.tableRevenue")}</th>
                     <th className="px-3 py-3">{t("detail.tableFba")}</th>
@@ -185,6 +186,7 @@ export default async function ProductDetailPage({ params }: Props) {
                           ? `${(v.price_currency as string) || "$"}${(v.price as number).toFixed(2)}`
                           : "—"}
                       </td>
+                      <td className="px-3 py-3 font-semibold text-ink">{String(v.review_count ?? 0)}</td>
                       <td className="px-3 py-3">{(v.sales_volume != null) ? String(v.sales_volume) : "—"}</td>
                       <td className="px-3 py-3">{v.sales_revenue != null ? `${(v.price_currency as string) || "$"}${(v.sales_revenue as number).toFixed(2)}` : "—"}</td>
                       <td className="px-3 py-3">{(v.is_fba as boolean) ? "FBA" : "FBM"}</td>

@@ -76,6 +76,8 @@ export type ProductVariant = {
   sales_revenue: number | null;
   is_fba: boolean | null;
   listing_date: string | null;
+  review_count?: number;
+  latest_review_date?: string | null;
 };
 
 export type ProductVersion = {

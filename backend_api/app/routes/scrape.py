@@ -180,6 +180,7 @@ def plugin_upload(
             "date": r.date,
             "reviewer": r.reviewer or "",
             "source": f"Amazon {req.marketplace.upper()}",
+            "source_channel": "chrome_extension",
             "source_variant_asin": req.asin,
         })
 

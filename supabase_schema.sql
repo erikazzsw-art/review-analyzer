@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS comments (
     date TEXT,
     reviewer TEXT,
     source TEXT,
+    source_channel TEXT NOT NULL DEFAULT 'manual',
+    source_variant_asin TEXT,
     content_hash TEXT,
     sentiment TEXT,
     category TEXT,
@@ -84,6 +86,10 @@ CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_product_id ON comments(user_id, product_id);
 CREATE INDEX IF NOT EXISTS idx_comments_session_id ON comments(session_id);
 CREATE INDEX IF NOT EXISTS idx_comments_hash ON comments(user_id, content_hash);
+CREATE INDEX IF NOT EXISTS idx_comments_source_channel ON comments(user_id, source_channel);
+CREATE INDEX IF NOT EXISTS idx_comments_source_variant_asin
+    ON comments(user_id, product_id, source_variant_asin)
+    WHERE source_variant_asin IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_settings_user_key ON settings(user_id, key);
 CREATE INDEX IF NOT EXISTS idx_upload_jobs_user_id ON upload_jobs(user_id);

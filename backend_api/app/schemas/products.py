@@ -27,6 +27,8 @@ class ProductVariantPayload(BaseModel):
     sales_revenue: float | None = None
     is_fba: bool | None = None
     listing_date: str | None = None
+    review_count: int = 0
+    latest_review_date: str | None = None
 
 
 class ProductVersionPayload(BaseModel):

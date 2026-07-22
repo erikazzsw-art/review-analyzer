@@ -25,7 +25,7 @@ from review_analyzer.product_store import (
     get_parent_variant_analysis,
     get_product_by_id,
     get_product_overview_rows,
-    get_variants,
+    get_variants_with_review_counts,
     move_variant_to_parent,
     plugin_upload_listing,
     update_product,
@@ -263,7 +263,7 @@ def get_product_detail(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found.",
         )
-    variants = get_variants(user_id, product_id)
+    variants = get_variants_with_review_counts(user_id, product_id)
     return {
         "product": product,
         "variants": variants,

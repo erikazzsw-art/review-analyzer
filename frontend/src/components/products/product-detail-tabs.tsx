@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 type ParentAnalysisData = {
   product: Record<string, unknown>;
   analysis: {
-    variants: Array<{ child_asin: string | null; id: number }>;
+    variants: Array<{ child_asin: string | null; id: number; review_count?: number }>;
     total_reviews: number;
     positive_count: number;
     negative_count: number;
@@ -181,7 +181,7 @@ export function ProductDetailTabs({ productId, variantCount, children, labels }:
                         key={v.child_asin ?? idx}
                         className="inline-flex rounded-pill bg-[#f3f0f8] px-3 py-1 text-xs font-mono text-ink/70"
                       >
-                        {v.child_asin || "—"}
+                        {v.child_asin || "—"} · {v.review_count ?? 0}
                       </span>
                     ))}
                   </div>

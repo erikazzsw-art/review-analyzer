@@ -421,6 +421,44 @@ def get_variants(user_id: int, product_id: int) -> list[dict[str, Any]]:
         conn.close()
 
 
+def get_variants_with_review_counts(user_id: int, product_id: int) -> list[dict[str, Any]]:
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT
+                       v.*,
+                       COALESCE(vc.review_count, 0) AS review_count,
+                       vc.latest_review_date
+                   FROM product_variants v
+                   LEFT JOIN products p
+                     ON p.id = v.product_id AND p.user_id = v.user_id
+                   LEFT JOIN (
+                       SELECT source_variant_asin,
+                              COUNT(*) AS review_count,
+                              MAX(date) AS latest_review_date
+                       FROM comments
+                       WHERE user_id = %s
+                         AND product_id = (
+                             SELECT parent_product_id
+                             FROM products
+                             WHERE user_id = %s AND id = %s
+                         )
+                         AND source_variant_asin IS NOT NULL
+                       GROUP BY source_variant_asin
+                   ) vc ON vc.source_variant_asin = v.child_asin
+                   WHERE v.user_id = %s AND v.product_id = %s
+                   ORDER BY v.created_at DESC, v.id DESC""",
+                (user_id, user_id, product_id, user_id, product_id),
+            )
+            return [dict(row) for row in cur.fetchall()]
+    except psycopg2.errors.UndefinedTable:
+        conn.rollback()
+        return []
+    finally:
+        conn.close()
+
+
 
 def upsert_product_from_api(user_id: int, data: dict[str, Any]) -> int:
     """从 Rainforest API 数据 upsert 产品记录，返回 product_id。"""
@@ -1478,8 +1516,28 @@ def get_parent_variant_analysis(
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             # 获取该产品下的所有变体
             cur.execute(
-                "SELECT child_asin, id FROM product_variants WHERE user_id = %s AND product_id = %s AND child_asin IS NOT NULL",
-                (user_id, product_id),
+                """SELECT
+                       v.child_asin,
+                       v.id,
+                       COALESCE(vc.review_count, 0) AS review_count
+                   FROM product_variants v
+                   LEFT JOIN (
+                       SELECT source_variant_asin,
+                              COUNT(*) AS review_count
+                       FROM comments
+                       WHERE user_id = %s
+                         AND product_id = (
+                             SELECT parent_product_id
+                             FROM products
+                             WHERE id = %s AND user_id = %s
+                         )
+                         AND source_variant_asin IS NOT NULL
+                       GROUP BY source_variant_asin
+                   ) vc ON vc.source_variant_asin = v.child_asin
+                   WHERE v.user_id = %s
+                     AND v.product_id = %s
+                     AND v.child_asin IS NOT NULL""",
+                (user_id, product_id, user_id, user_id, product_id),
             )
             variants = [dict(r) for r in cur.fetchall()]
 

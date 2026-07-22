@@ -91,6 +91,8 @@ def _build_comments(
                 "date": comment.get("date"),
                 "reviewer": comment.get("reviewer"),
                 "source": comment.get("source"),
+                "source_variant_asin": comment.get("source_variant_asin"),
+                "source_channel": comment.get("source_channel"),
                 "content_hash": compute_content_hash(content, rating, category),
             }
         )

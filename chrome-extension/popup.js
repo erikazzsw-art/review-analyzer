@@ -447,6 +447,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    renderReviewsPageLink(true);
+
     // Load existing listing data for this tab
     try {
       const status = await getListingStatus();
@@ -474,12 +476,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         listingScrapeBtn.textContent = t('listing_scrape_btn');
         listingActionHint.textContent = t('listing_hint_click');
         listingActionHint.className = 'action-hint';
-        renderReviewsPageLink(false);
       }
     } catch (_) {
       listingScrapeBtn.disabled = false;
       listingScrapeBtn.textContent = t('listing_scrape_btn');
-      renderReviewsPageLink(false);
     }
   }
 

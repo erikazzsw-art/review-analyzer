@@ -364,11 +364,12 @@ def delete_user(user_id: int) -> None:
 
 _COMMENT_FIELDS = (
     "user_id, product_id, version, content, rating, date, "
-    "reviewer, source, content_hash, sentiment, content_sentiment, category, "
+    "reviewer, source, source_channel, source_variant_asin, "
+    "content_hash, sentiment, content_sentiment, category, "
     "priority, reason, improvement, issue_tag, highlight_tag, "
     "is_processed, session_id"
 )
-_COMMENT_PLACEHOLDERS = ", ".join(["%s"] * 19)
+_COMMENT_PLACEHOLDERS = ", ".join(["%s"] * 21)
 
 
 def _comment_values(user_id: int, comment: dict) -> list:
@@ -381,6 +382,8 @@ def _comment_values(user_id: int, comment: dict) -> list:
         comment.get("date"),
         comment.get("reviewer"),
         comment.get("source"),
+        comment.get("source_channel") or "manual",
+        comment.get("source_variant_asin"),
         comment.get("content_hash"),
         comment.get("sentiment"),
         comment.get("content_sentiment", comment.get("sentiment")),
