@@ -99,119 +99,123 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-4 py-4 sm:py-8">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-lg rounded-shell border border-line bg-white p-6 shadow-card"
+        className="mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-shell border border-line bg-white shadow-card sm:max-h-[calc(100dvh-4rem)]"
       >
-        <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
-          {t("edit.editTitle")}
-        </h3>
-
-        <div className="mt-6 space-y-4">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              {t("edit.parentProductNameLabel")}
-            </label>
-            <input
-              type="text"
-              value={form.parent_product_id ?? ""}
-              onChange={(e) => updateField("parent_product_id", e.target.value)}
-              placeholder={t("edit.parentProductNamePlaceholder")}
-              className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              {t("edit.productNameLabel")}
-            </label>
-            <input
-              type="text"
-              value={form.name ?? ""}
-              onChange={(e) => updateField("name", e.target.value)}
-              className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                {t("edit.platformLabel")}
-              </label>
-              <select
-                value={form.platform ?? "Amazon"}
-                onChange={(e) => updateField("platform", e.target.value)}
-                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-              >
-                {platformOptions.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-                <option value="其他">{t("create.platformOther")}</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                {t("edit.lifecycleLabel")}
-              </label>
-              <select
-                value={form.lifecycle_stage ?? "growth"}
-                onChange={(e) => updateField("lifecycle_stage", e.target.value)}
-                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-              >
-                {lifecycleKeys.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{t(`create.${opt.key}`)}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              {t("edit.categoryLabel")}
-            </label>
-            <input
-              type="text"
-              value={form.category ?? ""}
-              onChange={(e) => updateField("category", e.target.value)}
-              className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              {t("edit.coreSellingPointsLabel")}
-            </label>
-            <textarea
-              value={form.core_selling_points ?? ""}
-              onChange={(e) => updateField("core_selling_points", e.target.value)}
-              rows={2}
-              className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              {t("edit.mainCompetitorsLabel")}
-            </label>
-            <textarea
-              value={form.main_competitors ?? ""}
-              onChange={(e) => updateField("main_competitors", e.target.value)}
-              rows={2}
-              className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-            />
-          </div>
+        <div className="flex-shrink-0 border-b border-line bg-white px-6 py-5">
+          <h3 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink">
+            {t("edit.editTitle")}
+          </h3>
         </div>
 
-        {error && (
-          <p className="mt-4 rounded-card border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </p>
-        )}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                {t("edit.parentProductNameLabel")}
+              </label>
+              <input
+                type="text"
+                value={form.parent_product_id ?? ""}
+                onChange={(e) => updateField("parent_product_id", e.target.value)}
+                placeholder={t("edit.parentProductNamePlaceholder")}
+                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                required
+              />
+            </div>
 
-        <div className="mt-8 flex justify-end gap-3">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                {t("edit.productNameLabel")}
+              </label>
+              <input
+                type="text"
+                value={form.name ?? ""}
+                onChange={(e) => updateField("name", e.target.value)}
+                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                  {t("edit.platformLabel")}
+                </label>
+                <select
+                  value={form.platform ?? "Amazon"}
+                  onChange={(e) => updateField("platform", e.target.value)}
+                  className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                >
+                  {platformOptions.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                  <option value="其他">{t("create.platformOther")}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                  {t("edit.lifecycleLabel")}
+                </label>
+                <select
+                  value={form.lifecycle_stage ?? "growth"}
+                  onChange={(e) => updateField("lifecycle_stage", e.target.value)}
+                  className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+                >
+                  {lifecycleKeys.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{t(`create.${opt.key}`)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                {t("edit.categoryLabel")}
+              </label>
+              <input
+                type="text"
+                value={form.category ?? ""}
+                onChange={(e) => updateField("category", e.target.value)}
+                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                {t("edit.coreSellingPointsLabel")}
+              </label>
+              <textarea
+                value={form.core_selling_points ?? ""}
+                onChange={(e) => updateField("core_selling_points", e.target.value)}
+                rows={2}
+                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                {t("edit.mainCompetitorsLabel")}
+              </label>
+              <textarea
+                value={form.main_competitors ?? ""}
+                onChange={(e) => updateField("main_competitors", e.target.value)}
+                rows={2}
+                className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <p className="mt-4 rounded-card border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-shrink-0 justify-end gap-3 border-t border-line bg-white px-6 py-4">
           <button
             type="button"
             onClick={() => {
