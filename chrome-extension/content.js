@@ -11,8 +11,8 @@
 (function () {
   'use strict';
 
-  // @@VERSION: 2026-07-22-v5 — Strategy D: colorToAsin parsing (ImageBlockBTF)
-  console.log('[ReviewLens CS] content.js loaded — version 2026-07-22-v5');
+  // @@VERSION: 2026-07-22-v6 — defensive try/catch on extractProductListing + extractVariationAsins
+  console.log('[ReviewLens CS] content.js loaded — version 2026-07-22-v6');
 
   // ═══════════════════════════════════════════════════════════════
   // Page Type Detection (Step 10)

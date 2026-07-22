@@ -1052,7 +1052,13 @@
 
       // ── Step 11.5: product listing request ──
       if (data.type === 'REVIEWLENS_GET_LISTING') {
-        var listing = extractProductListing();
+        var listing;
+        try {
+          listing = extractProductListing();
+        } catch (e) {
+          console.error('[ReviewLens MAIN] extractProductListing error:', e);
+          listing = { asin: '', marketplace: getMarketplace(), url: window.location.href };
+        }
         window.postMessage(
           {
             type: 'REVIEWLENS_LISTING_RESPONSE',
@@ -1066,7 +1072,13 @@
 
       // ── Step 11.5: variation ASINs request ──
       if (data.type === 'REVIEWLENS_GET_VARIATIONS') {
-        var variations = extractVariationAsins();
+        var variations;
+        try {
+          variations = extractVariationAsins();
+        } catch (e) {
+          console.error('[ReviewLens MAIN] extractVariationAsins error:', e);
+          variations = { parent_asin: '', variants: [], variation_dimensions: [] };
+        }
         window.postMessage(
           {
             type: 'REVIEWLENS_VARIATIONS_RESPONSE',
