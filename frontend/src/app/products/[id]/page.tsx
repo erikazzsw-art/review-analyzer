@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app/app-shell";
 import { DeleteVariantButton } from "@/components/products/delete-variant-button";
+import { EditProductButton } from "@/components/products/edit-product-button";
 import { MoveVariantButton } from "@/components/products/move-variant-button";
 import { ProductDetailTabs } from "@/components/products/product-detail-tabs";
 import { getProductDetail, isApiError } from "@/lib/api/server";
@@ -92,6 +93,21 @@ export default async function ProductDetailPage({ params }: Props) {
                 >
                   {t("detail.backToList")}
                 </Link>
+                <EditProductButton
+                  productId={productId}
+                  initial={{
+                    parent_product_id: parentProductId,
+                    name: (product.name as string | null) ?? undefined,
+                    platform: (product.platform as string | null) ?? undefined,
+                    category: category ?? undefined,
+                    lifecycle_stage: (product.lifecycle_stage as string | null) ?? undefined,
+                    current_version: (product.current_version as string | null) ?? undefined,
+                    core_selling_points: (product.core_selling_points as string | null) ?? undefined,
+                    main_competitors: (product.main_competitors as string | null) ?? undefined,
+                    owner_role: (product.owner_role as string | null) ?? undefined,
+                    production_cycle_days: (product.production_cycle_days as number | null) ?? undefined,
+                  }}
+                />
               </div>
             </div>
           </div>

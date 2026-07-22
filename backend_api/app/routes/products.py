@@ -17,6 +17,7 @@ from backend_api.app.schemas.products import (
 )
 from review_analyzer.database import get_connection
 from review_analyzer.product_store import (
+    ProductParentNameConflictError,
     create_product,
     create_variant,
     delete_product,
@@ -47,6 +48,7 @@ class ProductCreateRequest(BaseModel):
 
 
 class ProductUpdateRequest(BaseModel):
+    parent_product_id: str | None = None
     name: str | None = None
     platform: str | None = None
     category: str | None = None
@@ -187,9 +189,28 @@ def update_product_route(
             detail="Product not found.",
         )
     data = body.model_dump(exclude_none=True)
+    if "parent_product_id" in data:
+        parent_product_id = str(data["parent_product_id"]).strip()
+        if not parent_product_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="父体名称不能为空。",
+            )
+        data["parent_product_id"] = parent_product_id
     if not data:
         return {"updated": False}
-    updated = update_product(user_id, product_id, data)
+    try:
+        updated = update_product(user_id, product_id, data)
+    except ProductParentNameConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     return {"updated": updated}
 
 

@@ -7,11 +7,23 @@ from typing import Any
 import psycopg2
 import psycopg2.extras
 
-from review_analyzer.database import get_connection, get_sessions
+from review_analyzer.database import (
+    get_comments,
+    get_comments_deduped,
+    get_connection,
+    get_existing_hashes,
+    get_product_stats_deduped,
+    get_session_by_id,
+    get_sessions,
+)
 
 LIFECYCLE_OPTIONS = ["research", "launch", "growth", "mature", "decline"]
 VARIANT_STATUS_OPTIONS = ["active", "paused", "clearance", "retired"]
 TRACKER_ACTIVE_STATUSES = ("pending", "todo", "in_progress", "follow_up")
+
+
+class ProductParentNameConflictError(ValueError):
+    """Raised when a parent product name is already used by this user."""
 
 
 def create_product(user_id: int, data: dict[str, Any]) -> int:
@@ -48,25 +60,139 @@ def update_product(user_id: int, product_id: int, data: dict[str, Any]) -> bool:
     conn = get_connection()
     try:
         allowed = {
-            "name", "platform", "category", "lifecycle_stage",
+            "parent_product_id", "name", "platform", "category", "lifecycle_stage",
             "current_version", "core_selling_points", "main_competitors",
             "owner_role", "production_cycle_days",
         }
         fields = {k: v for k, v in data.items() if k in allowed}
         if not fields:
             return False
+        if "parent_product_id" in fields:
+            fields["parent_product_id"] = str(fields["parent_product_id"]).strip()
+            if not fields["parent_product_id"]:
+                raise ValueError("父体名称不能为空。")
         set_clause = ", ".join(f"{k} = %s" for k in fields)
-        values = list(fields.values()) + [user_id, product_id]
         with conn.cursor() as cur:
+            cur.execute(
+                "SELECT parent_product_id FROM products WHERE user_id = %s AND id = %s FOR UPDATE",
+                (user_id, product_id),
+            )
+            row = cur.fetchone()
+            if row is None:
+                return False
+
+            old_parent_product_id = str(row[0] or "").strip()
+            new_parent_product_id = str(fields.get("parent_product_id") or old_parent_product_id).strip()
+            parent_name_changed = (
+                "parent_product_id" in fields
+                and new_parent_product_id != old_parent_product_id
+            )
+            if parent_name_changed:
+                _ensure_parent_name_available(cur, user_id, product_id, new_parent_product_id)
+
+            values = list(fields.values()) + [user_id, product_id]
             cur.execute(
                 f"UPDATE products SET {set_clause} WHERE user_id = %s AND id = %s",
                 values,
             )
             updated = cur.rowcount > 0
+            if updated and parent_name_changed:
+                _update_parent_product_references(
+                    cur,
+                    user_id,
+                    old_parent_product_id,
+                    new_parent_product_id,
+                )
         conn.commit()
+        if updated and parent_name_changed:
+            _clear_product_reference_caches()
         return updated
+    except (ProductParentNameConflictError, ValueError):
+        conn.rollback()
+        raise
+    except psycopg2.errors.UniqueViolation as exc:
+        conn.rollback()
+        raise ProductParentNameConflictError("父体名称已存在，请换一个名称。") from exc
     finally:
         conn.close()
+
+
+def _ensure_parent_name_available(
+    cur: Any,
+    user_id: int,
+    product_id: int,
+    parent_product_id: str,
+) -> None:
+    cur.execute(
+        """SELECT 1 FROM products
+           WHERE user_id = %s AND parent_product_id = %s AND id <> %s
+           LIMIT 1""",
+        (user_id, parent_product_id, product_id),
+    )
+    if cur.fetchone():
+        raise ProductParentNameConflictError("父体名称已存在，请换一个名称。")
+
+    for table in ("sessions", "comments", "upload_jobs"):
+        cur.execute(
+            f"SELECT 1 FROM {table} WHERE user_id = %s AND product_id = %s LIMIT 1",
+            (user_id, parent_product_id),
+        )
+        if cur.fetchone():
+            raise ProductParentNameConflictError("父体名称已存在，请换一个名称。")
+
+
+def _update_parent_product_references(
+    cur: Any,
+    user_id: int,
+    old_parent_product_id: str,
+    new_parent_product_id: str,
+) -> None:
+    for table in ("sessions", "comments", "upload_jobs"):
+        cur.execute(
+            f"UPDATE {table} SET product_id = %s WHERE user_id = %s AND product_id = %s",
+            (new_parent_product_id, user_id, old_parent_product_id),
+        )
+
+    _safe_execute(
+        cur,
+        """UPDATE action_items
+           SET source_product_id = %s
+           WHERE user_id = %s AND source_product_id = %s""",
+        (new_parent_product_id, user_id, old_parent_product_id),
+    )
+    _safe_execute(
+        cur,
+        """DELETE FROM ideal_profiles old
+           WHERE old.user_id = %s AND old.product_id = %s
+             AND EXISTS (
+                 SELECT 1 FROM ideal_profiles existing
+                 WHERE existing.user_id = old.user_id
+                   AND existing.product_id = %s
+                   AND existing.version = old.version
+             )""",
+        (user_id, old_parent_product_id, new_parent_product_id),
+    )
+    _safe_execute(
+        cur,
+        """UPDATE ideal_profiles
+           SET product_id = %s
+           WHERE user_id = %s AND product_id = %s""",
+        (new_parent_product_id, user_id, old_parent_product_id),
+    )
+
+
+def _clear_product_reference_caches() -> None:
+    for func in (
+        get_comments,
+        get_comments_deduped,
+        get_existing_hashes,
+        get_product_stats_deduped,
+        get_session_by_id,
+        get_sessions,
+    ):
+        clear = getattr(func, "clear", None)
+        if callable(clear):
+            clear()
 
 
 def _safe_execute(cur: Any, sql: str, params: tuple) -> None:

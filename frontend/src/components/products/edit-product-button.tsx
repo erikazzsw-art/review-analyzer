@@ -20,6 +20,7 @@ const platformOptions = ["Amazon", "eBay", "Shopee", "AliExpress", "Walmart"];
 type EditProductButtonProps = {
   productId: number;
   initial: {
+    parent_product_id?: string;
     name?: string;
     platform?: string;
     category?: string;
@@ -37,7 +38,9 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ProductUpdatePayload>({
+    parent_product_id: initial.parent_product_id ?? "",
     name: initial.name ?? "",
     platform: initial.platform ?? "Amazon",
     category: initial.category ?? "",
@@ -53,9 +56,12 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.parent_product_id?.trim()) return;
     setSubmitting(true);
+    setError(null);
     try {
       const payload: ProductUpdatePayload = {};
+      payload.parent_product_id = form.parent_product_id.trim();
       if (form.name?.trim()) payload.name = form.name.trim();
       if (form.platform) payload.platform = form.platform;
       if (form.category?.trim()) payload.category = form.category.trim();
@@ -66,7 +72,12 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
       await updateProduct(productId, payload);
       setOpen(false);
       router.refresh();
-    } catch {
+    } catch (err) {
+      const message = err && typeof err === "object" && "message" in err
+        ? String((err as { message?: unknown }).message)
+        : t("edit.saveFailed");
+      setError(message);
+    } finally {
       setSubmitting(false);
     }
   }
@@ -75,7 +86,10 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setError(null);
+          setOpen(true);
+        }}
         className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-pill border border-line bg-white px-3 py-2 text-xs font-semibold text-ink transition hover:border-ink/30"
       >
         <Pencil className="h-3.5 w-3.5" />
@@ -95,6 +109,20 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
         </h3>
 
         <div className="mt-6 space-y-4">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+              {t("edit.parentProductNameLabel")}
+            </label>
+            <input
+              type="text"
+              value={form.parent_product_id ?? ""}
+              onChange={(e) => updateField("parent_product_id", e.target.value)}
+              placeholder={t("edit.parentProductNamePlaceholder")}
+              className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+              required
+            />
+          </div>
+
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
               {t("edit.productNameLabel")}
@@ -177,10 +205,19 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
           </div>
         </div>
 
+        {error && (
+          <p className="mt-4 rounded-card border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </p>
+        )}
+
         <div className="mt-8 flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setError(null);
+              setOpen(false);
+            }}
             disabled={submitting}
             className="inline-flex min-h-11 items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-soft"
           >
@@ -188,7 +225,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
           </button>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !form.parent_product_id?.trim()}
             className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card disabled:opacity-50"
           >
             {submitting ? t("edit.saving") : t("edit.saveButton")}

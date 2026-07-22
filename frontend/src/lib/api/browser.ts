@@ -1053,7 +1053,7 @@ export type ProductCreatePayload = {
   production_cycle_days?: number;
 };
 
-export type ProductUpdatePayload = Partial<Omit<ProductCreatePayload, "parent_product_id">>;
+export type ProductUpdatePayload = Partial<ProductCreatePayload>;
 
 export async function createProduct(payload: ProductCreatePayload): Promise<{ id: number }> {
   const response = await fetch(`${getApiBaseUrl()}/products`, {

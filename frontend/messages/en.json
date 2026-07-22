@@ -2187,9 +2187,9 @@
     "create": {
       "createButton": "New Product",
       "createTitle": "New Product Group",
-      "productIdLabel": "Product ID (required)",
-      "productIdPlaceholder": "e.g. ASIN / SKU",
-      "productNameLabel": "Product Name",
+      "productIdLabel": "Parent Name / ID (required)",
+      "productIdPlaceholder": "e.g. parent name, parent ASIN, or SKU",
+      "productNameLabel": "Display Name (optional)",
       "productNamePlaceholder": "Optional, for easier identification",
       "platformLabel": "Platform",
       "lifecycleLabel": "Lifecycle",
@@ -2208,7 +2208,9 @@
     "edit": {
       "editButton": "Edit",
       "editTitle": "Edit Product",
-      "productNameLabel": "Product Name",
+      "parentProductNameLabel": "Parent Name (Product Name)",
+      "parentProductNamePlaceholder": "Enter a new parent name",
+      "productNameLabel": "Display Name (optional)",
       "platformLabel": "Platform",
       "lifecycleLabel": "Lifecycle",
       "categoryLabel": "Category",
@@ -2216,7 +2218,8 @@
       "mainCompetitorsLabel": "Main Competitors",
       "cancelButton": "Cancel",
       "saveButton": "Save",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "saveFailed": "Save failed. Please try again."
     },
     "delete": {
       "deleteButton": "Delete",

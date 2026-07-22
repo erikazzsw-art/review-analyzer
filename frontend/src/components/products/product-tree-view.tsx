@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { ProductOverview } from "@/lib/api/types";
 import { DeleteProductButton } from "@/components/products/delete-product-button";
+import { EditProductButton } from "@/components/products/edit-product-button";
 
 type PlatformFilter = "all" | "amazon" | "aliexpress" | "shopee" | "ebay" | "walmart";
 
@@ -137,7 +138,24 @@ function ProductRow({
               {t("tree.viewDetail")}
             </Link>
             {product.id != null && (
-              <DeleteProductButton productId={product.id} productName={title} />
+              <>
+                <EditProductButton
+                  productId={product.id}
+                  initial={{
+                    parent_product_id: product.parent_product_id,
+                    name: product.name ?? undefined,
+                    platform: product.platform ?? undefined,
+                    category: product.category ?? undefined,
+                    lifecycle_stage: product.lifecycle_stage ?? undefined,
+                    current_version: product.current_version,
+                    core_selling_points: product.core_selling_points ?? undefined,
+                    main_competitors: product.main_competitors ?? undefined,
+                    owner_role: product.owner_role ?? undefined,
+                    production_cycle_days: product.production_cycle_days ?? undefined,
+                  }}
+                />
+                <DeleteProductButton productId={product.id} productName={title} />
+              </>
             )}
           </div>
         </td>
