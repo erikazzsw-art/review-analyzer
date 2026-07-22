@@ -104,6 +104,53 @@ function sendMessageWithTimeout(tabId, message, timeoutMs = 15000) {
   });
 }
 
+// ── Fix 2026-07-22: Content script connection guard ──
+/**
+ * Send a message to the content script with Amazon URL validation and dynamic
+ * injection fallback. If the tab is not an Amazon page, throws immediately.
+ * If the content script isn't loaded (e.g. SW restart, page not fully loaded),
+ * attempts to inject it dynamically and retries once.
+ *
+ * @param {object} tab — chrome.tabs.Tab (must have .id and .url)
+ * @param {object} message — message to send
+ * @param {number} [timeoutMs=15000]
+ * @returns {Promise<object>} response from content script
+ */
+async function sendToContentScript(tab, message, timeoutMs = 15000) {
+  // Guard: validate Amazon URL before attempting to message content script
+  const pageType = detectPageTypeFromUrl(tab.url || '');
+  if (pageType === 'not_amazon' || pageType === 'unknown') {
+    throw new Error('NOT_AMAZON:当前页面不是 Amazon 商品页，请在 Amazon 商品页面使用此功能');
+  }
+
+  try {
+    return await sendMessageWithTimeout(tab.id, message, timeoutMs);
+  } catch (err) {
+    const msg = err.message || String(err);
+    // Connection error → content script not loaded; try dynamic injection
+    if (msg.includes('Could not establish connection')
+        || msg.includes('Receiving end does not exist')) {
+      console.warn('[ReviewLens BG] Content script missing for tab', tab.id,
+        ', attempting dynamic injection');
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js'],
+        });
+        // Brief settle time for the injected script to register its listener
+        await new Promise(r => setTimeout(r, 150));
+        return await sendMessageWithTimeout(tab.id, message, timeoutMs);
+      } catch (injectErr) {
+        console.error('[ReviewLens BG] Dynamic injection failed:', injectErr);
+        throw new Error(
+          'CONTENT_INJECT_FAILED:请在 Amazon 商品页面刷新后重试'
+        );
+      }
+    }
+    throw err;
+  }
+}
+
 // ── Fix 2026-07-15: Storage helpers for tabReviews (persists across SW restart) ──
 /**
  * Load stored reviews for a tab from chrome.storage.session.
@@ -331,16 +378,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
-          // Forward to content script with timeout
-          const result = await sendMessageWithTimeout(tab.id, {
+          // Forward to content script (with URL guard + dynamic injection fallback)
+          const result = await sendToContentScript(tab, {
             type: 'EXTRACT_REVIEWS',
           });
           sendResponse(result);
         } catch (err) {
           console.error('[ReviewLens BG] Error forwarding EXTRACT_REVIEWS:', err);
+          // Strip error prefix for user-visible messages
+          const errMsg = err.message || String(err);
+          const userMsg = errMsg.startsWith('NOT_AMAZON:')
+            ? errMsg.slice('NOT_AMAZON:'.length)
+            : errMsg.startsWith('CONTENT_INJECT_FAILED:')
+              ? errMsg.slice('CONTENT_INJECT_FAILED:'.length)
+              : errMsg;
           sendResponse({
             reviews: [],
-            stats: { total_found: 0, total_extracted: 0, error: String(err) },
+            stats: { total_found: 0, total_extracted: 0, error: userMsg },
           });
         }
       })();
@@ -408,14 +462,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // Content script may not be injected; proceed anyway
           }
 
-          // Trigger extraction in content script (with timeout)
+          // Trigger extraction in content script (with URL guard + injection fallback)
           let extraction;
           try {
-            extraction = await sendMessageWithTimeout(tab.id, {
+            extraction = await sendToContentScript(tab, {
               type: 'EXTRACT_REVIEWS',
             }, 20000);
-          } catch (timeoutErr) {
-            console.warn('[ReviewLens BG] EXTRACT_REVIEWS timed out:', timeoutErr.message);
+          } catch (extractErr) {
+            const extractErrMsg = extractErr.message || String(extractErr);
+            // Distinguish NOT_AMAZON / injection failure from timeout
+            if (extractErrMsg.startsWith('NOT_AMAZON:')) {
+              return {
+                success: false,
+                error: 'not_amazon',
+                error_message: extractErrMsg.slice('NOT_AMAZON:'.length),
+              };
+            }
+            if (extractErrMsg.startsWith('CONTENT_INJECT_FAILED:')) {
+              return {
+                success: false,
+                error: 'content_script_unavailable',
+                error_message: extractErrMsg.slice('CONTENT_INJECT_FAILED:'.length),
+              };
+            }
+            console.warn('[ReviewLens BG] EXTRACT_REVIEWS error:', extractErrMsg);
             return {
               success: false,
               error: 'content_script_timeout',
@@ -895,8 +965,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           meta.lastScrapeTime = now;
           await saveTabMeta(tab.id, meta);
 
-          // Forward to content script with timeout
-          const result = await sendMessageWithTimeout(tab.id, {
+          // Forward to content script (with URL guard + dynamic injection fallback)
+          const result = await sendToContentScript(tab, {
             type: 'EXTRACT_LISTING',
           }, 20000);
 
@@ -929,7 +999,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         } catch (err) {
           console.error('[ReviewLens BG] Error in START_LISTING_SCRAPING:', err);
-          sendResponse({ success: false, error: String(err) });
+          // Strip prefix for user-visible errors from sendToContentScript
+          const errMsg = err.message || String(err);
+          const userMsg = errMsg.startsWith('NOT_AMAZON:')
+            ? errMsg.slice('NOT_AMAZON:'.length)
+            : errMsg.startsWith('CONTENT_INJECT_FAILED:')
+              ? errMsg.slice('CONTENT_INJECT_FAILED:'.length)
+              : errMsg;
+          sendResponse({ success: false, error: userMsg });
         }
       })();
       return true;
