@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import * as XLSX from "xlsx";
 
 import { ModuleCard } from "@/components/analysis/module-card";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
@@ -16,7 +17,6 @@ import { DownloadTagButton } from "@/components/analysis/download-tag-button";
 import { CreateActionPanel } from "@/components/analysis/create-action-panel";
 import { SectionAnchorNav } from "@/components/analysis/section-anchor-nav";
 import { Button } from "@/components/ui/button";
-import { exportFullXlsx } from "@/lib/api/browser";
 import {
   Table,
   TableBody,
@@ -74,6 +74,76 @@ function rv(value: unknown, fallback = "--"): string {
 
 function reviewBody(comment: Record<string, unknown>): string {
   return rv(comment.content || comment.body || comment.comment, "");
+}
+
+function safeFilenamePart(value: string): string {
+  return value.trim().replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_") || "analysis";
+}
+
+function buildRawReviewsXlsx(
+  comments: Array<Record<string, unknown>>,
+  locale: string,
+  session: SessionInfo,
+): Blob {
+  const wb = XLSX.utils.book_new();
+  const headers =
+    locale === "zh"
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags"];
+  const rows = comments.map((comment, index) => [
+    index + 1,
+    reviewBody(comment),
+    comment.rating != null ? Number(comment.rating) : "",
+    rv(comment.date, ""),
+    rv(comment.reviewer, ""),
+    rv(comment.source, ""),
+    rv(comment.sentiment, ""),
+    rv(comment.category, ""),
+    rv(comment.priority, ""),
+    rv(comment.reason, ""),
+    rv(comment.improvement, ""),
+    rv(comment.issue_tag, ""),
+    rv(comment.highlight_tag, ""),
+  ]);
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws["!cols"] = [
+    { wch: 8 },
+    { wch: 64 },
+    { wch: 8 },
+    { wch: 14 },
+    { wch: 20 },
+    { wch: 16 },
+    { wch: 12 },
+    { wch: 16 },
+    { wch: 12 },
+    { wch: 36 },
+    { wch: 36 },
+    { wch: 24 },
+    { wch: 24 },
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "评论原文" : "Raw Reviews");
+
+  const metaHeaders = locale === "zh" ? ["字段", "值"] : ["Field", "Value"];
+  const metaRows = [
+    [locale === "zh" ? "产品编号" : "Product ID", session.product_id || ""],
+    [locale === "zh" ? "版本" : "Version", session.version || ""],
+    [locale === "zh" ? "评论数" : "Review Count", comments.length],
+    [
+      locale === "zh" ? "AI 标注说明" : "AI Notice",
+      locale === "zh"
+        ? "AI 生成分析 · 基于 OpenAI GPT-4o-mini"
+        : "Analysis powered by AI (OpenAI GPT-4o-mini)",
+    ],
+  ];
+  const meta = XLSX.utils.aoa_to_sheet([metaHeaders, ...metaRows]);
+  meta["!cols"] = [{ wch: 18 }, { wch: 60 }];
+  XLSX.utils.book_append_sheet(wb, meta, locale === "zh" ? "导出信息" : "Export Info");
+
+  const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+  return new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
 }
 
 function PctBar({ pct, color }: { pct: number; color: string }) {
@@ -251,23 +321,25 @@ export function AnalysisResultsSections({
   const tTable = useTranslations("analysis.table");
   const [reviewsShown, setReviewsShown] = useState(REVIEWS_PAGE_SIZE);
   const [exportingFull, setExportingFull] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const canShowActions = sessionId > 0;
 
-  async function handleExportFull() {
-    if (!sessionId) return;
+  async function handleExportRawReviews() {
+    if (comments.length === 0) return;
     setExportingFull(true);
+    setExportError(null);
     try {
-      const blob = await exportFullXlsx(sessionId);
+      const blob = buildRawReviewsXlsx(comments, locale, session);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `analysis_${sessionId}_full.xlsx`;
+      a.download = `${safeFilenamePart(session.product_id)}-${safeFilenamePart(session.version)}-raw-reviews.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // silently fail
+      setExportError(locale === "zh" ? "下载失败，请稍后重试。" : "Download failed. Please try again.");
     } finally {
       setExportingFull(false);
     }
@@ -527,13 +599,13 @@ export function AnalysisResultsSections({
       <section className="flex flex-col gap-3">
         <SectionHeading id="reviews" title={t("rawReviews")} />
         <div className="rounded-shell border border-line bg-white p-5 shadow-card">
-          {sessionId > 0 && (
-            <div className="mb-3 flex justify-end">
+          {comments.length > 0 && (
+            <div className="mb-3 flex flex-col items-end gap-1">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleExportFull}
-                disabled={exportingFull}
+                onClick={handleExportRawReviews}
+                disabled={exportingFull || comments.length === 0}
                 className="h-7 gap-1 px-2.5 text-[11px]"
               >
                 {exportingFull ? (
@@ -543,6 +615,9 @@ export function AnalysisResultsSections({
                 )}
                 XLSX
               </Button>
+              {exportError && (
+                <p className="text-[11px] text-[#dc2626]">{exportError}</p>
+              )}
             </div>
           )}
           <div className="space-y-2">
