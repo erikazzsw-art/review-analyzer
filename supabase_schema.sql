@@ -212,8 +212,22 @@ CREATE TABLE IF NOT EXISTS action_items (
     suggested_action TEXT,
     expected_effect_batch TEXT,
     expected_review_at TEXT,
-    status TEXT NOT NULL DEFAULT 'todo',
+    status TEXT NOT NULL DEFAULT 'in_progress',
+    sort_order INTEGER,
+    ai_suggestions_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    removed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS action_center_product_groups (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    product_group_key TEXT NOT NULL,
+    note TEXT,
+    sort_order INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, product_group_key)
 );
 
 CREATE TABLE IF NOT EXISTS review_trackers (
@@ -256,6 +270,9 @@ CREATE INDEX IF NOT EXISTS idx_product_versions_product_id ON product_versions(p
 CREATE INDEX IF NOT EXISTS idx_action_items_user_id ON action_items(user_id);
 CREATE INDEX IF NOT EXISTS idx_action_items_product_id ON action_items(product_id);
 CREATE INDEX IF NOT EXISTS idx_action_items_status ON action_items(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_action_items_user_removed ON action_items(user_id, removed_at);
+CREATE INDEX IF NOT EXISTS idx_action_items_user_sort ON action_items(user_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_action_center_product_groups_user ON action_center_product_groups(user_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_review_trackers_user_id ON review_trackers(user_id);
 CREATE INDEX IF NOT EXISTS idx_review_trackers_product_id ON review_trackers(product_id);
 CREATE INDEX IF NOT EXISTS idx_review_trackers_status ON review_trackers(user_id, result_status);

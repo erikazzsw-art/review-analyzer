@@ -467,14 +467,29 @@ export type ActionItem = {
   current_pct: number | null;
   owner_role: string | null;
   suggested_action: string | null;
+  ai_suggestions_json: string[];
   expected_effect_batch: string | null;
   expected_review_at: string | null;
   status: string;
+  sort_order: number | null;
+  removed_at: string | null;
   created_at: string | null;
   parent_product_id: string | null;
   product_name: string | null;
   variant_sku: string | null;
   child_asin: string | null;
+  source_reviews_json: Array<{
+    id?: number | null;
+    content?: string | null;
+    rating?: number | null;
+    date?: string | null;
+    issue_tag?: string | null;
+    highlight_tag?: string | null;
+  }>;
+  product_group_key: string | null;
+  product_group_name: string | null;
+  product_note: string | null;
+  product_sort_order: number | null;
 };
 
 export type ActionItemsResponse = {
@@ -495,6 +510,7 @@ export type ActionItemCreatePayload = {
   currentPct?: number | null;
   ownerRole?: string | null;
   suggestedAction?: string | null;
+  aiSuggestions?: string[];
   expectedEffectBatch?: string | null;
   expectedReviewAt?: string | null;
   status?: string;
@@ -502,6 +518,12 @@ export type ActionItemCreatePayload = {
 
 export type ActionStatusUpdatePayload = {
   status: string;
+};
+
+export type ActionProductGroup = {
+  product_group_key: string;
+  note: string | null;
+  sort_order: number | null;
 };
 
 export type ReviewTracker = {

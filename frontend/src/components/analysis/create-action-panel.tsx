@@ -48,7 +48,7 @@ export function CreateActionPanel({
   const [suggestedAction, setSuggestedAction] = useState("");
   const [expectedReviewAt, setExpectedReviewAt] = useState("");
   const [expectedEffectBatch, setExpectedEffectBatch] = useState("");
-  const [status, setStatus] = useState("todo");
+  const [status, setStatus] = useState("in_progress");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -202,9 +202,7 @@ export function CreateActionPanel({
               onChange={(event) => setStatus(event.target.value)}
               className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
             >
-              <option value="todo">{t("statusTodo")}</option>
               <option value="in_progress">{t("statusInProgress")}</option>
-              <option value="pending_review">{t("statusPendingReview")}</option>
               <option value="done">{t("statusDone")}</option>
             </select>
           </label>

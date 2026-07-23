@@ -64,7 +64,7 @@ export function InlineActionButton({
         sourceBatchLabel: t("inlineBatchLabelFormat", { sessionId }),
         currentPct: pct ?? null,
         tagName: tag,
-        status: "todo",
+        status: "in_progress",
       };
       if (productId) {
         payload.productId = productId;

@@ -276,9 +276,10 @@ class ActionItemCreatePayload(BaseModel):
     current_pct: float | None = None
     owner_role: str | None = None
     suggested_action: str | None = None
+    ai_suggestions: list[str] = Field(default_factory=list)
     expected_effect_batch: str | None = None
     expected_review_at: str | None = None
-    status: str = "todo"
+    status: str = "in_progress"
 
 
 class ActionItemPayload(BaseModel):
@@ -296,14 +297,22 @@ class ActionItemPayload(BaseModel):
     current_pct: float | None = None
     owner_role: str | None = None
     suggested_action: str | None = None
+    ai_suggestions_json: list[str] = Field(default_factory=list)
     expected_effect_batch: str | None = None
     expected_review_at: str | None = None
     status: str
+    sort_order: int | None = None
+    removed_at: datetime | None = None
     created_at: datetime | None = None
     parent_product_id: str | None = None
     product_name: str | None = None
     variant_sku: str | None = None
     child_asin: str | None = None
+    source_reviews_json: list[dict[str, Any]] = Field(default_factory=list)
+    product_group_key: str | None = None
+    product_group_name: str | None = None
+    product_note: str | None = None
+    product_sort_order: int | None = None
 
 
 class ActionItemsResponse(BaseModel):
@@ -313,6 +322,34 @@ class ActionItemsResponse(BaseModel):
 
 class ActionStatusUpdatePayload(BaseModel):
     status: str
+
+
+class ActionSuggestionsUpdatePayload(BaseModel):
+    suggestions: list[str] = Field(default_factory=list)
+
+
+class ActionReorderPayload(BaseModel):
+    product_group_key: str
+    action_ids: list[int] = Field(default_factory=list)
+
+
+class ActionProductGroupNotePayload(BaseModel):
+    product_group_key: str
+    note: str | None = None
+
+
+class ActionProductGroupPayload(BaseModel):
+    product_group_key: str
+    note: str | None = None
+    sort_order: int | None = None
+
+
+class ActionProductGroupReorderPayload(BaseModel):
+    product_group_keys: list[str] = Field(default_factory=list)
+
+
+class ActionProductGroupRemovePayload(BaseModel):
+    product_group_key: str
 
 
 class ReviewTrackerCreatePayload(BaseModel):

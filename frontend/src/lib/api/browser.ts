@@ -1,5 +1,7 @@
 import type {
+  ActionItem,
   ActionItemCreatePayload,
+  ActionProductGroup,
   ActionItemsResponse,
   ActionStatusUpdatePayload,
   AnalysisCommentInput,
@@ -539,9 +541,10 @@ export async function createActionItem(
       current_pct: payload.currentPct ?? null,
       owner_role: payload.ownerRole ?? null,
       suggested_action: payload.suggestedAction ?? null,
+      ai_suggestions: payload.aiSuggestions ?? [],
       expected_effect_batch: payload.expectedEffectBatch ?? null,
       expected_review_at: payload.expectedReviewAt ?? null,
-      status: payload.status ?? "todo",
+      status: payload.status ?? "in_progress",
     }),
   });
 
@@ -555,7 +558,7 @@ export async function createActionItem(
 export async function updateActionStatus(
   actionId: number,
   status: string,
-): Promise<Record<string, unknown>> {
+): Promise<ActionItem> {
   const response = await fetch(`${getApiBaseUrl()}/actions/${actionId}/status`, {
     method: "PATCH",
     credentials: "include",
@@ -569,7 +572,114 @@ export async function updateActionStatus(
     throw await parseError(response);
   }
 
-  return (await response.json()) as Record<string, unknown>;
+  return (await response.json()) as ActionItem;
+}
+
+export async function updateActionSuggestions(
+  actionId: number,
+  suggestions: string[],
+): Promise<ActionItem> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/${actionId}/suggestions`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ suggestions }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as ActionItem;
+}
+
+export async function deleteActionItem(actionId: number): Promise<{ removed: boolean }> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/${actionId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as { removed: boolean };
+}
+
+export async function updateActionProductGroupNote(
+  productGroupKey: string,
+  note: string | null,
+): Promise<ActionProductGroup> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/product-groups/note`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ product_group_key: productGroupKey, note }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as ActionProductGroup;
+}
+
+export async function reorderActionProductGroups(productGroupKeys: string[]): Promise<{ updated: number }> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/product-groups/reorder`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ product_group_keys: productGroupKeys }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as { updated: number };
+}
+
+export async function removeActionProductGroup(productGroupKey: string): Promise<{ removed: number }> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/product-groups/remove`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ product_group_key: productGroupKey }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as { removed: number };
+}
+
+export async function reorderActionItems(
+  productGroupKey: string,
+  actionIds: number[],
+): Promise<{ updated: number }> {
+  const response = await fetch(`${getApiBaseUrl()}/actions/reorder`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ product_group_key: productGroupKey, action_ids: actionIds }),
+  });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return (await response.json()) as { updated: number };
 }
 
 export async function getActionTracker(actionId: number): Promise<Record<string, unknown> | null> {

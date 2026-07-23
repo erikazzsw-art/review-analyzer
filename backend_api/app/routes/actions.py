@@ -9,6 +9,12 @@ from backend_api.app.schemas.analysis import (
     ActionItemCreatePayload,
     ActionItemPayload,
     ActionItemsResponse,
+    ActionProductGroupNotePayload,
+    ActionProductGroupPayload,
+    ActionProductGroupRemovePayload,
+    ActionProductGroupReorderPayload,
+    ActionReorderPayload,
+    ActionSuggestionsUpdatePayload,
     ActionStatusUpdatePayload,
     ReviewTrackerCreatePayload,
     ReviewTrackerFromActionResponse,
@@ -21,7 +27,13 @@ from review_analyzer.action_store import (
     create_action_item,
     get_action_item_by_id,
     get_action_items,
+    remove_action_item,
+    remove_product_group_actions,
+    reorder_actions,
+    reorder_product_groups,
+    update_action_suggestions,
     update_action_status,
+    update_product_group_note,
 )
 from review_analyzer.review_store import (
     REVIEW_TRACKER_STATUSES,
@@ -55,6 +67,57 @@ def create_action(
     return _action_payload(action)
 
 
+@router.patch("/product-groups/note", response_model=ActionProductGroupPayload)
+def change_product_group_note(
+    payload: ActionProductGroupNotePayload,
+    current_user: dict = Depends(get_current_user),
+) -> ActionProductGroupPayload:
+    user_id = int(current_user["id"])
+    if not payload.product_group_key:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product group key is required.")
+    group = update_product_group_note(user_id, payload.product_group_key, payload.note)
+    return ActionProductGroupPayload(**group)
+
+
+@router.patch("/product-groups/reorder")
+def change_product_group_order(
+    payload: ActionProductGroupReorderPayload,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, int]:
+    user_id = int(current_user["id"])
+    updated = reorder_product_groups(user_id, payload.product_group_keys)
+    return {"updated": updated}
+
+
+@router.post("/product-groups/remove")
+def remove_product_group(
+    payload: ActionProductGroupRemovePayload,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, int]:
+    user_id = int(current_user["id"])
+    if not payload.product_group_key:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product group key is required.")
+    removed = remove_product_group_actions(user_id, payload.product_group_key)
+    if removed == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product group actions not found.")
+    return {"removed": removed}
+
+
+@router.patch("/reorder")
+def change_action_order(
+    payload: ActionReorderPayload,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, int]:
+    user_id = int(current_user["id"])
+    if not payload.product_group_key:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Product group key is required.")
+    if not payload.action_ids:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Action ids are required.")
+    if not reorder_actions(user_id, payload.product_group_key, payload.action_ids):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid action order.")
+    return {"updated": len(payload.action_ids)}
+
+
 @router.patch("/{action_id}/status", response_model=ActionItemPayload)
 def change_action_status(
     action_id: int,
@@ -69,6 +132,31 @@ def change_action_status(
     if not action:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Action not found.")
     return _action_payload(action)
+
+
+@router.patch("/{action_id}/suggestions", response_model=ActionItemPayload)
+def change_action_suggestions(
+    action_id: int,
+    payload: ActionSuggestionsUpdatePayload,
+    current_user: dict = Depends(get_current_user),
+) -> ActionItemPayload:
+    user_id = int(current_user["id"])
+    update_action_suggestions(user_id, action_id, payload.suggestions)
+    action = get_action_item_by_id(user_id, action_id)
+    if not action:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Action not found.")
+    return _action_payload(action)
+
+
+@router.delete("/{action_id}")
+def remove_action(
+    action_id: int,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, bool]:
+    user_id = int(current_user["id"])
+    if not remove_action_item(user_id, action_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Action not found.")
+    return {"removed": True}
 
 
 @router.get("/{action_id}/tracker", response_model=ReviewTrackerPayload | None)
@@ -94,7 +182,14 @@ def create_tracker_from_action(
 
     existing_tracker = get_review_tracker_by_action_id(user_id, action_id)
     if existing_tracker:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tracker already exists.")
+        update_action_status(user_id, action_id, "pending_review")
+        refreshed_action = get_action_item_by_id(user_id, action_id)
+        if not refreshed_action:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to refresh action.")
+        return ReviewTrackerFromActionResponse(
+            tracker=_review_tracker_payload(existing_tracker),
+            action=_action_payload(refreshed_action),
+        )
 
     create_review_tracker(
         user_id,
