@@ -10,7 +10,6 @@ from review_analyzer.product_store import get_product_overview_rows
 from review_analyzer.review_store import get_review_trackers
 from review_analyzer.workflow_prompts import get_workflow_purpose_label
 
-ROLES = ["运营", "产研", "质检", "管理者"]
 ACTIVE_ACTION_STATUSES = {"todo", "in_progress", "pending_review"}
 ACTIVE_TRACKER_STATUSES = {"pending", "follow_up"}
 
@@ -43,48 +42,19 @@ def role_label(value: str | None) -> str:
     lang = getattr(_lang_var, "value", "zh")
     return mapping.get(lang, mapping["zh"])
 
-ROLE_INTROS = {
-    "运营": {
-        "headline": "今天先处理最影响转化和口碑的评论问题。",
-        "focus": "优先差评处理、Listing 优化和待复盘事项。",
-    },
-    "产研": {
-        "headline": "今天先验证问题是否值得改版，以及哪些卖点值得继续放大。",
-        "focus": "优先版本对比、功能缺口和竞品机会。",
-    },
-    "质检": {
-        "headline": "今天先盯住高频质量客诉，避免问题继续放大。",
-        "focus": "优先质量类动作、风险 SKU 和复盘闭环。",
-    },
-    "管理者": {
-        "headline": "今天先看最危险的 SKU 和最该推进的闭环事项。",
-        "focus": "优先风险排序、未完结事项和改版效果判断。",
-    },
+WORKSPACE_INTRO = {
+    "headline": "今天先看最影响增长和口碑的评论信号。",
+    "focus": "风险 SKU、未完结行动、复盘事项和最新批次会在这里汇总成同一套待办。",
 }
 
-ROLE_INTROS_EN = {
-    "运营": {
-        "headline": "start with the review issues that most affect conversion and reputation today.",
-        "focus": "Prioritize negative-review handling, listing optimization, and pending follow-up items.",
-    },
-    "产研": {
-        "headline": "start by validating which problems deserve a product update and which selling points deserve more emphasis.",
-        "focus": "Prioritize version comparison, feature gaps, and competitor opportunities.",
-    },
-    "质检": {
-        "headline": "focus on recurring quality complaints before they spread further.",
-        "focus": "Prioritize quality actions, risky SKUs, and the follow-up loop.",
-    },
-    "管理者": {
-        "headline": "start with the riskiest SKUs and the most important loop items to push forward.",
-        "focus": "Prioritize risk ranking, open items, and version-update outcomes.",
-    },
+WORKSPACE_INTRO_EN = {
+    "headline": "Start with the review signals that most affect growth and reputation today.",
+    "focus": "Risk SKUs, open actions, follow-up items, and recent batches are summarized into one shared task list.",
 }
 
 
-def get_workspace_summary(user_id: int, role: str, lang: str) -> dict[str, Any]:
+def get_workspace_summary(user_id: int, lang: str) -> dict[str, Any]:
     _set_lang(lang)
-    selected_role = role if role in ROLES else ROLES[0]
     products = get_product_overview_rows(user_id)
     actions = get_action_items(user_id)
     trackers = get_review_trackers(user_id)
@@ -96,8 +66,7 @@ def get_workspace_summary(user_id: int, role: str, lang: str) -> dict[str, Any]:
     recent_upload_count = _count_recent_uploads(sessions, days=7)
 
     return {
-        "role": selected_role,
-        "intro": ROLE_INTROS[selected_role] if lang == "zh" else ROLE_INTROS_EN[selected_role],
+        "intro": WORKSPACE_INTRO if lang == "zh" else WORKSPACE_INTRO_EN,
         "metrics": {
             "product_count": len(products),
             "risk_product_count": len(risk_products),
@@ -105,7 +74,7 @@ def get_workspace_summary(user_id: int, role: str, lang: str) -> dict[str, Any]:
             "open_tracker_count": len(open_trackers),
             "recent_upload_count": recent_upload_count,
         },
-        "today_tasks": _build_today_tasks(selected_role, products, risk_products, open_actions, open_trackers, sessions, lang),
+        "today_tasks": _build_today_tasks(products, risk_products, open_actions, open_trackers, sessions),
         "risk_products": risk_products[:5],
         "pending_trackers": _build_pending_trackers(open_trackers)[:5],
         "role_action_summary": _build_role_action_summary(open_actions),
@@ -199,46 +168,25 @@ def _build_recent_sessions(sessions: list[dict[str, Any]]) -> list[dict[str, Any
 
 
 def _build_today_tasks(
-    role: str,
     products: list[dict[str, Any]],
     risk_products: list[dict[str, Any]],
     actions: list[dict[str, Any]],
     trackers: list[dict[str, Any]],
     sessions: list[dict[str, Any]],
-    lang: str,
-) -> list[dict[str, Any]]:
-    builders = {
-        "运营": _build_operator_tasks,
-        "产研": _build_product_tasks,
-        "质检": _build_quality_tasks,
-        "管理者": _build_manager_tasks,
-    }
-    tasks = builders[role](products, risk_products, actions, trackers, sessions, lang)
-    return tasks[:3]
-
-
-def _build_operator_tasks(
-    products: list[dict[str, Any]],
-    risk_products: list[dict[str, Any]],
-    actions: list[dict[str, Any]],
-    trackers: list[dict[str, Any]],
-    sessions: list[dict[str, Any]],
-    lang: str,
 ) -> list[dict[str, Any]]:
     tasks: list[dict[str, Any]] = []
-    operator_actions = [item for item in actions if str(item.get("owner_role")) == "运营"]
-    if operator_actions:
-        action = operator_actions[0]
+    if actions:
+        action = actions[0]
         tasks.append(
             _task(
                 pick("行动中心", "Action Center"),
                 pick(
-                    f"先处理「{action.get('tag_name') or action.get('title') or '高频问题'}」",
-                    f"Handle '{action.get('tag_name') or action.get('title') or 'recurring issue'}' first",
+                    f"先推进「{action.get('tag_name') or action.get('title') or '高频问题'}」",
+                    f"Move '{action.get('tag_name') or action.get('title') or 'recurring issue'}' forward first",
                 ),
                 pick(
-                    f"{_display_product_name(action)} 当前已进入运营动作流，建议先推进状态并确认修改动作。",
-                    f"{_display_product_name(action)} is already in the operations action flow. Update the status and confirm the next fix first.",
+                    f"{_display_product_name(action)} 已有未完结行动，建议先确认负责人、状态和下一步。",
+                    f"{_display_product_name(action)} has an open action. Confirm the owner, status, and next step first.",
                 ),
                 pick("去行动中心", "Open Action Center"),
                 "actions",
@@ -248,14 +196,11 @@ def _build_operator_tasks(
         risk = risk_products[0]
         tasks.append(
             _task(
-                pick("Listing 优化", "Listing Optimization"),
+                pick("风险 SKU", "Risk SKU"),
+                pick(f"优先查看 {risk['product_name']} 的「{risk['top_issue']}」", f"Review '{risk['top_issue']}' for {risk['product_name']}"),
                 pick(
-                    f"优先优化 {risk['product_name']} 的「{risk['top_issue']}」",
-                    f"Prioritize {risk['top_issue']} for {risk['product_name']}",
-                ),
-                pick(
-                    f"当前差评率 {risk['negative_rate']:.1f}%，适合先从描述澄清、安装说明或素材表达切入。",
-                    f"The current negative rate is {risk['negative_rate']:.1f}%. Start with clearer descriptions, setup guidance, or creative messaging.",
+                    f"当前差评率 {risk['negative_rate']:.1f}%，适合先判断是否需要进入行动中心或复盘追踪。",
+                    f"The current negative rate is {risk['negative_rate']:.1f}%. Decide whether this needs an action item or follow-up tracking.",
                 ),
                 pick("看产品管理", "Open Product Management"),
                 "products",
@@ -276,6 +221,25 @@ def _build_operator_tasks(
                 ),
                 pick("去复盘追踪", "Open Follow-up Tracking"),
                 "reviews",
+            )
+        )
+    comparable_products = [row for row in products if int(row.get("session_count") or 0) >= 2]
+    if len(tasks) < 3 and comparable_products:
+        row = comparable_products[0]
+        tasks.append(
+            _task(
+                pick("版本验证", "Version Validation"),
+                pick(
+                    f"对比 {row.get('name') or row.get('parent_product_id')} 的不同版本表现",
+                    f"Compare different versions of {row.get('name') or row.get('parent_product_id')}",
+                ),
+                pick(
+                    "如果旧问题下降但新问题出现，就可以更快判断当前改版是否值得继续推进。",
+                    "If older issues decline but new ones appear, you can judge the version update much faster.",
+                ),
+                pick("去对比分析", "Open Compare"),
+                "analysis",
+                {"analysis_subpage": "compare"},
             )
         )
     if len(tasks) < 3 and sessions:
@@ -300,227 +264,7 @@ def _build_operator_tasks(
                 },
             )
         )
-    return tasks
-
-
-def _build_product_tasks(
-    products: list[dict[str, Any]],
-    risk_products: list[dict[str, Any]],
-    actions: list[dict[str, Any]],
-    trackers: list[dict[str, Any]],
-    sessions: list[dict[str, Any]],
-    lang: str,
-) -> list[dict[str, Any]]:
-    tasks: list[dict[str, Any]] = []
-    rd_actions = [item for item in actions if str(item.get("owner_role")) == "产研"]
-    if rd_actions:
-        action = rd_actions[0]
-        tasks.append(
-            _task(
-                pick("产研动作", "Product & R&D"),
-                pick(
-                    f"先判断「{action.get('tag_name') or action.get('title') or '功能问题'}」是否需要改版",
-                    f"Decide whether '{action.get('tag_name') or action.get('title') or 'feature issue'}' needs a version update",
-                ),
-                pick(
-                    f"{_display_product_name(action)} 已经沉淀成产研事项，建议确认是否进入版本改版验证。",
-                    f"{_display_product_name(action)} is already captured as a product task. Confirm whether it should move into version-validation work.",
-                ),
-                pick("去行动中心", "Open Action Center"),
-                "actions",
-            )
-        )
-    comparable_products = [row for row in products if int(row.get("session_count") or 0) >= 2]
-    if comparable_products:
-        row = comparable_products[0]
-        tasks.append(
-            _task(
-                pick("版本验证", "Version Validation"),
-                pick(
-                    f"对比 {row.get('name') or row.get('parent_product_id')} 的不同版本表现",
-                    f"Compare different versions of {row.get('name') or row.get('parent_product_id')}",
-                ),
-                pick(
-                    "如果旧问题下降但新问题出现，就可以更快判断当前改版是否值得继续推进。",
-                    "If older issues decline but new ones appear, you can judge the version update much faster.",
-                ),
-                pick("去对比分析", "Open Compare"),
-                "analysis",
-                {"analysis_subpage": "compare"},
-            )
-        )
-    if risk_products:
-        risk = risk_products[0]
-        tasks.append(
-            _task(
-                pick("问题机会", "Issue Opportunity"),
-                pick(
-                    f"研究 {risk['product_name']} 的「{risk['top_issue']}」根因",
-                    f"Investigate the root cause of '{risk['top_issue']}' for {risk['product_name']}",
-                ),
-                pick(
-                    "如果这是结构性问题，优先进入设计、材质或功能层面的改进清单。",
-                    "If this is structural, move first into design, material, or feature-level improvements.",
-                ),
-                pick("看产品管理", "Open Product Management"),
-                "products",
-            )
-        )
-    if len(tasks) < 3:
-        tasks.append(
-            _task(
-                pick("多产品机会", "Cross-Product Opportunity"),
-                pick("用横向对比找更值得放大的卖点", "Use cross-product comparison to find stronger selling points"),
-                pick(
-                    "把不同产品或变体放到同一张表里，更容易发现值得主推的功能方向。",
-                    "Putting products or variants into one table makes it easier to spot which feature direction deserves more emphasis.",
-                ),
-                pick("去对比分析", "Open Compare"),
-                "analysis",
-                {"analysis_subpage": "compare"},
-            )
-        )
-    return tasks
-
-
-def _build_quality_tasks(
-    products: list[dict[str, Any]],
-    risk_products: list[dict[str, Any]],
-    actions: list[dict[str, Any]],
-    trackers: list[dict[str, Any]],
-    sessions: list[dict[str, Any]],
-    lang: str,
-) -> list[dict[str, Any]]:
-    tasks: list[dict[str, Any]] = []
-    qa_actions = [item for item in actions if str(item.get("owner_role")) == "质检"]
-    if qa_actions:
-        action = qa_actions[0]
-        tasks.append(
-            _task(
-                pick("质量动作", "Quality Action"),
-                pick(
-                    f"优先处理 {_display_product_name(action)} 的「{action.get('tag_name') or '质量问题'}」",
-                    f"Prioritize '{action.get('tag_name') or 'quality issue'}' for {_display_product_name(action)}",
-                ),
-                pick(
-                    "这类事项最适合先确认是否已落地整改，再决定何时进入复盘。",
-                    "These items are best handled by confirming whether the corrective action is already in place before moving into follow-up.",
-                ),
-                pick("去行动中心", "Open Action Center"),
-                "actions",
-            )
-        )
-    if risk_products:
-        risk = risk_products[0]
-        tasks.append(
-            _task(
-                pick("高风险 SKU", "High-Risk SKU"),
-                pick(
-                    f"盯住 {risk['product_name']} 的差评扩散",
-                    f"Watch the negative-review spread for {risk['product_name']}",
-                ),
-                pick(
-                    f"当前差评率 {risk['negative_rate']:.1f}%，核心问题是「{risk['top_issue']}」，建议优先抽检或排查批次。",
-                    f"The negative rate is {risk['negative_rate']:.1f}%, centered on '{risk['top_issue']}'. Prioritize spot checks or batch investigation.",
-                ),
-                pick("看产品管理", "Open Product Management"),
-                "products",
-            )
-        )
-    if trackers:
-        tracker = trackers[0]
-        tasks.append(
-            _task(
-                pick("整改复盘", "Corrective Follow-up"),
-                pick(
-                    f"补齐「{tracker.get('tag_name') or tracker.get('title') or '问题'}」复盘结果",
-                    f"Complete the follow-up result for '{tracker.get('tag_name') or tracker.get('title') or 'issue'}'",
-                ),
-                pick(
-                    "只有把改进前后占比补齐，团队才能确认质量动作是否真的有效。",
-                    "Only after the before-and-after rates are filled in can the team confirm whether the quality action really worked.",
-                ),
-                pick("去复盘追踪", "Open Follow-up Tracking"),
-                "reviews",
-            )
-        )
-    return tasks
-
-
-def _build_manager_tasks(
-    products: list[dict[str, Any]],
-    risk_products: list[dict[str, Any]],
-    actions: list[dict[str, Any]],
-    trackers: list[dict[str, Any]],
-    sessions: list[dict[str, Any]],
-    lang: str,
-) -> list[dict[str, Any]]:
-    tasks: list[dict[str, Any]] = []
-    if risk_products:
-        risk = risk_products[0]
-        tasks.append(
-            _task(
-                pick("风险优先级", "Risk Priority"),
-                pick(
-                    f"先看 {risk['product_name']} 是否需要降级处理",
-                    f"Decide first whether {risk['product_name']} needs immediate mitigation",
-                ),
-                pick(
-                    f"当前差评率 {risk['negative_rate']:.1f}%，且聚焦在「{risk['top_issue']}」，适合作为今天的第一优先级。",
-                    f"The negative rate is {risk['negative_rate']:.1f}% and centers on '{risk['top_issue']}', making it a strong first priority for today.",
-                ),
-                pick("看产品管理", "Open Product Management"),
-                "products",
-            )
-        )
-    if actions:
-        tasks.append(
-            _task(
-                pick("团队推进", "Team Progress"),
-                pick(
-                    f"今天还有 {len(actions)} 个未完结事项需要推进",
-                    f"There are still {len(actions)} open items to move forward today",
-                ),
-                pick(
-                    "优先看行动中心里还停留在待处理或处理中状态的事项，避免闭环停滞。",
-                    "Start with items still marked To Do or In Progress in the Action Center to avoid stalled loops.",
-                ),
-                pick("去行动中心", "Open Action Center"),
-                "actions",
-            )
-        )
-    comparable_products = [row for row in products if int(row.get("session_count") or 0) >= 2]
-    if comparable_products:
-        tasks.append(
-            _task(
-                pick("改版效果", "Version Outcome"),
-                pick("用对比分析判断哪些 SKU 可以继续加码", "Use comparison analysis to decide which SKUs deserve more push"),
-                pick(
-                    "管理视角更适合先看主推机会款、风险款和待观察款的分层结果。",
-                    "From a management view, start with the layered outcome across priority products, risk products, and watch-list products.",
-                ),
-                pick("去对比分析", "Open Compare"),
-                "analysis",
-                {"analysis_subpage": "compare"},
-            )
-        )
-    elif trackers:
-        tasks.append(
-            _task(
-                pick("待复盘事项", "Pending Follow-up"),
-                pick(
-                    f"当前有 {len(trackers)} 个复盘项待判断是否完结",
-                    f"There are {len(trackers)} follow-up items still waiting for closure",
-                ),
-                pick(
-                    "先把待复盘项推进完，管理视角会更容易看清哪些动作真的产生了效果。",
-                    "Finishing pending follow-up items first makes it much easier to see which actions truly worked.",
-                ),
-                pick("去复盘追踪", "Open Follow-up Tracking"),
-                "reviews",
-            )
-        )
-    return tasks
+    return tasks[:3]
 
 
 def _task(

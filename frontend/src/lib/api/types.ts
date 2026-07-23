@@ -1,7 +1,4 @@
-export type WorkspaceRole = "运营" | "产研" | "质检" | "管理者";
-
 export type WorkspaceSummary = {
-  role: WorkspaceRole;
   intro: {
     headline: string;
     focus: string;

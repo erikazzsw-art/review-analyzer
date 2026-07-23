@@ -13,21 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { WorkspaceRole, WorkspaceSummary } from "@/lib/api/types";
+import type { WorkspaceSummary } from "@/lib/api/types";
 
 export const metadata = buildNoIndexMetadata({
   title: "Growth Workspace",
   description: "Authenticated workspace for review-driven growth decisions and follow-up tracking.",
 });
-
-const roleLabelKeys: Record<WorkspaceRole, string> = {
-  "运营": "roleOps",
-  "产研": "roleProduct",
-  "质检": "roleQA",
-  "管理者": "roleManager",
-};
-
-const roleList: WorkspaceRole[] = ["运营", "产研", "质检", "管理者"];
 
 function taskHref(page: string): string {
   if (page === "products") return "/products";
@@ -53,7 +44,6 @@ function safeNullNumber(value: unknown): number | null {
 function normalizeSummary(summary: WorkspaceSummary): WorkspaceSummary {
   return {
     ...summary,
-    role: roleList.includes(summary.role) ? summary.role : "运营",
     intro: {
       headline: safeText(summary.intro?.headline, "准备查看今日增长信号"),
       focus: safeText(summary.intro?.focus, "导入评论后，这里会汇总风险、机会和团队行动。"),
@@ -120,58 +110,26 @@ function normalizeSummary(summary: WorkspaceSummary): WorkspaceSummary {
   };
 }
 
-type WorkspacePageProps = {
-  searchParams?: Promise<{
-    role?: string;
-  }>;
-};
-
-export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
+export default async function WorkspacePage() {
   const t = await getTranslations("workspace");
-  const params = searchParams ? await searchParams : undefined;
-  const rawRole = params?.role;
-  const selectedRole = roleList.includes(rawRole as WorkspaceRole)
-    ? (rawRole as WorkspaceRole)
-    : "运营";
 
   try {
-    const summary = normalizeSummary(await getWorkspaceSummary(selectedRole));
+    const summary = normalizeSummary(await getWorkspaceSummary());
     return (
       <AppShell
         currentPath="/workspace"
         title={t("title")}
         description={t("description")}
       >
-        {/* Hero + Role Selector */}
+        {/* Hero */}
         <section className="rounded-shell border border-line bg-card px-5 py-5 shadow-card backdrop-blur">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h2 className="max-w-3xl font-heading text-2xl font-extrabold tracking-normal text-ink md:text-3xl">
-                {summary.intro.headline}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-soft">
-                {summary.intro.focus}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {roleList.map((role) => {
-                const isActive = role === summary.role;
-                return (
-                  <Link
-                    key={role}
-                    href={`/workspace?role=${encodeURIComponent(role)}`}
-                    className={[
-                      "inline-flex min-h-9 items-center justify-center rounded-pill border px-3.5 py-1.5 text-sm font-semibold transition",
-                      isActive
-                        ? "border-transparent bg-ink text-white shadow-card"
-                        : "border-line bg-white/80 text-soft hover:bg-white hover:text-ink",
-                    ].join(" ")}
-                  >
-                    {t(roleLabelKeys[role])}
-                  </Link>
-                );
-              })}
-            </div>
+          <div>
+            <h2 className="max-w-3xl font-heading text-2xl font-extrabold tracking-normal text-ink md:text-3xl">
+              {summary.intro.headline}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-soft">
+              {summary.intro.focus}
+            </p>
           </div>
         </section>
 

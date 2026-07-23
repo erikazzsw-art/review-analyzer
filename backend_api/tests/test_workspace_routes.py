@@ -9,9 +9,8 @@ from backend_api.app.main import app
 
 
 def test_workspace_summary_normalizes_invalid_upstream_data(monkeypatch):
-    def fake_get_workspace_summary(user_id: int, role: str, lang: str):
+    def fake_get_workspace_summary(user_id: int, lang: str):
         return {
-            "role": "未知角色",
             "intro": {
                 "headline": None,
                 "focus": "",
@@ -84,7 +83,7 @@ def test_workspace_summary_normalizes_invalid_upstream_data(monkeypatch):
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["role"] == "运营"
+    assert "role" not in payload
     assert payload["intro"]["headline"] == "欢迎回来"
     assert payload["intro"]["focus"] == "工作台数据正在加载。"
     assert payload["metrics"]["product_count"] == 0

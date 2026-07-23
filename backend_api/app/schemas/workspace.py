@@ -62,7 +62,6 @@ class WorkspaceRecentSessionPayload(BaseModel):
 
 
 class WorkspaceSummaryPayload(BaseModel):
-    role: str
     intro: WorkspaceIntroPayload
     metrics: WorkspaceMetricsPayload
     today_tasks: list[WorkspaceTaskPayload]

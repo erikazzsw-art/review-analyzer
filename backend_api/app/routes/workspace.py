@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.workspace import WorkspaceSummaryPayload
-from review_analyzer.workspace_store import ROLES, get_workspace_summary
+from review_analyzer.workspace_store import get_workspace_summary
 
 router = APIRouter(prefix="/workspace", tags=["workspace"])
 
@@ -28,11 +28,10 @@ def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def _normalize_workspace_summary(summary: dict[str, Any], role: str) -> dict[str, Any]:
+def _normalize_workspace_summary(summary: dict[str, Any]) -> dict[str, Any]:
     intro = _as_dict(summary.get("intro"))
     metrics = _as_dict(summary.get("metrics"))
     return {
-        "role": role if role in ROLES else ROLES[0],
         "intro": {
             "headline": _safe_text(intro.get("headline"), "欢迎回来"),
             "focus": _safe_text(intro.get("focus"), "工作台数据正在加载。"),
@@ -107,19 +106,15 @@ def _normalize_workspace_summary(summary: dict[str, Any], role: str) -> dict[str
 
 @router.get("/summary", response_model=WorkspaceSummaryPayload)
 def get_workspace_summary_route(
-    role: str = Query(default="运营"),
     lang: str = Query(default="zh"),
     current_user: dict = Depends(get_current_user),
 ) -> WorkspaceSummaryPayload:
-    selected_role = role if role in ROLES else ROLES[0]
     selected_lang = lang if lang in {"zh", "en"} else "zh"
     summary = _normalize_workspace_summary(
         get_workspace_summary(
             int(current_user["id"]),
-            selected_role,
             selected_lang,
-        ),
-        selected_role,
+        )
     )
     return WorkspaceSummaryPayload(
         **summary,

@@ -14,7 +14,6 @@ import type {
   ProductSearchResponse,
   SettingsResponse,
   ReviewTrackersResponse,
-  WorkspaceRole,
   WorkspaceSummary,
 } from "@/lib/api/types";
 
@@ -66,10 +65,8 @@ async function apiFetch<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function getWorkspaceSummary(
-  role: WorkspaceRole = "运营",
-): Promise<WorkspaceSummary> {
-  const search = new URLSearchParams({ role, lang: "zh" });
+export async function getWorkspaceSummary(): Promise<WorkspaceSummary> {
+  const search = new URLSearchParams({ lang: "zh" });
   return apiFetch<WorkspaceSummary>(`/workspace/summary?${search.toString()}`);
 }
 
