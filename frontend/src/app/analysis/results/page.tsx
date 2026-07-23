@@ -101,6 +101,53 @@ function hasAspectEvidence(
   );
 }
 
+function getAspectsPayload(comment: Record<string, unknown>): Record<string, unknown> | null {
+  const raw = comment.aspects_json;
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function hasSpecificIssueEvidence(
+  comment: Record<string, unknown>,
+  row: Record<string, unknown>,
+): boolean {
+  const aspectKey = String(row.aspect_key || "").trim();
+  const canonicalIssueKey = String(row.canonical_issue_key || "").trim();
+  const subCategory = String(row.sub_category || "").trim();
+  if (!aspectKey || !canonicalIssueKey) return false;
+  const aj = getAspectsPayload(comment) as
+    | { aspects?: Array<Record<string, unknown>>; cluster_propagated?: boolean; sub_category?: string }
+    | null;
+  if (!aj || aj.cluster_propagated) return false;
+  if (subCategory && String(aj.sub_category || comment.sub_category || comment.category || "") !== subCategory) {
+    return false;
+  }
+  const aspects = aj.aspects;
+  if (!Array.isArray(aspects)) return false;
+  const content = String((comment as Record<string, unknown>).content || "");
+  return aspects.some(
+    (a) =>
+      String(a.key || a.aspect_key || "") === aspectKey &&
+      String(a.canonical_issue_key || "") === canonicalIssueKey &&
+      String(a.polarity || "").toLowerCase() === "negative" &&
+      a.display_allowed !== false &&
+      !!a.evidence_span &&
+      content.includes(String(a.evidence_span)),
+  );
+}
+
 function enrichRowsWithQuotes(
   rows: Array<Record<string, unknown>>,
   comments: Array<Record<string, unknown>>,
@@ -113,11 +160,12 @@ function enrichRowsWithQuotes(
     if (!tag) return row;
     const quotes: string[] = [];
     const seen = new Set<string>();
+    const hasSpecificIdentity = Boolean(row.aspect_key && row.canonical_issue_key);
 
-    // Pass 1: comments with direct LLM evidence for this aspect
+    // Pass 1: comments with direct LLM evidence for this specific issue occurrence
     for (const c of comments) {
       if (quotes.length >= perRow) break;
-      if (!hasAspectEvidence(c, tag)) continue;
+      if (hasSpecificIdentity ? !hasSpecificIssueEvidence(c, row) : !hasAspectEvidence(c, tag)) continue;
       const content = String((c as Record<string, unknown>).content || "").trim();
       if (!content || seen.has(content)) continue;
       seen.add(content);
@@ -125,7 +173,7 @@ function enrichRowsWithQuotes(
     }
 
     // Pass 2: fall back to tag-field match if not enough verified quotes
-    if (quotes.length < perRow) {
+    if (quotes.length < perRow && !hasSpecificIdentity) {
       for (const c of comments) {
         if (quotes.length >= perRow) break;
         const raw = String((c as Record<string, unknown>)[source] || "");
@@ -309,12 +357,20 @@ export default async function AnalysisResultsPage({
       detail: String(row.reason || row.detail || row.pct || ""),
       currentPct: typeof row.pct === "number" ? row.pct : Number(row.pct) || null,
       suggestedAction: String(row.reason || row.detail || ""),
+      specificIssue: String(row.specific_issue || row.tag || row.label || t("negative")),
+      aspectKey: String(row.aspect_key || "") || null,
+      canonicalIssueKey: String(row.canonical_issue_key || "") || null,
+      dimension: String(row.dimension || row.aspect_label || "") || null,
     })),
     ...(unmetNeeds.rows || []).map((row) => ({
       label: String(row.tag || row.label || t("moduleUnmetNeeds")),
       detail: String(row.reason || row.detail || row.summary || row.value || ""),
       currentPct: typeof row.pct === "number" ? row.pct : Number(row.pct) || null,
       suggestedAction: String(row.reason || row.detail || ""),
+      specificIssue: String(row.specific_issue || row.tag || row.label || t("moduleUnmetNeeds")),
+      aspectKey: String(row.aspect_key || "") || null,
+      canonicalIssueKey: String(row.canonical_issue_key || "") || null,
+      dimension: String(row.dimension || row.aspect_label || "") || null,
     })),
   ].slice(0, 8);
 

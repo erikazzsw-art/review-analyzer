@@ -36,6 +36,10 @@ export type WorkspaceSummary = {
     current_pct: number | null;
     review_scope: string;
   }>;
+  responsibility_action_summary?: Array<{
+    responsibility: string;
+    count: number;
+  }>;
   role_action_summary: Array<{
     role: string;
     count: number;
@@ -461,7 +465,11 @@ export type ActionItem = {
   title: string;
   tag_name: string | null;
   tag_type: string | null;
+  aspect_key: string | null;
+  canonical_issue_key: string | null;
+  specific_issue: string | null;
   current_pct: number | null;
+  // Backend compatibility field. UI treats this as issue ownership / responsible department.
   owner_role: string | null;
   suggested_action: string | null;
   ai_suggestions_json: string[];
@@ -482,6 +490,7 @@ export type ActionItem = {
     date?: string | null;
     issue_tag?: string | null;
     highlight_tag?: string | null;
+    aspects_json?: Record<string, unknown> | null;
   }>;
   product_group_key: string | null;
   product_group_name: string | null;
@@ -504,7 +513,12 @@ export type ActionItemCreatePayload = {
   title: string;
   tagName?: string | null;
   tagType?: string;
+  aspectKey?: string | null;
+  canonicalIssueKey?: string | null;
+  specificIssue?: string | null;
   currentPct?: number | null;
+  responsibleDepartment?: string | null;
+  // Compatibility alias for the existing backend owner_role field.
   ownerRole?: string | null;
   suggestedAction?: string | null;
   aiSuggestions?: string[];
@@ -531,6 +545,9 @@ export type ReviewTracker = {
   variant_id: number | null;
   tracker_title: string;
   tag_name: string | null;
+  aspect_key: string | null;
+  canonical_issue_key: string | null;
+  specific_issue: string | null;
   baseline_pct: number | null;
   improvement_action: string | null;
   effective_batch: string | null;
@@ -561,6 +578,9 @@ export type ReviewTrackerCreatePayload = {
   variantId?: number | null;
   trackerTitle: string;
   tagName?: string | null;
+  aspectKey?: string | null;
+  canonicalIssueKey?: string | null;
+  specificIssue?: string | null;
   baselinePct?: number | null;
   improvementAction?: string | null;
   effectiveBatch?: string | null;

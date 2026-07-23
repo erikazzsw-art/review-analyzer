@@ -35,17 +35,38 @@ _ACTION_SELECT_SQL = f"""
         (
             SELECT COALESCE(jsonb_agg(to_jsonb(source_review) ORDER BY source_review.id DESC), '[]'::jsonb)
             FROM (
-                SELECT c.id, c.content, c.rating, c.date, c.issue_tag, c.highlight_tag
+                SELECT
+                    c.id,
+                    c.content,
+                    c.rating,
+                    c.date,
+                    c.issue_tag,
+                    c.highlight_tag,
+                    c.aspects_json
                 FROM comments c
                 WHERE c.user_id = ai.user_id
                   AND (ai.session_id IS NULL OR c.session_id = ai.session_id)
                   AND (NULLIF(ai.source_product_id, '') IS NULL OR c.product_id = ai.source_product_id)
                   AND (
-                      NULLIF(ai.tag_name, '') IS NULL
-                      OR POSITION(
-                          LOWER(ai.tag_name)
-                          IN LOWER(COALESCE(c.issue_tag, '') || ' ' || COALESCE(c.highlight_tag, ''))
-                      ) > 0
+                      CASE
+                          WHEN NULLIF(ai.aspect_key, '') IS NOT NULL
+                               AND NULLIF(ai.canonical_issue_key, '') IS NOT NULL
+                          THEN EXISTS (
+                              SELECT 1
+                              FROM jsonb_array_elements(COALESCE(c.aspects_json->'aspects', '[]'::jsonb)) aspect
+                              WHERE COALESCE(aspect->>'key', aspect->>'aspect_key') = ai.aspect_key
+                                AND aspect->>'canonical_issue_key' = ai.canonical_issue_key
+                                AND LOWER(COALESCE(aspect->>'polarity', '')) = 'negative'
+                                AND LOWER(COALESCE(aspect->>'display_allowed', 'true')) <> 'false'
+                          )
+                          ELSE (
+                              NULLIF(ai.tag_name, '') IS NULL
+                              OR POSITION(
+                                  LOWER(ai.tag_name)
+                                  IN LOWER(COALESCE(c.issue_tag, '') || ' ' || COALESCE(c.highlight_tag, ''))
+                              ) > 0
+                          )
+                      END
                   )
                 ORDER BY c.id DESC
                 LIMIT 3
@@ -88,9 +109,10 @@ def create_action_item(user_id: int, data: dict[str, Any]) -> int:
                 """INSERT INTO action_items
                    (user_id, product_id, variant_id, session_id, source_product_id, source_version,
                     source_batch_label, title, tag_name, tag_type, current_pct, owner_role,
-                    suggested_action, expected_effect_batch, expected_review_at, status,
-                    sort_order, ai_suggestions_json)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    aspect_key, canonical_issue_key, specific_issue, suggested_action,
+                    expected_effect_batch, expected_review_at, status, sort_order,
+                    ai_suggestions_json)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                    RETURNING id""",
                 (
                     user_id,
@@ -105,6 +127,9 @@ def create_action_item(user_id: int, data: dict[str, Any]) -> int:
                     data.get("tag_type", "issue"),
                     data.get("current_pct"),
                     data.get("owner_role"),
+                    data.get("aspect_key"),
+                    data.get("canonical_issue_key"),
+                    data.get("specific_issue") or data.get("tag_name"),
                     data.get("suggested_action"),
                     data.get("expected_effect_batch"),
                     data.get("expected_review_at"),

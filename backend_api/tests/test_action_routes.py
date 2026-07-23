@@ -21,6 +21,9 @@ def _action_row(action_id: int = 12) -> dict:
         "title": "Improve the waterproofing.",
         "tag_name": "waterproofing",
         "tag_type": "issue",
+        "aspect_key": "waterproof_performance",
+        "canonical_issue_key": "water_leaks_through",
+        "specific_issue": "Water Leaks Through",
         "current_pct": 18.2,
         "owner_role": "产研",
         "suggested_action": "Improve seam sealing.",
@@ -52,6 +55,9 @@ def _tracker_row(action_id: int = 12) -> dict:
         "variant_id": None,
         "tracker_title": "waterproofing 复盘",
         "tag_name": "waterproofing",
+        "aspect_key": "waterproof_performance",
+        "canonical_issue_key": "water_leaks_through",
+        "specific_issue": "Water Leaks Through",
         "baseline_pct": 18.2,
         "improvement_action": "Improve seam sealing.",
         "effective_batch": None,
@@ -108,6 +114,96 @@ def test_create_tracker_from_action_reuses_existing_tracker(monkeypatch):
     assert captured["status"] == "pending_review"
     assert response.json()["action"]["status"] == "pending_review"
     assert response.json()["tracker"]["id"] == 33
+    assert response.json()["tracker"]["aspect_key"] == "waterproof_performance"
+    assert response.json()["tracker"]["canonical_issue_key"] == "water_leaks_through"
+    assert response.json()["tracker"]["specific_issue"] == "Water Leaks Through"
+
+
+def test_create_action_accepts_specific_issue_metadata(monkeypatch):
+    captured: dict[str, object] = {}
+
+    def fake_create_action_item(user_id: int, data: dict) -> int:
+        captured["user_id"] = user_id
+        captured["data"] = data
+        return 12
+
+    monkeypatch.setattr("backend_api.app.routes.actions.create_action_item", fake_create_action_item)
+    monkeypatch.setattr("backend_api.app.routes.actions.get_action_item_by_id", lambda user_id, action_id: _action_row(action_id))
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/actions",
+            json={
+                "product_id": 3,
+                "session_id": 21,
+                "source_product_id": "PARENT-1",
+                "source_version": "V1",
+                "title": "Fix leaking issue",
+                "tag_name": "Water Leaks Through",
+                "tag_type": "issue",
+                "aspect_key": "waterproof_performance",
+                "canonical_issue_key": "water_leaks_through",
+                "specific_issue": "Water Leaks Through",
+                "current_pct": 18.2,
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = captured["data"]
+    assert isinstance(data, dict)
+    assert captured["user_id"] == 7
+    assert data["aspect_key"] == "waterproof_performance"
+    assert data["canonical_issue_key"] == "water_leaks_through"
+    assert data["specific_issue"] == "Water Leaks Through"
+    assert response.json()["aspect_key"] == "waterproof_performance"
+    assert response.json()["canonical_issue_key"] == "water_leaks_through"
+    assert response.json()["specific_issue"] == "Water Leaks Through"
+
+
+def test_create_tracker_from_action_inherits_specific_issue_metadata(monkeypatch):
+    captured: dict[str, object] = {}
+    created = {"value": False}
+
+    monkeypatch.setattr("backend_api.app.routes.actions.get_action_item_by_id", lambda user_id, action_id: _action_row(action_id))
+
+    def fake_get_review_tracker_by_action_id(user_id: int, action_id: int):
+        return _tracker_row(action_id) if created["value"] else None
+
+    def fake_create_review_tracker(user_id: int, data: dict) -> int:
+        captured["user_id"] = user_id
+        captured["data"] = data
+        created["value"] = True
+        return 33
+
+    monkeypatch.setattr("backend_api.app.routes.actions.get_review_tracker_by_action_id", fake_get_review_tracker_by_action_id)
+    monkeypatch.setattr("backend_api.app.routes.actions.create_review_tracker", fake_create_review_tracker)
+    monkeypatch.setattr("backend_api.app.routes.actions.update_action_status", lambda user_id, action_id, status: None)
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/actions/12/tracker",
+            json={
+                "tracker_title": "Water leak validation",
+                "result_status": "pending",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = captured["data"]
+    assert isinstance(data, dict)
+    assert captured["user_id"] == 7
+    assert data["aspect_key"] == "waterproof_performance"
+    assert data["canonical_issue_key"] == "water_leaks_through"
+    assert data["specific_issue"] == "Water Leaks Through"
+    assert response.json()["tracker"]["aspect_key"] == "waterproof_performance"
 
 
 def test_remove_product_group_returns_removed_count(monkeypatch):

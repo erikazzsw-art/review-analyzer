@@ -27,6 +27,7 @@ from backend_api.app.services.review_pool import (
     pool_lookup,
     pool_write,
 )
+from backend_api.app.services.specific_issue import enrich_aspects_json
 from backend_api.app.services.sub_category_inference import infer_sub_category_from_payload
 from backend_api.app.services.taxonomy_coverage_monitor import (
     build_coverage_warning,
@@ -567,6 +568,12 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "prompt_version": v4.get("prompt_version", PROMPT_VERSION),
                     "cluster_propagated": v4.get("cluster_propagated", False),
                 }
+                result["aspects_json"] = enrich_aspects_json(
+                    result["aspects_json"],
+                    sub_category=sub_category,
+                    content=comment.get("content", ""),
+                    locale=locale,
+                )
                 result["analyzer_version"] = ANALYZER_VERSION
                 result["cache_hit_level"] = v4.get("cache_hit_level")
                 result["cache_source_id"] = v4.get("cache_source_id")

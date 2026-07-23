@@ -273,7 +273,11 @@ class ActionItemCreatePayload(BaseModel):
     title: str
     tag_name: str | None = None
     tag_type: str = "issue"
+    aspect_key: str | None = None
+    canonical_issue_key: str | None = None
+    specific_issue: str | None = None
     current_pct: float | None = None
+    # Compatibility field: UI treats this as issue ownership / responsible department.
     owner_role: str | None = None
     suggested_action: str | None = None
     ai_suggestions: list[str] = Field(default_factory=list)
@@ -294,7 +298,11 @@ class ActionItemPayload(BaseModel):
     title: str
     tag_name: str | None = None
     tag_type: str | None = None
+    aspect_key: str | None = None
+    canonical_issue_key: str | None = None
+    specific_issue: str | None = None
     current_pct: float | None = None
+    # Compatibility field: UI treats this as issue ownership / responsible department.
     owner_role: str | None = None
     suggested_action: str | None = None
     ai_suggestions_json: list[str] = Field(default_factory=list)
@@ -358,6 +366,9 @@ class ReviewTrackerCreatePayload(BaseModel):
     variant_id: int | None = None
     tracker_title: str
     tag_name: str | None = None
+    aspect_key: str | None = None
+    canonical_issue_key: str | None = None
+    specific_issue: str | None = None
     baseline_pct: float | None = None
     improvement_action: str | None = None
     effective_batch: str | None = None
@@ -375,6 +386,9 @@ class ReviewTrackerPayload(BaseModel):
     variant_id: int | None = None
     tracker_title: str
     tag_name: str | None = None
+    aspect_key: str | None = None
+    canonical_issue_key: str | None = None
+    specific_issue: str | None = None
     baseline_pct: float | None = None
     improvement_action: str | None = None
     effective_batch: str | None = None

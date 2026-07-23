@@ -25,14 +25,19 @@ type InlineActionButtonProps = {
   tag: string;
   pct?: number;
   reason?: string;
+  aspectKey?: string | null;
+  canonicalIssueKey?: string | null;
+  specificIssue?: string | null;
+  dimension?: string | null;
 };
 
-// 见 create-action-panel.tsx 顶部注释：owner_role 后端存中文，UI 仅做显示 i18n。
-const OWNER_ROLES = [
+// 见 create-action-panel.tsx 顶部注释：owner_role 后端保留为兼容字段，UI 显示为责任部门。
+const RESPONSIBLE_DEPARTMENTS = [
   { value: "运营", labelKey: "ownerOps" },
   { value: "产研", labelKey: "ownerProduct" },
   { value: "质检", labelKey: "ownerQA" },
-  { value: "复盘", labelKey: "ownerReview" },
+  { value: "客服", labelKey: "ownerCS" },
+  { value: "其他", labelKey: "ownerOther" },
 ] as const;
 
 export function InlineActionButton({
@@ -43,11 +48,16 @@ export function InlineActionButton({
   tag,
   pct,
   reason,
+  aspectKey,
+  canonicalIssueKey,
+  specificIssue,
+  dimension,
 }: InlineActionButtonProps) {
   const t = useTranslations("analysis.action");
+  const tTable = useTranslations("analysis.table");
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [ownerRole, setOwnerRole] = useState<string>(OWNER_ROLES[0].value);
+  const [responsibleDepartment, setResponsibleDepartment] = useState<string>(RESPONSIBLE_DEPARTMENTS[0].value);
   const [action, setAction] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -57,13 +67,16 @@ export function InlineActionButton({
     try {
       const payload: ActionItemCreatePayload = {
         title: title.trim() || tag,
-        ownerRole: ownerRole,
+        responsibleDepartment,
         suggestedAction: action.trim() || reason || "",
         sourceProductId: sourceProductId,
         sourceVersion: sourceVersion,
         sourceBatchLabel: t("inlineBatchLabelFormat", { sessionId }),
         currentPct: pct ?? null,
         tagName: tag,
+        aspectKey: aspectKey ?? null,
+        canonicalIssueKey: canonicalIssueKey ?? null,
+        specificIssue: specificIssue || tag,
         status: "in_progress",
       };
       if (productId) {
@@ -107,6 +120,9 @@ export function InlineActionButton({
           <div className="rounded-lg border border-line bg-muted/40 p-3">
             <div className="text-xs font-medium text-soft">{t("inlineSource")}</div>
             <div className="mt-1 text-sm font-semibold text-ink">{tag}</div>
+            {dimension ? (
+              <div className="mt-0.5 text-xs text-soft">{tTable("dimension")}: {dimension}</div>
+            ) : null}
             {pct !== undefined && (
               <div className="mt-0.5 text-xs text-soft">
                 {t("inlineMentionedFormat", { pct: pct.toFixed(1) })}
@@ -127,15 +143,15 @@ export function InlineActionButton({
           <div className="space-y-2">
             <label className="text-xs font-medium text-ink">{t("inlineOwnerLabel")}</label>
             <div className="flex flex-wrap gap-1.5">
-              {OWNER_ROLES.map((role) => (
+              {RESPONSIBLE_DEPARTMENTS.map((department) => (
                 <Button
-                  key={role.value}
-                  variant={ownerRole === role.value ? "default" : "outline"}
+                  key={department.value}
+                  variant={responsibleDepartment === department.value ? "default" : "outline"}
                   size="sm"
                   className="h-7 px-3 text-xs"
-                  onClick={() => setOwnerRole(role.value)}
+                  onClick={() => setResponsibleDepartment(department.value)}
                 >
-                  {t(role.labelKey)}
+                  {t(department.labelKey)}
                 </Button>
               ))}
             </div>

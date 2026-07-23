@@ -28,6 +28,7 @@ DEFAULT_ASPECT_DEPT_MAP: dict[str, str] = {
     "missing_parts": "qa",
     "smell": "qa",
     "safety": "qa",
+    "leak_proof": "qa",
     # 产研（设计相关）
     "aesthetics": "product",
     "color_accuracy": "product",

@@ -49,6 +49,10 @@ type ActionCandidate = {
   detail: string;
   currentPct: number | null;
   suggestedAction: string;
+  aspectKey?: string | null;
+  canonicalIssueKey?: string | null;
+  specificIssue?: string | null;
+  dimension?: string | null;
 };
 
 type Props = {
@@ -76,6 +80,38 @@ function reviewBody(comment: Record<string, unknown>): string {
   return rv(comment.content || comment.body || comment.comment, "");
 }
 
+function getAspects(comment: Record<string, unknown>): Array<Record<string, unknown>> {
+  const raw = comment.aspects_json;
+  let parsed: unknown = raw;
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+  }
+  const aspects = (parsed as { aspects?: unknown[] } | null | undefined)?.aspects;
+  return Array.isArray(aspects)
+    ? aspects.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+    : [];
+}
+
+function negativeIssueOccurrences(comment: Record<string, unknown>): Array<Record<string, unknown>> {
+  return getAspects(comment).filter(
+    (aspect) =>
+      String(aspect.polarity || "").toLowerCase() === "negative" &&
+      aspect.display_allowed !== false &&
+      Boolean(aspect.specific_issue),
+  );
+}
+
+function joinIssueField(comment: Record<string, unknown>, field: string): string {
+  return negativeIssueOccurrences(comment)
+    .map((aspect) => String(aspect[field] || "").trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
 function safeFilenamePart(value: string): string {
   return value.trim().replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_") || "analysis";
 }
@@ -88,8 +124,8 @@ function buildRawReviewsXlsx(
   const wb = XLSX.utils.book_new();
   const headers =
     locale === "zh"
-      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签"]
-      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags"];
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "Specific Issue", "Canonical Issue Key", "Dimension", "Aspect Key", "Evidence Span", "Issue Confidence"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Specific Issue", "Canonical Issue Key", "Dimension", "Aspect Key", "Evidence Span", "Issue Confidence"];
   const rows = comments.map((comment, index) => [
     index + 1,
     reviewBody(comment),
@@ -104,6 +140,12 @@ function buildRawReviewsXlsx(
     rv(comment.improvement, ""),
     rv(comment.issue_tag, ""),
     rv(comment.highlight_tag, ""),
+    joinIssueField(comment, "specific_issue"),
+    joinIssueField(comment, "canonical_issue_key"),
+    joinIssueField(comment, "dimension") || joinIssueField(comment, "aspect_label"),
+    joinIssueField(comment, "key") || joinIssueField(comment, "aspect_key"),
+    joinIssueField(comment, "evidence_span"),
+    joinIssueField(comment, "issue_confidence"),
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -121,6 +163,12 @@ function buildRawReviewsXlsx(
     { wch: 36 },
     { wch: 24 },
     { wch: 24 },
+    { wch: 26 },
+    { wch: 26 },
+    { wch: 24 },
+    { wch: 22 },
+    { wch: 34 },
+    { wch: 18 },
   ];
   XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "评论原文" : "Raw Reviews");
 
@@ -183,6 +231,26 @@ function extractQuotes(row: RowItem): string[] {
   return [];
 }
 
+function rowIssueLabel(row: RowItem, fallback: string): string {
+  return String(row.specific_issue || row.tag || row.label || fallback);
+}
+
+function rowDimension(row: RowItem): string {
+  return String(row.dimension || row.aspect_label || "");
+}
+
+function rowAspectKey(row: RowItem): string {
+  return String(row.aspect_key || "");
+}
+
+function rowCanonicalIssueKey(row: RowItem): string {
+  return String(row.canonical_issue_key || "");
+}
+
+function rowSubCategory(row: RowItem): string {
+  return String(row.sub_category || "");
+}
+
 type TagTableProps = {
   items: RowItem[];
   variant: "positive" | "negative" | "neutral";
@@ -215,6 +283,163 @@ function TagTable({
   if (items.length === 0) return null;
 
   const limited = items.slice(0, 10);
+  const issueMode = variant === "negative" && tagSource === "issue_tag";
+
+  if (issueMode) {
+    return (
+      <>
+        <div className="hidden md:block">
+          <Table className="w-full table-fixed">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[28%]">{t("specificIssue")}</TableHead>
+                <TableHead className="w-36">{t("mentionPct")}</TableHead>
+                <TableHead className="w-44">{t("dimension")}</TableHead>
+                <TableHead>{t("evidence")}</TableHead>
+                <TableHead className="w-32">{t("action")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {limited.map((row, i) => {
+                const tag = rowIssueLabel(row, `#${i + 1}`);
+                const pct = Number(row.pct || 0);
+                const quotes = extractQuotes(row);
+                const dimension = rowDimension(row);
+                const aspectKey = rowAspectKey(row);
+                const canonicalIssueKey = rowCanonicalIssueKey(row);
+                const subCategory = rowSubCategory(row);
+                const reasonForAction = String(row.reason || row.detail || "");
+                return (
+                  <TableRow key={`${variant}-issue-${i}`} className="group align-top">
+                    <TableCell className="break-words text-sm font-semibold text-ink">
+                      <span className="mr-1.5 text-xs font-bold text-soft">#{i + 1}</span>
+                      {tag}
+                    </TableCell>
+                    <TableCell>
+                      <PctBar pct={pct} color={barColor} />
+                    </TableCell>
+                    <TableCell className="break-words text-xs font-medium text-soft">
+                      {dimension || "—"}
+                    </TableCell>
+                    <TableCell className="text-xs leading-5 text-soft">
+                      {quotes.length > 0 ? (
+                        <ul className="space-y-1.5">
+                          {quotes.slice(0, 3).map((q, qi) => (
+                            <li key={qi} className="flex gap-1.5">
+                              <span className="text-soft/60">•</span>
+                              <span className="min-w-0">{q}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col items-start gap-1.5">
+                        {comments && (
+                          <DownloadTagButton
+                            tag={tag}
+                            comments={comments}
+                            tagSource="issue_tag"
+                            locale={locale || "zh"}
+                            specificIssue={tag}
+                            aspectKey={aspectKey}
+                            canonicalIssueKey={canonicalIssueKey}
+                            dimension={dimension}
+                            subCategory={subCategory}
+                          />
+                        )}
+                        {showAction && sessionId > 0 && (
+                          <InlineActionButton
+                            sessionId={sessionId}
+                            productId={session.product_ref_id}
+                            sourceProductId={session.product_id}
+                            sourceVersion={session.version}
+                            tag={tag}
+                            pct={pct}
+                            reason={reasonForAction}
+                            specificIssue={tag}
+                            aspectKey={aspectKey}
+                            canonicalIssueKey={canonicalIssueKey}
+                            dimension={dimension}
+                          />
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="grid gap-3 md:hidden">
+          {limited.map((row, i) => {
+            const tag = rowIssueLabel(row, `#${i + 1}`);
+            const pct = Number(row.pct || 0);
+            const quotes = extractQuotes(row).slice(0, 3);
+            const dimension = rowDimension(row);
+            const aspectKey = rowAspectKey(row);
+            const canonicalIssueKey = rowCanonicalIssueKey(row);
+            const subCategory = rowSubCategory(row);
+            const reasonForAction = String(row.reason || row.detail || "");
+            return (
+              <div key={`${variant}-issue-card-${i}`} className="rounded-card border border-line bg-white p-3">
+                <div className="flex items-start gap-2">
+                  <span className="shrink-0 text-xs font-bold text-soft">#{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="break-words text-sm font-semibold text-ink">{tag}</div>
+                    <div className="mt-1 text-xs text-soft">
+                      {pct.toFixed(1)}% · {t("dimension")}: {dimension || "—"}
+                    </div>
+                  </div>
+                </div>
+                {quotes.length > 0 ? (
+                  <div className="mt-3 space-y-1.5">
+                    {quotes.map((q, qi) => (
+                      <p key={qi} className="text-xs leading-5 text-soft">
+                        &ldquo;{q}&rdquo;
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                  {comments && (
+                    <DownloadTagButton
+                      tag={tag}
+                      comments={comments}
+                      tagSource="issue_tag"
+                      locale={locale || "zh"}
+                      specificIssue={tag}
+                      aspectKey={aspectKey}
+                      canonicalIssueKey={canonicalIssueKey}
+                      dimension={dimension}
+                      subCategory={subCategory}
+                    />
+                  )}
+                  {showAction && sessionId > 0 && (
+                    <InlineActionButton
+                      sessionId={sessionId}
+                      productId={session.product_ref_id}
+                      sourceProductId={session.product_id}
+                      sourceVersion={session.version}
+                      tag={tag}
+                      pct={pct}
+                      reason={reasonForAction}
+                      specificIssue={tag}
+                      aspectKey={aspectKey}
+                      canonicalIssueKey={canonicalIssueKey}
+                      dimension={dimension}
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+  }
 
   return (
     <Table>

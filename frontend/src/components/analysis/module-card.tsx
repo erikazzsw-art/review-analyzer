@@ -19,6 +19,14 @@ type SessionInfo = {
   auto_title?: string | null;
 };
 
+type IssueMeta = {
+  specificIssue?: string | null;
+  canonicalIssueKey?: string | null;
+  aspectKey?: string | null;
+  dimension?: string | null;
+  subCategory?: string | null;
+};
+
 type ModuleCardProps = {
   sessionId: number;
   moduleKey: string;
@@ -137,6 +145,64 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale,
   );
 }
 
+function parseAspectsPayload(comment: Record<string, unknown>): Record<string, unknown> | null {
+  const raw = comment.aspects_json;
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function getAspects(comment: Record<string, unknown>): Array<Record<string, unknown>> {
+  const aspects = parseAspectsPayload(comment)?.aspects;
+  return Array.isArray(aspects)
+    ? aspects.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+    : [];
+}
+
+function safeIssueSlug(value: string): string {
+  const asciiSlug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  if (asciiSlug) return asciiSlug;
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "_")
+    .replace(/^_+|_+$/g, "") || "unspecified_issue";
+}
+
+function issueLabel(row: Record<string, unknown>, fallback = ""): string {
+  return String(row.specific_issue || row.tag || row.label || fallback);
+}
+
+function issueDimension(row: Record<string, unknown>): string {
+  return String(row.dimension || row.aspect_label || "");
+}
+
+function issueMetaFromRow(row: Record<string, unknown> | undefined, fallbackIssue = ""): IssueMeta {
+  const source = row || {};
+  return {
+    specificIssue: issueLabel(source, fallbackIssue) || fallbackIssue || null,
+    canonicalIssueKey: String(source.canonical_issue_key || "") || null,
+    aspectKey: String(source.aspect_key || "") || null,
+    dimension: issueDimension(source) || null,
+    subCategory: String(source.sub_category || "") || null,
+  };
+}
+
 function buildClientXlsx(
   moduleKey: string,
   comments: Array<Record<string, unknown>>,
@@ -149,6 +215,10 @@ function buildClientXlsx(
     locale === "zh"
       ? ["排名", "标签", "出现次数", "提及占比", "代表性评论（前20条摘要）"]
       : ["Rank", "Tag", "Count", "Percentage", "Representative Reviews (Top 20)"];
+  const issueHeaders =
+    locale === "zh"
+      ? ["排名", "Specific Issue", "出现次数", "提及占比", "Dimension", "Canonical Issue Key", "Aspect Key", "Evidence Span", "Issue Confidence", "代表性评论（前20条摘要）"]
+      : ["Rank", "Specific Issue", "Count", "Mention Share", "Dimension", "Canonical Issue Key", "Aspect Key", "Evidence Span", "Issue Confidence", "Representative Reviews (Top 20)"];
 
   function buildTop10(pool: Array<Record<string, unknown>>, tagField: string) {
     const counter: Record<string, number> = {};
@@ -181,11 +251,111 @@ function buildClientXlsx(
       ]);
   }
 
+  function iterSpecificIssueOccurrences(comment: Record<string, unknown>) {
+    const payload = parseAspectsPayload(comment);
+    const schemaVersion = String(payload?.specific_issue_schema_version || "");
+    const content = String(comment.content || "");
+    const subCategory = String(payload?.sub_category || comment.sub_category || comment.category || "");
+    const occurrences = getAspects(comment)
+      .filter((aspect) => {
+        return (
+          String(aspect.polarity || "").toLowerCase() === "negative" &&
+          aspect.display_allowed !== false &&
+          Boolean(aspect.specific_issue) &&
+          Boolean(aspect.canonical_issue_key)
+        );
+      })
+      .map((aspect) => ({
+        specificIssue: String(aspect.specific_issue || ""),
+        canonicalIssueKey: String(aspect.canonical_issue_key || ""),
+        aspectKey: String(aspect.key || aspect.aspect_key || ""),
+        dimension: String(aspect.dimension || aspect.aspect_label || ""),
+        evidenceSpan: String(aspect.evidence_span || ""),
+        issueConfidence: String(aspect.issue_confidence || ""),
+        subCategory,
+        content,
+      }));
+    if (occurrences.length > 0 || schemaVersion === "1.0") {
+      return occurrences;
+    }
+    return String(comment.issue_tag || "")
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .map((tag) => ({
+        specificIssue: tag,
+        canonicalIssueKey: safeIssueSlug(tag),
+        aspectKey: "",
+        dimension: "",
+        evidenceSpan: "",
+        issueConfidence: "low",
+        subCategory: String(comment.sub_category || comment.category || ""),
+        content,
+      }));
+  }
+
+  function buildSpecificIssueTop10(pool: Array<Record<string, unknown>>) {
+    const groups = new Map<string, {
+      specificIssue: string;
+      canonicalIssueKey: string;
+      aspectKey: string;
+      dimension: string;
+      evidenceSpans: string[];
+      issueConfidence: string;
+      comments: string[];
+      count: number;
+    }>();
+
+    for (const comment of pool) {
+      const seen = new Set<string>();
+      for (const occurrence of iterSpecificIssueOccurrences(comment)) {
+        const key = `${occurrence.subCategory}::${occurrence.aspectKey}::${occurrence.canonicalIssueKey}`;
+        if (!occurrence.canonicalIssueKey || seen.has(key)) continue;
+        seen.add(key);
+        const group = groups.get(key) || {
+          specificIssue: occurrence.specificIssue,
+          canonicalIssueKey: occurrence.canonicalIssueKey,
+          aspectKey: occurrence.aspectKey,
+          dimension: occurrence.dimension,
+          evidenceSpans: [],
+          issueConfidence: occurrence.issueConfidence || "low",
+          comments: [],
+          count: 0,
+        };
+        group.count += 1;
+        if (occurrence.evidenceSpan && group.evidenceSpans.length < 20) {
+          group.evidenceSpans.push(occurrence.evidenceSpan);
+        }
+        if (occurrence.content && group.comments.length < 20) {
+          group.comments.push(occurrence.content.slice(0, 120));
+        }
+        groups.set(key, group);
+      }
+    }
+
+    const poolSize = pool.length || 1;
+    return Array.from(groups.values())
+      .sort((a, b) => b.count - a.count || a.specificIssue.localeCompare(b.specificIssue))
+      .slice(0, 10)
+      .map((group, i) => [
+        i + 1,
+        group.specificIssue,
+        group.count,
+        `${((group.count / poolSize) * 100).toFixed(1)}%`,
+        group.dimension,
+        group.canonicalIssueKey,
+        group.aspectKey,
+        group.evidenceSpans.join(" | "),
+        group.issueConfidence,
+        group.comments.join(" | "),
+      ]);
+  }
+
   if (moduleKey === "user_experience") {
     const posData = [headers, ...buildTop10(positive, "highlight_tag")];
     const wsPos = XLSX.utils.aoa_to_sheet(posData);
     XLSX.utils.book_append_sheet(wb, wsPos, locale === "zh" ? "正向反馈 TOP10" : "Positive Feedback TOP10");
-    const negData = [headers, ...buildTop10(negative, "issue_tag")];
+    const negData = [issueHeaders, ...buildSpecificIssueTop10(negative)];
     const wsNeg = XLSX.utils.aoa_to_sheet(negData);
     XLSX.utils.book_append_sheet(wb, wsNeg, locale === "zh" ? "负向反馈 TOP10" : "Negative Feedback TOP10");
   } else if (moduleKey === "purchase_motives") {
@@ -193,7 +363,7 @@ function buildClientXlsx(
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "消费动机" : "Purchase Motives");
   } else if (moduleKey === "unmet_needs") {
-    const data = [headers, ...buildTop10(negative, "issue_tag")];
+    const data = [issueHeaders, ...buildSpecificIssueTop10(negative)];
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "未满足的需求" : "Unmet Needs");
   } else if (moduleKey === "consumer_profile") {
@@ -242,6 +412,7 @@ function TranslatedView({
   showAction?: boolean;
 }) {
   const t = useTranslations("analysis");
+  const tTable = useTranslations("analysis.table");
   const summary = String(data.summary || "");
   const rows = Array.isArray(data.rows) ? data.rows : [];
   const positive = Array.isArray(data.positive) ? data.positive : [];
@@ -252,7 +423,14 @@ function TranslatedView({
   const origNegative = Array.isArray(originalData.negative) ? originalData.negative as Record<string, unknown>[] : [];
   const origRows = Array.isArray(originalData.rows) ? originalData.rows as Record<string, unknown>[] : [];
 
-  function renderRowButtons(tag: string, pct: number, reason: string, tagSource: "highlight_tag" | "issue_tag", canAction: boolean) {
+  function renderRowButtons(
+    tag: string,
+    pct: number,
+    reason: string,
+    tagSource: "highlight_tag" | "issue_tag",
+    canAction: boolean,
+    meta: IssueMeta = {},
+  ) {
     return (
       <div className="mt-2 flex items-center gap-1.5">
         {comments && (
@@ -261,6 +439,11 @@ function TranslatedView({
             comments={comments}
             tagSource={tagSource}
             locale={locale || "zh"}
+            specificIssue={meta.specificIssue}
+            canonicalIssueKey={meta.canonicalIssueKey}
+            aspectKey={meta.aspectKey}
+            dimension={meta.dimension}
+            subCategory={meta.subCategory}
           />
         )}
         {canAction && session && sessionId > 0 && (
@@ -272,6 +455,10 @@ function TranslatedView({
             tag={tag}
             pct={pct}
             reason={reason}
+            specificIssue={meta.specificIssue}
+            canonicalIssueKey={meta.canonicalIssueKey}
+            aspectKey={meta.aspectKey}
+            dimension={meta.dimension}
           />
         )}
       </div>
@@ -310,8 +497,11 @@ function TranslatedView({
             <div className="space-y-2">
               <div className="text-xs font-semibold text-[#dc2626]">{t("negativeFeedback")}</div>
               {negative.map((row: Record<string, unknown>, i: number) => {
-                const tag = String(row.tag || "");
-                const origTag = String(origNegative[i]?.tag || tag);
+                const origRow = origNegative[i];
+                const tag = issueLabel(row, issueLabel(origRow || {}, ""));
+                const origTag = issueLabel(origRow || {}, tag);
+                const meta = issueMetaFromRow(origRow, origTag);
+                const dimension = issueDimension(row) || meta.dimension || "";
                 const pct = Number(row.pct || 0);
                 const reason = String(row.reason || "");
                 return (
@@ -321,8 +511,14 @@ function TranslatedView({
                       <span className="text-sm font-semibold text-ink">{tag}</span>
                       <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
                     </div>
+                    {dimension ? (
+                      <div className="mt-1 text-xs text-soft">{tTable("dimension")}: {dimension}</div>
+                    ) : null}
                     {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
-                    {renderRowButtons(origTag, pct, reason, "issue_tag", !!showAction)}
+                    {renderRowButtons(origTag, pct, reason, "issue_tag", !!showAction, {
+                      ...meta,
+                      dimension: meta.dimension || dimension,
+                    })}
                   </div>
                 );
               })}
@@ -334,13 +530,19 @@ function TranslatedView({
       {rows.length > 0 && moduleKey !== "user_experience" && (
         <div className="space-y-2">
           {rows.map((row: Record<string, unknown>, i: number) => {
-            const tag = String(row.tag || row.label || "");
-            const origTag = String(origRows[i]?.tag || origRows[i]?.label || tag);
+            const origRow = origRows[i];
             const pct = Number(row.pct || 0);
             const reason = String(row.reason || row.detail || "");
             const tagSource: "highlight_tag" | "issue_tag" =
               moduleKey === "unmet_needs" ? "issue_tag" : "highlight_tag";
             const canAction = moduleKey === "unmet_needs" && !!showAction;
+            const isSpecificIssue = moduleKey === "unmet_needs";
+            const tag = isSpecificIssue ? issueLabel(row, issueLabel(origRow || {}, "")) : String(row.tag || row.label || "");
+            const origTag = isSpecificIssue
+              ? issueLabel(origRow || {}, tag)
+              : String(origRow?.tag || origRow?.label || tag);
+            const meta = isSpecificIssue ? issueMetaFromRow(origRow, origTag) : {};
+            const dimension = isSpecificIssue ? issueDimension(row) || meta.dimension || "" : "";
             return (
               <div key={i} className="rounded-card border border-line bg-[#faf8fb] px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -351,10 +553,16 @@ function TranslatedView({
                     <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
                   )}
                 </div>
+                {dimension ? (
+                  <div className="mt-1 text-xs text-soft">{tTable("dimension")}: {dimension}</div>
+                ) : null}
                 {(row.reason || row.detail) ? (
                   <p className="mt-1 text-xs leading-5 text-soft">{reason}</p>
                 ) : null}
-                {renderRowButtons(origTag, pct, reason, tagSource, canAction)}
+                {renderRowButtons(origTag, pct, reason, tagSource, canAction, {
+                  ...meta,
+                  dimension: meta.dimension || dimension,
+                })}
               </div>
             );
           })}

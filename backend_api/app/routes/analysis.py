@@ -22,6 +22,7 @@ from backend_api.app.schemas.analysis import (
     AnalysisSessionResultsPayload,
 )
 from backend_api.app.services.locale import get_analysis_locale
+from backend_api.app.services.specific_issue import ISSUE_RULESET_VERSION
 from review_analyzer.compare_store import build_compare_group_specs, get_comparison_dataset
 from review_analyzer.database import (
     delete_session,
@@ -41,7 +42,7 @@ router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 _LOGGER = logging.getLogger(__name__)
 
-# Phase 2: 进程内聚合结果缓存 — key = (user_id, product_id, start, end, comment_ids_hash)
+# Phase 2: 进程内聚合结果缓存 — key = (user_id, product_id, start, end, comment_ids_hash, issue_ruleset_version)
 # 命中相同筛选条件秒返;重启失效可接受。
 _INSIGHTS_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 _INSIGHTS_CACHE_TTL = 60 * 30  # 30 分钟
@@ -55,7 +56,7 @@ def _cache_key(
     end: str,
     comment_ids: tuple[int, ...],
 ) -> str:
-    raw = f"{user_id}|{product_id}|{start}|{end}|{len(comment_ids)}|{hash(comment_ids)}"
+    raw = f"{user_id}|{product_id}|{start}|{end}|{len(comment_ids)}|{hash(comment_ids)}|{ISSUE_RULESET_VERSION}"
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
 

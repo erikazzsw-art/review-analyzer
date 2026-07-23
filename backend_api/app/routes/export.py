@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 
 from backend_api.app.deps import get_current_user
+from backend_api.app.services.specific_issue import build_specific_issue_rows
 from review_analyzer.database import get_comments, get_session_by_id
 from review_analyzer.exporter import export_to_xlsx
 from review_analyzer.quota import InsufficientCreditsError, credit_consume, quota_check
@@ -83,6 +84,34 @@ def _top10_headers(locale: str) -> list[str]:
     return ["Rank", "Tag", "Count", "Percentage", "Representative Reviews (Top 20)"]
 
 
+def _specific_issue_top10_headers(locale: str) -> list[str]:
+    if locale == "zh":
+        return [
+            "排名",
+            "Specific Issue",
+            "出现次数",
+            "提及占比",
+            "Dimension",
+            "Canonical Issue Key",
+            "Aspect Key",
+            "Evidence Span",
+            "Issue Confidence",
+            "代表性评论（前20条摘要）",
+        ]
+    return [
+        "Rank",
+        "Specific Issue",
+        "Count",
+        "Mention Share",
+        "Dimension",
+        "Canonical Issue Key",
+        "Aspect Key",
+        "Evidence Span",
+        "Issue Confidence",
+        "Representative Reviews (Top 20)",
+    ]
+
+
 def _build_top10_rows(
     pool_comments: list[dict[str, Any]],
     tag_field: str,
@@ -115,6 +144,29 @@ def _build_top10_rows(
     return rows
 
 
+def _build_specific_issue_top10_rows(
+    pool_comments: list[dict[str, Any]],
+    locale: str,
+) -> list[list[str | int]]:
+    rows: list[list[str | int]] = []
+    for rank, row in enumerate(build_specific_issue_rows(pool_comments, locale=locale), 1):
+        rows.append(
+            [
+                rank,
+                str(row.get("specific_issue") or row.get("tag") or ""),
+                int(row.get("count") or 0),
+                f"{float(row.get('pct') or 0):.1f}%",
+                str(row.get("dimension") or ""),
+                str(row.get("canonical_issue_key") or ""),
+                str(row.get("aspect_key") or ""),
+                " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
+                str(row.get("issue_confidence") or ""),
+                " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
+            ]
+        )
+    return rows
+
+
 def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: str) -> io.BytesIO:
     import openpyxl
 
@@ -123,6 +175,7 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
     positive = [c for c in comments if c.get("sentiment") == "positive"]
     negative = [c for c in comments if c.get("sentiment") == "negative"]
     headers = _top10_headers(locale)
+    issue_headers = _specific_issue_top10_headers(locale)
 
     if module_key == "user_experience":
         ws_pos = wb.active
@@ -134,8 +187,8 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
 
         neg_title = "负向反馈 TOP10" if locale == "zh" else "Negative Feedback TOP10"
         ws_neg = wb.create_sheet(title=neg_title)
-        ws_neg.append(headers)
-        for row in _build_top10_rows(negative, "issue_tag"):
+        ws_neg.append(issue_headers)
+        for row in _build_specific_issue_top10_rows(negative, locale):
             ws_neg.append(row)
 
     elif module_key == "purchase_motives":
@@ -148,8 +201,8 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
     elif module_key == "unmet_needs":
         ws = wb.active
         ws.title = "Unmet Needs" if locale == "en" else "未满足的需求"
-        ws.append(headers)
-        for row in _build_top10_rows(negative, "issue_tag"):
+        ws.append(issue_headers)
+        for row in _build_specific_issue_top10_rows(negative, locale):
             ws.append(row)
 
     elif module_key == "consumer_profile":

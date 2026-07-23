@@ -4,6 +4,8 @@ import json
 from collections import Counter
 from typing import Any
 
+from backend_api.app.services.specific_issue import build_specific_issue_rows
+
 
 def build_results_insights(
     user_id: int,
@@ -15,7 +17,7 @@ def build_results_insights(
 
     locale: passed through to llm_router — "en" prefers GPT-4o-mini, "zh" prefers DeepSeek.
     """
-    heuristic_payload = _build_heuristic_results(comments, context)
+    heuristic_payload = _build_heuristic_results(comments, context, locale=locale)
     ai_payload = _build_ai_results_payload(user_id, comments, context, locale=locale)
     if ai_payload:
         merged = dict(heuristic_payload)
@@ -57,11 +59,15 @@ def build_compare_insights(
     }
 
 
-def _build_heuristic_results(comments: list[dict[str, Any]], context: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _build_heuristic_results(
+    comments: list[dict[str, Any]],
+    context: dict[str, Any],
+    locale: str = "en",
+) -> dict[str, dict[str, Any]]:
     positive = [comment for comment in comments if comment.get("sentiment") == "positive"]
     negative = [comment for comment in comments if comment.get("sentiment") == "negative"]
     positive_tags = _top_tag_rows(positive, "highlight_tag")
-    negative_tags = _top_tag_rows(negative, "issue_tag")
+    negative_tags = build_specific_issue_rows(negative, locale=locale)
 
     total = len(comments)
     pos_rate = round(len(positive) / total * 100, 1) if total else 0.0
@@ -164,7 +170,7 @@ def _build_ai_results_payload(
     if not comments:
         return None
     positive_tags = _top_tag_rows([c for c in comments if c.get("sentiment") == "positive"], "highlight_tag")
-    negative_tags = _top_tag_rows([c for c in comments if c.get("sentiment") == "negative"], "issue_tag")
+    negative_tags = build_specific_issue_rows([c for c in comments if c.get("sentiment") == "negative"], locale=locale)
     prompt = {
         "context": context,
         "review_count": len(comments),

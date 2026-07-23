@@ -11,6 +11,10 @@ type IssueCandidate = {
   detail: string;
   currentPct?: number | null;
   suggestedAction?: string | null;
+  aspectKey?: string | null;
+  canonicalIssueKey?: string | null;
+  specificIssue?: string | null;
+  dimension?: string | null;
 };
 
 type CreateActionPanelProps = {
@@ -22,14 +26,15 @@ type CreateActionPanelProps = {
   candidates: IssueCandidate[];
 };
 
-// API 契约：owner_role 后端存中文（workers/jobs.py 默认 "运营"、action_advisor 走 get_dept_label 也返回中文），
-// 前端必须继续发中文值以避免混合语言环境下的聚合/查询错乱。UI 只对显示做 i18n。
-// 完整迁移到 role slug 是独立任务（等 backend migration）。
-const OWNER_ROLES = [
+// API 契约：owner_role 后端存中文（workers/jobs.py 默认 "运营"、action_advisor 走 get_dept_label 也返回中文）。
+// 前端外显使用“责任部门”，但提交时仍发中文部门值以避免混合语言环境下的聚合/查询错乱。
+// 完整迁移到 department slug 是独立任务（等 backend migration）。
+const RESPONSIBLE_DEPARTMENTS = [
   { value: "运营", labelKey: "ownerOps" },
   { value: "产研", labelKey: "ownerProduct" },
   { value: "质检", labelKey: "ownerQA" },
-  { value: "复盘", labelKey: "ownerReview" },
+  { value: "客服", labelKey: "ownerCS" },
+  { value: "其他", labelKey: "ownerOther" },
 ] as const;
 
 export function CreateActionPanel({
@@ -41,10 +46,11 @@ export function CreateActionPanel({
   candidates,
 }: CreateActionPanelProps) {
   const t = useTranslations("analysis.action");
+  const tTable = useTranslations("analysis.table");
   const tCommon = useTranslations("common");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [title, setTitle] = useState("");
-  const [ownerRole, setOwnerRole] = useState<string>(OWNER_ROLES[0].value);
+  const [responsibleDepartment, setResponsibleDepartment] = useState<string>(RESPONSIBLE_DEPARTMENTS[0].value);
   const [suggestedAction, setSuggestedAction] = useState("");
   const [expectedReviewAt, setExpectedReviewAt] = useState("");
   const [expectedEffectBatch, setExpectedEffectBatch] = useState("");
@@ -76,8 +82,11 @@ export function CreateActionPanel({
         sourceBatchLabel,
         title: finalTitle,
         tagName: selectedCandidate.label,
+        aspectKey: selectedCandidate.aspectKey ?? null,
+        canonicalIssueKey: selectedCandidate.canonicalIssueKey ?? null,
+        specificIssue: selectedCandidate.specificIssue || selectedCandidate.label,
         currentPct: selectedCandidate.currentPct ?? null,
-        ownerRole,
+        responsibleDepartment,
         suggestedAction: finalAction,
         expectedReviewAt: expectedReviewAt.trim() || null,
         expectedEffectBatch: expectedEffectBatch.trim() || null,
@@ -133,7 +142,7 @@ export function CreateActionPanel({
           >
             {candidates.map((item, index) => (
               <option key={`${item.label}-${index}`} value={index}>
-                {item.label}
+                {item.dimension ? `${item.label} · ${item.dimension}` : item.label}
               </option>
             ))}
           </select>
@@ -151,13 +160,13 @@ export function CreateActionPanel({
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <label className="space-y-2">
-          <span className="text-sm font-semibold text-ink">{t("ownerRole")}</span>
+          <span className="text-sm font-semibold text-ink">{t("responsibleDepartment")}</span>
           <select
-            value={ownerRole}
-            onChange={(event) => setOwnerRole(event.target.value)}
+            value={responsibleDepartment}
+            onChange={(event) => setResponsibleDepartment(event.target.value)}
             className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
           >
-            {OWNER_ROLES.map((item) => (
+            {RESPONSIBLE_DEPARTMENTS.map((item) => (
               <option key={item.value} value={item.value}>
                 {t(item.labelKey)}
               </option>
@@ -208,6 +217,12 @@ export function CreateActionPanel({
           </label>
           <div className="rounded-card border border-line bg-[#fffafb] px-4 py-4 text-sm leading-7 text-soft">
             {t("selectedIssueLabel", { label: selectedCandidate?.label || "—" })}
+            {selectedCandidate?.dimension ? (
+              <>
+                <br />
+                {tTable("dimension")}: {selectedCandidate.dimension}
+              </>
+            ) : null}
             <br />
             {t("ratioReferenceLabel", {
               pct:

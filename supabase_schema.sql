@@ -207,6 +207,9 @@ CREATE TABLE IF NOT EXISTS action_items (
     title TEXT NOT NULL,
     tag_name TEXT NOT NULL,
     tag_type TEXT NOT NULL DEFAULT 'issue',
+    aspect_key TEXT,
+    canonical_issue_key TEXT,
+    specific_issue TEXT,
     current_pct NUMERIC(8, 2),
     owner_role TEXT NOT NULL,
     suggested_action TEXT,
@@ -238,6 +241,9 @@ CREATE TABLE IF NOT EXISTS review_trackers (
     variant_id INTEGER REFERENCES product_variants(id),
     tracker_title TEXT NOT NULL,
     tag_name TEXT NOT NULL,
+    aspect_key TEXT,
+    canonical_issue_key TEXT,
+    specific_issue TEXT,
     baseline_pct NUMERIC(8, 2),
     improvement_action TEXT,
     effective_batch TEXT,
@@ -247,6 +253,39 @@ CREATE TABLE IF NOT EXISTS review_trackers (
     conclusion TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     closed_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS specific_issue_catalog (
+    id SERIAL PRIMARY KEY,
+    sub_category TEXT NOT NULL,
+    aspect_key TEXT NOT NULL,
+    canonical_issue_key TEXT NOT NULL,
+    specific_issue TEXT NOT NULL,
+    display_allowed BOOLEAN NOT NULL DEFAULT TRUE,
+    issue_confidence TEXT NOT NULL DEFAULT 'medium',
+    issue_ruleset_version TEXT NOT NULL DEFAULT '2026-07-23-mvp1',
+    note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(sub_category, aspect_key, canonical_issue_key)
+);
+
+CREATE TABLE IF NOT EXISTS specific_issue_alias_rules (
+    id SERIAL PRIMARY KEY,
+    sub_category TEXT NOT NULL DEFAULT '*',
+    aspect_key TEXT NOT NULL DEFAULT '*',
+    rule_type TEXT NOT NULL CHECK (rule_type IN ('exact', 'regex', 'blocklist')),
+    pattern TEXT NOT NULL,
+    canonical_issue_key TEXT,
+    specific_issue TEXT,
+    display_allowed BOOLEAN NOT NULL DEFAULT TRUE,
+    issue_confidence TEXT NOT NULL DEFAULT 'medium',
+    issue_ruleset_version TEXT NOT NULL DEFAULT '2026-07-23-mvp1',
+    priority INTEGER NOT NULL DEFAULT 100,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS comparison_reports (
@@ -272,10 +311,14 @@ CREATE INDEX IF NOT EXISTS idx_action_items_product_id ON action_items(product_i
 CREATE INDEX IF NOT EXISTS idx_action_items_status ON action_items(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_action_items_user_removed ON action_items(user_id, removed_at);
 CREATE INDEX IF NOT EXISTS idx_action_items_user_sort ON action_items(user_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_action_items_specific_issue ON action_items(user_id, aspect_key, canonical_issue_key) WHERE removed_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_action_center_product_groups_user ON action_center_product_groups(user_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_review_trackers_user_id ON review_trackers(user_id);
 CREATE INDEX IF NOT EXISTS idx_review_trackers_product_id ON review_trackers(product_id);
 CREATE INDEX IF NOT EXISTS idx_review_trackers_status ON review_trackers(user_id, result_status);
+CREATE INDEX IF NOT EXISTS idx_review_trackers_specific_issue ON review_trackers(user_id, aspect_key, canonical_issue_key);
+CREATE INDEX IF NOT EXISTS idx_specific_issue_catalog_identity ON specific_issue_catalog(sub_category, aspect_key, canonical_issue_key);
+CREATE INDEX IF NOT EXISTS idx_specific_issue_alias_rules_lookup ON specific_issue_alias_rules(sub_category, aspect_key, rule_type, enabled, priority);
 CREATE INDEX IF NOT EXISTS idx_comparison_reports_user_id ON comparison_reports(user_id);
 
 -- V5.8: product_variants platform 字段 + 联合唯一索引 (Migration 050)

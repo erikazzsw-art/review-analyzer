@@ -11,6 +11,7 @@ import {
   Save,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -55,17 +56,17 @@ type ConfirmTarget =
   | { type: "product"; group: ProductGroup }
   | { type: "action"; action: ActionItem };
 
-const FILTER_OPTIONS: Array<{ value: ActionFilter; label: string }> = [
-  { value: "all", label: "全部" },
-  { value: "in_progress", label: "处理中" },
-  { value: "pending_review", label: "复盘中" },
-  { value: "done", label: "已完结" },
+const FILTER_OPTIONS: Array<{ value: ActionFilter; labelKey: string }> = [
+  { value: "all", labelKey: "filters.all" },
+  { value: "in_progress", labelKey: "filters.inProgress" },
+  { value: "pending_review", labelKey: "filters.pendingReview" },
+  { value: "done", labelKey: "filters.done" },
 ];
 
-const STATUS_LABELS: Record<ActionDisplayStatus, string> = {
-  in_progress: "处理中",
-  pending_review: "复盘中",
-  done: "已完结",
+const STATUS_LABEL_KEYS: Record<ActionDisplayStatus, string> = {
+  in_progress: "status.inProgress",
+  pending_review: "status.pendingReview",
+  done: "status.done",
 };
 
 const STATUS_BADGE_CLASS: Record<ActionDisplayStatus, string> = {
@@ -74,15 +75,18 @@ const STATUS_BADGE_CLASS: Record<ActionDisplayStatus, string> = {
   done: "border-[#bfe6d8] bg-[#f3fffa] text-[#327b64]",
 };
 
-const STATUS_OPERATIONS: Array<{ value: StatusOperation; label: string }> = [
-  { value: "in_progress", label: "标记处理中" },
-  { value: "enter_review", label: "已落实，进入复盘" },
-  { value: "done", label: "标记已完结" },
+const STATUS_OPERATIONS: Array<{ value: StatusOperation; labelKey: string }> = [
+  { value: "in_progress", labelKey: "operations.markInProgress" },
+  { value: "enter_review", labelKey: "operations.enterReview" },
+  { value: "done", labelKey: "operations.markDone" },
 ];
 
 export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
+  const t = useTranslations("actions.panel");
   const initialItems = useMemo(() => items.map(normalizeActionItem), [items]);
   const initialGroupKey = initialItems[0] ? getProductGroupKey(initialItems[0]) : null;
+  const unboundProduct = t("unboundProduct");
+  const emptyValue = t("emptyValue");
 
   const [actions, setActions] = useState<ActionItem[]>(initialItems);
   const [activeStatus, setActiveStatus] = useState<ActionFilter>("all");
@@ -107,8 +111,29 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
       activeStatus === "all"
         ? actions
         : actions.filter((action) => normalizeStatus(action.status) === activeStatus);
-    return buildProductGroups(filteredActions);
-  }, [activeStatus, actions]);
+    return buildProductGroups(filteredActions, unboundProduct);
+  }, [activeStatus, actions, unboundProduct]);
+
+  const responsibilityLabels = {
+    ops: t("responsibility.ops"),
+    product: t("responsibility.product"),
+    qa: t("responsibility.qa"),
+    cs: t("responsibility.cs"),
+    other: t("responsibility.other"),
+    review: t("responsibility.review"),
+  };
+
+  const detailLabels = {
+    sourceReviews: t("details.sourceReviews"),
+    session: t("details.session"),
+    issueTag: t("details.issueTag"),
+    currentPct: t("details.currentPct"),
+    issueOwnership: t("details.issueOwnership"),
+    expectedReview: t("details.expectedReview"),
+    sourceVersion: t("details.sourceVersion"),
+    sourceBatch: t("details.sourceBatch"),
+    variant: t("details.variant"),
+  };
 
   async function handleStatusOperation(action: ActionItem, operation: StatusOperation): Promise<void> {
     const requestKey = `status-${action.id}`;
@@ -121,8 +146,11 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
           actionItemId: action.id,
           productId: action.product_id ?? null,
           variantId: action.variant_id ?? null,
-          trackerTitle: `${action.tag_name || action.title} 复盘`,
+          trackerTitle: t("trackerTitleFormat", { title: action.tag_name || action.title }),
           tagName: action.tag_name ?? null,
+          aspectKey: action.aspect_key ?? null,
+          canonicalIssueKey: action.canonical_issue_key ?? null,
+          specificIssue: action.specific_issue ?? action.tag_name ?? null,
           baselinePct: action.current_pct ?? null,
           improvementAction: getPrimarySuggestion(action),
           effectiveBatch: action.expected_effect_batch ?? null,
@@ -133,14 +161,14 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
         });
         replaceAction(response.action);
         setExpandedActionIds((current) => addToSet(current, action.id));
-        setMessage("已落实，行动已进入复盘中。");
+        setMessage(t("messages.enterReviewSuccess"));
       } else {
         const updated = await updateActionStatus(action.id, operation);
         replaceAction(updated);
-        setMessage("状态已保存。");
+        setMessage(t("messages.statusSaved"));
       }
     } catch (err) {
-      setError(getErrorMessage(err, "状态更新失败"));
+      setError(getErrorMessage(err, t("errors.statusUpdateFailed")));
     } finally {
       setBusyKey(null);
     }
@@ -166,9 +194,9 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
         ),
       );
       setNoteDrafts((current) => ({ ...current, [group.key]: updated.note ?? "" }));
-      setMessage("产品备注已保存。");
+      setMessage(t("messages.noteSaved"));
     } catch (err) {
-      setError(getErrorMessage(err, "产品备注保存失败"));
+      setError(getErrorMessage(err, t("errors.noteSaveFailed")));
     } finally {
       setBusyKey(null);
     }
@@ -197,10 +225,10 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
 
     try {
       await reorderActionProductGroups(nextKeys);
-      setMessage("产品排序已保存。");
+      setMessage(t("messages.productOrderSaved"));
     } catch (err) {
       setActions(previousActions);
-      setError(getErrorMessage(err, "产品排序保存失败"));
+      setError(getErrorMessage(err, t("errors.productOrderSaveFailed")));
     } finally {
       setBusyKey(null);
     }
@@ -228,10 +256,10 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
 
     try {
       await reorderActionItems(group.key, nextIds);
-      setMessage("行动排序已保存。");
+      setMessage(t("messages.actionOrderSaved"));
     } catch (err) {
       setActions(previousActions);
-      setError(getErrorMessage(err, "行动排序保存失败"));
+      setError(getErrorMessage(err, t("errors.actionOrderSaveFailed")));
     } finally {
       setBusyKey(null);
     }
@@ -247,9 +275,9 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
       const updated = await updateActionSuggestions(action.id, cleaned);
       replaceAction(updated);
       setSuggestionDrafts((current) => ({ ...current, [action.id]: parseSuggestions(updated) }));
-      setMessage("AI 建议已保存。");
+      setMessage(t("messages.suggestionsSaved"));
     } catch (err) {
-      setError(getErrorMessage(err, "AI 建议保存失败"));
+      setError(getErrorMessage(err, t("errors.suggestionsSaveFailed")));
     } finally {
       setBusyKey(null);
     }
@@ -274,16 +302,16 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
         });
         setExpandedProductKeys((current) => removeFromSet(current, confirmTarget.group.key));
         setSelectedProductKey(null);
-        setMessage("该产品下的行动和备注已从行动中心移除。");
+        setMessage(t("messages.productRemoved"));
       } else {
         await deleteActionItem(confirmTarget.action.id);
         setActions((current) => current.filter((action) => action.id !== confirmTarget.action.id));
         setExpandedActionIds((current) => removeFromSet(current, confirmTarget.action.id));
-        setMessage("行动已从行动中心移除。");
+        setMessage(t("messages.actionRemoved"));
       }
       setConfirmTarget(null);
     } catch (err) {
-      setError(getErrorMessage(err, "移除失败"));
+      setError(getErrorMessage(err, t("errors.removeFailed")));
     } finally {
       setBusyKey(null);
     }
@@ -313,10 +341,10 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
     return (
       <section className="rounded-shell border border-dashed border-line bg-white/80 px-6 py-10 shadow-card backdrop-blur">
         <h2 className="font-heading text-3xl font-extrabold tracking-normal text-ink">
-          暂无行动事项
+          {t("emptyTitle")}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-soft">
-          先去分析结果页从 TOP 问题创建一个 action，或者从工作台里继续推进现有事项。
+          {t("emptyDescription")}
         </p>
       </section>
     );
@@ -327,10 +355,10 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <div className="inline-flex rounded-md bg-[#eef6ff] px-3 py-1.5 text-xs font-bold text-[#4a7dc7]">
-            ACTION CENTER
+            {t("badge")}
           </div>
           <h2 className="mt-3 font-heading text-2xl font-extrabold tracking-normal text-ink">
-            行动中心
+            {t("title")}
           </h2>
         </div>
 
@@ -347,7 +375,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                   : "border-line bg-white text-soft hover:border-[#f36f8f]",
               )}
             >
-              {item.label}
+              {t(item.labelKey)}
             </button>
           ))}
         </div>
@@ -367,7 +395,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
       <div className="mt-6 space-y-4">
         {groups.length === 0 ? (
           <div className="rounded-md border border-dashed border-line bg-white/70 px-5 py-8 text-sm leading-7 text-soft">
-            当前筛选下暂无行动事项。
+            {t("filterEmpty")}
           </div>
         ) : null}
 
@@ -400,21 +428,25 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                   <span className="min-w-0">
                     <span className="block truncate text-base font-bold text-ink">{group.name}</span>
                     <span className="mt-1 block text-xs leading-6 text-soft">
-                      {stats.total} 条行动 · {stats.reviewing} 个复盘中 · {stats.done} 个已完结
+                      {t("groupStats", {
+                        total: stats.total,
+                        reviewing: stats.reviewing,
+                        done: stats.done,
+                      })}
                     </span>
                   </span>
                 </button>
 
                 <div className="flex flex-wrap items-center gap-2">
                   <IconButton
-                    label="上移产品"
+                    label={t("buttons.moveProductUp")}
                     disabled={groupIndex === 0 || busyKey !== null}
                     onClick={() => handleMoveProduct(groupIndex, -1)}
                   >
                     <ArrowUp className="h-4 w-4" />
                   </IconButton>
                   <IconButton
-                    label="下移产品"
+                    label={t("buttons.moveProductDown")}
                     disabled={groupIndex === groups.length - 1 || busyKey !== null}
                     onClick={() => handleMoveProduct(groupIndex, 1)}
                   >
@@ -429,7 +461,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                     }}
                     className="min-h-9 rounded-md border border-[#f5c6cb] bg-white px-3 py-2 text-sm font-semibold text-[#b44655] transition hover:bg-[#fff3f5] disabled:opacity-60"
                   >
-                    移除
+                    {t("buttons.remove")}
                   </button>
                 </div>
               </div>
@@ -442,8 +474,8 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                       onChange={(event) =>
                         setNoteDrafts((current) => ({ ...current, [group.key]: event.target.value }))
                       }
-                      placeholder="添加产品备注"
-                      aria-label={`${group.name} 产品备注`}
+                      placeholder={t("productNotePlaceholder")}
+                      aria-label={t("productNoteAria", { product: group.name })}
                       className="min-h-20 resize-y rounded-md bg-white text-sm"
                     />
                     <Button
@@ -453,7 +485,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                       className="min-h-10 rounded-md bg-ink px-4 text-sm text-white"
                     >
                       <Save className="h-4 w-4" />
-                      保存备注
+                      {t("buttons.saveNote")}
                     </Button>
                   </div>
 
@@ -462,6 +494,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                       const status = normalizeStatus(action.status);
                       const actionExpanded = expandedActionIds.has(action.id);
                       const suggestions = getSuggestions(action);
+                      const joinedDate = getJoinedDate(action.created_at);
 
                       return (
                         <div key={action.id} className="px-4 py-4">
@@ -481,7 +514,8 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                               <span className="min-w-0">
                                 <span className="block text-sm font-bold leading-6 text-ink">{action.title}</span>
                                 <span className="mt-1 block text-xs leading-6 text-soft">
-                                  {formatJoinedDate(action.created_at)} · {getActionSourceLine(action)}
+                                  {joinedDate ? t("joinedAt", { date: joinedDate }) : t("joinedAtUnknown")} ·{" "}
+                                  {getActionSourceLine(action, unboundProduct)}
                                 </span>
                               </span>
                             </button>
@@ -493,7 +527,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                                   STATUS_BADGE_CLASS[status],
                                 )}
                               >
-                                {STATUS_LABELS[status]}
+                                {t(STATUS_LABEL_KEYS[status])}
                               </span>
                               <select
                                 value=""
@@ -504,34 +538,34 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                                     void handleStatusOperation(action, operation);
                                   }
                                 }}
-                                aria-label={`${action.title} 状态动作`}
+                                aria-label={t("statusActionAria", { title: action.title })}
                                 className="h-9 rounded-md border border-line bg-white px-3 text-sm font-semibold text-ink outline-none transition focus:border-[#f36f8f] disabled:opacity-60"
                               >
                                 <option value="" disabled>
-                                  状态动作
+                                  {t("statusActionPlaceholder")}
                                 </option>
                                 {STATUS_OPERATIONS.map((item) => (
                                   <option key={item.value} value={item.value}>
-                                    {item.label}
+                                    {t(item.labelKey)}
                                   </option>
                                 ))}
                               </select>
                               <IconButton
-                                label="上移行动"
+                                label={t("buttons.moveActionUp")}
                                 disabled={actionIndex === 0 || busyKey !== null}
                                 onClick={() => handleMoveAction(group, actionIndex, -1)}
                               >
                                 <ArrowUp className="h-4 w-4" />
                               </IconButton>
                               <IconButton
-                                label="下移行动"
+                                label={t("buttons.moveActionDown")}
                                 disabled={actionIndex === group.actions.length - 1 || busyKey !== null}
                                 onClick={() => handleMoveAction(group, actionIndex, 1)}
                               >
                                 <ArrowDown className="h-4 w-4" />
                               </IconButton>
                               <IconButton
-                                label="移除行动"
+                                label={t("buttons.removeAction")}
                                 disabled={busyKey !== null}
                                 className="border-[#f5c6cb] text-[#b44655] hover:bg-[#fff3f5]"
                                 onClick={() => setConfirmTarget({ type: "action", action })}
@@ -544,7 +578,13 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                           {actionExpanded ? (
                             <div className="mt-4 border-l-2 border-[#f36f8f] pl-4">
                               <dl className="grid overflow-hidden rounded-md border border-line bg-line md:grid-cols-2 xl:grid-cols-3">
-                                {getActionDetails(action).map((detail) => (
+                                {getActionDetails(
+                                  action,
+                                  detailLabels,
+                                  responsibilityLabels,
+                                  t("listIndexSeparator"),
+                                  emptyValue,
+                                ).map((detail) => (
                                   <div key={detail.label} className="min-h-20 bg-white px-4 py-3">
                                     <dt className="text-xs font-semibold text-soft">{detail.label}</dt>
                                     <dd className="mt-2 whitespace-pre-wrap text-sm leading-7 text-ink">{detail.value}</dd>
@@ -554,7 +594,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
 
                               <div className="mt-5">
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                  <h4 className="text-sm font-bold text-ink">AI 建议</h4>
+                                  <h4 className="text-sm font-bold text-ink">{t("aiSuggestionsTitle")}</h4>
                                   <Button
                                     type="button"
                                     variant="outline"
@@ -564,14 +604,14 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                                     className="rounded-md"
                                   >
                                     <Plus className="h-4 w-4" />
-                                    新增建议
+                                    {t("buttons.addSuggestion")}
                                   </Button>
                                 </div>
 
                                 <div className="mt-3 space-y-3">
                                   {suggestions.length === 0 ? (
                                     <div className="rounded-md border border-dashed border-line bg-[#fbfcff] px-4 py-4 text-sm text-soft">
-                                      暂无 AI 建议。
+                                      {t("aiSuggestionsEmpty")}
                                     </div>
                                   ) : null}
 
@@ -581,7 +621,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                                       className="grid gap-2 rounded-md border border-line bg-[#fbfcff] p-3 md:grid-cols-[2.5rem_1fr_auto] md:items-start"
                                     >
                                       <div className="text-sm font-bold leading-9 text-ink">
-                                        {suggestionIndex + 1}、
+                                        {t("listIndex", { index: suggestionIndex + 1 })}
                                       </div>
                                       <Textarea
                                         value={suggestion}
@@ -589,19 +629,22 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                                         onChange={(event) =>
                                           updateSuggestionDraft(action, suggestionIndex, event.target.value)
                                         }
-                                        aria-label={`${action.title} AI 建议 ${suggestionIndex + 1}`}
+                                        aria-label={t("aiSuggestionAria", {
+                                          title: action.title,
+                                          index: suggestionIndex + 1,
+                                        })}
                                         className="min-h-9 resize-y rounded-md bg-white text-sm"
                                       />
                                       <div className="flex gap-2">
                                         <IconButton
-                                          label="保存建议"
+                                          label={t("buttons.saveSuggestion")}
                                           disabled={busyKey !== null || !suggestion.trim()}
                                           onClick={() => handleSaveSuggestions(action, suggestions)}
                                         >
                                           <Save className="h-4 w-4" />
                                         </IconButton>
                                         <IconButton
-                                          label="删除建议"
+                                          label={t("buttons.deleteSuggestion")}
                                           disabled={busyKey !== null}
                                           className="border-[#f5c6cb] text-[#b44655] hover:bg-[#fff3f5]"
                                           onClick={() =>
@@ -635,12 +678,12 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
         <DialogContent className="rounded-md">
           <DialogHeader>
             <DialogTitle>
-              {confirmTarget?.type === "product" ? "从行动中心移除该产品行动？" : "从行动中心移除这条行动？"}
+              {confirmTarget?.type === "product" ? t("confirm.productTitle") : t("confirm.actionTitle")}
             </DialogTitle>
             <DialogDescription className="leading-7">
               {confirmTarget?.type === "product"
-                ? "这将移除该产品下所有已加入行动中心的行动事项和备注，但不会删除产品、评论数据或分析结果。"
-                : "这将只把该行动从行动中心移除，不会删除产品、评论数据或分析结果。"}
+                ? t("confirm.productDescription")
+                : t("confirm.actionDescription")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -650,7 +693,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
               disabled={busyKey === "remove"}
               onClick={() => setConfirmTarget(null)}
             >
-              取消
+              {t("buttons.cancel")}
             </Button>
             <Button
               type="button"
@@ -658,7 +701,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
               onClick={handleConfirmRemove}
               className="bg-[#b44655] text-white hover:bg-[#963746]"
             >
-              确认移除
+              {t("buttons.confirmRemove")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -708,7 +751,7 @@ function normalizeStatus(status: string | null | undefined): ActionDisplayStatus
   return "in_progress";
 }
 
-function buildProductGroups(items: ActionItem[]): ProductGroup[] {
+function buildProductGroups(items: ActionItem[], unboundProduct: string): ProductGroup[] {
   const groupMap = new Map<string, ProductGroup>();
 
   for (const action of items) {
@@ -727,7 +770,7 @@ function buildProductGroups(items: ActionItem[]): ProductGroup[] {
 
     groupMap.set(key, {
       key,
-      name: getProductGroupName(action),
+      name: getProductGroupName(action, unboundProduct),
       note: action.product_note ?? "",
       sortOrder: action.product_sort_order ?? null,
       actions: [action],
@@ -781,13 +824,13 @@ function getProductGroupKey(action: ActionItem): string {
   return "unbound";
 }
 
-function getProductGroupName(action: ActionItem): string {
+function getProductGroupName(action: ActionItem, unboundProduct: string): string {
   return (
     action.product_group_name ||
     action.product_name ||
     action.parent_product_id ||
     action.source_product_id ||
-    (action.session_id ? `Session #${action.session_id}` : "未绑定产品")
+    (action.session_id ? `Session #${action.session_id}` : unboundProduct)
   );
 }
 
@@ -799,38 +842,107 @@ function getGroupStats(actions: ActionItem[]): { total: number; reviewing: numbe
   };
 }
 
-function getActionDetails(action: ActionItem): Array<{ label: string; value: string }> {
+type ActionDetailLabels = {
+  sourceReviews: string;
+  session: string;
+  issueTag: string;
+  currentPct: string;
+  issueOwnership: string;
+  expectedReview: string;
+  sourceVersion: string;
+  sourceBatch: string;
+  variant: string;
+};
+
+type ResponsibilityLabels = {
+  ops: string;
+  product: string;
+  qa: string;
+  cs: string;
+  other: string;
+  review: string;
+};
+
+function getActionDetails(
+  action: ActionItem,
+  labels: ActionDetailLabels,
+  responsibilityLabels: ResponsibilityLabels,
+  listIndexSeparator: string,
+  emptyValue: string,
+): Array<{ label: string; value: string }> {
   return [
-    { label: "评论原文", value: formatSourceReviews(action) },
-    { label: "Session", value: action.session_id ? `Session #${action.session_id}` : "—" },
-    { label: "问题标签", value: action.tag_name || "—" },
-    { label: "当前占比", value: formatPct(action.current_pct) },
-    { label: "责任角色", value: action.owner_role || "—" },
-    { label: "预计复盘", value: action.expected_review_at || "—" },
-    { label: "来源版本", value: action.source_version || "—" },
-    { label: "来源批次", value: action.source_batch_label || "—" },
-    { label: "变体", value: action.variant_sku || action.child_asin || "—" },
+    { label: labels.sourceReviews, value: formatSourceReviews(action, listIndexSeparator, emptyValue) },
+    { label: labels.session, value: action.session_id ? `Session #${action.session_id}` : emptyValue },
+    { label: labels.issueTag, value: action.tag_name || emptyValue },
+    { label: labels.currentPct, value: formatPct(action.current_pct, emptyValue) },
+    {
+      label: labels.issueOwnership,
+      value: formatResponsibility(action.owner_role, responsibilityLabels, emptyValue),
+    },
+    { label: labels.expectedReview, value: action.expected_review_at || emptyValue },
+    { label: labels.sourceVersion, value: action.source_version || emptyValue },
+    { label: labels.sourceBatch, value: action.source_batch_label || emptyValue },
+    { label: labels.variant, value: action.variant_sku || action.child_asin || emptyValue },
   ];
 }
 
-function formatSourceReviews(action: ActionItem): string {
+function formatSourceReviews(action: ActionItem, listIndexSeparator: string, emptyValue: string): string {
   const reviews = Array.isArray(action.source_reviews_json) ? action.source_reviews_json : [];
   const contents = reviews
     .map((review, index) => {
       const content = String(review.content || "").trim();
-      return content ? `${index + 1}、${content}` : "";
+      return content ? `${index + 1}${listIndexSeparator}${content}` : "";
     })
     .filter(Boolean);
-  return contents.length > 0 ? contents.join("\n") : "—";
+  return contents.length > 0 ? contents.join("\n") : emptyValue;
 }
 
-function getActionSourceLine(action: ActionItem): string {
+function getActionSourceLine(action: ActionItem, unboundProduct: string): string {
   const parts = [
-    action.source_product_id || action.parent_product_id || action.product_name || "未绑定产品",
+    action.source_product_id || action.parent_product_id || action.product_name || unboundProduct,
     action.source_version || null,
     action.source_batch_label || null,
   ].filter(Boolean);
   return parts.join(" · ");
+}
+
+function formatResponsibility(
+  value: string | null,
+  labels: ResponsibilityLabels,
+  emptyValue: string,
+): string {
+  const normalized = (value || "").trim();
+  if (!normalized) {
+    return emptyValue;
+  }
+
+  const labelMap: Record<string, string> = {
+    "运营": labels.ops,
+    ops: labels.ops,
+    Ops: labels.ops,
+    Operations: labels.ops,
+    "产研": labels.product,
+    product: labels.product,
+    "PM/R&D": labels.product,
+    "Product & R&D": labels.product,
+    "质检": labels.qa,
+    qa: labels.qa,
+    QA: labels.qa,
+    "Quality Assurance": labels.qa,
+    "客服": labels.cs,
+    cs: labels.cs,
+    CS: labels.cs,
+    Support: labels.cs,
+    "其他": labels.other,
+    other: labels.other,
+    Other: labels.other,
+    "复盘": labels.review,
+    review: labels.review,
+    Review: labels.review,
+    "Follow-up": labels.review,
+  };
+
+  return labelMap[normalized] || normalized;
 }
 
 function getPrimarySuggestion(action: ActionItem): string | null {
@@ -890,16 +1002,16 @@ function buildInitialSuggestionDrafts(items: ActionItem[]): Record<number, strin
   }, {});
 }
 
-function formatJoinedDate(value: string | null): string {
+function getJoinedDate(value: string | null): string | null {
   if (!value) {
-    return "加入时间未记录";
+    return null;
   }
   const date = value.slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? `加入于 ${date}` : "加入时间未记录";
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
 }
 
-function formatPct(value: number | null): string {
-  return value == null ? "—" : `${value.toFixed(1)}%`;
+function formatPct(value: number | null, emptyValue: string): string {
+  return value == null ? emptyValue : `${value.toFixed(1)}%`;
 }
 
 function swapAt<T>(items: T[], index: number, targetIndex: number): T[] {

@@ -26,9 +26,10 @@ def create_review_tracker(user_id: int, data: dict[str, Any]) -> int:
             cur.execute(
                 """INSERT INTO review_trackers
                    (user_id, action_item_id, product_id, variant_id, tracker_title, tag_name,
-                    baseline_pct, improvement_action, effective_batch, review_scope,
-                    current_pct, result_status, conclusion)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    aspect_key, canonical_issue_key, specific_issue, baseline_pct,
+                    improvement_action, effective_batch, review_scope, current_pct,
+                    result_status, conclusion)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                    RETURNING id""",
                 (
                     user_id,
@@ -37,6 +38,9 @@ def create_review_tracker(user_id: int, data: dict[str, Any]) -> int:
                     data.get("variant_id"),
                     data.get("tracker_title"),
                     data.get("tag_name"),
+                    data.get("aspect_key"),
+                    data.get("canonical_issue_key"),
+                    data.get("specific_issue") or data.get("tag_name"),
                     data.get("baseline_pct"),
                     data.get("improvement_action"),
                     data.get("effective_batch"),

@@ -9,6 +9,10 @@ from datetime import datetime
 import xlsxwriter
 
 from backend_api.app.services.category_grouper import CATEGORY_ZH_LABELS
+from backend_api.app.services.specific_issue import (
+    build_specific_issue_rows,
+    iter_specific_issue_occurrences,
+)
 
 from .database import get_comments, get_session_by_id
 
@@ -63,16 +67,40 @@ def _build_summary_data(session: dict) -> list[list[str]]:
     return rows
 
 
-def _build_comments_data(comments: list[dict]) -> tuple[list[str], list[list[str]]]:
+SPECIFIC_ISSUE_EXPORT_HEADERS = [
+    "Specific Issue",
+    "Canonical Issue Key",
+    "Dimension",
+    "Aspect Key",
+    "Evidence Span",
+    "Issue Confidence",
+]
+
+
+def _join_specific_issue_field(comment: dict, field: str) -> str:
+    values = [
+        str(occurrence.get(field) or "").strip()
+        for occurrence in iter_specific_issue_occurrences(comment, locale="en")
+    ]
+    return ", ".join(value for value in values if value)
+
+
+def _build_comments_data(
+    comments: list[dict],
+    *,
+    include_specific_issue: bool = False,
+) -> tuple[list[str], list[list[str]]]:
     """构建评论明细数据"""
     headers = [
         "序号", "评论内容", "评分", "日期", "评论者", "来源",
         "情感", "分类", "优先级", "分析理由", "改进建议",
         "问题标签", "亮点标签",
     ]
+    if include_specific_issue:
+        headers.extend(SPECIFIC_ISSUE_EXPORT_HEADERS)
     rows = []
     for i, c in enumerate(comments, 1):
-        rows.append([
+        row = [
             str(i),
             c.get("content", ""),
             str(c.get("rating", "")) if c.get("rating") else "",
@@ -86,7 +114,19 @@ def _build_comments_data(comments: list[dict]) -> tuple[list[str], list[list[str
             c.get("improvement", ""),
             c.get("issue_tag", ""),
             c.get("highlight_tag", ""),
-        ])
+        ]
+        if include_specific_issue:
+            row.extend(
+                [
+                    _join_specific_issue_field(c, "specific_issue"),
+                    _join_specific_issue_field(c, "canonical_issue_key"),
+                    _join_specific_issue_field(c, "dimension"),
+                    _join_specific_issue_field(c, "aspect_key"),
+                    _join_specific_issue_field(c, "evidence_span"),
+                    _join_specific_issue_field(c, "issue_confidence"),
+                ]
+            )
+        rows.append(row)
     return headers, rows
 
 
@@ -123,6 +163,39 @@ def _build_top10_data(
         source_text = " | ".join(tag_sources.get(tag, []))
         rows.append([str(rank), tag, str(count), pct, source_text])
 
+    return headers, rows
+
+
+def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[str], list[list[str]]]:
+    """构建 TOP10 Specific Issue 数据."""
+    headers = [
+        "排名",
+        "Specific Issue",
+        "出现次数",
+        "占比",
+        "Dimension",
+        "Canonical Issue Key",
+        "Aspect Key",
+        "Evidence Span",
+        "Issue Confidence",
+        "代表性评论（前20条摘要）",
+    ]
+    rows: list[list[str]] = []
+    for rank, row in enumerate(build_specific_issue_rows(pool_comments, locale="en"), 1):
+        rows.append(
+            [
+                str(rank),
+                str(row.get("specific_issue") or row.get("tag") or ""),
+                str(row.get("count") or ""),
+                f"{float(row.get('pct') or 0):.1f}%",
+                str(row.get("dimension") or ""),
+                str(row.get("canonical_issue_key") or ""),
+                str(row.get("aspect_key") or ""),
+                " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
+                str(row.get("issue_confidence") or ""),
+                " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
+            ]
+        )
     return headers, rows
 
 
@@ -182,9 +255,9 @@ def export_to_xlsx(
 
     # Sheet2: 源评论分析明细
     ws2 = workbook.add_worksheet("源评论分析明细")
-    headers, rows = _build_comments_data(comments)
+    headers, rows = _build_comments_data(comments, include_specific_issue=True)
 
-    col_widths = [6, 50, 6, 12, 12, 10, 8, 10, 8, 30, 30, 15, 15]
+    col_widths = [6, 50, 6, 12, 12, 10, 8, 10, 8, 30, 30, 15, 15, 24, 26, 20, 18, 34, 16]
     for i, w in enumerate(col_widths):
         ws2.set_column(i, i, w)
 
@@ -202,9 +275,14 @@ def export_to_xlsx(
     ws3.set_column("B:B", 15)
     ws3.set_column("C:C", 10)
     ws3.set_column("D:D", 8)
-    ws3.set_column("E:E", 80)
+    ws3.set_column("E:E", 22)
+    ws3.set_column("F:F", 26)
+    ws3.set_column("G:G", 18)
+    ws3.set_column("H:H", 34)
+    ws3.set_column("I:I", 16)
+    ws3.set_column("J:J", 80)
 
-    t3_headers, t3_rows = _build_top10_data(comments, "issue_tag", negative_comments)
+    t3_headers, t3_rows = _build_specific_issue_top10_data(negative_comments)
     for col_idx, h in enumerate(t3_headers):
         ws3.write(0, col_idx, h, header_fmt)
     for row_idx, row_data in enumerate(t3_rows, 1):
