@@ -72,7 +72,7 @@ def _annotate_upload_variant_asins(
     column_names: list[str] = []
     seen: set[str] = set()
     for row in rows:
-        for key in row.keys():
+        for key in row:
             if key not in seen:
                 seen.add(key)
                 column_names.append(key)
