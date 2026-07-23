@@ -1277,25 +1277,52 @@ def find_or_create_parent_product(
         conn.close()
 
 
-def _find_existing_variant_parent(
+def _find_existing_variant_for_identifier(
     user_id: int, child_asin: str, platform: str
-) -> int | None:
-    """查找指定 ASIN 在当前用户+平台下是否已有归属父产品。
+) -> dict[str, Any] | None:
+    """查找指定 ASIN 在当前用户下是否已有变体记录。
+
+    历史表仍保留 UNIQUE(user_id, variant_sku)，旧数据可能只有
+    variant_sku=ASIN 或 platform=NULL。上传归并必须先识别这些记录，
+    否则新三元组 upsert 会撞到旧唯一约束。
 
     Returns:
-        已有父产品的 product_id (DB PK)，无则返回 None
+        变体行，含 id / product_id / platform / child_asin / variant_sku。
     """
     conn = get_connection()
     try:
-        with conn.cursor() as cur:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """SELECT product_id FROM product_variants
-                   WHERE user_id = %s AND platform = %s AND child_asin = %s
+                """SELECT id, product_id, platform, child_asin, variant_sku
+                   FROM product_variants
+                   WHERE user_id = %s
+                     AND (
+                        (platform = %s AND child_asin = %s)
+                        OR variant_sku = %s
+                        OR (platform IS NULL AND child_asin = %s)
+                     )
+                   ORDER BY
+                     CASE
+                       WHEN platform = %s AND child_asin = %s THEN 0
+                       WHEN variant_sku = %s THEN 1
+                       WHEN platform IS NULL AND child_asin = %s THEN 2
+                       ELSE 3
+                     END
                    LIMIT 1""",
-                (user_id, platform, child_asin),
+                (
+                    user_id,
+                    platform,
+                    child_asin,
+                    child_asin,
+                    child_asin,
+                    platform,
+                    child_asin,
+                    child_asin,
+                    child_asin,
+                ),
             )
             row = cur.fetchone()
-            return int(row[0]) if row else None
+            return dict(row) if row else None
     finally:
         conn.close()
 
@@ -1337,17 +1364,33 @@ def upsert_product_variant_for_upload(
             "message": str,
         }
     """
-    # 1. 检查 ASIN 是否已有归属（ASIN 重叠检查）
-    existing_parent_id = _find_existing_variant_parent(user_id, child_asin, platform)
-    if existing_parent_id is not None:
+    # 1. 检查 ASIN 是否已有归属（兼容历史 variant_sku 唯一约束）
+    existing_variant = _find_existing_variant_for_identifier(user_id, child_asin, platform)
+    if existing_variant is not None:
+        existing_parent_id = int(existing_variant["product_id"])
+        existing_variant_id = int(existing_variant["id"])
         existing_parent_name = _get_parent_product_name(user_id, existing_parent_id)
         # ASIN 已存在 → 不创建新记录，返回现有归属
         if existing_parent_name == parent_name:
+            conn = get_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """UPDATE product_variants
+                           SET platform = COALESCE(platform, %s),
+                               child_asin = COALESCE(child_asin, %s),
+                               variant_sku = COALESCE(NULLIF(variant_sku, ''), %s)
+                           WHERE user_id = %s AND id = %s""",
+                        (platform, child_asin, child_asin, user_id, existing_variant_id),
+                    )
+                    conn.commit()
+            finally:
+                conn.close()
             return {
                 "child_asin": child_asin,
                 "action": "existing",
                 "parent_name": parent_name,
-                "variant_id": None,
+                "variant_id": existing_variant_id,
                 "message": f"ASIN {child_asin} 已存在于父产品 [{parent_name}] 下",
             }
         else:
@@ -1356,7 +1399,7 @@ def upsert_product_variant_for_upload(
                 "child_asin": child_asin,
                 "action": "merged_to_other",
                 "parent_name": existing_parent_name,
-                "variant_id": None,
+                "variant_id": existing_variant_id,
                 "message": f"ASIN {child_asin} 已归入父产品 [{existing_parent_name}]（按 ASIN 优先规则）",
             }
 

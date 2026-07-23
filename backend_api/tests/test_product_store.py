@@ -69,7 +69,7 @@ class FakeConnection:
         self.committed = False
         self.closed = False
 
-    def cursor(self) -> FakeCursor:
+    def cursor(self, *args: Any, **kwargs: Any) -> FakeCursor:
         return self._cursor
 
     def commit(self) -> None:
@@ -147,3 +147,64 @@ def test_delete_variant_clears_version_and_session_refs(monkeypatch):
         "UPDATE sessions SET variant_ref_id = NULL WHERE user_id = %s AND variant_ref_id = %s",
         (7, 31),
     ) in cursor.queries
+
+
+def test_upload_variant_reuses_legacy_variant_sku_record(monkeypatch):
+    cursor = FakeCursor()
+    conn = FakeConnection(cursor)
+    monkeypatch.setattr(product_store, "get_connection", lambda: conn)
+    monkeypatch.setattr(
+        product_store,
+        "_find_existing_variant_for_identifier",
+        lambda user_id, child_asin, platform: {
+            "id": 55,
+            "product_id": 12,
+            "platform": None,
+            "child_asin": child_asin,
+            "variant_sku": child_asin,
+        },
+    )
+    monkeypatch.setattr(product_store, "_get_parent_product_name", lambda user_id, product_id: "TIDEWE")
+
+    result = product_store.upsert_product_variant_for_upload(
+        user_id=7,
+        platform="Amazon",
+        child_asin="B0779NTMYD",
+        parent_name="TIDEWE",
+        category="waders",
+    )
+
+    assert result["action"] == "existing"
+    assert result["variant_id"] == 55
+    assert (
+        "UPDATE product_variants SET platform = COALESCE(platform, %s), child_asin = COALESCE(child_asin, %s), variant_sku = COALESCE(NULLIF(variant_sku, ''), %s) WHERE user_id = %s AND id = %s",
+        ("Amazon", "B0779NTMYD", "B0779NTMYD", 7, 55),
+    ) in cursor.queries
+    assert conn.committed is True
+
+
+def test_upload_variant_merges_to_existing_parent_for_legacy_variant_sku(monkeypatch):
+    monkeypatch.setattr(
+        product_store,
+        "_find_existing_variant_for_identifier",
+        lambda user_id, child_asin, platform: {
+            "id": 56,
+            "product_id": 13,
+            "platform": None,
+            "child_asin": child_asin,
+            "variant_sku": child_asin,
+        },
+    )
+    monkeypatch.setattr(product_store, "_get_parent_product_name", lambda user_id, product_id: "Existing Parent")
+
+    result = product_store.upsert_product_variant_for_upload(
+        user_id=7,
+        platform="Amazon",
+        child_asin="B0779NTMYD",
+        parent_name="TIDEWE",
+        category="waders",
+    )
+
+    assert result["action"] == "merged_to_other"
+    assert result["parent_name"] == "Existing Parent"
+    assert result["variant_id"] == 56

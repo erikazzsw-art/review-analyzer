@@ -245,9 +245,10 @@ def create_uploads(
                 psycopg2.errors.UndefinedColumn,
                 psycopg2.errors.UndefinedTable,
                 psycopg2.errors.InvalidColumnReference,
+                psycopg2.IntegrityError,
             ) as exc:
                 logger.warning(
-                    "Skipping upload variant merge because product catalog schema is not ready: %s",
+                    "Skipping upload variant merge because product catalog is not ready or has legacy conflicts: %s",
                     exc,
                 )
 

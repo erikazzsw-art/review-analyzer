@@ -6,6 +6,7 @@ from datetime import datetime
 
 import pandas as pd
 import psycopg2
+import pytest
 from fastapi.testclient import TestClient
 
 from backend_api.app.deps import get_current_user
@@ -123,7 +124,16 @@ def test_file_upload_uses_product_name_as_parent_and_reads_asins_from_raw_data(m
     }
 
 
-def test_file_upload_skips_variant_merge_when_product_schema_is_not_ready(monkeypatch):
+@pytest.mark.parametrize(
+    "merge_error",
+    [
+        psycopg2.errors.UndefinedColumn("column product_variants.platform does not exist"),
+        psycopg2.errors.UniqueViolation(
+            'duplicate key value violates unique constraint "product_variants_user_id_variant_sku_key"'
+        ),
+    ],
+)
+def test_file_upload_skips_variant_merge_when_product_catalog_fails(monkeypatch, merge_error):
     captured: dict[str, object] = {}
 
     parsed = pd.DataFrame(
@@ -141,7 +151,7 @@ def test_file_upload_skips_variant_merge_when_product_schema_is_not_ready(monkey
     monkeypatch.setattr("backend_api.app.routes.uploads.compute_batch_hash", lambda *_args: "batch-1")
 
     def fake_batch_upsert(*_args, **_kwargs):
-        raise psycopg2.errors.UndefinedColumn("column product_variants.platform does not exist")
+        raise merge_error
 
     def fake_enqueue(user_id, payload):
         captured["user_id"] = user_id
