@@ -558,6 +558,30 @@ def get_product_by_id(user_id: int, product_id: int) -> dict[str, Any] | None:
         conn.close()
 
 
+def get_product_listing_by_product_id(user_id: int, product_id: int) -> dict[str, Any] | None:
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT
+                       l.parent_asin,
+                       l.marketplace,
+                       l.title,
+                       l.scraped_at
+                   FROM product_listings l
+                   JOIN products p ON p.id = l.product_id
+                   WHERE p.user_id = %s AND l.product_id = %s""",
+                (user_id, product_id),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+    except psycopg2.errors.UndefinedTable:
+        conn.rollback()
+        return None
+    finally:
+        conn.close()
+
+
 
 def get_product_by_parent_id(user_id: int, parent_product_id: str) -> dict[str, Any] | None:
     conn = get_connection()

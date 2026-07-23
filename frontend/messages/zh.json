@@ -2159,6 +2159,8 @@
       "category": "类目",
       "asin": "ASIN",
       "parentProductId": "产品名称",
+      "amazonProductLink": "Amazon 链接",
+      "amazonProductLinkAria": "打开 ASIN {asin} 的 Amazon 产品详情页",
       "ratingCount": "({count} 评分)",
       "reviewCount": "{count} 条评论",
       "viewAnalysis": "查看评论分析",

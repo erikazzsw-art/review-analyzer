@@ -6,6 +6,7 @@ import { MoveVariantButton } from "@/components/products/move-variant-button";
 import { ProductDetailTabs } from "@/components/products/product-detail-tabs";
 import { getProductDetail, isApiError } from "@/lib/api/server";
 import type { ProductVariant } from "@/lib/api/types";
+import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -13,6 +14,58 @@ import { getTranslations } from "next-intl/server";
 type Props = {
   params: Promise<{ id: string }>;
 };
+
+const AMAZON_MARKETPLACE_DOMAINS: Record<string, string> = {
+  us: "amazon.com",
+  uk: "amazon.co.uk",
+  ca: "amazon.ca",
+  au: "amazon.com.au",
+  de: "amazon.de",
+  fr: "amazon.fr",
+  es: "amazon.es",
+  it: "amazon.it",
+  jp: "amazon.co.jp",
+  in: "amazon.in",
+  br: "amazon.com.br",
+  mx: "amazon.com.mx",
+  nl: "amazon.nl",
+  se: "amazon.se",
+  pl: "amazon.pl",
+  sg: "amazon.sg",
+  ae: "amazon.ae",
+  sa: "amazon.sa",
+  tr: "amazon.com.tr",
+};
+
+const AMAZON_ASIN_PATTERN = /^B[A-Z0-9]{9}$/i;
+
+function normalizeAmazonAsin(value: unknown): string | null {
+  const asin = typeof value === "string" ? value.trim().toUpperCase() : "";
+  return AMAZON_ASIN_PATTERN.test(asin) ? asin : null;
+}
+
+function getAmazonProductUrl(asin: string | null, marketplace: string | null): string | null {
+  if (!asin) return null;
+  const normalizedMarketplace = (marketplace || "us").trim().toLowerCase();
+  const domain = AMAZON_MARKETPLACE_DOMAINS[normalizedMarketplace] || AMAZON_MARKETPLACE_DOMAINS.us;
+  return `https://www.${domain}/dp/${asin}`;
+}
+
+function getFallbackAmazonAsin(
+  parentProductId: string,
+  variants: ProductVariant[],
+  productPlatform: unknown,
+): string | null {
+  const parentAsin = normalizeAmazonAsin(parentProductId);
+  if (parentAsin) return parentAsin;
+
+  const normalizedProductPlatform = typeof productPlatform === "string" ? productPlatform.toLowerCase() : "";
+  const amazonVariant = variants.find((variant) => {
+    const platform = (variant.platform || normalizedProductPlatform || "").toLowerCase();
+    return platform === "amazon" && normalizeAmazonAsin(variant.child_asin);
+  });
+  return normalizeAmazonAsin(amazonVariant?.child_asin);
+}
 
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params;
@@ -22,7 +75,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const t = await getTranslations("products");
 
   try {
-    const { product, variants: rawVariants } = await getProductDetail(productId);
+    const { product, variants: rawVariants, listing } = await getProductDetail(productId);
     const variants = rawVariants as ProductVariant[];
 
     const parentProductId = product.parent_product_id as string;
@@ -33,6 +86,11 @@ export default async function ProductDetailPage({ params }: Props) {
     const category = product.category as string | null;
     const ratingsTotal = product.ratings_total as number | null;
     const reviewsTotal = product.reviews_total as number | null;
+    const amazonAsin =
+      normalizeAmazonAsin(listing?.parent_asin) ||
+      getFallbackAmazonAsin(parentProductId, variants, product.platform);
+    const amazonProductUrl = getAmazonProductUrl(amazonAsin, listing?.marketplace ?? null);
+    const amazonDisplayUrl = amazonProductUrl?.replace(/^https:\/\/www\./, "");
 
     return (
       <AppShell currentPath="/products" title={name} description={t("detail.pageDescription")}>
@@ -58,6 +116,21 @@ export default async function ProductDetailPage({ params }: Props) {
                 {name}
               </h1>
               {brand && <p className="mt-1 text-sm text-soft">{t("detail.brand")}：{brand}</p>}
+              {amazonProductUrl && (
+                <p className="mt-1 flex flex-wrap items-center gap-1 text-sm">
+                  <span className="text-soft">{t("detail.amazonProductLink")}：</span>
+                  <a
+                    href={amazonProductUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-w-0 items-center gap-1 break-all font-semibold text-ink underline decoration-pink-200 underline-offset-4 transition hover:text-pink-600"
+                    aria-label={t("detail.amazonProductLinkAria", { asin: amazonAsin ?? "" })}
+                  >
+                    <span>{amazonDisplayUrl}</span>
+                    <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+                  </a>
+                </p>
+              )}
               {category && <p className="mt-1 text-sm text-soft">{t("detail.category")}：{category}</p>}
 
               {/* Rating */}

@@ -94,6 +94,13 @@ export type ProductVersion = {
   created_at: string | null;
 };
 
+export type ProductListing = {
+  parent_asin: string | null;
+  marketplace: string | null;
+  title: string | null;
+  scraped_at: string | null;
+};
+
 export type ProductOverview = {
   id: number | null;
   parent_product_id: string;

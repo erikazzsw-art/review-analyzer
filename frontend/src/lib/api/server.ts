@@ -9,6 +9,7 @@ import type {
   AnalysisSessionResultsResponse,
   CompareLatestResponse,
   QaProduct,
+  ProductListing,
   ProductsResponse,
   ProductSearchResponse,
   SettingsResponse,
@@ -79,6 +80,7 @@ export async function getProducts(): Promise<ProductsResponse> {
 export async function getProductDetail(productId: number): Promise<{
   product: Record<string, unknown>;
   variants: Record<string, unknown>[];
+  listing: ProductListing | null;
 }> {
   return apiFetch(`/products/${productId}/detail`);
 }

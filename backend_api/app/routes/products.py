@@ -28,6 +28,7 @@ from review_analyzer.product_store import (
     delete_variant,
     get_parent_variant_analysis,
     get_product_by_id,
+    get_product_listing_by_product_id,
     get_product_overview_rows,
     get_variants_with_review_counts,
     move_variant_to_parent,
@@ -371,9 +372,11 @@ def get_product_detail(
             detail="Product not found.",
         )
     variants = get_variants_with_review_counts(user_id, product_id)
+    listing = get_product_listing_by_product_id(user_id, product_id)
     return {
         "product": product,
         "variants": variants,
+        "listing": listing,
     }
 
 

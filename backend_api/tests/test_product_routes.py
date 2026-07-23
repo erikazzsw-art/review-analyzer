@@ -136,6 +136,47 @@ def test_update_product_reports_parent_name_conflict(monkeypatch):
     assert response.json()["detail"] == "父体名称已存在，请换一个名称。"
 
 
+def test_get_product_detail_includes_listing_metadata(monkeypatch):
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_by_id",
+        lambda user_id, product_id: {
+            "id": product_id,
+            "user_id": user_id,
+            "parent_product_id": "TIDEWE-下水服-WD001",
+            "name": "TIDEWE-下水服-WD001",
+            "platform": "amazon",
+        },
+    )
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_variants_with_review_counts",
+        lambda user_id, product_id: [],
+    )
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_listing_by_product_id",
+        lambda user_id, product_id: {
+            "parent_asin": "B0B14JY8S8",
+            "marketplace": "us",
+            "title": "TIDEWE Bootfoot Chest Wader",
+            "scraped_at": None,
+        },
+    )
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.get("/products/12/detail")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["listing"] == {
+        "parent_asin": "B0B14JY8S8",
+        "marketplace": "us",
+        "title": "TIDEWE Bootfoot Chest Wader",
+        "scraped_at": None,
+    }
+
+
 def test_search_products_matches_variant_asin(monkeypatch):
     monkeypatch.setattr(
         "backend_api.app.routes.products.get_product_overview_rows",

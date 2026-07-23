@@ -2159,6 +2159,8 @@
       "category": "Category",
       "asin": "ASIN",
       "parentProductId": "Product Name",
+      "amazonProductLink": "Amazon Link",
+      "amazonProductLinkAria": "Open Amazon product detail page for ASIN {asin}",
       "ratingCount": "({count} ratings)",
       "reviewCount": "{count} reviews",
       "viewAnalysis": "View Review Analysis",
