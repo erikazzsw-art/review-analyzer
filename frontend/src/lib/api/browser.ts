@@ -123,6 +123,7 @@ export async function submitUploadJob(params: {
   dateStart: string;
   dateEnd: string;
   versionNotes: string;
+  representativeAsin?: string | null;
   productRefId?: number | null;
   variantRefId?: number | null;
 }): Promise<UploadJobResponse> {
@@ -137,6 +138,9 @@ export async function submitUploadJob(params: {
   formData.append("date_start", params.dateStart);
   formData.append("date_end", params.dateEnd);
   formData.append("version_notes", params.versionNotes);
+  if (params.representativeAsin?.trim()) {
+    formData.append("representative_asin", params.representativeAsin.trim());
+  }
   if (params.productRefId !== undefined && params.productRefId !== null) {
     formData.append("product_ref_id", String(params.productRefId));
   }

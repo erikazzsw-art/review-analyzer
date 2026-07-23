@@ -9,6 +9,7 @@ import { AsinWatchlistPanel } from "@/components/upload/asin-watchlist-panel";
 import {
   describeRequestError,
   fetchTaxonomyCategories,
+  searchProducts,
   submitUploadJob,
 } from "@/lib/api/browser";
 import type { DuplicateBatchError } from "@/lib/api/browser";
@@ -17,6 +18,7 @@ import type {
   TaxonomyCategoriesResponse,
   TaxonomyCategoryGroup,
   UploadJob,
+  ProductSearchItem,
 } from "@/lib/api/types";
 import { renderInline } from "@/lib/render-inline";
 
@@ -32,6 +34,40 @@ const workflowPurposeKeys = [
 ] as const;
 
 const PLATFORMS = ["Amazon", "AliExpress", "eBay", "Shopee", "Walmart"] as const;
+
+function normalizeProductLookup(value: string): string {
+  return value
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[\p{P}\p{S}\s_]+/gu, "");
+}
+
+function productSimilarity(a: string, b: string): number {
+  const left = normalizeProductLookup(a);
+  const right = normalizeProductLookup(b);
+  if (!left || !right) return 0;
+  if (left === right) return 1;
+  if (left.includes(right) || right.includes(left)) {
+    return 0.92 * Math.min(left.length, right.length) / Math.max(left.length, right.length);
+  }
+  const rows = left.length + 1;
+  const cols = right.length + 1;
+  const dp = Array.from({ length: rows }, () => Array<number>(cols).fill(0));
+  for (let i = 0; i < rows; i += 1) dp[i][0] = i;
+  for (let j = 0; j < cols; j += 1) dp[0][j] = j;
+  for (let i = 1; i < rows; i += 1) {
+    for (let j = 1; j < cols; j += 1) {
+      const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost,
+      );
+    }
+  }
+  const distance = dp[left.length][right.length];
+  return 1 - distance / Math.max(left.length, right.length);
+}
 
 type FormState = {
   productId: string;
@@ -96,6 +132,8 @@ export function UploadForm() {
   const [job, setJob] = useState<UploadJob | null>(null);
   const [error, setError] = useState<string>("");
   const [duplicate, setDuplicate] = useState<DuplicateBatchError | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<ProductSearchItem[]>([]);
+  const [pendingParentName, setPendingParentName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [taxonomy, setTaxonomy] = useState<TaxonomyCategoriesResponse | null>(null);
   const [form, setForm] = useState<FormState>({
@@ -189,46 +227,62 @@ export function UploadForm() {
   const canSubmit = useMemo(() => {
     return (
       !!file &&
-      form.productId.trim().length > 0 &&
+      form.productName.trim().length > 0 &&
       form.version.trim().length > 0 &&
       form.workflowPurpose.trim().length > 0
     );
-  }, [file, form.productId, form.version, form.workflowPurpose]);
+  }, [file, form.productName, form.version, form.workflowPurpose]);
 
   const jobInProgress = !!job && (job.status === "queued" || job.status === "processing");
 
-  async function handleSubmit() {
-    if (!file || !canSubmit) {
-      setError(t("validationError"));
-      return;
+  async function findSimilarProducts(parentName: string): Promise<ProductSearchItem[]> {
+    try {
+      const response = await searchProducts(parentName, 8);
+      return response.items
+        .filter((item) => {
+          const existingName = item.parent_product_id.trim();
+          if (!existingName || existingName === parentName) return false;
+          return productSimilarity(parentName, existingName) >= 0.82;
+        })
+        .slice(0, 3);
+    } catch {
+      return [];
     }
+  }
 
+  async function submitWithParentName(parentName: string) {
     setError("");
     setDuplicate(null);
+    setSimilarProducts([]);
+    setPendingParentName("");
     setIsSubmitting(true);
     track("upload_start", {
-      file_type: file.name.split(".").pop(),
-      file_size_kb: Math.round(file.size / 1024),
+      file_type: file?.name.split(".").pop(),
+      file_size_kb: file ? Math.round(file.size / 1024) : 0,
       category: form.category,
       workflow_purpose: t(form.workflowPurpose),
     });
     try {
+      if (!file) {
+        throw new Error(t("validationError"));
+      }
       const response = await submitUploadJob({
         sourceFile: file,
-        productId: form.productId.trim(),
+        productId: parentName,
         version: form.version.trim(),
         workflowPurpose: t(form.workflowPurpose).trim(),
-        productName: form.productName.trim(),
+        productName: parentName,
         platform: form.platform.trim(),
         category: form.category.trim(),
         dateStart: "",
         dateEnd: "",
         versionNotes: form.versionNotes.trim(),
+        representativeAsin: form.productId.trim() || null,
       });
       setJob(response.job);
       track("upload_complete", { job_id: response.job.id });
       if (response.job.status === "done" && response.job.session_id) {
-        router.push(`/analysis/results?session_id=${response.job.session_id}&version=${encodeURIComponent(form.version.trim())}`);
+        router.push(`/analysis/results?product_id=${encodeURIComponent(parentName)}&session_id=${response.job.session_id}&version=${encodeURIComponent(form.version.trim())}`);
       } else {
         router.push(`/analysis/results?job_id=${response.job.id}&version=${encodeURIComponent(form.version.trim())}`);
       }
@@ -245,6 +299,27 @@ export function UploadForm() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handleSubmit() {
+    if (!file || !canSubmit) {
+      setError(t("validationError"));
+      return;
+    }
+
+    setError("");
+    setDuplicate(null);
+    setSimilarProducts([]);
+    setIsSubmitting(true);
+    const parentName = form.productName.trim();
+    const candidates = await findSimilarProducts(parentName);
+    if (candidates.length > 0) {
+      setPendingParentName(parentName);
+      setSimilarProducts(candidates);
+      setIsSubmitting(false);
+      return;
+    }
+    await submitWithParentName(parentName);
   }
 
   return (
@@ -296,23 +371,6 @@ export function UploadForm() {
         <>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-semibold text-ink">
-              {form.platform === "Amazon" ? t("asinLabel") : form.platform === "AliExpress" ? t("aliexpressProductIdLabel") : t("productId")}
-            </span>
-            <input
-              value={form.productId}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, productId: event.target.value }))
-              }
-              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
-              placeholder={
-                form.platform === "Amazon" ? t("asinPlaceholder") :
-                form.platform === "AliExpress" ? t("aliexpressProductIdPlaceholder") :
-                t("productIdPlaceholder")
-              }
-            />
-          </label>
-          <label className="space-y-2">
             <span className="text-sm font-semibold text-ink">{t("productName")}</span>
             <input
               value={form.productName}
@@ -321,6 +379,24 @@ export function UploadForm() {
               }
               className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
               placeholder={t("productNamePlaceholder")}
+              required
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-ink">
+              {form.platform === "Amazon" ? t("representativeAsinLabel") : form.platform === "AliExpress" ? t("representativeProductIdLabel") : t("representativeProductIdLabel")}
+            </span>
+            <input
+              value={form.productId}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, productId: event.target.value }))
+              }
+              className="w-full rounded-card border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f36f8f]"
+              placeholder={
+                form.platform === "Amazon" ? t("representativeAsinPlaceholder") :
+                form.platform === "AliExpress" ? t("representativeProductIdPlaceholder") :
+                t("representativeProductIdPlaceholder")
+              }
             />
           </label>
           <label className="space-y-2">
@@ -476,6 +552,44 @@ export function UploadForm() {
               className="mt-3 inline-flex items-center rounded-pill bg-[#9a6118] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#7a4d13]"
             >
               {t("viewExistingResult")}
+            </button>
+          </div>
+        ) : null}
+
+        {similarProducts.length > 0 ? (
+          <div className="mt-4 rounded-card border border-[#f6dbb4] bg-[#fff6e6] px-4 py-4 text-sm leading-7 text-[#9a6118]">
+            <p className="font-semibold">{t("similarProductTitle")}</p>
+            <p className="mt-1 text-xs text-[#9a6118]/80">
+              {t("similarProductDesc", { name: pendingParentName })}
+            </p>
+            <div className="mt-3 space-y-2">
+              {similarProducts.map((item) => (
+                <div
+                  key={item.parent_product_id}
+                  className="flex flex-col gap-2 rounded-card border border-[#f1d29c] bg-white/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <div className="text-sm font-semibold text-ink">{item.parent_product_id}</div>
+                    <div className="mt-0.5 text-xs text-soft">
+                      {item.review_count} {t("similarProductReviews")} · {item.variants.length} {t("similarProductVariants")}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => submitWithParentName(item.parent_product_id)}
+                    className="inline-flex min-h-9 items-center justify-center rounded-pill bg-[#9a6118] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#7a4d13]"
+                  >
+                    {t("useExistingProduct")}
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => submitWithParentName(pendingParentName || form.productName.trim())}
+              className="mt-3 inline-flex min-h-9 items-center justify-center rounded-pill border border-[#e3bc7b] bg-white px-4 py-2 text-xs font-semibold text-[#9a6118] transition hover:bg-[#fff9ef]"
+            >
+              {t("createNewProductAnyway")}
             </button>
           </div>
         ) : null}

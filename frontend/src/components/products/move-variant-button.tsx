@@ -129,7 +129,6 @@ export function MoveVariantButton({ productId, variantId, variantName }: MoveVar
                 <div className="space-y-1">
                   {results.map((item) => {
                     const title = item.parent_product_id || item.name || "";
-                    const secondaryName = item.name && item.name !== title ? item.name : null;
 
                     return (
                       <button
@@ -143,9 +142,6 @@ export function MoveVariantButton({ productId, variantId, variantName }: MoveVar
                           <p className="text-sm font-semibold text-ink">
                             {title}
                           </p>
-                          {secondaryName && (
-                            <p className="line-clamp-1 text-xs text-soft">{secondaryName}</p>
-                          )}
                         </div>
                         {submitting && (
                           <Loader2 className="h-4 w-4 animate-spin text-soft" />

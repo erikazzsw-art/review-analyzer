@@ -99,7 +99,7 @@ def test_update_product_accepts_parent_product_id(monkeypatch):
         client = TestClient(app)
         response = client.patch(
             "/products/12",
-            json={"parent_product_id": "  New Parent  ", "name": "Display Name"},
+            json={"parent_product_id": "  New Parent  ", "name": "Ignored Display Name"},
         )
     finally:
         app.dependency_overrides.clear()
@@ -110,7 +110,7 @@ def test_update_product_accepts_parent_product_id(monkeypatch):
     assert captured["product_id"] == 12
     assert captured["data"] == {
         "parent_product_id": "New Parent",
-        "name": "Display Name",
+        "name": "New Parent",
     }
 
 
@@ -238,6 +238,32 @@ def test_search_products_matches_variant_product_name(monkeypatch):
     assert response.json()["items"][0]["variants"] == [
         {"child_asin": "B0ASINMATCH", "name": "Desk Lamp Black"}
     ]
+
+
+def test_search_products_matches_normalized_similar_parent_name(monkeypatch):
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_overview_rows",
+        lambda user_id: [
+            {
+                "id": 12,
+                "parent_product_id": "TIDEWE-下水服-WD001",
+                "name": "TIDEWE-下水服-WD001",
+                "review_count": 100,
+                "session_count": 1,
+                "variants": [],
+            },
+        ],
+    )
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.get("/products/search", params={"q": "tidewe 下水服 wd001"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["parent_product_id"] == "TIDEWE-下水服-WD001"
 
 
 def test_search_products_excludes_archived_session_rows(monkeypatch):

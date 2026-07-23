@@ -26,9 +26,7 @@ export default async function ProductDetailPage({ params }: Props) {
     const variants = rawVariants as ProductVariant[];
 
     const parentProductId = product.parent_product_id as string;
-    const displayName = (product.name as string | null) ?? null;
-    const name = parentProductId || displayName || t("detail.unnamedProduct");
-    const secondaryName = displayName && displayName !== name ? displayName : null;
+    const name = parentProductId || t("detail.unnamedProduct");
     const brand = product.brand as string | null;
     const rating = product.rating != null ? Number(product.rating) : null;
     const imageUrl = product.image_url as string | null;
@@ -59,10 +57,8 @@ export default async function ProductDetailPage({ params }: Props) {
               <h1 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-ink">
                 {name}
               </h1>
-              {secondaryName && <p className="mt-1 max-w-3xl text-sm leading-6 text-soft">{secondaryName}</p>}
               {brand && <p className="mt-1 text-sm text-soft">{t("detail.brand")}：{brand}</p>}
               {category && <p className="mt-1 text-sm text-soft">{t("detail.category")}：{category}</p>}
-              <p className="mt-1 text-sm text-soft">{t("detail.parentProductId")}：{parentProductId}</p>
 
               {/* Rating */}
               {rating != null && (

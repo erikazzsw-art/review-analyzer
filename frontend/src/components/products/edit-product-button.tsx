@@ -42,7 +42,6 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ProductUpdatePayload>({
     parent_product_id: initial.parent_product_id ?? "",
-    name: initial.name ?? "",
     platform: initial.platform ?? "Amazon",
     category: initial.category ?? "",
     lifecycle_stage: initial.lifecycle_stage ?? "growth",
@@ -57,13 +56,14 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.parent_product_id?.trim()) return;
+    const productName = form.parent_product_id?.trim() || "";
+    if (!productName) return;
     setSubmitting(true);
     setError(null);
     try {
       const payload: ProductUpdatePayload = {};
-      payload.parent_product_id = form.parent_product_id.trim();
-      if (form.name?.trim()) payload.name = form.name.trim();
+      payload.parent_product_id = productName;
+      payload.name = productName;
       if (form.platform) payload.platform = form.platform;
       if (form.category?.trim()) payload.category = form.category.trim();
       if (form.lifecycle_stage) payload.lifecycle_stage = form.lifecycle_stage;
@@ -118,27 +118,15 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                    {t("edit.parentProductNameLabel")}
+                    {t("edit.productNameLabel")}
                   </label>
                   <input
                     type="text"
                     value={form.parent_product_id ?? ""}
                     onChange={(e) => updateField("parent_product_id", e.target.value)}
-                    placeholder={t("edit.parentProductNamePlaceholder")}
+                    placeholder={t("edit.productNamePlaceholder")}
                     className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
                     required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-                    {t("edit.productNameLabel")}
-                  </label>
-                  <input
-                    type="text"
-                    value={form.name ?? ""}
-                    onChange={(e) => updateField("name", e.target.value)}
-                    className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
                   />
                 </div>
 

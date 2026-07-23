@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import re
+import unicodedata
 from datetime import datetime
+from difflib import SequenceMatcher
 
 import psycopg2.extras
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
@@ -69,6 +72,23 @@ def _visible_product_rows(rows: list[dict]) -> list[dict]:
     ]
 
 
+def _normalize_product_lookup(value: object) -> str:
+    text = unicodedata.normalize("NFKC", str(value or "")).casefold()
+    return re.sub(r"[\W_]+", "", text, flags=re.UNICODE)
+
+
+def _product_similarity(query: str, value: str) -> float:
+    q_norm = _normalize_product_lookup(query)
+    value_norm = _normalize_product_lookup(value)
+    if not q_norm or not value_norm:
+        return 0.0
+    if q_norm == value_norm:
+        return 1.0
+    if q_norm in value_norm or value_norm in q_norm:
+        return 0.92 * min(len(q_norm), len(value_norm)) / max(len(q_norm), len(value_norm))
+    return SequenceMatcher(None, q_norm, value_norm).ratio()
+
+
 @router.get("", response_model=ProductsResponsePayload)
 def get_products_route(
     current_user: dict = Depends(get_current_user),
@@ -93,7 +113,9 @@ def search_products_route(
     """
     user_id = int(current_user["id"])
     rows = _visible_product_rows(get_product_overview_rows(user_id))
-    q_norm = q.strip().lower()
+    q_raw = q.strip()
+    q_lower = q_raw.lower()
+    q_norm = _normalize_product_lookup(q_raw)
 
     def _variant_values(row: dict) -> list[str]:
         values: list[str] = []
@@ -146,20 +168,33 @@ def search_products_route(
         return items
 
     def _match(row: dict) -> bool:
-        if not q_norm:
+        if not q_raw:
             return True
-        return any(q_norm in value.lower() for value in _search_values(row))
+        for value in _search_values(row):
+            if q_lower in value.lower():
+                return True
+            if len(q_norm) >= 4 and _product_similarity(q_raw, value) >= 0.82:
+                return True
+        return False
 
     matched = [r for r in rows if _match(r)]
 
     def _sort_key(row: dict) -> tuple:
-        values = [value.lower() for value in _search_values(row) if value]
-        exact_hit = 0 if (q_norm and any(value == q_norm for value in values)) else 1
-        prefix_hit = 0 if (q_norm and any(value.startswith(q_norm) for value in values)) else 1
+        values = [value for value in _search_values(row) if value]
+        lower_values = [value.lower() for value in values]
+        norm_values = [_normalize_product_lookup(value) for value in values]
+        exact_hit = 0 if (q_lower and any(value == q_lower for value in lower_values)) else 1
+        normalized_hit = 0 if (q_norm and any(value == q_norm for value in norm_values)) else 1
+        prefix_hit = 0 if (q_lower and any(value.startswith(q_lower) for value in lower_values)) else 1
+        normalized_prefix_hit = 0 if (q_norm and any(value.startswith(q_norm) for value in norm_values)) else 1
+        best_similarity = max((_product_similarity(q_raw, value) for value in values), default=0.0)
         pid = str(row.get("parent_product_id") or "").lower()
         return (
             exact_hit,
+            normalized_hit,
             prefix_hit,
+            normalized_prefix_hit,
+            -best_similarity,
             -int(row.get("review_count") or 0),
             pid,
         )
@@ -231,7 +266,16 @@ def create_product_route(
     current_user: dict = Depends(get_current_user),
 ) -> dict:
     user_id = int(current_user["id"])
-    product_id = create_product(user_id, body.model_dump(exclude_none=True))
+    data = body.model_dump(exclude_none=True)
+    parent_product_id = str(data.get("parent_product_id") or "").strip()
+    if not parent_product_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="产品名称不能为空。",
+        )
+    data["parent_product_id"] = parent_product_id
+    data["name"] = parent_product_id
+    product_id = create_product(user_id, data)
     return {"id": product_id}
 
 
@@ -254,9 +298,12 @@ def update_product_route(
         if not parent_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="父体名称不能为空。",
+                detail="产品名称不能为空。",
             )
         data["parent_product_id"] = parent_product_id
+        data["name"] = parent_product_id
+    elif "name" in data:
+        data["name"] = str(existing.get("parent_product_id") or data["name"] or "").strip()
     if not data:
         return {"updated": False}
     try:

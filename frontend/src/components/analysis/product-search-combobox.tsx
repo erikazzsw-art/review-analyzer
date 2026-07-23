@@ -146,8 +146,8 @@ export function ProductSearchCombobox({ value, variantAsin, onChange, placeholde
               const matchedVariant = findMatchedVariant(it);
               const variantCount = (it.variants || []).filter((variant) => variant.child_asin).length;
               const secondaryLabel = matchedVariant
-                ? [it.parent_product_id, it.name].filter(Boolean).join(" · ")
-                : it.name;
+                ? it.parent_product_id
+                : null;
               const primaryLabel = matchedVariant?.name || matchedVariant?.child_asin || it.parent_product_id;
 
               return (

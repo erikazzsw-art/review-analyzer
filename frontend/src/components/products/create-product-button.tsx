@@ -24,7 +24,6 @@ export function CreateProductButton() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<ProductCreatePayload>({
     parent_product_id: "",
-    name: "",
     platform: "Amazon",
     category: "",
     lifecycle_stage: "growth",
@@ -37,19 +36,19 @@ export function CreateProductButton() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.parent_product_id.trim()) return;
+    const productName = form.parent_product_id.trim();
+    if (!productName) return;
     setSubmitting(true);
     try {
       await createProduct({
         ...form,
-        parent_product_id: form.parent_product_id.trim(),
-        name: form.name?.trim() || undefined,
+        parent_product_id: productName,
+        name: productName,
         category: form.category?.trim() || undefined,
       });
       setOpen(false);
       setForm({
         parent_product_id: "",
-        name: "",
         platform: "Amazon",
         category: "",
         lifecycle_stage: "growth",
@@ -87,28 +86,15 @@ export function CreateProductButton() {
         <div className="mt-6 space-y-4">
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              {t("productIdLabel")}
+              {t("productNameLabel")}
             </label>
             <input
               type="text"
               value={form.parent_product_id}
               onChange={(e) => updateField("parent_product_id", e.target.value)}
-              placeholder={t("productIdPlaceholder")}
-              className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
-              {t("productNameLabel")}
-            </label>
-            <input
-              type="text"
-              value={form.name ?? ""}
-              onChange={(e) => updateField("name", e.target.value)}
               placeholder={t("productNamePlaceholder")}
               className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
+              required
             />
           </div>
 
