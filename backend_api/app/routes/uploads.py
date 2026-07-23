@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import tempfile
 from pathlib import Path
 from threading import Thread
 from typing import Any
 
+import psycopg2
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -34,6 +36,7 @@ from review_analyzer.quota import quota_check, quota_check_atomic
 from workers.jobs import enqueue_upload_job_task, process_upload_job
 
 router = APIRouter(tags=["uploads"])
+logger = logging.getLogger(__name__)
 
 
 def _merged_raw_comment_row(comment: dict[str, Any]) -> dict[str, Any]:
@@ -232,11 +235,21 @@ def create_uploads(
     variant_merge_result = None
     if platform and product_name and comments:
         if identifiers:
-            variant_merge_result = batch_upsert_variants_for_upload(
-                user_id, platform, identifiers,
-                parent_name=product_name,
-                category=category,
-            )
+            try:
+                variant_merge_result = batch_upsert_variants_for_upload(
+                    user_id, platform, identifiers,
+                    parent_name=product_name,
+                    category=category,
+                )
+            except (
+                psycopg2.errors.UndefinedColumn,
+                psycopg2.errors.UndefinedTable,
+                psycopg2.errors.InvalidColumnReference,
+            ) as exc:
+                logger.warning(
+                    "Skipping upload variant merge because product catalog schema is not ready: %s",
+                    exc,
+                )
 
     payload = {
         "source_filename": source_file.filename or "upload",
