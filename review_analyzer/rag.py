@@ -337,6 +337,7 @@ def answer_question(
     top_k: int = DEFAULT_TOP_K,
     history: list[dict] | None = None,
     products_meta: list[dict] | None = None,
+    locale: str = "en",
 ) -> dict:
     """路由到对应 handler 生成回答，返回 {answer, citations, retrieval_method, intent, aggregation_snapshot}."""
     # 延迟导入避免循环依赖（qa_handlers 会 import rag 里的原语）
@@ -347,7 +348,7 @@ def answer_question(
     intent = intent_result["intent"]
     handler = INTENT_HANDLERS.get(intent, retrieval_handler)
 
-    kwargs: dict = {"fallback": retrieval_handler}
+    kwargs: dict = {"fallback": retrieval_handler, "locale": locale}
     if intent == "product_compare":
         kwargs["products_meta"] = products_meta
 

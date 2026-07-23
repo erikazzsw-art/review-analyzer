@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.schemas.analysis import (
@@ -15,6 +15,7 @@ from backend_api.app.schemas.analysis import (
     QaMessageResponse,
     QaProductPayload,
 )
+from backend_api.app.services.locale import get_analysis_locale
 from review_analyzer.database import get_comments, get_connection
 from review_analyzer.paddle_billing import is_pro_user
 from review_analyzer.product_store import get_product_overview_rows
@@ -52,6 +53,7 @@ def list_qa_products(current_user: dict = Depends(get_current_user)) -> list[QaP
 @router.post("/questions", response_model=QaAskResponse)
 def ask_reviews(
     payload: QaAskRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ) -> QaAskResponse:
     user_id = int(current_user["id"])
@@ -88,6 +90,7 @@ def ask_reviews(
         selected_comments,
         top_k=payload.top_k,
         products_meta=selected_rows,
+        locale=get_analysis_locale(request),
     )
     try:
         credit_consume(user_id, 3, "ask")
@@ -253,6 +256,7 @@ def get_conversation_messages(
 def send_message(
     conversation_id: int,
     payload: QaMessageCreate,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ) -> QaMessageResponse:
     user_id = int(current_user["id"])
@@ -289,6 +293,7 @@ def send_message(
         top_k=payload.top_k,
         history=history,
         products_meta=selected_rows_for_conv,
+        locale=get_analysis_locale(request),
     )
     try:
         credit_consume(user_id, 3, "ask")

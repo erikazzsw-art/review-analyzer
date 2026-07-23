@@ -6,15 +6,14 @@ from datetime import date, datetime
 from typing import Any
 
 import psycopg2.extras
-from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
 
+from backend_api.app.services.llm_router import router_completion
 from review_analyzer.aggregations import (
     pick_representative_reviews as _pick_representative_reviews,
 )
 from review_analyzer.aggregations import (
     top_tags as _get_top_tags,
 )
-from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import get_comments, get_connection, get_sessions
 from review_analyzer.insight_engine import build_results_insights
 
@@ -247,23 +246,16 @@ def generate_ai_comparison_summary(
     user_id: int,
     dataset: dict[str, Any],
     focus_feature: str | None = None,
+    locale: str = "en",
 ) -> dict[str, Any]:
     groups = dataset.get("groups", [])
     groups_with_data = [group for group in groups if group.get("review_count", 0) > 0]
     if len(groups_with_data) < 2:
         raise ValueError("当前有效评论不足，暂时无法生成 AI 对比总结。")
 
-    api_key = get_api_key(user_id)
-    client = OpenAI(
-        api_key=api_key,
-        base_url="https://api.deepseek.com/v1",
-        timeout=30.0,
-    )
-
     prompt = _build_ai_summary_prompt(dataset, focus_feature=focus_feature)
     try:
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        response, _model_name = router_completion(
             messages=[
                 {"role": "system", "content": _comparison_summary_system_prompt()},
                 {"role": "user", "content": prompt},
@@ -271,12 +263,9 @@ def generate_ai_comparison_summary(
             temperature=0.2,
             max_tokens=900,
             response_format={"type": "json_object"},
+            locale=locale,
         )
-    except AuthenticationError as exc:
-        raise ValueError("DeepSeek API Key 无效，请先到设置页检查配置。") from exc
-    except APITimeoutError as exc:
-        raise ValueError("AI 对比总结生成超时，请稍后重试。") from exc
-    except APIError as exc:
+    except RuntimeError as exc:
         raise ValueError(f"AI 对比总结生成失败：{exc}") from exc
 
     content = response.choices[0].message.content.strip()
@@ -1247,4 +1236,3 @@ def delete_compare_history(user_id: int, fingerprint: str) -> bool:
             return deleted
     finally:
         conn.close()
-

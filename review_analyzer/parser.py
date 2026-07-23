@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import re
 
 import pandas as pd
 from dateutil import parser as dateutil_parser
 
+from backend_api.app.services.llm_router import router_completion
 from review_analyzer.config import (
     CONTENT_COLUMN_ALIASES,
     DATE_COLUMN_ALIASES,
@@ -256,16 +256,7 @@ def parse_amazon_format(text: str) -> list[dict]:
 # ============================================================
 
 def _parse_unstructured_ai(text: str) -> list[dict]:
-    """调用 DeepSeek API 解析无固定格式的评论文本（兜底方案）。"""
-    from dotenv import load_dotenv
-    from openai import OpenAI
-
-    load_dotenv()
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key:
-        raise ValueError("未配置 DEEPSEEK_API_KEY，无法解析非结构化文档")
-
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    """通过统一 LLM Router 解析无固定格式的评论文本（兜底方案）。"""
     prompt = (
         "从以下文本中提取所有用户评论，以 JSON 数组返回，每条评论包含字段：\n"
         "content（评论内容，必须）、date（日期 YYYY-MM-DD，必须）、"
@@ -273,10 +264,10 @@ def _parse_unstructured_ai(text: str) -> list[dict]:
         "只返回 JSON 数组，不要其他文字。\n\n"
         f"文本：\n{text[:4000]}"
     )
-    response = client.chat.completions.create(
-        model="deepseek-chat",
+    response, _model_name = router_completion(
         messages=[{"role": "user", "content": prompt}],
         temperature=0,
+        locale="en",
     )
     raw = response.choices[0].message.content.strip()
     raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE).strip()

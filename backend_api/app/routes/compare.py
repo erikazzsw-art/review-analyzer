@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import Response
 
 from backend_api.app.deps import get_current_user
@@ -22,6 +22,7 @@ from backend_api.app.schemas.analysis import (
     ComparisonReportResponse,
 )
 from backend_api.app.services.budget_guard import assert_budget
+from backend_api.app.services.locale import get_analysis_locale
 from review_analyzer.analysis_export import export_compare_page_to_xlsx
 from review_analyzer.compare_store import (
     build_compare_group_specs,
@@ -55,6 +56,7 @@ def _enrich_dataset_with_cache(
     compare_type: str,
     filters: dict[str, Any],
     dataset: dict[str, Any],
+    locale: str = "en",
 ) -> tuple[list[dict[str, Any] | None], dict[str, Any] | None]:
     """Attach per-group insights + ai_summary, honoring fingerprint cache.
 
@@ -84,7 +86,7 @@ def _enrich_dataset_with_cache(
     if groups_with_data >= 2:
         try:
             assert_budget(user_id)
-            ai_summary = generate_ai_comparison_summary(user_id, dataset)
+            ai_summary = generate_ai_comparison_summary(user_id, dataset, locale=locale)
         except HTTPException:
             raise
         except ValueError:
@@ -134,6 +136,7 @@ def _dataset_to_payload(
 @router.post("/dataset", response_model=AnalysisComparePayload)
 def compare_dataset(
     payload: CompareDatasetRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ) -> AnalysisComparePayload:
     user_id = int(current_user["id"])
@@ -143,7 +146,7 @@ def compare_dataset(
     }
     dataset = get_comparison_dataset(user_id, filters)
     insights, ai_summary = _enrich_dataset_with_cache(
-        user_id, payload.compare_type, filters, dataset
+        user_id, payload.compare_type, filters, dataset, locale=get_analysis_locale(request)
     )
     return _dataset_to_payload(dataset, payload.compare_type, insights, ai_summary)
 
@@ -151,6 +154,7 @@ def compare_dataset(
 @router.post("/export")
 def compare_export(
     payload: CompareExportRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ) -> Response:
     user_id = int(current_user["id"])
@@ -173,6 +177,7 @@ def compare_export(
             filters,
             dataset,
             focus_feature=payload.focus_feature,
+            locale=get_analysis_locale(request),
         )
 
     xlsx_payload, context = dataset_to_xlsx_payload(dataset, ai_summary)
@@ -190,6 +195,7 @@ def _get_or_generate_ai_summary(
     filters: dict[str, Any],
     dataset: dict[str, Any],
     focus_feature: str | None = None,
+    locale: str = "en",
 ) -> dict[str, Any] | None:
     """走 fingerprint 缓存 → 命中直接返回；未命中才调 LLM。
 
@@ -207,7 +213,9 @@ def _get_or_generate_ai_summary(
 
     assert_budget(user_id)
     try:
-        ai_summary = generate_ai_comparison_summary(user_id, dataset, focus_feature)
+        ai_summary = generate_ai_comparison_summary(
+            user_id, dataset, focus_feature, locale=locale
+        )
     except ValueError:
         return None
 

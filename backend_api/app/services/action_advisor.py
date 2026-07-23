@@ -1,6 +1,6 @@
-"""V5-T3 Step 4: LLM 行动建议生成服务
+"""V5-T3 Step 4: LLM 行动建议生成服务.
 
-升级触发时调用 DeepSeek 生成结构化行动建议，写入行动中心。
+升级触发时通过统一 LLM Router 生成结构化行动建议，写入行动中心。
 """
 from __future__ import annotations
 

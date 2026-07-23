@@ -1,4 +1,4 @@
-"""通用品类 Aspect Taxonomy 抽取脚本.
+"""通用品类 Aspect Taxonomy 抽取脚本（统一 LLM Router）.
 
 V4-T1 Step 3 扩展：从家具家居 1 个品类扩到 5 个核心品类。
 
@@ -21,7 +21,7 @@ V4-T1 Step 3 扩展：从家具家居 1 个品类扩到 5 个核心品类。
 
 输入 CSV 字段要求详见 data/taxonomy/seeds/README.md。
 
-成本预估（DeepSeek-V4-flash, ¥1/M input + ¥8/M output）:
+成本预估（按当前 Router 可用模型计费）:
     5000 条 ≈ ¥4
 """
 from __future__ import annotations
@@ -38,12 +38,13 @@ from typing import Any
 
 import pandas as pd
 import yaml
-from openai import OpenAI
+
+from review_analyzer.router_client import OpenAI
 
 ROOT = Path(__file__).resolve().parent.parent
 
-MODEL = "deepseek-chat"
-BASE_URL = "https://api.deepseek.com"
+MODEL = "router"
+BASE_URL = "router"
 MAX_WORKERS = 8
 PROMPT_VERSION = "taxonomy_v1.0_generic"
 
@@ -313,7 +314,7 @@ def _get_api_key() -> str:
         for line in env_path.read_text().splitlines():
             if line.startswith("DEEPSEEK_API_KEY="):
                 return line.split("=", 1)[1].strip().strip('"').strip("'")
-    raise RuntimeError("DEEPSEEK_API_KEY 未配置")
+    raise RuntimeError("未配置可用的 LLM API Key")
 
 
 def main() -> int:

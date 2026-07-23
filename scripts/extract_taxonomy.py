@@ -1,4 +1,4 @@
-"""家具家居 Taxonomy 全量抽取脚本.
+"""家具家居 Taxonomy 全量抽取脚本（统一 LLM Router）.
 
 用法:
 - 对 24032 条全量数据做 Aspect 抽取（与 annotate_golden_set.py 用同一 prompt）
@@ -10,7 +10,7 @@
     data/taxonomy/v1.0/aspect_extraction_raw.csv  (原始抽取结果)
     data/taxonomy/v1.0/extraction_summary.md  (汇总报告)
 
-成本预估 (DeepSeek-V4-flash, ¥1/M input + ¥8/M output):
+成本预估（按当前 Router 可用模型计费）:
     24032 条 × ~150 input + ~80 output tokens
     ≈ 3.6M input + 1.92M output
     ≈ ¥3.6 + ¥15.4 = ¥19
@@ -34,7 +34,8 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from openai import OpenAI
+
+from review_analyzer.router_client import OpenAI
 
 sys.path.insert(0, str(Path(__file__).parent))
 from aspect_taxonomy import ASPECT_KEYS, FURNITURE_ASPECTS, POLARITY_VALUES
@@ -42,8 +43,8 @@ from aspect_taxonomy import ASPECT_KEYS, FURNITURE_ASPECTS, POLARITY_VALUES
 INPUT_PATH = Path(__file__).parent.parent / "data" / "processed" / "furniture_v1.0.parquet"
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "taxonomy" / "v1.0"
 
-MODEL = "deepseek-chat"
-BASE_URL = "https://api.deepseek.com"
+MODEL = "router"
+BASE_URL = "router"
 MAX_WORKERS = 8
 PROMPT_VERSION = "taxonomy_v1.0"
 

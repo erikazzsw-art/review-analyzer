@@ -7,28 +7,20 @@ P0 只实现 3 个：aggregate_feedback / product_compare / retrieval。
 from __future__ import annotations
 
 import logging
-import os
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any, TypedDict
 
-from dotenv import load_dotenv
-from openai import OpenAI
-
+from backend_api.app.services.llm_router import router_completion
 from review_analyzer.aggregations import (
     TagStat,
     pick_citations_by_tags,
     top_tags,
 )
-from review_analyzer.analyzer import get_api_key
-
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 logger = logging.getLogger(__name__)
 
 MAX_CONTEXT_CHARS = 3600
 MIN_TAGS_FOR_AGGREGATION = 3  # 少于此数量降级到 retrieval
-DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
 
 
 class HandlerResult(TypedDict):
@@ -38,18 +30,7 @@ class HandlerResult(TypedDict):
     aggregation_snapshot: dict[str, Any] | None
 
 
-Fallback = Callable[
-    [int, str, list[dict[str, Any]], int, list[dict] | None, dict[str, Any]],
-    HandlerResult,
-]
-
-
-def _get_llm_client(api_key: str) -> OpenAI:
-    return OpenAI(api_key=api_key, base_url=DEEPSEEK_BASE_URL, timeout=30.0)
-
-
-def _resolve_api_key(user_id: int, api_key: str | None) -> str:
-    return api_key or get_api_key(user_id)
+Fallback = Callable[..., HandlerResult]
 
 
 def _format_citations_context(citations: list[dict[str, Any]]) -> str:
@@ -93,8 +74,9 @@ def aggregate_feedback_handler(
     history: list[dict] | None,
     intent_result: dict[str, Any],
     fallback: Fallback | None = None,
+    locale: str = "en",
 ) -> HandlerResult:
-    """聚合 highlight_tag / issue_tag Top-N，回捞代表评论，让 LLM 基于骨架总结。"""
+    """聚合 highlight_tag / issue_tag Top-N，回捞代表评论，通过统一 LLM Router 基于骨架总结。"""
     polarity = intent_result.get("slots", {}).get("polarity") or "negative"
     tag_field = "highlight_tag" if polarity == "positive" else "issue_tag"
 
@@ -103,7 +85,7 @@ def aggregate_feedback_handler(
     if len(non_empty) < MIN_TAGS_FOR_AGGREGATION:
         # 标签稀疏，降级到 retrieval
         if fallback:
-            return fallback(user_id, question, comments, top_k, history, intent_result)
+            return fallback(user_id, question, comments, top_k, history, intent_result, locale=locale)
         return _empty_result(
             "当前评论的结构化标签太稀疏，无法给出可靠的聚合结论。可以试试更具体的问题。",
         )
@@ -133,21 +115,19 @@ def aggregate_feedback_handler(
     )
 
     try:
-        api_key = _resolve_api_key(user_id, None)
-        client = _get_llm_client(api_key)
         messages: list[dict] = [{"role": "system", "content": system_prompt}]
         if history:
             messages.extend(history)
         messages.append({"role": "user", "content": user_prompt})
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        response, _model_name = router_completion(
             messages=messages,
             temperature=0.2,
             max_tokens=800,
+            locale=locale,
         )
         answer = response.choices[0].message.content.strip()
     except Exception:
-        logger.exception("aggregate_feedback LLM 调用失败，回退到骨架文本")
+        logger.exception("aggregate_feedback 统一 LLM Router 调用失败，回退到骨架文本")
         answer = _skeleton_fallback_text(dimension, non_empty)
 
     return {
@@ -181,8 +161,9 @@ def product_compare_handler(
     intent_result: dict[str, Any],  # noqa: ARG001
     fallback: Fallback | None = None,
     products_meta: list[dict] | None = None,
+    locale: str = "en",
 ) -> HandlerResult:
-    """按 product_id 分组聚合 Top-5 issue + Top-5 highlight，让 LLM 输出对比结论。"""
+    """按 product_id 分组聚合 Top-5 issue + Top-5 highlight，通过统一 LLM Router 输出对比结论。"""
     # 按 product_id 分组
     groups: dict[str, list[dict[str, Any]]] = {}
     for c in comments:
@@ -194,7 +175,7 @@ def product_compare_handler(
     if len(groups) < 2:
         # 只有一个产品，无法对比 → 降级
         if fallback:
-            return fallback(user_id, question, comments, top_k, history, intent_result)
+            return fallback(user_id, question, comments, top_k, history, intent_result, locale=locale)
         return _empty_result("只选了一个产品，无法做对比。请选择至少 2 个产品后再问。")
 
     product_name_map: dict[str, str] = {}
@@ -257,7 +238,7 @@ def product_compare_handler(
     total_valid = sum(1 for snap in per_product_snapshot if snap["top_issues"] or snap["top_highlights"])
     if total_valid < 2:
         if fallback:
-            return fallback(user_id, question, comments, top_k, history, intent_result)
+            return fallback(user_id, question, comments, top_k, history, intent_result, locale=locale)
 
     skeleton = "\n".join(skeleton_lines)
     context = _format_citations_context(dedup_citations)
@@ -277,21 +258,19 @@ def product_compare_handler(
     )
 
     try:
-        api_key = _resolve_api_key(user_id, None)
-        client = _get_llm_client(api_key)
         messages: list[dict] = [{"role": "system", "content": system_prompt}]
         if history:
             messages.extend(history)
         messages.append({"role": "user", "content": user_prompt})
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        response, _model_name = router_completion(
             messages=messages,
             temperature=0.2,
             max_tokens=900,
+            locale=locale,
         )
         answer = response.choices[0].message.content.strip()
     except Exception:
-        logger.exception("product_compare LLM 调用失败，回退到骨架文本")
+        logger.exception("product_compare 统一 LLM Router 调用失败，回退到骨架文本")
         answer = _compare_skeleton_fallback(per_product_snapshot)
 
     return {
@@ -330,6 +309,7 @@ def retrieval_handler(
     history: list[dict] | None,
     intent_result: dict[str, Any],  # noqa: ARG001
     fallback: Fallback | None = None,  # noqa: ARG001
+    locale: str = "en",
 ) -> HandlerResult:
     """现有检索型 RAG 流程原样封装。"""
     # 延迟导入避免循环依赖
@@ -369,8 +349,6 @@ def retrieval_handler(
         }
 
     try:
-        api_key = _resolve_api_key(user_id, None)
-        client = _get_llm_client(api_key)
         context = _format_context(citations)
         messages: list[dict] = [
             {
@@ -389,15 +367,15 @@ def retrieval_handler(
                 "content": f"用户问题：{question}\n\n相关评论：\n{context}",
             },
         )
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        response, _model_name = router_completion(
             messages=messages,
             temperature=0.2,
             max_tokens=700,
+            locale=locale,
         )
         answer = response.choices[0].message.content.strip()
     except Exception:
-        logger.exception("retrieval_handler LLM 调用失败，回退到 fallback 文案")
+        logger.exception("retrieval_handler 统一 LLM Router 调用失败，回退到 fallback 文案")
         answer = _fallback_answer(question, citations)
 
     return {

@@ -17,18 +17,18 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from openai import OpenAI
 
 from backend_api.app.services.prompt_registry import load_prompt
 from backend_api.app.services.taxonomy_loader import (
     render_aspects_block,
     resolve_aspects,
 )
+from review_analyzer.router_client import OpenAI
 
 from .golden_set import load_golden_set
 
-MODEL = "deepseek-chat"
-BASE_URL = "https://api.deepseek.com"
+MODEL = "router"
+BASE_URL = ""
 MAX_WORKERS = 8
 
 INPUT_PRICE_PER_M = 1.0

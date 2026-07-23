@@ -17,14 +17,14 @@ import time
 from pathlib import Path
 from typing import Any
 
-from openai import OpenAI
+from review_analyzer.router_client import OpenAI
 
 ROOT = Path(__file__).resolve().parent.parent
 INPUT_CSV = ROOT / "data" / "golden_set" / "v1.1" / "3c" / "ai_annotated_50.csv"
 OUTPUT_CSV = ROOT / "data" / "golden_set" / "v1.1" / "3c" / "ai_annotated_50_reviewed.csv"
 TAXONOMY_FILE = ROOT / "data" / "taxonomy" / "v1.0" / "3c" / "iphone_charger.yaml"
-MODEL = os.environ.get("GOLDEN_SET_MODEL", "deepseek-chat")
-BASE_URL = os.environ.get("GOLDEN_SET_BASE_URL", "https://api.deepseek.com")
+MODEL = "router"
+BASE_URL = "router"
 
 
 def load_key_zh_map() -> dict[str, str]:
@@ -80,7 +80,7 @@ def parse_operations(notes: str) -> list[dict[str, Any]]:
 
 
 def translate_text(client: OpenAI, text: str) -> str:
-    """Translate English text to Chinese using DeepSeek."""
+    """Translate English text to Chinese using the unified LLM Router."""
     if not text or not text.strip():
         return ""
     try:
@@ -141,7 +141,7 @@ def main():
             pass
 
     if client is None:
-        print("⚠️ DEEPSEEK_API_KEY 未设置或无效，中文翻译将回退到英文原文")
+        print("⚠️ 未检测到可用的 LLM API Key，中文翻译将回退到英文原文")
 
     key_zh_map = load_key_zh_map()
     print(f"Loaded taxonomy: {len(key_zh_map)} aspects")

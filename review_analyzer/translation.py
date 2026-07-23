@@ -3,9 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from openai import APIError, APITimeoutError, AuthenticationError, OpenAI
-
-from review_analyzer.analyzer import get_api_key
+from backend_api.app.services.llm_router import router_completion
 
 LANGUAGE_LABELS = {
     "en": "English",
@@ -26,14 +24,9 @@ def translate_compare_dataset(user_id: int, dataset: dict[str, Any], target_lang
 def _translate_payload(user_id: int, payload: dict[str, Any], target_lang: str) -> dict[str, Any]:
     target_label = LANGUAGE_LABELS.get(target_lang, "Chinese")
     source_text = json.dumps(payload, ensure_ascii=False)
+    locale = "zh" if target_lang == "zh" else "en"
     try:
-        client = OpenAI(
-            api_key=get_api_key(user_id),
-            base_url="https://api.deepseek.com/v1",
-            timeout=30.0,
-        )
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        response, _model_name = router_completion(
             messages=[
                 {
                     "role": "system",
@@ -52,10 +45,11 @@ def _translate_payload(user_id: int, payload: dict[str, Any], target_lang: str) 
             temperature=0.1,
             max_tokens=2200,
             response_format={"type": "json_object"},
+            locale=locale,
         )
         translated = json.loads(response.choices[0].message.content.strip())
         if isinstance(translated, dict):
             return translated
-    except (APIError, APITimeoutError, AuthenticationError, json.JSONDecodeError, ValueError, TypeError):
+    except (json.JSONDecodeError, ValueError, TypeError, RuntimeError):
         pass
     return payload
