@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -61,6 +62,18 @@ class UserPayload(BaseModel):
     locale: str | None = None
     terms_accepted_at: str | None = None
     terms_version: str | None = None
+    occupation_tag: Literal[
+        "operations",
+        "product_manager",
+        "management",
+        "customer_service",
+        "quality_control",
+        "other",
+    ] | None = None
+    occupation_tag_status: Literal["pending", "completed", "skipped", "not_required"] = "not_required"
+    occupation_tag_collected_at: str | None = None
+    occupation_tag_skipped_at: str | None = None
+    occupation_tag_updated_at: str | None = None
 
 
 class AcceptTermsRequest(BaseModel):

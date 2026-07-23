@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 _EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+OccupationTag = Literal[
+    "operations",
+    "product_manager",
+    "management",
+    "customer_service",
+    "quality_control",
+    "other",
+]
 
 
 def _validate_password_strength(password: str) -> str:
@@ -63,6 +71,20 @@ class MeDeleteRequest(BaseModel):
         return candidate
 
 
+class OccupationTagUpdateRequest(BaseModel):
+    occupation_tag: OccupationTag | None = None
+    skip: bool = False
+    source: str = Field(default="onboarding", max_length=64)
+
+    @model_validator(mode="after")
+    def choose_or_skip(self) -> OccupationTagUpdateRequest:
+        if self.skip and self.occupation_tag is not None:
+            raise ValueError("Choose an occupation tag or skip, not both")
+        if not self.skip and self.occupation_tag is None:
+            raise ValueError("occupation_tag is required unless skip is true")
+        return self
+
+
 class MeExportUser(BaseModel):
     id: int
     username: str
@@ -71,6 +93,11 @@ class MeExportUser(BaseModel):
     paddle_customer_id: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
+    occupation_tag: str | None = None
+    occupation_tag_status: str | None = None
+    occupation_tag_collected_at: str | None = None
+    occupation_tag_skipped_at: str | None = None
+    occupation_tag_updated_at: str | None = None
 
 
 class MeExportPayload(BaseModel):

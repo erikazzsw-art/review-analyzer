@@ -42,6 +42,7 @@ import type {
   SubCategoryProbeResponse,
   TaxonomyCategoriesResponse,
   UploadJobResponse,
+  UserProfilePayload,
 } from "@/lib/api/types";
 
 const DEFAULT_API_BASE_URL = "/api";
@@ -1314,8 +1315,23 @@ export async function exportMyData(): Promise<import("./types").MeExportPayload>
 
 export async function updateMyProfile(
   payload: import("./types").MeUpdatePayload,
-): Promise<import("./types").MeExportUser> {
+): Promise<UserProfilePayload> {
   const response = await fetch(`${getApiBaseUrl()}/me`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
+export async function updateOccupationTag(
+  payload: import("./types").OccupationTagUpdatePayload,
+): Promise<UserProfilePayload> {
+  const response = await fetch(`${getApiBaseUrl()}/me/occupation-tag`, {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

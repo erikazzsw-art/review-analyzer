@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
 import {
   Menu,
   X,
@@ -13,18 +13,18 @@ import { FeedbackTrigger } from "@/components/feedback/FeedbackWidget";
 import { SidebarCreditEntry } from "@/components/credit/sidebar-credit-entry";
 import { SidebarUserMenu } from "@/components/app/sidebar-user-menu";
 import { TermsGate } from "@/components/terms/terms-gate";
+import { OccupationTagGate } from "@/components/onboarding/occupation-tag-gate";
+import type { UserProfilePayload } from "@/lib/api/types";
 
 const CURRENT_TERMS_VERSION = "2.0";
 
-type MeData = {
-  username: string;
-  plan: string;
-  is_admin: boolean;
-  terms_accepted_at: string | null;
-  terms_version: string | null;
-};
+type MeData = UserProfilePayload;
 
-function useMe(): { me: MeData | null; showTermsGate: boolean } {
+function useMe(): {
+  me: MeData | null;
+  setMe: Dispatch<SetStateAction<MeData | null>>;
+  showTermsGate: boolean;
+} {
   const [me, setMe] = useState<MeData | null>(null);
   useEffect(() => {
     fetch("/api/me", { credentials: "include" })
@@ -35,7 +35,7 @@ function useMe(): { me: MeData | null; showTermsGate: boolean } {
 
   // V4-出海-M2.5: 老用户 terms_version 为空或过期 → 弹出 Terms Gate
   const showTermsGate = me !== null && me.terms_version !== CURRENT_TERMS_VERSION;
-  return { me, showTermsGate };
+  return { me, setMe, showTermsGate };
 }
 
 type SidebarProps = {
@@ -45,9 +45,11 @@ type SidebarProps = {
 export function Sidebar({ currentPath }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslations("sidebar");
-  const { me, showTermsGate } = useMe();
+  const { me, setMe, showTermsGate } = useMe();
 
   const isAdmin = me?.is_admin ?? false;
+  const showOccupationGate =
+    me !== null && !showTermsGate && me.occupation_tag_status === "pending";
 
   const navGroups = [
     {
@@ -156,6 +158,13 @@ export function Sidebar({ currentPath }: SidebarProps) {
     <>
       {/* V4-出海-M2.5-C: Terms Gate — 老用户登录后必须补同意才能继续 */}
       <TermsGate open={showTermsGate} />
+      <OccupationTagGate
+        open={showOccupationGate}
+        userId={me?.id ?? null}
+        username={me?.username ?? null}
+        plan={me?.plan ?? null}
+        onComplete={setMe}
+      />
 
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 hidden h-screen w-[260px] border-r border-line bg-white md:block">

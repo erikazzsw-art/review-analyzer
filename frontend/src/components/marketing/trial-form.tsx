@@ -48,7 +48,7 @@ export function TrialForm() {
           username,
           email,
           password,
-          terms_version: "1.0",
+          terms_version: "2.0",
           age_confirmed: true,
           marketing_opt_in: false,
         }),

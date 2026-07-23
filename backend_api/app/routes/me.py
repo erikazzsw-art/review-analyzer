@@ -17,7 +17,9 @@ from backend_api.app.schemas.me import (
     MeExportUser,
     MeMessageResponse,
     MeUpdateRequest,
+    OccupationTagUpdateRequest,
 )
+from backend_api.app.services.analytics import track_event
 from review_analyzer.database import (
     anonymize_user,
     collect_user_data_for_export,
@@ -26,6 +28,7 @@ from review_analyzer.database import (
     get_user_by_id,
     get_user_by_username,
     get_user_plan,
+    update_user_occupation_tag,
     update_user_password,
     update_user_profile,
 )
@@ -82,6 +85,25 @@ def _locale_from_request(request: Request) -> str:
     return "en-US"
 
 
+def _user_payload_from_record(user: dict[str, Any], *, is_admin: bool | None = None) -> UserPayload:
+    user_id = int(user["id"])
+    return UserPayload(
+        id=user_id,
+        username=str(user.get("username") or ""),
+        email=str(user.get("email") or ""),
+        plan=get_user_plan(user_id),
+        is_admin=_check_admin(user_id) if is_admin is None else is_admin,
+        locale=str(user.get("locale") or "") or None,
+        terms_accepted_at=_iso_or_none(user.get("terms_accepted_at")),
+        terms_version=str(user.get("terms_version") or "") or None,
+        occupation_tag=user.get("occupation_tag"),
+        occupation_tag_status=str(user.get("occupation_tag_status") or "not_required"),
+        occupation_tag_collected_at=_iso_or_none(user.get("occupation_tag_collected_at")),
+        occupation_tag_skipped_at=_iso_or_none(user.get("occupation_tag_skipped_at")),
+        occupation_tag_updated_at=_iso_or_none(user.get("occupation_tag_updated_at")),
+    )
+
+
 def _fire_and_forget(send_fn, *args, **kwargs) -> None:
     """把邮件发送放到后台线程,失败只记 WARNING,不阻断也不回滚主流程。
 
@@ -102,17 +124,38 @@ def _fire_and_forget(send_fn, *args, **kwargs) -> None:
 @router.get("/me", response_model=UserPayload)
 def get_me(current_user: dict = Depends(get_current_user)) -> UserPayload:
     user_id = int(current_user["id"])
-    is_admin = _check_admin(user_id)
-    return UserPayload(
-        id=user_id,
-        username=str(current_user["username"]),
-        email=str(current_user.get("email") or ""),
-        plan=get_user_plan(user_id),
-        is_admin=is_admin,
-        locale=str(current_user.get("locale") or "") or None,
-        terms_accepted_at=_iso_or_none(current_user.get("terms_accepted_at")),
-        terms_version=str(current_user.get("terms_version") or "") or None,
-    )
+    return _user_payload_from_record(current_user, is_admin=_check_admin(user_id))
+
+
+@router.patch("/me/occupation-tag", response_model=UserPayload)
+def update_me_occupation_tag(
+    payload: OccupationTagUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+) -> UserPayload:
+    """保存或跳过职业标签采集。
+
+    职业标签只用于用户行为路径观察，不参与权限、页面内容、Action Center 或推送分责。
+    """
+    user_id = int(current_user["id"])
+    source = payload.source.strip() or "onboarding"
+
+    if payload.skip:
+        update_user_occupation_tag(user_id, occupation_tag=None, status="skipped")
+        track_event(user_id, "occupation_tag_skipped", {"source": source})
+    else:
+        update_user_occupation_tag(
+            user_id,
+            occupation_tag=payload.occupation_tag,
+            status="completed",
+        )
+        track_event(
+            user_id,
+            "occupation_tag_saved",
+            {"source": source, "occupation_tag": payload.occupation_tag},
+        )
+
+    refreshed = get_user_by_id(user_id) or current_user
+    return _user_payload_from_record(refreshed)
 
 
 @router.get("/me/export", response_model=MeExportPayload)
@@ -135,6 +178,11 @@ def export_me(current_user: dict = Depends(get_current_user)) -> MeExportPayload
             paddle_customer_id=current_user.get("paddle_customer_id"),
             created_at=_iso_or_none(current_user.get("created_at")),
             updated_at=_iso_or_none(current_user.get("updated_at")),
+            occupation_tag=current_user.get("occupation_tag"),
+            occupation_tag_status=current_user.get("occupation_tag_status"),
+            occupation_tag_collected_at=_iso_or_none(current_user.get("occupation_tag_collected_at")),
+            occupation_tag_skipped_at=_iso_or_none(current_user.get("occupation_tag_skipped_at")),
+            occupation_tag_updated_at=_iso_or_none(current_user.get("occupation_tag_updated_at")),
         ),
         subscription=data.get("subscription"),
         sessions=data.get("sessions", []),
@@ -213,13 +261,7 @@ def update_me(
         )
 
     refreshed = get_user_by_id(user_id) or current_user
-    return UserPayload(
-        id=user_id,
-        username=str(refreshed.get("username") or ""),
-        email=str(refreshed.get("email") or ""),
-        plan=str(refreshed.get("plan") or "free"),
-        is_admin=_check_admin(user_id),
-    )
+    return _user_payload_from_record(refreshed, is_admin=_check_admin(user_id))
 
 
 @router.delete("/me", response_model=MeMessageResponse)

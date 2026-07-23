@@ -49,6 +49,14 @@ def _verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
+def _iso_or_none(value: Any) -> str | None:
+    if value is None:
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value)
+
+
 def _init_trial_credits(user_id: int) -> None:
     """M6: 新用户注册时初始化 trial credits（3000 credits，14天有效期）"""
     conn = get_connection()
@@ -78,6 +86,14 @@ def _user_payload(user: dict[str, Any]) -> UserPayload:
         username=str(user["username"]),
         email=str(user.get("email") or ""),
         plan=plan,
+        locale=str(user.get("locale") or "") or None,
+        terms_accepted_at=_iso_or_none(user.get("terms_accepted_at")),
+        terms_version=str(user.get("terms_version") or "") or None,
+        occupation_tag=user.get("occupation_tag"),
+        occupation_tag_status=str(user.get("occupation_tag_status") or "not_required"),
+        occupation_tag_collected_at=_iso_or_none(user.get("occupation_tag_collected_at")),
+        occupation_tag_skipped_at=_iso_or_none(user.get("occupation_tag_skipped_at")),
+        occupation_tag_updated_at=_iso_or_none(user.get("occupation_tag_updated_at")),
     )
 
 

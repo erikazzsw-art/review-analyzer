@@ -868,6 +868,32 @@ export type DownloadRecord = {
   created_at: string;
 };
 
+export type OccupationTag =
+  | "operations"
+  | "product_manager"
+  | "management"
+  | "customer_service"
+  | "quality_control"
+  | "other";
+
+export type OccupationTagStatus = "pending" | "completed" | "skipped" | "not_required";
+
+export type UserProfilePayload = {
+  id: number;
+  username: string;
+  email: string;
+  plan: string;
+  is_admin: boolean;
+  locale?: string | null;
+  terms_accepted_at?: string | null;
+  terms_version?: string | null;
+  occupation_tag?: OccupationTag | null;
+  occupation_tag_status: OccupationTagStatus;
+  occupation_tag_collected_at?: string | null;
+  occupation_tag_skipped_at?: string | null;
+  occupation_tag_updated_at?: string | null;
+};
+
 // V4-出海-M3.2 数据主权 API
 export type MeExportUser = {
   id: number;
@@ -877,6 +903,11 @@ export type MeExportUser = {
   paddle_customer_id?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  occupation_tag?: OccupationTag | null;
+  occupation_tag_status?: OccupationTagStatus | null;
+  occupation_tag_collected_at?: string | null;
+  occupation_tag_skipped_at?: string | null;
+  occupation_tag_updated_at?: string | null;
 };
 
 export type MeExportPayload = {
@@ -900,6 +931,18 @@ export type MeUpdatePayload = {
   email?: string;
   new_password?: string;
 };
+
+export type OccupationTagUpdatePayload =
+  | {
+      occupation_tag: OccupationTag;
+      skip?: false;
+      source?: string;
+    }
+  | {
+      occupation_tag?: null;
+      skip: true;
+      source?: string;
+    };
 
 export type MeDeletePayload = {
   current_password: string;

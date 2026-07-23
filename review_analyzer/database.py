@@ -1552,6 +1552,53 @@ def update_user_profile(
         conn.close()
 
 
+def update_user_occupation_tag(
+    user_id: int,
+    *,
+    occupation_tag: str | None = None,
+    status: str,
+) -> None:
+    """更新用户职业标签采集状态。
+
+    该字段仅用于后续行为路径分析，不参与权限、页面内容或推送分责。
+    """
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            if status == "completed":
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET occupation_tag = %s,
+                        occupation_tag_status = 'completed',
+                        occupation_tag_collected_at = COALESCE(occupation_tag_collected_at, %s),
+                        occupation_tag_updated_at = %s
+                    WHERE id = %s
+                    """,
+                    (occupation_tag, now, now, user_id),
+                )
+            elif status == "skipped":
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET occupation_tag = NULL,
+                        occupation_tag_status = 'skipped',
+                        occupation_tag_skipped_at = %s,
+                        occupation_tag_updated_at = %s
+                    WHERE id = %s
+                    """,
+                    (now, now, user_id),
+                )
+            else:
+                raise ValueError(f"Unsupported occupation tag status: {status}")
+            conn.commit()
+    finally:
+        conn.close()
+
+
 def mark_user_login(user_id: int) -> None:
     """V4-出海-M3.5: 每次成功登录时刷新 last_login_at,并清零 inactivity_notified_at。
 
@@ -1596,6 +1643,11 @@ def anonymize_user(user_id: int, scrambled_password_hash: str) -> None:
                     api_key_encrypted = NULL,
                     paddle_customer_id = NULL,
                     plan = 'free',
+                    occupation_tag = NULL,
+                    occupation_tag_status = 'not_required',
+                    occupation_tag_collected_at = NULL,
+                    occupation_tag_skipped_at = NULL,
+                    occupation_tag_updated_at = NOW(),
                     deleted_at = NOW()
                 WHERE id = %s
                 """,
