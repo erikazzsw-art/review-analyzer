@@ -1109,6 +1109,10 @@ NX-M2 验收记录：
   - [x] 前端改为 AI 对话框形式（消息列表 + Popover 产品选择器 + 预设问题卡片）
   - [x] 后端新增 qa_conversations/qa_messages 表 + 对话管理 API
   - [x] RAG 模块支持 history 参数，LLM 感知多轮上下文
+- [x] 问评论旧 LLM 直连迁移到统一 Router（2026-07-23）
+  - [x] `answer_question()` / `retrieval_handler()` / `aggregate_feedback_handler()` / `product_compare_handler()` 新增 `locale="en"` 参数并透传
+  - [x] `qa_handlers.py` 删除 DeepSeek 直连 client、base_url 与 `deepseek-chat` 硬编码，统一走 `router_completion(locale=...)`
+  - [x] `/qa/ask`、`/qa/questions`、多轮对话消息入口复用 `get_analysis_locale(request)`，默认海外英文链路优先
 
 NX-M6 验收记录：
 
@@ -1118,6 +1122,7 @@ NX-M6 验收记录：
 - `/actions`：PASS，支持 action 列表、状态流转和一键加入复盘
 - `/reviews`：PASS，支持 tracker 列表与复盘结果回写
 - 从 `/analysis/results` 可直接创建 action，再把 action 生成 tracker，最后在复盘页回写结果：PASS
+- 2026-07-23 问评论 Router 迁移回归：`python3 -m pytest backend_api/tests/test_qa_llm_router.py -q`：PASS（3 passed）；`python3 -m ruff check review_analyzer/qa_handlers.py review_analyzer/rag.py review_analyzer/translation.py review_analyzer/compare_store.py review_analyzer/parser.py review_analyzer/router_client.py review_analyzer/eval/runner.py backend_api/app/routes/qa.py backend_api/app/routes/compare.py backend_api/app/services/action_advisor.py`：PASS；`python3 -m py_compile` 覆盖本次 runtime + 已跟踪 scripts：PASS
 
 ### NX-M7: 宣传文案 / 设置 / 计费迁移
 
@@ -1402,6 +1407,7 @@ NX-M8 验收记录（Phase A）：
 | 2026-06-30 | V4-T1.6 | Golden Set 标签校准管理系统 + 管理员权限控制：golden_set 表 + boundary_note 字段 + CSV 上传 API + 准确率统计 + few-shot 注入 + /settings/golden-set 管理页 + users.is_admin + sidebar adminOnly 过滤 + 页面级权限守卫；migration 033/034/035 |
 | 2026-06-30 | V4-T1 扩展 | 全品类 Taxonomy 批量扩展：新增 5 品类(outdoor/beauty/kitchen/automotive/office) 27 子品类 441 条 aspect 全部携带 boundary_note；表结构重建 migration 037；sub_category_categories.json 覆盖 87 子品类；docs/类目标签覆盖表.md 产出 |
 | 2026-07-07 | V4-T4 Step 7 | 跨用户 LLM 分析结果复用：接通已有 review_pool 全局池 → L1 缓存除用户自己历史也查 pool（analyzer_version 校验隔离），CSV 上传的分析结果也回填 pool；migration 043 加 content_hash 部分索引 + comments.cache_hit_source 列；隐私政策 + 服务条款追加"分析结果聚合复用"条款；预期热门 ASIN 场景 DeepSeek 调用量下降 30–60% |
+| 2026-07-23 | LLM Router 旧链路迁移 | Review Q&A、结果翻译、Compare AI Summary、非结构化解析兜底、eval runner、已跟踪 taxonomy/golden 维护脚本统一迁移到 `backend_api.app.services.llm_router.router_completion()` 或 Router 兼容 shim；QA 与 Compare 路由复用 `get_analysis_locale(request)`；`locale="en"` 路由顺序为 GPT-4o-mini → DeepSeek → Qwen，`locale="zh"` 为 DeepSeek → GPT-4o-mini → Qwen；commit `71b0d4c` 已推送 `origin/develop` |
 
 ---
 
@@ -4671,6 +4677,10 @@ CREATE TABLE workspace_invitations (
 - [x] `backend_api/app/services/deep_analyzer.py` — `analyze_one` / `analyze_batch` 新增 `locale` 参数，透传给 `router_completion()`（默认 `"en"`）
 - [x] `review_analyzer/insight_engine.py` — 删除硬编码 `OpenAI(base_url="deepseek")`，改走 `router_completion(locale=...)`；`build_results_insights` / `build_compare_insights` / 两个内部 `_build_ai_*` 加 locale 参数
 - [x] `backend_api/app/routes/analysis.py` — `/sessions/{id}/results` 与 `/results` 端点注入 `Request` + 传 locale 到 `build_results_insights` / `_cached_build_insights`
+- [x] 2026-07-23 补充：Review Q&A 旧链路迁移到 Router；`review_analyzer/qa_handlers.py` 不再直接创建 OpenAI client 指向 DeepSeek，也不再硬编码 `deepseek-chat`；`review_analyzer/rag.answer_question()` 默认 `locale="en"` 并向 intent handler 透传
+- [x] 2026-07-23 补充：`backend_api/app/routes/qa.py` 与 `backend_api/app/routes/compare.py` 复用 `get_analysis_locale(request)`，QA / Compare AI Summary 与核心评论分析共用 locale-aware fallback 顺序
+- [x] 2026-07-23 补充：`review_analyzer/translation.py`、`review_analyzer/compare_store.py`、`review_analyzer/parser.py`、`review_analyzer/eval/runner.py` 以及已跟踪维护脚本 `scripts/apply_3c_review.py` / `scripts/extract_taxonomy.py` / `scripts/extract_taxonomy_generic.py` 移除旧 DeepSeek 直连，统一通过 Router 或 `review_analyzer/router_client.py` 兼容 shim 调用
+- [x] 2026-07-23 补充：`backend_api/app/services/action_advisor.py` 文件头注释改为“通过统一 LLM Router 生成结构化行动建议”
 - [x] `frontend/src/i18n/routing.ts` — `defaultLocale: "zh"` → `"en"`（海外优先，配合 `localePrefix: "never"` + middleware/cookie 检测）
 - [x] `frontend/messages/{en,zh}.json` — 新增 `categoryLabels` 段，11 个中文分类（产品质量/包装物流/使用体验/客服售后/性价比/功能需求/正面反馈/单纯好评/无效乱码/混合评价/其他）英文翻译（en 侧完整翻译；zh 侧保留中文本名以对齐 key）
 
@@ -4679,6 +4689,7 @@ CREATE TABLE workspace_invitations (
 - [x] `get_analysis_locale` 正确处理 `en`/`en-US`/`zh-CN`/`en-US,zh;q=0.9`/`fr`（fr 落到默认 en）
 - [x] `python -m pytest backend_api/tests/ --ignore=backend_api/tests/test_v24_dynamic_aspects.py` 60 通过（test_v24 失败与本次改动无关，是 taxonomy_loader row 解包问题）
 - [x] JSON messages 校验：en / zh 的 categoryLabels key 集合一致
+- [x] 2026-07-23 Review Q&A Router 迁移验证：`python3 -m pytest backend_api/tests/test_qa_llm_router.py -q` 3 passed；核心 runtime 文件 ruff PASS；本次 runtime + 已跟踪 scripts `python3 -m py_compile` PASS
 - [ ] 部署到 prod 后线上验证：以 en cookie 上传评论 → 日志显示 model_used=gpt-4o-mini（如 OPENAI_API_KEY 已配置且 SG IP 可达）
 
 ---
