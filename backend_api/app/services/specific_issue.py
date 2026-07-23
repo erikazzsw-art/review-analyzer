@@ -92,9 +92,7 @@ def _is_broad_issue(issue: str, aspect_key: str, label: str) -> bool:
         return True
     if norm_issue in _BROAD_LABELS:
         return True
-    if norm_issue == _norm_text(aspect_key) or norm_issue == _norm_text(label):
-        return True
-    return False
+    return norm_issue == _norm_text(aspect_key) or norm_issue == _norm_text(label)
 
 
 def _first_regex(patterns: list[str], text: str) -> bool:
