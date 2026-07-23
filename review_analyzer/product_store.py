@@ -196,13 +196,52 @@ def _clear_product_reference_caches() -> None:
 
 
 def _safe_execute(cur: Any, sql: str, params: tuple) -> None:
-    """Execute SQL, silently skipping if the target table doesn't exist."""
+    """Execute optional-schema SQL, silently skipping missing tables/columns."""
     cur.execute("SAVEPOINT _safe_exec")
     try:
         cur.execute(sql, params)
         cur.execute("RELEASE SAVEPOINT _safe_exec")
-    except psycopg2.errors.UndefinedTable:
+    except (psycopg2.errors.UndefinedTable, psycopg2.errors.UndefinedColumn):
         cur.execute("ROLLBACK TO SAVEPOINT _safe_exec")
+        cur.execute("RELEASE SAVEPOINT _safe_exec")
+
+
+def _safe_fetch_column(cur: Any, sql: str, params: tuple) -> list[Any]:
+    """Fetch the first column from optional-schema SQL."""
+    cur.execute("SAVEPOINT _safe_fetch")
+    try:
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        cur.execute("RELEASE SAVEPOINT _safe_fetch")
+        return [row[0] for row in rows]
+    except (psycopg2.errors.UndefinedTable, psycopg2.errors.UndefinedColumn):
+        cur.execute("ROLLBACK TO SAVEPOINT _safe_fetch")
+        cur.execute("RELEASE SAVEPOINT _safe_fetch")
+        return []
+
+
+def _compact_identifiers(values: list[Any]) -> list[str]:
+    seen: set[str] = set()
+    identifiers: list[str] = []
+    for value in values:
+        text = str(value or "").strip()
+        key = text.lower()
+        if not text or key in seen:
+            continue
+        seen.add(key)
+        identifiers.append(text)
+    return identifiers
+
+
+def _compact_values(values: list[Any]) -> list[Any]:
+    seen: set[Any] = set()
+    result: list[Any] = []
+    for value in values:
+        if value is None or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
 
 
 def delete_product(user_id: int, product_id: int) -> bool:
@@ -218,38 +257,127 @@ def delete_product(user_id: int, product_id: int) -> bool:
                 return False
             parent_product_id = str(product[0] or "").strip()
 
-            variant_ids_sql = (
-                "SELECT id FROM product_variants WHERE user_id = %s AND product_id = %s"
+            cur.execute(
+                """SELECT id, child_asin, variant_sku
+                   FROM product_variants
+                   WHERE user_id = %s AND product_id = %s""",
+                (user_id, product_id),
             )
-            cur.execute(variant_ids_sql, (user_id, product_id))
-            variant_ids = [r[0] for r in cur.fetchall()]
+            variant_rows = cur.fetchall()
+            variant_ids = [r[0] for r in variant_rows]
+            product_identifiers = _compact_identifiers(
+                [
+                    parent_product_id,
+                    *[r[1] for r in variant_rows],
+                    *[r[2] for r in variant_rows],
+                ]
+            )
 
+            session_ids = _safe_fetch_column(
+                cur,
+                "SELECT id FROM sessions WHERE user_id = %s AND product_ref_id = %s",
+                (user_id, product_id),
+            )
+            if product_identifiers:
+                session_ids.extend(
+                    _safe_fetch_column(
+                        cur,
+                        "SELECT id FROM sessions WHERE user_id = %s AND product_id = ANY(%s)",
+                        (user_id, product_identifiers),
+                    )
+                )
             if variant_ids:
-                cur.execute(
-                    """SELECT id FROM sessions
-                       WHERE user_id = %s
-                         AND (
-                             product_ref_id = %s
-                             OR product_id = %s
-                             OR variant_ref_id = ANY(%s)
-                         )""",
-                    (user_id, product_id, parent_product_id, variant_ids),
+                session_ids.extend(
+                    _safe_fetch_column(
+                        cur,
+                        "SELECT id FROM sessions WHERE user_id = %s AND variant_ref_id = ANY(%s)",
+                        (user_id, variant_ids),
+                    )
                 )
-            else:
-                cur.execute(
-                    """SELECT id FROM sessions
-                       WHERE user_id = %s
-                         AND (product_ref_id = %s OR product_id = %s)""",
-                    (user_id, product_id, parent_product_id),
-                )
-            session_ids = [r[0] for r in cur.fetchall()]
+            session_ids = _compact_values(session_ids)
 
+            action_item_ids = _safe_fetch_column(
+                cur,
+                "SELECT id FROM action_items WHERE user_id = %s AND product_id = %s",
+                (user_id, product_id),
+            )
+            if variant_ids:
+                action_item_ids.extend(
+                    _safe_fetch_column(
+                        cur,
+                        "SELECT id FROM action_items WHERE user_id = %s AND variant_id = ANY(%s)",
+                        (user_id, variant_ids),
+                    )
+                )
             if session_ids:
+                action_item_ids.extend(
+                    _safe_fetch_column(
+                        cur,
+                        "SELECT id FROM action_items WHERE user_id = %s AND session_id = ANY(%s)",
+                        (user_id, session_ids),
+                    )
+                )
+            if product_identifiers:
+                action_item_ids.extend(
+                    _safe_fetch_column(
+                        cur,
+                        "SELECT id FROM action_items WHERE user_id = %s AND source_product_id = ANY(%s)",
+                        (user_id, product_identifiers),
+                    )
+                )
+            action_item_ids = _compact_values(action_item_ids)
+
+            _safe_execute(
+                cur,
+                "DELETE FROM review_trackers WHERE user_id = %s AND product_id = %s",
+                (user_id, product_id),
+            )
+            if variant_ids:
                 _safe_execute(
                     cur,
-                    "UPDATE action_items SET session_id = NULL WHERE user_id = %s AND session_id = ANY(%s)",
-                    (user_id, session_ids),
+                    "DELETE FROM review_trackers WHERE user_id = %s AND variant_id = ANY(%s)",
+                    (user_id, variant_ids),
                 )
+            if action_item_ids:
+                _safe_execute(
+                    cur,
+                    "DELETE FROM review_trackers WHERE user_id = %s AND action_item_id = ANY(%s)",
+                    (user_id, action_item_ids),
+                )
+
+            _safe_execute(
+                cur,
+                "DELETE FROM issue_escalation_state WHERE user_id = %s AND product_id = %s",
+                (user_id, product_id),
+            )
+            if action_item_ids:
+                _safe_execute(
+                    cur,
+                    "DELETE FROM issue_escalation_state WHERE user_id = %s AND action_item_id = ANY(%s)",
+                    (user_id, action_item_ids),
+                )
+
+            _safe_execute(
+                cur,
+                "DELETE FROM push_snapshots WHERE user_id = %s AND product_id = %s",
+                (user_id, product_id),
+            )
+
+            if action_item_ids:
+                _safe_execute(
+                    cur,
+                    "DELETE FROM action_items WHERE user_id = %s AND id = ANY(%s)",
+                    (user_id, action_item_ids),
+                )
+
+            if product_identifiers:
+                _safe_execute(
+                    cur,
+                    "DELETE FROM ideal_profiles WHERE user_id = %s AND product_id = ANY(%s)",
+                    (user_id, product_identifiers),
+                )
+
+            if session_ids:
                 _safe_execute(
                     cur,
                     "DELETE FROM upload_jobs WHERE user_id = %s AND session_id = ANY(%s)",
@@ -265,20 +393,36 @@ def delete_product(user_id: int, product_id: int) -> bool:
                     (user_id, session_ids),
                 )
 
-            if parent_product_id:
+            if product_identifiers:
                 _safe_execute(
                     cur,
-                    "DELETE FROM upload_jobs WHERE user_id = %s AND product_id = %s",
-                    (user_id, parent_product_id),
+                    "DELETE FROM upload_jobs WHERE user_id = %s AND product_id = ANY(%s)",
+                    (user_id, product_identifiers),
                 )
-                cur.execute(
-                    "DELETE FROM comments WHERE user_id = %s AND product_id = %s",
-                    (user_id, parent_product_id),
+                _safe_execute(
+                    cur,
+                    "DELETE FROM comments WHERE user_id = %s AND product_id = ANY(%s)",
+                    (user_id, product_identifiers),
+                )
+                _safe_execute(
+                    cur,
+                    "DELETE FROM asin_watchlist WHERE user_id = %s AND asin = ANY(%s)",
+                    (user_id, product_identifiers),
                 )
 
             _safe_execute(
                 cur,
                 "DELETE FROM upload_jobs WHERE user_id = %s AND product_ref_id = %s",
+                (user_id, product_id),
+            )
+            _safe_execute(
+                cur,
+                "DELETE FROM product_listings WHERE product_id = %s",
+                (product_id,),
+            )
+            _safe_execute(
+                cur,
+                "DELETE FROM asin_watchlist WHERE user_id = %s AND product_id = %s",
                 (user_id, product_id),
             )
 
@@ -290,22 +434,17 @@ def delete_product(user_id: int, product_id: int) -> bool:
                 )
                 _safe_execute(
                     cur,
-                    "UPDATE action_items SET variant_id = NULL WHERE variant_id = ANY(%s)",
-                    (variant_ids,),
-                )
-                _safe_execute(
-                    cur,
-                    "UPDATE review_trackers SET variant_id = NULL WHERE variant_id = ANY(%s)",
-                    (variant_ids,),
-                )
-                _safe_execute(
-                    cur,
                     "UPDATE upload_jobs SET variant_ref_id = NULL WHERE variant_ref_id = ANY(%s)",
                     (variant_ids,),
                 )
                 _safe_execute(
                     cur,
                     "UPDATE sessions SET variant_ref_id = NULL WHERE user_id = %s AND variant_ref_id = ANY(%s)",
+                    (user_id, variant_ids),
+                )
+                _safe_execute(
+                    cur,
+                    "UPDATE product_versions SET variant_id = NULL WHERE user_id = %s AND variant_id = ANY(%s)",
                     (user_id, variant_ids),
                 )
 
@@ -317,26 +456,6 @@ def delete_product(user_id: int, product_id: int) -> bool:
             cur.execute(
                 "DELETE FROM product_variants WHERE user_id = %s AND product_id = %s",
                 (user_id, product_id),
-            )
-            _safe_execute(
-                cur,
-                "UPDATE action_items SET product_id = NULL WHERE product_id = %s",
-                (product_id,),
-            )
-            _safe_execute(
-                cur,
-                "UPDATE review_trackers SET product_id = NULL WHERE product_id = %s",
-                (product_id,),
-            )
-            _safe_execute(
-                cur,
-                "UPDATE push_snapshots SET product_id = NULL WHERE product_id = %s",
-                (product_id,),
-            )
-            _safe_execute(
-                cur,
-                "UPDATE issue_escalation_state SET product_id = NULL WHERE product_id = %s",
-                (product_id,),
             )
             _safe_execute(
                 cur,

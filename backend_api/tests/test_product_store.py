@@ -11,12 +11,19 @@ class FakeCursor:
     def __init__(
         self,
         variant_ids: list[int] | None = None,
+        variant_rows: list[tuple[int, str | None, str | None]] | None = None,
         session_ids: list[int] | None = None,
+        action_item_ids: list[int] | None = None,
         parent_product_id: str | None = "Wader",
         product_deleted: bool = True,
     ) -> None:
         self.variant_ids = variant_ids or []
+        self.variant_rows = variant_rows or [
+            (variant_id, f"B0VAR{variant_id}", f"SKU-{variant_id}")
+            for variant_id in self.variant_ids
+        ]
         self.session_ids = session_ids or []
+        self.action_item_ids = action_item_ids or []
         self.parent_product_id = parent_product_id
         self.product_deleted = product_deleted
         self.queries: list[tuple[str, tuple[Any, ...] | None]] = []
@@ -39,14 +46,16 @@ class FakeCursor:
         else:
             self.rowcount = 0
 
-    def fetchall(self) -> list[tuple[int]]:
-        if self.last_sql.startswith("SELECT id FROM product_variants"):
-            return [(variant_id,) for variant_id in self.variant_ids]
+    def fetchall(self) -> list[tuple[Any, ...]]:
+        if self.last_sql.startswith("SELECT id, child_asin, variant_sku FROM product_variants"):
+            return self.variant_rows
         if self.last_sql.startswith("SELECT id FROM sessions"):
             return [(session_id,) for session_id in self.session_ids]
+        if self.last_sql.startswith("SELECT id FROM action_items"):
+            return [(action_item_id,) for action_item_id in self.action_item_ids]
         return []
 
-    def fetchone(self) -> tuple[int] | None:
+    def fetchone(self) -> tuple[Any, ...] | None:
         if self.last_sql.startswith("SELECT parent_product_id FROM products"):
             return (self.parent_product_id,) if self.parent_product_id is not None else None
         if self.last_sql.startswith("SELECT id FROM product_variants"):
@@ -71,7 +80,14 @@ class FakeConnection:
 
 
 def test_delete_product_hard_deletes_user_review_data_without_touching_global_pool(monkeypatch):
-    cursor = FakeCursor(variant_ids=[31, 32], session_ids=[101, 102])
+    cursor = FakeCursor(
+        variant_rows=[
+            (31, "B0779PQHM5", "WADER-BLACK"),
+            (32, "B0OTHERASIN", "WADER-GREEN"),
+        ],
+        session_ids=[101, 102],
+        action_item_ids=[201],
+    )
     conn = FakeConnection(cursor)
     monkeypatch.setattr(product_store, "get_connection", lambda: conn)
 
@@ -88,16 +104,28 @@ def test_delete_product_hard_deletes_user_review_data_without_touching_global_po
         (7, [101, 102]),
     ) in cursor.queries
     assert (
-        "DELETE FROM comments WHERE user_id = %s AND product_id = %s",
-        (7, "Wader"),
+        "DELETE FROM comments WHERE user_id = %s AND product_id = ANY(%s)",
+        (7, ["Wader", "B0779PQHM5", "B0OTHERASIN", "WADER-BLACK", "WADER-GREEN"]),
     ) in cursor.queries
     assert (
-        "DELETE FROM upload_jobs WHERE user_id = %s AND product_id = %s",
-        (7, "Wader"),
+        "DELETE FROM upload_jobs WHERE user_id = %s AND product_id = ANY(%s)",
+        (7, ["Wader", "B0779PQHM5", "B0OTHERASIN", "WADER-BLACK", "WADER-GREEN"]),
     ) in cursor.queries
     assert (
         "DELETE FROM upload_jobs WHERE user_id = %s AND product_ref_id = %s",
         (7, 12),
+    ) in cursor.queries
+    assert (
+        "DELETE FROM asin_watchlist WHERE user_id = %s AND asin = ANY(%s)",
+        (7, ["Wader", "B0779PQHM5", "B0OTHERASIN", "WADER-BLACK", "WADER-GREEN"]),
+    ) in cursor.queries
+    assert (
+        "DELETE FROM asin_watchlist WHERE user_id = %s AND product_id = %s",
+        (7, 12),
+    ) in cursor.queries
+    assert (
+        "DELETE FROM action_items WHERE user_id = %s AND id = ANY(%s)",
+        (7, [201]),
     ) in cursor.queries
     assert not any("review_pool" in sql for sql, _params in cursor.queries)
 
