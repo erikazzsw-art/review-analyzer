@@ -14,8 +14,8 @@ from backend_api.app.schemas.analysis import (
     ActionProductGroupRemovePayload,
     ActionProductGroupReorderPayload,
     ActionReorderPayload,
-    ActionSuggestionsUpdatePayload,
     ActionStatusUpdatePayload,
+    ActionSuggestionsUpdatePayload,
     ReviewTrackerCreatePayload,
     ReviewTrackerFromActionResponse,
     ReviewTrackerPayload,
@@ -31,8 +31,8 @@ from review_analyzer.action_store import (
     remove_product_group_actions,
     reorder_actions,
     reorder_product_groups,
-    update_action_suggestions,
     update_action_status,
+    update_action_suggestions,
     update_product_group_note,
 )
 from review_analyzer.review_store import (
