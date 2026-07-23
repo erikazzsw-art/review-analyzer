@@ -31,7 +31,7 @@ export function HeroPreview() {
               { label: t("heroMetricRating"), value: "3.5", sub: "/5" },
             ].map((m) => (
               <div key={m.label} className="rounded bg-white px-2.5 py-2 text-center shadow-sm">
-                <div className="font-heading text-lg font-extrabold tracking-tight text-ink">
+                <div className="font-heading text-lg font-extrabold tracking-normal text-ink">
                   {m.value}
                   {m.sub && (
                     <span className="text-xs font-normal text-soft">{m.sub}</span>
@@ -60,7 +60,7 @@ export function HeroPreview() {
               <span>{t("heroPositive")} 70%</span>
             </div>
           </div>
-          <div className="mt-2 text-right font-heading text-xl font-extrabold tracking-tight text-ink">
+          <div className="mt-2 text-right font-heading text-xl font-extrabold tracking-normal text-ink">
             1,284
             <span className="ml-1 text-[10px] font-normal text-soft">{t("heroReviews")}</span>
           </div>

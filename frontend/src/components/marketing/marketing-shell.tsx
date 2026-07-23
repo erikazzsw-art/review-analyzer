@@ -38,11 +38,11 @@ export function MarketingShell({
                   {eyebrow}
                 </div>
               ) : null}
-              <h1 className="font-heading text-4xl font-extrabold leading-[1.02] tracking-[-0.04em] text-ink md:text-5xl">
+              <h1 className="font-heading text-4xl font-extrabold leading-[1.06] tracking-normal text-ink md:text-5xl">
                 {title}
               </h1>
               {subtitle ? (
-                <p className="mt-3 font-heading text-xl font-bold tracking-[-0.02em] text-ink/80">
+                <p className="mt-3 font-heading text-xl font-bold tracking-normal text-ink/80">
                   {subtitle}
                 </p>
               ) : null}

@@ -20,7 +20,7 @@ export function FeaturesContent() {
       </div>
 
       {/* Title */}
-      <h1 className="px-4 text-center font-heading text-[44px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">
+      <h1 className="mx-auto max-w-4xl px-4 text-center font-heading text-[40px] font-extrabold leading-[1.16] tracking-normal text-ink md:text-[44px]">
         {t("title")}
       </h1>
 

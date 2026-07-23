@@ -7,9 +7,9 @@ import { buildMarketingMetadata } from "@/lib/seo";
 import PricingContent from "./pricing-content";
 
 export const metadata = buildMarketingMetadata({
-  title: "ReviewLens Pricing",
+  title: "ClueAI Pricing",
   description:
-    "Simple, transparent pricing for e-commerce review analysis. Start with 3,000 free credits — 14 days, no credit card required.",
+    "Pricing for e-commerce sellers turning reviews into growth decisions. Start with 3,000 free credits for 14 days, no credit card required.",
   path: "/pricing",
 });
 

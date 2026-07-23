@@ -5,8 +5,8 @@ import { getCopywriterPlatforms, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Marketing Copy",
-  description: "Authenticated copy generation for products and campaigns.",
+  title: "Listing Copy",
+  description: "Authenticated listing and campaign copy generation from review insights.",
 });
 
 type SearchParams = {
@@ -29,8 +29,8 @@ export default async function CopywriterPage({
     return (
       <AppShell
         currentPath="/copywriter"
-        title="把评论洞察转成可直接使用的广告文案。"
-        description="选择产品和版本后，系统按平台规则生成英文文案与中文参考，并同步出一份理想产品画像。"
+        title="把评论洞察转成 Listing 和广告文案。"
+        description="选择产品和版本后，系统按平台规则生成英文文案、中文参考和理想产品画像。"
       >
         <CopywriterWorkspace
           productId={params.product_id ?? ""}
@@ -46,12 +46,12 @@ export default async function CopywriterPage({
       return (
         <AppShell
           currentPath="/copywriter"
-          title="宣传文案需要先登录。"
+          title="Listing 文案需要先登录。"
           description="登录后会直接读取当前账号的产品与评论资产。"
         >
           <EmptyAuthState
-            title="登录后生成宣传文案"
-            description="这里会把评论摘要、平台规则和产品功能点一起整理成可用文案。"
+            title="登录后生成 Listing 文案"
+            description="这里会把评论洞察、平台规则和产品卖点整理成可直接测试的文案。"
           />
         </AppShell>
       );
@@ -61,15 +61,15 @@ export default async function CopywriterPage({
       return (
         <AppShell
           currentPath="/copywriter"
-          title="宣传文案是 Pro 功能。"
-          description="这条能力保留在升级后入口里，适合已经看到价值后继续扩大使用。"
+          title="Listing 文案是 Pro 功能。"
+          description="这条能力适合在发现痛点、亮点和竞品机会后，继续扩大到 Listing 与广告优化。"
         >
           <section className="rounded-shell border border-dashed border-line bg-white/80 px-6 py-10 shadow-card backdrop-blur">
             <div className="inline-flex rounded-pill bg-[#fff1f5] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
               PRO FEATURE
             </div>
             <h2 className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-              升级后解锁宣传文案
+              升级后解锁 Listing 文案
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-soft">
               这一步可以把评论洞察转换成按平台可直接使用的广告文案、卖点表达和客户画像。

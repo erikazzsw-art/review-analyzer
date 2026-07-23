@@ -74,10 +74,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {/* Logo */}
         <Link href="/" className="inline-flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#f36f8f,#8d7be8)] font-heading text-xs font-extrabold text-white">
-            RL
+            CA
           </span>
-          <span className="font-heading text-lg font-bold tracking-[-0.02em] text-ink">
-            ReviewLens
+          <span className="font-heading text-lg font-bold tracking-normal text-ink">
+            ClueAI
           </span>
         </Link>
 
@@ -106,10 +106,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {/* Mobile logo */}
         <Link href="/" className="mb-8 inline-flex items-center gap-3 lg:hidden">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#f36f8f,#8d7be8)] font-heading text-xs font-extrabold text-white">
-            RL
+            CA
           </span>
-          <span className="font-heading text-lg font-bold tracking-[-0.02em] text-ink">
-            ReviewLens
+          <span className="font-heading text-lg font-bold tracking-normal text-ink">
+            ClueAI
           </span>
         </Link>
 

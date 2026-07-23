@@ -25,8 +25,8 @@ import { isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Analysis Results",
-  description: "Authenticated analysis results for a single review batch.",
+  title: "Growth Decision Analysis",
+  description: "Authenticated growth insights for a single review batch.",
 });
 
 type ResultsPageProps = {

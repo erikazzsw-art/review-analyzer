@@ -8,8 +8,8 @@ import { getCompareLatest, getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Compare Analysis",
-  description: "Authenticated compare view for products, batches, and versions.",
+  title: "Opportunity Compare",
+  description: "Authenticated compare view for product pain points, highlights, and opportunities.",
 });
 
 type ComparePageProps = {

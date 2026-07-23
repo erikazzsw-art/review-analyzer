@@ -16,8 +16,8 @@ import {
 import type { WorkspaceRole, WorkspaceSummary } from "@/lib/api/types";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Today's Workspace",
-  description: "Authenticated workspace for review operations and follow-up tracking.",
+  title: "Growth Workspace",
+  description: "Authenticated workspace for review-driven growth decisions and follow-up tracking.",
 });
 
 const roleLabelKeys: Record<WorkspaceRole, string> = {
@@ -55,8 +55,8 @@ function normalizeSummary(summary: WorkspaceSummary): WorkspaceSummary {
     ...summary,
     role: roleList.includes(summary.role) ? summary.role : "运营",
     intro: {
-      headline: safeText(summary.intro?.headline, "欢迎回来"),
-      focus: safeText(summary.intro?.focus, "工作台数据正在加载。"),
+      headline: safeText(summary.intro?.headline, "准备查看今日增长信号"),
+      focus: safeText(summary.intro?.focus, "导入评论后，这里会汇总风险、机会和团队行动。"),
     },
     metrics: {
       product_count: safeNumber(summary.metrics?.product_count),
@@ -146,7 +146,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         <section className="rounded-shell border border-line bg-card px-5 py-5 shadow-card backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h2 className="max-w-3xl font-heading text-2xl font-extrabold tracking-[-0.04em] text-ink md:text-3xl">
+              <h2 className="max-w-3xl font-heading text-2xl font-extrabold tracking-normal text-ink md:text-3xl">
                 {summary.intro.headline}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-7 text-soft">
@@ -186,7 +186,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           ].map((metric) => (
             <div key={metric.label} className="flex-1 basis-[140px] px-5 py-4">
               <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-soft">{metric.label}</div>
-              <div className={`mt-1.5 font-heading text-2xl font-extrabold tracking-[-0.04em] ${metric.color}`}>
+              <div className={`mt-1.5 font-heading text-2xl font-extrabold tracking-normal ${metric.color}`}>
                 {metric.value}
               </div>
             </div>
@@ -195,7 +195,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
 
         {/* Today Tasks — table style */}
         <section className="rounded-shell border border-line bg-white/82 p-5 shadow-card backdrop-blur">
-          <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">
+          <h3 className="font-heading text-lg font-extrabold tracking-normal text-ink">
             {t("todayTasks")}
           </h3>
           {summary.today_tasks.length > 0 ? (
@@ -242,7 +242,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         {/* Risk Products + Pending Trackers — side by side */}
         <section className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
           <div className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-            <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">{t("riskProducts")}</h3>
+            <h3 className="font-heading text-lg font-extrabold tracking-normal text-ink">{t("riskProducts")}</h3>
             {summary.risk_products.length > 0 ? (
               <Table className="mt-3">
                 <TableHeader>
@@ -273,7 +273,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
 
           <div className="space-y-4">
             <div className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-              <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">{t("pendingTrackers")}</h3>
+              <h3 className="font-heading text-lg font-extrabold tracking-normal text-ink">{t("pendingTrackers")}</h3>
               {summary.pending_trackers.length > 0 ? (
                 <div className="mt-3 space-y-2">
                   {summary.pending_trackers.map((item) => (
@@ -301,7 +301,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
             </div>
 
             <div className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-              <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">{t("roleActions")}</h3>
+              <h3 className="font-heading text-lg font-extrabold tracking-normal text-ink">{t("roleActions")}</h3>
               {summary.role_action_summary.length > 0 ? (
                 <div className="mt-3 space-y-1.5">
                   {summary.role_action_summary.map((item) => (
@@ -325,7 +325,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
 
         {/* Recent Uploads */}
         <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
-          <h3 className="font-heading text-lg font-extrabold tracking-[-0.04em] text-ink">{t("recentUploads")}</h3>
+          <h3 className="font-heading text-lg font-extrabold tracking-normal text-ink">{t("recentUploads")}</h3>
           {summary.recent_sessions.length > 0 ? (
             <Table className="mt-3">
               <TableHeader>

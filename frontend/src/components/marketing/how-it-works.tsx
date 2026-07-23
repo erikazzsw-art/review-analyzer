@@ -52,7 +52,7 @@ export function HowItWorks() {
                 </div>
 
                 {/* Step number */}
-                <div className="mt-4 font-heading text-xl font-extrabold tracking-[-0.02em] text-ink">
+                <div className="mt-4 font-heading text-xl font-extrabold tracking-normal text-ink">
                   {t(`step${index + 1}Title`)}
                 </div>
 

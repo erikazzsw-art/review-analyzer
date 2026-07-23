@@ -5,8 +5,8 @@ import { UploadForm } from "@/components/upload/upload-form";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Upload",
-  description: "Upload review data for analysis.",
+  title: "Import Reviews",
+  description: "Import review data to generate growth decision insights.",
 });
 
 export default async function UploadPage() {

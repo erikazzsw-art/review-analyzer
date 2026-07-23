@@ -6,7 +6,7 @@ import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
   title: "Follow-up Tracking",
-  description: "Authenticated follow-up validation and review tracking.",
+  description: "Authenticated validation for team actions and review changes.",
 });
 
 export default async function ReviewsPage() {
@@ -15,8 +15,8 @@ export default async function ReviewsPage() {
     return (
       <AppShell
         currentPath="/reviews"
-        title="复盘追踪把改进前后结果继续落下来。"
-        description="这里记录当前占比、复盘范围、结论状态和最终判断。"
+        title="复盘追踪验证行动是否带来变化。"
+        description="记录当前占比、复盘范围、结论状态和最终判断，让增长动作有后续证据。"
       >
         <ReviewTrackerPanel items={response.items} />
       </AppShell>
@@ -27,11 +27,11 @@ export default async function ReviewsPage() {
         <AppShell
           currentPath="/reviews"
           title="复盘追踪需要先登录。"
-          description="登录后会直接读取当前账号下的 tracker 数据。"
+          description="登录后会直接读取当前账号下的复盘追踪数据。"
         >
           <EmptyAuthState
             title="登录后查看复盘追踪"
-            description="这条能力会记录改进前后占比和结论，方便判断动作是否真的有效。"
+            description="这里会记录行动前后的评论占比和结论，方便判断动作是否真的有效。"
           />
         </AppShell>
       );

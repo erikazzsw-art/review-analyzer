@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button";
 import { buildMarketingMetadata } from "@/lib/seo";
 
 export const metadata = buildMarketingMetadata({
-  title: "ReviewLens — 评论分析到产品行动的完整闭环",
+  title: "ClueAI — 把评论变成增长决策",
   description:
-    "支持多平台多格式评论上传，AI 自动分析输出 Top 问题与亮点，推送飞书到责任人，跟进改进落地，复盘优化效果。",
+    "ClueAI 帮卖家从评论中发现高频痛点、竞品机会和产品亮点，实时监控关键变化，并通过钉钉或邮件推送可执行的优化建议。",
   path: "/",
 });
 
@@ -27,9 +27,9 @@ export default function HomePage() {
         "@type": "WebSite",
         "@id": "https://clueai-reviewlens.com/#website",
         url: "https://clueai-reviewlens.com",
-        name: "ClueAI ReviewLens",
+        name: "ClueAI",
         description:
-          "跨境电商评论智能分析 SaaS — 从评论分析到产品行动的完整闭环",
+          "帮助电商卖家把评论变成增长决策的评论智能分析 SaaS",
         inLanguage: "zh-CN",
         publisher: {
           "@id": "https://clueai-reviewlens.com/#organization",
@@ -70,18 +70,18 @@ export default function HomePage() {
         <div className="flex flex-col items-center text-center lg:w-[55%] lg:items-start lg:text-left">
           {/* Eyebrow pill */}
           <div className="glass-rose mb-6 inline-flex rounded-pill px-4 py-1.5 text-[13px] font-medium text-[#f36f8f]">
-            ✨ {t("heroEyebrow")}
+            {t("heroEyebrow")}
           </div>
 
           {/* H1 - two lines */}
-          <h1 className="font-heading text-[44px] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink md:text-[60px]">
+          <h1 className="font-heading text-[44px] font-extrabold leading-[1.06] tracking-normal text-ink md:text-[60px]">
             {t("heroH1Line1")}
             <br />
             {t("heroH1Line2")}
           </h1>
 
           {/* Subtitle - 1 line */}
-          <p className="mt-4 max-w-lg text-lg leading-relaxed text-soft md:text-xl">
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-soft md:text-xl md:leading-9">
             {t("heroSubtitleShort")}
           </p>
 
@@ -110,12 +110,12 @@ export default function HomePage() {
 
           {/* Floating badge: top-right */}
           <div className="glass-rose pointer-events-none absolute -top-3 -right-3 inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-medium text-[#d94d72] shadow-sm md:-right-6">
-            🔥 {t("heroBadgeImproved")}
+            {t("heroBadgeImproved")}
           </div>
 
           {/* Floating badge: bottom-right */}
           <div className="glass-mint pointer-events-none absolute -bottom-3 -right-3 inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-medium text-[#2e9680] shadow-sm md:-right-6">
-            ✓ {t("heroBadgeWeekly")}
+            {t("heroBadgeWeekly")}
           </div>
         </div>
       </section>

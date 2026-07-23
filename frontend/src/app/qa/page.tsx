@@ -9,7 +9,7 @@ import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
   title: "Review Q&A",
-  description: "Authenticated question answering over review evidence.",
+  description: "Authenticated question answering over review evidence for growth decisions.",
 });
 
 export default async function QaPage() {
@@ -18,7 +18,7 @@ export default async function QaPage() {
     return (
       <AppShell
         currentPath="/qa"
-        title="问评论"
+        title="Ask Reviews"
         description=""
       >
         <QaPanel products={products} />
@@ -30,18 +30,18 @@ export default async function QaPage() {
       return (
         <AppShell
           currentPath="/qa"
-          title="问评论需要 Pro 权限。"
-          description="这条能力保留在高级入口里，升级后就能按产品聚合评论并继续追问。"
+          title="Ask Reviews 需要 Pro 权限。"
+          description="升级后可按产品聚合评论，围绕痛点、竞品机会和 Listing 线索继续追问。"
         >
           <section className="rounded-shell border border-dashed border-line bg-white/80 px-6 py-10 shadow-card backdrop-blur">
             <div className="inline-flex rounded-pill bg-[#fff1f5] px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
               PRO FEATURE
             </div>
             <h2 className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
-              升级后解锁问评论
+              升级后解锁 Ask Reviews
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-soft">
-              这一步可以把 1-5 个产品的评论聚合起来提问，并返回引用评论，适合做更深入的运营追问。
+              聚合 1-5 个产品的评论自由提问，并返回引用评论，适合做竞品分析、选品判断和运营巡检。
             </p>
             <Link
               href="/pricing"
@@ -58,11 +58,11 @@ export default async function QaPage() {
       return (
         <AppShell
           currentPath="/qa"
-          title="问评论需要先登录。"
+          title="Ask Reviews 需要先登录。"
           description="登录后会直接读取当前账号的产品评论资产。"
         >
           <EmptyAuthState
-            title="登录后查看问评论"
+            title="登录后查看 Ask Reviews"
             description="这条能力会使用当前账号的产品评论范围，并返回带证据的回答。"
           />
         </AppShell>

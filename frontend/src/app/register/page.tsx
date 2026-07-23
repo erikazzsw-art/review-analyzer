@@ -26,10 +26,10 @@ export default function RegisterPage() {
           {/* Logo */}
           <Link href="/" className="inline-flex items-center gap-2.5">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#f36f8f,#8d7be8)] font-heading text-xs font-extrabold text-white shadow-sm">
-              RL
+              CA
             </span>
-            <span className="font-heading text-lg font-extrabold tracking-[-0.02em] text-ink">
-              ReviewLens
+            <span className="font-heading text-lg font-extrabold tracking-normal text-ink">
+              ClueAI
             </span>
           </Link>
 
@@ -52,7 +52,7 @@ export default function RegisterPage() {
         <section className="flex flex-1 items-center justify-center bg-[#fffaf8] px-6 py-12 lg:px-10">
           <div className="w-full max-w-[384px]">
             <div className="mb-6">
-              <h1 className="font-heading text-[28px] font-extrabold tracking-[-0.02em] text-[#25212a]">
+              <h1 className="font-heading text-[28px] font-extrabold tracking-normal text-[#25212a]">
                 {t("registerTitle")}
               </h1>
               <p className="mt-2 text-base text-[#6f6877]">

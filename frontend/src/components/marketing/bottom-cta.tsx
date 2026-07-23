@@ -21,7 +21,7 @@ export function BottomCta({
         <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/8 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-white/6 blur-3xl" />
 
-        <h2 className="relative font-heading text-2xl font-extrabold tracking-[-0.02em] text-white md:text-[28px]">
+        <h2 className="relative font-heading text-2xl font-extrabold tracking-normal text-white md:text-[28px]">
           {text || t("text")}
         </h2>
         <div className="relative mt-8">

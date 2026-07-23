@@ -53,7 +53,7 @@ function BrowserFrame({ children }: { children: React.ReactNode }) {
         {/* Address bar */}
         <div className="ml-3 flex-1 rounded-full bg-white px-3 py-1 text-[11px] text-soft border border-line/60">
           app.clueai-reviewlens.com/
-          <span className="text-ink/50">analytics</span>
+          <span className="text-ink/50">growth</span>
         </div>
       </div>
       {/* Content slot */}
@@ -96,7 +96,7 @@ function DashboardMockup() {
       {/* Bar chart */}
       <div className="rounded-xl border border-line/80 bg-white p-4">
         <div className="mb-3 font-body text-[11px] font-semibold text-soft uppercase tracking-wider">
-          7 天差评趋势
+          7 天 Top 问题趋势
         </div>
         <div className="flex items-end justify-between gap-2 h-[100px]">
           {bars.map((h, i) => (
@@ -113,7 +113,7 @@ function DashboardMockup() {
         </div>
         <div className="mt-3 flex items-center gap-1.5 font-body text-[11px] text-mint">
           <span className="inline-block h-2 w-2 rounded-full bg-mint" />
-          差评率持续下降 ↓32%
+          高频问题持续下降 ↓32%
         </div>
       </div>
     </div>
@@ -126,7 +126,7 @@ function AskMockup() {
       {/* User message */}
       <div className="flex justify-end">
         <div className="max-w-[75%] rounded-2xl rounded-br-md bg-roseSoft px-4 py-2.5 font-body text-[13px] text-ink shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          拉链质量问题有多少条？
+          包装破损主要集中在哪些 SKU？
         </div>
       </div>
       {/* AI response */}
@@ -134,15 +134,15 @@ function AskMockup() {
         <div className="max-w-[82%] space-y-3 rounded-2xl rounded-bl-md border border-line bg-white px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
           <p className="font-body text-[13px] leading-relaxed text-ink">
             共 <span className="font-bold text-rose">47 条</span>{" "}
-            差评提到拉链问题，占比{" "}
+            评论提到包装破损，占比{" "}
             <span className="font-bold text-rose">32%</span>
             ，主要集中在 2026 年 5-6 月。
           </p>
           <div className="flex gap-3">
             {[
-              { v: "47", l: "条差评" },
+              { v: "47", l: "条评论" },
               { v: "32%", l: "占比" },
-              { v: "↓", l: "趋势" },
+              { v: "推送", l: "动作" },
             ].map((s) => (
               <div
                 key={s.l}
@@ -172,24 +172,24 @@ function AnalysisMockup() {
     {
       name: "张***",
       stars: 4,
-      snippet: "拉链很顺滑，做工比预期好很多",
-      sentiment: "正面",
+      snippet: "包装扎实，打开后产品状态很好",
+      sentiment: "亮点",
       sentimentColor: "bg-mint/10 text-mint border-mint/30",
       tags: ["易用性", "耐用性"],
     },
     {
       name: "李***",
       stars: 2,
-      snippet: "用了两周拉链就卡住了，很失望",
-      sentiment: "负面",
+      snippet: "外盒压坏，送礼看起来不够体面",
+      sentiment: "痛点",
       sentimentColor: "bg-rose/10 text-rose border-rose/30",
       tags: ["做工质量"],
     },
     {
       name: "王***",
       stars: 3,
-      snippet: "性价比不错，就是包装有点简陋",
-      sentiment: "中性",
+      snippet: "竞品有收纳袋，这款页面没写清楚",
+      sentiment: "机会",
       sentimentColor: "bg-amber/10 text-amber border-amber/30",
       tags: ["性价比", "包装"],
     },
@@ -202,8 +202,8 @@ function AnalysisMockup() {
         <div className="grid grid-cols-[1fr_60px_2fr_56px_1fr] gap-2 border-b border-line bg-[#faf8f7] px-4 py-2 font-body text-[10px] font-semibold text-soft uppercase tracking-wider">
           <span>评论者</span>
           <span>评分</span>
-          <span>内容摘要</span>
-          <span>情感</span>
+          <span>评论要点</span>
+          <span>信号</span>
           <span>主题标签</span>
         </div>
         {/* Rows */}
@@ -249,8 +249,8 @@ function ActionMockup() {
       color: "border-l-amber",
       count: 2,
       cards: [
-        { title: "拉链卡顿问题", product: "户外背包 A-300", priority: "bg-rose" },
-        { title: "肩带脱线反馈", product: "户外背包 A-300", priority: "bg-amber" },
+        { title: "包装破损预警", product: "户外背包 A-300", priority: "bg-rose" },
+        { title: "补充尺寸说明", product: "户外背包 A-300", priority: "bg-amber" },
       ],
     },
     {
@@ -259,7 +259,7 @@ function ActionMockup() {
       count: 1,
       cards: [
         {
-          title: "改进拉链供应商",
+          title: "优化主图卖点",
           product: "户外背包 A-300",
           priority: "bg-amber",
         },
@@ -270,9 +270,9 @@ function ActionMockup() {
       color: "border-l-mint",
       count: 4,
       cards: [
-        { title: "更换包装材料", product: "户外背包 A-300", priority: "bg-mint" },
-        { title: "增加内衬加固", product: "腰包 B-100", priority: "bg-mint" },
-        { title: "升级拉链品牌", product: "腰包 B-100", priority: "bg-mint" },
+        { title: "推送客服话术", product: "户外背包 A-300", priority: "bg-mint" },
+        { title: "补齐竞品对比表", product: "腰包 B-100", priority: "bg-mint" },
+        { title: "更新 Listing FAQ", product: "腰包 B-100", priority: "bg-mint" },
       ],
     },
   ];
@@ -316,7 +316,7 @@ function CompareMockup() {
       {/* Before */}
       <div className="pr-4">
         <div className="mb-3 inline-block rounded-full bg-rose/10 px-2.5 py-0.5 font-body text-[10px] font-semibold text-rose">
-          导入前
+          原始评论
         </div>
         <div className="space-y-1.5 rounded-lg border border-line/60 bg-[#fdfbfb] p-3">
           {[...Array(5)].map((_, i) => (
@@ -327,11 +327,11 @@ function CompareMockup() {
               <span className="w-5 shrink-0 text-right">{i + 1}</span>
               <span className="truncate">
                 {[
-                  "拉链,卡顿,质量问题,差评...",
+                  "包装破损,送礼,外盒压坏...",
                   "尺寸偏小,退货,不满意...",
-                  "颜色色差,与图片不符...",
-                  "面料起球,洗涤后缩水...",
-                  "包装破损,物流慢,差评...",
+                  "竞品配件,收纳袋,更方便...",
+                  "主图看不出尺寸,安装不确定...",
+                  "物流慢,客服回复,退换货...",
                 ][i]}
               </span>
             </div>
@@ -341,7 +341,7 @@ function CompareMockup() {
       {/* After */}
       <div className="pl-4">
         <div className="mb-3 inline-block rounded-full bg-mint/10 px-2.5 py-0.5 font-body text-[10px] font-semibold text-mint">
-          分析后
+          增长建议
         </div>
         <div className="space-y-3 rounded-lg border border-line/60 bg-white p-3">
           <div className="flex items-center gap-3">
@@ -349,21 +349,21 @@ function CompareMockup() {
               <div className="font-heading text-lg font-bold text-mint">
                 ↓62%
               </div>
-              <div className="font-body text-[10px] text-soft">差评率下降</div>
+              <div className="font-body text-[10px] text-soft">Top 问题下降</div>
             </div>
             <div className="flex-1 rounded-lg bg-lavender/5 px-3 py-2 text-center">
               <div className="font-heading text-lg font-bold text-lavender">
                 47
               </div>
-              <div className="font-body text-[10px] text-soft">改进项</div>
+              <div className="font-body text-[10px] text-soft">建议动作</div>
             </div>
           </div>
           <div className="rounded-lg border border-mint/30 bg-mint/5 px-3 py-2">
             <div className="font-body text-[10px] font-semibold text-mint">
-              💡 改版建议
+              增长建议
             </div>
             <div className="mt-1 font-body text-[11px] text-ink/80">
-              优先处理拉链问题（32% 差评），建议更换 YKK 供应商
+              优先补强包装说明与首图卖点，并将异常变化推送给运营
             </div>
           </div>
         </div>
@@ -376,17 +376,17 @@ function ReviewTimelineMockup() {
   const events = [
     {
       date: "2026-07-15",
-      text: "拉链升级方案已执行，待验证效果",
+      text: "Listing 与包装说明已更新，等待新评论验证效果",
       dot: "bg-mint",
     },
     {
       date: "2026-07-10",
-      text: "产品会议确认：改用 YKK #5 金属拉链",
+      text: "团队确认：补充主图尺寸信息和客服跟进话术",
       dot: "bg-lavender",
     },
     {
       date: "2026-07-03",
-      text: "AI 识别到拉链差评激增 47 条，自动创建追踪任务",
+      text: "识别到包装破损评论激增 47 条，自动创建追踪任务",
       dot: "bg-rose",
     },
   ];
@@ -580,7 +580,7 @@ export function FeatureCarousel() {
             const Icon = TAB_ICONS[TAB_KEYS[activeIndex]];
             return <Icon className="h-5 w-5 text-rose" />;
           })()}
-          <h3 className="font-heading text-xl font-extrabold text-ink">
+          <h3 className="font-heading text-xl font-extrabold tracking-normal text-ink">
             {t(`tabs.${TAB_KEYS[activeIndex]}.title`)}
           </h3>
         </div>

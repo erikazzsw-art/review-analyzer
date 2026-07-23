@@ -100,7 +100,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
           CA
         </Link>
         <div>
-          <div className="font-heading text-base font-extrabold tracking-[-0.03em] text-ink">
+          <div className="font-heading text-base font-extrabold tracking-normal text-ink">
             ClueAI
           </div>
           <div className="text-xs text-soft">{t("tagline")}</div>

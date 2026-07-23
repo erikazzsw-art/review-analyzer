@@ -39,10 +39,10 @@ export default function TrialPage() {
           {/* Logo */}
           <Link href="/" className="inline-flex items-center gap-2.5">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#f36f8f,#8d7be8)] font-heading text-xs font-extrabold text-white shadow-sm">
-              RL
+              CA
             </span>
-            <span className="font-heading text-lg font-extrabold tracking-[-0.02em] text-ink">
-              ReviewLens
+            <span className="font-heading text-lg font-extrabold tracking-normal text-ink">
+              ClueAI
             </span>
           </Link>
 
@@ -73,7 +73,7 @@ export default function TrialPage() {
               <span className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#d94d72]">
                 {t("pageEyebrow")}
               </span>
-              <h1 className="mt-5 font-heading text-3xl font-extrabold leading-[1.15] tracking-[-0.03em] text-ink md:text-4xl">
+              <h1 className="mt-5 font-heading text-3xl font-extrabold leading-[1.15] tracking-normal text-ink md:text-4xl">
                 {t("pageTitle")}
               </h1>
             </div>
@@ -89,7 +89,7 @@ export default function TrialPage() {
                   >
                     {step.num}
                   </span>
-                  <p className="mt-4 font-heading text-base font-bold tracking-[-0.01em] text-ink">
+                  <p className="mt-4 font-heading text-base font-bold tracking-normal text-ink">
                     {t(step.key)}
                   </p>
                   <p className="mt-1.5 text-sm leading-relaxed text-soft">

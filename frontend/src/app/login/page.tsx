@@ -41,15 +41,15 @@ export default function LoginPage() {
           {/* Logo */}
           <Link href="/" className="inline-flex items-center gap-3 mb-8">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#f36f8f,#8d7be8)] font-heading text-xs font-extrabold text-white shadow-sm">
-              RL
-            </span>
-            <span className="font-heading text-lg font-extrabold tracking-[-0.02em] text-white">
-              ReviewLens
+            CA
+          </span>
+            <span className="font-heading text-lg font-extrabold tracking-normal text-white">
+              ClueAI
             </span>
           </Link>
 
           {/* "欢迎回来" */}
-          <h1 className="font-heading text-[40px] font-extrabold tracking-[-0.02em] text-white leading-tight">
+          <h1 className="font-heading text-[40px] font-extrabold tracking-normal text-white leading-tight">
             {t("loginTitle")}
           </h1>
           <p className="mt-3 text-base text-white/65">
@@ -64,10 +64,10 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <Link href="/" className="mb-8 inline-flex items-center gap-3 lg:hidden">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#f36f8f,#8d7be8)] font-heading text-xs font-extrabold text-white">
-              RL
+              CA
             </span>
-            <span className="font-heading text-lg font-extrabold tracking-[-0.02em] text-[#25212a]">
-              ReviewLens
+            <span className="font-heading text-lg font-extrabold tracking-normal text-[#25212a]">
+              ClueAI
             </span>
           </Link>
 
@@ -82,7 +82,7 @@ export default function LoginPage() {
 
           {/* Heading — mobile only; desktop shows it on the left panel */}
           <div className="mb-6 lg:hidden">
-            <h1 className="font-heading text-[28px] font-extrabold tracking-[-0.02em] text-[#25212a]">
+            <h1 className="font-heading text-[28px] font-extrabold tracking-normal text-[#25212a]">
               {t("loginTitle")}
             </h1>
             <p className="mt-2 text-base text-[#6f6877]">

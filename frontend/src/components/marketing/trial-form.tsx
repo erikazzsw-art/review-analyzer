@@ -82,7 +82,7 @@ export function TrialForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Title */}
       <div className="text-center">
-        <h2 className="font-heading text-xl font-extrabold tracking-[-0.02em] text-[#25212a]">
+        <h2 className="font-heading text-xl font-extrabold tracking-normal text-[#25212a]">
           {t("formTitle")}
         </h2>
         <p className="mt-1.5 text-sm text-[#6f6877]">{t("formSubtitle")}</p>

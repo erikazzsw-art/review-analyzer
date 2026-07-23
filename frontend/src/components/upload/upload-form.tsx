@@ -328,7 +328,7 @@ export function UploadForm() {
         <div className="inline-flex rounded-pill bg-roseSoft px-4 py-2 text-xs font-bold tracking-[0.12em] text-[#d94d72]">
           {t("step1")}
         </div>
-        <h2 className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.04em] text-ink">
+        <h2 className="mt-4 font-heading text-3xl font-extrabold tracking-normal text-ink">
           {t("importTitle")}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-soft">

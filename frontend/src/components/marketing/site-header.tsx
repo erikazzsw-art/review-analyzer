@@ -45,10 +45,10 @@ export function SiteHeader() {
           onClick={closeMobile}
         >
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#f36f8f,#8d7be8)] font-heading text-xs font-extrabold text-white shadow-sm">
-            RL
+            CA
           </span>
-          <span className="font-heading text-lg font-extrabold tracking-[-0.02em] text-ink">
-            ReviewLens
+          <span className="font-heading text-lg font-extrabold tracking-normal text-ink">
+            ClueAI
           </span>
         </Link>
 

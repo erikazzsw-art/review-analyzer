@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     template: "%s | ClueAI",
   },
   description:
-    "ClueAI helps cross-border sellers turn review signals into actions and follow-up validation.",
+    "ClueAI helps e-commerce sellers turn customer reviews into growth decisions, team notifications, and follow-up validation.",
   openGraph: {
     title: "ClueAI",
     description:
-      "ClueAI helps cross-border sellers turn review signals into actions and follow-up validation.",
+      "ClueAI helps e-commerce sellers turn customer reviews into growth decisions, team notifications, and follow-up validation.",
     siteName: "ClueAI",
     type: "website",
     images: [
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ClueAI",
     description:
-      "ClueAI helps cross-border sellers turn review signals into actions and follow-up validation.",
+      "ClueAI helps e-commerce sellers turn customer reviews into growth decisions, team notifications, and follow-up validation.",
     images: [ogImagePath],
   },
 };

@@ -34,7 +34,7 @@ export function AppShell({
       {/* Main content area */}
       <div className="pt-14 md:pl-[260px] md:pt-0">
         <header className="px-6 pb-1 pt-6 lg:px-10">
-          <h1 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-ink md:text-3xl">
+          <h1 className="font-heading text-2xl font-extrabold tracking-normal text-ink md:text-3xl">
             {title}
           </h1>
           {description && (

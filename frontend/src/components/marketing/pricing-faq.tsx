@@ -19,7 +19,7 @@ export function PricingFaq() {
 
   return (
     <section className="relative z-10 mx-auto w-full max-w-3xl px-6 pb-20 lg:px-10">
-      <h2 className="text-center font-heading text-3xl font-extrabold tracking-[-0.02em] text-ink">
+      <h2 className="text-center font-heading text-3xl font-extrabold tracking-normal text-ink">
         {t("title")}
       </h2>
       <div className="mt-8 space-y-3">

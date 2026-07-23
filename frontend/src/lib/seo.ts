@@ -88,8 +88,8 @@ export function buildMarketingMetadata(input: {
       "cross-border sellers",
       "Amazon reviews",
       "Walmart reviews",
-      "product feedback",
-      "action tracking",
+      "growth decisions",
+      "team notifications",
     ],
     robots: {
       index: true,

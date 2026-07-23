@@ -31,7 +31,7 @@ export function ValueGrid() {
           <div className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${item.accent}`}>
             {index + 1}
           </div>
-          <h2 className="mt-4 font-heading text-xl font-bold tracking-[-0.02em] text-ink">
+          <h2 className="mt-4 font-heading text-xl font-bold tracking-normal text-ink">
             {item.title}
           </h2>
           <p className="mt-3 text-sm leading-7 text-soft">{item.description}</p>

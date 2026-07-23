@@ -12,16 +12,17 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "300 credits / month",
     "1 product group",
     "Up to 500 reviews per upload",
-    "Sentiment analysis + tagging",
-    "7-day analysis history",
+    "Top issues & highlights",
+    "7-day insight history",
     "Community support",
   ],
   starter: [
     "5,000 credits / month",
     "3 product groups",
     "Up to 1,000 reviews per upload",
+    "Pain point discovery",
+    "Listing optimization cues",
     "Ask Reviews AI Q&A",
-    "Ad copy generation",
     "Translation (batch)",
     "Email support",
   ],
@@ -30,9 +31,9 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "Unlimited product groups",
     "Up to 5,000 reviews per upload",
     "All Starter features",
-    "Multi-product comparison",
-    "Action center + tracking",
-    "Webhook integration",
+    "Competitor opportunity analysis",
+    "Action center & follow-up",
+    "Webhook team notifications",
     "Priority support",
   ],
   team: [
@@ -40,6 +41,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
     "Everything in Pro",
     "Multi-member collaboration",
     "Role-based permissions",
+    "Team notification workflows",
     "Custom analysis templates",
     "API access (10 keys)",
     "SLA guarantee",
@@ -105,11 +107,11 @@ export default function PricingContent() {
             Pricing
           </span>
         </div>
-        <h1 className="font-heading text-4xl font-extrabold tracking-[-0.02em] text-ink md:text-[44px]">
-          Simple, transparent pricing.
+        <h1 className="font-heading text-4xl font-extrabold tracking-normal text-ink md:text-[44px]">
+          Pricing for review-driven growth.
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-base text-soft">
-          Start with {TRIAL_CREDITS.toLocaleString()} free credits — {TRIAL_DAYS} days, no credit card required.
+          Start with {TRIAL_CREDITS.toLocaleString()} free credits for {TRIAL_DAYS} days. Import reviews, find growth signals, and decide what your team should do next.
         </p>
 
         {/* Monthly / Annual toggle */}
@@ -177,7 +179,7 @@ export default function PricingContent() {
               </div>
 
               <div className="mt-3 flex items-baseline gap-1.5">
-                <span className={`font-heading text-4xl font-extrabold tracking-[-0.04em] ${isFree ? "text-[#4fb99f]" : "text-ink"}`}>
+                <span className={`font-heading text-4xl font-extrabold tracking-normal ${isFree ? "text-[#4fb99f]" : "text-ink"}`}>
                   {price}
                 </span>
                 {perMonth && (
@@ -205,7 +207,7 @@ export default function PricingContent() {
                       : "border border-[rgba(255,255,255,0.8)] bg-white/60 text-ink hover:border-[#f36f8f]/30 hover:text-[#f36f8f]",
                   ].join(" ")}
                 >
-                  {key === "free" ? "Get started free" : "Get Team"}
+                  {key === "free" ? "Start free analysis" : "Talk to sales"}
                 </Link>
               ) : (
                 <button
@@ -219,7 +221,7 @@ export default function PricingContent() {
                       : "border border-[rgba(255,255,255,0.8)] bg-white/60 text-ink hover:border-[#f36f8f]/30 hover:text-[#f36f8f]",
                   ].join(" ")}
                 >
-                  {checkoutLoading === key ? "Loading…" : `Get ${plan.name}`}
+                  {checkoutLoading === key ? "Loading…" : key === "pro" ? "Start Pro workflow" : `Start ${plan.name}`}
                 </button>
               )}
 
@@ -245,11 +247,11 @@ export default function PricingContent() {
       {/* Add-ons section */}
       <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 lg:px-10">
         <div className="glass-white p-8">
-          <h2 className="font-heading text-2xl font-bold tracking-[-0.02em] text-ink">
-            Need more credits?
+          <h2 className="font-heading text-2xl font-bold tracking-normal text-ink">
+            Need more review capacity?
           </h2>
           <p className="mt-2 text-sm text-soft">
-            Upgrade when you need more. Top-up credits never expire and stack on top of your monthly grant.
+            Add credits when a launch, competitor check, or review monitoring cycle needs more analysis volume.
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -272,7 +274,7 @@ export default function PricingContent() {
           </div>
 
           <p className="mt-4 text-xs text-soft">
-            Upgrading to a higher plan is always cheaper than stacking add-ons. Pro $29/mo gives 15K credits vs. Starter + $18 add-on = 15K credits at $30.
+            Higher plans are more efficient for recurring monitoring. Pro gives 15K monthly credits plus comparison, action follow-up, and webhook notifications.
           </p>
         </div>
       </div>
@@ -283,7 +285,7 @@ export default function PricingContent() {
           <div>
             <h3 className="font-heading text-xl font-bold text-ink">Enterprise</h3>
             <p className="mt-1 text-sm text-soft">
-              200K+ credits/month · Custom integrations · Dedicated support · SLA
+              200K+ credits/month · Custom integrations · Team notification workflows · SLA
             </p>
           </div>
           <a

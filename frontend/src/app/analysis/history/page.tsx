@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/table";
 
 export const metadata = buildNoIndexMetadata({
-  title: "Analysis History",
-  description: "Authenticated history of uploaded review batches.",
+  title: "Insight History",
+  description: "Authenticated history of imported review batches and growth insights.",
 });
 
 type HistoryPageProps = {
