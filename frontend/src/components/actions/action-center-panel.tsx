@@ -429,7 +429,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                     }}
                     className="min-h-9 rounded-md border border-[#f5c6cb] bg-white px-3 py-2 text-sm font-semibold text-[#b44655] transition hover:bg-[#fff3f5] disabled:opacity-60"
                   >
-                    从行动中心移除该产品行动
+                    移除
                   </button>
                 </div>
               </div>
