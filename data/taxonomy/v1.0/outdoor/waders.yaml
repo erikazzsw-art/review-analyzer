@@ -1,0 +1,235 @@
+# waders Aspect Taxonomy v1.0
+# 生成时间: 2026-07-22 (手动生成，基于户外 Wader 原始评论与现有 outdoor taxonomy)
+sub_category: waders
+aspect_count: 21
+aspects:
+- key: waterproof
+  label_zh: 防水性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "涉水裤整体是否进水、漏水或保持身体干燥；接缝/靴筒连接处明确漏水时归 seam_integrity"
+  top_phrases: []
+  sample_reviews: []
+
+- key: seam_integrity
+  label_zh: 接缝密封
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "腿部、裆部、靴子连接处等接缝是否开裂、渗水或脱胶，不含普通面料破洞（归 durability）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: size_fit
+  label_zh: 整体尺码
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "胸围、腰围、裤长、裆部、儿童身高体重等整体尺码是否准确；仅鞋靴尺码归 boot_fit"
+  top_phrases: []
+  sample_reviews: []
+
+- key: boot_fit
+  label_zh: 靴码/脚部适配
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "一体靴的鞋码、脚趾空间、脚踝/小腿松紧、是否需要大一码，不含鞋底抓地（归 grip）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: comfort
+  label_zh: 穿着舒适度
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "长时间涉水、行走或站立时的脚感、摩擦、压迫和疲劳感，不含尺码准确性（归 size_fit/boot_fit）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: mobility
+  label_zh: 活动灵活性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "穿着时走路、弯腰、下蹲、爬坡、儿童玩耍是否受限，不含单纯舒适脚感（归 comfort）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: breathability
+  label_zh: 透气排湿
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "闷热、出汗、内部潮湿是否来自不透气；外部进水或漏水归 waterproof/seam_integrity"
+  top_phrases: []
+  sample_reviews: []
+
+- key: temperature_rating
+  label_zh: 保暖性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "冷水、冬季、长时间站水中脚部或身体保暖表现；闷热出汗归 breathability"
+  top_phrases: []
+  sample_reviews: []
+
+- key: grip
+  label_zh: 鞋底抓地力
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "一体靴鞋底在河床、泥地、岩石、沙滩上的防滑和胎纹表现，不含靴码大小（归 boot_fit）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: durability
+  label_zh: 耐用性
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "多次使用、灌木/岩石/树枝摩擦后的抗撕裂、抗磨损和使用寿命；接缝专门问题归 seam_integrity"
+  top_phrases: []
+  sample_reviews: []
+
+- key: material
+  label_zh: 材质用料
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "PVC/橡胶/尼龙/氯丁橡胶等材料厚薄、柔软度、气味和质感；实际破损寿命归 durability"
+  top_phrases: []
+  sample_reviews: []
+
+- key: build_quality
+  label_zh: 做工
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "肩带、腰带、扣具、车线、口袋等制造工艺细节；接缝漏水归 seam_integrity"
+  top_phrases: []
+  sample_reviews: []
+
+- key: weight
+  label_zh: 重量
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "涉水裤整体或靴子轻重、进水后是否沉重；收纳便利和附赠挂架归 accessory_storage"
+  top_phrases: []
+  sample_reviews: []
+
+- key: ease_of_use
+  label_zh: 穿脱/调节便利
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "穿脱、肩带/腰带调节、清洗晾干是否方便；附带收纳挂架本身归 accessory_storage"
+  top_phrases: []
+  sample_reviews: []
+
+- key: accessory_storage
+  label_zh: 口袋/配件收纳
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "胸前口袋、手机防水袋、修补贴、挂架、收纳和晾干配件是否好用或缺失"
+  top_phrases: []
+  sample_reviews: []
+
+- key: packaging
+  label_zh: 包装
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "外包装、盒内摆放、开箱状态和包装保护，不含到货错发/已使用（归 shipping_damage）"
+  top_phrases: []
+  sample_reviews: []
+
+- key: shipping_damage
+  label_zh: 运输/到货问题
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "到货时错尺码、错颜色、已使用、脏污、运输损坏等履约问题，不含产品使用后损坏"
+  top_phrases: []
+  sample_reviews: []
+
+- key: customer_service
+  label_zh: 客服
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "售后响应、退款、换货、质保注册与卖家沟通体验"
+  top_phrases: []
+  sample_reviews: []
+
+- key: value_for_money
+  label_zh: 性价比
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "价格与防水、耐用、配件和整体品质之间的匹配感"
+  top_phrases: []
+  sample_reviews: []
+
+- key: aesthetics
+  label_zh: 外观设计
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "颜色、款式、儿童/成人穿着外观是否好看，不含尺码适配"
+  top_phrases: []
+  sample_reviews: []
+
+- key: other
+  label_zh: 其他
+  total: 0
+  positive_count: 0
+  negative_count: 0
+  neutral_count: 0
+  negative_rate: 0.0%
+  boundary_note: "不属于以上任何维度的评论内容（兜底）"
+  top_phrases: []
+  sample_reviews: []
