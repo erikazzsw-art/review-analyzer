@@ -755,11 +755,11 @@ def _build_dept_section(
     contact_open_id: str | None,
     escalated_tags: set[str] | None = None,
 ) -> list[list[dict]]:
-    """构建飞书 post 富文本的单个部门板块（保留 @人 能力）"""
+    """构建飞书 post 富文本的单个责任部门板块（保留 @人 能力）"""
     lines: list[list[dict]] = []
 
     header_elements: list[dict] = [
-        {"tag": "text", "text": f"\n{dept_icon} 【{dept_label}】"},
+        {"tag": "text", "text": f"\n{dept_icon} 问题归属：{dept_label}"},
     ]
     if contact_open_id:
         header_elements.append({"tag": "at", "user_id": contact_open_id})
@@ -774,7 +774,7 @@ def _build_dept_section(
         text = f"{i}. {tag_label} ({count}条, {pct:.1f}%)"
 
         if escalated_tags and tag in escalated_tags:
-            text += " 🔴⚡已升级"
+            text += " 🔴已升级并写入行动中心"
 
         lines.append([{"tag": "text", "text": text}])
 
@@ -827,6 +827,15 @@ def build_rich_push_content(
         escalated_tags = {r.get("tag_name", "") for r in escalation_results}
 
     content: list[list[dict]] = []
+    product_owner_line: list[dict] = [{"tag": "text", "text": "产品总负责人：运营"}]
+    product_owner_open_id = str(contacts.get("ops") or "").strip()
+    if product_owner_open_id:
+        product_owner_line.extend([
+            {"tag": "text", "text": " "},
+            {"tag": "at", "user_id": product_owner_open_id},
+        ])
+    content.append(product_owner_line)
+    content.append([{"tag": "text", "text": "具体问题按问题归属提醒对应责任部门。"}])
 
     dept_order = ["qa", "product", "ops", "cs", "other"]
     for dept in dept_order:
@@ -845,12 +854,14 @@ def build_rich_push_content(
 
     if escalation_results:
         content.append([{"tag": "text", "text": "\n━━━━━━━━━━━━━━━━━━━━━"}])
-        content.append([{"tag": "text", "text": "⚡ 升级行动（已写入行动中心）："}])
+        content.append([{"tag": "text", "text": "⚡ 升级行动（已写入行动中心，并提醒对应责任方处理）："}])
         for esc in escalation_results:
             tag_label = esc.get("tag_label", esc.get("tag_name", ""))
+            dept_label = esc.get("dept_label") or esc.get("responsible_department") or ""
             action = esc.get("suggested_action", "")
             timeline = esc.get("expected_timeline", "")
-            line = f"• 「{tag_label}」→ {action[:50]}"
+            ownership = f"（责任部门：{dept_label}）" if dept_label else ""
+            line = f"• 「{tag_label}」{ownership} → {action[:50]}"
             if timeline:
                 line += f"，预计{timeline}"
             content.append([{"tag": "text", "text": line}])
@@ -912,7 +923,13 @@ def _build_markdown_rich(
     if escalation_results:
         escalated_tags = {r.get("tag_name", "") for r in escalation_results}
 
-    lines: list[str] = [f"### {title}", ""]
+    lines: list[str] = [
+        f"### {title}",
+        "",
+        "**产品总负责人**：运营",
+        "具体问题按问题归属提醒对应责任部门。",
+        "",
+    ]
 
     dept_order = ["qa", "product", "ops", "cs", "other"]
     for dept in dept_order:
@@ -921,24 +938,26 @@ def _build_markdown_rich(
             continue
         dept_label = DEPT_LABELS.get(dept, "其他")
         dept_icon = DEPT_ICONS.get(dept, "📋")
-        lines.append(f"**{dept_icon} 【{dept_label}】**")
+        lines.append(f"**{dept_icon} 问题归属：{dept_label}**")
         for i, issue in enumerate(issues, 1):
             tag = issue.get("tag", "")
             pct = issue.get("pct", 0)
             count = issue.get("count", 0)
             tag_label = issue.get("tag_label", tag)
-            suffix = " 🔴⚡已升级" if tag in escalated_tags else ""
+            suffix = " 🔴已升级并写入行动中心" if tag in escalated_tags else ""
             lines.append(f"> {i}. {tag_label} ({count}条, {pct:.1f}%){suffix}")
         lines.append("")
 
     if escalation_results:
         lines.append("---")
-        lines.append("**⚡ 升级行动（已写入行动中心）**")
+        lines.append("**⚡ 升级行动（已写入行动中心，并提醒对应责任方处理）**")
         for esc in escalation_results:
             tag_label = esc.get("tag_label", esc.get("tag_name", ""))
+            dept_label = esc.get("dept_label") or esc.get("responsible_department") or ""
             action = esc.get("suggested_action", "")
             timeline = esc.get("expected_timeline", "")
-            line = f"- 「{tag_label}」→ {action[:50]}"
+            ownership = f"（责任部门：{dept_label}）" if dept_label else ""
+            line = f"- 「{tag_label}」{ownership} → {action[:50]}"
             if timeline:
                 line += f"，预计{timeline}"
             lines.append(line)

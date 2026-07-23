@@ -13,10 +13,12 @@ from review_analyzer.workflow_prompts import get_workflow_purpose_label
 ACTIVE_ACTION_STATUSES = {"todo", "in_progress", "pending_review"}
 ACTIVE_TRACKER_STATUSES = {"pending", "follow_up"}
 
-_ROLE_LABELS = {
+_RESPONSIBILITY_LABELS = {
     "运营": {"zh": "运营", "en": "Operations"},
     "产研": {"zh": "产研", "en": "Product & R&D"},
     "质检": {"zh": "质检", "en": "Quality Assurance"},
+    "客服": {"zh": "客服", "en": "Support"},
+    "其他": {"zh": "其他", "en": "Other"},
     "管理者": {"zh": "管理者", "en": "Manager"},
     "复盘": {"zh": "复盘", "en": "Follow-up"},
     "跨团队": {"zh": "跨团队", "en": "Cross-functional"},
@@ -33,10 +35,10 @@ def pick(zh: str, en: str) -> str:
     return zh if getattr(_lang_var, "value", "zh") == "zh" else en
 
 
-def role_label(value: str | None) -> str:
+def responsibility_label(value: str | None) -> str:
     if not value:
         return pick("未分配", "Unassigned")
-    mapping = _ROLE_LABELS.get(value)
+    mapping = _RESPONSIBILITY_LABELS.get(value)
     if not mapping:
         return value
     lang = getattr(_lang_var, "value", "zh")
@@ -77,6 +79,7 @@ def get_workspace_summary(user_id: int, lang: str) -> dict[str, Any]:
         "today_tasks": _build_today_tasks(products, risk_products, open_actions, open_trackers, sessions),
         "risk_products": risk_products[:5],
         "pending_trackers": _build_pending_trackers(open_trackers)[:5],
+        "responsibility_action_summary": _build_responsibility_action_summary(open_actions),
         "role_action_summary": _build_role_action_summary(open_actions),
         "recent_sessions": _build_recent_sessions(sessions)[:5],
     }
@@ -141,13 +144,33 @@ def _build_pending_trackers(trackers: list[dict[str, Any]]) -> list[dict[str, An
     return result
 
 
+def _build_responsibility_action_summary(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    responsibilities = ["运营", "产研", "质检", "客服", "其他"]
+    summary: list[dict[str, Any]] = []
+    for responsibility in responsibilities:
+        count = sum(
+            1
+            for item in actions
+            if _responsibility_bucket(item.get("owner_role")) == responsibility
+        )
+        summary.append({"responsibility": responsibility_label(responsibility), "count": count})
+    return summary
+
+
 def _build_role_action_summary(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
     roles = ["运营", "产研", "质检", "复盘"]
     summary: list[dict[str, Any]] = []
     for role in roles:
         count = sum(1 for item in actions if str(item.get("owner_role")) == role)
-        summary.append({"role": role_label(role), "count": count})
+        summary.append({"role": responsibility_label(role), "count": count})
     return summary
+
+
+def _responsibility_bucket(value: Any) -> str:
+    normalized = str(value or "").strip()
+    if normalized in {"运营", "产研", "质检", "客服"}:
+        return normalized
+    return "其他"
 
 
 def _build_recent_sessions(sessions: list[dict[str, Any]]) -> list[dict[str, Any]]:

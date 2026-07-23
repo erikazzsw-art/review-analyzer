@@ -42,6 +42,18 @@ function safeNullNumber(value: unknown): number | null {
 }
 
 function normalizeSummary(summary: WorkspaceSummary): WorkspaceSummary {
+  const responsibilityActionSummary = Array.isArray(summary.responsibility_action_summary)
+    ? summary.responsibility_action_summary.map((item) => ({
+        responsibility: safeText(item?.responsibility, "未归属"),
+        count: safeNumber(item?.count),
+      }))
+    : Array.isArray(summary.role_action_summary)
+      ? summary.role_action_summary.map((item) => ({
+          responsibility: safeText(item?.role, "未归属"),
+          count: safeNumber(item?.count),
+        }))
+      : [];
+
   return {
     ...summary,
     intro: {
@@ -90,6 +102,7 @@ function normalizeSummary(summary: WorkspaceSummary): WorkspaceSummary {
           review_scope: safeText(item?.review_scope, "all"),
         }))
       : [],
+    responsibility_action_summary: responsibilityActionSummary,
     role_action_summary: Array.isArray(summary.role_action_summary)
       ? summary.role_action_summary.map((item) => ({
           role: safeText(item?.role, "未知"),
@@ -115,6 +128,7 @@ export default async function WorkspacePage() {
 
   try {
     const summary = normalizeSummary(await getWorkspaceSummary());
+    const actionOwnershipSummary = summary.responsibility_action_summary ?? [];
     return (
       <AppShell
         currentPath="/workspace"
@@ -260,14 +274,14 @@ export default async function WorkspacePage() {
 
             <div className="rounded-shell border border-line bg-white/84 p-5 shadow-card backdrop-blur">
               <h3 className="font-heading text-lg font-extrabold tracking-normal text-ink">{t("roleActions")}</h3>
-              {summary.role_action_summary.length > 0 ? (
+              {actionOwnershipSummary.length > 0 ? (
                 <div className="mt-3 space-y-1.5">
-                  {summary.role_action_summary.map((item) => (
+                  {actionOwnershipSummary.map((item) => (
                     <div
-                      key={item.role}
+                      key={item.responsibility}
                       className="flex items-center justify-between rounded-card border border-line bg-white px-4 py-2.5"
                     >
-                      <span className="text-sm font-semibold text-ink">{item.role}</span>
+                      <span className="text-sm font-semibold text-ink">{item.responsibility}</span>
                       <span className="font-heading text-lg font-extrabold text-ink">{item.count}</span>
                     </div>
                   ))}

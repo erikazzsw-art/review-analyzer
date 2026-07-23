@@ -669,7 +669,7 @@ export type BillingCheckoutResponse = {
   plan: string;
 };
 
-// V5-T3: Smart Push Settings Types
+// V5-T3: Smart Push Settings Types (owner Open IDs / issue ownership)
 export type PeriodicPushSettings = {
   enabled: boolean;
   frequency: "daily" | "weekly" | "biweekly" | "monthly";

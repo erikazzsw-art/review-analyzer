@@ -9,10 +9,7 @@
 """
 from __future__ import annotations
 
-import json
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from review_analyzer.department_router import route_issues_by_department
 from review_analyzer.escalation import (
@@ -103,7 +100,7 @@ class TestRichPushIntegration:
 
         dept_issues = route_issues_by_department(issues)
 
-        from scripts.aspect_taxonomy import get_aspect_label_zh
+        from review_analyzer.aspect_taxonomy import get_aspect_label_zh
         for dept_list in dept_issues.values():
             for issue in dept_list:
                 issue["tag_label"] = get_aspect_label_zh(issue.get("tag", ""))
@@ -134,6 +131,9 @@ class TestRichPushIntegration:
         assert "IKEA-KALLAX" in title
         all_text = " ".join(elem.get("text", "") for line in content for elem in line)
 
+        assert "产品总负责人" in all_text
+        assert "问题归属" in all_text
+
         # 验证各部门板块存在
         assert "质检" in all_text
         assert "产研" in all_text
@@ -143,6 +143,7 @@ class TestRichPushIntegration:
         # 验证升级标记
         assert "已升级" in all_text
         assert "升级行动" in all_text
+        assert "已写入行动中心，并提醒对应责任方处理" in all_text
         assert "EPE珍珠棉" in all_text
 
         # 验证亮点

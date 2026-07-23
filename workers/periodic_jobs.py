@@ -5,7 +5,7 @@
 2. 生成推送快照（snapshot_type='periodic'）
 3. 运行升级判定
 4. 触发升级时调用 LLM 生成行动建议
-5. 发送富文本推送到飞书
+5. 发送富文本推送到飞书 / 钉钉 / 企业微信
 """
 from __future__ import annotations
 
@@ -28,10 +28,10 @@ def periodic_digest_job(user_id: int) -> dict[str, Any]:
     2. 遍历用户的活跃产品
     3. 对每个产品：汇总当期评论 → 生成 TOP issues/highlights → 写快照
     4. 更新升级状态 → 检查升级 → 触发 LLM 建议
-    5. 构建富文本消息 → 发送飞书
+    5. 构建富文本消息 → 按配置渠道发送
     """
     from review_analyzer.database import get_comments, get_setting
-    from review_analyzer.department_router import route_issues_by_department
+    from review_analyzer.department_router import get_dept_label, route_issues_by_department
     from review_analyzer.escalation import (
         EscalationConfig,
         check_escalations,
@@ -165,7 +165,9 @@ def periodic_digest_job(user_id: int) -> dict[str, Any]:
                     escalation_actions.append({
                         "tag_name": esc.tag_name,
                         "tag_label": get_aspect_label_zh(esc.tag_name),
-                        "suggested_action": "已写入行动中心",
+                        "dept": esc.dept,
+                        "dept_label": get_dept_label(esc.dept),
+                        "suggested_action": "已写入行动中心，并提醒对应责任方处理",
                         "expected_timeline": "",
                     })
 

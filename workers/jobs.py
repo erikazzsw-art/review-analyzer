@@ -807,7 +807,7 @@ def _post_analysis_smart_push(
     from collections import Counter
 
     from review_analyzer.database import get_setting
-    from review_analyzer.department_router import route_issues_by_department
+    from review_analyzer.department_router import get_dept_label, route_issues_by_department
     from review_analyzer.escalation import (
         EscalationConfig,
         check_escalations,
@@ -941,7 +941,9 @@ def _post_analysis_smart_push(
                 escalation_actions.append({
                     "tag_name": esc.tag_name,
                     "tag_label": get_aspect_label_zh(esc.tag_name),
-                    "suggested_action": "已写入行动中心",
+                    "dept": esc.dept,
+                    "dept_label": get_dept_label(esc.dept),
+                    "suggested_action": "已写入行动中心，并提醒对应责任方处理",
                     "expected_timeline": "",
                 })
 

@@ -52,6 +52,11 @@ class WorkspaceRoleActionPayload(BaseModel):
     count: int
 
 
+class WorkspaceResponsibilityActionPayload(BaseModel):
+    responsibility: str
+    count: int
+
+
 class WorkspaceRecentSessionPayload(BaseModel):
     session_id: int
     title: str
@@ -67,6 +72,7 @@ class WorkspaceSummaryPayload(BaseModel):
     today_tasks: list[WorkspaceTaskPayload]
     risk_products: list[WorkspaceRiskProductPayload]
     pending_trackers: list[WorkspacePendingTrackerPayload]
+    responsibility_action_summary: list[WorkspaceResponsibilityActionPayload]
     role_action_summary: list[WorkspaceRoleActionPayload]
     recent_sessions: list[WorkspaceRecentSessionPayload]
     generated_at: datetime

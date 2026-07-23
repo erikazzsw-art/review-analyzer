@@ -247,15 +247,29 @@ export function PushSettingsPanel({ initialSettings }: Props) {
         </div>
       </section>
 
-      {/* ④ 部门负责人 */}
+      {/* ④ 负责人 Open ID */}
       <section className="rounded-shell border border-line bg-white/84 p-5 shadow-card">
         <h2 className="text-base font-bold text-ink">{t("deptContacts.title")}</h2>
         <p className="mt-1 text-sm text-soft">{t(`${platformKey}.contactHint`)}</p>
+        <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
+          <div>
+            <p className="font-semibold text-ink">{t("deptContacts.productOwnerTitle")}</p>
+            <p className="mt-1 leading-6 text-soft">{t("deptContacts.productOwnerDesc")}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-ink">{t("deptContacts.issueOwnerTitle")}</p>
+            <p className="mt-1 leading-6 text-soft">{t("deptContacts.issueOwnerDesc")}</p>
+          </div>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-soft">{t("deptContacts.futureMappingNote")}</p>
         {smartLoading ? <div className="py-4 text-sm text-soft">{t("loading")}</div> : (
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-3">
             {DEPT_KEYS.map((dept) => (
-              <div key={dept} className="flex items-center gap-3">
-                <span className="w-12 text-sm font-medium text-ink">{t(`deptLabel.${dept}`)}</span>
+              <div key={dept} className="grid gap-2 md:grid-cols-[160px_1fr] md:items-center">
+                <span className="text-sm font-medium text-ink">
+                  {t(`deptLabel.${dept}`)}
+                  <span className="block text-xs font-normal leading-5 text-soft">{t(`deptContactHint.${dept}`)}</span>
+                </span>
                 <Input
                   value={deptContacts[dept]}
                   onChange={(e) => setDeptContacts({ ...deptContacts, [dept]: e.target.value })}

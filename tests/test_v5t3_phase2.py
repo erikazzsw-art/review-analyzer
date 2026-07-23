@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from review_analyzer.notifier import (
     _build_post_body,
     build_rich_push_content,
@@ -52,6 +50,8 @@ class TestBuildRichPushContent:
             elem.get("text", "") for line in content for elem in line
         )
         assert "质检" in all_text
+        assert "产品总负责人" in all_text
+        assert "问题归属" in all_text
         assert "包装" in all_text
         assert "15.2%" in all_text
 
@@ -63,7 +63,7 @@ class TestBuildRichPushContent:
             "cs": [],
             "other": [],
         }
-        dept_contacts = {"qa": "ou_abc123"}
+        dept_contacts = {"qa": "ou_abc123", "ops": "ou_ops_owner"}
 
         title, content = build_rich_push_content(
             product_name="TEST",
@@ -77,7 +77,13 @@ class TestBuildRichPushContent:
             for line in content
             for elem in line
         )
+        has_product_owner_at = any(
+            elem.get("tag") == "at" and elem.get("user_id") == "ou_ops_owner"
+            for line in content
+            for elem in line
+        )
         assert has_at
+        assert has_product_owner_at
 
     def test_with_escalation(self):
         dept_issues = {
@@ -108,6 +114,7 @@ class TestBuildRichPushContent:
         )
         assert "已升级" in all_text
         assert "升级行动" in all_text
+        assert "已写入行动中心，并提醒对应责任方处理" in all_text
         assert "更换供应商缓冲材料" in all_text
 
     def test_with_highlights(self):

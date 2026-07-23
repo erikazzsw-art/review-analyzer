@@ -31,6 +31,22 @@ def _as_dict(value: Any) -> dict[str, Any]:
 def _normalize_workspace_summary(summary: dict[str, Any]) -> dict[str, Any]:
     intro = _as_dict(summary.get("intro"))
     metrics = _as_dict(summary.get("metrics"))
+    role_action_summary = summary.get("role_action_summary", [])
+    responsibility_action_summary = summary.get("responsibility_action_summary", [])
+    if not isinstance(role_action_summary, list):
+        role_action_summary = []
+    if not isinstance(responsibility_action_summary, list):
+        responsibility_action_summary = []
+    if not responsibility_action_summary:
+        responsibility_action_summary = [
+            {
+                "responsibility": item.get("responsibility") or item.get("role"),
+                "count": item.get("count"),
+            }
+            for item in role_action_summary
+            if isinstance(item, dict)
+        ]
+
     return {
         "intro": {
             "headline": _safe_text(intro.get("headline"), "欢迎回来"),
@@ -81,12 +97,20 @@ def _normalize_workspace_summary(summary: dict[str, Any]) -> dict[str, Any]:
             for item in summary.get("pending_trackers", [])
             if isinstance(item, dict)
         ],
-        "role_action_summary": [
+        "responsibility_action_summary": [
             {
-                "role": _safe_text(item.get("role"), "未知"),
+                "responsibility": _safe_text(item.get("responsibility") or item.get("role"), "未归属"),
                 "count": _safe_int(item.get("count")),
             }
-            for item in summary.get("role_action_summary", [])
+            for item in responsibility_action_summary
+            if isinstance(item, dict)
+        ],
+        "role_action_summary": [
+            {
+                "role": _safe_text(item.get("role") or item.get("responsibility"), "未知"),
+                "count": _safe_int(item.get("count")),
+            }
+            for item in role_action_summary
             if isinstance(item, dict)
         ],
         "recent_sessions": [

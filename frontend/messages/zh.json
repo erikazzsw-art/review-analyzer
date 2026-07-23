@@ -306,7 +306,7 @@
     },
     "layout": {
       "pushSettingsTitle": "通知设置",
-      "pushSettingsDesc": "配置 Top 问题、产品亮点和异常变化的自动通知。",
+      "pushSettingsDesc": "配置团队通知、产品总负责人、问题责任方和自动推送规则。",
       "pageLoadError": "加载设置失败",
       "unauthorizedTitle": "登录后查看通知设置",
       "unauthorizedDesc": "这里管理钉钉 / Webhook 通知渠道和自动推送规则。"
@@ -414,11 +414,11 @@
       "testFail": "测试失败",
       "platformFeishu": {
         "sectionTitle": "绑定飞书",
-        "sectionDesc": "配置飞书群机器人 Webhook，用于接收评论增长信号。",
+        "sectionDesc": "配置飞书群机器人 Webhook，用于接收产品报告、问题归属提醒和异常变化。",
         "urlPlaceholder": "https://open.feishu.cn/open-apis/bot/v2/hook/xxx（完整地址，含 hook/ 后的 token）",
         "secretPlaceholder": "飞书机器人「安全设置」中的签名校验密钥（未开启则留空）",
         "secretHint": "签名校验（可选）",
-        "contactHint": "配置后推送消息将 @对应负责人。Open ID 从飞书管理后台获取。",
+        "contactHint": "配置负责人 Open ID 后，产品报告默认 @ 产品总负责人；具体问题板块按问题归属 @ 对应责任方。",
         "contactPlaceholder": "ou_xxx（飞书 Open ID）"
       },
       "platformDingtalk": {
@@ -427,7 +427,7 @@
         "urlPlaceholder": "https://oapi.dingtalk.com/robot/send?access_token=xxx",
         "secretPlaceholder": "钉钉机器人「安全设置 → 加签」提供的密钥（未启用加签则留空）",
         "secretHint": "加签密钥",
-        "contactHint": "钉钉群机器人暂不支持精准 @ 联系人（因 Open ID 不通用）。",
+        "contactHint": "钉钉群机器人暂不支持飞书 Open ID 精准 @，仍会推送产品报告和问题责任部门。",
         "contactPlaceholder": "钉钉暂不使用"
       },
       "platformWechat": {
@@ -436,7 +436,7 @@
         "urlPlaceholder": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx",
         "secretPlaceholder": "",
         "secretHint": "",
-        "contactHint": "企业微信群机器人暂不支持精准 @ 联系人（需飞书 Open ID）。",
+        "contactHint": "企业微信群机器人暂不支持飞书 Open ID 精准 @，仍会推送产品报告和问题责任部门。",
         "contactPlaceholder": "企业微信暂不使用"
       },
       "wechatNoSecretHint": "企业微信不使用签名密钥，URL 中的 key 已完成鉴权。",
@@ -479,7 +479,12 @@
         "statusDisabled": "停用"
       },
       "deptContacts": {
-        "title": "部门负责人"
+        "title": "负责人 Open ID",
+        "productOwnerTitle": "产品总负责人",
+        "productOwnerDesc": "默认使用运营联系人，负责产品整体表现、行动推进和复盘闭环。",
+        "issueOwnerTitle": "问题责任方",
+        "issueOwnerDesc": "质量、包装、设计、Listing、售后等问题按问题归属提醒对应责任部门。",
+        "futureMappingNote": "当前按默认问题归属分配；更细的「产品 + 问题类型 → 具体同事」覆盖规则后续再开放。"
       },
       "deptLabel": {
         "qa": "质检",
@@ -487,6 +492,13 @@
         "ops": "运营",
         "cs": "客服",
         "other": "其他"
+      },
+      "deptContactHint": {
+        "qa": "质量 / 包装 / 安全",
+        "product": "设计 / 结构 / 易用性",
+        "ops": "产品总负责 / Listing / 价格",
+        "cs": "售后 / 退换货体验",
+        "other": "未归属问题"
       },
       "periodic": {
         "title": "周期增长简报",
@@ -513,7 +525,7 @@
       },
       "escalation": {
         "title": "连续异常升级",
-        "desc": "当某问题连续 N 个周期进入 Top N 或超过阈值时，自动升级并生成行动建议。",
+        "desc": "当某问题连续 N 个周期进入 Top N 或超过阈值时，写入行动中心并提醒对应责任方处理。",
         "consecutiveCount": "连续周期数",
         "topN": "TOP N 阈值",
         "pctThreshold": "占比阈值 %"
@@ -704,8 +716,113 @@
     "recentUploadsEmpty": "最近还没有新的评论批次。",
     "pendingTrackers": "待复盘事项",
     "pendingTrackersEmpty": "暂无待复盘事项。完成行动后可在这里验证效果。",
-    "roleActions": "团队行动分布",
-    "roleActionsEmpty": "暂无团队行动数据。"
+    "roleActions": "责任部门行动分布",
+    "roleActionsEmpty": "暂无责任部门行动数据。"
+  },
+  "actions": {
+    "page": {
+      "title": "把评论洞察转成行动责任。",
+      "description": "承接 Top 问题、Listing 线索和竞品机会，并推进问题归属、状态和复盘。",
+      "authTitle": "行动中心需要先登录。",
+      "authDescription": "登录后可以直接看到当前账号下由评论洞察生成的行动事项和状态。",
+      "authEmptyTitle": "登录后查看行动中心",
+      "authEmptyDescription": "这里会承接增长分析页创建的事项，并继续推进到复盘追踪。"
+    },
+    "panel": {
+      "badge": "ACTION CENTER",
+      "title": "行动中心",
+      "emptyTitle": "暂无行动事项",
+      "emptyDescription": "先去分析结果页从 TOP 问题创建一个行动事项，或者从工作台里继续推进现有事项。",
+      "filterEmpty": "当前筛选下暂无行动事项。",
+      "unboundProduct": "未绑定产品",
+      "emptyValue": "—",
+      "trackerTitleFormat": "{title} 复盘",
+      "joinedAt": "加入于 {date}",
+      "joinedAtUnknown": "加入时间未记录",
+      "groupStats": "{total} 条行动 · {reviewing} 个复盘中 · {done} 个已完结",
+      "listIndexSeparator": "、",
+      "listIndex": "{index}、",
+      "statusActionPlaceholder": "状态动作",
+      "statusActionAria": "{title} 状态动作",
+      "productNotePlaceholder": "添加产品备注",
+      "productNoteAria": "{product} 产品备注",
+      "aiSuggestionsTitle": "AI 建议",
+      "aiSuggestionsEmpty": "暂无 AI 建议。",
+      "aiSuggestionAria": "{title} AI 建议 {index}",
+      "filters": {
+        "all": "全部",
+        "inProgress": "处理中",
+        "pendingReview": "复盘中",
+        "done": "已完结"
+      },
+      "status": {
+        "inProgress": "处理中",
+        "pendingReview": "复盘中",
+        "done": "已完结"
+      },
+      "operations": {
+        "markInProgress": "标记处理中",
+        "enterReview": "已落实，进入复盘",
+        "markDone": "标记已完结"
+      },
+      "responsibility": {
+        "ops": "运营",
+        "product": "产研",
+        "qa": "质检",
+        "cs": "客服",
+        "other": "其他",
+        "review": "复盘（旧数据）"
+      },
+      "details": {
+        "sourceReviews": "评论原文",
+        "session": "Session",
+        "issueTag": "问题标签",
+        "currentPct": "当前占比",
+        "issueOwnership": "问题归属",
+        "expectedReview": "预计复盘",
+        "sourceVersion": "来源版本",
+        "sourceBatch": "来源批次",
+        "variant": "变体"
+      },
+      "buttons": {
+        "moveProductUp": "上移产品",
+        "moveProductDown": "下移产品",
+        "remove": "移除",
+        "saveNote": "保存备注",
+        "moveActionUp": "上移行动",
+        "moveActionDown": "下移行动",
+        "removeAction": "移除行动",
+        "addSuggestion": "新增建议",
+        "saveSuggestion": "保存建议",
+        "deleteSuggestion": "删除建议",
+        "cancel": "取消",
+        "confirmRemove": "确认移除"
+      },
+      "messages": {
+        "enterReviewSuccess": "已落实，行动已进入复盘中。",
+        "statusSaved": "状态已保存。",
+        "noteSaved": "产品备注已保存。",
+        "productOrderSaved": "产品排序已保存。",
+        "actionOrderSaved": "行动排序已保存。",
+        "suggestionsSaved": "AI 建议已保存。",
+        "productRemoved": "该产品下的行动和备注已从行动中心移除。",
+        "actionRemoved": "行动已从行动中心移除。"
+      },
+      "errors": {
+        "statusUpdateFailed": "状态更新失败",
+        "noteSaveFailed": "产品备注保存失败",
+        "productOrderSaveFailed": "产品排序保存失败",
+        "actionOrderSaveFailed": "行动排序保存失败",
+        "suggestionsSaveFailed": "AI 建议保存失败",
+        "removeFailed": "移除失败"
+      },
+      "confirm": {
+        "productTitle": "从行动中心移除该产品行动？",
+        "actionTitle": "从行动中心移除这条行动？",
+        "productDescription": "这将移除该产品下所有已加入行动中心的行动事项和备注，但不会删除产品、评论数据或分析结果。",
+        "actionDescription": "这将只把该行动从行动中心移除，不会删除产品、评论数据或分析结果。"
+      }
+    }
   },
   "analysis": {
     "title": "增长决策分析",
@@ -907,15 +1024,18 @@
       "ownerOps": "运营",
       "ownerProduct": "产研",
       "ownerQA": "质检",
-      "ownerReview": "复盘",
+      "ownerCS": "客服",
+      "ownerOther": "其他",
+      "ownerReview": "复盘（旧数据）",
       "dashboardBadge": "CREATE ACTION",
       "dashboardTitle": "把这批洞察转成团队行动",
-      "dashboardSubtitle": "把 Top 问题、Listing 线索或竞品机会分派给产品、运营、客服，并在复盘追踪里验证。",
+      "dashboardSubtitle": "把 Top 问题、Listing 线索或竞品机会分派给责任部门或负责人，并在复盘追踪里验证。",
       "sourceFormat": "来源：{productId} · {version} · {label}",
       "chooseIssue": "选择问题",
       "actionTitle": "行动标题",
       "actionTitlePlaceholder": "例如：优化安装说明和主图卖点",
-      "ownerRole": "责任角色",
+      "ownerRole": "责任部门",
+      "responsibleDepartment": "责任部门",
       "expectedReviewAt": "预计复盘时间",
       "expectedReviewPlaceholder": "例如：2026-06-15",
       "expectedEffectBatch": "预计生效批次",
@@ -928,7 +1048,7 @@
       "statusDone": "已完结",
       "selectedIssueLabel": "选中的问题：{label}",
       "ratioReferenceLabel": "占比参考：{pct}",
-      "dashHint": "选一个高频信号后，把它交给对应角色。",
+      "dashHint": "选一个高频信号后，把它交给对应责任部门。",
       "createBtn": "创建行动",
       "createSuccess": "行动已创建。去行动中心继续推进和复盘。",
       "createFail": "创建行动失败",
@@ -938,7 +1058,7 @@
       "inlineSource": "来源问题",
       "inlineMentionedFormat": "{pct}% 的评论提及",
       "inlineTitleLabel": "标题",
-      "inlineOwnerLabel": "负责角色",
+      "inlineOwnerLabel": "责任部门",
       "inlineSuggestedLabel": "建议措施",
       "inlineSuggestedPlaceholder": "描述改进措施...",
       "inlineCreated": "已创建 ✓",
