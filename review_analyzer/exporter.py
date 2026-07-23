@@ -182,6 +182,12 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
     ]
     rows: list[list[str]] = []
     for rank, row in enumerate(build_specific_issue_rows(pool_comments, locale="en"), 1):
+        aspect_keys = row.get("aspect_keys")
+        aspect_key_text = (
+            ", ".join(str(item) for item in aspect_keys if item)
+            if isinstance(aspect_keys, list)
+            else str(row.get("aspect_key") or "")
+        )
         rows.append(
             [
                 str(rank),
@@ -190,7 +196,7 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
                 f"{float(row.get('pct') or 0):.1f}%",
                 str(row.get("dimension") or ""),
                 str(row.get("canonical_issue_key") or ""),
-                str(row.get("aspect_key") or ""),
+                aspect_key_text,
                 " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("issue_confidence") or ""),
                 " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),

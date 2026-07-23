@@ -777,6 +777,7 @@
                 "sourceReviews": "\u8bc4\u8bba\u539f\u6587",
                 "session": "Session",
                 "issueTag": "\u95ee\u9898\u6807\u7b7e",
+                "dimension": "Dimension",
                 "currentPct": "\u5f53\u524d\u5360\u6bd4",
                 "issueOwnership": "\u95ee\u9898\u5f52\u5c5e",
                 "expectedReview": "\u9884\u8ba1\u590d\u76d8",
@@ -889,6 +890,7 @@
         "table": {
             "tag": "\u6807\u7b7e",
             "specificIssue": "Specific Issue",
+            "issueTag": "Issue Tag",
             "mentionPct": "\u63d0\u53ca\u5360\u6bd4",
             "reprComments": "\u4ee3\u8868\u8bc4\u8bba",
             "dimension": "\u7ef4\u5ea6",

@@ -777,6 +777,7 @@
         "sourceReviews": "评论原文",
         "session": "Session",
         "issueTag": "问题标签",
+        "dimension": "维度",
         "currentPct": "当前占比",
         "issueOwnership": "问题归属",
         "expectedReview": "预计复盘",
@@ -889,6 +890,7 @@
     "table": {
       "tag": "标签",
       "specificIssue": "Specific Issue",
+      "issueTag": "问题标签",
       "mentionPct": "提及占比",
       "reprComments": "代表评论",
       "dimension": "维度",

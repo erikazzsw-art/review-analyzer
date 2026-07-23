@@ -119,14 +119,28 @@ function getAspectsPayload(comment: Record<string, unknown>): Record<string, unk
   return null;
 }
 
+function stringValues(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean);
+  }
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function hasSpecificIssueEvidence(
   comment: Record<string, unknown>,
   row: Record<string, unknown>,
 ): boolean {
-  const aspectKey = String(row.aspect_key || "").trim();
+  const aspectKeys = stringValues(row.aspect_keys);
+  const primaryAspectKey = String(row.aspect_key || "").trim();
+  if (primaryAspectKey && !aspectKeys.includes(primaryAspectKey)) {
+    aspectKeys.unshift(primaryAspectKey);
+  }
   const canonicalIssueKey = String(row.canonical_issue_key || "").trim();
   const subCategory = String(row.sub_category || "").trim();
-  if (!aspectKey || !canonicalIssueKey) return false;
+  if (aspectKeys.length === 0 || !canonicalIssueKey) return false;
   const aj = getAspectsPayload(comment) as
     | { aspects?: Array<Record<string, unknown>>; cluster_propagated?: boolean; sub_category?: string }
     | null;
@@ -139,7 +153,7 @@ function hasSpecificIssueEvidence(
   const content = String((comment as Record<string, unknown>).content || "");
   return aspects.some(
     (a) =>
-      String(a.key || a.aspect_key || "") === aspectKey &&
+      aspectKeys.includes(String(a.key || a.aspect_key || "")) &&
       String(a.canonical_issue_key || "") === canonicalIssueKey &&
       String(a.polarity || "").toLowerCase() === "negative" &&
       a.display_allowed !== false &&
@@ -160,7 +174,9 @@ function enrichRowsWithQuotes(
     if (!tag) return row;
     const quotes: string[] = [];
     const seen = new Set<string>();
-    const hasSpecificIdentity = Boolean(row.aspect_key && row.canonical_issue_key);
+    const hasSpecificIdentity = Boolean(
+      row.canonical_issue_key && (row.aspect_key || stringValues(row.aspect_keys).length > 0),
+    );
 
     // Pass 1: comments with direct LLM evidence for this specific issue occurrence
     for (const c of comments) {
@@ -331,13 +347,23 @@ export default async function AnalysisResultsPage({
   };
   const consumerProfile = normalizeModule(payload.modules?.consumer_profile);
   const userExperienceRaw = normalizeModule(payload.modules?.user_experience);
+  const positiveComments = payload.comments.filter(
+    (comment) => String(comment.sentiment || "").toLowerCase() === "positive",
+  );
+  const negativeComments = payload.comments.filter(
+    (comment) => String(comment.sentiment || "").toLowerCase() === "negative",
+  );
   const userExperience = {
     ...userExperienceRaw,
-    positive: enrichRowsWithQuotes(userExperienceRaw.positive, payload.comments, "highlight_tag", 5),
-    negative: enrichRowsWithQuotes(userExperienceRaw.negative, payload.comments, "issue_tag", 5),
+    positive: enrichRowsWithQuotes(userExperienceRaw.positive, positiveComments, "highlight_tag", 5),
+    negative: enrichRowsWithQuotes(userExperienceRaw.negative, negativeComments, "issue_tag", 5),
   };
   const purchaseMotives = normalizeModule(payload.modules?.purchase_motives);
-  const unmetNeeds = normalizeModule(payload.modules?.unmet_needs);
+  const unmetNeedsRaw = normalizeModule(payload.modules?.unmet_needs);
+  const unmetNeeds = {
+    ...unmetNeedsRaw,
+    rows: enrichRowsWithQuotes(unmetNeedsRaw.rows, negativeComments, "issue_tag", 5),
+  };
   const recommendations = normalizeModule(payload.modules?.recommendations);
 
   const total = payload.session.total_reviews;

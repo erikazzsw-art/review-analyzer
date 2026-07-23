@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 SPECIFIC_ISSUE_SCHEMA_VERSION = "1.0"
-ISSUE_RULESET_VERSION = "2026-07-23-mvp1"
+ISSUE_RULESET_VERSION = "2026-07-23-mvp2-display-dedupe"
 
 _LABELS_CACHE: dict[str, dict[str, str]] | None = None
 
@@ -28,6 +28,13 @@ def aspect_label(aspect_key: str, locale: str = "en") -> str:
     labels = _load_aspect_labels().get(aspect_key, {})
     label = labels.get(locale) or labels.get("en") or labels.get("zh")
     return str(label or aspect_key.replace("_", " ").title())
+
+
+def _display_aspect_label(aspect: dict[str, Any], aspect_key: str, locale: str) -> str:
+    mapped = _load_aspect_labels().get(aspect_key, {})
+    if mapped:
+        return aspect_label(aspect_key, locale)
+    return str(aspect.get("aspect_label") or aspect.get("label") or aspect_label(aspect_key, locale))
 
 
 def coerce_aspects_json(value: Any) -> dict[str, Any] | None:
@@ -216,7 +223,7 @@ def _normalize_aspect_issue(
     if str(aspect.get("polarity") or "").lower() != "negative":
         return None
 
-    label = str(aspect.get("aspect_label") or aspect.get("label") or aspect_label(aspect_key, locale))
+    label = _display_aspect_label(aspect, aspect_key, locale)
     evidence = str(aspect.get("evidence_span") or aspect.get("evidence") or "").strip()
     existing = _issue_from_existing(aspect, aspect_key, label)
 
@@ -337,13 +344,19 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
     if aj:
         schema_version = str(aj.get("specific_issue_schema_version") or "")
         sub_category = str(aj.get("sub_category") or comment.get("sub_category") or "")
-        for aspect in aj.get("aspects") or []:
-            if not isinstance(aspect, dict):
-                continue
-            has_specific_issue_payload = has_specific_issue_payload or any(
+        aspects = [aspect for aspect in aj.get("aspects") or [] if isinstance(aspect, dict)]
+        has_specific_issue_payload = any(
+            any(
                 key in aspect
                 for key in ("specific_issue", "canonical_issue_key", "display_allowed", "issue_source")
             )
+            for aspect in aspects
+        )
+        if schema_version != SPECIFIC_ISSUE_SCHEMA_VERSION and not has_specific_issue_payload:
+            return _legacy_issue_occurrences(comment, locale)
+        for aspect in aspects:
+            if not isinstance(aspect, dict):
+                continue
             issue = _normalize_aspect_issue(
                 aspect,
                 sub_category=sub_category,
@@ -387,41 +400,66 @@ def build_specific_issue_rows(
     limit: int = 10,
 ) -> list[dict[str, Any]]:
     pool_size = len(comments)
-    groups: dict[tuple[str, str, str], dict[str, Any]] = {}
-    comment_counts: dict[tuple[str, str, str], set[Any]] = defaultdict(set)
-    confidence_counter: dict[tuple[str, str, str], Counter[str]] = defaultdict(Counter)
+    groups: dict[tuple[str, str], dict[str, Any]] = {}
+    comment_counts: dict[tuple[str, str], set[Any]] = defaultdict(set)
+    confidence_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
+    issue_label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
 
     for fallback_index, comment in enumerate(comments):
         comment_id = comment.get("id")
         if comment_id is None:
             comment_id = f"row-{fallback_index}"
-        seen_in_comment: set[tuple[str, str, str]] = set()
+        counted_in_comment: set[tuple[str, str]] = set()
+        seen_occurrences_in_comment: set[tuple[str, str, str]] = set()
         for occurrence in iter_specific_issue_occurrences(comment, locale=locale):
-            key = (
+            occurrence_key = (
                 str(occurrence.get("sub_category") or ""),
                 str(occurrence.get("aspect_key") or ""),
                 str(occurrence.get("canonical_issue_key") or ""),
             )
-            if not key[2] or key in seen_in_comment:
+            if not occurrence_key[2] or occurrence_key in seen_occurrences_in_comment:
                 continue
-            seen_in_comment.add(key)
+            seen_occurrences_in_comment.add(occurrence_key)
+            key = (occurrence_key[0], occurrence_key[2])
             if key not in groups:
+                is_legacy = bool(occurrence.get("legacy_fallback"))
                 groups[key] = {
                     "tag": occurrence["specific_issue"],
                     "specific_issue": occurrence["specific_issue"],
                     "canonical_issue_key": occurrence["canonical_issue_key"],
                     "aspect_key": occurrence.get("aspect_key") or "",
-                    "dimension": occurrence.get("dimension") or "",
+                    "aspect_keys": [],
+                    "dimension": "",
+                    "dimensions": [],
                     "sub_category": occurrence.get("sub_category") or "",
                     "issue_source": occurrence.get("issue_source") or "",
+                    "issue_sources": [],
+                    "legacy_fallback": is_legacy,
+                    "is_specific_issue": not is_legacy,
                     "display_allowed": True,
-                    "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
+                    "specific_issue_schema_version": "" if is_legacy else SPECIFIC_ISSUE_SCHEMA_VERSION,
                     "issue_ruleset_version": ISSUE_RULESET_VERSION,
                     "representative_comments": [],
                     "evidence_spans": [],
                     "reason": "",
                 }
-            comment_counts[key].add(comment_id)
+            if not occurrence.get("legacy_fallback"):
+                groups[key]["legacy_fallback"] = False
+                groups[key]["is_specific_issue"] = True
+                groups[key]["specific_issue_schema_version"] = SPECIFIC_ISSUE_SCHEMA_VERSION
+            aspect_key = str(occurrence.get("aspect_key") or "")
+            if aspect_key and aspect_key not in groups[key]["aspect_keys"]:
+                groups[key]["aspect_keys"].append(aspect_key)
+            dimension = str(occurrence.get("dimension") or "")
+            if dimension and dimension not in groups[key]["dimensions"]:
+                groups[key]["dimensions"].append(dimension)
+            issue_source = str(occurrence.get("issue_source") or "")
+            if issue_source and issue_source not in groups[key]["issue_sources"]:
+                groups[key]["issue_sources"].append(issue_source)
+            issue_label_counter[key][str(occurrence.get("specific_issue") or groups[key]["specific_issue"])] += 1
+            if key not in counted_in_comment:
+                comment_counts[key].add(comment_id)
+                counted_in_comment.add(key)
             confidence_counter[key][str(occurrence.get("issue_confidence") or "low")] += 1
             content = str(occurrence.get("content") or "").strip()
             evidence = str(occurrence.get("evidence_span") or "").strip()
@@ -430,17 +468,30 @@ def build_specific_issue_rows(
                     groups[key]["representative_comments"].append(content[:240])
                 if evidence and evidence not in groups[key]["evidence_spans"]:
                     groups[key]["evidence_spans"].append(evidence)
+            elif occurrence.get("legacy_fallback") and content:
+                if content not in groups[key]["representative_comments"]:
+                    groups[key]["representative_comments"].append(content[:240])
 
     rows: list[dict[str, Any]] = []
     for key, row in groups.items():
         count = len(comment_counts[key])
         pct = round(count / pool_size * 100, 1) if pool_size else 0.0
         conf = confidence_counter[key].most_common(1)[0][0] if confidence_counter[key] else "low"
+        issue = issue_label_counter[key].most_common(1)[0][0] if issue_label_counter[key] else row["specific_issue"]
+        aspect_keys = row["aspect_keys"]
+        dimensions = row["dimensions"]
         examples = row["representative_comments"][:5]
         evidence_spans = row["evidence_spans"][:5]
         rows.append(
             {
                 **row,
+                "tag": issue,
+                "specific_issue": issue,
+                "aspect_key": aspect_keys[0] if aspect_keys else row.get("aspect_key", ""),
+                "aspect_keys": aspect_keys,
+                "dimension": ", ".join(dimensions),
+                "dimensions": dimensions,
+                "issue_source": row["issue_sources"][0] if row["issue_sources"] else row.get("issue_source", ""),
                 "count": count,
                 "pct": pct,
                 "mention_share": pct,

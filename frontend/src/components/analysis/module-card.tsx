@@ -10,6 +10,7 @@ import { exportModuleXlsx } from "@/lib/api/browser";
 import { useTranslatedContent } from "@/hooks/useTranslatedContent";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
 import { DownloadTagButton } from "@/components/analysis/download-tag-button";
+import { aspectLabel } from "@/lib/aspect-labels";
 
 type SessionInfo = {
   product_ref_id?: number | null;
@@ -23,6 +24,7 @@ type IssueMeta = {
   specificIssue?: string | null;
   canonicalIssueKey?: string | null;
   aspectKey?: string | null;
+  aspectKeys?: string[] | null;
   dimension?: string | null;
   subCategory?: string | null;
 };
@@ -192,12 +194,28 @@ function issueDimension(row: Record<string, unknown>): string {
   return String(row.dimension || row.aspect_label || "");
 }
 
+function issueAspectKeys(row: Record<string, unknown>): string[] {
+  const raw = Array.isArray(row.aspect_keys)
+    ? row.aspect_keys
+    : String(row.aspect_keys || "")
+        .split(",")
+        .map((item) => item.trim());
+  const keys = raw.map((item) => String(item || "").trim()).filter(Boolean);
+  const primary = String(row.aspect_key || "").trim();
+  if (primary && !keys.includes(primary)) {
+    keys.unshift(primary);
+  }
+  return keys;
+}
+
 function issueMetaFromRow(row: Record<string, unknown> | undefined, fallbackIssue = ""): IssueMeta {
   const source = row || {};
+  const aspectKeys = issueAspectKeys(source);
   return {
     specificIssue: issueLabel(source, fallbackIssue) || fallbackIssue || null,
     canonicalIssueKey: String(source.canonical_issue_key || "") || null,
-    aspectKey: String(source.aspect_key || "") || null,
+    aspectKey: aspectKeys[0] || String(source.aspect_key || "") || null,
+    aspectKeys: aspectKeys.length > 0 ? aspectKeys : null,
     dimension: issueDimension(source) || null,
     subCategory: String(source.sub_category || "") || null,
   };
@@ -265,16 +283,21 @@ function buildClientXlsx(
           Boolean(aspect.canonical_issue_key)
         );
       })
-      .map((aspect) => ({
-        specificIssue: String(aspect.specific_issue || ""),
-        canonicalIssueKey: String(aspect.canonical_issue_key || ""),
-        aspectKey: String(aspect.key || aspect.aspect_key || ""),
-        dimension: String(aspect.dimension || aspect.aspect_label || ""),
-        evidenceSpan: String(aspect.evidence_span || ""),
-        issueConfidence: String(aspect.issue_confidence || ""),
-        subCategory,
-        content,
-      }));
+      .map((aspect) => {
+        const aspectKey = String(aspect.key || aspect.aspect_key || "");
+        return {
+          specificIssue: String(aspect.specific_issue || ""),
+          canonicalIssueKey: String(aspect.canonical_issue_key || ""),
+          aspectKey,
+          dimension: aspectKey
+            ? aspectLabel(aspectKey, locale)
+            : String(aspect.dimension || aspect.aspect_label || ""),
+          evidenceSpan: String(aspect.evidence_span || ""),
+          issueConfidence: String(aspect.issue_confidence || ""),
+          subCategory,
+          content,
+        };
+      });
     if (occurrences.length > 0 || schemaVersion === "1.0") {
       return occurrences;
     }
@@ -299,7 +322,9 @@ function buildClientXlsx(
       specificIssue: string;
       canonicalIssueKey: string;
       aspectKey: string;
+      aspectKeys: string[];
       dimension: string;
+      dimensions: string[];
       evidenceSpans: string[];
       issueConfidence: string;
       comments: string[];
@@ -307,22 +332,35 @@ function buildClientXlsx(
     }>();
 
     for (const comment of pool) {
-      const seen = new Set<string>();
+      const counted = new Set<string>();
+      const seenOccurrences = new Set<string>();
       for (const occurrence of iterSpecificIssueOccurrences(comment)) {
-        const key = `${occurrence.subCategory}::${occurrence.aspectKey}::${occurrence.canonicalIssueKey}`;
-        if (!occurrence.canonicalIssueKey || seen.has(key)) continue;
-        seen.add(key);
+        const occurrenceKey = `${occurrence.subCategory}::${occurrence.aspectKey}::${occurrence.canonicalIssueKey}`;
+        if (!occurrence.canonicalIssueKey || seenOccurrences.has(occurrenceKey)) continue;
+        seenOccurrences.add(occurrenceKey);
+        const key = `${occurrence.subCategory}::${occurrence.canonicalIssueKey}`;
         const group = groups.get(key) || {
           specificIssue: occurrence.specificIssue,
           canonicalIssueKey: occurrence.canonicalIssueKey,
           aspectKey: occurrence.aspectKey,
+          aspectKeys: [],
           dimension: occurrence.dimension,
+          dimensions: [],
           evidenceSpans: [],
           issueConfidence: occurrence.issueConfidence || "low",
           comments: [],
           count: 0,
         };
-        group.count += 1;
+        if (occurrence.aspectKey && !group.aspectKeys.includes(occurrence.aspectKey)) {
+          group.aspectKeys.push(occurrence.aspectKey);
+        }
+        if (occurrence.dimension && !group.dimensions.includes(occurrence.dimension)) {
+          group.dimensions.push(occurrence.dimension);
+        }
+        if (!counted.has(key)) {
+          group.count += 1;
+          counted.add(key);
+        }
         if (occurrence.evidenceSpan && group.evidenceSpans.length < 20) {
           group.evidenceSpans.push(occurrence.evidenceSpan);
         }
@@ -342,9 +380,9 @@ function buildClientXlsx(
         group.specificIssue,
         group.count,
         `${((group.count / poolSize) * 100).toFixed(1)}%`,
-        group.dimension,
+        group.dimensions.join(", ") || group.dimension,
         group.canonicalIssueKey,
-        group.aspectKey,
+        group.aspectKeys.join(", ") || group.aspectKey,
         group.evidenceSpans.join(" | "),
         group.issueConfidence,
         group.comments.join(" | "),
@@ -412,7 +450,6 @@ function TranslatedView({
   showAction?: boolean;
 }) {
   const t = useTranslations("analysis");
-  const tTable = useTranslations("analysis.table");
   const summary = String(data.summary || "");
   const rows = Array.isArray(data.rows) ? data.rows : [];
   const positive = Array.isArray(data.positive) ? data.positive : [];
@@ -442,6 +479,7 @@ function TranslatedView({
             specificIssue={meta.specificIssue}
             canonicalIssueKey={meta.canonicalIssueKey}
             aspectKey={meta.aspectKey}
+            aspectKeys={meta.aspectKeys}
             dimension={meta.dimension}
             subCategory={meta.subCategory}
           />
@@ -511,9 +549,6 @@ function TranslatedView({
                       <span className="text-sm font-semibold text-ink">{tag}</span>
                       <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
                     </div>
-                    {dimension ? (
-                      <div className="mt-1 text-xs text-soft">{tTable("dimension")}: {dimension}</div>
-                    ) : null}
                     {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
                     {renderRowButtons(origTag, pct, reason, "issue_tag", !!showAction, {
                       ...meta,
@@ -553,9 +588,6 @@ function TranslatedView({
                     <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
                   )}
                 </div>
-                {dimension ? (
-                  <div className="mt-1 text-xs text-soft">{tTable("dimension")}: {dimension}</div>
-                ) : null}
                 {(row.reason || row.detail) ? (
                   <p className="mt-1 text-xs leading-5 text-soft">{reason}</p>
                 ) : null}

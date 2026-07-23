@@ -11,7 +11,7 @@ import {
   Save,
   Trash2,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +34,7 @@ import {
   updateActionSuggestions,
 } from "@/lib/api/browser";
 import type { ActionItem } from "@/lib/api/types";
+import { aspectLabel } from "@/lib/aspect-labels";
 import { cn } from "@/lib/utils";
 
 type ActionCenterPanelProps = {
@@ -83,6 +84,7 @@ const STATUS_OPERATIONS: Array<{ value: StatusOperation; labelKey: string }> = [
 
 export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
   const t = useTranslations("actions.panel");
+  const locale = useLocale();
   const initialItems = useMemo(() => items.map(normalizeActionItem), [items]);
   const initialGroupKey = initialItems[0] ? getProductGroupKey(initialItems[0]) : null;
   const unboundProduct = t("unboundProduct");
@@ -127,6 +129,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
     sourceReviews: t("details.sourceReviews"),
     session: t("details.session"),
     issueTag: t("details.issueTag"),
+    dimension: t("details.dimension"),
     currentPct: t("details.currentPct"),
     issueOwnership: t("details.issueOwnership"),
     expectedReview: t("details.expectedReview"),
@@ -582,6 +585,7 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
                                   action,
                                   detailLabels,
                                   responsibilityLabels,
+                                  locale,
                                   t("listIndexSeparator"),
                                   emptyValue,
                                 ).map((detail) => (
@@ -846,6 +850,7 @@ type ActionDetailLabels = {
   sourceReviews: string;
   session: string;
   issueTag: string;
+  dimension: string;
   currentPct: string;
   issueOwnership: string;
   expectedReview: string;
@@ -867,6 +872,7 @@ function getActionDetails(
   action: ActionItem,
   labels: ActionDetailLabels,
   responsibilityLabels: ResponsibilityLabels,
+  locale: string,
   listIndexSeparator: string,
   emptyValue: string,
 ): Array<{ label: string; value: string }> {
@@ -874,6 +880,7 @@ function getActionDetails(
     { label: labels.sourceReviews, value: formatSourceReviews(action, listIndexSeparator, emptyValue) },
     { label: labels.session, value: action.session_id ? `Session #${action.session_id}` : emptyValue },
     { label: labels.issueTag, value: action.tag_name || emptyValue },
+    { label: labels.dimension, value: action.aspect_key ? aspectLabel(action.aspect_key, locale) : emptyValue },
     { label: labels.currentPct, value: formatPct(action.current_pct, emptyValue) },
     {
       label: labels.issueOwnership,

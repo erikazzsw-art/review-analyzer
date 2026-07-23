@@ -4,17 +4,20 @@ import { FileDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as XLSX from "xlsx";
 
+import { aspectLabel } from "@/lib/aspect-labels";
+
 type IssueMeta = {
   specificIssue?: string | null;
   canonicalIssueKey?: string | null;
   aspectKey?: string | null;
+  aspectKeys?: string[] | null;
   dimension?: string | null;
   subCategory?: string | null;
 };
 
 type MatchedReview = {
   comment: Record<string, unknown>;
-  occurrence: Record<string, unknown> | null;
+  occurrences: Array<Record<string, unknown>>;
 };
 
 function getAspectsPayload(comment: Record<string, unknown>): Record<string, unknown> | null {
@@ -39,28 +42,44 @@ function getAspects(comment: Record<string, unknown>): Array<Record<string, unkn
     : [];
 }
 
-function findSpecificIssueOccurrence(
+function splitMetaValues(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean);
+  }
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function uniqueValues(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function metaAspectKeys(meta: IssueMeta): string[] {
+  return uniqueValues([...splitMetaValues(meta.aspectKeys), ...splitMetaValues(meta.aspectKey)]);
+}
+
+function findSpecificIssueOccurrences(
   comment: Record<string, unknown>,
   meta: IssueMeta,
-): Record<string, unknown> | null {
-  const aspectKey = String(meta.aspectKey || "").trim();
+): Array<Record<string, unknown>> {
+  const aspectKeys = metaAspectKeys(meta);
   const canonicalIssueKey = String(meta.canonicalIssueKey || "").trim();
   const subCategory = String(meta.subCategory || "").trim();
-  if (!aspectKey || !canonicalIssueKey) return null;
+  if (aspectKeys.length === 0 || !canonicalIssueKey) return [];
   const payload = getAspectsPayload(comment);
   if (subCategory && String(payload?.sub_category || comment.sub_category || comment.category || "") !== subCategory) {
-    return null;
+    return [];
   }
-  return (
-    getAspects(comment).find((aspect) => {
-      return (
-        String(aspect.key || aspect.aspect_key || "") === aspectKey &&
-        String(aspect.canonical_issue_key || "") === canonicalIssueKey &&
-        String(aspect.polarity || "").toLowerCase() === "negative" &&
-        aspect.display_allowed !== false
-      );
-    }) || null
-  );
+  return getAspects(comment).filter((aspect) => {
+    return (
+      aspectKeys.includes(String(aspect.key || aspect.aspect_key || "")) &&
+      String(aspect.canonical_issue_key || "") === canonicalIssueKey &&
+      String(aspect.polarity || "").toLowerCase() === "negative" &&
+      aspect.display_allowed !== false
+    );
+  });
 }
 
 function tagMatchesComment(
@@ -84,17 +103,41 @@ function getMatchedReviews(
   tagSource: "highlight_tag" | "issue_tag",
   meta: IssueMeta,
 ): MatchedReview[] {
-  const hasSpecificIdentity = Boolean(meta.aspectKey && meta.canonicalIssueKey);
+  const hasSpecificIdentity = Boolean(metaAspectKeys(meta).length > 0 && meta.canonicalIssueKey);
   return comments
     .map((comment) => {
-      const occurrence = hasSpecificIdentity ? findSpecificIssueOccurrence(comment, meta) : null;
-      if (occurrence) return { comment, occurrence };
+      const occurrences = hasSpecificIdentity ? findSpecificIssueOccurrences(comment, meta) : [];
+      if (occurrences.length > 0) return { comment, occurrences };
       if (!hasSpecificIdentity && tagMatchesComment(tag, comment, tagSource)) {
-        return { comment, occurrence: null };
+        return { comment, occurrences: [] };
       }
       return null;
     })
     .filter((item): item is MatchedReview => Boolean(item));
+}
+
+function joinOccurrenceValues(
+  occurrences: Array<Record<string, unknown>>,
+  pick: (occurrence: Record<string, unknown>) => unknown,
+  fallback = "",
+): string {
+  const values = uniqueValues(
+    occurrences
+      .map((occurrence) => String(pick(occurrence) || "").trim())
+      .filter(Boolean),
+  );
+  return values.length > 0 ? values.join(", ") : fallback;
+}
+
+function occurrenceAspectKey(occurrence: Record<string, unknown>): string {
+  return String(occurrence.key || occurrence.aspect_key || "").trim();
+}
+
+function occurrenceDimension(occurrence: Record<string, unknown>, locale: string): string {
+  const aspectKey = occurrenceAspectKey(occurrence);
+  return aspectKey
+    ? aspectLabel(aspectKey, locale)
+    : String(occurrence.dimension || occurrence.aspect_label || "").trim();
 }
 
 function safeSheetName(value: string): string {
@@ -119,7 +162,7 @@ function downloadTagReviews(
       ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "Specific Issue", "Canonical Issue Key", "Dimension", "Aspect Key", "Evidence Span", "Issue Confidence"]
       : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Specific Issue", "Canonical Issue Key", "Dimension", "Aspect Key", "Evidence Span", "Issue Confidence"];
   const data: (string | number)[][] = [headers];
-  matched.forEach(({ comment: c, occurrence }, idx) => {
+  matched.forEach(({ comment: c, occurrences }, idx) => {
     const categorySlug = String(c.category || "");
     data.push([
       idx + 1,
@@ -135,12 +178,24 @@ function downloadTagReviews(
       String(c.improvement || ""),
       String(c.issue_tag || ""),
       String(c.highlight_tag || ""),
-      String(occurrence?.specific_issue || meta.specificIssue || ""),
-      String(occurrence?.canonical_issue_key || meta.canonicalIssueKey || ""),
-      String(meta.dimension || occurrence?.dimension || occurrence?.aspect_label || ""),
-      String(occurrence?.key || occurrence?.aspect_key || meta.aspectKey || ""),
-      String(occurrence?.evidence_span || ""),
-      String(occurrence?.issue_confidence || ""),
+      joinOccurrenceValues(occurrences, (occurrence) => occurrence.specific_issue, String(meta.specificIssue || "")),
+      joinOccurrenceValues(
+        occurrences,
+        (occurrence) => occurrence.canonical_issue_key,
+        String(meta.canonicalIssueKey || ""),
+      ),
+      joinOccurrenceValues(
+        occurrences,
+        (occurrence) => occurrenceDimension(occurrence, locale),
+        String(meta.dimension || ""),
+      ),
+      joinOccurrenceValues(
+        occurrences,
+        occurrenceAspectKey,
+        metaAspectKeys(meta).join(", "),
+      ),
+      joinOccurrenceValues(occurrences, (occurrence) => occurrence.evidence_span),
+      joinOccurrenceValues(occurrences, (occurrence) => occurrence.issue_confidence),
     ] as (string | number)[]);
   });
   const ws = XLSX.utils.aoa_to_sheet(data);
@@ -166,6 +221,7 @@ export function DownloadTagButton({
   specificIssue,
   canonicalIssueKey,
   aspectKey,
+  aspectKeys,
   dimension,
   subCategory,
 }: {
@@ -176,6 +232,7 @@ export function DownloadTagButton({
   specificIssue?: string | null;
   canonicalIssueKey?: string | null;
   aspectKey?: string | null;
+  aspectKeys?: string[] | null;
   dimension?: string | null;
   subCategory?: string | null;
 }) {
@@ -187,19 +244,21 @@ export function DownloadTagButton({
       return slug;
     }
   };
-  const meta = { specificIssue, canonicalIssueKey, aspectKey, dimension, subCategory };
+  const meta = { specificIssue, canonicalIssueKey, aspectKey, aspectKeys, dimension, subCategory };
   const count = getMatchedReviews(tag, comments, tagSource, meta).length;
+  if (count === 0) {
+    return null;
+  }
 
   return (
     <button
       type="button"
-      onClick={() => count > 0 && downloadTagReviews(tag, comments, tagSource, locale, translateCategory, meta)}
-      disabled={count === 0}
+      onClick={() => downloadTagReviews(tag, comments, tagSource, locale, translateCategory, meta)}
       className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-      title={count > 0 ? `Download ${count} reviews` : "No matching reviews"}
+      title={`Download ${count} reviews`}
     >
       <FileDown className="h-3 w-3" />
-      {count > 0 ? `Reviews ${count}` : "Reviews 0"}
+      {`Reviews ${count}`}
     </button>
   );
 }

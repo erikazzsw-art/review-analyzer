@@ -17,6 +17,7 @@ import { DownloadTagButton } from "@/components/analysis/download-tag-button";
 import { CreateActionPanel } from "@/components/analysis/create-action-panel";
 import { SectionAnchorNav } from "@/components/analysis/section-anchor-nav";
 import { Button } from "@/components/ui/button";
+import { aspectLabel } from "@/lib/aspect-labels";
 import {
   Table,
   TableBody,
@@ -112,6 +113,18 @@ function joinIssueField(comment: Record<string, unknown>, field: string): string
     .join(", ");
 }
 
+function joinIssueDimension(comment: Record<string, unknown>, locale: string): string {
+  return negativeIssueOccurrences(comment)
+    .map((aspect) => {
+      const aspectKey = String(aspect.key || aspect.aspect_key || "").trim();
+      return aspectKey
+        ? aspectLabel(aspectKey, locale)
+        : String(aspect.dimension || aspect.aspect_label || "").trim();
+    })
+    .filter(Boolean)
+    .join(", ");
+}
+
 function safeFilenamePart(value: string): string {
   return value.trim().replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_") || "analysis";
 }
@@ -142,7 +155,7 @@ function buildRawReviewsXlsx(
     rv(comment.highlight_tag, ""),
     joinIssueField(comment, "specific_issue"),
     joinIssueField(comment, "canonical_issue_key"),
-    joinIssueField(comment, "dimension") || joinIssueField(comment, "aspect_label"),
+    joinIssueDimension(comment, locale),
     joinIssueField(comment, "key") || joinIssueField(comment, "aspect_key"),
     joinIssueField(comment, "evidence_span"),
     joinIssueField(comment, "issue_confidence"),
@@ -243,12 +256,30 @@ function rowAspectKey(row: RowItem): string {
   return String(row.aspect_key || "");
 }
 
+function rowAspectKeys(row: RowItem): string[] {
+  const values = Array.isArray(row.aspect_keys)
+    ? row.aspect_keys
+    : String(row.aspect_keys || "")
+        .split(",")
+        .map((item) => item.trim());
+  const keys = values.map((item) => String(item || "").trim()).filter(Boolean);
+  const primary = rowAspectKey(row);
+  if (primary && !keys.includes(primary)) {
+    keys.unshift(primary);
+  }
+  return keys;
+}
+
 function rowCanonicalIssueKey(row: RowItem): string {
   return String(row.canonical_issue_key || "");
 }
 
 function rowSubCategory(row: RowItem): string {
   return String(row.sub_category || "");
+}
+
+function rowIsLegacyFallback(row: RowItem): boolean {
+  return row.legacy_fallback === true || String(row.issue_source || "") === "legacy_issue_tag";
 }
 
 type TagTableProps = {
@@ -284,17 +315,26 @@ function TagTable({
 
   const limited = items.slice(0, 10);
   const issueMode = variant === "negative" && tagSource === "issue_tag";
+  const scopedComments = comments?.filter((comment) => {
+    if (variant === "negative") {
+      return String(comment.sentiment || "").toLowerCase() === "negative";
+    }
+    if (variant === "positive") {
+      return String(comment.sentiment || "").toLowerCase() === "positive";
+    }
+    return true;
+  });
 
   if (issueMode) {
+    const issueHeader = limited.every(rowIsLegacyFallback) ? t("issueTag") : t("specificIssue");
     return (
       <>
         <div className="hidden md:block">
           <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[28%]">{t("specificIssue")}</TableHead>
+                <TableHead className="w-[30%]">{issueHeader}</TableHead>
                 <TableHead className="w-36">{t("mentionPct")}</TableHead>
-                <TableHead className="w-44">{t("dimension")}</TableHead>
                 <TableHead>{t("evidence")}</TableHead>
                 <TableHead className="w-32">{t("action")}</TableHead>
               </TableRow>
@@ -306,6 +346,7 @@ function TagTable({
                 const quotes = extractQuotes(row);
                 const dimension = rowDimension(row);
                 const aspectKey = rowAspectKey(row);
+                const aspectKeys = rowAspectKeys(row);
                 const canonicalIssueKey = rowCanonicalIssueKey(row);
                 const subCategory = rowSubCategory(row);
                 const reasonForAction = String(row.reason || row.detail || "");
@@ -317,9 +358,6 @@ function TagTable({
                     </TableCell>
                     <TableCell>
                       <PctBar pct={pct} color={barColor} />
-                    </TableCell>
-                    <TableCell className="break-words text-xs font-medium text-soft">
-                      {dimension || "—"}
                     </TableCell>
                     <TableCell className="text-xs leading-5 text-soft">
                       {quotes.length > 0 ? (
@@ -337,14 +375,15 @@ function TagTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col items-start gap-1.5">
-                        {comments && (
+                        {scopedComments && (
                           <DownloadTagButton
                             tag={tag}
-                            comments={comments}
+                            comments={scopedComments}
                             tagSource="issue_tag"
                             locale={locale || "zh"}
                             specificIssue={tag}
                             aspectKey={aspectKey}
+                            aspectKeys={aspectKeys}
                             canonicalIssueKey={canonicalIssueKey}
                             dimension={dimension}
                             subCategory={subCategory}
@@ -380,6 +419,7 @@ function TagTable({
             const quotes = extractQuotes(row).slice(0, 3);
             const dimension = rowDimension(row);
             const aspectKey = rowAspectKey(row);
+            const aspectKeys = rowAspectKeys(row);
             const canonicalIssueKey = rowCanonicalIssueKey(row);
             const subCategory = rowSubCategory(row);
             const reasonForAction = String(row.reason || row.detail || "");
@@ -390,7 +430,7 @@ function TagTable({
                   <div className="min-w-0 flex-1">
                     <div className="break-words text-sm font-semibold text-ink">{tag}</div>
                     <div className="mt-1 text-xs text-soft">
-                      {pct.toFixed(1)}% · {t("dimension")}: {dimension || "—"}
+                      {pct.toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -404,14 +444,15 @@ function TagTable({
                   </div>
                 ) : null}
                 <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                  {comments && (
+                  {scopedComments && (
                     <DownloadTagButton
                       tag={tag}
-                      comments={comments}
+                      comments={scopedComments}
                       tagSource="issue_tag"
                       locale={locale || "zh"}
                       specificIssue={tag}
                       aspectKey={aspectKey}
+                      aspectKeys={aspectKeys}
                       canonicalIssueKey={canonicalIssueKey}
                       dimension={dimension}
                       subCategory={subCategory}
@@ -485,10 +526,10 @@ function TagTable({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1.5">
-                  {comments && tagSource && (
+                  {scopedComments && tagSource && (
                     <DownloadTagButton
                       tag={tag}
-                      comments={comments}
+                      comments={scopedComments}
                       tagSource={tagSource}
                       locale={locale || "zh"}
                     />
