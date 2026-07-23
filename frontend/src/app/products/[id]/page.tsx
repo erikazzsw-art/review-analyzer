@@ -79,7 +79,7 @@ export default async function ProductDetailPage({ params }: Props) {
     const variants = rawVariants as ProductVariant[];
 
     const parentProductId = product.parent_product_id as string;
-    const name = parentProductId || t("detail.unnamedProduct");
+    const name = (product.name as string | null) || parentProductId || t("detail.unnamedProduct");
     const brand = product.brand as string | null;
     const rating = product.rating != null ? Number(product.rating) : null;
     const imageUrl = product.image_url as string | null;

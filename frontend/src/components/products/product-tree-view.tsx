@@ -60,7 +60,7 @@ function ProductRow({
   onToggle: () => void;
   t: (key: string, values?: Record<string, string | number | Date>) => string;
 }) {
-  const title = product.parent_product_id || product.name || "";
+  const title = product.name || product.parent_product_id || "";
   const badge = getPlatformBadge(product.platform);
   const hasVariants = (product.variants?.length ?? 0) > 0;
   const Chevron = expanded ? ChevronDown : ChevronRight;

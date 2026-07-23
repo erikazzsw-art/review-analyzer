@@ -26,8 +26,29 @@ export function ProductSearchCombobox({ value, variantAsin, onChange, placeholde
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<ProductSearchItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!value) {
+      setSelectedLabel("");
+      return;
+    }
+    let cancelled = false;
+    searchProducts(value, 5)
+      .then((res) => {
+        if (cancelled) return;
+        const selected = (res.items || []).find((item) => item.parent_product_id === value);
+        setSelectedLabel(selected?.name || selected?.parent_product_id || value);
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedLabel(value);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [value]);
 
   useEffect(() => {
     if (!open) return;
@@ -98,10 +119,11 @@ export function ProductSearchCombobox({ value, variantAsin, onChange, placeholde
   };
 
   const selectItem = (item: ProductSearchItem) => {
+    setSelectedLabel(item.name || item.parent_product_id);
     handleSelect(item.parent_product_id, findMatchedVariant(item)?.child_asin || null);
   };
 
-  const display = open ? query : variantAsin || value;
+  const display = open ? query : variantAsin || selectedLabel || value;
 
   return (
     <div ref={containerRef} className="relative w-full max-w-sm">
@@ -145,10 +167,13 @@ export function ProductSearchCombobox({ value, variantAsin, onChange, placeholde
             items.map((it) => {
               const matchedVariant = findMatchedVariant(it);
               const variantCount = (it.variants || []).filter((variant) => variant.child_asin).length;
+              const productLabel = it.name || it.parent_product_id;
               const secondaryLabel = matchedVariant
-                ? it.parent_product_id
-                : null;
-              const primaryLabel = matchedVariant?.name || matchedVariant?.child_asin || it.parent_product_id;
+                ? productLabel
+                : productLabel !== it.parent_product_id
+                  ? it.parent_product_id
+                  : null;
+              const primaryLabel = matchedVariant?.name || matchedVariant?.child_asin || productLabel;
 
               return (
                 <li

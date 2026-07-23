@@ -139,7 +139,7 @@ export function DownloadVariantsButton({
     metaSheet["!cols"] = [{ wch: 22 }, { wch: 44 }];
     XLSX.utils.book_append_sheet(workbook, metaSheet, sheetName(t("exportSheetInfo")));
 
-    const filename = `${safeFilenamePart(parentProductId || parentName)}-${t("exportFilenameSuffix")}.xlsx`;
+    const filename = `${safeFilenamePart(parentName || parentProductId)}-${t("exportFilenameSuffix")}.xlsx`;
     XLSX.writeFile(workbook, filename);
     recordDownload(filename, t("exportDownloadSource"));
   }

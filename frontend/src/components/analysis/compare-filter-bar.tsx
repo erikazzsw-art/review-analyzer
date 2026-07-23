@@ -317,7 +317,7 @@ export function CompareFilterBar({
     () =>
       products.map((product) => ({
         value: product.parent_product_id,
-        label: product.parent_product_id,
+        label: product.name || product.parent_product_id,
         versions: product.session_versions ?? [],
       })),
     [products],

@@ -110,7 +110,7 @@ export function QaProductSelector({ products, selectedIds, onConfirm }: QaProduc
                       {isActive && "✓"}
                     </span>
                     <span className="flex-1 truncate font-medium">
-                      {product.parent_product_id}
+                      {product.name || product.parent_product_id}
                     </span>
                     <span className="shrink-0 text-xs text-soft">
                       {product.review_count} {t("reviewsUnit")}

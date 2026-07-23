@@ -302,9 +302,18 @@ def update_product_route(
                 detail="产品名称不能为空。",
             )
         data["parent_product_id"] = parent_product_id
-        data["name"] = parent_product_id
+        if "name" in data:
+            data["name"] = str(data["name"] or "").strip() or parent_product_id
+        else:
+            data["name"] = parent_product_id
     elif "name" in data:
-        data["name"] = str(existing.get("parent_product_id") or data["name"] or "").strip()
+        name = str(data["name"] or "").strip()
+        if not name:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="产品名称不能为空。",
+            )
+        data["name"] = name
     if not data:
         return {"updated": False}
     try:

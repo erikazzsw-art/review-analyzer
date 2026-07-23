@@ -17,6 +17,11 @@ const lifecycleKeys = [
 ] as const;
 
 const platformOptions = ["Amazon", "eBay", "Shopee", "AliExpress", "Walmart"];
+const AMAZON_ASIN_PATTERN = /^B[A-Z0-9]{9}$/i;
+
+function isAmazonAsin(value: string | undefined): boolean {
+  return AMAZON_ASIN_PATTERN.test((value || "").trim());
+}
 
 type EditProductButtonProps = {
   productId: number;
@@ -42,6 +47,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ProductUpdatePayload>({
     parent_product_id: initial.parent_product_id ?? "",
+    name: initial.name ?? initial.parent_product_id ?? "",
     platform: initial.platform ?? "Amazon",
     category: initial.category ?? "",
     lifecycle_stage: initial.lifecycle_stage ?? "growth",
@@ -56,14 +62,16 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const productName = form.parent_product_id?.trim() || "";
+    const productName = form.name?.trim() || "";
     if (!productName) return;
     setSubmitting(true);
     setError(null);
     try {
       const payload: ProductUpdatePayload = {};
-      payload.parent_product_id = productName;
       payload.name = productName;
+      if (!isAmazonAsin(initial.parent_product_id)) {
+        payload.parent_product_id = productName;
+      }
       if (form.platform) payload.platform = form.platform;
       if (form.category?.trim()) payload.category = form.category.trim();
       if (form.lifecycle_stage) payload.lifecycle_stage = form.lifecycle_stage;
@@ -122,8 +130,8 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
                   </label>
                   <input
                     type="text"
-                    value={form.parent_product_id ?? ""}
-                    onChange={(e) => updateField("parent_product_id", e.target.value)}
+                    value={form.name ?? ""}
+                    onChange={(e) => updateField("name", e.target.value)}
                     placeholder={t("edit.productNamePlaceholder")}
                     className="mt-1 w-full rounded-card border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-[#4a7dc7]"
                     required
@@ -221,7 +229,7 @@ export function EditProductButton({ productId, initial }: EditProductButtonProps
               </button>
               <button
                 type="submit"
-                disabled={submitting || !form.parent_product_id?.trim()}
+                disabled={submitting || !form.name?.trim()}
                 className="inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-5 py-3 text-sm font-semibold text-white shadow-card disabled:opacity-50"
               >
                 {submitting ? t("edit.saving") : t("edit.saveButton")}

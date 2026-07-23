@@ -128,7 +128,7 @@ export function MoveVariantButton({ productId, variantId, variantName }: MoveVar
               {results.length > 0 ? (
                 <div className="space-y-1">
                   {results.map((item) => {
-                    const title = item.parent_product_id || item.name || "";
+                    const title = item.name || item.parent_product_id || "";
 
                     return (
                       <button

@@ -56,7 +56,7 @@ function StarRating({ rating, t }: { rating: number | null; t: (key: string, val
 }
 
 function ProductCard({ product, t }: { product: ProductOverview; t: (key: string, values?: Record<string, string | number | Date>) => string }) {
-  const title = product.parent_product_id || product.name || "";
+  const title = product.name || product.parent_product_id || "";
   const lifecycleKey = lifecycleKeys[product.lifecycle_stage || ""];
   const lifecycle = lifecycleKey ? t(`create.${lifecycleKey}`) : (product.lifecycle_stage || "");
   const badge = getPlatformBadge(product.platform);
