@@ -1146,7 +1146,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               price_currency: realListing.price_currency || 'USD',
               original_price: realListing.original_price || null,
               rating: realListing.rating || null,
-              ratings_total: realListing.ratings_total || null,
               brand: realListing.brand || null,
               bullet_points: realListing.bullet_points || [],
               main_image_url: realListing.main_image_url || null,

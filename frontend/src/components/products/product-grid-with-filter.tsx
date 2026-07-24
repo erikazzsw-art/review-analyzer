@@ -115,7 +115,7 @@ function ProductCard({ product, t }: { product: ProductOverview; t: (key: string
         <StarRating rating={product.rating} t={t} />
 
         <div className="mt-auto flex items-center justify-between pt-2 text-xs text-soft">
-          <span>{product.reviews_total ?? product.review_count} {t("grid.reviewsUnit")}</span>
+          <span>{product.review_count} {t("grid.reviewsUnit")}</span>
           <span>{product.variant_count} {t("grid.variantsUnit")}</span>
         </div>
 

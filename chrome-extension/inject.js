@@ -416,13 +416,6 @@
         if (ratingMatch) rating = parseFloat(ratingMatch[1].replace(',', '.'));
       }
 
-      var ratingsTotalText = extractField(['#acrCustomerReviewText', '[data-hook="total-review-count"]']);
-      var ratingsTotal = null;
-      if (ratingsTotalText) {
-        var rtMatch = ratingsTotalText.match(/([\d,]+)/);
-        if (rtMatch) ratingsTotal = parseInt(rtMatch[1].replace(/,/g, ''), 10);
-      }
-
       // Extract ASIN from URL or hidden input
       var asin = '';
       try {
@@ -489,7 +482,6 @@
         original_price: origParsed.amount,
         original_price_text: origPriceText,
         rating: rating,
-        ratings_total: ratingsTotal,
         brand: brand,
         bullet_points: bulletPoints,
         main_image_url: mainImageUrl,

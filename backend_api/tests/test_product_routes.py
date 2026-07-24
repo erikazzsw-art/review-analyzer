@@ -185,6 +185,10 @@ def test_get_product_detail_includes_listing_metadata(monkeypatch):
             "scraped_at": None,
         },
     )
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_parent_variant_analysis",
+        lambda user_id, product_id: {"total_reviews": 18},
+    )
     app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
 
     try:
@@ -194,6 +198,7 @@ def test_get_product_detail_includes_listing_metadata(monkeypatch):
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
+    assert response.json()["product"]["review_count"] == 18
     assert response.json()["listing"] == {
         "parent_asin": "B0B14JY8S8",
         "marketplace": "us",

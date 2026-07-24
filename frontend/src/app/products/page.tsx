@@ -40,7 +40,7 @@ export default async function ProductsPage() {
                 {t("page.totalReviews")}
               </div>
               <div className="mt-3 font-heading text-4xl font-extrabold tracking-[-0.04em] text-ink">
-                {response.items.reduce((sum, p) => sum + (p.reviews_total ?? p.review_count), 0)}
+                {response.items.reduce((sum, p) => sum + p.review_count, 0)}
               </div>
             </div>
             <div className="rounded-card border border-line bg-white/82 px-5 py-5 shadow-card backdrop-blur">

@@ -376,6 +376,7 @@ def test_plugin_upload_listing_completes_existing_product_by_name(monkeypatch):
         "message": "产品信息已更新",
     }
     assert captured["identifiers"] == ["B07VFCWCNC"]
+    assert not any(params and 200 in params for _sql, params in cursor.queries)
     assert not any(sql.startswith("INSERT INTO products") for sql, _params in cursor.queries)
     assert any(
         sql.startswith("UPDATE products SET name = %s")

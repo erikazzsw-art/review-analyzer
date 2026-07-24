@@ -380,6 +380,9 @@ def get_product_detail(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found.",
         )
+    analysis = get_parent_variant_analysis(user_id, product_id)
+    product = dict(product)
+    product["review_count"] = int(analysis.get("total_reviews") or 0)
     variants = get_variants_with_review_counts(user_id, product_id)
     listing = get_product_listing_by_product_id(user_id, product_id)
     return {
