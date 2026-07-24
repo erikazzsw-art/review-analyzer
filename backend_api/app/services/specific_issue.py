@@ -7,6 +7,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from backend_api.app.services.customer_label_catalog import resolve_customer_label
+
 SPECIFIC_ISSUE_SCHEMA_VERSION = "1.0"
 CUSTOMER_LABEL_SCHEMA_VERSION = "1.0"
 ISSUE_RULESET_VERSION = "2026-07-24-customer-label-system"
@@ -406,12 +408,36 @@ def _normalize_aspect_issue(
             confidence = "low"
             display_allowed = False
 
+    forced_hidden = (
+        source == "broad_fallback"
+        or aspect.get("display_allowed") is False
+        or aspect.get("issue_source") == "broad_fallback"
+    )
+    catalog = resolve_customer_label(
+        label_type="issue",
+        canonical_label_key=canonical,
+        display_en=issue,
+        display_zh=issue_zh,
+        raw_label=raw,
+        aspect_key=aspect_key,
+        sub_category_key=sub_category,
+        confidence=confidence,
+        display_allowed=not forced_hidden,
+    )
+    issue = catalog.display_en or issue
+    issue_zh = catalog.display_zh or issue_zh
+    canonical = catalog.canonical_label_key
+    confidence = catalog.confidence if catalog.confidence in {"high", "medium", "low"} else confidence
+    display_allowed = False if forced_hidden else catalog.display_allowed
+
     return {
         "specific_issue": issue,
         "specific_issue_zh": issue_zh,
         "canonical_issue_key": canonical,
         "issue_confidence": confidence,
         "issue_source": source,
+        "customer_label_catalog_source": catalog.source,
+        "customer_label_catalog_ruleset_version": catalog.ruleset_version,
         "specific_issue_raw": raw,
         "display_allowed": bool(display_allowed),
         "aspect_key": aspect_key,
@@ -638,12 +664,36 @@ def _normalize_aspect_highlight(
                 confidence = "low"
                 display_allowed = False
 
+    forced_hidden = (
+        source == "broad_fallback"
+        or aspect.get("highlight_display_allowed") is False
+        or aspect.get("highlight_source") == "broad_fallback"
+    )
+    catalog = resolve_customer_label(
+        label_type="highlight",
+        canonical_label_key=canonical,
+        display_en=highlight_en,
+        display_zh=highlight_zh,
+        raw_label=raw,
+        aspect_key=aspect_key,
+        sub_category_key=sub_category,
+        confidence=confidence,
+        display_allowed=not forced_hidden,
+    )
+    highlight_en = catalog.display_en or highlight_en
+    highlight_zh = catalog.display_zh or highlight_zh
+    canonical = catalog.canonical_label_key
+    confidence = catalog.confidence if catalog.confidence in {"high", "medium", "low"} else confidence
+    display_allowed = False if forced_hidden else catalog.display_allowed
+
     return {
         "customer_highlight": highlight_en,
         "customer_highlight_zh": highlight_zh,
         "canonical_highlight_key": canonical,
         "highlight_confidence": confidence,
         "highlight_source": source,
+        "customer_label_catalog_source": catalog.source,
+        "customer_label_catalog_ruleset_version": catalog.ruleset_version,
         "customer_highlight_raw": raw,
         "highlight_display_allowed": bool(display_allowed),
         "aspect_key": aspect_key,
@@ -688,6 +738,10 @@ def enrich_aspects_json(
                     "canonical_issue_key": issue["canonical_issue_key"],
                     "issue_confidence": issue["issue_confidence"],
                     "issue_source": issue["issue_source"],
+                    "customer_label_catalog_source": issue["customer_label_catalog_source"],
+                    "customer_label_catalog_ruleset_version": issue[
+                        "customer_label_catalog_ruleset_version"
+                    ],
                     "specific_issue_raw": issue["specific_issue_raw"],
                     "display_allowed": issue["display_allowed"],
                     "aspect_label": issue["dimension"],
@@ -707,6 +761,10 @@ def enrich_aspects_json(
                     "canonical_highlight_key": highlight["canonical_highlight_key"],
                     "highlight_confidence": highlight["highlight_confidence"],
                     "highlight_source": highlight["highlight_source"],
+                    "customer_label_catalog_source": highlight["customer_label_catalog_source"],
+                    "customer_label_catalog_ruleset_version": highlight[
+                        "customer_label_catalog_ruleset_version"
+                    ],
                     "customer_highlight_raw": highlight["customer_highlight_raw"],
                     "highlight_display_allowed": highlight["highlight_display_allowed"],
                     "aspect_label": highlight["dimension"],
@@ -806,6 +864,10 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
                     "canonical_issue_key": issue["canonical_issue_key"],
                     "issue_confidence": issue["issue_confidence"],
                     "issue_source": issue["issue_source"],
+                    "customer_label_catalog_source": issue["customer_label_catalog_source"],
+                    "customer_label_catalog_ruleset_version": issue[
+                        "customer_label_catalog_ruleset_version"
+                    ],
                     "specific_issue_raw": issue["specific_issue_raw"],
                     "display_allowed": True,
                     "aspect_key": issue["aspect_key"],
@@ -1028,6 +1090,10 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
                     "canonical_highlight_key": highlight["canonical_highlight_key"],
                     "highlight_confidence": highlight["highlight_confidence"],
                     "highlight_source": highlight["highlight_source"],
+                    "customer_label_catalog_source": highlight["customer_label_catalog_source"],
+                    "customer_label_catalog_ruleset_version": highlight[
+                        "customer_label_catalog_ruleset_version"
+                    ],
                     "customer_highlight_raw": highlight["customer_highlight_raw"],
                     "highlight_display_allowed": True,
                     "aspect_key": highlight["aspect_key"],
