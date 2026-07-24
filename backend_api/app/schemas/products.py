@@ -130,7 +130,6 @@ class ListingDataPayload(BaseModel):
     price_currency: str = "USD"
     original_price: float | None = None
     rating: float | None = None
-    ratings_total: int | None = None
     brand: str | None = None
     bullet_points: list[str] = []
     main_image_url: str | None = None

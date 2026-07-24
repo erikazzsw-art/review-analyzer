@@ -635,9 +635,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (listing.rating != null) {
       html += '<div class="listing-field">' +
         '<span class="listing-field-label">' + t('listing_field_rating') + '</span>' +
-        '<span class="listing-field-value">' + listing.rating + '⭐' +
-        (listing.ratings_total ? ' (' + listing.ratings_total.toLocaleString() + ' ' + t('listing_field_ratings') + ')' : '') +
-        '</span></div>';
+        '<span class="listing-field-value">' + listing.rating + '⭐</span></div>';
     }
 
     // Brand

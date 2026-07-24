@@ -117,7 +117,7 @@ function ProductRow({
           <StarRating rating={product.rating} />
         </td>
         <td className="px-3 py-3 text-center text-sm font-semibold text-ink">
-          {product.reviews_total ?? product.review_count}
+          {product.review_count}
         </td>
         <td className="px-3 py-3 text-center text-sm font-semibold text-ink">
           {product.variant_count}

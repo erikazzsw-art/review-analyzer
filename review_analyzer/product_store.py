@@ -1848,6 +1848,11 @@ def plugin_upload_listing(
     parent_asin = parent_asin.strip().upper()
     name = name.strip()
     listing = listing or {}
+    listing = {
+        key: value
+        for key, value in listing.items()
+        if key not in {"ratings_total", "reviews_total"}
+    }
     variants = variants or []
     variant_asins = [
         str(var.get("asin") or "").strip().upper()
@@ -1923,24 +1928,18 @@ def plugin_upload_listing(
                     bsr_json = psycopg2.extras.Json(best_seller_rank)
                 else:
                     bsr_json = psycopg2.extras.Json([])
-                reviews_total = listing.get("reviews_total") or listing.get("ratings_total")
-
                 # 更新 products 表中的快速字段（用于列表页展示）
                 _try_optional_execute(
                     cur,
                     """UPDATE products SET
                        brand = COALESCE(%s, brand),
                        image_url = COALESCE(%s, image_url),
-                       rating = COALESCE(%s, rating),
-                       ratings_total = COALESCE(%s, ratings_total),
-                       reviews_total = COALESCE(%s, reviews_total)
+                       rating = COALESCE(%s, rating)
                        WHERE id = %s""",
                     (
                         listing.get("brand"),
                         listing.get("main_image_url"),
                         listing.get("rating"),
-                        listing.get("ratings_total"),
-                        reviews_total,
                         product_id,
                     ),
                 )
@@ -1988,8 +1987,8 @@ def plugin_upload_listing(
                         listing.get("price_currency", "USD"),
                         listing.get("original_price"),
                         listing.get("rating"),
-                        listing.get("ratings_total"),
-                        reviews_total,
+                        None,
+                        None,
                         listing.get("brand"),
                         bullet_points_json,
                         listing.get("main_image_url"),
