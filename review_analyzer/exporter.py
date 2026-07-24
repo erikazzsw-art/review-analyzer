@@ -77,14 +77,17 @@ SPECIFIC_ISSUE_EXPORT_HEADERS = [
     "Aspect Key",
     "Evidence Span",
     "Issue Confidence",
+    "Evidence Verified",
 ]
 
 
 def _join_specific_issue_field(comment: dict, field: str) -> str:
-    values = [
-        str(occurrence.get(field) or "").strip()
-        for occurrence in iter_specific_issue_occurrences(comment, locale="zh")
-    ]
+    values = []
+    for occurrence in iter_specific_issue_occurrences(comment, locale="zh"):
+        if field == "verified_evidence":
+            values.append("true" if occurrence.get(field) else "false")
+            continue
+        values.append(str(occurrence.get(field) or "").strip())
     return ", ".join(value for value in values if value)
 
 
@@ -135,6 +138,7 @@ def _build_comments_data(
                     _join_specific_issue_field(c, "aspect_key"),
                     _join_specific_issue_field(c, "evidence_span"),
                     _join_specific_issue_field(c, "issue_confidence"),
+                    _join_specific_issue_field(c, "verified_evidence"),
                 ]
             )
         rows.append(row)
@@ -147,12 +151,13 @@ def _build_customer_highlight_top10_data(pool_comments: list[dict]) -> tuple[lis
         "排名",
         "客户亮点",
         "出现次数",
-        "占比",
+        "情绪池内提及占比",
         "内部维度",
         "Canonical Highlight Key",
         "Aspect Key",
         "Evidence Span",
         "Highlight Confidence",
+        "Evidence Verified",
         "代表性评论（前20条摘要）",
     ]
     rows: list[list[str]] = []
@@ -174,6 +179,7 @@ def _build_customer_highlight_top10_data(pool_comments: list[dict]) -> tuple[lis
                 aspect_key_text,
                 " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("highlight_confidence") or ""),
+                "true" if row.get("evidence_spans") else "false",
                 " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
             ]
         )
@@ -222,12 +228,13 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
         "排名",
         "客户痛点",
         "出现次数",
-        "占比",
+        "情绪池内提及占比",
         "内部维度",
         "Canonical Issue Key",
         "Aspect Key",
         "Evidence Span",
         "Issue Confidence",
+        "Evidence Verified",
         "代表性评论（前20条摘要）",
     ]
     rows: list[list[str]] = []
@@ -249,6 +256,7 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
                 aspect_key_text,
                 " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("issue_confidence") or ""),
+                "true" if row.get("evidence_spans") else "false",
                 " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
             ]
         )
@@ -313,7 +321,7 @@ def export_to_xlsx(
     ws2 = workbook.add_worksheet("源评论分析明细")
     headers, rows = _build_comments_data(comments, include_specific_issue=True)
 
-    col_widths = [6, 50, 6, 12, 12, 10, 8, 10, 8, 30, 30, 15, 15, 24, 26, 20, 18, 34, 16]
+    col_widths = [6, 50, 6, 12, 12, 10, 8, 10, 8, 30, 30, 15, 15, 24, 26, 20, 18, 34, 16, 18]
     for i, w in enumerate(col_widths):
         ws2.set_column(i, i, w)
 
@@ -336,7 +344,8 @@ def export_to_xlsx(
     ws3.set_column("G:G", 18)
     ws3.set_column("H:H", 34)
     ws3.set_column("I:I", 16)
-    ws3.set_column("J:J", 80)
+    ws3.set_column("J:J", 18)
+    ws3.set_column("K:K", 80)
 
     t3_headers, t3_rows = _build_specific_issue_top10_data(negative_comments)
     for col_idx, h in enumerate(t3_headers):
@@ -357,7 +366,8 @@ def export_to_xlsx(
     ws4.set_column("G:G", 18)
     ws4.set_column("H:H", 34)
     ws4.set_column("I:I", 16)
-    ws4.set_column("J:J", 80)
+    ws4.set_column("J:J", 18)
+    ws4.set_column("K:K", 80)
 
     t4_headers, t4_rows = _build_customer_highlight_top10_data(positive_comments)
     for col_idx, h in enumerate(t4_headers):

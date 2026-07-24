@@ -72,6 +72,7 @@ function findSpecificIssueOccurrences(
   const subCategory = String(meta.subCategory || "").trim();
   if (aspectKeys.length === 0 || !canonicalIssueKey) return [];
   const payload = getAspectsPayload(comment);
+  if (payload?.cluster_propagated) return [];
   if (subCategory && String(payload?.sub_category || comment.sub_category || comment.category || "") !== subCategory) {
     return [];
   }
@@ -82,7 +83,8 @@ function findSpecificIssueOccurrences(
       aspectKeys.includes(String(aspect.key || aspect.aspect_key || "")) &&
       String(aspect.canonical_issue_key || "") === canonicalIssueKey &&
       (String(aspect.polarity || "").toLowerCase() === "negative" || hasSpecificIssuePayload) &&
-      aspect.display_allowed !== false
+      aspect.display_allowed !== false &&
+      occurrenceEvidenceVerified(comment, aspect, payload)
     );
   });
 }
@@ -96,6 +98,7 @@ function findCustomerHighlightOccurrences(
   const subCategory = String(meta.subCategory || "").trim();
   if (aspectKeys.length === 0 || !canonicalHighlightKey) return [];
   const payload = getAspectsPayload(comment);
+  if (payload?.cluster_propagated) return [];
   if (subCategory && String(payload?.sub_category || comment.sub_category || comment.category || "") !== subCategory) {
     return [];
   }
@@ -104,9 +107,20 @@ function findCustomerHighlightOccurrences(
       aspectKeys.includes(String(aspect.key || aspect.aspect_key || "")) &&
       String(aspect.canonical_highlight_key || "") === canonicalHighlightKey &&
       String(aspect.polarity || "").toLowerCase() === "positive" &&
-      aspect.highlight_display_allowed !== false
+      aspect.highlight_display_allowed !== false &&
+      occurrenceEvidenceVerified(comment, aspect, payload)
     );
   });
+}
+
+function occurrenceEvidenceVerified(
+  comment: Record<string, unknown>,
+  occurrence: Record<string, unknown>,
+  payload: Record<string, unknown> | null,
+): boolean {
+  const evidence = String(occurrence.evidence_span || "").trim();
+  const content = String(comment.content || "");
+  return Boolean(evidence && content.includes(evidence) && !payload?.cluster_propagated);
 }
 
 function tagMatchesComment(
@@ -211,8 +225,8 @@ function downloadTagReviews(
   const matched = getMatchedReviews(tag, comments, tagSource, meta, locale);
   const headers =
     locale === "zh"
-      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户标签", "Canonical Label Key", "内部维度", "Aspect Key", "Evidence Span", "Label Confidence"]
-      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Label", "Canonical Label Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Label Confidence"];
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户标签", "Canonical Label Key", "内部维度", "Aspect Key", "Evidence Span", "Label Confidence", "Evidence Verified"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Label", "Canonical Label Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Label Confidence", "Evidence Verified"];
   const data: (string | number)[][] = [headers];
   matched.forEach(({ comment: c, occurrences }, idx) => {
     const categorySlug = String(c.category || "");
@@ -254,6 +268,11 @@ function downloadTagReviews(
       joinOccurrenceValues(
         occurrences,
         (occurrence) => occurrence.issue_confidence || occurrence.highlight_confidence,
+      ),
+      joinOccurrenceValues(
+        occurrences,
+        (occurrence) => (occurrenceEvidenceVerified(c, occurrence, getAspectsPayload(c)) ? "true" : "false"),
+        "false",
       ),
     ] as (string | number)[]);
   });

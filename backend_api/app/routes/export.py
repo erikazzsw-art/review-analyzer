@@ -83,8 +83,8 @@ def export_full_xlsx(
 
 def _top10_headers(locale: str) -> list[str]:
     if locale == "zh":
-        return ["排名", "标签", "出现次数", "提及占比", "代表性评论（前20条摘要）"]
-    return ["Rank", "Tag", "Count", "Percentage", "Representative Reviews (Top 20)"]
+        return ["排名", "标签", "出现次数", "情绪池内提及占比", "代表性评论（前20条摘要）"]
+    return ["Rank", "Tag", "Count", "Sentiment-Pool Mention Share", "Representative Reviews (Top 20)"]
 
 
 def _customer_highlight_top10_headers(locale: str) -> list[str]:
@@ -93,24 +93,26 @@ def _customer_highlight_top10_headers(locale: str) -> list[str]:
             "排名",
             "客户亮点",
             "出现次数",
-            "提及占比",
+            "情绪池内提及占比",
             "内部维度",
             "Canonical Highlight Key",
             "Aspect Key",
             "Evidence Span",
             "Highlight Confidence",
+            "Evidence Verified",
             "代表性评论（前20条摘要）",
         ]
     return [
         "Rank",
         "Customer Highlight",
         "Count",
-        "Mention Share",
+        "Sentiment-Pool Mention Share",
         "Internal Aspect",
         "Canonical Highlight Key",
         "Aspect Key",
         "Evidence Span",
         "Highlight Confidence",
+        "Evidence Verified",
         "Representative Reviews (Top 20)",
     ]
 
@@ -121,24 +123,26 @@ def _specific_issue_top10_headers(locale: str) -> list[str]:
             "排名",
             "客户痛点",
             "出现次数",
-            "提及占比",
+            "情绪池内提及占比",
             "内部维度",
             "Canonical Issue Key",
             "Aspect Key",
             "Evidence Span",
             "Issue Confidence",
+            "Evidence Verified",
             "代表性评论（前20条摘要）",
         ]
     return [
         "Rank",
         "Customer Issue",
         "Count",
-        "Mention Share",
+        "Sentiment-Pool Mention Share",
         "Internal Aspect",
         "Canonical Issue Key",
         "Aspect Key",
         "Evidence Span",
         "Issue Confidence",
+        "Evidence Verified",
         "Representative Reviews (Top 20)",
     ]
 
@@ -198,6 +202,7 @@ def _build_specific_issue_top10_rows(
                 aspect_key_text,
                 " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("issue_confidence") or ""),
+                "true" if row.get("evidence_spans") else "false",
                 " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
             ]
         )
@@ -227,6 +232,7 @@ def _build_customer_highlight_top10_rows(
                 aspect_key_text,
                 " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("highlight_confidence") or ""),
+                "true" if row.get("evidence_spans") else "false",
                 " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
             ]
         )

@@ -210,6 +210,43 @@ def _first_regex(patterns: list[str], text: str) -> bool:
     return any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns)
 
 
+_NEGATED_WATER_LEAK_PATTERNS = [
+    r"\bno\s+leaks?\b",
+    r"\bwithout\s+(any\s+)?leaks?\b",
+    r"\bnever\s+(had\s+)?leaks?\b",
+    r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak\b",
+    r"\bnot\s+leaking\b",
+]
+
+
+def _is_negated_water_leak_statement(text: str) -> bool:
+    return _first_regex(_NEGATED_WATER_LEAK_PATTERNS, text)
+
+
+def _water_leak_issue_hit(evidence: str, content: str) -> bool:
+    basis = evidence.strip() or content[:400]
+    if _is_negated_water_leak_statement(basis):
+        return False
+    text = f"{evidence} {content[:400]}".lower()
+    text = re.sub(r"\bno\s+leaks?\b", " ", text)
+    text = re.sub(r"\bwithout\s+(any\s+)?leaks?\b", " ", text)
+    text = re.sub(r"\bnever\s+(had\s+)?leaks?\b", " ", text)
+    text = re.sub(r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak\b", " ", text)
+    text = re.sub(r"\bnot\s+leaking\b", " ", text)
+    return _first_regex(
+        [
+            r"\bnot waterproof\b",
+            r"\bleak",
+            r"\bwater (gets|got|came|comes|coming|enters|entered) (in|through)",
+        ],
+        text,
+    )
+
+
+def _evidence_verified(content: str, evidence: str, *, cluster_propagated: bool = False) -> bool:
+    return bool(evidence and evidence in content and not cluster_propagated)
+
+
 def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str, str, str] | None:
     text = f"{evidence} {content[:400]}".lower()
 
@@ -222,7 +259,7 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Missing Wader Hanger", "missing_wader_hanger", "regex_alias_rule")
 
     if aspect_key in {"waterproof", "waterproof_performance", "seam_integrity"}:
-        if _first_regex([r"\bnot waterproof\b", r"\bleak", r"\bwater (gets|got|came|comes|coming|enters|entered) (in|through)"], text):
+        if _water_leak_issue_hit(evidence, content):
             return ("Water Leaks Through", "water_leaks_through", "regex_alias_rule")
 
     if aspect_key in {"zipper_quality"}:
@@ -754,10 +791,10 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
                 continue
             display_label = issue["specific_issue_zh"] if locale.startswith("zh") else issue["specific_issue"]
             evidence = issue["evidence_span"]
-            verified_evidence = bool(
-                evidence
-                and evidence in content
-                and not bool(aj.get("cluster_propagated"))
+            verified_evidence = _evidence_verified(
+                content,
+                evidence,
+                cluster_propagated=bool(aj.get("cluster_propagated")),
             )
             occurrences.append(
                 {
@@ -800,7 +837,6 @@ def build_specific_issue_rows(
     comment_counts: dict[tuple[str, str], set[Any]] = defaultdict(set)
     confidence_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
     issue_label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
-    fallback_comments: dict[tuple[str, str], list[str]] = defaultdict(list)
 
     for fallback_index, comment in enumerate(comments):
         comment_id = comment.get("id")
@@ -860,14 +896,12 @@ def build_specific_issue_rows(
             confidence_counter[key][str(occurrence.get("issue_confidence") or "low")] += 1
             content = str(occurrence.get("content") or "").strip()
             evidence = str(occurrence.get("evidence_span") or "").strip()
-            if (occurrence.get("verified_evidence") or occurrence.get("source_review_allowed")) and content:
+            if occurrence.get("verified_evidence") and content:
                 _append_unique_snippet(groups[key]["representative_comments"], content)
                 if evidence and evidence not in groups[key]["evidence_spans"]:
                     groups[key]["evidence_spans"].append(evidence)
             elif occurrence.get("legacy_fallback") and content:
                 _append_unique_snippet(groups[key]["representative_comments"], content)
-            elif content:
-                _append_unique_snippet(fallback_comments[key], content)
 
     rows: list[dict[str, Any]] = []
     for key, row in groups.items():
@@ -877,7 +911,7 @@ def build_specific_issue_rows(
         issue = issue_label_counter[key].most_common(1)[0][0] if issue_label_counter[key] else row["specific_issue"]
         aspect_keys = row["aspect_keys"]
         dimensions = row["dimensions"]
-        examples = row["representative_comments"][:5] or fallback_comments[key][:5]
+        examples = row["representative_comments"][:5]
         evidence_spans = row["evidence_spans"][:5]
         rows.append(
             {
@@ -979,10 +1013,10 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
                 else highlight["customer_highlight"]
             )
             evidence = highlight["evidence_span"]
-            verified_evidence = bool(
-                evidence
-                and evidence in content
-                and not bool(aj.get("cluster_propagated"))
+            verified_evidence = _evidence_verified(
+                content,
+                evidence,
+                cluster_propagated=bool(aj.get("cluster_propagated")),
             )
             occurrences.append(
                 {
@@ -1027,7 +1061,6 @@ def build_customer_highlight_rows(
     comment_counts: dict[tuple[str, str], set[Any]] = defaultdict(set)
     confidence_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
     label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
-    fallback_comments: dict[tuple[str, str], list[str]] = defaultdict(list)
 
     for fallback_index, comment in enumerate(comments):
         comment_id = comment.get("id")
@@ -1087,12 +1120,10 @@ def build_customer_highlight_rows(
             confidence_counter[key][str(occurrence.get("highlight_confidence") or "low")] += 1
             content = str(occurrence.get("content") or "").strip()
             evidence = str(occurrence.get("evidence_span") or "").strip()
-            if (occurrence.get("verified_evidence") or occurrence.get("source_review_allowed")) and content:
+            if occurrence.get("verified_evidence") and content:
                 _append_unique_snippet(groups[key]["representative_comments"], content)
                 if evidence and evidence not in groups[key]["evidence_spans"]:
                     groups[key]["evidence_spans"].append(evidence)
-            elif content:
-                _append_unique_snippet(fallback_comments[key], content)
 
     rows: list[dict[str, Any]] = []
     for key, row in groups.items():
@@ -1104,7 +1135,7 @@ def build_customer_highlight_rows(
         label = label_counter[key].most_common(1)[0][0] if label_counter[key] else row["customer_highlight"]
         aspect_keys = row["aspect_keys"]
         dimensions = row["dimensions"]
-        examples = row["representative_comments"][:5] or fallback_comments[key][:5]
+        examples = row["representative_comments"][:5]
         evidence_spans = row["evidence_spans"][:5]
         rows.append(
             {
