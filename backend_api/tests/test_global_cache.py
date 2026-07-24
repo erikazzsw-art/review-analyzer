@@ -175,6 +175,37 @@ def test_content_hash_stable_across_users():
     assert h1 != h4
 
 
+def test_apply_cache_uses_persisted_content_hash_with_category():
+    """L1 must use the stored hash when category is part of the cache key."""
+    from backend_api.app.services.analysis_cache import apply_cache, compute_content_hash
+
+    content_hash = compute_content_hash("This product is great!", 5, "waders")
+    result = apply_cache(
+        comments=[
+            {
+                "id": 1,
+                "content": "This product is great!",
+                "rating": 5,
+                "content_hash": content_hash,
+            }
+        ],
+        existing_analyses={
+            content_hash: {
+                "sentiment": "positive",
+                "aspects_json": {"aspects": [{"key": "fit"}]},
+                "source_id": 99,
+                "cache_hit_source": "global",
+            }
+        },
+    )
+
+    assert result.hit_count == 1
+    assert result.miss_count == 0
+    hit = result.hits[1]
+    assert hit.level == "L1"
+    assert hit.source_comment_id == 99
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v"]))

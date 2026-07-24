@@ -86,8 +86,10 @@ def _check_l1(
     remaining: list[dict[str, Any]] = []
 
     for c in comments:
-        content_hash = compute_content_hash(
-            c.get("content", ""), c.get("rating")
+        content_hash = c.get("content_hash") or compute_content_hash(
+            c.get("content", ""),
+            c.get("rating"),
+            c.get("category"),
         )
         cached = existing_analyses.get(content_hash)
         if cached and cached.get("aspects_json"):

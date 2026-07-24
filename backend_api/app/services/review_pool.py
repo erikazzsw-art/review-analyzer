@@ -202,7 +202,13 @@ def pool_write(
             for r in reviews:
                 content = r.get("content", "")
                 rating = r.get("rating")
-                content_hash = compute_content_hash(content, rating)
+                content_hash = str(r.get("content_hash") or "").strip()
+                if not content_hash:
+                    content_hash = compute_content_hash(
+                        content,
+                        rating,
+                        r.get("category") or r.get("sub_category"),
+                    )
                 review_date = _normalize_review_date(r)
                 if not review_date:
                     continue
@@ -213,9 +219,14 @@ def pool_write(
                 seen_keys.add(dedupe_key)
                 cur.execute("SAVEPOINT _pool_write_row")
                 try:
+                    source_variant = (
+                        r.get("source_variant_asin")
+                        or r.get("source_variant")
+                        or r.get("sku_info", "")
+                    )
                     if review_id:
                         cur.execute(
-                            """SELECT id
+                            """SELECT id, content_hash
                                FROM review_pool
                                WHERE platform = %s
                                  AND product_key = %s
@@ -224,7 +235,35 @@ def pool_write(
                                LIMIT 1""",
                             (platform, product_key, marketplace, review_id),
                         )
-                        if cur.fetchone():
+                        existing = cur.fetchone()
+                        if existing:
+                            existing_id = existing[0]
+                            existing_hash = existing[1] if len(existing) > 1 else None
+                            if existing_hash != content_hash:
+                                cur.execute(
+                                    """UPDATE review_pool
+                                       SET content = %s,
+                                           rating = %s,
+                                           review_date = %s,
+                                           reviewer = %s,
+                                           title = %s,
+                                           source_variant = %s,
+                                           content_hash = %s,
+                                           scraper_source = %s,
+                                           scraped_at = NOW()
+                                       WHERE id = %s""",
+                                    (
+                                        content,
+                                        rating,
+                                        review_date,
+                                        r.get("reviewer", ""),
+                                        r.get("title", ""),
+                                        source_variant,
+                                        content_hash,
+                                        scraper_source,
+                                        existing_id,
+                                    ),
+                                )
                             cur.execute("RELEASE SAVEPOINT _pool_write_row")
                             continue
 
@@ -243,7 +282,7 @@ def pool_write(
                             r.get("reviewer", ""),
                             r.get("title", ""),
                             review_id,
-                            r.get("source_variant_asin") or r.get("sku_info", ""),
+                            source_variant,
                             content_hash,
                             scraper_source,
                         ),

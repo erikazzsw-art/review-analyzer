@@ -311,7 +311,8 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             # L1: 收集当前 batch 的 content_hash，查询已有分析结果
             # migration 043: 除用户自己历史，同时查全局 review_pool 支持跨用户复用
             content_hashes = [
-                compute_content_hash(c.get("content", ""), c.get("rating"), sub_category)
+                c.get("content_hash")
+                or compute_content_hash(c.get("content", ""), c.get("rating"), sub_category)
                 for c in unprocessed
             ]
             existing_analyses = get_analyzed_by_content_hash(
@@ -349,6 +350,8 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "id": c["id"],
                     "content": c.get("content", ""),
                     "rating": c.get("rating"),
+                    "content_hash": c.get("content_hash"),
+                    "category": sub_category,
                     "embedding": emb_by_id.get(c["id"]),
                 })
 

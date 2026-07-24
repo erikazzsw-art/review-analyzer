@@ -108,3 +108,34 @@ def test_pool_write_keeps_recent_reviews_and_dedupes_by_review_id(monkeypatch):
     assert len(inserts) == 1
     assert inserts[0][8] == "R1"
     assert inserts[0][5] == "2999-01-02"
+
+
+def test_pool_write_preserves_provided_content_hash(monkeypatch):
+    cursor = FakeCursor()
+    conn = FakeConnection(cursor)
+    monkeypatch.setattr(review_pool, "get_connection", lambda: conn)
+
+    inserted = review_pool.pool_write(
+        "amazon",
+        "B0TESTASIN",
+        "us",
+        [
+            {
+                "review_id": "R10",
+                "content": "Great product",
+                "rating": 5,
+                "date": "2999-01-02",
+                "reviewer": "Alice",
+                "content_hash": "category-aware-hash",
+            }
+        ],
+        scraper_source="unit-test",
+    )
+
+    assert inserted == 1
+    inserts = [
+        params
+        for sql, params in cursor.queries
+        if sql.startswith("INSERT INTO review_pool ")
+    ]
+    assert inserts[0][10] == "category-aware-hash"
