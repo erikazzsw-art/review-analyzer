@@ -716,6 +716,12 @@ def _legacy_issue_occurrences(comment: dict[str, Any], locale: str) -> list[dict
     return occurrences
 
 
+def _append_unique_snippet(target: list[str], content: str, limit: int = 240) -> None:
+    snippet = content.strip()[:limit]
+    if snippet and snippet not in target:
+        target.append(snippet)
+
+
 def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en") -> list[dict[str, Any]]:
     content = str(comment.get("content") or "").strip()
     aj = coerce_aspects_json(comment.get("aspects_json"))
@@ -794,6 +800,7 @@ def build_specific_issue_rows(
     comment_counts: dict[tuple[str, str], set[Any]] = defaultdict(set)
     confidence_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
     issue_label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
+    fallback_comments: dict[tuple[str, str], list[str]] = defaultdict(list)
 
     for fallback_index, comment in enumerate(comments):
         comment_id = comment.get("id")
@@ -854,13 +861,13 @@ def build_specific_issue_rows(
             content = str(occurrence.get("content") or "").strip()
             evidence = str(occurrence.get("evidence_span") or "").strip()
             if (occurrence.get("verified_evidence") or occurrence.get("source_review_allowed")) and content:
-                if content not in groups[key]["representative_comments"]:
-                    groups[key]["representative_comments"].append(content[:240])
+                _append_unique_snippet(groups[key]["representative_comments"], content)
                 if evidence and evidence not in groups[key]["evidence_spans"]:
                     groups[key]["evidence_spans"].append(evidence)
             elif occurrence.get("legacy_fallback") and content:
-                if content not in groups[key]["representative_comments"]:
-                    groups[key]["representative_comments"].append(content[:240])
+                _append_unique_snippet(groups[key]["representative_comments"], content)
+            elif content:
+                _append_unique_snippet(fallback_comments[key], content)
 
     rows: list[dict[str, Any]] = []
     for key, row in groups.items():
@@ -870,9 +877,7 @@ def build_specific_issue_rows(
         issue = issue_label_counter[key].most_common(1)[0][0] if issue_label_counter[key] else row["specific_issue"]
         aspect_keys = row["aspect_keys"]
         dimensions = row["dimensions"]
-        examples = row["representative_comments"][:5]
-        if not examples:
-            continue
+        examples = row["representative_comments"][:5] or fallback_comments[key][:5]
         evidence_spans = row["evidence_spans"][:5]
         rows.append(
             {
@@ -1022,6 +1027,7 @@ def build_customer_highlight_rows(
     comment_counts: dict[tuple[str, str], set[Any]] = defaultdict(set)
     confidence_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
     label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
+    fallback_comments: dict[tuple[str, str], list[str]] = defaultdict(list)
 
     for fallback_index, comment in enumerate(comments):
         comment_id = comment.get("id")
@@ -1082,10 +1088,11 @@ def build_customer_highlight_rows(
             content = str(occurrence.get("content") or "").strip()
             evidence = str(occurrence.get("evidence_span") or "").strip()
             if (occurrence.get("verified_evidence") or occurrence.get("source_review_allowed")) and content:
-                if content not in groups[key]["representative_comments"]:
-                    groups[key]["representative_comments"].append(content[:240])
+                _append_unique_snippet(groups[key]["representative_comments"], content)
                 if evidence and evidence not in groups[key]["evidence_spans"]:
                     groups[key]["evidence_spans"].append(evidence)
+            elif content:
+                _append_unique_snippet(fallback_comments[key], content)
 
     rows: list[dict[str, Any]] = []
     for key, row in groups.items():
@@ -1097,9 +1104,7 @@ def build_customer_highlight_rows(
         label = label_counter[key].most_common(1)[0][0] if label_counter[key] else row["customer_highlight"]
         aspect_keys = row["aspect_keys"]
         dimensions = row["dimensions"]
-        examples = row["representative_comments"][:5]
-        if not examples:
-            continue
+        examples = row["representative_comments"][:5] or fallback_comments[key][:5]
         evidence_spans = row["evidence_spans"][:5]
         rows.append(
             {

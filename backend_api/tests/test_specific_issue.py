@@ -492,6 +492,44 @@ def test_build_specific_issue_rows_groups_by_subcategory_and_canonical_issue_for
     assert travel["count"] == 1
 
 
+def test_specific_issue_rows_keep_cluster_propagated_only_rows_with_fallback_comment() -> None:
+    content = "The pocket got wet again, but this was copied cluster evidence."
+    rows = build_specific_issue_rows(
+        [
+            {
+                "id": 1,
+                "content": content,
+                "sentiment": "negative",
+                "aspects_json": {
+                    "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
+                    "sub_category": "outdoor",
+                    "cluster_propagated": True,
+                    "aspects": [
+                        {
+                            "key": "accessory_storage",
+                            "aspect_label": "Accessory Storage",
+                            "polarity": "negative",
+                            "specific_issue": "Pocket Not Waterproof",
+                            "canonical_issue_key": "pocket_not_waterproof",
+                            "issue_confidence": "medium",
+                            "display_allowed": True,
+                            "evidence_span": "pocket got wet",
+                        }
+                    ],
+                },
+            }
+        ],
+        locale="en",
+        limit=10,
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["count"] == 1
+    assert rows[0]["specific_issue"] == "Pocket Not Waterproof"
+    assert rows[0]["representative_comments"] == [content]
+    assert rows[0]["evidence_spans"] == []
+
+
 def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across_dimensions() -> None:
     comments = [
         {
@@ -573,3 +611,41 @@ def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across
     assert runs_small["count"] == 1
     assert runs_small["aspect_keys"] == ["size_fit", "boot_fit"]
     assert runs_small["dimension"] == "Size & Fit, Boot Fit"
+
+
+def test_customer_highlight_rows_keep_cluster_propagated_only_rows_with_fallback_comment() -> None:
+    content = "They kept my feet dry on a rainy hike."
+    rows = build_customer_highlight_rows(
+        [
+            {
+                "id": 1,
+                "content": content,
+                "sentiment": "positive",
+                "aspects_json": {
+                    "customer_label_schema_version": CUSTOMER_LABEL_SCHEMA_VERSION,
+                    "sub_category": "outdoor",
+                    "cluster_propagated": True,
+                    "aspects": [
+                        {
+                            "key": "waterproof",
+                            "polarity": "positive",
+                            "customer_highlight": "Keeps Water Out",
+                            "customer_highlight_zh": "防水可靠",
+                            "canonical_highlight_key": "keeps_water_out",
+                            "highlight_confidence": "medium",
+                            "highlight_display_allowed": True,
+                            "evidence_span": "kept me dry",
+                        }
+                    ],
+                },
+            }
+        ],
+        locale="en",
+        limit=10,
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["count"] == 1
+    assert rows[0]["customer_highlight"] == "Keeps Water Out"
+    assert rows[0]["representative_comments"] == [content]
+    assert rows[0]["evidence_spans"] == []
