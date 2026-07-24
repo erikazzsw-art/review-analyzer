@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from backend_api.app.services.specific_issue import (
+    CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+    CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
     CUSTOMER_LABEL_SCHEMA_VERSION,
     ISSUE_RULESET_VERSION,
     SPECIFIC_ISSUE_SCHEMA_VERSION,
@@ -11,6 +13,25 @@ from backend_api.app.services.specific_issue import (
     iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
 )
+
+_OCCURRENCE_REQUIRED_FIELDS = {
+    "comment_id",
+    "type",
+    "raw_label",
+    "canonical_label_key",
+    "display_label_en",
+    "display_label_zh",
+    "aspect_key",
+    "evidence_span",
+    "evidence_start",
+    "evidence_end",
+    "confidence",
+    "source",
+    "evidence_verified",
+    "cluster_propagated",
+    "schema_version",
+    "ruleset_version",
+}
 
 
 def test_enrich_aspects_json_adds_rule_based_specific_issue_metadata() -> None:
@@ -40,6 +61,92 @@ def test_enrich_aspects_json_adds_rule_based_specific_issue_metadata() -> None:
     assert aspect["issue_confidence"] == "high"
 
 
+def test_enrich_aspects_json_adds_customer_label_occurrences_for_issue_and_highlight() -> None:
+    content = "The hanger was missing, but the waders kept me dry."
+    enriched = enrich_aspects_json(
+        {
+            "aspects": [
+                {
+                    "key": "accessory_storage",
+                    "polarity": "negative",
+                    "evidence_span": "hanger was missing",
+                },
+                {
+                    "key": "waterproof",
+                    "polarity": "positive",
+                    "evidence_span": "kept me dry",
+                },
+            ]
+        },
+        sub_category="outdoor",
+        content=content,
+        locale="en",
+        comment_id=10,
+    )
+
+    assert enriched is not None
+    assert enriched["customer_label_occurrence_schema_version"] == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
+    assert (
+        enriched["customer_label_occurrence_ruleset_version"]
+        == CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
+    )
+    occurrences = enriched["customer_label_occurrences"]
+    assert len(occurrences) == 2
+    assert all(set(item) >= _OCCURRENCE_REQUIRED_FIELDS for item in occurrences)
+
+    issue = next(item for item in occurrences if item["type"] == "issue")
+    highlight = next(item for item in occurrences if item["type"] == "highlight")
+    assert issue["comment_id"] == 10
+    assert issue["canonical_label_key"] == "missing_wader_hanger"
+    assert issue["display_label_en"] == "Missing Wader Hanger"
+    assert issue["source"] == "rule"
+    assert issue["source_detail"] == "regex_alias_rule"
+    assert issue["evidence_verified"] is True
+    assert content[issue["evidence_start"] : issue["evidence_end"]] == issue["evidence_span"]
+    assert highlight["canonical_label_key"] == "keeps_water_out"
+    assert highlight["display_label_en"] == "Keeps Water Out"
+    assert content[highlight["evidence_start"] : highlight["evidence_end"]] == "kept me dry"
+
+
+def test_occurrence_iterator_projects_new_payload_and_fills_comment_id() -> None:
+    content = "The pocket gets wet whenever it rains."
+    enriched = enrich_aspects_json(
+        {
+            "aspects": [
+                {
+                    "key": "accessory_storage",
+                    "polarity": "negative",
+                    "specific_issue": "Pocket Gets Wet",
+                    "canonical_issue_key": "pocket_gets_wet",
+                    "specific_issue_raw": "pocket gets wet",
+                    "issue_confidence": "medium",
+                    "display_allowed": True,
+                    "evidence_span": "pocket gets wet",
+                }
+            ]
+        },
+        sub_category="outdoor",
+        content=content,
+        locale="en",
+    )
+
+    occurrences = iter_specific_issue_occurrences(
+        {"id": 42, "content": content, "aspects_json": enriched},
+        locale="en",
+    )
+
+    assert len(occurrences) == 1
+    occurrence = occurrences[0]
+    assert occurrence["comment_id"] == 42
+    assert occurrence["type"] == "issue"
+    assert occurrence["canonical_label_key"] == "pocket_gets_wet"
+    assert occurrence["canonical_issue_key"] == "pocket_gets_wet"
+    assert occurrence["specific_issue"] == "Pocket Gets Wet"
+    assert occurrence["evidence_verified"] is True
+    assert occurrence["verified_evidence"] is True
+    assert content[occurrence["evidence_start"] : occurrence["evidence_end"]] == "pocket gets wet"
+
+
 def test_no_leaks_does_not_create_water_leaks_issue() -> None:
     content = "These waders stayed dry all day with no leaks whatsoever."
     occurrences = iter_specific_issue_occurrences(
@@ -67,6 +174,36 @@ def test_no_leaks_does_not_create_water_leaks_issue() -> None:
     )
 
     assert occurrences == []
+
+
+def test_positive_dry_phrases_do_not_create_water_leaks_issue() -> None:
+    for evidence in ("remained dry", "kept dry"):
+        content = f"These waders {evidence} through the whole trip."
+        occurrences = iter_specific_issue_occurrences(
+            {
+                "id": evidence,
+                "content": content,
+                "sentiment": "positive",
+                "issue_tag": "Waterproof Performance",
+                "aspects_json": enrich_aspects_json(
+                    {
+                        "aspects": [
+                            {
+                                "key": "waterproof",
+                                "polarity": "negative",
+                                "evidence_span": evidence,
+                            }
+                        ]
+                    },
+                    sub_category="outdoor",
+                    content=content,
+                    locale="en",
+                ),
+            },
+            locale="en",
+        )
+
+        assert occurrences == []
 
 
 def test_iter_specific_issue_occurrences_filters_broad_new_schema_without_legacy_fallback() -> None:
@@ -171,6 +308,8 @@ def test_iter_specific_issue_occurrences_uses_legacy_issue_tag_for_old_session()
     assert occurrences[0]["specific_issue"] == "Zipper Quality"
     assert occurrences[0]["canonical_issue_key"] == "zipper_quality"
     assert occurrences[0]["aspect_key"] == ""
+    assert occurrences[0]["type"] == "issue"
+    assert occurrences[0]["source"] == "legacy"
     assert occurrences[0]["legacy_fallback"] is True
 
 
@@ -594,6 +733,50 @@ def test_specific_issue_rows_do_not_use_missing_evidence_as_representative_comme
     assert rows[0]["evidence_spans"] == []
 
 
+def test_new_occurrence_payload_keeps_missing_evidence_but_not_as_representative() -> None:
+    comment = {
+        "id": 1,
+        "content": "The pocket got wet in light rain.",
+        "sentiment": "negative",
+        "aspects_json": {
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrences": [
+                {
+                    "comment_id": None,
+                    "type": "issue",
+                    "raw_label": "pocket gets wet",
+                    "canonical_label_key": "pocket_not_waterproof",
+                    "display_label_en": "Pocket Not Waterproof",
+                    "display_label_zh": "口袋不防水",
+                    "aspect_key": "accessory_storage",
+                    "evidence_span": "copied evidence from another review",
+                    "evidence_start": -1,
+                    "evidence_end": -1,
+                    "confidence": "high",
+                    "source": "rule",
+                    "source_detail": "regex_alias_rule",
+                    "evidence_verified": False,
+                    "cluster_propagated": False,
+                    "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                    "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                    "display_allowed": True,
+                }
+            ],
+        },
+    }
+
+    occurrences = iter_specific_issue_occurrences(comment, locale="en")
+    rows = build_specific_issue_rows([comment], locale="en", limit=10)
+
+    assert len(occurrences) == 1
+    assert occurrences[0]["comment_id"] == 1
+    assert occurrences[0]["evidence_verified"] is False
+    assert occurrences[0]["verified_evidence"] is False
+    assert rows[0]["count"] == 1
+    assert rows[0]["representative_comments"] == []
+    assert rows[0]["evidence_spans"] == []
+
+
 def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across_dimensions() -> None:
     comments = [
         {
@@ -711,5 +894,51 @@ def test_customer_highlight_rows_keep_cluster_propagated_only_rows_with_fallback
     assert len(rows) == 1
     assert rows[0]["count"] == 1
     assert rows[0]["customer_highlight"] == "Keeps Water Out"
+    assert rows[0]["representative_comments"] == []
+    assert rows[0]["evidence_spans"] == []
+
+
+def test_new_occurrence_payload_keeps_cluster_propagated_for_audit_only() -> None:
+    content = "They kept my feet dry on a rainy hike."
+    comment = {
+        "id": 1,
+        "content": content,
+        "sentiment": "positive",
+        "aspects_json": {
+            "cluster_propagated": True,
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrences": [
+                {
+                    "comment_id": 1,
+                    "type": "highlight",
+                    "raw_label": "kept my feet dry",
+                    "canonical_label_key": "keeps_water_out",
+                    "display_label_en": "Keeps Water Out",
+                    "display_label_zh": "防水可靠",
+                    "aspect_key": "waterproof",
+                    "evidence_span": "kept my feet dry",
+                    "evidence_start": content.find("kept my feet dry"),
+                    "evidence_end": content.find("kept my feet dry") + len("kept my feet dry"),
+                    "confidence": "high",
+                    "source": "rule",
+                    "source_detail": "regex_alias_rule",
+                    "evidence_verified": True,
+                    "cluster_propagated": True,
+                    "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                    "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                    "display_allowed": True,
+                }
+            ],
+        },
+    }
+
+    occurrences = iter_customer_highlight_occurrences(comment, locale="en")
+    rows = build_customer_highlight_rows([comment], locale="en", limit=10)
+
+    assert len(occurrences) == 1
+    assert occurrences[0]["evidence_verified"] is True
+    assert occurrences[0]["verified_evidence"] is False
+    assert occurrences[0]["cluster_propagated"] is True
+    assert rows[0]["count"] == 1
     assert rows[0]["representative_comments"] == []
     assert rows[0]["evidence_spans"] == []

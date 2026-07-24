@@ -577,6 +577,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     sub_category=sub_category,
                     content=comment.get("content", ""),
                     locale=locale,
+                    comment_id=comment.get("id"),
                 )
                 result["analyzer_version"] = ANALYZER_VERSION
                 result["cache_hit_level"] = v4.get("cache_hit_level")

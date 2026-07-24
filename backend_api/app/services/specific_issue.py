@@ -11,9 +11,13 @@ from backend_api.app.services.customer_label_catalog import resolve_customer_lab
 
 SPECIFIC_ISSUE_SCHEMA_VERSION = "1.0"
 CUSTOMER_LABEL_SCHEMA_VERSION = "1.0"
+CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION = "1.0"
 ISSUE_RULESET_VERSION = "2026-07-24-customer-label-system"
 HIGHLIGHT_RULESET_VERSION = "2026-07-24-customer-label-system"
 CUSTOMER_LABEL_RULESET_VERSION = f"{ISSUE_RULESET_VERSION}+{HIGHLIGHT_RULESET_VERSION}"
+CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION = "2026-07-24-customer-label-occurrence-v1"
+
+_OCCURRENCE_SOURCES = {"llm", "rule", "human", "legacy"}
 
 _LABELS_CACHE: dict[str, dict[str, str]] | None = None
 
@@ -220,14 +224,31 @@ _NEGATED_WATER_LEAK_PATTERNS = [
     r"\bnot\s+leaking\b",
 ]
 
+_POSITIVE_DRY_PATTERNS = [
+    r"\b(remained|stayed|kept|keep|keeps)\s+(?:me\s+|my\s+\w+\s+)?dry\b",
+]
+
+_WATER_LEAK_HIT_PATTERNS = [
+    r"\bnot waterproof\b",
+    r"\bleak",
+    r"\bwater (gets|got|came|comes|coming|enters|entered) (in|through)",
+]
+
 
 def _is_negated_water_leak_statement(text: str) -> bool:
     return _first_regex(_NEGATED_WATER_LEAK_PATTERNS, text)
 
 
+def _is_positive_dry_statement(text: str) -> bool:
+    return _first_regex(_POSITIVE_DRY_PATTERNS, text) and not _first_regex(
+        _WATER_LEAK_HIT_PATTERNS,
+        text,
+    )
+
+
 def _water_leak_issue_hit(evidence: str, content: str) -> bool:
     basis = evidence.strip() or content[:400]
-    if _is_negated_water_leak_statement(basis):
+    if _is_negated_water_leak_statement(basis) or _is_positive_dry_statement(basis):
         return False
     text = f"{evidence} {content[:400]}".lower()
     text = re.sub(r"\bno\s+leaks?\b", " ", text)
@@ -235,18 +256,344 @@ def _water_leak_issue_hit(evidence: str, content: str) -> bool:
     text = re.sub(r"\bnever\s+(had\s+)?leaks?\b", " ", text)
     text = re.sub(r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak\b", " ", text)
     text = re.sub(r"\bnot\s+leaking\b", " ", text)
-    return _first_regex(
-        [
-            r"\bnot waterproof\b",
-            r"\bleak",
-            r"\bwater (gets|got|came|comes|coming|enters|entered) (in|through)",
-        ],
-        text,
-    )
+    return _first_regex(_WATER_LEAK_HIT_PATTERNS, text)
 
 
 def _evidence_verified(content: str, evidence: str, *, cluster_propagated: bool = False) -> bool:
     return bool(evidence and evidence in content and not cluster_propagated)
+
+
+def _locate_evidence_span(content: str, evidence: str) -> dict[str, Any]:
+    evidence = str(evidence or "").strip()
+    if not content or not evidence:
+        return {
+            "evidence_span": evidence,
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "evidence_verified": False,
+        }
+
+    start = content.find(evidence)
+    if start < 0:
+        start = content.lower().find(evidence.lower())
+    if start < 0:
+        return {
+            "evidence_span": evidence,
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "evidence_verified": False,
+        }
+
+    end = start + len(evidence)
+    return {
+        "evidence_span": content[start:end],
+        "evidence_start": start,
+        "evidence_end": end,
+        "evidence_verified": True,
+    }
+
+
+def _occurrence_source(source_detail: str) -> str:
+    source_detail = str(source_detail or "").strip().lower()
+    if source_detail in _OCCURRENCE_SOURCES:
+        return source_detail
+    if source_detail.startswith("legacy_"):
+        return "legacy"
+    if source_detail.startswith("human_"):
+        return "human"
+    if source_detail in {"llm_canonical_hint", "llm"}:
+        return "llm"
+    return "rule"
+
+
+def _clean_occurrence_source(source: str, source_detail: str = "") -> str:
+    cleaned = str(source or "").strip().lower()
+    if cleaned in _OCCURRENCE_SOURCES:
+        return cleaned
+    return _occurrence_source(source_detail)
+
+
+def _clean_confidence(confidence: Any, default: str = "medium") -> str:
+    cleaned = str(confidence or "").strip().lower()
+    return cleaned if cleaned in {"high", "medium", "low"} else default
+
+
+def _display_label_for_locale(en_label: str, zh_label: str, locale: str) -> str:
+    if locale.startswith("zh") and zh_label:
+        return zh_label
+    return en_label or zh_label
+
+
+def _aspect_dimension_labels(aspect: dict[str, Any], aspect_key: str) -> tuple[str, str]:
+    if not aspect_key:
+        return ("", "")
+    return (
+        _display_aspect_label(aspect, aspect_key, "en"),
+        _display_aspect_label(aspect, aspect_key, "zh"),
+    )
+
+
+def _build_customer_label_occurrence(
+    *,
+    label_type: str,
+    comment_id: Any,
+    content: str,
+    aspect: dict[str, Any],
+    aspect_key: str,
+    raw_label: str,
+    canonical_label_key: str,
+    display_label_en: str,
+    display_label_zh: str,
+    evidence_span: str,
+    confidence: str,
+    source_detail: str,
+    sub_category: str,
+    cluster_propagated: bool,
+    display_allowed: bool = True,
+    catalog_source: str = "",
+    catalog_ruleset_version: str = "",
+) -> dict[str, Any]:
+    evidence = _locate_evidence_span(content, evidence_span)
+    dimension_en, dimension_zh = _aspect_dimension_labels(aspect, aspect_key)
+    source = _occurrence_source(source_detail)
+    return {
+        "comment_id": comment_id,
+        "type": label_type,
+        "raw_label": str(raw_label or "").strip(),
+        "canonical_label_key": str(canonical_label_key or "").strip(),
+        "display_label_en": str(display_label_en or "").strip(),
+        "display_label_zh": str(display_label_zh or "").strip(),
+        "aspect_key": aspect_key,
+        "dimension_en": dimension_en,
+        "dimension_zh": dimension_zh,
+        "sub_category": sub_category,
+        "evidence_span": evidence["evidence_span"],
+        "evidence_start": evidence["evidence_start"],
+        "evidence_end": evidence["evidence_end"],
+        "confidence": _clean_confidence(confidence),
+        "source": source,
+        "source_detail": source_detail,
+        "evidence_verified": evidence["evidence_verified"],
+        "cluster_propagated": bool(cluster_propagated),
+        "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+        "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+        "display_allowed": bool(display_allowed),
+        "customer_label_catalog_source": catalog_source,
+        "customer_label_catalog_ruleset_version": catalog_ruleset_version,
+    }
+
+
+def _issue_occurrence_from_normalized(
+    *,
+    comment_id: Any,
+    content: str,
+    aspect: dict[str, Any],
+    issue: dict[str, Any],
+    cluster_propagated: bool,
+) -> dict[str, Any]:
+    return _build_customer_label_occurrence(
+        label_type="issue",
+        comment_id=comment_id,
+        content=content,
+        aspect=aspect,
+        aspect_key=str(issue.get("aspect_key") or ""),
+        raw_label=str(issue.get("specific_issue_raw") or ""),
+        canonical_label_key=str(issue.get("canonical_issue_key") or ""),
+        display_label_en=str(issue.get("specific_issue") or ""),
+        display_label_zh=str(issue.get("specific_issue_zh") or ""),
+        evidence_span=str(issue.get("evidence_span") or ""),
+        confidence=str(issue.get("issue_confidence") or "medium"),
+        source_detail=str(issue.get("issue_source") or ""),
+        sub_category=str(issue.get("sub_category") or ""),
+        cluster_propagated=cluster_propagated,
+        display_allowed=bool(issue.get("display_allowed")),
+        catalog_source=str(issue.get("customer_label_catalog_source") or ""),
+        catalog_ruleset_version=str(issue.get("customer_label_catalog_ruleset_version") or ""),
+    )
+
+
+def _highlight_occurrence_from_normalized(
+    *,
+    comment_id: Any,
+    content: str,
+    aspect: dict[str, Any],
+    highlight: dict[str, Any],
+    cluster_propagated: bool,
+) -> dict[str, Any]:
+    return _build_customer_label_occurrence(
+        label_type="highlight",
+        comment_id=comment_id,
+        content=content,
+        aspect=aspect,
+        aspect_key=str(highlight.get("aspect_key") or ""),
+        raw_label=str(highlight.get("customer_highlight_raw") or ""),
+        canonical_label_key=str(highlight.get("canonical_highlight_key") or ""),
+        display_label_en=str(highlight.get("customer_highlight") or ""),
+        display_label_zh=str(highlight.get("customer_highlight_zh") or ""),
+        evidence_span=str(highlight.get("evidence_span") or ""),
+        confidence=str(highlight.get("highlight_confidence") or "medium"),
+        source_detail=str(highlight.get("highlight_source") or ""),
+        sub_category=str(highlight.get("sub_category") or ""),
+        cluster_propagated=cluster_propagated,
+        display_allowed=bool(highlight.get("highlight_display_allowed")),
+        catalog_source=str(highlight.get("customer_label_catalog_source") or ""),
+        catalog_ruleset_version=str(highlight.get("customer_label_catalog_ruleset_version") or ""),
+    )
+
+
+def _project_customer_label_occurrence(
+    occurrence: dict[str, Any],
+    *,
+    comment: dict[str, Any],
+    label_type: str,
+    locale: str,
+    inherited_cluster_propagated: bool = False,
+) -> dict[str, Any] | None:
+    if str(occurrence.get("type") or "").strip().lower() != label_type:
+        return None
+    if occurrence.get("display_allowed") is False:
+        return None
+
+    content = str(comment.get("content") or "").strip()
+    canonical = str(occurrence.get("canonical_label_key") or "").strip()
+    if not canonical:
+        return None
+
+    display_en = str(occurrence.get("display_label_en") or "").strip()
+    display_zh = str(occurrence.get("display_label_zh") or "").strip()
+    display_label = _display_label_for_locale(display_en, display_zh, locale)
+    aspect_key = str(occurrence.get("aspect_key") or "").strip()
+    dimension_en = str(occurrence.get("dimension_en") or "").strip()
+    dimension_zh = str(occurrence.get("dimension_zh") or "").strip()
+    if aspect_key and (not dimension_en or not dimension_zh):
+        fallback_en, fallback_zh = _aspect_dimension_labels({}, aspect_key)
+        dimension_en = dimension_en or fallback_en
+        dimension_zh = dimension_zh or fallback_zh
+    dimension = _display_label_for_locale(dimension_en, dimension_zh, locale)
+    if not display_label or not _is_customer_label_allowed(
+        display_label,
+        locale=locale,
+        aspect_key=aspect_key,
+        aspect_label=dimension,
+    ):
+        return None
+
+    stored_evidence = str(occurrence.get("evidence_span") or "").strip()
+    evidence = _locate_evidence_span(content, stored_evidence)
+    if not content:
+        evidence = {
+            "evidence_span": stored_evidence,
+            "evidence_start": int(occurrence.get("evidence_start") or -1),
+            "evidence_end": int(occurrence.get("evidence_end") or -1),
+            "evidence_verified": bool(occurrence.get("evidence_verified")),
+        }
+    cluster_propagated = bool(
+        inherited_cluster_propagated or occurrence.get("cluster_propagated")
+    )
+    evidence_verified = bool(evidence["evidence_verified"])
+    representative_verified = evidence_verified and not cluster_propagated
+    confidence = _clean_confidence(occurrence.get("confidence"), default="low")
+    source_detail = str(occurrence.get("source_detail") or "").strip()
+    source = _clean_occurrence_source(str(occurrence.get("source") or ""), source_detail)
+    common = {
+        "comment_id": comment.get("id")
+        if comment.get("id") is not None
+        else occurrence.get("comment_id"),
+        "content": content,
+        "type": label_type,
+        "raw_label": str(occurrence.get("raw_label") or "").strip(),
+        "canonical_label_key": canonical,
+        "display_label_en": display_en,
+        "display_label_zh": display_zh,
+        "aspect_key": aspect_key,
+        "dimension": dimension,
+        "dimension_en": dimension_en,
+        "dimension_zh": dimension_zh,
+        "sub_category": str(
+            occurrence.get("sub_category")
+            or comment.get("sub_category")
+            or comment.get("category")
+            or ""
+        ),
+        "evidence_span": evidence["evidence_span"],
+        "evidence_start": evidence["evidence_start"],
+        "evidence_end": evidence["evidence_end"],
+        "confidence": confidence,
+        "source": source,
+        "source_detail": source_detail,
+        "evidence_verified": evidence_verified,
+        "verified_evidence": representative_verified,
+        "cluster_propagated": cluster_propagated,
+        "schema_version": str(
+            occurrence.get("schema_version") or CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
+        ),
+        "ruleset_version": str(
+            occurrence.get("ruleset_version") or CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
+        ),
+        "display_allowed": True,
+        "source_review_allowed": bool(content and representative_verified),
+        "legacy_fallback": False,
+    }
+    if label_type == "issue":
+        issue_source = source_detail or source
+        return {
+            **common,
+            "specific_issue": display_label,
+            "specific_issue_en": display_en,
+            "specific_issue_zh": display_zh or display_en,
+            "canonical_issue_key": canonical,
+            "issue_confidence": confidence,
+            "issue_source": issue_source,
+            "customer_label_catalog_source": occurrence.get("customer_label_catalog_source", ""),
+            "customer_label_catalog_ruleset_version": occurrence.get(
+                "customer_label_catalog_ruleset_version",
+                "",
+            ),
+            "specific_issue_raw": common["raw_label"],
+        }
+    highlight_source = source_detail or source
+    return {
+        **common,
+        "customer_highlight": display_label,
+        "customer_highlight_en": display_en,
+        "customer_highlight_zh": display_zh or display_en,
+        "canonical_highlight_key": canonical,
+        "highlight_confidence": confidence,
+        "highlight_source": highlight_source,
+        "customer_label_catalog_source": occurrence.get("customer_label_catalog_source", ""),
+        "customer_label_catalog_ruleset_version": occurrence.get(
+            "customer_label_catalog_ruleset_version",
+            "",
+        ),
+        "customer_highlight_raw": common["raw_label"],
+        "highlight_display_allowed": True,
+    }
+
+
+def _project_customer_label_occurrences(
+    comment: dict[str, Any],
+    *,
+    label_type: str,
+    locale: str,
+    aspects_json: dict[str, Any],
+) -> list[dict[str, Any]]:
+    raw_occurrences = aspects_json.get("customer_label_occurrences")
+    if not isinstance(raw_occurrences, list):
+        return []
+    projected: list[dict[str, Any]] = []
+    for occurrence in raw_occurrences:
+        if not isinstance(occurrence, dict):
+            continue
+        item = _project_customer_label_occurrence(
+            occurrence,
+            comment=comment,
+            label_type=label_type,
+            locale=locale,
+            inherited_cluster_propagated=bool(aspects_json.get("cluster_propagated")),
+        )
+        if item:
+            projected.append(item)
+    return projected
 
 
 def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str, str, str] | None:
@@ -711,6 +1058,7 @@ def enrich_aspects_json(
     sub_category: str = "",
     content: str = "",
     locale: str = "en",
+    comment_id: Any = None,
 ) -> dict[str, Any] | None:
     aj = coerce_aspects_json(aspects_json)
     if not aj:
@@ -721,13 +1069,17 @@ def enrich_aspects_json(
         aspects = []
         enriched["aspects"] = aspects
     normalized_sub_category = sub_category or str(enriched.get("sub_category") or "")
+    content_text = str(content or "")
+    existing_occurrences = enriched.get("customer_label_occurrences")
+    occurrences: list[dict[str, Any]] = []
     for aspect in aspects:
         if not isinstance(aspect, dict):
             continue
+        cluster_propagated = bool(enriched.get("cluster_propagated") or aspect.get("cluster_propagated"))
         issue = _normalize_aspect_issue(
             aspect,
             sub_category=normalized_sub_category,
-            content=content,
+            content=content_text,
             locale=locale,
         )
         if issue:
@@ -747,10 +1099,20 @@ def enrich_aspects_json(
                     "aspect_label": issue["dimension"],
                 }
             )
+            if issue["display_allowed"]:
+                occurrences.append(
+                    _issue_occurrence_from_normalized(
+                        comment_id=comment_id,
+                        content=content_text,
+                        aspect=aspect,
+                        issue=issue,
+                        cluster_propagated=cluster_propagated,
+                    )
+                )
         highlight = _normalize_aspect_highlight(
             aspect,
             sub_category=normalized_sub_category,
-            content=content,
+            content=content_text,
             locale=locale,
         )
         if highlight:
@@ -770,8 +1132,24 @@ def enrich_aspects_json(
                     "aspect_label": highlight["dimension"],
                 }
             )
+            if highlight["highlight_display_allowed"]:
+                occurrences.append(
+                    _highlight_occurrence_from_normalized(
+                        comment_id=comment_id,
+                        content=content_text,
+                        aspect=aspect,
+                        highlight=highlight,
+                        cluster_propagated=cluster_propagated,
+                    )
+                )
     enriched["specific_issue_schema_version"] = SPECIFIC_ISSUE_SCHEMA_VERSION
     enriched["customer_label_schema_version"] = CUSTOMER_LABEL_SCHEMA_VERSION
+    enriched["customer_label_occurrence_schema_version"] = CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
+    enriched["customer_label_occurrence_ruleset_version"] = CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
+    if aspects or not isinstance(existing_occurrences, list):
+        enriched["customer_label_occurrences"] = occurrences
+    else:
+        enriched["customer_label_occurrences"] = existing_occurrences
     enriched["issue_ruleset_version"] = ISSUE_RULESET_VERSION
     enriched["highlight_ruleset_version"] = HIGHLIGHT_RULESET_VERSION
     if normalized_sub_category:
@@ -788,23 +1166,40 @@ def _legacy_issue_occurrences(comment: dict[str, Any], locale: str) -> list[dict
             continue
         if not _is_customer_label_allowed(issue, locale=locale):
             continue
+        canonical = _slug(issue)
         occurrences.append(
             {
                 "comment_id": comment.get("id"),
                 "content": content,
+                "type": "issue",
+                "raw_label": issue,
+                "canonical_label_key": canonical,
+                "display_label_en": issue,
+                "display_label_zh": issue,
                 "specific_issue": issue,
                 "specific_issue_en": issue,
                 "specific_issue_zh": issue,
-                "canonical_issue_key": _slug(issue),
+                "canonical_issue_key": canonical,
+                "confidence": "low",
                 "issue_confidence": "low",
+                "source": "legacy",
+                "source_detail": "legacy_issue_tag",
                 "issue_source": "legacy_issue_tag",
                 "specific_issue_raw": issue,
                 "display_allowed": True,
                 "aspect_key": "",
                 "dimension": "",
+                "dimension_en": "",
+                "dimension_zh": "",
                 "sub_category": str(comment.get("sub_category") or comment.get("category") or ""),
                 "evidence_span": "",
+                "evidence_start": -1,
+                "evidence_end": -1,
+                "evidence_verified": False,
                 "verified_evidence": False,
+                "cluster_propagated": False,
+                "schema_version": "",
+                "ruleset_version": "",
                 "legacy_fallback": True,
             }
         )
@@ -821,10 +1216,19 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
     content = str(comment.get("content") or "").strip()
     aj = coerce_aspects_json(comment.get("aspects_json"))
     schema_version = ""
+    occurrence_schema_version = ""
     has_specific_issue_payload = False
     occurrences: list[dict[str, Any]] = []
     if aj:
         schema_version = str(aj.get("specific_issue_schema_version") or "")
+        occurrence_schema_version = str(aj.get("customer_label_occurrence_schema_version") or "")
+        if occurrence_schema_version == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION:
+            return _project_customer_label_occurrences(
+                comment,
+                label_type="issue",
+                locale=locale,
+                aspects_json=aj,
+            )
         sub_category = str(aj.get("sub_category") or comment.get("sub_category") or "")
         aspects = [aspect for aspect in aj.get("aspects") or [] if isinstance(aspect, dict)]
         has_specific_issue_payload = any(
@@ -847,42 +1251,22 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
             )
             if not issue or not issue["display_allowed"]:
                 continue
-            display_label = issue["specific_issue_zh"] if locale.startswith("zh") else issue["specific_issue"]
-            evidence = issue["evidence_span"]
-            verified_evidence = _evidence_verified(
-                content,
-                evidence,
-                cluster_propagated=bool(aj.get("cluster_propagated")),
+            unified = _issue_occurrence_from_normalized(
+                comment_id=comment.get("id"),
+                cluster_propagated=bool(aj.get("cluster_propagated") or aspect.get("cluster_propagated")),
+                content=content,
+                aspect=aspect,
+                issue=issue,
             )
-            occurrences.append(
-                {
-                    "comment_id": comment.get("id"),
-                    "content": content,
-                    "specific_issue": display_label,
-                    "specific_issue_en": issue["specific_issue"],
-                    "specific_issue_zh": issue["specific_issue_zh"],
-                    "canonical_issue_key": issue["canonical_issue_key"],
-                    "issue_confidence": issue["issue_confidence"],
-                    "issue_source": issue["issue_source"],
-                    "customer_label_catalog_source": issue["customer_label_catalog_source"],
-                    "customer_label_catalog_ruleset_version": issue[
-                        "customer_label_catalog_ruleset_version"
-                    ],
-                    "specific_issue_raw": issue["specific_issue_raw"],
-                    "display_allowed": True,
-                    "aspect_key": issue["aspect_key"],
-                    "dimension": issue["dimension"],
-                    "sub_category": issue["sub_category"],
-                    "evidence_span": evidence,
-                    "verified_evidence": verified_evidence,
-                    "source_review_allowed": bool(
-                        content
-                        and not bool(aj.get("cluster_propagated"))
-                        and (verified_evidence or issue["issue_source"] != "broad_fallback")
-                    ),
-                    "legacy_fallback": False,
-                }
+            projected = _project_customer_label_occurrence(
+                unified,
+                comment=comment,
+                label_type="issue",
+                locale=locale,
+                inherited_cluster_propagated=bool(aj.get("cluster_propagated")),
             )
+            if projected:
+                occurrences.append(projected)
     if occurrences or schema_version == SPECIFIC_ISSUE_SCHEMA_VERSION or has_specific_issue_payload:
         return occurrences
     return _legacy_issue_occurrences(comment, locale)
@@ -1007,21 +1391,40 @@ def _legacy_highlight_occurrences(comment: dict[str, Any], locale: str) -> list[
             continue
         if not _is_customer_label_allowed(highlight, locale=locale):
             continue
+        canonical = _slug(highlight)
         occurrences.append(
             {
                 "comment_id": comment.get("id"),
                 "content": content,
+                "type": "highlight",
+                "raw_label": highlight,
+                "canonical_label_key": canonical,
+                "display_label_en": highlight,
+                "display_label_zh": highlight,
                 "customer_highlight": highlight,
-                "canonical_highlight_key": _slug(highlight),
+                "customer_highlight_en": highlight,
+                "customer_highlight_zh": highlight,
+                "canonical_highlight_key": canonical,
+                "confidence": "low",
                 "highlight_confidence": "low",
+                "source": "legacy",
+                "source_detail": "legacy_highlight_tag",
                 "highlight_source": "legacy_highlight_tag",
                 "customer_highlight_raw": highlight,
                 "highlight_display_allowed": True,
                 "aspect_key": "",
                 "dimension": "",
+                "dimension_en": "",
+                "dimension_zh": "",
                 "sub_category": str(comment.get("sub_category") or comment.get("category") or ""),
                 "evidence_span": "",
+                "evidence_start": -1,
+                "evidence_end": -1,
+                "evidence_verified": False,
                 "verified_evidence": False,
+                "cluster_propagated": False,
+                "schema_version": "",
+                "ruleset_version": "",
                 "source_review_allowed": bool(content),
                 "legacy_fallback": True,
             }
@@ -1034,11 +1437,20 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
     aj = coerce_aspects_json(comment.get("aspects_json"))
     customer_schema_version = ""
     specific_schema_version = ""
+    occurrence_schema_version = ""
     has_highlight_payload = False
     occurrences: list[dict[str, Any]] = []
     if aj:
         customer_schema_version = str(aj.get("customer_label_schema_version") or "")
         specific_schema_version = str(aj.get("specific_issue_schema_version") or "")
+        occurrence_schema_version = str(aj.get("customer_label_occurrence_schema_version") or "")
+        if occurrence_schema_version == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION:
+            return _project_customer_label_occurrences(
+                comment,
+                label_type="highlight",
+                locale=locale,
+                aspects_json=aj,
+            )
         sub_category = str(aj.get("sub_category") or comment.get("sub_category") or "")
         aspects = [aspect for aspect in aj.get("aspects") or [] if isinstance(aspect, dict)]
         has_highlight_payload = any(
@@ -1069,48 +1481,22 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
             )
             if not highlight or not highlight["highlight_display_allowed"]:
                 continue
-            display_label = (
-                highlight["customer_highlight_zh"]
-                if locale.startswith("zh")
-                else highlight["customer_highlight"]
+            unified = _highlight_occurrence_from_normalized(
+                comment_id=comment.get("id"),
+                cluster_propagated=bool(aj.get("cluster_propagated") or aspect.get("cluster_propagated")),
+                content=content,
+                aspect=aspect,
+                highlight=highlight,
             )
-            evidence = highlight["evidence_span"]
-            verified_evidence = _evidence_verified(
-                content,
-                evidence,
-                cluster_propagated=bool(aj.get("cluster_propagated")),
+            projected = _project_customer_label_occurrence(
+                unified,
+                comment=comment,
+                label_type="highlight",
+                locale=locale,
+                inherited_cluster_propagated=bool(aj.get("cluster_propagated")),
             )
-            occurrences.append(
-                {
-                    "comment_id": comment.get("id"),
-                    "content": content,
-                    "customer_highlight": display_label,
-                    "customer_highlight_en": highlight["customer_highlight"],
-                    "customer_highlight_zh": highlight["customer_highlight_zh"],
-                    "canonical_highlight_key": highlight["canonical_highlight_key"],
-                    "highlight_confidence": highlight["highlight_confidence"],
-                    "highlight_source": highlight["highlight_source"],
-                    "customer_label_catalog_source": highlight["customer_label_catalog_source"],
-                    "customer_label_catalog_ruleset_version": highlight[
-                        "customer_label_catalog_ruleset_version"
-                    ],
-                    "customer_highlight_raw": highlight["customer_highlight_raw"],
-                    "highlight_display_allowed": True,
-                    "aspect_key": highlight["aspect_key"],
-                    "dimension": highlight["dimension"],
-                    "dimension_en": highlight["dimension_en"],
-                    "dimension_zh": highlight["dimension_zh"],
-                    "sub_category": highlight["sub_category"],
-                    "evidence_span": evidence,
-                    "verified_evidence": verified_evidence,
-                    "source_review_allowed": bool(
-                        content
-                        and not bool(aj.get("cluster_propagated"))
-                        and (verified_evidence or highlight["highlight_source"] != "broad_fallback")
-                    ),
-                    "legacy_fallback": False,
-                }
-            )
+            if projected:
+                occurrences.append(projected)
     if occurrences or customer_schema_version == CUSTOMER_LABEL_SCHEMA_VERSION or has_highlight_payload:
         return occurrences
     return _legacy_highlight_occurrences(comment, locale)
@@ -1274,6 +1660,8 @@ def decorate_comment_customer_labels(comment: dict[str, Any], locale: str = "en"
         has_new_payload = (
             str(aj.get("specific_issue_schema_version") or "") == SPECIFIC_ISSUE_SCHEMA_VERSION
             or str(aj.get("customer_label_schema_version") or "") == CUSTOMER_LABEL_SCHEMA_VERSION
+            or str(aj.get("customer_label_occurrence_schema_version") or "")
+            == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
             or any(
                 isinstance(aspect, dict)
                 and any(
@@ -1294,6 +1682,7 @@ def decorate_comment_customer_labels(comment: dict[str, Any], locale: str = "en"
                 sub_category=str(aj.get("sub_category") or decorated.get("sub_category") or ""),
                 content=str(decorated.get("content") or ""),
                 locale=locale,
+                comment_id=decorated.get("id"),
             )
             if enriched:
                 decorated["aspects_json"] = enriched
