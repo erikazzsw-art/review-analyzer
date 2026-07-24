@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app/app-shell";
+import { AddVariantButton } from "@/components/products/add-variant-button";
 import { DeleteVariantButton } from "@/components/products/delete-variant-button";
 import { DownloadVariantsButton } from "@/components/products/download-variants-button";
 import { EditProductButton } from "@/components/products/edit-product-button";
@@ -207,11 +208,17 @@ export default async function ProductDetailPage({ params }: Props) {
               <h2 className="font-heading text-lg font-bold text-ink">
                 {t("detail.variantList", { count: variants.length })}
               </h2>
-              <DownloadVariantsButton
-                parentProductId={parentProductId}
-                parentName={name}
-                variants={variants}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <AddVariantButton
+                  productId={productId}
+                  defaultPlatform={(product.platform as string | null) ?? "Amazon"}
+                />
+                <DownloadVariantsButton
+                  parentProductId={parentProductId}
+                  parentName={name}
+                  variants={variants}
+                />
+              </div>
             </div>
 
             {variants.length > 0 ? (

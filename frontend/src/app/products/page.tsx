@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyAuthState } from "@/components/app/empty-auth-state";
 import { CreateProductButton } from "@/components/products/create-product-button";
+import { ImportProductsButton } from "@/components/products/import-products-button";
 import { ProductTreeView } from "@/components/products/product-tree-view";
 import { getProducts, isApiError } from "@/lib/api/server";
 import { buildNoIndexMetadata } from "@/lib/seo";
@@ -52,7 +53,10 @@ export default async function ProductsPage() {
               </div>
             </div>
           </section>
-          <CreateProductButton />
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <ImportProductsButton />
+            <CreateProductButton />
+          </div>
         </div>
 
         {response.items.length > 0 ? (
@@ -66,7 +70,10 @@ export default async function ProductsPage() {
               {t("page.emptyDescription")}
             </p>
             <div className="mt-6">
-              <CreateProductButton />
+              <div className="flex flex-wrap gap-2">
+                <ImportProductsButton />
+                <CreateProductButton />
+              </div>
             </div>
           </section>
         )}

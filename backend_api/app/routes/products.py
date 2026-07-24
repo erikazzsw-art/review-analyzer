@@ -23,17 +23,18 @@ from review_analyzer.database import get_connection
 from review_analyzer.product_store import (
     ProductParentNameConflictError,
     create_product,
-    create_variant,
     delete_product,
     delete_variant,
     get_parent_variant_analysis,
     get_product_by_id,
+    get_product_by_parent_id,
     get_product_listing_by_product_id,
     get_product_overview_rows,
     get_variants_with_review_counts,
     move_variant_to_parent,
     plugin_upload_listing,
     update_product,
+    upsert_manual_variant,
 )
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -65,6 +66,40 @@ class ProductUpdateRequest(BaseModel):
     production_cycle_days: int | None = None
 
 
+class ProductImportRow(BaseModel):
+    row_number: int | None = None
+    product_name: str | None = None
+    platform: str | None = None
+    category: str | None = None
+    lifecycle_stage: str | None = None
+    current_version: str | None = None
+    core_selling_points: str | None = None
+    main_competitors: str | None = None
+    owner_role: str | None = None
+    production_cycle_days: int | None = None
+    child_asin: str | None = None
+    variant_sku: str | None = None
+    variant_name: str | None = None
+    color: str | None = None
+    size: str | None = None
+    style: str | None = None
+    material: str | None = None
+    status: str | None = None
+    launched_at: str | None = None
+    image_url: str | None = None
+    brand: str | None = None
+    price: float | None = None
+    price_currency: str | None = None
+    sales_volume: int | None = None
+    sales_revenue: float | None = None
+    is_fba: bool | None = None
+    listing_date: str | None = None
+
+
+class ProductImportRequest(BaseModel):
+    rows: list[ProductImportRow]
+
+
 def _visible_product_rows(rows: list[dict]) -> list[dict]:
     return [
         row
@@ -88,6 +123,52 @@ def _product_similarity(query: str, value: str) -> float:
     if q_norm in value_norm or value_norm in q_norm:
         return 0.92 * min(len(q_norm), len(value_norm)) / max(len(q_norm), len(value_norm))
     return SequenceMatcher(None, q_norm, value_norm).ratio()
+
+
+def _clean_text(value: object) -> str | None:
+    text = str(value or "").strip()
+    return text or None
+
+
+def _product_import_data(row: ProductImportRow) -> dict:
+    product_name = _clean_text(row.product_name)
+    data = {
+        "parent_product_id": product_name,
+        "name": product_name,
+        "platform": _clean_text(row.platform) or "Amazon",
+        "category": _clean_text(row.category),
+        "lifecycle_stage": _clean_text(row.lifecycle_stage) or "growth",
+        "current_version": _clean_text(row.current_version) or "V1",
+        "core_selling_points": _clean_text(row.core_selling_points),
+        "main_competitors": _clean_text(row.main_competitors),
+        "owner_role": _clean_text(row.owner_role),
+        "production_cycle_days": row.production_cycle_days,
+    }
+    return {key: value for key, value in data.items() if value is not None}
+
+
+def _variant_import_data(row: ProductImportRow, platform: str | None) -> dict:
+    data = {
+        "child_asin": _clean_text(row.child_asin),
+        "variant_sku": _clean_text(row.variant_sku) or _clean_text(row.child_asin),
+        "name": _clean_text(row.variant_name),
+        "platform": _clean_text(row.platform) or platform,
+        "color": _clean_text(row.color),
+        "size": _clean_text(row.size),
+        "style": _clean_text(row.style),
+        "material": _clean_text(row.material),
+        "status": _clean_text(row.status) or "active",
+        "launched_at": _clean_text(row.launched_at),
+        "image_url": _clean_text(row.image_url),
+        "brand": _clean_text(row.brand),
+        "price": row.price,
+        "price_currency": _clean_text(row.price_currency),
+        "sales_volume": row.sales_volume,
+        "sales_revenue": row.sales_revenue,
+        "is_fba": row.is_fba,
+        "listing_date": _clean_text(row.listing_date),
+    }
+    return {key: value for key, value in data.items() if value is not None}
 
 
 @router.get("", response_model=ProductsResponsePayload)
@@ -280,6 +361,82 @@ def create_product_route(
     return {"id": product_id}
 
 
+@router.post("/import", status_code=status.HTTP_200_OK)
+def import_products_route(
+    body: ProductImportRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """批量导入产品和子 ASIN 变体。"""
+    user_id = int(current_user["id"])
+    if not body.rows:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="导入表格为空。",
+        )
+
+    product_ids: dict[str, int] = {}
+    products_created = 0
+    products_updated = 0
+    variants_created = 0
+    variants_updated = 0
+    variants_skipped = 0
+    errors: list[dict[str, object]] = []
+
+    for index, row in enumerate(body.rows, start=1):
+        row_number = row.row_number or index + 1
+        product_name = _clean_text(row.product_name)
+        if not product_name:
+            errors.append({"row": row_number, "detail": "产品名称不能为空。"})
+            continue
+
+        try:
+            product_data = _product_import_data(row)
+            if product_name in product_ids:
+                product_id = product_ids[product_name]
+            else:
+                existing = get_product_by_parent_id(user_id, product_name)
+                if existing:
+                    product_id = int(existing["id"])
+                    update_payload = {
+                        key: value
+                        for key, value in product_data.items()
+                        if key not in {"parent_product_id", "name"}
+                    }
+                    if update_payload and update_product(user_id, product_id, update_payload):
+                        products_updated += 1
+                else:
+                    product_id = create_product(user_id, product_data)
+                    products_created += 1
+                product_ids[product_name] = product_id
+
+            if not _clean_text(row.child_asin):
+                variants_skipped += 1
+                continue
+
+            variant_result = upsert_manual_variant(
+                user_id,
+                product_id,
+                _variant_import_data(row, _clean_text(row.platform) or product_data.get("platform")),
+            )
+            if variant_result.get("action") == "created":
+                variants_created += 1
+            else:
+                variants_updated += 1
+        except (ProductParentNameConflictError, ValueError) as exc:
+            errors.append({"row": row_number, "detail": str(exc)})
+
+    return {
+        "ok": len(errors) == 0,
+        "total_rows": len(body.rows),
+        "products_created": products_created,
+        "products_updated": products_updated,
+        "variants_created": variants_created,
+        "variants_updated": variants_updated,
+        "variants_skipped": variants_skipped,
+        "errors": errors,
+    }
+
+
 @router.patch("/{product_id}")
 def update_product_route(
     product_id: int,
@@ -400,6 +557,20 @@ class AddVariantRequest(BaseModel):
     variant_sku: str | None = None
     name: str | None = None
     platform: str | None = None
+    color: str | None = None
+    size: str | None = None
+    style: str | None = None
+    material: str | None = None
+    brand: str | None = None
+    price: float | None = None
+    price_currency: str | None = None
+    sales_volume: int | None = None
+    sales_revenue: float | None = None
+    is_fba: bool | None = None
+    listing_date: str | None = None
+    launched_at: str | None = None
+    status: str | None = None
+    image_url: str | None = None
 
 
 class MoveVariantRequest(BaseModel):
@@ -424,13 +595,13 @@ def add_variant_route(
     data["variant_sku"] = data.get("variant_sku") or body.child_asin
     data["platform"] = data.get("platform") or existing.get("platform")
     try:
-        variant_id = create_variant(user_id, product_id, data)
+        result = upsert_manual_variant(user_id, product_id, data)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
-    return {"variant_id": variant_id, "child_asin": body.child_asin}
+    return result
 
 
 @router.patch("/{product_id}/variants/{variant_id}/move")
