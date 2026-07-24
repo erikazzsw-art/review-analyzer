@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app/app-shell";
+import { AddVariantButton } from "@/components/products/add-variant-button";
 import { DeleteVariantButton } from "@/components/products/delete-variant-button";
 import { DownloadVariantsButton } from "@/components/products/download-variants-button";
 import { EditProductButton } from "@/components/products/edit-product-button";
@@ -84,8 +85,7 @@ export default async function ProductDetailPage({ params }: Props) {
     const rating = product.rating != null ? Number(product.rating) : null;
     const imageUrl = product.image_url as string | null;
     const category = product.category as string | null;
-    const ratingsTotal = product.ratings_total as number | null;
-    const reviewsTotal = product.reviews_total as number | null;
+    const reviewCount = Number(product.review_count ?? 0);
     const amazonAsin =
       normalizeAmazonAsin(listing?.parent_asin) ||
       getFallbackAmazonAsin(parentProductId, variants, product.platform);
@@ -144,15 +144,10 @@ export default async function ProductDetailPage({ params }: Props) {
                     ))}
                   </div>
                   <span className="text-sm font-semibold text-ink">{rating.toFixed(1)}</span>
-                  {ratingsTotal != null && (
-                    <span className="text-xs text-soft">{t("detail.ratingCount", { count: ratingsTotal })}</span>
-                  )}
                 </div>
               )}
 
-              {reviewsTotal != null && (
-                <p className="mt-2 text-sm text-soft">{t("detail.reviewCount", { count: reviewsTotal })}</p>
-              )}
+              <p className="mt-2 text-sm text-soft">{t("detail.reviewCount", { count: reviewCount })}</p>
 
               {/* Action buttons */}
               <div className="mt-4 flex flex-wrap gap-3">
@@ -213,11 +208,17 @@ export default async function ProductDetailPage({ params }: Props) {
               <h2 className="font-heading text-lg font-bold text-ink">
                 {t("detail.variantList", { count: variants.length })}
               </h2>
-              <DownloadVariantsButton
-                parentProductId={parentProductId}
-                parentName={name}
-                variants={variants}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <AddVariantButton
+                  productId={productId}
+                  defaultPlatform={(product.platform as string | null) ?? "Amazon"}
+                />
+                <DownloadVariantsButton
+                  parentProductId={parentProductId}
+                  parentName={name}
+                  variants={variants}
+                />
+              </div>
             </div>
 
             {variants.length > 0 ? (

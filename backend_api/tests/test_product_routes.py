@@ -161,6 +161,133 @@ def test_update_product_reports_parent_name_conflict(monkeypatch):
     assert response.json()["detail"] == "父体名称已存在，请换一个名称。"
 
 
+def test_import_products_creates_product_and_variant(monkeypatch):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_by_parent_id",
+        lambda user_id, parent_product_id: None,
+    )
+
+    def fake_create_product(user_id: int, data: dict):
+        captured["create_product"] = {"user_id": user_id, "data": data}
+        return 12
+
+    def fake_upsert_manual_variant(user_id: int, product_id: int, data: dict):
+        captured["variant"] = {"user_id": user_id, "product_id": product_id, "data": data}
+        return {"variant_id": 31, "child_asin": data["child_asin"], "action": "created"}
+
+    monkeypatch.setattr("backend_api.app.routes.products.create_product", fake_create_product)
+    monkeypatch.setattr("backend_api.app.routes.products.upsert_manual_variant", fake_upsert_manual_variant)
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/products/import",
+            json={
+                "rows": [
+                    {
+                        "row_number": 2,
+                        "product_name": "TIDEWE 下水服 WD001",
+                        "platform": "Amazon",
+                        "category": "Outdoor",
+                        "child_asin": "B0779NTMYD",
+                        "variant_name": "Black M",
+                        "color": "Black",
+                        "price": 99.99,
+                        "is_fba": True,
+                    }
+                ]
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["products_created"] == 1
+    assert response.json()["variants_created"] == 1
+    assert captured["create_product"] == {
+        "user_id": 7,
+        "data": {
+            "parent_product_id": "TIDEWE 下水服 WD001",
+            "name": "TIDEWE 下水服 WD001",
+            "platform": "Amazon",
+            "category": "Outdoor",
+            "lifecycle_stage": "growth",
+            "current_version": "V1",
+        },
+    }
+    assert captured["variant"] == {
+        "user_id": 7,
+        "product_id": 12,
+        "data": {
+            "child_asin": "B0779NTMYD",
+            "variant_sku": "B0779NTMYD",
+            "name": "Black M",
+            "platform": "Amazon",
+            "color": "Black",
+            "status": "active",
+            "price": 99.99,
+            "is_fba": True,
+        },
+    }
+
+
+def test_add_variant_route_passes_extended_fields(monkeypatch):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_product_by_id",
+        lambda user_id, product_id: {"id": product_id, "parent_product_id": "TIDEWE", "platform": "Amazon"},
+    )
+
+    def fake_upsert_manual_variant(user_id: int, product_id: int, data: dict):
+        captured["data"] = data
+        return {"variant_id": 31, "child_asin": data["child_asin"], "action": "created"}
+
+    monkeypatch.setattr("backend_api.app.routes.products.upsert_manual_variant", fake_upsert_manual_variant)
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/products/12/variants",
+            json={
+                "child_asin": "B0779NTMYD",
+                "variant_sku": "",
+                "name": "Black M",
+                "color": "Black",
+                "size": "M",
+                "material": "Neoprene",
+                "brand": "TIDEWE",
+                "price": 99.99,
+                "price_currency": "USD",
+                "is_fba": True,
+                "listing_date": "2026-01-15",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    assert response.json() == {"variant_id": 31, "child_asin": "B0779NTMYD", "action": "created"}
+    assert captured["data"] == {
+        "child_asin": "B0779NTMYD",
+        "variant_sku": "B0779NTMYD",
+        "name": "Black M",
+        "color": "Black",
+        "size": "M",
+        "material": "Neoprene",
+        "brand": "TIDEWE",
+        "price": 99.99,
+        "price_currency": "USD",
+        "is_fba": True,
+        "listing_date": "2026-01-15",
+        "platform": "Amazon",
+    }
+
+
 def test_get_product_detail_includes_listing_metadata(monkeypatch):
     monkeypatch.setattr(
         "backend_api.app.routes.products.get_product_by_id",
@@ -185,6 +312,10 @@ def test_get_product_detail_includes_listing_metadata(monkeypatch):
             "scraped_at": None,
         },
     )
+    monkeypatch.setattr(
+        "backend_api.app.routes.products.get_parent_variant_analysis",
+        lambda user_id, product_id: {"total_reviews": 18},
+    )
     app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
 
     try:
@@ -194,6 +325,7 @@ def test_get_product_detail_includes_listing_metadata(monkeypatch):
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
+    assert response.json()["product"]["review_count"] == 18
     assert response.json()["listing"] == {
         "parent_asin": "B0B14JY8S8",
         "marketplace": "us",

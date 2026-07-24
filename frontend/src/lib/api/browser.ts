@@ -1202,12 +1202,89 @@ export type ProductCreatePayload = {
 
 export type ProductUpdatePayload = Partial<ProductCreatePayload>;
 
+export type ProductVariantCreatePayload = {
+  child_asin: string;
+  variant_sku?: string;
+  name?: string;
+  platform?: string;
+  color?: string;
+  size?: string;
+  style?: string;
+  material?: string;
+  brand?: string;
+  price?: number;
+  price_currency?: string;
+  sales_volume?: number;
+  sales_revenue?: number;
+  is_fba?: boolean;
+  listing_date?: string;
+  launched_at?: string;
+  status?: string;
+  image_url?: string;
+};
+
+export type ProductImportRowPayload = {
+  row_number?: number;
+  product_name?: string;
+  platform?: string;
+  category?: string;
+  lifecycle_stage?: string;
+  current_version?: string;
+  core_selling_points?: string;
+  main_competitors?: string;
+  owner_role?: string;
+  production_cycle_days?: number;
+  child_asin?: string;
+  variant_sku?: string;
+  variant_name?: string;
+  color?: string;
+  size?: string;
+  style?: string;
+  material?: string;
+  status?: string;
+  launched_at?: string;
+  image_url?: string;
+  brand?: string;
+  price?: number;
+  price_currency?: string;
+  sales_volume?: number;
+  sales_revenue?: number;
+  is_fba?: boolean;
+  listing_date?: string;
+};
+
+export type ProductImportResponse = {
+  ok: boolean;
+  total_rows: number;
+  products_created: number;
+  products_updated: number;
+  variants_created: number;
+  variants_updated: number;
+  variants_skipped: number;
+  errors: Array<{ row: number; detail: string }>;
+};
+
 export async function createProduct(payload: ProductCreatePayload): Promise<{ id: number }> {
   const response = await fetch(`${getApiBaseUrl()}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
+}
+
+export async function importProducts(
+  rows: ProductImportRowPayload[],
+): Promise<ProductImportResponse> {
+  const response = await fetch(`${getApiBaseUrl()}/products/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ rows }),
   });
   if (!response.ok) {
     throw await parseError(response);
@@ -1235,6 +1312,22 @@ export async function deleteProduct(productId: number): Promise<void> {
   if (!response.ok) {
     throw await parseError(response);
   }
+}
+
+export async function addProductVariant(
+  productId: number,
+  payload: ProductVariantCreatePayload,
+): Promise<{ variant_id: number; child_asin: string; action?: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/products/${productId}/variants`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.json();
 }
 
 export async function deleteVariant(productId: number, variantId: number): Promise<void> {
