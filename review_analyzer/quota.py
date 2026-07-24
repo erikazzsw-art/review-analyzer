@@ -161,16 +161,23 @@ def quota_check(user_id: int, dimension: str, amount: int = 1) -> tuple[bool, st
     if dim is None:
         return True, ""
 
-    plan = get_user_plan(user_id)
-    limit = _get_limit(dimension, plan)
-    if limit == -1:
-        return True, ""
-
     period = dim["period"]
 
     if period == "per_request":
+        free_limit = _get_limit(dimension, "free")
+        if free_limit == -1 or amount <= free_limit:
+            return True, ""
+        plan = get_user_plan(user_id)
+        limit = _get_limit(dimension, plan)
+        if limit == -1:
+            return True, ""
         if amount > limit:
             return False, _format_message(dimension, amount, limit)
+        return True, ""
+
+    plan = get_user_plan(user_id)
+    limit = _get_limit(dimension, plan)
+    if limit == -1:
         return True, ""
 
     if period in ("monthly", "daily", "forever"):

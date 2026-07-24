@@ -19,6 +19,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from backend_api.app.services.specific_issue import customer_highlight_tags_from_aspects
+
 # 11 类 category slug（对外稳定业务标识；供 migration / tests / exporter 复用）
 CATEGORY_SLUGS: tuple[str, ...] = (
     "product_quality",
@@ -277,6 +279,7 @@ def aspects_to_legacy_schema(
     content: str,
     pain_points: list[str] | None = None,
     highlights: list[str] | None = None,
+    locale: str = "en",
 ) -> dict[str, Any]:
     """V4-T3 输出 → 生产 8 字段（向后兼容 Streamlit + Next.js 旧 UI）."""
     pain_points = pain_points or []
@@ -301,7 +304,11 @@ def aspects_to_legacy_schema(
     reason = _derive_reason(aspects, pain_points)
     improvement = _derive_improvement(pain_points, aspects)
     issue_tag = _aspects_to_issue_tag(aspects)
-    highlight_tag = _aspects_to_highlight_tag(aspects)
+    highlight_tag = customer_highlight_tags_from_aspects(
+        aspects,
+        content=content,
+        locale=locale,
+    ) or _aspects_to_highlight_tag(aspects)
 
     return {
         "sentiment": sentiment,

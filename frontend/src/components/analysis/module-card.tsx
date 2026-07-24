@@ -11,6 +11,7 @@ import { useTranslatedContent } from "@/hooks/useTranslatedContent";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
 import { DownloadTagButton } from "@/components/analysis/download-tag-button";
 import { aspectLabel } from "@/lib/aspect-labels";
+import { customerTagText } from "@/lib/customer-labels";
 
 type SessionInfo = {
   product_ref_id?: number | null;
@@ -23,6 +24,8 @@ type SessionInfo = {
 type IssueMeta = {
   specificIssue?: string | null;
   canonicalIssueKey?: string | null;
+  customerHighlight?: string | null;
+  canonicalHighlightKey?: string | null;
   aspectKey?: string | null;
   aspectKeys?: string[] | null;
   dimension?: string | null;
@@ -221,6 +224,19 @@ function issueMetaFromRow(row: Record<string, unknown> | undefined, fallbackIssu
   };
 }
 
+function highlightMetaFromRow(row: Record<string, unknown> | undefined, fallbackHighlight = ""): IssueMeta {
+  const source = row || {};
+  const aspectKeys = issueAspectKeys(source);
+  return {
+    customerHighlight: String(source.customer_highlight || source.tag || source.label || fallbackHighlight) || fallbackHighlight || null,
+    canonicalHighlightKey: String(source.canonical_highlight_key || "") || null,
+    aspectKey: aspectKeys[0] || String(source.aspect_key || "") || null,
+    aspectKeys: aspectKeys.length > 0 ? aspectKeys : null,
+    dimension: issueDimension(source) || null,
+    subCategory: String(source.sub_category || "") || null,
+  };
+}
+
 function buildClientXlsx(
   moduleKey: string,
   comments: Array<Record<string, unknown>>,
@@ -231,18 +247,23 @@ function buildClientXlsx(
   const negative = comments.filter((c) => c.sentiment === "negative");
   const headers =
     locale === "zh"
-      ? ["排名", "标签", "出现次数", "提及占比", "代表性评论（前20条摘要）"]
-      : ["Rank", "Tag", "Count", "Percentage", "Representative Reviews (Top 20)"];
+      ? ["排名", "客户标签", "出现次数", "提及占比", "代表性评论（前20条摘要）"]
+      : ["Rank", "Customer Label", "Count", "Percentage", "Representative Reviews (Top 20)"];
   const issueHeaders =
     locale === "zh"
-      ? ["排名", "Specific Issue", "出现次数", "提及占比", "Dimension", "Canonical Issue Key", "Aspect Key", "Evidence Span", "Issue Confidence", "代表性评论（前20条摘要）"]
-      : ["Rank", "Specific Issue", "Count", "Mention Share", "Dimension", "Canonical Issue Key", "Aspect Key", "Evidence Span", "Issue Confidence", "Representative Reviews (Top 20)"];
+      ? ["排名", "客户痛点", "出现次数", "提及占比", "内部维度", "Canonical Issue Key", "Aspect Key", "Evidence Span", "Issue Confidence", "代表性评论（前20条摘要）"]
+      : ["Rank", "Customer Issue", "Count", "Mention Share", "Internal Aspect", "Canonical Issue Key", "Aspect Key", "Evidence Span", "Issue Confidence", "Representative Reviews (Top 20)"];
 
   function buildTop10(pool: Array<Record<string, unknown>>, tagField: string) {
     const counter: Record<string, number> = {};
     const sources: Record<string, string[]> = {};
     for (const c of pool) {
-      const raw = String(c[tagField] || "");
+      const raw =
+        tagField === "highlight_tag"
+          ? customerTagText(c, "highlight", locale)
+          : tagField === "issue_tag"
+            ? customerTagText(c, "issue", locale)
+            : String(c[tagField] || "");
       if (!raw) continue;
       const seen = new Set<string>();
       for (const t of raw.split(",")) {
@@ -301,7 +322,7 @@ function buildClientXlsx(
     if (occurrences.length > 0 || schemaVersion === "1.0") {
       return occurrences;
     }
-    return String(comment.issue_tag || "")
+    return customerTagText(comment, "issue", locale)
       .split(",")
       .map((tag) => tag.trim())
       .filter(Boolean)
@@ -478,6 +499,8 @@ function TranslatedView({
             locale={locale || "zh"}
             specificIssue={meta.specificIssue}
             canonicalIssueKey={meta.canonicalIssueKey}
+            customerHighlight={meta.customerHighlight}
+            canonicalHighlightKey={meta.canonicalHighlightKey}
             aspectKey={meta.aspectKey}
             aspectKeys={meta.aspectKeys}
             dimension={meta.dimension}
@@ -513,8 +536,10 @@ function TranslatedView({
             <div className="space-y-2">
               <div className="text-xs font-semibold text-[#059669]">{t("positiveFeedback")}</div>
               {positive.map((row: Record<string, unknown>, i: number) => {
-                const tag = String(row.tag || "");
-                const origTag = String(origPositive[i]?.tag || tag);
+                const origRow = origPositive[i];
+                const tag = String(row.customer_highlight || row.tag || "");
+                const origTag = String(origRow?.customer_highlight || origRow?.tag || tag);
+                const meta = highlightMetaFromRow(origRow, origTag);
                 const pct = Number(row.pct || 0);
                 const reason = String(row.reason || "");
                 return (
@@ -525,7 +550,7 @@ function TranslatedView({
                       <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
                     </div>
                     {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
-                    {renderRowButtons(origTag, pct, reason, "highlight_tag", false)}
+                    {renderRowButtons(origTag, pct, reason, "highlight_tag", false, meta)}
                   </div>
                 );
               })}
@@ -572,11 +597,13 @@ function TranslatedView({
               moduleKey === "unmet_needs" ? "issue_tag" : "highlight_tag";
             const canAction = moduleKey === "unmet_needs" && !!showAction;
             const isSpecificIssue = moduleKey === "unmet_needs";
-            const tag = isSpecificIssue ? issueLabel(row, issueLabel(origRow || {}, "")) : String(row.tag || row.label || "");
+            const tag = isSpecificIssue
+              ? issueLabel(row, issueLabel(origRow || {}, ""))
+              : String(row.customer_highlight || row.tag || row.label || "");
             const origTag = isSpecificIssue
               ? issueLabel(origRow || {}, tag)
-              : String(origRow?.tag || origRow?.label || tag);
-            const meta = isSpecificIssue ? issueMetaFromRow(origRow, origTag) : {};
+              : String(origRow?.customer_highlight || origRow?.tag || origRow?.label || tag);
+            const meta = isSpecificIssue ? issueMetaFromRow(origRow, origTag) : highlightMetaFromRow(origRow, origTag);
             const dimension = isSpecificIssue ? issueDimension(row) || meta.dimension || "" : "";
             return (
               <div key={i} className="rounded-card border border-line bg-[#faf8fb] px-4 py-3">

@@ -9,7 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 
 from backend_api.app.deps import get_current_user
-from backend_api.app.services.specific_issue import build_specific_issue_rows
+from backend_api.app.services.specific_issue import (
+    build_customer_highlight_rows,
+    build_specific_issue_rows,
+)
 from review_analyzer.database import get_comments, get_session_by_id
 from review_analyzer.exporter import export_to_xlsx
 from review_analyzer.quota import InsufficientCreditsError, credit_consume, quota_check
@@ -84,14 +87,42 @@ def _top10_headers(locale: str) -> list[str]:
     return ["Rank", "Tag", "Count", "Percentage", "Representative Reviews (Top 20)"]
 
 
+def _customer_highlight_top10_headers(locale: str) -> list[str]:
+    if locale == "zh":
+        return [
+            "排名",
+            "客户亮点",
+            "出现次数",
+            "提及占比",
+            "内部维度",
+            "Canonical Highlight Key",
+            "Aspect Key",
+            "Evidence Span",
+            "Highlight Confidence",
+            "代表性评论（前20条摘要）",
+        ]
+    return [
+        "Rank",
+        "Customer Highlight",
+        "Count",
+        "Mention Share",
+        "Internal Aspect",
+        "Canonical Highlight Key",
+        "Aspect Key",
+        "Evidence Span",
+        "Highlight Confidence",
+        "Representative Reviews (Top 20)",
+    ]
+
+
 def _specific_issue_top10_headers(locale: str) -> list[str]:
     if locale == "zh":
         return [
             "排名",
-            "Specific Issue",
+            "客户痛点",
             "出现次数",
             "提及占比",
-            "Dimension",
+            "内部维度",
             "Canonical Issue Key",
             "Aspect Key",
             "Evidence Span",
@@ -100,10 +131,10 @@ def _specific_issue_top10_headers(locale: str) -> list[str]:
         ]
     return [
         "Rank",
-        "Specific Issue",
+        "Customer Issue",
         "Count",
         "Mention Share",
-        "Dimension",
+        "Internal Aspect",
         "Canonical Issue Key",
         "Aspect Key",
         "Evidence Span",
@@ -173,6 +204,35 @@ def _build_specific_issue_top10_rows(
     return rows
 
 
+def _build_customer_highlight_top10_rows(
+    pool_comments: list[dict[str, Any]],
+    locale: str,
+) -> list[list[str | int]]:
+    rows: list[list[str | int]] = []
+    for rank, row in enumerate(build_customer_highlight_rows(pool_comments, locale=locale), 1):
+        aspect_keys = row.get("aspect_keys")
+        aspect_key_text = (
+            ", ".join(str(item) for item in aspect_keys if item)
+            if isinstance(aspect_keys, list)
+            else str(row.get("aspect_key") or "")
+        )
+        rows.append(
+            [
+                rank,
+                str(row.get("customer_highlight") or row.get("tag") or ""),
+                int(row.get("count") or 0),
+                f"{float(row.get('pct') or 0):.1f}%",
+                str(row.get("dimension") or ""),
+                str(row.get("canonical_highlight_key") or ""),
+                aspect_key_text,
+                " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
+                str(row.get("highlight_confidence") or ""),
+                " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
+            ]
+        )
+    return rows
+
+
 def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: str) -> io.BytesIO:
     import openpyxl
 
@@ -182,13 +242,14 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
     negative = [c for c in comments if c.get("sentiment") == "negative"]
     headers = _top10_headers(locale)
     issue_headers = _specific_issue_top10_headers(locale)
+    highlight_headers = _customer_highlight_top10_headers(locale)
 
     if module_key == "user_experience":
         ws_pos = wb.active
         pos_title = "正向反馈 TOP10" if locale == "zh" else "Positive Feedback TOP10"
         ws_pos.title = pos_title
-        ws_pos.append(headers)
-        for row in _build_top10_rows(positive, "highlight_tag"):
+        ws_pos.append(highlight_headers)
+        for row in _build_customer_highlight_top10_rows(positive, locale):
             ws_pos.append(row)
 
         neg_title = "负向反馈 TOP10" if locale == "zh" else "Negative Feedback TOP10"
@@ -200,8 +261,8 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
     elif module_key == "purchase_motives":
         ws = wb.active
         ws.title = "Purchase Motives" if locale == "en" else "消费动机"
-        ws.append(headers)
-        for row in _build_top10_rows(positive, "highlight_tag"):
+        ws.append(highlight_headers)
+        for row in _build_customer_highlight_top10_rows(positive, locale):
             ws.append(row)
 
     elif module_key == "unmet_needs":
@@ -215,21 +276,21 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
         ws_pos = wb.active
         pos_title = "亮点标签 TOP10" if locale == "zh" else "Highlight Tags TOP10"
         ws_pos.title = pos_title
-        ws_pos.append(headers)
-        for row in _build_top10_rows(positive, "highlight_tag"):
+        ws_pos.append(highlight_headers)
+        for row in _build_customer_highlight_top10_rows(positive, locale):
             ws_pos.append(row)
 
         neg_title = "问题标签 TOP10" if locale == "zh" else "Issue Tags TOP10"
         ws_neg = wb.create_sheet(title=neg_title)
-        ws_neg.append(headers)
-        for row in _build_top10_rows(negative, "issue_tag"):
+        ws_neg.append(issue_headers)
+        for row in _build_specific_issue_top10_rows(negative, locale):
             ws_neg.append(row)
 
     elif module_key == "recommendations":
         from review_analyzer.insight_engine import build_results_insights
 
         context = {"product_id": "", "version": "", "time_label": "", "workflow_purpose": ""}
-        modules = build_results_insights(0, comments, context)
+        modules = build_results_insights(0, comments, context, locale=locale)
         rec_data = modules.get("recommendations", {})
         ws = wb.active
         ws.title = "Recommendations" if locale == "en" else "综合建议"

@@ -121,7 +121,7 @@ export function ReviewTrackerPanel({ items }: ReviewTrackerPanelProps) {
               >
                 <div className="text-sm font-semibold">{item.tracker_title}</div>
                 <div className={["mt-2 text-xs leading-6", isSelected ? "text-white/80" : "text-soft"].join(" ")}>
-                  {item.parent_product_id || item.source_product_id || "未绑定产品"} · {item.tag_name || "—"}
+                  {item.parent_product_id || item.source_product_id || "未绑定产品"} · {item.specific_issue || item.tag_name || "—"}
                 </div>
                 <div className={["mt-1 text-xs leading-6", isSelected ? "text-white/80" : "text-soft"].join(" ")}>
                   {item.result_status} · {item.current_pct == null ? "—" : `${item.current_pct.toFixed(1)}%`}

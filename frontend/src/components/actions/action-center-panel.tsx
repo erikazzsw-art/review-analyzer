@@ -149,11 +149,11 @@ export function ActionCenterPanel({ items }: ActionCenterPanelProps) {
           actionItemId: action.id,
           productId: action.product_id ?? null,
           variantId: action.variant_id ?? null,
-          trackerTitle: t("trackerTitleFormat", { title: action.tag_name || action.title }),
-          tagName: action.tag_name ?? null,
+          trackerTitle: t("trackerTitleFormat", { title: getActionCustomerLabel(action) || action.title }),
+          tagName: getActionCustomerLabel(action) || action.tag_name,
           aspectKey: action.aspect_key ?? null,
           canonicalIssueKey: action.canonical_issue_key ?? null,
-          specificIssue: action.specific_issue ?? action.tag_name ?? null,
+          specificIssue: getActionCustomerLabel(action) || null,
           baselinePct: action.current_pct ?? null,
           improvementAction: getPrimarySuggestion(action),
           effectiveBatch: action.expected_effect_batch ?? null,
@@ -879,7 +879,7 @@ function getActionDetails(
   return [
     { label: labels.sourceReviews, value: formatSourceReviews(action, listIndexSeparator, emptyValue) },
     { label: labels.session, value: action.session_id ? `Session #${action.session_id}` : emptyValue },
-    { label: labels.issueTag, value: action.tag_name || emptyValue },
+    { label: labels.issueTag, value: getActionCustomerLabel(action) || emptyValue },
     { label: labels.dimension, value: action.aspect_key ? aspectLabel(action.aspect_key, locale) : emptyValue },
     { label: labels.currentPct, value: formatPct(action.current_pct, emptyValue) },
     {
@@ -902,6 +902,10 @@ function formatSourceReviews(action: ActionItem, listIndexSeparator: string, emp
     })
     .filter(Boolean);
   return contents.length > 0 ? contents.join("\n") : emptyValue;
+}
+
+function getActionCustomerLabel(action: ActionItem): string {
+  return String(action.specific_issue || action.tag_name || "").trim();
 }
 
 function getActionSourceLine(action: ActionItem, unboundProduct: string): string {

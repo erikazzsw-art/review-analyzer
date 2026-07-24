@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from backend_api.app.services.specific_issue import (
+    CUSTOMER_LABEL_SCHEMA_VERSION,
     ISSUE_RULESET_VERSION,
     SPECIFIC_ISSUE_SCHEMA_VERSION,
+    build_customer_highlight_rows,
     build_specific_issue_rows,
+    customer_highlight_tags_for_comment,
     enrich_aspects_json,
+    iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
 )
 
@@ -30,6 +34,7 @@ def test_enrich_aspects_json_adds_rule_based_specific_issue_metadata() -> None:
     assert enriched["specific_issue_schema_version"] == SPECIFIC_ISSUE_SCHEMA_VERSION
     assert enriched["issue_ruleset_version"] == ISSUE_RULESET_VERSION
     assert aspect["specific_issue"] == "Water Leaks Through"
+    assert aspect["specific_issue_zh"] == "容易进水"
     assert aspect["canonical_issue_key"] == "water_leaks_through"
     assert aspect["display_allowed"] is True
     assert aspect["issue_confidence"] == "high"
@@ -61,6 +66,66 @@ def test_iter_specific_issue_occurrences_filters_broad_new_schema_without_legacy
     )
 
     assert occurrences == []
+
+
+def test_specific_issue_rows_use_requested_locale_for_customer_label() -> None:
+    comments = [
+        {
+            "id": 1,
+            "content": "The waders are not waterproof and water gets in.",
+            "issue_tag": "Waterproof Performance",
+            "aspects_json": enrich_aspects_json(
+                {
+                    "aspects": [
+                        {
+                            "key": "waterproof_performance",
+                            "polarity": "negative",
+                            "evidence_span": "not waterproof",
+                        }
+                    ]
+                },
+                sub_category="outdoor",
+                content="The waders are not waterproof and water gets in.",
+                locale="en",
+            ),
+        }
+    ]
+
+    assert build_specific_issue_rows(comments, locale="en")[0]["specific_issue"] == "Water Leaks Through"
+    assert build_specific_issue_rows(comments, locale="zh")[0]["specific_issue"] == "容易进水"
+
+
+def test_specific_issue_recovers_clear_negative_text_from_wrong_positive_polarity() -> None:
+    rows = build_specific_issue_rows(
+        [
+            {
+                "id": 1,
+                "content": "Used them once and water enters through the boots.",
+                "sentiment": "negative",
+                "issue_tag": "Waterproof Performance",
+                "aspects_json": enrich_aspects_json(
+                    {
+                        "aspects": [
+                            {
+                                "key": "waterproof",
+                                "polarity": "positive",
+                                "evidence_span": "water enters through the boots",
+                            }
+                        ]
+                    },
+                    sub_category="outdoor",
+                    content="Used them once and water enters through the boots.",
+                    locale="en",
+                ),
+            }
+        ],
+        locale="en",
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["specific_issue"] == "Water Leaks Through"
+    assert rows[0]["issue_source"] == "sentiment_recovery_rule"
+    assert rows[0]["representative_comments"] == ["Used them once and water enters through the boots."]
 
 
 def test_iter_specific_issue_occurrences_uses_legacy_issue_tag_for_old_session() -> None:
@@ -177,7 +242,7 @@ def test_specific_issue_payload_without_schema_does_not_legacy_fallback_broad_is
     assert occurrences == []
 
 
-def test_old_aspects_without_specific_issue_payload_use_legacy_issue_tag_not_rule_issue() -> None:
+def test_old_aspects_without_specific_issue_payload_filters_broad_legacy_issue_tag() -> None:
     occurrences = iter_specific_issue_occurrences(
         {
             "id": 1,
@@ -198,10 +263,125 @@ def test_old_aspects_without_specific_issue_payload_use_legacy_issue_tag_not_rul
         locale="en",
     )
 
-    assert len(occurrences) == 1
-    assert occurrences[0]["specific_issue"] == "Packaging"
-    assert occurrences[0]["issue_source"] == "legacy_issue_tag"
-    assert occurrences[0]["legacy_fallback"] is True
+    assert occurrences == []
+
+
+def test_enrich_aspects_json_adds_customer_highlight_metadata() -> None:
+    enriched = enrich_aspects_json(
+        {
+            "aspects": [
+                {
+                    "key": "waterproof",
+                    "polarity": "positive",
+                    "evidence_span": "kept me dry",
+                }
+            ]
+        },
+        sub_category="outdoor",
+        content="These waders kept me dry all day with no leaks.",
+        locale="en",
+    )
+
+    assert enriched is not None
+    aspect = enriched["aspects"][0]
+    assert enriched["customer_label_schema_version"] == CUSTOMER_LABEL_SCHEMA_VERSION
+    assert aspect["customer_highlight"] == "Keeps Water Out"
+    assert aspect["customer_highlight_zh"] == "防水可靠"
+    assert aspect["canonical_highlight_key"] == "keeps_water_out"
+    assert aspect["highlight_display_allowed"] is True
+
+
+def test_customer_highlight_rows_filter_broad_aspects_and_keep_customer_labels() -> None:
+    comments = [
+        {
+            "id": 1,
+            "content": "Great quality for the price.",
+            "sentiment": "positive",
+            "highlight_tag": "Build Quality",
+            "aspects_json": enrich_aspects_json(
+                {
+                    "aspects": [
+                        {
+                            "key": "build_quality",
+                            "polarity": "positive",
+                            "evidence_span": "Great quality",
+                        }
+                    ]
+                },
+                sub_category="outdoor",
+                content="Great quality for the price.",
+                locale="en",
+            ),
+        },
+        {
+            "id": 2,
+            "content": "Nice product.",
+            "sentiment": "positive",
+            "highlight_tag": "Other",
+            "aspects_json": {
+                "customer_label_schema_version": CUSTOMER_LABEL_SCHEMA_VERSION,
+                "sub_category": "outdoor",
+                "aspects": [
+                    {
+                        "key": "other",
+                        "polarity": "positive",
+                        "evidence_span": "Nice product",
+                    }
+                ],
+            },
+        },
+    ]
+
+    rows = build_customer_highlight_rows(comments, locale="en", limit=10)
+
+    assert len(rows) == 1
+    assert rows[0]["customer_highlight"] == "Feels Well Made"
+    assert rows[0]["canonical_highlight_key"] == "feels_well_made"
+    assert rows[0]["representative_comments"] == ["Great quality for the price."]
+
+
+def test_customer_highlight_legacy_fallback_is_locale_safe_and_conservative() -> None:
+    assert customer_highlight_tags_for_comment(
+        {"content": "很好", "highlight_tag": "防水可靠", "aspects_json": None},
+        locale="en",
+    ) == []
+    assert customer_highlight_tags_for_comment(
+        {"content": "很好", "highlight_tag": "防水可靠", "aspects_json": None},
+        locale="zh",
+    ) == ["防水可靠"]
+    assert customer_highlight_tags_for_comment(
+        {"content": "Great", "highlight_tag": "Build Quality,Good Value for the Price", "aspects_json": None},
+        locale="en",
+    ) == ["Good Value for the Price"]
+
+
+def test_iter_customer_highlight_occurrences_derives_for_specific_issue_schema_session() -> None:
+    occurrences = iter_customer_highlight_occurrences(
+        {
+            "id": 1,
+            "content": "The boots fit perfect and kept me dry.",
+            "highlight_tag": "Boot Fit,Waterproofing",
+            "aspects_json": {
+                "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
+                "sub_category": "outdoor",
+                "aspects": [
+                    {
+                        "key": "boot_fit",
+                        "polarity": "positive",
+                        "evidence_span": "boots fit perfect",
+                    },
+                    {
+                        "key": "waterproof",
+                        "polarity": "positive",
+                        "evidence_span": "kept me dry",
+                    },
+                ],
+            },
+        },
+        locale="en",
+    )
+
+    assert [item["customer_highlight"] for item in occurrences] == ["Fits as Expected", "Keeps Water Out"]
 
 
 def test_build_specific_issue_rows_groups_by_subcategory_and_canonical_issue_for_display() -> None:

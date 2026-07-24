@@ -558,6 +558,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     content=comment.get("content", ""),
                     pain_points=v4.get("pain_points", []),
                     highlights=v4.get("highlights", []),
+                    locale=locale,
                 )
                 result["aspects_json"] = {
                     "sentiment": v4.get("sentiment"),

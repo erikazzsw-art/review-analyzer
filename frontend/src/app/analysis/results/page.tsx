@@ -22,6 +22,7 @@ import {
   getAnalysisSessionResults,
 } from "@/lib/api/server";
 import { isApiError } from "@/lib/api/server";
+import { customerTagText } from "@/lib/customer-labels";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
@@ -162,26 +163,71 @@ function hasSpecificIssueEvidence(
   );
 }
 
+function hasCustomerHighlightEvidence(
+  comment: Record<string, unknown>,
+  row: Record<string, unknown>,
+): boolean {
+  const aspectKeys = stringValues(row.aspect_keys);
+  const primaryAspectKey = String(row.aspect_key || "").trim();
+  if (primaryAspectKey && !aspectKeys.includes(primaryAspectKey)) {
+    aspectKeys.unshift(primaryAspectKey);
+  }
+  const canonicalHighlightKey = String(row.canonical_highlight_key || "").trim();
+  const subCategory = String(row.sub_category || "").trim();
+  if (aspectKeys.length === 0 || !canonicalHighlightKey) return false;
+  const aj = getAspectsPayload(comment) as
+    | { aspects?: Array<Record<string, unknown>>; cluster_propagated?: boolean; sub_category?: string }
+    | null;
+  if (!aj || aj.cluster_propagated) return false;
+  if (subCategory && String(aj.sub_category || comment.sub_category || comment.category || "") !== subCategory) {
+    return false;
+  }
+  const aspects = aj.aspects;
+  if (!Array.isArray(aspects)) return false;
+  const content = String((comment as Record<string, unknown>).content || "");
+  return aspects.some(
+    (a) =>
+      aspectKeys.includes(String(a.key || a.aspect_key || "")) &&
+      String(a.canonical_highlight_key || "") === canonicalHighlightKey &&
+      String(a.polarity || "").toLowerCase() === "positive" &&
+      a.highlight_display_allowed !== false &&
+      !!a.evidence_span &&
+      content.includes(String(a.evidence_span)),
+  );
+}
+
 function enrichRowsWithQuotes(
   rows: Array<Record<string, unknown>>,
   comments: Array<Record<string, unknown>>,
   source: "highlight_tag" | "issue_tag",
   perRow = 5,
+  locale = "en",
 ): Array<Record<string, unknown>> {
   if (rows.length === 0 || comments.length === 0) return rows;
   return rows.map((row) => {
-    const tag = String(row.tag || row.label || "").trim();
+    const tag = String(row.customer_highlight || row.tag || row.label || "").trim();
     if (!tag) return row;
     const quotes: string[] = [];
     const seen = new Set<string>();
     const hasSpecificIdentity = Boolean(
       row.canonical_issue_key && (row.aspect_key || stringValues(row.aspect_keys).length > 0),
     );
+    const hasHighlightIdentity = Boolean(
+      row.canonical_highlight_key && (row.aspect_key || stringValues(row.aspect_keys).length > 0),
+    );
 
-    // Pass 1: comments with direct LLM evidence for this specific issue occurrence
+    // Pass 1: comments with direct LLM evidence for this customer label occurrence
     for (const c of comments) {
       if (quotes.length >= perRow) break;
-      if (hasSpecificIdentity ? !hasSpecificIssueEvidence(c, row) : !hasAspectEvidence(c, tag)) continue;
+      if (
+        hasSpecificIdentity
+          ? !hasSpecificIssueEvidence(c, row)
+          : hasHighlightIdentity
+            ? !hasCustomerHighlightEvidence(c, row)
+            : !hasAspectEvidence(c, tag)
+      ) {
+        continue;
+      }
       const content = String((c as Record<string, unknown>).content || "").trim();
       if (!content || seen.has(content)) continue;
       seen.add(content);
@@ -189,10 +235,12 @@ function enrichRowsWithQuotes(
     }
 
     // Pass 2: fall back to tag-field match if not enough verified quotes
-    if (quotes.length < perRow && !hasSpecificIdentity) {
+    if (quotes.length < perRow && !hasSpecificIdentity && !hasHighlightIdentity) {
       for (const c of comments) {
         if (quotes.length >= perRow) break;
-        const raw = String((c as Record<string, unknown>)[source] || "");
+        const raw = source === "highlight_tag"
+          ? customerTagText(c, "highlight", locale)
+          : customerTagText(c, "issue", locale);
         const tags = raw.split(",").map((s) => s.trim());
         if (!tags.includes(tag)) continue;
         const content = String((c as Record<string, unknown>).content || "").trim();
@@ -355,14 +403,14 @@ export default async function AnalysisResultsPage({
   );
   const userExperience = {
     ...userExperienceRaw,
-    positive: enrichRowsWithQuotes(userExperienceRaw.positive, positiveComments, "highlight_tag", 5),
-    negative: enrichRowsWithQuotes(userExperienceRaw.negative, negativeComments, "issue_tag", 5),
+    positive: enrichRowsWithQuotes(userExperienceRaw.positive, positiveComments, "highlight_tag", 5, locale),
+    negative: enrichRowsWithQuotes(userExperienceRaw.negative, negativeComments, "issue_tag", 5, locale),
   };
   const purchaseMotives = normalizeModule(payload.modules?.purchase_motives);
   const unmetNeedsRaw = normalizeModule(payload.modules?.unmet_needs);
   const unmetNeeds = {
     ...unmetNeedsRaw,
-    rows: enrichRowsWithQuotes(unmetNeedsRaw.rows, negativeComments, "issue_tag", 5),
+    rows: enrichRowsWithQuotes(unmetNeedsRaw.rows, negativeComments, "issue_tag", 5, locale),
   };
   const recommendations = normalizeModule(payload.modules?.recommendations);
 
@@ -379,7 +427,7 @@ export default async function AnalysisResultsPage({
 
   const actionCandidates = [
     ...(userExperience.negative || []).map((row) => ({
-      label: String(row.tag || row.label || t("negative")),
+      label: String(row.specific_issue || row.tag || row.label || t("negative")),
       detail: String(row.reason || row.detail || row.pct || ""),
       currentPct: typeof row.pct === "number" ? row.pct : Number(row.pct) || null,
       suggestedAction: String(row.reason || row.detail || ""),
@@ -389,7 +437,7 @@ export default async function AnalysisResultsPage({
       dimension: String(row.dimension || row.aspect_label || "") || null,
     })),
     ...(unmetNeeds.rows || []).map((row) => ({
-      label: String(row.tag || row.label || t("moduleUnmetNeeds")),
+      label: String(row.specific_issue || row.tag || row.label || t("moduleUnmetNeeds")),
       detail: String(row.reason || row.detail || row.summary || row.value || ""),
       currentPct: typeof row.pct === "number" ? row.pct : Number(row.pct) || null,
       suggestedAction: String(row.reason || row.detail || ""),

@@ -18,6 +18,7 @@ import { CreateActionPanel } from "@/components/analysis/create-action-panel";
 import { SectionAnchorNav } from "@/components/analysis/section-anchor-nav";
 import { Button } from "@/components/ui/button";
 import { aspectLabel } from "@/lib/aspect-labels";
+import { customerTagText } from "@/lib/customer-labels";
 import {
   Table,
   TableBody,
@@ -137,8 +138,8 @@ function buildRawReviewsXlsx(
   const wb = XLSX.utils.book_new();
   const headers =
     locale === "zh"
-      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "Specific Issue", "Canonical Issue Key", "Dimension", "Aspect Key", "Evidence Span", "Issue Confidence"]
-      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Specific Issue", "Canonical Issue Key", "Dimension", "Aspect Key", "Evidence Span", "Issue Confidence"];
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户痛点", "Canonical Issue Key", "内部维度", "Aspect Key", "Evidence Span", "Issue Confidence"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Issue", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Issue Confidence"];
   const rows = comments.map((comment, index) => [
     index + 1,
     reviewBody(comment),
@@ -151,8 +152,8 @@ function buildRawReviewsXlsx(
     rv(comment.priority, ""),
     rv(comment.reason, ""),
     rv(comment.improvement, ""),
-    rv(comment.issue_tag, ""),
-    rv(comment.highlight_tag, ""),
+    customerTagText(comment, "issue", locale),
+    customerTagText(comment, "highlight", locale),
     joinIssueField(comment, "specific_issue"),
     joinIssueField(comment, "canonical_issue_key"),
     joinIssueDimension(comment, locale),
@@ -272,6 +273,10 @@ function rowAspectKeys(row: RowItem): string[] {
 
 function rowCanonicalIssueKey(row: RowItem): string {
   return String(row.canonical_issue_key || "");
+}
+
+function rowCanonicalHighlightKey(row: RowItem): string {
+  return String(row.canonical_highlight_key || "");
 }
 
 function rowSubCategory(row: RowItem): string {
@@ -495,10 +500,14 @@ function TagTable({
       </TableHeader>
       <TableBody>
         {limited.map((row, i) => {
-          const tag = String(row.tag || row.label || `#${i + 1}`);
+          const tag = String(row.customer_highlight || row.tag || row.label || `#${i + 1}`);
           const pct = Number(row.pct || 0);
           const quotes = extractQuotes(row);
           const reasonForAction = String(row.reason || row.detail || "");
+          const aspectKey = rowAspectKey(row);
+          const aspectKeys = rowAspectKeys(row);
+          const canonicalHighlightKey = rowCanonicalHighlightKey(row);
+          const dimension = rowDimension(row);
           return (
             <TableRow key={`${variant}-${i}`} className="group align-top">
               <TableCell className="text-center text-xs font-bold text-soft">
@@ -532,6 +541,11 @@ function TagTable({
                       comments={scopedComments}
                       tagSource={tagSource}
                       locale={locale || "zh"}
+                      customerHighlight={tagSource === "highlight_tag" ? tag : null}
+                      canonicalHighlightKey={tagSource === "highlight_tag" ? canonicalHighlightKey : null}
+                      aspectKey={tagSource === "highlight_tag" ? aspectKey : null}
+                      aspectKeys={tagSource === "highlight_tag" ? aspectKeys : null}
+                      dimension={tagSource === "highlight_tag" ? dimension : null}
                     />
                   )}
                   {showAction && sessionId > 0 && (
@@ -905,6 +919,8 @@ export function AnalysisResultsSections({
                     {comments.slice(0, reviewsShown).map((comment, i) => {
                       const sentiment = String(comment.sentiment || "");
                       const body = reviewBody(comment);
+                      const issueTags = customerTagText(comment, "issue", locale);
+                      const highlightTags = customerTagText(comment, "highlight", locale);
                       const sentimentColor =
                         sentiment === "positive"
                           ? "text-[#059669] bg-[#ecfdf5] border-[#a7f3d0]"
@@ -932,17 +948,17 @@ export function AnalysisResultsSections({
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1.5">
-                              {comment.issue_tag ? (
+                              {issueTags ? (
                                 <span className="rounded-pill border border-[#fecaca] bg-[#fef2f2] px-2 py-0.5 text-[10px] text-[#b91c1c]">
-                                  {String(comment.issue_tag)}
+                                  {issueTags}
                                 </span>
                               ) : null}
-                              {comment.highlight_tag ? (
+                              {highlightTags ? (
                                 <span className="rounded-pill border border-[#a7f3d0] bg-[#ecfdf5] px-2 py-0.5 text-[10px] text-[#047857]">
-                                  {String(comment.highlight_tag)}
+                                  {highlightTags}
                                 </span>
                               ) : null}
-                              {!comment.issue_tag && !comment.highlight_tag ? (
+                              {!issueTags && !highlightTags ? (
                                 <span className="text-xs text-soft">--</span>
                               ) : null}
                             </div>

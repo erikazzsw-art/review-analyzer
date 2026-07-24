@@ -4,7 +4,12 @@ import json
 from collections import Counter
 from typing import Any
 
-from backend_api.app.services.specific_issue import build_specific_issue_rows
+from backend_api.app.services.specific_issue import (
+    build_customer_highlight_rows,
+    build_specific_issue_rows,
+    customer_highlight_tags_for_comment,
+    customer_issue_tags_for_comment,
+)
 
 
 def build_results_insights(
@@ -66,7 +71,7 @@ def _build_heuristic_results(
 ) -> dict[str, dict[str, Any]]:
     positive = [comment for comment in comments if comment.get("sentiment") == "positive"]
     negative = [comment for comment in comments if comment.get("sentiment") == "negative"]
-    positive_tags = _top_tag_rows(positive, "highlight_tag")
+    positive_tags = build_customer_highlight_rows(positive, locale=locale)
     negative_tags = build_specific_issue_rows(negative, locale=locale)
 
     total = len(comments)
@@ -169,12 +174,15 @@ def _build_ai_results_payload(
 ) -> dict[str, Any] | None:
     if not comments:
         return None
-    positive_tags = _top_tag_rows([c for c in comments if c.get("sentiment") == "positive"], "highlight_tag")
+    positive_tags = build_customer_highlight_rows(
+        [c for c in comments if c.get("sentiment") == "positive"],
+        locale=locale,
+    )
     negative_tags = build_specific_issue_rows([c for c in comments if c.get("sentiment") == "negative"], locale=locale)
     prompt = {
         "context": context,
         "review_count": len(comments),
-        "representative_comments": _serialize_comments(comments[:15]),
+        "representative_comments": _serialize_comments(comments[:15], locale=locale),
         "positive_tags": positive_tags,
         "negative_tags": negative_tags,
     }
@@ -278,7 +286,7 @@ def _build_compare_object_ai(
         "review_count": object_payload.get("review_count", 0),
         "positive_tags": object_payload.get("positive_tags", []),
         "negative_tags": object_payload.get("negative_tags", []),
-        "representative_comments": _serialize_comments(comments[:8]),
+        "representative_comments": _serialize_comments(comments[:8], locale=locale),
     }
     try:
         from backend_api.app.services.llm_router import router_completion
@@ -306,15 +314,15 @@ def _build_compare_object_ai(
         return None
 
 
-def _serialize_comments(comments: list[dict[str, Any]]) -> list[dict[str, str]]:
+def _serialize_comments(comments: list[dict[str, Any]], locale: str = "en") -> list[dict[str, str]]:
     serialized: list[dict[str, str]] = []
     for comment in comments:
         serialized.append(
             {
                 "date": str(comment.get("date") or ""),
                 "content": str(comment.get("content") or "")[:220],
-                "issue_tag": str(comment.get("issue_tag") or ""),
-                "highlight_tag": str(comment.get("highlight_tag") or ""),
+                "issue_tag": ", ".join(customer_issue_tags_for_comment(comment, locale=locale)),
+                "highlight_tag": ", ".join(customer_highlight_tags_for_comment(comment, locale=locale)),
                 "sentiment": str(comment.get("sentiment") or ""),
             }
         )

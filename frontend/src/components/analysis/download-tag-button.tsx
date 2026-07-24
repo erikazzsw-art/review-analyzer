@@ -5,10 +5,13 @@ import { useTranslations } from "next-intl";
 import * as XLSX from "xlsx";
 
 import { aspectLabel } from "@/lib/aspect-labels";
+import { customerTagText } from "@/lib/customer-labels";
 
 type IssueMeta = {
   specificIssue?: string | null;
   canonicalIssueKey?: string | null;
+  customerHighlight?: string | null;
+  canonicalHighlightKey?: string | null;
   aspectKey?: string | null;
   aspectKeys?: string[] | null;
   dimension?: string | null;
@@ -73,11 +76,35 @@ function findSpecificIssueOccurrences(
     return [];
   }
   return getAspects(comment).filter((aspect) => {
+    const hasSpecificIssuePayload = Boolean(aspect.specific_issue || aspect.specific_issue_zh) &&
+      Boolean(aspect.canonical_issue_key);
     return (
       aspectKeys.includes(String(aspect.key || aspect.aspect_key || "")) &&
       String(aspect.canonical_issue_key || "") === canonicalIssueKey &&
-      String(aspect.polarity || "").toLowerCase() === "negative" &&
+      (String(aspect.polarity || "").toLowerCase() === "negative" || hasSpecificIssuePayload) &&
       aspect.display_allowed !== false
+    );
+  });
+}
+
+function findCustomerHighlightOccurrences(
+  comment: Record<string, unknown>,
+  meta: IssueMeta,
+): Array<Record<string, unknown>> {
+  const aspectKeys = metaAspectKeys(meta);
+  const canonicalHighlightKey = String(meta.canonicalHighlightKey || "").trim();
+  const subCategory = String(meta.subCategory || "").trim();
+  if (aspectKeys.length === 0 || !canonicalHighlightKey) return [];
+  const payload = getAspectsPayload(comment);
+  if (subCategory && String(payload?.sub_category || comment.sub_category || comment.category || "") !== subCategory) {
+    return [];
+  }
+  return getAspects(comment).filter((aspect) => {
+    return (
+      aspectKeys.includes(String(aspect.key || aspect.aspect_key || "")) &&
+      String(aspect.canonical_highlight_key || "") === canonicalHighlightKey &&
+      String(aspect.polarity || "").toLowerCase() === "positive" &&
+      aspect.highlight_display_allowed !== false
     );
   });
 }
@@ -86,9 +113,18 @@ function tagMatchesComment(
   searchTag: string,
   comment: Record<string, unknown>,
   tagSource: "highlight_tag" | "issue_tag",
+  locale: string,
 ): boolean {
   const needle = searchTag.trim().toLowerCase();
   if (!needle) return false;
+
+  const displayTags = tagSource === "issue_tag"
+    ? customerTagText(comment, "issue", locale)
+    : customerTagText(comment, "highlight", locale);
+  if (displayTags) {
+    const customerTags = displayTags.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    if (customerTags.includes(needle)) return true;
+  }
 
   const raw = String(comment[tagSource] || "");
   if (!raw) return false;
@@ -102,13 +138,19 @@ function getMatchedReviews(
   comments: Array<Record<string, unknown>>,
   tagSource: "highlight_tag" | "issue_tag",
   meta: IssueMeta,
+  locale: string,
 ): MatchedReview[] {
   const hasSpecificIdentity = Boolean(metaAspectKeys(meta).length > 0 && meta.canonicalIssueKey);
+  const hasHighlightIdentity = Boolean(metaAspectKeys(meta).length > 0 && meta.canonicalHighlightKey);
   return comments
     .map((comment) => {
-      const occurrences = hasSpecificIdentity ? findSpecificIssueOccurrences(comment, meta) : [];
+      const occurrences = hasSpecificIdentity
+        ? findSpecificIssueOccurrences(comment, meta)
+        : hasHighlightIdentity
+          ? findCustomerHighlightOccurrences(comment, meta)
+          : [];
       if (occurrences.length > 0) return { comment, occurrences };
-      if (!hasSpecificIdentity && tagMatchesComment(tag, comment, tagSource)) {
+      if (!hasSpecificIdentity && !hasHighlightIdentity && tagMatchesComment(tag, comment, tagSource, locale)) {
         return { comment, occurrences: [] };
       }
       return null;
@@ -140,6 +182,16 @@ function occurrenceDimension(occurrence: Record<string, unknown>, locale: string
     : String(occurrence.dimension || occurrence.aspect_label || "").trim();
 }
 
+function occurrenceCustomerLabel(occurrence: Record<string, unknown>, locale: string): string {
+  const issue = locale.startsWith("zh")
+    ? occurrence.specific_issue_zh || occurrence.specific_issue
+    : occurrence.specific_issue || occurrence.specific_issue_zh;
+  const highlight = locale.startsWith("zh")
+    ? occurrence.customer_highlight_zh || occurrence.customer_highlight
+    : occurrence.customer_highlight || occurrence.customer_highlight_zh;
+  return String(issue || highlight || "").trim();
+}
+
 function safeSheetName(value: string): string {
   return (value || "Reviews").replace(/[\\/?*[\]:]+/g, "_").slice(0, 31) || "Reviews";
 }
@@ -156,11 +208,11 @@ function downloadTagReviews(
   translateCategory: (slug: string) => string,
   meta: IssueMeta,
 ) {
-  const matched = getMatchedReviews(tag, comments, tagSource, meta);
+  const matched = getMatchedReviews(tag, comments, tagSource, meta, locale);
   const headers =
     locale === "zh"
-      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "Specific Issue", "Canonical Issue Key", "Dimension", "Aspect Key", "Evidence Span", "Issue Confidence"]
-      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Specific Issue", "Canonical Issue Key", "Dimension", "Aspect Key", "Evidence Span", "Issue Confidence"];
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户标签", "Canonical Label Key", "内部维度", "Aspect Key", "Evidence Span", "Label Confidence"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Label", "Canonical Label Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Label Confidence"];
   const data: (string | number)[][] = [headers];
   matched.forEach(({ comment: c, occurrences }, idx) => {
     const categorySlug = String(c.category || "");
@@ -176,13 +228,17 @@ function downloadTagReviews(
       String(c.priority || ""),
       String(c.reason || ""),
       String(c.improvement || ""),
-      String(c.issue_tag || ""),
-      String(c.highlight_tag || ""),
-      joinOccurrenceValues(occurrences, (occurrence) => occurrence.specific_issue, String(meta.specificIssue || "")),
+      customerTagText(c, "issue", locale),
+      customerTagText(c, "highlight", locale),
       joinOccurrenceValues(
         occurrences,
-        (occurrence) => occurrence.canonical_issue_key,
-        String(meta.canonicalIssueKey || ""),
+        (occurrence) => occurrenceCustomerLabel(occurrence, locale),
+        String(meta.specificIssue || meta.customerHighlight || tag),
+      ),
+      joinOccurrenceValues(
+        occurrences,
+        (occurrence) => occurrence.canonical_issue_key || occurrence.canonical_highlight_key,
+        String(meta.canonicalIssueKey || meta.canonicalHighlightKey || ""),
       ),
       joinOccurrenceValues(
         occurrences,
@@ -195,7 +251,10 @@ function downloadTagReviews(
         metaAspectKeys(meta).join(", "),
       ),
       joinOccurrenceValues(occurrences, (occurrence) => occurrence.evidence_span),
-      joinOccurrenceValues(occurrences, (occurrence) => occurrence.issue_confidence),
+      joinOccurrenceValues(
+        occurrences,
+        (occurrence) => occurrence.issue_confidence || occurrence.highlight_confidence,
+      ),
     ] as (string | number)[]);
   });
   const ws = XLSX.utils.aoa_to_sheet(data);
@@ -220,6 +279,8 @@ export function DownloadTagButton({
   locale,
   specificIssue,
   canonicalIssueKey,
+  customerHighlight,
+  canonicalHighlightKey,
   aspectKey,
   aspectKeys,
   dimension,
@@ -231,6 +292,8 @@ export function DownloadTagButton({
   locale: string;
   specificIssue?: string | null;
   canonicalIssueKey?: string | null;
+  customerHighlight?: string | null;
+  canonicalHighlightKey?: string | null;
   aspectKey?: string | null;
   aspectKeys?: string[] | null;
   dimension?: string | null;
@@ -244,8 +307,17 @@ export function DownloadTagButton({
       return slug;
     }
   };
-  const meta = { specificIssue, canonicalIssueKey, aspectKey, aspectKeys, dimension, subCategory };
-  const count = getMatchedReviews(tag, comments, tagSource, meta).length;
+  const meta = {
+    specificIssue,
+    canonicalIssueKey,
+    customerHighlight,
+    canonicalHighlightKey,
+    aspectKey,
+    aspectKeys,
+    dimension,
+    subCategory,
+  };
+  const count = getMatchedReviews(tag, comments, tagSource, meta, locale).length;
   if (count === 0) {
     return null;
   }

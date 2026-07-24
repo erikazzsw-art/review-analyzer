@@ -10,7 +10,10 @@ import xlsxwriter
 
 from backend_api.app.services.category_grouper import CATEGORY_ZH_LABELS
 from backend_api.app.services.specific_issue import (
+    build_customer_highlight_rows,
     build_specific_issue_rows,
+    customer_highlight_tags_for_comment,
+    customer_issue_tags_for_comment,
     iter_specific_issue_occurrences,
 )
 
@@ -68,9 +71,9 @@ def _build_summary_data(session: dict) -> list[list[str]]:
 
 
 SPECIFIC_ISSUE_EXPORT_HEADERS = [
-    "Specific Issue",
+    "客户痛点",
     "Canonical Issue Key",
-    "Dimension",
+    "内部维度",
     "Aspect Key",
     "Evidence Span",
     "Issue Confidence",
@@ -80,9 +83,17 @@ SPECIFIC_ISSUE_EXPORT_HEADERS = [
 def _join_specific_issue_field(comment: dict, field: str) -> str:
     values = [
         str(occurrence.get(field) or "").strip()
-        for occurrence in iter_specific_issue_occurrences(comment, locale="en")
+        for occurrence in iter_specific_issue_occurrences(comment, locale="zh")
     ]
     return ", ".join(value for value in values if value)
+
+
+def _customer_issue_tag_text(comment: dict) -> str:
+    return ", ".join(customer_issue_tags_for_comment(comment, locale="zh"))
+
+
+def _customer_highlight_tag_text(comment: dict) -> str:
+    return ", ".join(customer_highlight_tags_for_comment(comment, locale="zh"))
 
 
 def _build_comments_data(
@@ -112,8 +123,8 @@ def _build_comments_data(
             c.get("priority", ""),
             c.get("reason", ""),
             c.get("improvement", ""),
-            c.get("issue_tag", ""),
-            c.get("highlight_tag", ""),
+            _customer_issue_tag_text(c),
+            _customer_highlight_tag_text(c),
         ]
         if include_specific_issue:
             row.extend(
@@ -127,6 +138,45 @@ def _build_comments_data(
                 ]
             )
         rows.append(row)
+    return headers, rows
+
+
+def _build_customer_highlight_top10_data(pool_comments: list[dict]) -> tuple[list[str], list[list[str]]]:
+    """构建 TOP10 客户亮点数据."""
+    headers = [
+        "排名",
+        "客户亮点",
+        "出现次数",
+        "占比",
+        "内部维度",
+        "Canonical Highlight Key",
+        "Aspect Key",
+        "Evidence Span",
+        "Highlight Confidence",
+        "代表性评论（前20条摘要）",
+    ]
+    rows: list[list[str]] = []
+    for rank, row in enumerate(build_customer_highlight_rows(pool_comments, locale="zh"), 1):
+        aspect_keys = row.get("aspect_keys")
+        aspect_key_text = (
+            ", ".join(str(item) for item in aspect_keys if item)
+            if isinstance(aspect_keys, list)
+            else str(row.get("aspect_key") or "")
+        )
+        rows.append(
+            [
+                str(rank),
+                str(row.get("customer_highlight") or row.get("tag") or ""),
+                str(row.get("count") or ""),
+                f"{float(row.get('pct') or 0):.1f}%",
+                str(row.get("dimension") or ""),
+                str(row.get("canonical_highlight_key") or ""),
+                aspect_key_text,
+                " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
+                str(row.get("highlight_confidence") or ""),
+                " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
+            ]
+        )
     return headers, rows
 
 
@@ -170,10 +220,10 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
     """构建 TOP10 Specific Issue 数据."""
     headers = [
         "排名",
-        "Specific Issue",
+        "客户痛点",
         "出现次数",
         "占比",
-        "Dimension",
+        "内部维度",
         "Canonical Issue Key",
         "Aspect Key",
         "Evidence Span",
@@ -181,7 +231,7 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
         "代表性评论（前20条摘要）",
     ]
     rows: list[list[str]] = []
-    for rank, row in enumerate(build_specific_issue_rows(pool_comments, locale="en"), 1):
+    for rank, row in enumerate(build_specific_issue_rows(pool_comments, locale="zh"), 1):
         aspect_keys = row.get("aspect_keys")
         aspect_key_text = (
             ", ".join(str(item) for item in aspect_keys if item)
@@ -302,9 +352,14 @@ def export_to_xlsx(
     ws4.set_column("B:B", 15)
     ws4.set_column("C:C", 10)
     ws4.set_column("D:D", 8)
-    ws4.set_column("E:E", 80)
+    ws4.set_column("E:E", 22)
+    ws4.set_column("F:F", 26)
+    ws4.set_column("G:G", 18)
+    ws4.set_column("H:H", 34)
+    ws4.set_column("I:I", 16)
+    ws4.set_column("J:J", 80)
 
-    t4_headers, t4_rows = _build_top10_data(comments, "highlight_tag", positive_comments)
+    t4_headers, t4_rows = _build_customer_highlight_top10_data(positive_comments)
     for col_idx, h in enumerate(t4_headers):
         ws4.write(0, col_idx, h, header_fmt)
     for row_idx, row_data in enumerate(t4_rows, 1):
