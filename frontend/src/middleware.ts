@@ -80,6 +80,7 @@ export function middleware(request: NextRequest) {
   const existingVary = response.headers.get("Vary");
   const varyValue = existingVary ? `${existingVary}, Cookie` : "Cookie";
   response.headers.set("Vary", varyValue);
+  response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
 
   return response;
 }

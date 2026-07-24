@@ -242,6 +242,15 @@
     "goldenSet": "标签校准",
     "accountSettings": "账号与数据"
   },
+  "systemSettingsDialog": {
+    "title": "系统设置",
+    "accountInfo": "账户信息",
+    "username": "用户名",
+    "email": "邮箱",
+    "currentPlan": "当前套餐",
+    "registeredAt": "注册时间",
+    "loading": "加载中..."
+  },
   "quotaPanel": {
     "badge": "用量看板",
     "currentPlanPrefix": "当前套餐：",

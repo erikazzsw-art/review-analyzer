@@ -1,4 +1,5 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
 import { BottomCta } from "@/components/marketing/bottom-cta";
 import { HeroPreview } from "@/components/marketing/hero-preview";
@@ -10,15 +11,21 @@ import { ValueGrid } from "@/components/marketing/value-grid";
 import { Button } from "@/components/ui/button";
 import { buildMarketingMetadata } from "@/lib/seo";
 
-export const metadata = buildMarketingMetadata({
-  title: "ClueAI — 把评论变成增长决策",
-  description:
-    "ClueAI 帮卖家从评论中发现高频痛点、竞品机会和产品亮点，实时监控关键变化，并通过钉钉或邮件推送可执行的优化建议。",
-  path: "/",
-});
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  const t = await getTranslations("marketing");
+
+  return buildMarketingMetadata({
+    title: t("subtitle"),
+    description: t("description"),
+    path: "/",
+  });
+}
 
 export default function HomePage() {
   const t = useTranslations("marketing");
+  const locale = useLocale();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -28,9 +35,8 @@ export default function HomePage() {
         "@id": "https://clueai-reviewlens.com/#website",
         url: "https://clueai-reviewlens.com",
         name: "ClueAI",
-        description:
-          "帮助电商卖家把评论变成增长决策的评论智能分析 SaaS",
-        inLanguage: "zh-CN",
+        description: t("description"),
+        inLanguage: locale === "zh" ? "zh-CN" : "en-US",
         publisher: {
           "@id": "https://clueai-reviewlens.com/#organization",
         },

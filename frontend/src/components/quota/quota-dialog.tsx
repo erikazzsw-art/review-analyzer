@@ -188,6 +188,7 @@ function QuotaRow({ item }: { item: QuotaItem }) {
 }
 
 function ManageSubscriptionButton({ onDone }: { onDone: () => void }) {
+  const t = useTranslations("quotaDialog");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const checkoutRef = useRef<HTMLDivElement | null>(null);
@@ -201,7 +202,7 @@ function ManageSubscriptionButton({ onDone }: { onDone: () => void }) {
         return;
       }
     } catch (err) {
-      setError((err as { message?: string }).message || "操作失败");
+      setError((err as { message?: string }).message || t("manageSubscriptionFail"));
     } finally { setLoading(false); }
   }
 
@@ -214,7 +215,7 @@ function ManageSubscriptionButton({ onDone }: { onDone: () => void }) {
         disabled={loading}
         className="inline-flex w-full items-center justify-center rounded-pill border border-line bg-white px-5 py-3 text-sm font-semibold text-ink shadow-sm transition hover:bg-[#f8f6f3] disabled:opacity-50"
       >
-        {loading ? "加载中..." : "管理订阅"}
+        {loading ? t("loading") : t("manageSubscription")}
       </button>
       {error && <p className="mt-2 text-center text-xs text-red-600">{error}</p>}
     </>
