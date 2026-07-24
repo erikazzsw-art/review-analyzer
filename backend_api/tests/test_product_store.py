@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+import psycopg2
+
 from review_analyzer import product_store
 
 
@@ -257,3 +259,163 @@ def test_resolve_upload_reference_prefers_variant_match_over_exact_name_parent(m
         "platform": "amazon",
         "variant_id": 55,
     }
+
+
+class PluginUploadCursor:
+    def __init__(
+        self,
+        *,
+        resolved_product_id: int | None = None,
+        parent_asin_product_id: int | None = None,
+        inserted_product_id: int = 31,
+        existing_variant_id: int | None = None,
+        fail_variant_insert: bool = False,
+    ) -> None:
+        self.resolved_product_id = resolved_product_id
+        self.parent_asin_product_id = parent_asin_product_id
+        self.inserted_product_id = inserted_product_id
+        self.existing_variant_id = existing_variant_id
+        self.fail_variant_insert = fail_variant_insert
+        self.queries: list[tuple[str, tuple[Any, ...] | None]] = []
+        self._next_fetchone: tuple[Any, ...] | None = None
+
+    def __enter__(self) -> PluginUploadCursor:
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        return None
+
+    def execute(self, sql: str, params: tuple[Any, ...] | None = None) -> None:
+        normalized = " ".join(sql.split())
+        self.queries.append((normalized, params))
+        self._next_fetchone = None
+
+        if normalized == "SELECT id FROM products WHERE user_id = %s AND id = %s":
+            if self.resolved_product_id is not None and params == (7, self.resolved_product_id):
+                self._next_fetchone = (self.resolved_product_id,)
+        elif normalized == "SELECT id FROM products WHERE user_id = %s AND parent_product_id = %s":
+            if self.parent_asin_product_id is not None:
+                self._next_fetchone = (self.parent_asin_product_id,)
+        elif normalized.startswith("INSERT INTO products"):
+            self._next_fetchone = (self.inserted_product_id,)
+        elif normalized.startswith("SELECT id FROM product_variants"):
+            if self.existing_variant_id is not None:
+                self._next_fetchone = (self.existing_variant_id,)
+        elif normalized.startswith("INSERT INTO product_variants") and self.fail_variant_insert:
+            raise psycopg2.errors.UniqueViolation()
+
+    def fetchone(self) -> tuple[Any, ...] | None:
+        return self._next_fetchone
+
+
+class PluginUploadConnection:
+    def __init__(self, cursor: PluginUploadCursor) -> None:
+        self._cursor = cursor
+        self.committed = False
+        self.closed = False
+        self.rollback_count = 0
+
+    def cursor(self, *args: Any, **kwargs: Any) -> PluginUploadCursor:
+        return self._cursor
+
+    def commit(self) -> None:
+        self.committed = True
+
+    def rollback(self) -> None:
+        self.rollback_count += 1
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def test_plugin_upload_listing_completes_existing_product_by_name(monkeypatch):
+    captured: dict[str, Any] = {}
+
+    def fake_resolve_product_reference_for_upload(
+        user_id: int,
+        parent_name: str,
+        platform: str | None = None,
+        identifiers: list[str] | None = None,
+    ) -> dict[str, Any]:
+        captured["user_id"] = user_id
+        captured["parent_name"] = parent_name
+        captured["platform"] = platform
+        captured["identifiers"] = identifiers
+        return {
+            "id": 12,
+            "parent_product_id": "FISHINGSIR-下水服-XSY01",
+            "name": "FISHINGSIR-下水服-XSY01",
+            "platform": "Amazon",
+            "variant_id": 55,
+        }
+
+    cursor = PluginUploadCursor(resolved_product_id=12, existing_variant_id=55)
+    conn = PluginUploadConnection(cursor)
+    monkeypatch.setattr(product_store, "resolve_product_reference_for_upload", fake_resolve_product_reference_for_upload)
+    monkeypatch.setattr(product_store, "get_connection", lambda: conn)
+
+    result = product_store.plugin_upload_listing(
+        user_id=7,
+        parent_asin="B07VFCWCNC",
+        name="FISHINGSIR-下水服-XSY01",
+        platform="amazon",
+        marketplace="us",
+        listing={
+            "title": "Waders for Women",
+            "brand": "FISHINGSIR",
+            "rating": 4.4,
+            "ratings_total": 200,
+        },
+        variants=[{"asin": "B07VFCWCNC", "color": "Camo"}],
+    )
+
+    assert result == {
+        "product_id": 12,
+        "variant_count": 1,
+        "listing_updated": True,
+        "message": "产品信息已更新",
+    }
+    assert captured["identifiers"] == ["B07VFCWCNC"]
+    assert not any(sql.startswith("INSERT INTO products") for sql, _params in cursor.queries)
+    assert any(
+        sql.startswith("UPDATE products SET name = %s")
+        and params == ("FISHINGSIR-下水服-XSY01", "amazon", 7, 12)
+        for sql, params in cursor.queries
+    )
+    assert any(
+        sql.startswith("UPDATE product_variants SET product_id = %s")
+        and params is not None
+        and params[0] == 12
+        and params[-1] == 55
+        for sql, params in cursor.queries
+    )
+    assert conn.committed is True
+    assert conn.rollback_count == 0
+
+
+def test_plugin_upload_listing_variant_conflict_does_not_rollback_product(monkeypatch):
+    cursor = PluginUploadCursor(inserted_product_id=31, fail_variant_insert=True)
+    conn = PluginUploadConnection(cursor)
+    monkeypatch.setattr(product_store, "resolve_product_reference_for_upload", lambda **_kwargs: None)
+    monkeypatch.setattr(product_store, "get_connection", lambda: conn)
+
+    result = product_store.plugin_upload_listing(
+        user_id=7,
+        parent_asin="B07VFCWCNC",
+        name="FISHINGSIR-下水服-XSY01",
+        platform="amazon",
+        marketplace="us",
+        listing={"title": "Waders for Women"},
+        variants=[{"asin": "B07VFCWCNC"}],
+    )
+
+    assert result == {
+        "product_id": 31,
+        "variant_count": 0,
+        "listing_updated": True,
+        "message": "产品已创建并上传成功",
+    }
+    assert any(sql.startswith("INSERT INTO products") for sql, _params in cursor.queries)
+    assert ("ROLLBACK TO SAVEPOINT _plugin_variant_upsert", None) in cursor.queries
+    assert conn.committed is True
+    assert conn.rollback_count == 0

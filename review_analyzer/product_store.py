@@ -220,6 +220,19 @@ def _safe_fetch_column(cur: Any, sql: str, params: tuple) -> list[Any]:
         return []
 
 
+def _try_optional_execute(cur: Any, sql: str, params: tuple) -> bool:
+    """Execute optional-schema SQL and report whether it ran."""
+    cur.execute("SAVEPOINT _optional_exec")
+    try:
+        cur.execute(sql, params)
+        cur.execute("RELEASE SAVEPOINT _optional_exec")
+        return True
+    except (psycopg2.errors.UndefinedTable, psycopg2.errors.UndefinedColumn):
+        cur.execute("ROLLBACK TO SAVEPOINT _optional_exec")
+        cur.execute("RELEASE SAVEPOINT _optional_exec")
+        return False
+
+
 def _compact_identifiers(values: list[Any]) -> list[str]:
     seen: set[str] = set()
     identifiers: list[str] = []
@@ -638,6 +651,143 @@ def create_variant(user_id: int, product_id: int, data: dict[str, Any]) -> int:
         conn.close()
 
 
+def upsert_manual_variant(user_id: int, product_id: int, data: dict[str, Any]) -> dict[str, Any]:
+    """Create or update a manually maintained product variant."""
+    child_asin = str(data.get("child_asin") or "").strip().upper()
+    if not child_asin:
+        raise ValueError("ASIN 不能为空。")
+
+    variant_sku = str(data.get("variant_sku") or child_asin).strip() or child_asin
+    platform = str(data.get("platform") or "").strip() or None
+
+    insert_fields = {
+        "variant_sku": variant_sku,
+        "child_asin": child_asin,
+        "platform": platform,
+        "color": data.get("color"),
+        "size": data.get("size"),
+        "style": data.get("style"),
+        "material": data.get("material"),
+        "status": data.get("status") or "active",
+        "launched_at": data.get("launched_at"),
+        "image_url": data.get("image_url"),
+        "name": data.get("name"),
+        "brand": data.get("brand"),
+        "price": data.get("price"),
+        "price_currency": data.get("price_currency") or "USD",
+        "sales_volume": data.get("sales_volume"),
+        "sales_revenue": data.get("sales_revenue"),
+        "is_fba": data.get("is_fba"),
+        "listing_date": data.get("listing_date"),
+    }
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT platform FROM products WHERE id = %s AND user_id = %s",
+                (product_id, user_id),
+            )
+            product_row = cur.fetchone()
+            if product_row is None:
+                raise ValueError("产品档案不存在，无法创建变体。")
+            if not platform:
+                product_platform = str(product_row[0] or "").strip()
+                if product_platform:
+                    platform = product_platform
+                    insert_fields["platform"] = platform
+
+            cur.execute(
+                """SELECT id, product_id
+                   FROM product_variants
+                   WHERE user_id = %s
+                     AND (
+                       variant_sku = %s
+                       OR child_asin = %s
+                       OR (
+                         child_asin = %s
+                         AND (
+                           platform = %s
+                           OR platform IS NULL
+                           OR %s IS NULL
+                         )
+                       )
+                     )
+                   ORDER BY
+                     CASE WHEN product_id = %s THEN 0 ELSE 1 END,
+                     id ASC
+                   LIMIT 1""",
+                (
+                    user_id,
+                    variant_sku,
+                    child_asin,
+                    child_asin,
+                    platform,
+                    platform,
+                    product_id,
+                ),
+            )
+            existing = cur.fetchone()
+            if existing:
+                variant_id = int(existing[0])
+                existing_product_id = int(existing[1])
+                if existing_product_id != product_id:
+                    existing_parent_name = _get_parent_product_name(user_id, existing_product_id)
+                    raise ValueError(f"ASIN {child_asin} 已存在于产品 [{existing_parent_name}] 下。")
+
+                update_fields = {
+                    key: value
+                    for key, value in insert_fields.items()
+                    if value is not None and value != ""
+                }
+                if update_fields:
+                    set_clause = ", ".join(f"{key} = %s" for key in update_fields)
+                    cur.execute(
+                        f"UPDATE product_variants SET {set_clause} WHERE user_id = %s AND id = %s",
+                        [*update_fields.values(), user_id, variant_id],
+                    )
+                conn.commit()
+                return {
+                    "variant_id": variant_id,
+                    "child_asin": child_asin,
+                    "action": "updated" if update_fields else "existing",
+                }
+
+            columns = [
+                "user_id",
+                "product_id",
+                *insert_fields.keys(),
+            ]
+            values = [
+                user_id,
+                product_id,
+                *insert_fields.values(),
+            ]
+            placeholders = ", ".join(["%s"] * len(columns))
+            cur.execute(
+                f"""INSERT INTO product_variants
+                    ({", ".join(columns)})
+                    VALUES ({placeholders})
+                    RETURNING id""",
+                values,
+            )
+            variant_id = int(cur.fetchone()[0])
+            conn.commit()
+            return {
+                "variant_id": variant_id,
+                "child_asin": child_asin,
+                "action": "created",
+            }
+    except (psycopg2.errors.UniqueViolation, psycopg2.errors.InvalidColumnReference) as exc:
+        conn.rollback()
+        raise ValueError(f"ASIN {child_asin} 已存在，请检查所属产品或平台。") from exc
+    except ValueError:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 
 def get_variants(user_id: int, product_id: int) -> list[dict[str, Any]]:
     conn = get_connection()
@@ -1041,6 +1191,11 @@ def get_product_overview_rows(user_id: int) -> list[dict[str, Any]]:
                 "pending_review_count": pending_by_product.get(product_pid, 0) if product_pid is not None else 0,
                 "latest_session_label": _build_session_label(latest_session),
                 "latest_updated_at": created_at,
+                "image_url": product_row.get("image_url") if product_row else None,
+                "brand": product_row.get("brand") if product_row else None,
+                "rating": product_row.get("rating") if product_row else None,
+                "ratings_total": product_row.get("ratings_total") if product_row else None,
+                "reviews_total": product_row.get("reviews_total") if product_row else None,
             }
         )
 
@@ -1694,26 +1849,54 @@ def plugin_upload_listing(
     name = name.strip()
     listing = listing or {}
     variants = variants or []
+    variant_asins = [
+        str(var.get("asin") or "").strip().upper()
+        for var in variants
+        if isinstance(var, dict)
+        and _is_valid_asin(str(var.get("asin") or "").strip().upper(), platform)
+    ]
+    identifiers = _compact_identifiers([parent_asin, *variant_asins])
+    resolved_product = resolve_product_reference_for_upload(
+        user_id=user_id,
+        parent_name=name,
+        platform=platform,
+        identifiers=identifiers,
+    )
 
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            # 1. 查找已有产品（按 parent_asin，即 ASIN 作为唯一标识）
-            cur.execute(
-                "SELECT id FROM products WHERE user_id = %s AND parent_product_id = %s",
-                (user_id, parent_asin),
-            )
-            row = cur.fetchone()
-            if row:
-                product_id = int(row[0])
-                # 更新产品名称（用户随时可以修改）
+            # 1. Prefer an existing product with the same display name or ASINs.
+            # This lets plugin re-scrapes complete an already-created product.
+            product_id: int | None = None
+            product_created = False
+            if resolved_product and resolved_product.get("id") is not None:
+                cur.execute(
+                    "SELECT id FROM products WHERE user_id = %s AND id = %s",
+                    (user_id, int(resolved_product["id"])),
+                )
+                row = cur.fetchone()
+                if row:
+                    product_id = int(row[0])
+
+            if product_id is None:
+                cur.execute(
+                    "SELECT id FROM products WHERE user_id = %s AND parent_product_id = %s",
+                    (user_id, parent_asin),
+                )
+                row = cur.fetchone()
+                if row:
+                    product_id = int(row[0])
+
+            if product_id is not None:
+                # 更新产品名称；platform 只在历史空值时补齐，保留用户原有大小写。
                 cur.execute(
                     """UPDATE products
-                       SET name = %s, platform = COALESCE(platform, %s)
-                       WHERE id = %s""",
-                    (name, platform, product_id),
+                       SET name = %s,
+                           platform = COALESCE(NULLIF(platform, ''), %s)
+                       WHERE user_id = %s AND id = %s""",
+                    (name, platform, user_id, product_id),
                 )
-                product_created = False
             else:
                 # 新建产品
                 cur.execute(
@@ -1740,79 +1923,84 @@ def plugin_upload_listing(
                     bsr_json = psycopg2.extras.Json(best_seller_rank)
                 else:
                     bsr_json = psycopg2.extras.Json([])
+                reviews_total = listing.get("reviews_total") or listing.get("ratings_total")
 
                 # 更新 products 表中的快速字段（用于列表页展示）
-                cur.execute(
+                _try_optional_execute(
+                    cur,
                     """UPDATE products SET
                        brand = COALESCE(%s, brand),
                        image_url = COALESCE(%s, image_url),
                        rating = COALESCE(%s, rating),
                        ratings_total = COALESCE(%s, ratings_total),
-                       scraped_title = COALESCE(%s, scraped_title)
+                       reviews_total = COALESCE(%s, reviews_total)
                        WHERE id = %s""",
                     (
                         listing.get("brand"),
                         listing.get("main_image_url"),
                         listing.get("rating"),
                         listing.get("ratings_total"),
-                        listing.get("title"),
+                        reviews_total,
                         product_id,
                     ),
                 )
+                _try_optional_execute(
+                    cur,
+                    "UPDATE products SET scraped_title = COALESCE(%s, scraped_title) WHERE id = %s",
+                    (listing.get("title"), product_id),
+                )
 
                 # Upsert into product_listings
-                try:
-                    cur.execute(
-                        """INSERT INTO product_listings
-                           (product_id, parent_asin, marketplace, title, price, price_currency,
-                            original_price, rating, ratings_total, brand, bullet_points,
-                            main_image_url, description, best_seller_rank, dimensions, weight,
-                            seller_name, availability, scraped_at)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                           ON CONFLICT (product_id) DO UPDATE SET
-                               marketplace = EXCLUDED.marketplace,
-                               title = EXCLUDED.title,
-                               price = EXCLUDED.price,
-                               price_currency = EXCLUDED.price_currency,
-                               original_price = EXCLUDED.original_price,
-                               rating = EXCLUDED.rating,
-                               ratings_total = EXCLUDED.ratings_total,
-                               brand = EXCLUDED.brand,
-                               bullet_points = EXCLUDED.bullet_points,
-                               main_image_url = EXCLUDED.main_image_url,
-                               description = EXCLUDED.description,
-                               best_seller_rank = EXCLUDED.best_seller_rank,
-                               dimensions = EXCLUDED.dimensions,
-                               weight = EXCLUDED.weight,
-                               seller_name = EXCLUDED.seller_name,
-                               availability = EXCLUDED.availability,
-                               scraped_at = NOW()""",
-                        (
-                            product_id,
-                            parent_asin,
-                            marketplace,
-                            listing.get("title"),
-                            listing.get("price"),
-                            listing.get("price_currency", "USD"),
-                            listing.get("original_price"),
-                            listing.get("rating"),
-                            listing.get("ratings_total"),
-                            listing.get("brand"),
-                            bullet_points_json,
-                            listing.get("main_image_url"),
-                            listing.get("description"),
-                            bsr_json,
-                            listing.get("dimensions"),
-                            listing.get("weight"),
-                            listing.get("seller_name"),
-                            listing.get("availability"),
-                        ),
-                    )
-                    listing_updated = True
-                except psycopg2.errors.UndefinedTable:
-                    conn.rollback()
-                    # product_listings table doesn't exist yet; non-fatal
-                    pass
+                listing_updated = _try_optional_execute(
+                    cur,
+                    """INSERT INTO product_listings
+                       (product_id, parent_asin, marketplace, title, price, price_currency,
+                        original_price, rating, ratings_total, reviews_total, brand, bullet_points,
+                        main_image_url, description, best_seller_rank, dimensions, weight,
+                        seller_name, availability, scraped_at)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                       ON CONFLICT (product_id) DO UPDATE SET
+                           parent_asin = EXCLUDED.parent_asin,
+                           marketplace = EXCLUDED.marketplace,
+                           title = EXCLUDED.title,
+                           price = EXCLUDED.price,
+                           price_currency = EXCLUDED.price_currency,
+                           original_price = EXCLUDED.original_price,
+                           rating = EXCLUDED.rating,
+                           ratings_total = EXCLUDED.ratings_total,
+                           reviews_total = EXCLUDED.reviews_total,
+                           brand = EXCLUDED.brand,
+                           bullet_points = EXCLUDED.bullet_points,
+                           main_image_url = EXCLUDED.main_image_url,
+                           description = EXCLUDED.description,
+                           best_seller_rank = EXCLUDED.best_seller_rank,
+                           dimensions = EXCLUDED.dimensions,
+                           weight = EXCLUDED.weight,
+                           seller_name = EXCLUDED.seller_name,
+                           availability = EXCLUDED.availability,
+                           scraped_at = NOW()""",
+                    (
+                        product_id,
+                        parent_asin,
+                        marketplace,
+                        listing.get("title"),
+                        listing.get("price"),
+                        listing.get("price_currency", "USD"),
+                        listing.get("original_price"),
+                        listing.get("rating"),
+                        listing.get("ratings_total"),
+                        reviews_total,
+                        listing.get("brand"),
+                        bullet_points_json,
+                        listing.get("main_image_url"),
+                        listing.get("description"),
+                        bsr_json,
+                        listing.get("dimensions"),
+                        listing.get("weight"),
+                        listing.get("seller_name"),
+                        listing.get("availability"),
+                    ),
+                )
 
             # 3. 批量 upsert 变体（手动 SELECT → INSERT/UPDATE，不依赖 ON CONFLICT 索引）
             variant_count = 0
@@ -1821,31 +2009,69 @@ def plugin_upload_listing(
                 if not child_asin or not _is_valid_asin(child_asin, platform):
                     continue
 
+                cur.execute("SAVEPOINT _plugin_variant_upsert")
                 try:
-                    # 查找已有变体：优先匹配 (user_id, platform, child_asin)
+                    # 查找已有变体：兼容 platform 大小写、历史 variant_sku 唯一约束。
                     cur.execute(
                         """SELECT id FROM product_variants
-                           WHERE user_id = %s AND platform = %s AND child_asin = %s
+                           WHERE user_id = %s
+                             AND (
+                                  (
+                                      LOWER(COALESCE(platform, '')) = LOWER(%s)
+                                      AND UPPER(COALESCE(child_asin, '')) = %s
+                                  )
+                               OR UPPER(COALESCE(variant_sku, '')) = %s
+                               OR (
+                                      platform IS NULL
+                                      AND UPPER(COALESCE(child_asin, '')) = %s
+                                  )
+                             )
+                           ORDER BY
+                             CASE
+                               WHEN LOWER(COALESCE(platform, '')) = LOWER(%s)
+                                AND UPPER(COALESCE(child_asin, '')) = %s THEN 0
+                               WHEN UPPER(COALESCE(variant_sku, '')) = %s THEN 1
+                               WHEN platform IS NULL
+                                AND UPPER(COALESCE(child_asin, '')) = %s THEN 2
+                               ELSE 3
+                             END
                            LIMIT 1""",
-                        (user_id, platform, child_asin),
+                        (
+                            user_id,
+                            platform,
+                            child_asin,
+                            child_asin,
+                            child_asin,
+                            platform,
+                            child_asin,
+                            child_asin,
+                            child_asin,
+                        ),
                     )
                     existing = cur.fetchone()
                     if existing:
                         cur.execute(
                             """UPDATE product_variants SET
                                product_id = %s,
+                               platform = COALESCE(NULLIF(platform, ''), %s),
+                               child_asin = COALESCE(NULLIF(child_asin, ''), %s),
+                               variant_sku = COALESCE(NULLIF(variant_sku, ''), %s),
                                color = COALESCE(%s, color),
                                size = COALESCE(%s, size),
                                style = COALESCE(%s, style),
                                material = COALESCE(%s, material),
                                status = 'active'
-                               WHERE id = %s""",
+                               WHERE user_id = %s AND id = %s""",
                             (
                                 product_id,
+                                platform,
+                                child_asin,
+                                child_asin,
                                 var.get("color"),
                                 var.get("size"),
                                 var.get("style"),
                                 var.get("material"),
+                                user_id,
                                 existing[0],
                             ),
                         )
@@ -1868,9 +2094,11 @@ def plugin_upload_listing(
                                 "active",
                             ),
                         )
+                    cur.execute("RELEASE SAVEPOINT _plugin_variant_upsert")
                     variant_count += 1
                 except Exception:
-                    conn.rollback()
+                    cur.execute("ROLLBACK TO SAVEPOINT _plugin_variant_upsert")
+                    cur.execute("RELEASE SAVEPOINT _plugin_variant_upsert")
                     # variant insert/update failed; skip this variant and continue
                     continue
 
