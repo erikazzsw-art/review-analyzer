@@ -98,6 +98,22 @@ function getAspects(comment: Record<string, unknown>): Array<Record<string, unkn
     : [];
 }
 
+function issueEvidenceVerified(comment: Record<string, unknown>, aspect: Record<string, unknown>): boolean {
+  const raw = comment.aspects_json;
+  let parsed: unknown = raw;
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+  }
+  const clusterPropagated = Boolean((parsed as { cluster_propagated?: unknown } | null | undefined)?.cluster_propagated);
+  const evidence = String(aspect.evidence_span || "").trim();
+  const content = reviewBody(comment);
+  return Boolean(evidence && content.includes(evidence) && !clusterPropagated);
+}
+
 function negativeIssueOccurrences(comment: Record<string, unknown>): Array<Record<string, unknown>> {
   return getAspects(comment).filter(
     (aspect) =>
@@ -111,6 +127,12 @@ function joinIssueField(comment: Record<string, unknown>, field: string): string
   return negativeIssueOccurrences(comment)
     .map((aspect) => String(aspect[field] || "").trim())
     .filter(Boolean)
+    .join(", ");
+}
+
+function joinIssueEvidenceVerified(comment: Record<string, unknown>): string {
+  return negativeIssueOccurrences(comment)
+    .map((aspect) => (issueEvidenceVerified(comment, aspect) ? "true" : "false"))
     .join(", ");
 }
 
@@ -138,8 +160,8 @@ function buildRawReviewsXlsx(
   const wb = XLSX.utils.book_new();
   const headers =
     locale === "zh"
-      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户痛点", "Canonical Issue Key", "内部维度", "Aspect Key", "Evidence Span", "Issue Confidence"]
-      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Issue", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Issue Confidence"];
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户痛点", "Canonical Issue Key", "内部维度", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Issue", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified"];
   const rows = comments.map((comment, index) => [
     index + 1,
     reviewBody(comment),
@@ -160,6 +182,7 @@ function buildRawReviewsXlsx(
     joinIssueField(comment, "key") || joinIssueField(comment, "aspect_key"),
     joinIssueField(comment, "evidence_span"),
     joinIssueField(comment, "issue_confidence"),
+    joinIssueEvidenceVerified(comment),
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -182,6 +205,7 @@ function buildRawReviewsXlsx(
     { wch: 24 },
     { wch: 22 },
     { wch: 34 },
+    { wch: 18 },
     { wch: 18 },
   ];
   XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "评论原文" : "Raw Reviews");
@@ -230,6 +254,14 @@ function truncate(text: string, max = 140): string {
 }
 
 function extractQuotes(row: RowItem): string[] {
+  const evidence = row.evidence_spans;
+  if (Array.isArray(evidence) && evidence.length > 0) {
+    return evidence
+      .map((q) => String(q || "").trim())
+      .filter(Boolean)
+      .slice(0, 5)
+      .map((q) => truncate(q, 140));
+  }
   const arr = row.representative_comments;
   if (Array.isArray(arr) && arr.length > 0) {
     return arr

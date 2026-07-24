@@ -925,7 +925,7 @@
       "tag": "客户标签",
       "specificIssue": "客户痛点",
       "issueTag": "问题标签",
-      "mentionPct": "提及占比",
+      "mentionPct": "情绪池内提及占比",
       "reprComments": "代表评论",
       "dimension": "内部维度",
       "evidence": "证据",

@@ -40,6 +40,35 @@ def test_enrich_aspects_json_adds_rule_based_specific_issue_metadata() -> None:
     assert aspect["issue_confidence"] == "high"
 
 
+def test_no_leaks_does_not_create_water_leaks_issue() -> None:
+    content = "These waders stayed dry all day with no leaks whatsoever."
+    occurrences = iter_specific_issue_occurrences(
+        {
+            "id": 1,
+            "content": content,
+            "sentiment": "positive",
+            "issue_tag": "Waterproof Performance",
+            "aspects_json": enrich_aspects_json(
+                {
+                    "aspects": [
+                        {
+                            "key": "waterproof",
+                            "polarity": "negative",
+                            "evidence_span": "no leaks whatsoever",
+                        }
+                    ]
+                },
+                sub_category="outdoor",
+                content=content,
+                locale="en",
+            ),
+        },
+        locale="en",
+    )
+
+    assert occurrences == []
+
+
 def test_iter_specific_issue_occurrences_filters_broad_new_schema_without_legacy_fallback() -> None:
     enriched = enrich_aspects_json(
         {
@@ -526,7 +555,42 @@ def test_specific_issue_rows_keep_cluster_propagated_only_rows_with_fallback_com
     assert len(rows) == 1
     assert rows[0]["count"] == 1
     assert rows[0]["specific_issue"] == "Pocket Not Waterproof"
-    assert rows[0]["representative_comments"] == [content]
+    assert rows[0]["representative_comments"] == []
+    assert rows[0]["evidence_spans"] == []
+
+
+def test_specific_issue_rows_do_not_use_missing_evidence_as_representative_comment() -> None:
+    rows = build_specific_issue_rows(
+        [
+            {
+                "id": 1,
+                "content": "The pocket got wet in light rain.",
+                "sentiment": "negative",
+                "aspects_json": {
+                    "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
+                    "sub_category": "outdoor",
+                    "aspects": [
+                        {
+                            "key": "accessory_storage",
+                            "aspect_label": "Accessory Storage",
+                            "polarity": "negative",
+                            "specific_issue": "Pocket Not Waterproof",
+                            "canonical_issue_key": "pocket_not_waterproof",
+                            "issue_confidence": "high",
+                            "display_allowed": True,
+                            "evidence_span": "copied evidence from another review",
+                        }
+                    ],
+                },
+            }
+        ],
+        locale="en",
+        limit=10,
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["count"] == 1
+    assert rows[0]["representative_comments"] == []
     assert rows[0]["evidence_spans"] == []
 
 
@@ -647,5 +711,5 @@ def test_customer_highlight_rows_keep_cluster_propagated_only_rows_with_fallback
     assert len(rows) == 1
     assert rows[0]["count"] == 1
     assert rows[0]["customer_highlight"] == "Keeps Water Out"
-    assert rows[0]["representative_comments"] == [content]
+    assert rows[0]["representative_comments"] == []
     assert rows[0]["evidence_spans"] == []

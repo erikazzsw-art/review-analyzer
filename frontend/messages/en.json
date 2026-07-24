@@ -928,7 +928,7 @@
             "tag": "Customer Label",
             "specificIssue": "Customer Issue",
             "issueTag": "Issue Tag",
-            "mentionPct": "Mention Share",
+            "mentionPct": "Sentiment-Pool Mention Share",
             "reprComments": "Representative Reviews",
             "dimension": "Internal Aspect",
             "evidence": "Evidence",
