@@ -31,6 +31,7 @@ from review_analyzer.product_store import (
     _detect_identifier_column,
     _extract_unique_identifiers,
     batch_upsert_variants_for_upload,
+    resolve_product_reference_for_upload,
 )
 from review_analyzer.quota import quota_check, quota_check_atomic
 from workers.jobs import enqueue_upload_job_task, process_upload_job
@@ -251,6 +252,18 @@ def create_uploads(
                     "Skipping upload variant merge because product catalog is not ready or has legacy conflicts: %s",
                     exc,
                 )
+
+    resolved_product = resolve_product_reference_for_upload(
+        user_id=user_id,
+        parent_name=product_name,
+        platform=platform,
+        identifiers=identifiers,
+    )
+    if resolved_product:
+        product_ref_id = int(resolved_product["id"])
+        product_id = str(resolved_product["parent_product_id"])
+        if variant_ref_id is None and resolved_product.get("variant_id") is not None:
+            variant_ref_id = int(resolved_product["variant_id"])
 
     payload = {
         "source_filename": source_file.filename or "upload",

@@ -80,6 +80,7 @@ def test_file_upload_uses_product_name_as_parent_and_reads_asins_from_raw_data(m
         )
 
     monkeypatch.setattr("backend_api.app.routes.uploads.batch_upsert_variants_for_upload", fake_batch_upsert)
+    monkeypatch.setattr("backend_api.app.routes.uploads.resolve_product_reference_for_upload", lambda **_kwargs: None)
     monkeypatch.setattr("backend_api.app.routes.uploads._enqueue_upload_job", fake_enqueue)
     app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
 
@@ -122,6 +123,107 @@ def test_file_upload_uses_product_name_as_parent_and_reads_asins_from_raw_data(m
         "parent_name": "TIDEWE-下水服-WD001",
         "category": "waders",
     }
+
+
+def test_file_upload_reuses_existing_plugin_product_reference(monkeypatch):
+    captured: dict[str, object] = {}
+
+    parsed = pd.DataFrame(
+        [
+            {
+                "content": "Great waders",
+                "date": "2026-01-01",
+                "rating": 5,
+                "raw_data": '{"ASIN": "B0779PQHM5"}',
+            },
+        ],
+    )
+
+    monkeypatch.setattr("backend_api.app.routes.uploads.parse_file", lambda *_args: parsed)
+    monkeypatch.setattr("backend_api.app.routes.uploads.compute_batch_hash", lambda *_args: "batch-2")
+    monkeypatch.setattr(
+        "backend_api.app.routes.uploads.batch_upsert_variants_for_upload",
+        lambda *_args, **_kwargs: [
+            {
+                "child_asin": "B0779PQHM5",
+                "action": "merged_to_other",
+                "parent_name": "B0PLUGIN01",
+                "variant_id": 55,
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "backend_api.app.routes.uploads.resolve_product_reference_for_upload",
+        lambda **_kwargs: {
+            "id": 12,
+            "parent_product_id": "B0PLUGIN01",
+            "name": "TIDEWE-下水服-WD001",
+            "platform": "amazon",
+            "variant_id": 55,
+        },
+    )
+
+    def fake_enqueue(user_id, payload):
+        captured["payload"] = payload
+        now = datetime.utcnow()
+        return UploadJobResponse(
+            job=UploadJobPayload(
+                id=101,
+                user_id=user_id,
+                status="queued",
+                source_filename=payload["source_filename"],
+                product_id=payload["product_id"],
+                version=payload["version"],
+                workflow_purpose=payload["workflow_purpose"],
+                product_ref_id=payload.get("product_ref_id"),
+                variant_ref_id=payload.get("variant_ref_id"),
+                total_rows=len(payload["comments"]),
+                processed_rows=0,
+                positive_count=0,
+                negative_count=0,
+                session_id=None,
+                error_message=None,
+                payload_json=payload,
+                created_at=now,
+                updated_at=now,
+                completed_at=None,
+            ),
+            message="ok",
+        )
+
+    monkeypatch.setattr("backend_api.app.routes.uploads._enqueue_upload_job", fake_enqueue)
+    app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/uploads",
+            data={
+                "product_id": "B0779PQHM5",
+                "product_name": "TIDEWE-下水服-WD001",
+                "platform": "Amazon",
+                "category": "waders",
+                "version": "V1",
+                "workflow_purpose": "Daily analysis",
+            },
+            files={
+                "source_file": (
+                    "reviews.xlsx",
+                    b"placeholder",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ),
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = captured["payload"]
+    assert payload["product_id"] == "B0PLUGIN01"
+    assert payload["product_name"] == "TIDEWE-下水服-WD001"
+    assert payload["product_ref_id"] == 12
+    assert payload["variant_ref_id"] == 55
+    assert payload["comments"][0]["source_variant_asin"] == "B0779PQHM5"
 
 
 @pytest.mark.parametrize(
@@ -183,6 +285,7 @@ def test_file_upload_skips_variant_merge_when_product_catalog_fails(monkeypatch,
         )
 
     monkeypatch.setattr("backend_api.app.routes.uploads.batch_upsert_variants_for_upload", fake_batch_upsert)
+    monkeypatch.setattr("backend_api.app.routes.uploads.resolve_product_reference_for_upload", lambda **_kwargs: None)
     monkeypatch.setattr("backend_api.app.routes.uploads._enqueue_upload_job", fake_enqueue)
     app.dependency_overrides[get_current_user] = lambda: {"id": 7, "username": "alice"}
 

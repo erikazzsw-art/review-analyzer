@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from review_analyzer import product_store
@@ -16,6 +17,7 @@ class FakeCursor:
         action_item_ids: list[int] | None = None,
         parent_product_id: str | None = "Wader",
         product_deleted: bool = True,
+        resolve_rows: list[dict[str, Any]] | None = None,
     ) -> None:
         self.variant_ids = variant_ids or []
         self.variant_rows = variant_rows or [
@@ -26,6 +28,7 @@ class FakeCursor:
         self.action_item_ids = action_item_ids or []
         self.parent_product_id = parent_product_id
         self.product_deleted = product_deleted
+        self.resolve_rows = resolve_rows or []
         self.queries: list[tuple[str, tuple[Any, ...] | None]] = []
         self.last_sql = ""
         self.rowcount = 0
@@ -47,6 +50,8 @@ class FakeCursor:
             self.rowcount = 0
 
     def fetchall(self) -> list[tuple[Any, ...]]:
+        if self.last_sql.startswith("SELECT p.id, p.parent_product_id"):
+            return self.resolve_rows
         if self.last_sql.startswith("SELECT id, child_asin, variant_sku FROM product_variants"):
             return self.variant_rows
         if self.last_sql.startswith("SELECT id FROM sessions"):
@@ -208,3 +213,47 @@ def test_upload_variant_merges_to_existing_parent_for_legacy_variant_sku(monkeyp
     assert result["action"] == "merged_to_other"
     assert result["parent_name"] == "Existing Parent"
     assert result["variant_id"] == 56
+
+
+def test_resolve_upload_reference_prefers_variant_match_over_exact_name_parent(monkeypatch):
+    cursor = FakeCursor(
+        resolve_rows=[
+            {
+                "id": 21,
+                "parent_product_id": "TIDEWE-下水服-WD001",
+                "name": "TIDEWE-下水服-WD001",
+                "platform": "Amazon",
+                "created_at": datetime(2026, 1, 1),
+                "variant_count": 0,
+                "variant_match_count": 0,
+                "variant_id": None,
+            },
+            {
+                "id": 12,
+                "parent_product_id": "B0PLUGIN01",
+                "name": "TIDEWE-下水服-WD001",
+                "platform": "amazon",
+                "created_at": datetime(2026, 1, 2),
+                "variant_count": 28,
+                "variant_match_count": 1,
+                "variant_id": 55,
+            },
+        ],
+    )
+    conn = FakeConnection(cursor)
+    monkeypatch.setattr(product_store, "get_connection", lambda: conn)
+
+    result = product_store.resolve_product_reference_for_upload(
+        user_id=7,
+        parent_name="TIDEWE-下水服-WD001",
+        platform="Amazon",
+        identifiers=["B0779PQHM5"],
+    )
+
+    assert result == {
+        "id": 12,
+        "parent_product_id": "B0PLUGIN01",
+        "name": "TIDEWE-下水服-WD001",
+        "platform": "amazon",
+        "variant_id": 55,
+    }

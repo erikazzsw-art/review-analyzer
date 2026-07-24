@@ -1301,6 +1301,120 @@ def find_or_create_parent_product(
         conn.close()
 
 
+def resolve_product_reference_for_upload(
+    user_id: int,
+    parent_name: str,
+    platform: str | None = None,
+    identifiers: list[str] | None = None,
+) -> dict[str, Any] | None:
+    """Resolve a file upload to an existing product record when possible.
+
+    File uploads use the user's product name as the fallback parent id, while
+    Chrome listing uploads may store the Amazon parent ASIN as parent id and
+    the user's value as ``products.name``. This resolver keeps those paths from
+    creating duplicate product rows with the same display name.
+    """
+    display_name = str(parent_name or "").strip()
+    if not display_name:
+        return None
+
+    identifier_values = _compact_identifiers(identifiers or [])
+    identifier_keys = [value.lower() for value in identifier_values]
+    platform_key = str(platform or "").strip().lower()
+    display_key = display_name.lower()
+
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT
+                       p.id,
+                       p.parent_product_id,
+                       p.name,
+                       p.platform,
+                       p.created_at,
+                       COUNT(DISTINCT v_all.id) AS variant_count,
+                       COUNT(DISTINCT v_match.id) AS variant_match_count,
+                       MIN(v_match.id) AS variant_id
+                   FROM products p
+                   LEFT JOIN product_variants v_all
+                     ON v_all.user_id = p.user_id AND v_all.product_id = p.id
+                   LEFT JOIN product_variants v_match
+                     ON v_match.user_id = p.user_id
+                    AND v_match.product_id = p.id
+                    AND (
+                         LOWER(COALESCE(v_match.child_asin, '')) = ANY(%s::text[])
+                      OR LOWER(COALESCE(v_match.variant_sku, '')) = ANY(%s::text[])
+                    )
+                   WHERE p.user_id = %s
+                     AND (
+                          p.parent_product_id = %s
+                       OR LOWER(BTRIM(COALESCE(p.name, ''))) = %s
+                       OR LOWER(COALESCE(p.parent_product_id, '')) = ANY(%s::text[])
+                       OR v_match.id IS NOT NULL
+                     )
+                   GROUP BY p.id, p.parent_product_id, p.name, p.platform, p.created_at""",
+                (
+                    identifier_keys,
+                    identifier_keys,
+                    user_id,
+                    display_name,
+                    display_key,
+                    identifier_keys,
+                ),
+            )
+            rows = [dict(row) for row in cur.fetchall()]
+    except psycopg2.errors.UndefinedTable:
+        conn.rollback()
+        return None
+    finally:
+        conn.close()
+
+    if not rows:
+        return None
+
+    def _score(row: dict[str, Any]) -> tuple[int, datetime]:
+        parent_id = str(row.get("parent_product_id") or "").strip()
+        name = str(row.get("name") or "").strip()
+        row_platform = str(row.get("platform") or "").strip().lower()
+        variant_count = int(row.get("variant_count") or 0)
+        variant_match_count = int(row.get("variant_match_count") or 0)
+
+        score = 0
+        if variant_match_count > 0:
+            score += 1000 + (variant_match_count * 20)
+        if parent_id.lower() in identifier_keys:
+            score += 900
+        if name.lower() == display_key:
+            score += 400
+        if parent_id == display_name:
+            score += 200
+        if variant_count > 0:
+            score += 300
+        if platform_key and row_platform == platform_key:
+            score += 50
+
+        created_at = row.get("created_at")
+        if not isinstance(created_at, datetime):
+            created_at = datetime.min
+        return score, created_at
+
+    rows.sort(key=_score, reverse=True)
+    best = rows[0]
+    return {
+        "id": int(best["id"]),
+        "parent_product_id": str(best["parent_product_id"]),
+        "name": best.get("name"),
+        "platform": best.get("platform"),
+        "variant_id": (
+            int(best["variant_id"])
+            if best.get("variant_id") is not None
+            and int(best.get("variant_match_count") or 0) == 1
+            else None
+        ),
+    }
+
+
 def _find_existing_variant_for_identifier(
     user_id: int, child_asin: str, platform: str
 ) -> dict[str, Any] | None:
