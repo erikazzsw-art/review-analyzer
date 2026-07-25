@@ -35,3 +35,12 @@ data/taxonomy/v1.0/*/extraction.log
 data/taxonomy/v1.0/REVIEW_SHEET.xlsx
 data/taxonomy/v1.0/.~*.xlsx
 data/taxonomy/v1.0/backup-*/
+
+# 本地文档 / 探索产物（永不进 git，详见 CLAUDE.md「本地文档与目录约定」）
+/notes/
+/scratch/
+/.playwright-mcp/
+/node_modules/
+/*.png
+/*.jpg
+/*.jpeg
