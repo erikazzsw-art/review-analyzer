@@ -102,6 +102,7 @@ def _customer_highlight_top10_headers(locale: str) -> list[str]:
             "Aspect Key",
             "Highlight Confidence",
             "Evidence Verified",
+            "Cluster Propagated",
             "Legacy Fallback",
         ]
     return [
@@ -117,6 +118,7 @@ def _customer_highlight_top10_headers(locale: str) -> list[str]:
         "Aspect Key",
         "Highlight Confidence",
         "Evidence Verified",
+        "Cluster Propagated",
         "Legacy Fallback",
     ]
 
@@ -136,6 +138,7 @@ def _specific_issue_top10_headers(locale: str) -> list[str]:
             "Aspect Key",
             "Issue Confidence",
             "Evidence Verified",
+            "Cluster Propagated",
             "Legacy Fallback",
         ]
     return [
@@ -151,6 +154,7 @@ def _specific_issue_top10_headers(locale: str) -> list[str]:
         "Aspect Key",
         "Issue Confidence",
         "Evidence Verified",
+        "Cluster Propagated",
         "Legacy Fallback",
     ]
 
@@ -264,7 +268,8 @@ def _build_specific_issue_top10_rows(
                 str(row.get("canonical_issue_key") or ""),
                 aspect_key_text,
                 str(row.get("issue_confidence") or ""),
-                "true" if row.get("evidence_spans") else "false",
+                "true" if row.get("evidence_verified") else "false",
+                "true" if row.get("cluster_propagated") else "false",
                 "true" if row.get("legacy_fallback") else "false",
             ]
         )
@@ -296,7 +301,8 @@ def _build_customer_highlight_top10_rows(
                 str(row.get("canonical_highlight_key") or ""),
                 aspect_key_text,
                 str(row.get("highlight_confidence") or ""),
-                "true" if row.get("evidence_spans") else "false",
+                "true" if row.get("evidence_verified") else "false",
+                "true" if row.get("cluster_propagated") else "false",
                 "true" if row.get("legacy_fallback") else "false",
             ]
         )

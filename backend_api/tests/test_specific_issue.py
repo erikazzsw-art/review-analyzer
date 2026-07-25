@@ -435,6 +435,124 @@ def test_positive_dry_phrases_do_not_create_water_leaks_issue() -> None:
         assert occurrences == []
 
 
+def test_current_product_leak_text_recovers_water_issue_from_cluster_payload() -> None:
+    content = (
+        "I have had them for about 1 year now. Both feet are leaking around where "
+        "the boot connects to the wader. The boot is also extremely uncomfortable."
+    )
+    occurrences = iter_specific_issue_occurrences(
+        {
+            "id": 26483,
+            "content": content,
+            "sentiment": "negative",
+            "aspects_json": {
+                "cluster_propagated": True,
+                "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                "customer_label_occurrences": [
+                    {
+                        "comment_id": 26483,
+                        "type": "issue",
+                        "raw_label": "Uncomfortable Fit",
+                        "canonical_label_key": "uncomfortable_fit",
+                        "display_label_en": "Uncomfortable Fit",
+                        "display_label_zh": "穿着不舒服",
+                        "aspect_key": "comfort",
+                        "dimension_en": "Comfort",
+                        "dimension_zh": "舒适度",
+                        "sub_category": "waders",
+                        "evidence_span": "stayed warm, dry and comfortable the whole time",
+                        "evidence_start": -1,
+                        "evidence_end": -1,
+                        "confidence": "high",
+                        "source": "rule",
+                        "source_detail": "sentiment_recovery_rule",
+                        "evidence_verified": False,
+                        "cluster_propagated": True,
+                        "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                        "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                        "display_allowed": True,
+                    }
+                ],
+            },
+        },
+        locale="en",
+    )
+
+    water = next(item for item in occurrences if item["canonical_issue_key"] == "water_leaks_through")
+    assert water["specific_issue"] == "Water Leaks Through"
+    assert water["evidence_span"] == "Both feet are leaking around where the boot connects to the wader"
+    assert water["verified_evidence"] is True
+    assert water["cluster_propagated"] is False
+
+
+def test_occurrence_level_cluster_flag_overrides_top_level_cluster_payload() -> None:
+    content = "The seals were leaking a little bit after a year of use."
+    occurrences = iter_specific_issue_occurrences(
+        {
+            "id": 469,
+            "content": content,
+            "sentiment": "negative",
+            "aspects_json": {
+                "cluster_propagated": True,
+                "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                "customer_label_occurrences": [
+                    {
+                        "comment_id": 469,
+                        "type": "issue",
+                        "raw_label": "Water Leaks Through",
+                        "canonical_label_key": "water_leaks_through",
+                        "display_label_en": "Water Leaks Through",
+                        "display_label_zh": "漏水",
+                        "aspect_key": "waterproof",
+                        "dimension_en": "Waterproofing",
+                        "dimension_zh": "防水",
+                        "sub_category": "waders",
+                        "evidence_span": "were leaking a little bit",
+                        "confidence": "high",
+                        "source": "rule",
+                        "source_detail": "current_product_leak_text_rule",
+                        "evidence_verified": True,
+                        "cluster_propagated": False,
+                        "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                        "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                        "display_allowed": True,
+                    }
+                ],
+            },
+        },
+        locale="en",
+    )
+
+    water = next(item for item in occurrences if item["canonical_issue_key"] == "water_leaks_through")
+    assert water["evidence_span"] == "were leaking a little bit"
+    assert water["verified_evidence"] is True
+    assert water["cluster_propagated"] is False
+
+
+def test_old_product_leak_context_does_not_create_water_issue() -> None:
+    for content in (
+        "Got these for my boyfriend after the ones he had from another brand started leaking everywhere. These have kept him dry so far.",
+        "I ordered these waders after my Magellan ones developed a slow leak. Boots fit well, didn't experience any leaking.",
+        "The hand warmer pocket is great until water gets in there.",
+    ):
+        occurrences = iter_specific_issue_occurrences(
+            {
+                "id": content,
+                "content": content,
+                "sentiment": "positive",
+                "aspects_json": {
+                    "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                    "customer_label_occurrences": [],
+                },
+            },
+            locale="en",
+        )
+
+        assert [
+            item for item in occurrences if item.get("canonical_issue_key") == "water_leaks_through"
+        ] == []
+
+
 def test_iter_specific_issue_occurrences_filters_broad_new_schema_without_legacy_fallback() -> None:
     enriched = enrich_aspects_json(
         {

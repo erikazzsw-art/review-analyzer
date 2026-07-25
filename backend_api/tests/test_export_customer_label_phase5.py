@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import io
+
 from openpyxl import load_workbook
 
 from backend_api.app.routes.export import _build_module_xlsx
@@ -10,6 +12,7 @@ from backend_api.app.services.specific_issue import (
 from review_analyzer.exporter import (
     _build_customer_highlight_top10_data,
     _build_specific_issue_top10_data,
+    export_to_xlsx,
 )
 
 
@@ -137,3 +140,30 @@ def test_full_export_top_data_uses_phase4_headers_and_fields() -> None:
     assert issue_rows[0][2:7] == ["1", "100.0%", "1", "50.0%", "zipper broke"]
     assert highlight_rows[0][1] == "防水可靠"
     assert highlight_rows[0][2:7] == ["1", "100.0%", "1", "50.0%", "kept me dry"]
+
+
+def test_full_export_generates_valid_xlsx_with_ai_notice_sheet(monkeypatch) -> None:
+    from review_analyzer import exporter
+
+    monkeypatch.setattr(
+        exporter,
+        "get_session_by_id",
+        lambda user_id, session_id: {
+            "id": session_id,
+            "product_id": "Foxelli",
+            "version": "phase6",
+            "total_reviews": 2,
+            "positive_count": 1,
+            "negative_count": 1,
+            "category": "waders",
+            "created_at": "2026-07-25T00:00:00Z",
+        },
+    )
+    monkeypatch.setattr(exporter, "get_comments", lambda user_id, session_id: _mixed_review_comments())
+
+    xlsx_bytes, filename = export_to_xlsx(3, 6)
+    workbook = load_workbook(io.BytesIO(xlsx_bytes))
+
+    assert filename.endswith(".xlsx")
+    assert "AI Notice" in workbook.sheetnames
+    assert "AI Notice / AI 标注" not in workbook.sheetnames

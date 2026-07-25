@@ -1,0 +1,394 @@
+{
+  "name": "Customer Issue / Customer Label Phase 6 fixed validation set",
+  "created_for": "2026-07-25 Phase 6 validation and regression",
+  "comments": [
+    {
+      "id": "foxelli-114-no-leaks",
+      "content": "Foxelli waders stayed dry all morning with no leaks at all.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "specific_issue_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "aspects": [
+          {
+            "key": "waterproof",
+            "polarity": "negative",
+            "evidence_span": "no leaks at all"
+          }
+        ]
+      }
+    },
+    {
+      "id": "foxelli-114-remained-dry",
+      "content": "Foxelli waders remained dry after the creek crossing.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "specific_issue_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "aspects": [
+          {
+            "key": "waterproof",
+            "polarity": "negative",
+            "evidence_span": "remained dry"
+          }
+        ]
+      }
+    },
+    {
+      "id": "foxelli-114-kept-dry",
+      "content": "The suit kept dry in steady rain.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "specific_issue_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "aspects": [
+          {
+            "key": "waterproof",
+            "polarity": "negative",
+            "evidence_span": "kept dry"
+          }
+        ]
+      }
+    },
+    {
+      "id": "foxelli-114-water-leaking-in",
+      "content": "I love the fit, but after ten minutes I had water leaking in around the boot seam.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "specific_issue_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "aspects": [
+          {
+            "key": "waterproof",
+            "polarity": "positive",
+            "evidence_span": "water leaking in"
+          }
+        ]
+      }
+    },
+    {
+      "id": "foxelli-114-water-came-in",
+      "content": "Water came in through the left leg during fishing.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "specific_issue_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "aspects": [
+          {
+            "key": "waterproof",
+            "polarity": "negative",
+            "evidence_span": "Water came in"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mixed-missing-accessories-appearance",
+      "content": "The phone protector and hanger was missing from the package. The waders seem to be decent and look forward to trying them out.",
+      "sentiment": "neutral",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "customer_label_occurrence_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "customer_label_occurrences": [
+          {
+            "comment_id": "mixed-missing-accessories-appearance",
+            "type": "issue",
+            "raw_label": "phone protector and hanger was missing",
+            "canonical_label_key": "missing_accessories",
+            "display_label_en": "Missing Accessories",
+            "display_label_zh": "缺少配件",
+            "aspect_key": "accessory_storage",
+            "evidence_span": "phone protector and hanger was missing",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "high",
+            "source": "human",
+            "source_detail": "phase6_fixed_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          },
+          {
+            "comment_id": "mixed-missing-accessories-appearance",
+            "type": "highlight",
+            "raw_label": "seem to be decent",
+            "canonical_label_key": "satisfactory_appearance_workmanship",
+            "display_label_en": "Satisfactory Appearance / Workmanship",
+            "display_label_zh": "外观和做工尚可",
+            "aspect_key": "aesthetics",
+            "evidence_span": "seem to be decent",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "medium",
+            "source": "human",
+            "source_detail": "phase6_fixed_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "comfortable-to-wear-57-missing-evidence",
+      "content": "I wore the waders for hours and my knees were fine.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "customer_label_occurrence_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "customer_label_occurrences": [
+          {
+            "comment_id": "comfortable-to-wear-57-missing-evidence",
+            "type": "highlight",
+            "raw_label": "comfortable all day",
+            "canonical_label_key": "comfortable_to_wear",
+            "display_label_en": "Comfortable To Wear",
+            "display_label_zh": "穿着舒适",
+            "aspect_key": "comfort",
+            "evidence_span": "comfortable all day",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "medium",
+            "source": "llm",
+            "source_detail": "phase6_comfortable_fixture",
+            "evidence_verified": false,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "cluster-propagated-audit-only",
+      "content": "The pocket got wet again after rain.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "cluster_propagated": true,
+        "customer_label_occurrence_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "customer_label_occurrences": [
+          {
+            "comment_id": "cluster-propagated-audit-only",
+            "type": "issue",
+            "raw_label": "pocket got wet",
+            "canonical_label_key": "pocket_not_waterproof",
+            "display_label_en": "Pocket Not Waterproof",
+            "display_label_zh": "口袋不防水",
+            "aspect_key": "accessory_storage",
+            "evidence_span": "pocket got wet",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "high",
+            "source": "rule",
+            "source_detail": "phase6_cluster_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": true,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "bed-frame-missing-screws-sturdy",
+      "content": "The bed frame was missing screws, but once assembled it was sturdy.",
+      "sentiment": "negative",
+      "sub_category": "bed_frame",
+      "aspects_json": {
+        "customer_label_occurrence_schema_version": "1.0",
+        "sub_category": "bed_frame",
+        "customer_label_occurrences": [
+          {
+            "comment_id": "bed-frame-missing-screws-sturdy",
+            "type": "issue",
+            "raw_label": "missing screws",
+            "canonical_label_key": "missing_parts",
+            "display_label_en": "Missing Parts",
+            "display_label_zh": "缺少零件",
+            "aspect_key": "assembly",
+            "evidence_span": "missing screws",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "high",
+            "source": "human",
+            "source_detail": "phase6_bed_frame_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          },
+          {
+            "comment_id": "bed-frame-missing-screws-sturdy",
+            "type": "highlight",
+            "raw_label": "sturdy",
+            "canonical_label_key": "sturdy_construction",
+            "display_label_en": "Sturdy Construction",
+            "display_label_zh": "结构稳固",
+            "aspect_key": "stability",
+            "evidence_span": "sturdy",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "high",
+            "source": "human",
+            "source_detail": "phase6_bed_frame_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "mascara-clumps-no-smudge",
+      "content": "This mascara clumps on the second coat, but it did not smudge under my eyes.",
+      "sentiment": "negative",
+      "sub_category": "mascara",
+      "aspects_json": {
+        "customer_label_occurrence_schema_version": "1.0",
+        "sub_category": "mascara",
+        "customer_label_occurrences": [
+          {
+            "comment_id": "mascara-clumps-no-smudge",
+            "type": "issue",
+            "raw_label": "clumps",
+            "canonical_label_key": "mascara_clumps",
+            "display_label_en": "Mascara Clumps",
+            "display_label_zh": "睫毛膏容易结块",
+            "aspect_key": "clumping",
+            "evidence_span": "clumps",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "high",
+            "source": "human",
+            "source_detail": "phase6_mascara_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          },
+          {
+            "comment_id": "mascara-clumps-no-smudge",
+            "type": "highlight",
+            "raw_label": "did not smudge",
+            "canonical_label_key": "does_not_smudge",
+            "display_label_en": "Does Not Smudge",
+            "display_label_zh": "不易晕染",
+            "aspect_key": "smudge_resistance",
+            "evidence_span": "did not smudge",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "high",
+            "source": "human",
+            "source_detail": "phase6_mascara_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "legacy-old-aspects-json",
+      "content": "Legacy old session: the zipper broke after one use.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "issue_tag": "Zipper Quality",
+      "highlight_tag": "Good Value for the Price",
+      "aspects_json": {
+        "sub_category": "outdoor",
+        "aspects": [
+          {
+            "key": "zipper_quality",
+            "polarity": "negative",
+            "evidence_span": "zipper broke"
+          }
+        ]
+      }
+    },
+    {
+      "id": "negative-overall-highlight",
+      "content": "The package was delayed, but the material feels well made.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "customer_label_occurrence_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "customer_label_occurrences": [
+          {
+            "comment_id": "negative-overall-highlight",
+            "type": "highlight",
+            "raw_label": "feels well made",
+            "canonical_label_key": "feels_well_made",
+            "display_label_en": "Feels Well Made",
+            "display_label_zh": "做工扎实",
+            "aspect_key": "build_quality",
+            "evidence_span": "feels well made",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "high",
+            "source": "human",
+            "source_detail": "phase6_negative_overall_highlight_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "internal-aspect-filter",
+      "content": "The fabric is waterproof.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "aspects_json": {
+        "customer_label_occurrence_schema_version": "1.0",
+        "sub_category": "outdoor",
+        "customer_label_occurrences": [
+          {
+            "comment_id": "internal-aspect-filter",
+            "type": "highlight",
+            "raw_label": "waterproof",
+            "canonical_label_key": "waterproof",
+            "display_label_en": "Waterproof",
+            "display_label_zh": "防水性",
+            "aspect_key": "waterproof",
+            "evidence_span": "waterproof",
+            "evidence_start": -1,
+            "evidence_end": -1,
+            "confidence": "high",
+            "source": "human",
+            "source_detail": "phase6_internal_aspect_fixture",
+            "evidence_verified": true,
+            "cluster_propagated": false,
+            "schema_version": "1.0",
+            "ruleset_version": "2026-07-24-customer-label-occurrence-v1",
+            "display_allowed": true
+          }
+        ]
+      }
+    }
+  ]
+}

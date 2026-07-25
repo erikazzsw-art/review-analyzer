@@ -218,9 +218,13 @@ def _first_regex(patterns: list[str], text: str) -> bool:
 
 _NEGATED_WATER_LEAK_PATTERNS = [
     r"\bno\s+leaks?\b",
+    r"\bno\s+water\s+intrusion\b",
     r"\bwithout\s+(any\s+)?leaks?\b",
     r"\bnever\s+(had\s+)?leaks?\b",
-    r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak\b",
+    r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+(?:experience|experienced|had|have|see|seen)\s+(?:any\s+)?leak(?:ing|s)?\b",
+    r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak(?:ed|ing|s)?\b",
+    r"\b(?:do|does|did)(?:n['’]?t| not)\s+see[^.!?\n]{0,80}\bleak\b",
+    r"\bnot\s+a\s+leak\b",
     r"\bnot\s+leaking\b",
 ]
 
@@ -230,8 +234,45 @@ _POSITIVE_DRY_PATTERNS = [
 
 _WATER_LEAK_HIT_PATTERNS = [
     r"\bnot waterproof\b",
+    r"\bnot\s+100%\s+waterproof\b",
     r"\bleak",
+    r"\bmoisture\s+coming\s+through\b",
     r"\bwater (gets|got|came|comes|coming|enters|entered) (in|through)",
+]
+
+_NON_CURRENT_PRODUCT_LEAK_PATTERNS = [
+    r"\bafter\s+(?:my|our|the|his|her)\s+[^.!?]{0,80}\b(?:old|previous|last|magellan|brand|ones?)\b[^.!?]{0,80}\bleak",
+    r"\b(?:old|previous|last|other)\s+(?:pair|one|ones|waders?)\b[^.!?]{0,80}\bleak",
+    r"\b(?:ones?|waders?)\s+(?:he|she|they|i|we)\s+had\b[^.!?]{0,80}\bleak",
+    r"\b(?:pair|one|ones|waders?)\s+from\s+another\s+(?:company|brand)\b[^.!?\n]{0,100}\bleak",
+    r"\b(?:heard|reviews?\s+saying)[^.!?\n]{0,100}\bleak",
+    r"\bleaks?\s+on\s+some\s+pairs\b",
+    r"\bunlike\s+(?:my|our|the|his|her)\s+(?:old|previous|last)\s+(?:pair|one|ones|waders?)\b",
+]
+
+_ACCESSORY_LEAK_CONTEXT_PATTERNS = [
+    r"\b(?:pockets?|storage pocket|phone case|case|bag)\b[^.!?\n]{0,80}\bleak",
+    r"\bleak(?:ing|ed|s)?\b[^.!?\n]{0,80}\b(?:pockets?|storage pocket|phone case|case|bag)\b",
+    r"\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b[^.!?\n]{0,80}\b(?:water gets in|wet|soak)",
+    r"\b(?:water gets in|wet|soak)[^.!?\n]{0,80}\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b",
+]
+
+_CURRENT_PRODUCT_LEAK_CONTEXT_PATTERNS = [
+    r"\b(?:waders?|boot|boots|feet|foot|material|seam|neoprene)\b",
+    r"\bnot\s+(?:100%\s+)?waterproof\b",
+]
+
+_WATER_LEAK_EVIDENCE_PATTERNS = [
+    r"\bnot\s+(?:100%\s+)?waterproof(?:\s+material)?\b",
+    r"\bwater\s+leaking\s+(?:in|through)\b",
+    r"\bwater\s+(?:gets|got|came|comes|coming|enters|entered)\s+(?:in|through)\b",
+    r"\bmoisture\s+coming\s+through\b",
+    r"\b(?:both\s+feet\s+are\s+)?leaking\s+around\s+where\s+the\s+boot\s+connects\s+to\s+the\s+wader\b",
+    r"\bleak(?:ing|ed|s)?\s+(?:at|around|through|near|from)\s+(?:the\s+)?(?:seams?|boots?|waders?|material|knees?|padding)\b",
+    r"\bleaks?\s+(?:around|through|at|near|from)\b[^,.!?\n]{0,80}",
+    r"\b(?:are|is|was|were|started|began)\s+leaking\b[^.!?\n]{0,80}",
+    r"\bleaked\s+through\b",
+    r"\bleak(?:ing|ed|s)?\b",
 ]
 
 
@@ -252,11 +293,61 @@ def _water_leak_issue_hit(evidence: str, content: str) -> bool:
         return False
     text = f"{evidence} {content[:400]}".lower()
     text = re.sub(r"\bno\s+leaks?\b", " ", text)
+    text = re.sub(r"\bno\s+water\s+intrusion\b", " ", text)
     text = re.sub(r"\bwithout\s+(any\s+)?leaks?\b", " ", text)
     text = re.sub(r"\bnever\s+(had\s+)?leaks?\b", " ", text)
-    text = re.sub(r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak\b", " ", text)
+    text = re.sub(r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+(?:experience|experienced|had|have|see|seen)\s+(?:any\s+)?leak(?:ing|s)?\b", " ", text)
+    text = re.sub(r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak(?:ed|ing|s)?\b", " ", text)
+    text = re.sub(r"\b(?:do|does|did)(?:n['’]?t| not)\s+see[^.!?\n]{0,80}\bleak\b", " ", text)
+    text = re.sub(r"\bnot\s+a\s+leak\b", " ", text)
     text = re.sub(r"\bnot\s+leaking\b", " ", text)
     return _first_regex(_WATER_LEAK_HIT_PATTERNS, text)
+
+
+def _is_non_current_product_leak_context(text: str) -> bool:
+    return _first_regex(_NON_CURRENT_PRODUCT_LEAK_PATTERNS, text)
+
+
+def _is_accessory_only_leak_context(text: str) -> bool:
+    return _first_regex(_ACCESSORY_LEAK_CONTEXT_PATTERNS, text) and not _first_regex(
+        _CURRENT_PRODUCT_LEAK_CONTEXT_PATTERNS,
+        text,
+    )
+
+
+def _sentence_spans(text: str) -> list[tuple[int, str]]:
+    spans: list[tuple[int, str]] = []
+    for match in re.finditer(r"[^.!?\n]+(?:[.!?]+|$)", text):
+        sentence = match.group(0)
+        stripped = sentence.strip()
+        if not stripped:
+            continue
+        offset = len(sentence) - len(sentence.lstrip())
+        spans.append((match.start() + offset, stripped))
+    return spans or [(0, text.strip())] if text.strip() else []
+
+
+def _first_water_leak_evidence_span(sentence: str) -> str:
+    for pattern in _WATER_LEAK_EVIDENCE_PATTERNS:
+        match = re.search(pattern, sentence, re.IGNORECASE)
+        if match:
+            return sentence[match.start() : match.end()].strip()
+    return ""
+
+
+def _current_product_water_leak_evidence(content: str) -> str:
+    for _start, sentence in _sentence_spans(content):
+        if _is_negated_water_leak_statement(sentence) or _is_positive_dry_statement(sentence):
+            continue
+        if _is_non_current_product_leak_context(sentence) or _is_accessory_only_leak_context(sentence):
+            continue
+        evidence = _first_water_leak_evidence_span(sentence)
+        if not evidence:
+            continue
+        if not _water_leak_issue_hit(evidence, sentence):
+            continue
+        return evidence
+    return ""
 
 
 def _evidence_verified(content: str, evidence: str, *, cluster_propagated: bool = False) -> bool:
@@ -412,6 +503,93 @@ def _issue_occurrence_from_normalized(
     )
 
 
+def _water_leak_occurrence_from_content(
+    *,
+    comment_id: Any,
+    content: str,
+    sub_category: str,
+    locale: str,
+) -> dict[str, Any] | None:
+    evidence = _current_product_water_leak_evidence(content)
+    if not evidence:
+        return None
+
+    issue = "Water Leaks Through"
+    issue_zh = _specific_issue_zh_label("water_leaks_through", issue)
+    catalog = resolve_customer_label(
+        label_type="issue",
+        canonical_label_key="water_leaks_through",
+        display_en=issue,
+        display_zh=issue_zh,
+        raw_label=issue,
+        aspect_key="waterproof",
+        sub_category_key=sub_category,
+        confidence="high",
+        display_allowed=True,
+    )
+    display_en = catalog.display_en or issue
+    display_zh = catalog.display_zh or issue_zh
+    return _build_customer_label_occurrence(
+        label_type="issue",
+        comment_id=comment_id,
+        content=content,
+        aspect={"key": "waterproof"},
+        aspect_key="waterproof",
+        raw_label=issue,
+        canonical_label_key=catalog.canonical_label_key,
+        display_label_en=display_en,
+        display_label_zh=display_zh,
+        evidence_span=evidence,
+        confidence=catalog.confidence if catalog.confidence in {"high", "medium", "low"} else "high",
+        source_detail="current_product_leak_text_rule",
+        sub_category=sub_category,
+        cluster_propagated=False,
+        display_allowed=catalog.display_allowed,
+        catalog_source=catalog.source,
+        catalog_ruleset_version=catalog.ruleset_version,
+    )
+
+
+def _append_content_rule_issue_occurrences(
+    comment: dict[str, Any],
+    occurrences: list[dict[str, Any]],
+    *,
+    locale: str,
+    aspects_json: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    if any(
+        str(item.get("canonical_issue_key") or item.get("canonical_label_key") or "")
+        == "water_leaks_through"
+        for item in occurrences
+    ):
+        return occurrences
+
+    content = str(comment.get("content") or "").strip()
+    sub_category = str(
+        (aspects_json or {}).get("sub_category")
+        or comment.get("sub_category")
+        or comment.get("category")
+        or ""
+    )
+    occurrence = _water_leak_occurrence_from_content(
+        comment_id=comment.get("id"),
+        content=content,
+        sub_category=sub_category,
+        locale=locale,
+    )
+    if not occurrence:
+        return occurrences
+    projected = _project_customer_label_occurrence(
+        occurrence,
+        comment=comment,
+        label_type="issue",
+        locale=locale,
+    )
+    if projected:
+        occurrences.append(projected)
+    return occurrences
+
+
 def _highlight_occurrence_from_normalized(
     *,
     comment_id: Any,
@@ -487,9 +665,10 @@ def _project_customer_label_occurrence(
             "evidence_end": int(occurrence.get("evidence_end") or -1),
             "evidence_verified": bool(occurrence.get("evidence_verified")),
         }
-    cluster_propagated = bool(
-        inherited_cluster_propagated or occurrence.get("cluster_propagated")
-    )
+    if "cluster_propagated" in occurrence:
+        cluster_propagated = bool(occurrence.get("cluster_propagated"))
+    else:
+        cluster_propagated = bool(inherited_cluster_propagated)
     evidence_verified = bool(evidence["evidence_verified"])
     representative_verified = evidence_verified and not cluster_propagated
     confidence = _clean_confidence(occurrence.get("confidence"), default="low")
@@ -1142,11 +1321,23 @@ def enrich_aspects_json(
                         cluster_propagated=cluster_propagated,
                     )
                 )
+    if not any(
+        str(item.get("canonical_label_key") or "") == "water_leaks_through"
+        for item in occurrences
+    ):
+        water_leak_occurrence = _water_leak_occurrence_from_content(
+            comment_id=comment_id,
+            content=content_text,
+            sub_category=normalized_sub_category,
+            locale=locale,
+        )
+        if water_leak_occurrence:
+            occurrences.append(water_leak_occurrence)
     enriched["specific_issue_schema_version"] = SPECIFIC_ISSUE_SCHEMA_VERSION
     enriched["customer_label_schema_version"] = CUSTOMER_LABEL_SCHEMA_VERSION
     enriched["customer_label_occurrence_schema_version"] = CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
     enriched["customer_label_occurrence_ruleset_version"] = CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
-    if aspects or not isinstance(existing_occurrences, list):
+    if occurrences or aspects or not isinstance(existing_occurrences, list):
         enriched["customer_label_occurrences"] = occurrences
     else:
         enriched["customer_label_occurrences"] = existing_occurrences
@@ -1223,9 +1414,15 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
         schema_version = str(aj.get("specific_issue_schema_version") or "")
         occurrence_schema_version = str(aj.get("customer_label_occurrence_schema_version") or "")
         if occurrence_schema_version == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION:
-            return _project_customer_label_occurrences(
+            projected = _project_customer_label_occurrences(
                 comment,
                 label_type="issue",
+                locale=locale,
+                aspects_json=aj,
+            )
+            return _append_content_rule_issue_occurrences(
+                comment,
+                projected,
                 locale=locale,
                 aspects_json=aj,
             )
@@ -1268,6 +1465,12 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
             if projected:
                 occurrences.append(projected)
     if occurrences or schema_version == SPECIFIC_ISSUE_SCHEMA_VERSION or has_specific_issue_payload:
+        occurrences = _append_content_rule_issue_occurrences(
+            comment,
+            occurrences,
+            locale=locale,
+            aspects_json=aj,
+        )
         return occurrences
     return _legacy_issue_occurrences(comment, locale)
 
@@ -1353,6 +1556,7 @@ def _build_customer_label_rows(
                     ruleset_field: ruleset_version,
                     "representative_comments": [],
                     "evidence_spans": [],
+                    "cluster_propagated": False,
                     "reason": "",
                 }
             if not occurrence.get("legacy_fallback"):
@@ -1371,6 +1575,8 @@ def _build_customer_label_rows(
             source = str(occurrence.get(source_field) or "")
             if source and source not in groups[key][sources_field]:
                 groups[key][sources_field].append(source)
+            if occurrence.get("cluster_propagated"):
+                groups[key]["cluster_propagated"] = True
             label_counter[key][str(occurrence.get(label_field) or groups[key][label_field])] += 1
             if key not in counted_in_comment:
                 comment_counts[key].add(comment_id)
@@ -1417,6 +1623,8 @@ def _build_customer_label_rows(
                 confidence_field: conf,
                 "representative_comments": examples,
                 "evidence_spans": evidence_spans,
+                "evidence_verified": bool(evidence_spans),
+                "cluster_propagated": bool(row.get("cluster_propagated")),
                 "reason": examples[0] if examples else "No representative comment found.",
             }
         )

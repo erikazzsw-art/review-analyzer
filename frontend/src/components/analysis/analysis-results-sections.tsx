@@ -119,6 +119,12 @@ function joinIssueEvidenceVerified(comment: Record<string, unknown>, locale: str
     .join(", ");
 }
 
+function joinIssueClusterPropagated(comment: Record<string, unknown>, locale: string): string {
+  return customerLabelOccurrences(comment, "issue", locale)
+    .map((occurrence) => (occurrence.clusterPropagated ? "true" : "false"))
+    .join(", ");
+}
+
 function joinIssueDimension(comment: Record<string, unknown>, locale: string): string {
   return customerLabelOccurrences(comment, "issue", locale)
     .map((occurrence) => occurrence.dimension || (occurrence.aspectKey ? aspectLabel(occurrence.aspectKey, locale) : ""))
@@ -138,8 +144,8 @@ function buildRawReviewsXlsx(
   const wb = XLSX.utils.book_new();
   const headers =
     locale === "zh"
-      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户痛点", "Canonical Issue Key", "内部维度", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified"]
-      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Issue", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified"];
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户痛点", "Canonical Issue Key", "内部维度", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified", "Cluster Propagated"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Issue", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified", "Cluster Propagated"];
   const rows = comments.map((comment, index) => [
     index + 1,
     reviewBody(comment),
@@ -161,6 +167,7 @@ function buildRawReviewsXlsx(
     joinIssueField(comment, "evidence_span", locale),
     joinIssueField(comment, "issue_confidence", locale),
     joinIssueEvidenceVerified(comment, locale),
+    joinIssueClusterPropagated(comment, locale),
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -183,6 +190,7 @@ function buildRawReviewsXlsx(
     { wch: 24 },
     { wch: 22 },
     { wch: 34 },
+    { wch: 18 },
     { wch: 18 },
     { wch: 18 },
   ];

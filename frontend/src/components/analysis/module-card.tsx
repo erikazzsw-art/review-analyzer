@@ -211,12 +211,12 @@ function buildClientXlsx(
   const wb = XLSX.utils.book_new();
   const labelHeaders =
     locale === "zh"
-      ? ["排名", "客户标签", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Label Key", "内部维度", "Aspect Key", "Confidence"]
-      : ["Rank", "Customer Label", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Label Key", "Internal Aspect", "Aspect Key", "Confidence"];
+      ? ["排名", "客户标签", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Label Key", "内部维度", "Aspect Key", "Confidence", "Evidence Verified", "Cluster Propagated"]
+      : ["Rank", "Customer Label", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Label Key", "Internal Aspect", "Aspect Key", "Confidence", "Evidence Verified", "Cluster Propagated"];
   const issueHeaders =
     locale === "zh"
-      ? ["排名", "客户痛点", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Issue Key", "内部维度", "Aspect Key", "Confidence"]
-      : ["Rank", "Customer Issue", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Confidence"];
+      ? ["排名", "客户痛点", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Issue Key", "内部维度", "Aspect Key", "Confidence", "Evidence Verified", "Cluster Propagated"]
+      : ["Rank", "Customer Issue", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Confidence", "Evidence Verified", "Cluster Propagated"];
 
   function formatPct(value: number) {
     return `${value.toFixed(1)}%`;
@@ -231,6 +231,8 @@ function buildClientXlsx(
       evidenceSpans: string[];
       confidence: string;
       mentionCount: number;
+      evidenceVerified: boolean;
+      clusterPropagated: boolean;
     }>();
 
     for (const [index, comment] of comments.entries()) {
@@ -247,6 +249,8 @@ function buildClientXlsx(
           evidenceSpans: [],
           confidence: occurrence.confidence || "low",
           mentionCount: 0,
+          evidenceVerified: false,
+          clusterPropagated: false,
         };
         if (!counted.has(`${commentId}::${key}`)) {
           group.mentionCount += 1;
@@ -260,6 +264,10 @@ function buildClientXlsx(
         }
         if (occurrence.evidenceVerified && occurrence.evidenceSpan && group.evidenceSpans.length < 20) {
           group.evidenceSpans.push(occurrence.evidenceSpan);
+          group.evidenceVerified = true;
+        }
+        if (occurrence.clusterPropagated) {
+          group.clusterPropagated = true;
         }
         if (occurrence.confidence === "high") {
           group.confidence = "high";
@@ -288,6 +296,8 @@ function buildClientXlsx(
           group.dimensions.join(", "),
           group.aspectKeys.join(", "),
           group.confidence,
+          group.evidenceVerified ? "true" : "false",
+          group.clusterPropagated ? "true" : "false",
         ];
       });
   }

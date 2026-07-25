@@ -78,13 +78,14 @@ SPECIFIC_ISSUE_EXPORT_HEADERS = [
     "Evidence Span",
     "Issue Confidence",
     "Evidence Verified",
+    "Cluster Propagated",
 ]
 
 
 def _join_specific_issue_field(comment: dict, field: str) -> str:
     values = []
     for occurrence in iter_specific_issue_occurrences(comment, locale="zh"):
-        if field == "verified_evidence":
+        if field in {"verified_evidence", "cluster_propagated"}:
             values.append("true" if occurrence.get(field) else "false")
             continue
         values.append(str(occurrence.get(field) or "").strip())
@@ -191,6 +192,7 @@ def _build_comments_data(
                     _join_specific_issue_field(c, "evidence_span"),
                     _join_specific_issue_field(c, "issue_confidence"),
                     _join_specific_issue_field(c, "verified_evidence"),
+                    _join_specific_issue_field(c, "cluster_propagated"),
                 ]
             )
         rows.append(row)
@@ -212,6 +214,7 @@ def _build_customer_highlight_top10_data(pool_comments: list[dict]) -> tuple[lis
         "Aspect Key",
         "Highlight Confidence",
         "Evidence Verified",
+        "Cluster Propagated",
         "Legacy Fallback",
     ]
     rows: list[list[str]] = []
@@ -235,7 +238,8 @@ def _build_customer_highlight_top10_data(pool_comments: list[dict]) -> tuple[lis
                 str(row.get("canonical_highlight_key") or ""),
                 aspect_key_text,
                 str(row.get("highlight_confidence") or ""),
-                "true" if row.get("evidence_spans") else "false",
+                "true" if row.get("evidence_verified") else "false",
+                "true" if row.get("cluster_propagated") else "false",
                 "true" if row.get("legacy_fallback") else "false",
             ]
         )
@@ -293,6 +297,7 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
         "Aspect Key",
         "Issue Confidence",
         "Evidence Verified",
+        "Cluster Propagated",
         "Legacy Fallback",
     ]
     rows: list[list[str]] = []
@@ -316,7 +321,8 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
                 str(row.get("canonical_issue_key") or ""),
                 aspect_key_text,
                 str(row.get("issue_confidence") or ""),
-                "true" if row.get("evidence_spans") else "false",
+                "true" if row.get("evidence_verified") else "false",
+                "true" if row.get("cluster_propagated") else "false",
                 "true" if row.get("legacy_fallback") else "false",
             ]
         )
@@ -439,7 +445,7 @@ def export_to_xlsx(
             ws4.write(row_idx, col_idx, val, cell_fmt)
 
     # AI Transparency disclaimer (California AI Transparency Act AB 2013)
-    ws_ai = workbook.add_worksheet("AI Notice / AI 标注")
+    ws_ai = workbook.add_worksheet("AI Notice")
     ws_ai.set_column("A:A", 60)
     ai_note_fmt = workbook.add_format({
         "font_size": 10,
