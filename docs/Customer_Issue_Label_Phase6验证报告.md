@@ -150,6 +150,25 @@ git diff --check
 
 结果：通过
 
+Phase 6.5 追加已运行：
+
+```bash
+python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_catalog.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py
+```
+
+结果：47 passed
+
+```bash
+python3 -m ruff check review_analyzer/insight_engine.py backend_api/app/routes/analysis.py backend_api/app/services/llm_router.py backend_api/app/services/specific_issue.py backend_api/tests/test_analysis_results_llm_fallback.py
+```
+
+结果：All checks passed
+
+Phase 6.5 同时复跑：
+
+- `npm run typecheck --prefix frontend`：通过
+- `git diff --check`：通过
+
 ## 5. 手动验证记录
 
 前端展示代码检查：
@@ -210,6 +229,19 @@ Phase 6 验证发现并修复：
 - `frontend/src/components/analysis/module-card.tsx`
   - 本地聚合 XLSX fallback 增加 `Evidence Verified` 与 `Cluster Propagated`
 
+Phase 6.5 修复：
+
+- `review_analyzer/insight_engine.py`
+  - results AI 文本增强改为可配置附加层，默认 `RESULTS_AI_ENHANCEMENT_ENABLED=false`，主 results payload 优先返回 heuristic Top Issue / Top Label / Representative Evidence 等确定性统计。
+  - 开启 AI 增强时先查进程内缓存，使用后台线程、in-flight 去重、短等待 `RESULTS_AI_ENHANCEMENT_TIMEOUT_SECONDS`、provider timeout `RESULTS_AI_PROVIDER_TIMEOUT_SECONDS`，失败或超时写日志并缓存空值降级。
+  - AI 只允许增强 summary/evidence 等文本字段，继续不覆盖 `positive`、`negative`、`rows` 主统计数组。
+- `backend_api/app/services/llm_router.py`
+  - `router_completion()` 增加 per-call `disabled_providers`、`request_timeout`、`max_model_attempts`。
+  - results AI 默认通过 `RESULTS_AI_DISABLED_PROVIDERS=deepseek` 跳过当前不可用 DeepSeek 配置，且默认最多尝试 1 个 provider，不硬猜新模型名。
+- `backend_api/tests/test_analysis_results_llm_fallback.py`
+  - 覆盖 LLM router/provider 抛错时 `/analysis/sessions/{id}/results` 与 `/analysis/results` 仍返回 200。
+  - 覆盖 AI summary 失败不影响 `user_experience` Top Issue / Top Label 主数据。
+
 ## 7. 残留风险
 
 - `Comfortable_to_Wear_reviews_57.xlsx` 原始数据仍未放入本地工作区，只能用固定 fixture 复刻风险。
@@ -217,14 +249,16 @@ Phase 6 验证发现并修复：
 - 本轮未做浏览器人工点击下载验证，已用 API / HTML / XLSX 读取、typecheck 和代码检查覆盖前端路径。
 - TOP sheet 的 `Cluster Propagated` 是 row 级布尔值，含义为该 Top 标签至少包含一个 cluster propagated occurrence；逐条追溯仍以 occurrence 级下载为准。
 - legacy old session 缺少 verified evidence 时不会展示代表证据，这是保守口径，可能导致旧数据页面 evidence 较少。
-- 本地后端使用 `.env` LLM key 时，results 首次请求可能被 OpenAI connection error 与 DeepSeek `deepseek-chat` 模型不支持拖慢；Direct backend 最终 fallback 返回 200，3001 页面 dev server 热身后返回 200，但建议后续单独修正 DeepSeek model 配置或为 results 文本增强加非阻塞 / 缓存策略。
+- Phase 6.5 后 results 主 payload 不再依赖 LLM 文本增强；若重新开启 `RESULTS_AI_ENHANCEMENT_ENABLED=true`，需监控 results AI timeout / empty-cache 日志，并在确认 DeepSeek 可用模型前保持 `RESULTS_AI_DISABLED_PROVIDERS=deepseek`。
+- 当前工作区无法重跑真实 session 3 HTTP smoke：本地 SQLite `sessions/comments` 均为 0；localhost 后端 `/health` 返回 200，但受保护的 `/analysis/sessions/3/results`、`/analysis/results?...session_id=3`、`/analysis/sessions/3/export?...` 在当前终端无登录态时返回 401。Phase 6.5 已用自动化 TestClient fixture 覆盖同一路由在 LLM 失败时返回 200；真实 session 3 建议在 clueai-dev 登录态环境补跑。
 - clueai-dev 与当前代码存在 schema drift，真实上传验证期间已最小补齐 `comments.source_channel`、`comments.cluster_id`、`comments.cluster_representative_id`、`upload_jobs.source_channel`、`upload_jobs.trace_json`、`sessions.warnings_json`，并执行 `058_customer_label_catalog_alias_candidates.sql`；应纳入正式 migration 检查。
 
 ## 8. Phase 7 灰度建议
 
 - 将 `scratch/session114_raw_replay.xlsx` 对应的 session 3 作为 Foxelli Water Leak 灰度金样本，持续确认 `Water Leaks Through` 只包含当前产品真实漏水 evidence。
+- 发布前在 clueai-dev 有登录态环境补跑 session 3 smoke：results 返回 200，页面或 API 可见 `Water Leaks Through`，且仍为 5 mentions / 5 reviews，模块导出仍为 200。
 - 导入或重放 `Comfortable_to_Wear_reviews_57.xlsx`，确认 missing evidence 不进入 Representative Evidence，下载中标记 `Evidence Verified=false`。
 - 对灰度 session 记录 label stats：issue/highlight total_mentions、top label share、impact share、evidence_verified_ratio、cluster_propagated_ratio。
 - 加告警：单一标签突然 100%、verified evidence 比例过低、broad/internal label 进入 Top、cluster propagated 占比异常升高。
 - 保留新旧聚合并行对比一段时间，确认页面、下载、后端导出、Action Center、Review Tracking 口径一致。
-- 单独修正 LLM router 的 DeepSeek model 配置或将 results AI 文本增强改成非阻塞，避免页面首开被外部模型失败拖慢。
+- Phase 7 小流量灰度初期保持 results AI 文本增强关闭；如需重新开启，先确认 provider/model 可用，再逐步调高 `RESULTS_AI_MAX_MODEL_ATTEMPTS` 或取消 `RESULTS_AI_DISABLED_PROVIDERS=deepseek`。

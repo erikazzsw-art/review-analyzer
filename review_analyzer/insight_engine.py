@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import logging
+import os
+import time
 from collections import Counter
+from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeoutError
+from threading import Lock
 from typing import Any
 
 from backend_api.app.services.specific_issue import (
@@ -10,6 +17,73 @@ from backend_api.app.services.specific_issue import (
     customer_highlight_tags_for_comment,
     customer_issue_tags_for_comment,
 )
+
+_LOGGER = logging.getLogger(__name__)
+
+_RESULTS_AI_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="results-ai")
+_RESULTS_AI_CACHE: dict[str, tuple[float, dict[str, Any] | None]] = {}
+_RESULTS_AI_INFLIGHT: set[str] = set()
+_RESULTS_AI_LOCK = Lock()
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _results_ai_enabled() -> bool:
+    return _env_bool("RESULTS_AI_ENHANCEMENT_ENABLED", False)
+
+
+def _results_ai_wait_timeout_seconds() -> float:
+    return max(0.0, _env_float("RESULTS_AI_ENHANCEMENT_TIMEOUT_SECONDS", 0.25))
+
+
+def _results_ai_provider_timeout_seconds() -> float:
+    return max(0.1, _env_float("RESULTS_AI_PROVIDER_TIMEOUT_SECONDS", 1.0))
+
+
+def _results_ai_cache_ttl_seconds(payload: dict[str, Any] | None) -> float:
+    if payload:
+        return max(1.0, _env_float("RESULTS_AI_CACHE_TTL_SECONDS", 60 * 30))
+    return max(1.0, _env_float("RESULTS_AI_FAILURE_CACHE_TTL_SECONDS", 60.0))
+
+
+def _results_ai_disabled_providers() -> set[str]:
+    raw = os.getenv("RESULTS_AI_DISABLED_PROVIDERS", "deepseek")
+    return {item.strip().lower() for item in raw.split(",") if item.strip()}
+
+
+def _results_ai_max_model_attempts() -> int:
+    return max(1, _env_int("RESULTS_AI_MAX_MODEL_ATTEMPTS", 1))
+
+
+def _clear_results_ai_cache() -> None:
+    with _RESULTS_AI_LOCK:
+        _RESULTS_AI_CACHE.clear()
+        _RESULTS_AI_INFLIGHT.clear()
 
 
 def build_results_insights(
@@ -20,10 +94,15 @@ def build_results_insights(
 ) -> dict[str, dict[str, Any]]:
     """Build structured single-product insights from filtered comments.
 
-    locale: passed through to llm_router — "en" prefers GPT-4o-mini, "zh" prefers DeepSeek.
+    Results AI text enhancement is optional and isolated; deterministic
+    customer-label statistics are always built from local occurrences first.
     """
     heuristic_payload = _build_heuristic_results(comments, context, locale=locale)
-    ai_payload = _build_ai_results_payload(user_id, comments, context, locale=locale)
+    try:
+        ai_payload = _build_ai_results_payload(user_id, comments, context, locale=locale)
+    except Exception:
+        _LOGGER.exception("results AI enhancement isolated failure; using heuristic payload")
+        ai_payload = None
     if ai_payload:
         merged = dict(heuristic_payload)
         for key, value in ai_payload.items():
@@ -183,10 +262,103 @@ def _build_ai_results_payload(
         "positive_tags": positive_tags,
         "negative_tags": negative_tags,
     }
+    cache_key = _results_ai_cache_key(
+        user_id=user_id,
+        prompt=prompt,
+        locale=locale,
+    )
+    cached = _get_results_ai_cache(cache_key)
+    if cached is not _CACHE_MISS:
+        return cached
+
+    if not _results_ai_enabled():
+        return None
+
+    with _RESULTS_AI_LOCK:
+        if cache_key in _RESULTS_AI_INFLIGHT:
+            _LOGGER.info("results AI enhancement already in flight; using heuristic payload")
+            return None
+        _RESULTS_AI_INFLIGHT.add(cache_key)
+
+    future = _RESULTS_AI_EXECUTOR.submit(_call_ai_results_payload, prompt, locale)
+    future.add_done_callback(lambda done: _store_results_ai_future(cache_key, done))
+
+    wait_timeout = _results_ai_wait_timeout_seconds()
+    if wait_timeout <= 0:
+        _LOGGER.info("results AI enhancement scheduled in background; using heuristic payload")
+        return None
+
+    try:
+        return future.result(timeout=wait_timeout)
+    except FutureTimeoutError:
+        _put_results_ai_cache(cache_key, None)
+        _LOGGER.warning(
+            "results AI enhancement timed out after %.2fs; using heuristic payload",
+            wait_timeout,
+        )
+        return None
+
+
+_CACHE_MISS = object()
+
+
+def _results_ai_cache_key(
+    *,
+    user_id: int,
+    prompt: dict[str, Any],
+    locale: str,
+) -> str:
+    raw = json.dumps(
+        {
+            "user_id": user_id,
+            "locale": locale,
+            "prompt": prompt,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        default=str,
+    )
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+
+
+def _get_results_ai_cache(cache_key: str) -> dict[str, Any] | None | object:
+    with _RESULTS_AI_LOCK:
+        cached = _RESULTS_AI_CACHE.get(cache_key)
+    if not cached:
+        return _CACHE_MISS
+    created_at, payload = cached
+    if time.time() - created_at > _results_ai_cache_ttl_seconds(payload):
+        with _RESULTS_AI_LOCK:
+            _RESULTS_AI_CACHE.pop(cache_key, None)
+        return _CACHE_MISS
+    return payload
+
+
+def _put_results_ai_cache(cache_key: str, payload: dict[str, Any] | None) -> None:
+    with _RESULTS_AI_LOCK:
+        _RESULTS_AI_CACHE[cache_key] = (time.time(), payload)
+
+
+def _store_results_ai_future(
+    cache_key: str,
+    future: Future[dict[str, Any] | None],
+) -> None:
+    try:
+        payload = future.result()
+        _put_results_ai_cache(cache_key, payload)
+    except Exception:
+        _LOGGER.exception("results AI enhancement background failure; cached empty fallback")
+        _put_results_ai_cache(cache_key, None)
+    finally:
+        with _RESULTS_AI_LOCK:
+            _RESULTS_AI_INFLIGHT.discard(cache_key)
+
+
+def _call_ai_results_payload(prompt: dict[str, Any], locale: str) -> dict[str, Any] | None:
     try:
         from backend_api.app.services.llm_router import router_completion
 
-        response, _model_name = router_completion(
+        response, model_name = router_completion(
             messages=[
                 {
                     "role": "system",
@@ -220,12 +392,25 @@ def _build_ai_results_payload(
             max_tokens=3000,
             response_format={"type": "json_object"},
             locale=locale,
+            disabled_providers=_results_ai_disabled_providers(),
+            request_timeout=_results_ai_provider_timeout_seconds(),
+            max_model_attempts=_results_ai_max_model_attempts(),
         )
         payload = json.loads(response.choices[0].message.content.strip())
         if not isinstance(payload, dict):
+            _LOGGER.warning("results AI enhancement returned non-object payload via %s", model_name)
             return None
-        return _validate_ai_payload(payload)
-    except (json.JSONDecodeError, ValueError, TypeError, RuntimeError):
+        validated = _validate_ai_payload(payload)
+        if validated:
+            _LOGGER.info("results AI enhancement succeeded via %s", model_name)
+        else:
+            _LOGGER.warning("results AI enhancement returned invalid module shape via %s", model_name)
+        return validated
+    except (json.JSONDecodeError, ValueError, TypeError, RuntimeError) as exc:
+        _LOGGER.warning("results AI enhancement failed; using heuristic payload: %s", exc)
+        return None
+    except Exception:
+        _LOGGER.exception("results AI enhancement unexpected failure; using heuristic payload")
         return None
 
 

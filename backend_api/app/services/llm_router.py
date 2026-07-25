@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -204,11 +205,17 @@ class LLMRouter:
         temperature: float = 0,
         max_tokens: int = 800,
         locale: str = "zh",
+        disabled_providers: Iterable[str] | None = None,
+        request_timeout: float | None = None,
+        max_model_attempts: int | None = None,
     ) -> tuple[Any, str]:
         """调用 LLM，自动 fallback.
 
         Args:
             locale: "en" 走 GPT-4o-mini 优先链，其它（含 "zh"）走 DeepSeek 优先链.
+            disabled_providers: 本次调用要跳过的 provider name，例如 {"deepseek"}。
+            request_timeout: 本次调用传给 OpenAI-compatible client 的 per-request timeout。
+            max_model_attempts: 本次调用最多实际请求多少个 provider；None 表示完整 fallback 链。
 
         Returns:
             (response, model_name) — OpenAI 兼容 response 对象 + 实际使用的模型名
@@ -217,8 +224,17 @@ class LLMRouter:
         """
         errors: list[str] = []
         chain = _models_for_locale(locale)
+        disabled = {
+            str(provider).strip().lower()
+            for provider in (disabled_providers or [])
+            if str(provider).strip()
+        }
+        attempted_models = 0
 
         for model in chain:
+            if model.name.lower() in disabled:
+                logger.info("llm_router: %s skipped by per-call disabled_providers", model.name)
+                continue
             if model.name not in self._states:
                 # 兜底：动态加入未见过的 model（自定义 router 场景）
                 self._states[model.name] = _CircuitState()
@@ -228,6 +244,9 @@ class LLMRouter:
             client = self._get_client(model)
             if client is None:
                 continue
+            if max_model_attempts is not None and attempted_models >= max_model_attempts:
+                break
+            attempted_models += 1
 
             kwargs: dict[str, Any] = {
                 "model": model.model_id,
@@ -237,6 +256,8 @@ class LLMRouter:
             }
             if response_format:
                 kwargs["response_format"] = response_format
+            if request_timeout is not None and request_timeout > 0:
+                kwargs["timeout"] = request_timeout
 
             # 429 指数退避重试（最多 3 次），仅针对 RateLimitError
             last_exc: Exception | None = None
@@ -325,6 +346,9 @@ def router_completion(
     temperature: float = 0,
     max_tokens: int = 800,
     locale: str = "zh",
+    disabled_providers: Iterable[str] | None = None,
+    request_timeout: float | None = None,
+    max_model_attempts: int | None = None,
 ) -> tuple[Any, str]:
     """便捷函数：调用全局路由器的 completion.
 
@@ -337,4 +361,7 @@ def router_completion(
         temperature=temperature,
         max_tokens=max_tokens,
         locale=locale,
+        disabled_providers=disabled_providers,
+        request_timeout=request_timeout,
+        max_model_attempts=max_model_attempts,
     )
