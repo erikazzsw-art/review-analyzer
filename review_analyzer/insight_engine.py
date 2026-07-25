@@ -71,8 +71,8 @@ def _build_heuristic_results(
 ) -> dict[str, dict[str, Any]]:
     positive = [comment for comment in comments if comment.get("sentiment") == "positive"]
     negative = [comment for comment in comments if comment.get("sentiment") == "negative"]
-    positive_tags = build_customer_highlight_rows(positive, locale=locale)
-    negative_tags = build_specific_issue_rows(negative, locale=locale)
+    positive_tags = build_customer_highlight_rows(comments, locale=locale)
+    negative_tags = build_specific_issue_rows(comments, locale=locale)
 
     total = len(comments)
     pos_rate = round(len(positive) / total * 100, 1) if total else 0.0
@@ -86,11 +86,11 @@ def _build_heuristic_results(
         f"Top issue: {negative_tags[0]['tag'] if negative_tags else 'N/A'}."
     )
     purchase_summary = (
-        f"Based on {len(positive)} positive reviews, the main purchase drivers are: "
+        f"Based on customer label occurrences across {total} reviews, the main purchase drivers are: "
         f"{', '.join(row['tag'] for row in positive_tags[:3]) or 'general product value'}."
     )
     unmet_summary = (
-        f"Based on {len(negative)} negative reviews, the key unmet needs are: "
+        f"Based on customer label occurrences across {total} reviews, the key unmet needs are: "
         f"{', '.join(row['tag'] for row in negative_tags[:3]) or 'no clear pattern'}."
     )
     recommendations = _build_recommendations(positive_tags, negative_tags, context)
@@ -174,11 +174,8 @@ def _build_ai_results_payload(
 ) -> dict[str, Any] | None:
     if not comments:
         return None
-    positive_tags = build_customer_highlight_rows(
-        [c for c in comments if c.get("sentiment") == "positive"],
-        locale=locale,
-    )
-    negative_tags = build_specific_issue_rows([c for c in comments if c.get("sentiment") == "negative"], locale=locale)
+    positive_tags = build_customer_highlight_rows(comments, locale=locale)
+    negative_tags = build_specific_issue_rows(comments, locale=locale)
     prompt = {
         "context": context,
         "review_count": len(comments),

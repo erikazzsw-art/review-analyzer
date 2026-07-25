@@ -1272,89 +1272,127 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
     return _legacy_issue_occurrences(comment, locale)
 
 
-def build_specific_issue_rows(
+def _build_customer_label_rows(
     comments: list[dict[str, Any]],
     *,
+    label_type: str,
     locale: str = "en",
     limit: int = 10,
 ) -> list[dict[str, Any]]:
+    if label_type == "issue":
+        iterator = iter_specific_issue_occurrences
+        label_field = "specific_issue"
+        canonical_field = "canonical_issue_key"
+        confidence_field = "issue_confidence"
+        source_field = "issue_source"
+        sources_field = "issue_sources"
+        schema_field = "specific_issue_schema_version"
+        schema_version = SPECIFIC_ISSUE_SCHEMA_VERSION
+        ruleset_field = "issue_ruleset_version"
+        ruleset_version = ISSUE_RULESET_VERSION
+        is_specific_field = "is_specific_issue"
+    elif label_type == "highlight":
+        iterator = iter_customer_highlight_occurrences
+        label_field = "customer_highlight"
+        canonical_field = "canonical_highlight_key"
+        confidence_field = "highlight_confidence"
+        source_field = "highlight_source"
+        sources_field = "highlight_sources"
+        schema_field = "customer_label_schema_version"
+        schema_version = CUSTOMER_LABEL_SCHEMA_VERSION
+        ruleset_field = "highlight_ruleset_version"
+        ruleset_version = HIGHLIGHT_RULESET_VERSION
+        is_specific_field = "is_customer_highlight"
+    else:
+        raise ValueError(f"Unsupported customer label type: {label_type}")
+
     pool_size = len(comments)
     groups: dict[tuple[str, str], dict[str, Any]] = {}
     comment_counts: dict[tuple[str, str], set[Any]] = defaultdict(set)
+    raw_occurrence_counter: Counter[tuple[str, str]] = Counter()
     confidence_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
-    issue_label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
+    label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
 
     for fallback_index, comment in enumerate(comments):
         comment_id = comment.get("id")
         if comment_id is None:
             comment_id = f"row-{fallback_index}"
         counted_in_comment: set[tuple[str, str]] = set()
-        seen_occurrences_in_comment: set[tuple[str, str, str]] = set()
-        for occurrence in iter_specific_issue_occurrences(comment, locale=locale):
-            occurrence_key = (
-                str(occurrence.get("sub_category") or ""),
-                str(occurrence.get("aspect_key") or ""),
-                str(occurrence.get("canonical_issue_key") or ""),
-            )
-            if not occurrence_key[2] or occurrence_key in seen_occurrences_in_comment:
+        for occurrence in iterator(comment, locale=locale):
+            canonical = str(
+                occurrence.get(canonical_field)
+                or occurrence.get("canonical_label_key")
+                or ""
+            ).strip()
+            if not canonical:
                 continue
-            seen_occurrences_in_comment.add(occurrence_key)
-            key = (occurrence_key[0], occurrence_key[2])
+            key = (str(occurrence.get("sub_category") or ""), canonical)
+            raw_occurrence_counter[key] += 1
             if key not in groups:
                 is_legacy = bool(occurrence.get("legacy_fallback"))
                 groups[key] = {
-                    "tag": occurrence["specific_issue"],
-                    "specific_issue": occurrence["specific_issue"],
-                    "canonical_issue_key": occurrence["canonical_issue_key"],
+                    "tag": occurrence[label_field],
+                    label_field: occurrence[label_field],
+                    canonical_field: canonical,
+                    "canonical_label_key": canonical,
+                    "label_type": label_type,
                     "aspect_key": occurrence.get("aspect_key") or "",
                     "aspect_keys": [],
                     "dimension": "",
                     "dimensions": [],
                     "sub_category": occurrence.get("sub_category") or "",
-                    "issue_source": occurrence.get("issue_source") or "",
-                    "issue_sources": [],
+                    source_field: occurrence.get(source_field) or "",
+                    sources_field: [],
                     "legacy_fallback": is_legacy,
-                    "is_specific_issue": not is_legacy,
+                    is_specific_field: not is_legacy,
                     "display_allowed": True,
-                    "specific_issue_schema_version": "" if is_legacy else SPECIFIC_ISSUE_SCHEMA_VERSION,
-                    "issue_ruleset_version": ISSUE_RULESET_VERSION,
+                    schema_field: "" if is_legacy else schema_version,
+                    "customer_label_occurrence_schema_version": (
+                        "" if is_legacy else CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
+                    ),
+                    ruleset_field: ruleset_version,
                     "representative_comments": [],
                     "evidence_spans": [],
                     "reason": "",
                 }
             if not occurrence.get("legacy_fallback"):
                 groups[key]["legacy_fallback"] = False
-                groups[key]["is_specific_issue"] = True
-                groups[key]["specific_issue_schema_version"] = SPECIFIC_ISSUE_SCHEMA_VERSION
+                groups[key][is_specific_field] = True
+                groups[key][schema_field] = schema_version
+                groups[key][
+                    "customer_label_occurrence_schema_version"
+                ] = CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
             aspect_key = str(occurrence.get("aspect_key") or "")
             if aspect_key and aspect_key not in groups[key]["aspect_keys"]:
                 groups[key]["aspect_keys"].append(aspect_key)
             dimension = str(occurrence.get("dimension") or "")
             if dimension and dimension not in groups[key]["dimensions"]:
                 groups[key]["dimensions"].append(dimension)
-            issue_source = str(occurrence.get("issue_source") or "")
-            if issue_source and issue_source not in groups[key]["issue_sources"]:
-                groups[key]["issue_sources"].append(issue_source)
-            issue_label_counter[key][str(occurrence.get("specific_issue") or groups[key]["specific_issue"])] += 1
+            source = str(occurrence.get(source_field) or "")
+            if source and source not in groups[key][sources_field]:
+                groups[key][sources_field].append(source)
+            label_counter[key][str(occurrence.get(label_field) or groups[key][label_field])] += 1
             if key not in counted_in_comment:
                 comment_counts[key].add(comment_id)
                 counted_in_comment.add(key)
-            confidence_counter[key][str(occurrence.get("issue_confidence") or "low")] += 1
+            confidence_counter[key][str(occurrence.get(confidence_field) or "low")] += 1
             content = str(occurrence.get("content") or "").strip()
             evidence = str(occurrence.get("evidence_span") or "").strip()
             if occurrence.get("verified_evidence") and content:
                 _append_unique_snippet(groups[key]["representative_comments"], content)
                 if evidence and evidence not in groups[key]["evidence_spans"]:
                     groups[key]["evidence_spans"].append(evidence)
-            elif occurrence.get("legacy_fallback") and content:
-                _append_unique_snippet(groups[key]["representative_comments"], content)
 
+    total_mentions = sum(len(comment_ids) for comment_ids in comment_counts.values())
     rows: list[dict[str, Any]] = []
     for key, row in groups.items():
-        count = len(comment_counts[key])
-        pct = round(count / pool_size * 100, 1) if pool_size else 0.0
+        mention_count = len(comment_counts[key])
+        if mention_count <= 0:
+            continue
+        mention_share = round(mention_count / total_mentions * 100, 1) if total_mentions else 0.0
+        impact_review_share = round(mention_count / pool_size * 100, 1) if pool_size else 0.0
         conf = confidence_counter[key].most_common(1)[0][0] if confidence_counter[key] else "low"
-        issue = issue_label_counter[key].most_common(1)[0][0] if issue_label_counter[key] else row["specific_issue"]
+        label = label_counter[key].most_common(1)[0][0] if label_counter[key] else row[label_field]
         aspect_keys = row["aspect_keys"]
         dimensions = row["dimensions"]
         examples = row["representative_comments"][:5]
@@ -1362,24 +1400,42 @@ def build_specific_issue_rows(
         rows.append(
             {
                 **row,
-                "tag": issue,
-                "specific_issue": issue,
+                "tag": label,
+                label_field: label,
                 "aspect_key": aspect_keys[0] if aspect_keys else row.get("aspect_key", ""),
                 "aspect_keys": aspect_keys,
                 "dimension": ", ".join(dimensions),
                 "dimensions": dimensions,
-                "issue_source": row["issue_sources"][0] if row["issue_sources"] else row.get("issue_source", ""),
-                "count": count,
-                "pct": pct,
-                "mention_share": pct,
-                "issue_confidence": conf,
+                source_field: row[sources_field][0] if row[sources_field] else row.get(source_field, ""),
+                "mention_count": mention_count,
+                "mention_share": mention_share,
+                "review_count": mention_count,
+                "impact_review_share": impact_review_share,
+                "raw_occurrence_count": raw_occurrence_counter[key],
+                "count": mention_count,
+                "pct": mention_share,
+                confidence_field: conf,
                 "representative_comments": examples,
                 "evidence_spans": evidence_spans,
                 "reason": examples[0] if examples else "No representative comment found.",
             }
         )
 
-    return sorted(rows, key=lambda r: (-int(r["count"]), str(r["specific_issue"]).lower()))[:limit]
+    return sorted(rows, key=lambda r: (-int(r["mention_count"]), str(r[label_field]).lower()))[:limit]
+
+
+def build_specific_issue_rows(
+    comments: list[dict[str, Any]],
+    *,
+    locale: str = "en",
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    return _build_customer_label_rows(
+        comments,
+        label_type="issue",
+        locale=locale,
+        limit=limit,
+    )
 
 
 def _legacy_highlight_occurrences(comment: dict[str, Any], locale: str) -> list[dict[str, Any]]:
@@ -1508,108 +1564,12 @@ def build_customer_highlight_rows(
     locale: str = "en",
     limit: int = 10,
 ) -> list[dict[str, Any]]:
-    pool_size = len(comments)
-    groups: dict[tuple[str, str], dict[str, Any]] = {}
-    comment_counts: dict[tuple[str, str], set[Any]] = defaultdict(set)
-    confidence_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
-    label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
-
-    for fallback_index, comment in enumerate(comments):
-        comment_id = comment.get("id")
-        if comment_id is None:
-            comment_id = f"row-{fallback_index}"
-        counted_in_comment: set[tuple[str, str]] = set()
-        seen_occurrences_in_comment: set[tuple[str, str, str]] = set()
-        for occurrence in iter_customer_highlight_occurrences(comment, locale=locale):
-            occurrence_key = (
-                str(occurrence.get("sub_category") or ""),
-                str(occurrence.get("aspect_key") or ""),
-                str(occurrence.get("canonical_highlight_key") or ""),
-            )
-            if not occurrence_key[2] or occurrence_key in seen_occurrences_in_comment:
-                continue
-            seen_occurrences_in_comment.add(occurrence_key)
-            key = (occurrence_key[0], occurrence_key[2])
-            if key not in groups:
-                is_legacy = bool(occurrence.get("legacy_fallback"))
-                groups[key] = {
-                    "tag": occurrence["customer_highlight"],
-                    "customer_highlight": occurrence["customer_highlight"],
-                    "canonical_highlight_key": occurrence["canonical_highlight_key"],
-                    "aspect_key": occurrence.get("aspect_key") or "",
-                    "aspect_keys": [],
-                    "dimension": "",
-                    "dimensions": [],
-                    "sub_category": occurrence.get("sub_category") or "",
-                    "highlight_source": occurrence.get("highlight_source") or "",
-                    "highlight_sources": [],
-                    "legacy_fallback": is_legacy,
-                    "is_customer_highlight": not is_legacy,
-                    "display_allowed": True,
-                    "customer_label_schema_version": "" if is_legacy else CUSTOMER_LABEL_SCHEMA_VERSION,
-                    "highlight_ruleset_version": HIGHLIGHT_RULESET_VERSION,
-                    "representative_comments": [],
-                    "evidence_spans": [],
-                    "reason": "",
-                }
-            if not occurrence.get("legacy_fallback"):
-                groups[key]["legacy_fallback"] = False
-                groups[key]["is_customer_highlight"] = True
-                groups[key]["customer_label_schema_version"] = CUSTOMER_LABEL_SCHEMA_VERSION
-            aspect_key = str(occurrence.get("aspect_key") or "")
-            if aspect_key and aspect_key not in groups[key]["aspect_keys"]:
-                groups[key]["aspect_keys"].append(aspect_key)
-            dimension = str(occurrence.get("dimension") or "")
-            if dimension and dimension not in groups[key]["dimensions"]:
-                groups[key]["dimensions"].append(dimension)
-            source = str(occurrence.get("highlight_source") or "")
-            if source and source not in groups[key]["highlight_sources"]:
-                groups[key]["highlight_sources"].append(source)
-            label_counter[key][str(occurrence.get("customer_highlight") or groups[key]["customer_highlight"])] += 1
-            if key not in counted_in_comment:
-                comment_counts[key].add(comment_id)
-                counted_in_comment.add(key)
-            confidence_counter[key][str(occurrence.get("highlight_confidence") or "low")] += 1
-            content = str(occurrence.get("content") or "").strip()
-            evidence = str(occurrence.get("evidence_span") or "").strip()
-            if occurrence.get("verified_evidence") and content:
-                _append_unique_snippet(groups[key]["representative_comments"], content)
-                if evidence and evidence not in groups[key]["evidence_spans"]:
-                    groups[key]["evidence_spans"].append(evidence)
-
-    rows: list[dict[str, Any]] = []
-    for key, row in groups.items():
-        count = len(comment_counts[key])
-        if count <= 0:
-            continue
-        pct = round(count / pool_size * 100, 1) if pool_size else 0.0
-        conf = confidence_counter[key].most_common(1)[0][0] if confidence_counter[key] else "low"
-        label = label_counter[key].most_common(1)[0][0] if label_counter[key] else row["customer_highlight"]
-        aspect_keys = row["aspect_keys"]
-        dimensions = row["dimensions"]
-        examples = row["representative_comments"][:5]
-        evidence_spans = row["evidence_spans"][:5]
-        rows.append(
-            {
-                **row,
-                "tag": label,
-                "customer_highlight": label,
-                "aspect_key": aspect_keys[0] if aspect_keys else row.get("aspect_key", ""),
-                "aspect_keys": aspect_keys,
-                "dimension": ", ".join(dimensions),
-                "dimensions": dimensions,
-                "highlight_source": row["highlight_sources"][0] if row["highlight_sources"] else row.get("highlight_source", ""),
-                "count": count,
-                "pct": pct,
-                "mention_share": pct,
-                "highlight_confidence": conf,
-                "representative_comments": examples,
-                "evidence_spans": evidence_spans,
-                "reason": examples[0] if examples else "No representative comment found.",
-            }
-        )
-
-    return sorted(rows, key=lambda r: (-int(r["count"]), str(r["customer_highlight"]).lower()))[:limit]
+    return _build_customer_label_rows(
+        comments,
+        label_type="highlight",
+        locale=locale,
+        limit=limit,
+    )
 
 
 def customer_issue_tags_for_comment(comment: dict[str, Any], locale: str = "en") -> list[str]:

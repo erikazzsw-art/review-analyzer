@@ -34,6 +34,57 @@ _OCCURRENCE_REQUIRED_FIELDS = {
 }
 
 
+def _label_occurrence(
+    *,
+    label_type: str,
+    canonical: str,
+    display: str,
+    aspect_key: str,
+    evidence: str,
+    comment_id: int | None = None,
+) -> dict[str, object]:
+    return {
+        "comment_id": comment_id,
+        "type": label_type,
+        "raw_label": display,
+        "canonical_label_key": canonical,
+        "display_label_en": display,
+        "display_label_zh": display,
+        "aspect_key": aspect_key,
+        "evidence_span": evidence,
+        "evidence_start": -1,
+        "evidence_end": -1,
+        "confidence": "high",
+        "source": "rule",
+        "source_detail": "test_occurrence",
+        "evidence_verified": True,
+        "cluster_propagated": False,
+        "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+        "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+        "display_allowed": True,
+    }
+
+
+def _comment_with_occurrences(
+    *,
+    comment_id: int,
+    content: str,
+    occurrences: list[dict[str, object]],
+    sentiment: str = "neutral",
+    sub_category: str = "outdoor",
+) -> dict[str, object]:
+    return {
+        "id": comment_id,
+        "content": content,
+        "sentiment": sentiment,
+        "aspects_json": {
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "sub_category": sub_category,
+            "customer_label_occurrences": occurrences,
+        },
+    }
+
+
 def test_enrich_aspects_json_adds_rule_based_specific_issue_metadata() -> None:
     enriched = enrich_aspects_json(
         {
@@ -145,6 +196,184 @@ def test_occurrence_iterator_projects_new_payload_and_fills_comment_id() -> None
     assert occurrence["evidence_verified"] is True
     assert occurrence["verified_evidence"] is True
     assert content[occurrence["evidence_start"] : occurrence["evidence_end"]] == "pocket gets wet"
+
+
+def test_issue_mention_share_uses_all_issue_mentions_as_denominator() -> None:
+    comments = [
+        _comment_with_occurrences(
+            comment_id=1,
+            content="The pocket got wet in the rain.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="issue",
+                    canonical="pocket_not_waterproof",
+                    display="Pocket Not Waterproof",
+                    aspect_key="accessory_storage",
+                    evidence="pocket got wet",
+                    comment_id=1,
+                )
+            ],
+            sentiment="negative",
+        ),
+        _comment_with_occurrences(
+            comment_id=2,
+            content="The storage pocket leaked.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="issue",
+                    canonical="pocket_not_waterproof",
+                    display="Pocket Not Waterproof",
+                    aspect_key="capacity",
+                    evidence="pocket leaked",
+                    comment_id=2,
+                )
+            ],
+            sentiment="negative",
+        ),
+        _comment_with_occurrences(
+            comment_id=3,
+            content="The zipper broke after one trip.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="issue",
+                    canonical="zipper_fails",
+                    display="Zipper Fails",
+                    aspect_key="zipper_quality",
+                    evidence="zipper broke",
+                    comment_id=3,
+                )
+            ],
+            sentiment="negative",
+        ),
+        {"id": 4, "content": "No label here.", "sentiment": "neutral", "aspects_json": None},
+    ]
+
+    rows = build_specific_issue_rows(comments, locale="en", limit=10)
+    pocket = next(row for row in rows if row["canonical_issue_key"] == "pocket_not_waterproof")
+    zipper = next(row for row in rows if row["canonical_issue_key"] == "zipper_fails")
+
+    assert pocket["mention_count"] == 2
+    assert pocket["count"] == 2
+    assert pocket["review_count"] == 2
+    assert pocket["mention_share"] == 66.7
+    assert pocket["pct"] == 66.7
+    assert pocket["impact_review_share"] == 50.0
+    assert pocket["raw_occurrence_count"] == 2
+    assert zipper["mention_share"] == 33.3
+    assert zipper["impact_review_share"] == 25.0
+
+
+def test_highlight_mention_share_uses_all_highlight_mentions_as_denominator() -> None:
+    comments = [
+        _comment_with_occurrences(
+            comment_id=1,
+            content="They kept me dry.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="highlight",
+                    canonical="keeps_water_out",
+                    display="Keeps Water Out",
+                    aspect_key="waterproof",
+                    evidence="kept me dry",
+                    comment_id=1,
+                )
+            ],
+            sentiment="positive",
+        ),
+        _comment_with_occurrences(
+            comment_id=2,
+            content="Still kept my feet dry after hours.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="highlight",
+                    canonical="keeps_water_out",
+                    display="Keeps Water Out",
+                    aspect_key="waterproof",
+                    evidence="kept my feet dry",
+                    comment_id=2,
+                )
+            ],
+            sentiment="positive",
+        ),
+        _comment_with_occurrences(
+            comment_id=3,
+            content="The boots fit perfect.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="highlight",
+                    canonical="fits_as_expected",
+                    display="Fits as Expected",
+                    aspect_key="boot_fit",
+                    evidence="fit perfect",
+                    comment_id=3,
+                )
+            ],
+            sentiment="positive",
+        ),
+        {"id": 4, "content": "No label here.", "sentiment": "neutral", "aspects_json": None},
+    ]
+
+    rows = build_customer_highlight_rows(comments, locale="en", limit=10)
+    dry = next(row for row in rows if row["canonical_highlight_key"] == "keeps_water_out")
+    fit = next(row for row in rows if row["canonical_highlight_key"] == "fits_as_expected")
+
+    assert dry["mention_count"] == 2
+    assert dry["count"] == 2
+    assert dry["review_count"] == 2
+    assert dry["mention_share"] == 66.7
+    assert dry["pct"] == 66.7
+    assert dry["impact_review_share"] == 50.0
+    assert dry["raw_occurrence_count"] == 2
+    assert fit["mention_share"] == 33.3
+    assert fit["impact_review_share"] == 25.0
+
+
+def test_insight_rows_use_occurrences_without_overall_sentiment_filter(monkeypatch) -> None:
+    from review_analyzer.insight_engine import build_results_insights
+
+    monkeypatch.setattr(
+        "review_analyzer.insight_engine._build_ai_results_payload",
+        lambda *args, **kwargs: None,
+    )
+    comments = [
+        _comment_with_occurrences(
+            comment_id=1,
+            content="I like the waders, but the zipper broke on day one.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="issue",
+                    canonical="zipper_fails",
+                    display="Zipper Fails",
+                    aspect_key="zipper_quality",
+                    evidence="zipper broke",
+                    comment_id=1,
+                )
+            ],
+            sentiment="positive",
+        ),
+        _comment_with_occurrences(
+            comment_id=2,
+            content="The fit was bad, but they kept me dry.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="highlight",
+                    canonical="keeps_water_out",
+                    display="Keeps Water Out",
+                    aspect_key="waterproof",
+                    evidence="kept me dry",
+                    comment_id=2,
+                )
+            ],
+            sentiment="negative",
+        ),
+    ]
+
+    insights = build_results_insights(1, comments, {"product_id": "demo"}, locale="en")
+
+    assert insights["user_experience"]["negative"][0]["canonical_issue_key"] == "zipper_fails"
+    assert insights["user_experience"]["positive"][0]["canonical_highlight_key"] == "keeps_water_out"
+    assert "customer label occurrences" in insights["purchase_motives"]["summary"]
+    assert "customer label occurrences" in insights["unmet_needs"]["summary"]
 
 
 def test_no_leaks_does_not_create_water_leaks_issue() -> None:
@@ -331,7 +560,11 @@ def test_legacy_issue_rows_are_marked_as_legacy_not_specific_issue_schema() -> N
     assert rows[0]["legacy_fallback"] is True
     assert rows[0]["is_specific_issue"] is False
     assert rows[0]["specific_issue_schema_version"] == ""
-    assert rows[0]["representative_comments"] == ["The battery does not last long."]
+    assert rows[0]["mention_count"] == 1
+    assert rows[0]["review_count"] == 1
+    assert rows[0]["mention_share"] == 100.0
+    assert rows[0]["impact_review_share"] == 100.0
+    assert rows[0]["representative_comments"] == []
 
 
 def test_specific_issue_dimension_uses_requested_locale_for_known_aspect_key() -> None:
@@ -849,13 +1082,21 @@ def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across
     breathable = next(row for row in rows if row["canonical_issue_key"] == "not_breathable")
     runs_small = next(row for row in rows if row["canonical_issue_key"] == "runs_too_small")
     assert breathable["count"] == 1
+    assert breathable["mention_count"] == 1
+    assert breathable["review_count"] == 1
     assert breathable["pct"] == 50.0
+    assert breathable["mention_share"] == 50.0
+    assert breathable["impact_review_share"] == 50.0
+    assert breathable["raw_occurrence_count"] == 2
     assert breathable["aspect_keys"] == ["breathability", "mobility"]
     assert breathable["dimension"] == "Breathability, Mobility"
     assert breathable["representative_comments"] == [
         "The material was hot and not breathable. It was stiff and not breathable while walking."
     ]
     assert runs_small["count"] == 1
+    assert runs_small["mention_count"] == 1
+    assert runs_small["review_count"] == 1
+    assert runs_small["raw_occurrence_count"] == 2
     assert runs_small["aspect_keys"] == ["size_fit", "boot_fit"]
     assert runs_small["dimension"] == "Size & Fit, Boot Fit"
 
