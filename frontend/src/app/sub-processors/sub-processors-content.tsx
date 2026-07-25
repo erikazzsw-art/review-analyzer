@@ -25,10 +25,10 @@ const SUB_PROCESSORS: readonly SubProcessor[] = [
     dpa: "https://www.cloudflare.com/privacypolicy/",
   },
   {
-    name: "Anthropic",
+    name: "OpenAI",
     purpose: "LLM inference (review analysis)",
     region: "United States",
-    dpa: "https://www.anthropic.com/legal/privacy",
+    dpa: "https://openai.com/policies/privacy-policy/",
   },
   {
     name: "DataForSEO",
