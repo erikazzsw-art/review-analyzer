@@ -22,7 +22,7 @@ import {
   getAnalysisSessionResults,
 } from "@/lib/api/server";
 import { isApiError } from "@/lib/api/server";
-import { customerTagText } from "@/lib/customer-labels";
+import { rowMentionShare } from "@/lib/customer-labels";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
@@ -199,9 +199,7 @@ function hasCustomerHighlightEvidence(
 function enrichRowsWithQuotes(
   rows: Array<Record<string, unknown>>,
   comments: Array<Record<string, unknown>>,
-  source: "highlight_tag" | "issue_tag",
   perRow = 5,
-  locale = "en",
 ): Array<Record<string, unknown>> {
   if (rows.length === 0 || comments.length === 0) return rows;
   return rows.map((row) => {
@@ -232,22 +230,6 @@ function enrichRowsWithQuotes(
       if (!content || seen.has(content)) continue;
       seen.add(content);
       quotes.push(content);
-    }
-
-    // Pass 2: fall back to tag-field match if not enough verified quotes
-    if (quotes.length < perRow && !hasSpecificIdentity && !hasHighlightIdentity) {
-      for (const c of comments) {
-        if (quotes.length >= perRow) break;
-        const raw = source === "highlight_tag"
-          ? customerTagText(c, "highlight", locale)
-          : customerTagText(c, "issue", locale);
-        const tags = raw.split(",").map((s) => s.trim());
-        if (!tags.includes(tag)) continue;
-        const content = String((c as Record<string, unknown>).content || "").trim();
-        if (!content || seen.has(content)) continue;
-        seen.add(content);
-        quotes.push(content);
-      }
     }
 
     if (quotes.length === 0) return row;
@@ -395,22 +377,16 @@ export default async function AnalysisResultsPage({
   };
   const consumerProfile = normalizeModule(payload.modules?.consumer_profile);
   const userExperienceRaw = normalizeModule(payload.modules?.user_experience);
-  const positiveComments = payload.comments.filter(
-    (comment) => String(comment.sentiment || "").toLowerCase() === "positive",
-  );
-  const negativeComments = payload.comments.filter(
-    (comment) => String(comment.sentiment || "").toLowerCase() === "negative",
-  );
   const userExperience = {
     ...userExperienceRaw,
-    positive: enrichRowsWithQuotes(userExperienceRaw.positive, positiveComments, "highlight_tag", 5, locale),
-    negative: enrichRowsWithQuotes(userExperienceRaw.negative, negativeComments, "issue_tag", 5, locale),
+    positive: enrichRowsWithQuotes(userExperienceRaw.positive, payload.comments, 5),
+    negative: enrichRowsWithQuotes(userExperienceRaw.negative, payload.comments, 5),
   };
   const purchaseMotives = normalizeModule(payload.modules?.purchase_motives);
   const unmetNeedsRaw = normalizeModule(payload.modules?.unmet_needs);
   const unmetNeeds = {
     ...unmetNeedsRaw,
-    rows: enrichRowsWithQuotes(unmetNeedsRaw.rows, negativeComments, "issue_tag", 5, locale),
+    rows: enrichRowsWithQuotes(unmetNeedsRaw.rows, payload.comments, 5),
   };
   const recommendations = normalizeModule(payload.modules?.recommendations);
 
@@ -429,7 +405,7 @@ export default async function AnalysisResultsPage({
     ...(userExperience.negative || []).map((row) => ({
       label: String(row.specific_issue || row.tag || row.label || t("negative")),
       detail: String(row.reason || row.detail || row.pct || ""),
-      currentPct: typeof row.pct === "number" ? row.pct : Number(row.pct) || null,
+      currentPct: rowMentionShare(row) || null,
       suggestedAction: String(row.reason || row.detail || ""),
       specificIssue: String(row.specific_issue || row.tag || row.label || t("negative")),
       aspectKey: String(row.aspect_key || "") || null,
@@ -439,7 +415,7 @@ export default async function AnalysisResultsPage({
     ...(unmetNeeds.rows || []).map((row) => ({
       label: String(row.specific_issue || row.tag || row.label || t("moduleUnmetNeeds")),
       detail: String(row.reason || row.detail || row.summary || row.value || ""),
-      currentPct: typeof row.pct === "number" ? row.pct : Number(row.pct) || null,
+      currentPct: rowMentionShare(row) || null,
       suggestedAction: String(row.reason || row.detail || ""),
       specificIssue: String(row.specific_issue || row.tag || row.label || t("moduleUnmetNeeds")),
       aspectKey: String(row.aspect_key || "") || null,

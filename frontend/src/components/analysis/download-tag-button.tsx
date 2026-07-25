@@ -1,11 +1,12 @@
 "use client";
 
 import { FileDown } from "lucide-react";
-import { useTranslations } from "next-intl";
 import * as XLSX from "xlsx";
 
-import { aspectLabel } from "@/lib/aspect-labels";
-import { customerTagText } from "@/lib/customer-labels";
+import {
+  customerLabelOccurrences,
+  type CustomerLabelOccurrence,
+} from "@/lib/customer-labels";
 
 type IssueMeta = {
   specificIssue?: string | null;
@@ -16,34 +17,14 @@ type IssueMeta = {
   aspectKeys?: string[] | null;
   dimension?: string | null;
   subCategory?: string | null;
+  mentionShare?: number | null;
+  impactReviewShare?: number | null;
 };
 
-type MatchedReview = {
+type MatchedOccurrence = {
   comment: Record<string, unknown>;
-  occurrences: Array<Record<string, unknown>>;
+  occurrence: CustomerLabelOccurrence;
 };
-
-function getAspectsPayload(comment: Record<string, unknown>): Record<string, unknown> | null {
-  const raw = comment.aspects_json;
-  let parsed: unknown = raw;
-  if (typeof raw === "string" && raw.trim()) {
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = null;
-    }
-  }
-  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-    ? (parsed as Record<string, unknown>)
-    : null;
-}
-
-function getAspects(comment: Record<string, unknown>): Array<Record<string, unknown>> {
-  const aspects = getAspectsPayload(comment)?.aspects;
-  return Array.isArray(aspects)
-    ? aspects.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
-    : [];
-}
 
 function splitMetaValues(value: unknown): string[] {
   if (Array.isArray(value)) {
@@ -63,147 +44,68 @@ function metaAspectKeys(meta: IssueMeta): string[] {
   return uniqueValues([...splitMetaValues(meta.aspectKeys), ...splitMetaValues(meta.aspectKey)]);
 }
 
-function findSpecificIssueOccurrences(
-  comment: Record<string, unknown>,
+function labelTypeFromSource(tagSource: "highlight_tag" | "issue_tag"): "issue" | "highlight" {
+  return tagSource === "issue_tag" ? "issue" : "highlight";
+}
+
+function metaCanonicalKey(meta: IssueMeta, labelType: "issue" | "highlight"): string {
+  return String(labelType === "issue" ? meta.canonicalIssueKey || "" : meta.canonicalHighlightKey || "").trim();
+}
+
+function metaLabel(meta: IssueMeta, tag: string, labelType: "issue" | "highlight"): string {
+  return String(labelType === "issue" ? meta.specificIssue || tag : meta.customerHighlight || tag).trim();
+}
+
+function occurrenceMatches(
+  occurrence: CustomerLabelOccurrence,
   meta: IssueMeta,
-): Array<Record<string, unknown>> {
-  const aspectKeys = metaAspectKeys(meta);
-  const canonicalIssueKey = String(meta.canonicalIssueKey || "").trim();
-  const subCategory = String(meta.subCategory || "").trim();
-  if (aspectKeys.length === 0 || !canonicalIssueKey) return [];
-  const payload = getAspectsPayload(comment);
-  if (payload?.cluster_propagated) return [];
-  if (subCategory && String(payload?.sub_category || comment.sub_category || comment.category || "") !== subCategory) {
-    return [];
-  }
-  return getAspects(comment).filter((aspect) => {
-    const hasSpecificIssuePayload = Boolean(aspect.specific_issue || aspect.specific_issue_zh) &&
-      Boolean(aspect.canonical_issue_key);
-    return (
-      aspectKeys.includes(String(aspect.key || aspect.aspect_key || "")) &&
-      String(aspect.canonical_issue_key || "") === canonicalIssueKey &&
-      (String(aspect.polarity || "").toLowerCase() === "negative" || hasSpecificIssuePayload) &&
-      aspect.display_allowed !== false &&
-      occurrenceEvidenceVerified(comment, aspect, payload)
-    );
-  });
-}
-
-function findCustomerHighlightOccurrences(
-  comment: Record<string, unknown>,
-  meta: IssueMeta,
-): Array<Record<string, unknown>> {
-  const aspectKeys = metaAspectKeys(meta);
-  const canonicalHighlightKey = String(meta.canonicalHighlightKey || "").trim();
-  const subCategory = String(meta.subCategory || "").trim();
-  if (aspectKeys.length === 0 || !canonicalHighlightKey) return [];
-  const payload = getAspectsPayload(comment);
-  if (payload?.cluster_propagated) return [];
-  if (subCategory && String(payload?.sub_category || comment.sub_category || comment.category || "") !== subCategory) {
-    return [];
-  }
-  return getAspects(comment).filter((aspect) => {
-    return (
-      aspectKeys.includes(String(aspect.key || aspect.aspect_key || "")) &&
-      String(aspect.canonical_highlight_key || "") === canonicalHighlightKey &&
-      String(aspect.polarity || "").toLowerCase() === "positive" &&
-      aspect.highlight_display_allowed !== false &&
-      occurrenceEvidenceVerified(comment, aspect, payload)
-    );
-  });
-}
-
-function occurrenceEvidenceVerified(
-  comment: Record<string, unknown>,
-  occurrence: Record<string, unknown>,
-  payload: Record<string, unknown> | null,
+  tag: string,
+  labelType: "issue" | "highlight",
 ): boolean {
-  const evidence = String(occurrence.evidence_span || "").trim();
-  const content = String(comment.content || "");
-  return Boolean(evidence && content.includes(evidence) && !payload?.cluster_propagated);
-}
-
-function tagMatchesComment(
-  searchTag: string,
-  comment: Record<string, unknown>,
-  tagSource: "highlight_tag" | "issue_tag",
-  locale: string,
-): boolean {
-  const needle = searchTag.trim().toLowerCase();
-  if (!needle) return false;
-
-  const displayTags = tagSource === "issue_tag"
-    ? customerTagText(comment, "issue", locale)
-    : customerTagText(comment, "highlight", locale);
-  if (displayTags) {
-    const customerTags = displayTags.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-    if (customerTags.includes(needle)) return true;
+  if (occurrence.type !== labelType) return false;
+  const canonicalKey = metaCanonicalKey(meta, labelType);
+  const expectedLabel = metaLabel(meta, tag, labelType).toLowerCase();
+  const subCategory = String(meta.subCategory || "").trim();
+  const aspectKeys = metaAspectKeys(meta);
+  if (subCategory && occurrence.subCategory && occurrence.subCategory !== subCategory) {
+    return false;
   }
-
-  const raw = String(comment[tagSource] || "");
-  if (!raw) return false;
-  const commentTags = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-
-  return commentTags.includes(needle);
+  if (canonicalKey) {
+    if (occurrence.canonicalLabelKey !== canonicalKey) return false;
+  } else if (expectedLabel && occurrence.label.toLowerCase() !== expectedLabel) {
+    return false;
+  }
+  if (aspectKeys.length > 0 && occurrence.aspectKey && !aspectKeys.includes(occurrence.aspectKey)) {
+    return false;
+  }
+  return true;
 }
 
-function getMatchedReviews(
+function getMatchedOccurrences(
   tag: string,
   comments: Array<Record<string, unknown>>,
   tagSource: "highlight_tag" | "issue_tag",
   meta: IssueMeta,
   locale: string,
-): MatchedReview[] {
-  const hasSpecificIdentity = Boolean(metaAspectKeys(meta).length > 0 && meta.canonicalIssueKey);
-  const hasHighlightIdentity = Boolean(metaAspectKeys(meta).length > 0 && meta.canonicalHighlightKey);
-  return comments
-    .map((comment) => {
-      const occurrences = hasSpecificIdentity
-        ? findSpecificIssueOccurrences(comment, meta)
-        : hasHighlightIdentity
-          ? findCustomerHighlightOccurrences(comment, meta)
-          : [];
-      if (occurrences.length > 0) return { comment, occurrences };
-      if (!hasSpecificIdentity && !hasHighlightIdentity && tagMatchesComment(tag, comment, tagSource, locale)) {
-        return { comment, occurrences: [] };
+): MatchedOccurrence[] {
+  const labelType = labelTypeFromSource(tagSource);
+  const matched: MatchedOccurrence[] = [];
+  for (const comment of comments) {
+    for (const occurrence of customerLabelOccurrences(comment, labelType, locale)) {
+      if (occurrenceMatches(occurrence, meta, tag, labelType)) {
+        matched.push({ comment, occurrence });
       }
-      return null;
-    })
-    .filter((item): item is MatchedReview => Boolean(item));
+    }
+  }
+  return matched;
 }
 
-function joinOccurrenceValues(
-  occurrences: Array<Record<string, unknown>>,
-  pick: (occurrence: Record<string, unknown>) => unknown,
-  fallback = "",
-): string {
-  const values = uniqueValues(
-    occurrences
-      .map((occurrence) => String(pick(occurrence) || "").trim())
-      .filter(Boolean),
-  );
-  return values.length > 0 ? values.join(", ") : fallback;
-}
-
-function occurrenceAspectKey(occurrence: Record<string, unknown>): string {
-  return String(occurrence.key || occurrence.aspect_key || "").trim();
-}
-
-function occurrenceDimension(occurrence: Record<string, unknown>, locale: string): string {
-  const aspectKey = occurrenceAspectKey(occurrence);
-  return aspectKey
-    ? aspectLabel(aspectKey, locale)
-    : String(occurrence.dimension || occurrence.aspect_label || "").trim();
-}
-
-function occurrenceCustomerLabel(occurrence: Record<string, unknown>, locale: string): string {
-  const issue = locale.startsWith("zh")
-    ? occurrence.specific_issue_zh || occurrence.specific_issue
-    : occurrence.specific_issue || occurrence.specific_issue_zh;
-  const highlight = locale.startsWith("zh")
-    ? occurrence.customer_highlight_zh || occurrence.customer_highlight
-    : occurrence.customer_highlight || occurrence.customer_highlight_zh;
-  return String(issue || highlight || "").trim();
+function uniqueReviewCount(matches: MatchedOccurrence[]): number {
+  const ids = new Set<string>();
+  matches.forEach(({ comment }, index) => {
+    ids.add(String(comment.id ?? `${comment.content || ""}-${index}`));
+  });
+  return ids.size;
 }
 
 function safeSheetName(value: string): string {
@@ -214,73 +116,74 @@ function safeFilenamePart(value: string): string {
   return value.trim().replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_") || "reviews";
 }
 
-function downloadTagReviews(
-  tag: string,
-  comments: Array<Record<string, unknown>>,
-  tagSource: "highlight_tag" | "issue_tag",
-  locale: string,
-  translateCategory: (slug: string) => string,
+function formatShare(value: number | null | undefined): string {
+  return typeof value === "number" && Number.isFinite(value) ? `${value.toFixed(1)}%` : "";
+}
+
+function occurrenceRows(
+  matches: MatchedOccurrence[],
   meta: IssueMeta,
+  tag: string,
+): (string | number)[][] {
+  return matches.map(({ comment, occurrence }) => {
+    const recordScope = occurrence.evidenceVerified && occurrence.evidenceSpan
+      ? "Verified Evidence"
+      : "Related Review";
+    return [
+      occurrence.type === "issue" ? "Issue" : "Highlight",
+      metaLabel(meta, tag, occurrence.type),
+      occurrence.canonicalLabelKey || metaCanonicalKey(meta, occurrence.type),
+      formatShare(meta.mentionShare),
+      formatShare(meta.impactReviewShare),
+      occurrence.rawLabel,
+      occurrence.dimension || meta.dimension || "",
+      occurrence.evidenceSpan,
+      occurrence.evidenceVerified ? "true" : "false",
+      occurrence.clusterPropagated ? "true" : "false",
+      String(comment.content || ""),
+      comment.rating != null ? Number(comment.rating) : "",
+      String(comment.date || ""),
+      String(comment.reviewer || ""),
+      occurrence.confidence,
+      occurrence.source || (occurrence.legacyFallback ? "legacy" : ""),
+      recordScope,
+    ];
+  });
+}
+
+function downloadOccurrencesXlsx(
+  tag: string,
+  matches: MatchedOccurrence[],
+  meta: IssueMeta,
+  locale: string,
 ) {
-  const matched = getMatchedReviews(tag, comments, tagSource, meta, locale);
   const headers =
     locale === "zh"
-      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户标签", "Canonical Label Key", "内部维度", "Aspect Key", "Evidence Span", "Label Confidence", "Evidence Verified"]
-      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Label", "Canonical Label Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Label Confidence", "Evidence Verified"];
-  const data: (string | number)[][] = [headers];
-  matched.forEach(({ comment: c, occurrences }, idx) => {
-    const categorySlug = String(c.category || "");
-    data.push([
-      idx + 1,
-      String(c.content || ""),
-      c.rating != null ? Number(c.rating) : "",
-      String(c.date || ""),
-      String(c.reviewer || ""),
-      String(c.source || ""),
-      String(c.sentiment || ""),
-      categorySlug ? translateCategory(categorySlug) : "",
-      String(c.priority || ""),
-      String(c.reason || ""),
-      String(c.improvement || ""),
-      customerTagText(c, "issue", locale),
-      customerTagText(c, "highlight", locale),
-      joinOccurrenceValues(
-        occurrences,
-        (occurrence) => occurrenceCustomerLabel(occurrence, locale),
-        String(meta.specificIssue || meta.customerHighlight || tag),
-      ),
-      joinOccurrenceValues(
-        occurrences,
-        (occurrence) => occurrence.canonical_issue_key || occurrence.canonical_highlight_key,
-        String(meta.canonicalIssueKey || meta.canonicalHighlightKey || ""),
-      ),
-      joinOccurrenceValues(
-        occurrences,
-        (occurrence) => occurrenceDimension(occurrence, locale),
-        String(meta.dimension || ""),
-      ),
-      joinOccurrenceValues(
-        occurrences,
-        occurrenceAspectKey,
-        metaAspectKeys(meta).join(", "),
-      ),
-      joinOccurrenceValues(occurrences, (occurrence) => occurrence.evidence_span),
-      joinOccurrenceValues(
-        occurrences,
-        (occurrence) => occurrence.issue_confidence || occurrence.highlight_confidence,
-      ),
-      joinOccurrenceValues(
-        occurrences,
-        (occurrence) => (occurrenceEvidenceVerified(c, occurrence, getAspectsPayload(c)) ? "true" : "false"),
-        "false",
-      ),
-    ] as (string | number)[]);
-  });
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, safeSheetName(tag));
+      ? ["Type", "Customer Issue / Label", "Canonical Label Key", "Mention Share", "Impact Review Share", "Raw Label", "Aspect", "Evidence Span", "Evidence Verified", "Cluster Propagated", "Review", "Rating", "Date", "Reviewer", "Confidence", "Source", "Record Scope"]
+      : ["Type", "Customer Issue / Label", "Canonical Label Key", "Mention Share", "Impact Review Share", "Raw Label", "Aspect", "Evidence Span", "Evidence Verified", "Cluster Propagated", "Review", "Rating", "Date", "Reviewer", "Confidence", "Source", "Record Scope"];
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...occurrenceRows(matches, meta, tag)]);
+  ws["!cols"] = [
+    { wch: 12 },
+    { wch: 28 },
+    { wch: 28 },
+    { wch: 16 },
+    { wch: 20 },
+    { wch: 24 },
+    { wch: 22 },
+    { wch: 36 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 64 },
+    { wch: 8 },
+    { wch: 14 },
+    { wch: 18 },
+    { wch: 14 },
+    { wch: 18 },
+    { wch: 18 },
+  ];
 
-  // AI Transparency disclaimer row (California AI Transparency Act AB 2013)
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, safeSheetName("Evidence + Related Reviews"));
   const aiNote =
     locale === "zh"
       ? "AI 生成分析 · 基于 OpenAI GPT-4o-mini"
@@ -288,7 +191,11 @@ function downloadTagReviews(
   const wsNote = XLSX.utils.aoa_to_sheet([[], [aiNote]]);
   XLSX.utils.book_append_sheet(wb, wsNote, locale === "zh" ? "AI 标注" : "AI Notice");
 
-  XLSX.writeFile(wb, `${safeFilenamePart(tag)}_reviews_${matched.length}.xlsx`);
+  const reviewCount = uniqueReviewCount(matches);
+  XLSX.writeFile(
+    wb,
+    `${safeFilenamePart(tag)}_evidence_and_related_reviews_${matches.length}occurrences_${reviewCount}reviews.xlsx`,
+  );
 }
 
 export function DownloadTagButton({
@@ -304,6 +211,8 @@ export function DownloadTagButton({
   aspectKeys,
   dimension,
   subCategory,
+  mentionShare,
+  impactReviewShare,
 }: {
   tag: string;
   comments: Array<Record<string, unknown>>;
@@ -317,15 +226,9 @@ export function DownloadTagButton({
   aspectKeys?: string[] | null;
   dimension?: string | null;
   subCategory?: string | null;
+  mentionShare?: number | null;
+  impactReviewShare?: number | null;
 }) {
-  const t = useTranslations("categoryLabels");
-  const translateCategory = (slug: string): string => {
-    try {
-      return t(slug);
-    } catch {
-      return slug;
-    }
-  };
   const meta = {
     specificIssue,
     canonicalIssueKey,
@@ -335,21 +238,30 @@ export function DownloadTagButton({
     aspectKeys,
     dimension,
     subCategory,
+    mentionShare,
+    impactReviewShare,
   };
-  const count = getMatchedReviews(tag, comments, tagSource, meta, locale).length;
-  if (count === 0) {
+  const matches = getMatchedOccurrences(tag, comments, tagSource, meta, locale);
+  if (matches.length === 0) {
     return null;
   }
+
+  const evidenceCount = matches.filter(
+    ({ occurrence }) => occurrence.evidenceVerified && Boolean(occurrence.evidenceSpan),
+  ).length;
+  const relatedReviewCount = uniqueReviewCount(matches);
 
   return (
     <button
       type="button"
-      onClick={() => downloadTagReviews(tag, comments, tagSource, locale, translateCategory, meta)}
-      className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-      title={`Download ${count} reviews`}
+      onClick={() => downloadOccurrencesXlsx(tag, matches, meta, locale)}
+      className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11px] font-medium text-soft shadow-sm hover:bg-[#faf8fb] hover:text-ink"
+      title={`Download ${matches.length} label occurrences across ${relatedReviewCount} reviews; ${evidenceCount} verified evidence occurrences`}
     >
       <FileDown className="h-3 w-3" />
-      {`Reviews ${count}`}
+      {locale.startsWith("zh")
+        ? `Download Evidence + Reviews ${relatedReviewCount}`
+        : `Download Evidence + Reviews ${relatedReviewCount}`}
     </button>
   );
 }

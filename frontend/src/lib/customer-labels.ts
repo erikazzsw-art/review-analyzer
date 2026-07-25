@@ -2,6 +2,29 @@ import { aspectLabel } from "@/lib/aspect-labels";
 
 type RecordValue = Record<string, unknown>;
 
+export type CustomerLabelType = "issue" | "highlight";
+
+export type CustomerLabelOccurrence = {
+  type: CustomerLabelType;
+  label: string;
+  rawLabel: string;
+  canonicalLabelKey: string;
+  aspectKey: string;
+  dimension: string;
+  evidenceSpan: string;
+  evidenceVerified: boolean;
+  clusterPropagated: boolean;
+  confidence: string;
+  source: string;
+  subCategory: string;
+  legacyFallback: boolean;
+};
+
+export type CustomerLabelEvidence = {
+  evidenceSpan: string;
+  review: string;
+};
+
 const BROAD_LABELS = new Set([
   "accessories and storage",
   "accessory storage",
@@ -71,6 +94,34 @@ export function uniqueStrings(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
+function finiteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value.replace("%", ""));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function boolValue(value: unknown): boolean {
+  return value === true || value === "true" || value === 1 || value === "1";
+}
+
+function localeLabel(enValue: unknown, zhValue: unknown, locale: string): string {
+  const en = String(enValue || "").trim();
+  const zh = String(zhValue || "").trim();
+  return locale.startsWith("zh") ? zh || en : en || zh;
+}
+
+function reviewBody(comment: RecordValue): string {
+  return String(comment.content || comment.body || comment.comment || "").trim();
+}
+
+function evidenceVerified(comment: RecordValue, evidence: string, clusterPropagated: boolean): boolean {
+  const content = reviewBody(comment);
+  return Boolean(evidence && content.includes(evidence) && !clusterPropagated);
+}
+
 export function parseAspectsPayload(comment: RecordValue): RecordValue | null {
   const raw = comment.aspects_json;
   if (raw && typeof raw === "object" && !Array.isArray(raw)) {
@@ -93,6 +144,13 @@ export function getAspects(comment: RecordValue): RecordValue[] {
   const aspects = parseAspectsPayload(comment)?.aspects;
   return Array.isArray(aspects)
     ? aspects.filter((item): item is RecordValue => Boolean(item) && typeof item === "object")
+    : [];
+}
+
+function payloadOccurrences(payload: RecordValue | null): RecordValue[] {
+  const occurrences = payload?.customer_label_occurrences;
+  return Array.isArray(occurrences)
+    ? occurrences.filter((item): item is RecordValue => Boolean(item) && typeof item === "object")
     : [];
 }
 
@@ -137,6 +195,13 @@ export function customerIssueTags(comment: RecordValue, locale: string): string[
     return uniqueStrings(decorated.filter((label) => isCustomerLabelAllowed(label, locale)));
   }
 
+  const occurrences = customerLabelOccurrences(comment, "issue", locale)
+    .map((occurrence) => occurrence.label)
+    .filter(Boolean);
+  if (occurrences.length > 0) {
+    return uniqueStrings(occurrences);
+  }
+
   const payload = parseAspectsPayload(comment);
   const aspects = getAspects(comment);
   const labels = aspects
@@ -170,6 +235,13 @@ export function customerHighlightTags(comment: RecordValue, locale: string): str
   const decorated = splitTagText(comment.customer_highlight_tags);
   if (decorated.length > 0) {
     return uniqueStrings(decorated.filter((label) => isCustomerLabelAllowed(label, locale)));
+  }
+
+  const occurrences = customerLabelOccurrences(comment, "highlight", locale)
+    .map((occurrence) => occurrence.label)
+    .filter(Boolean);
+  if (occurrences.length > 0) {
+    return uniqueStrings(occurrences);
   }
 
   const payload = parseAspectsPayload(comment);
@@ -209,4 +281,194 @@ export function customerTagText(
 ): string {
   const labels = type === "issue" ? customerIssueTags(comment, locale) : customerHighlightTags(comment, locale);
   return labels.join(", ");
+}
+
+export function customerLabelOccurrences(
+  comment: RecordValue,
+  type: CustomerLabelType,
+  locale: string,
+): CustomerLabelOccurrence[] {
+  const payload = parseAspectsPayload(comment);
+  const clusterPropagated = boolValue(payload?.cluster_propagated);
+  const subCategory = String(payload?.sub_category || comment.sub_category || comment.category || "").trim();
+  const projected = payloadOccurrences(payload)
+    .filter((occurrence) => String(occurrence.type || "").toLowerCase() === type)
+    .map((occurrence) => {
+      const aspectKey = String(occurrence.aspect_key || "").trim();
+      const label = localeLabel(occurrence.display_label_en, occurrence.display_label_zh, locale);
+      const dimension = localeLabel(occurrence.dimension_en, occurrence.dimension_zh, locale) ||
+        (aspectKey ? aspectLabel(aspectKey, locale) : "");
+      const evidenceSpan = String(occurrence.evidence_span || "").trim();
+      return {
+        type,
+        label,
+        rawLabel: String(occurrence.raw_label || label).trim(),
+        canonicalLabelKey: String(occurrence.canonical_label_key || "").trim(),
+        aspectKey,
+        dimension,
+        evidenceSpan,
+        evidenceVerified: evidenceVerified(comment, evidenceSpan, clusterPropagated || boolValue(occurrence.cluster_propagated)),
+        clusterPropagated: clusterPropagated || boolValue(occurrence.cluster_propagated),
+        confidence: String(occurrence.confidence || "").trim(),
+        source: String(occurrence.source_detail || occurrence.source || "").trim(),
+        subCategory: String(occurrence.sub_category || subCategory).trim(),
+        legacyFallback: boolValue(occurrence.legacy_fallback) || String(occurrence.source || "") === "legacy",
+      };
+    })
+    .filter((occurrence) => {
+      if (!occurrence.label || !occurrence.canonicalLabelKey) return false;
+      return isCustomerLabelAllowed(occurrence.label, locale, occurrence.aspectKey, occurrence.dimension);
+    });
+  if (projected.length > 0) return projected;
+
+  const aspects = getAspects(comment);
+  const fromAspects = aspects
+    .filter((aspect) => {
+      if (type === "issue") {
+        const hasIssue = Boolean(aspect.specific_issue || aspect.specific_issue_zh) &&
+          Boolean(aspect.canonical_issue_key);
+        return (
+          hasIssue &&
+          aspect.display_allowed !== false &&
+          (String(aspect.polarity || "").toLowerCase() === "negative" || hasIssue)
+        );
+      }
+      return (
+        Boolean(aspect.customer_highlight || aspect.customer_highlight_zh) &&
+        Boolean(aspect.canonical_highlight_key) &&
+        aspect.highlight_display_allowed !== false &&
+        String(aspect.polarity || "").toLowerCase() === "positive"
+      );
+    })
+    .map((aspect) => {
+      const aspectKey = String(aspect.key || aspect.aspect_key || "").trim();
+      const label = type === "issue"
+        ? localeLabel(aspect.specific_issue, aspect.specific_issue_zh, locale)
+        : localeLabel(aspect.customer_highlight, aspect.customer_highlight_zh, locale);
+      const canonicalLabelKey = type === "issue"
+        ? String(aspect.canonical_issue_key || "").trim()
+        : String(aspect.canonical_highlight_key || "").trim();
+      const evidenceSpan = String(aspect.evidence_span || aspect.evidence || "").trim();
+      const dimension = aspectKey ? aspectLabel(aspectKey, locale) : String(aspect.dimension || aspect.aspect_label || "").trim();
+      return {
+        type,
+        label,
+        rawLabel: String(
+          type === "issue"
+            ? aspect.specific_issue_raw || aspect.specific_issue || label
+            : aspect.customer_highlight_raw || aspect.customer_highlight || label,
+        ).trim(),
+        canonicalLabelKey,
+        aspectKey,
+        dimension,
+        evidenceSpan,
+        evidenceVerified: evidenceVerified(comment, evidenceSpan, clusterPropagated || boolValue(aspect.cluster_propagated)),
+        clusterPropagated: clusterPropagated || boolValue(aspect.cluster_propagated),
+        confidence: String(type === "issue" ? aspect.issue_confidence || "" : aspect.highlight_confidence || "").trim(),
+        source: String(type === "issue" ? aspect.issue_source || "" : aspect.highlight_source || "").trim(),
+        subCategory,
+        legacyFallback: false,
+      };
+    })
+    .filter((occurrence) => {
+      if (!occurrence.label || !occurrence.canonicalLabelKey) return false;
+      return isCustomerLabelAllowed(occurrence.label, locale, occurrence.aspectKey, occurrence.dimension);
+    });
+  if (fromAspects.length > 0 || hasCustomerPayload(payload, type === "issue"
+    ? ["specific_issue", "canonical_issue_key", "display_allowed"]
+    : ["customer_highlight", "canonical_highlight_key", "highlight_display_allowed"])) {
+    return fromAspects;
+  }
+
+  const tagField = type === "issue" ? comment.issue_tag : comment.highlight_tag;
+  return splitTagText(tagField)
+    .filter((label) => isCustomerLabelAllowed(label, locale))
+    .map((label) => ({
+      type,
+      label,
+      rawLabel: label,
+      canonicalLabelKey: label
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "") || label.trim(),
+      aspectKey: "",
+      dimension: "",
+      evidenceSpan: "",
+      evidenceVerified: false,
+      clusterPropagated: false,
+      confidence: "low",
+      source: type === "issue" ? "legacy_issue_tag" : "legacy_highlight_tag",
+      subCategory: String(comment.sub_category || comment.category || "").trim(),
+      legacyFallback: true,
+    }));
+}
+
+export function rowMentionCount(row: RecordValue): number {
+  return finiteNumber(row.mention_count ?? row.count) ?? 0;
+}
+
+export function rowReviewCount(row: RecordValue): number {
+  return finiteNumber(row.review_count ?? row.count) ?? 0;
+}
+
+export function rowMentionShare(row: RecordValue): number {
+  return finiteNumber(row.mention_share ?? row.pct ?? row.percentage ?? row.percent) ?? 0;
+}
+
+export function rowImpactReviewShare(row: RecordValue, totalReviews?: number): number {
+  const explicit = finiteNumber(row.impact_review_share);
+  if (explicit !== null) return explicit;
+  const reviewCount = rowReviewCount(row);
+  if (typeof totalReviews === "number" && totalReviews > 0 && row.review_count !== undefined) {
+    return Math.round((reviewCount / totalReviews) * 1000) / 10;
+  }
+  return finiteNumber(row.pct ?? row.percentage ?? row.percent) ?? 0;
+}
+
+export function rowUsesLegacyStats(row: RecordValue): boolean {
+  return Boolean(row.legacy_fallback) ||
+    (row.mention_share === undefined &&
+      row.impact_review_share === undefined &&
+      row.mention_count === undefined &&
+      row.review_count === undefined);
+}
+
+function evidenceStrings(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item || "").trim())
+      .filter((item) => item && item !== "No representative comment found.");
+  }
+  const single = String(value || "").trim();
+  return single && single !== "No representative comment found." ? [single] : [];
+}
+
+export function rowRepresentativeEvidence(row: RecordValue): CustomerLabelEvidence[] {
+  const result: CustomerLabelEvidence[] = [];
+  const seen = new Set<string>();
+  const comments = evidenceStrings(row.representative_comments);
+  for (const [index, evidenceSpan] of evidenceStrings(row.evidence_spans).entries()) {
+    if (seen.has(evidenceSpan)) continue;
+    seen.add(evidenceSpan);
+    result.push({ evidenceSpan, review: comments[index] || "" });
+  }
+
+  const representative = row.representative_evidence;
+  const values = Array.isArray(representative) ? representative : representative ? [representative] : [];
+  for (const item of values) {
+    let evidenceSpan = "";
+    let review = "";
+    if (item && typeof item === "object") {
+      const record = item as RecordValue;
+      evidenceSpan = String(record.evidence_span || record.evidenceSpan || record.span || record.text || "").trim();
+      review = String(record.review || record.content || record.full_review || record.comment || "").trim();
+    } else {
+      evidenceSpan = String(item || "").trim();
+    }
+    if (!evidenceSpan || seen.has(evidenceSpan) || evidenceSpan === "No representative comment found.") continue;
+    seen.add(evidenceSpan);
+    result.push({ evidenceSpan, review });
+  }
+  return result;
 }

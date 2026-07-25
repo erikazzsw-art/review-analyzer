@@ -10,8 +10,13 @@ import { exportModuleXlsx } from "@/lib/api/browser";
 import { useTranslatedContent } from "@/hooks/useTranslatedContent";
 import { InlineActionButton } from "@/components/analysis/inline-action-button";
 import { DownloadTagButton } from "@/components/analysis/download-tag-button";
-import { aspectLabel } from "@/lib/aspect-labels";
-import { customerTagText } from "@/lib/customer-labels";
+import {
+  customerLabelOccurrences,
+  rowImpactReviewShare,
+  rowMentionShare,
+  rowRepresentativeEvidence,
+  rowReviewCount,
+} from "@/lib/customer-labels";
 
 type SessionInfo = {
   product_ref_id?: number | null;
@@ -150,45 +155,6 @@ export function ModuleCard({ sessionId, moduleKey, moduleData, comments, locale,
   );
 }
 
-function parseAspectsPayload(comment: Record<string, unknown>): Record<string, unknown> | null {
-  const raw = comment.aspects_json;
-  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-    return raw as Record<string, unknown>;
-  }
-  if (typeof raw === "string" && raw.trim()) {
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-        ? (parsed as Record<string, unknown>)
-        : null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-function getAspects(comment: Record<string, unknown>): Array<Record<string, unknown>> {
-  const aspects = parseAspectsPayload(comment)?.aspects;
-  return Array.isArray(aspects)
-    ? aspects.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
-    : [];
-}
-
-function safeIssueSlug(value: string): string {
-  const asciiSlug = value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  if (asciiSlug) return asciiSlug;
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, "_")
-    .replace(/^_+|_+$/g, "") || "unspecified_issue";
-}
-
 function issueLabel(row: Record<string, unknown>, fallback = ""): string {
   return String(row.specific_issue || row.tag || row.label || fallback);
 }
@@ -243,197 +209,113 @@ function buildClientXlsx(
   locale: string,
 ): Blob {
   const wb = XLSX.utils.book_new();
-  const positive = comments.filter((c) => c.sentiment === "positive");
-  const negative = comments.filter((c) => c.sentiment === "negative");
-  const headers =
+  const labelHeaders =
     locale === "zh"
-      ? ["排名", "客户标签", "出现次数", "提及占比", "代表性评论（前20条摘要）"]
-      : ["Rank", "Customer Label", "Count", "Percentage", "Representative Reviews (Top 20)"];
+      ? ["排名", "客户标签", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Label Key", "内部维度", "Aspect Key", "Confidence"]
+      : ["Rank", "Customer Label", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Label Key", "Internal Aspect", "Aspect Key", "Confidence"];
   const issueHeaders =
     locale === "zh"
-      ? ["排名", "客户痛点", "出现次数", "提及占比", "内部维度", "Canonical Issue Key", "Aspect Key", "Evidence Span", "Issue Confidence", "代表性评论（前20条摘要）"]
-      : ["Rank", "Customer Issue", "Count", "Mention Share", "Internal Aspect", "Canonical Issue Key", "Aspect Key", "Evidence Span", "Issue Confidence", "Representative Reviews (Top 20)"];
+      ? ["排名", "客户痛点", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Issue Key", "内部维度", "Aspect Key", "Confidence"]
+      : ["Rank", "Customer Issue", "Mention Count", "Mention Share", "Review Count", "Impact Review Share", "Representative Evidence", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Confidence"];
 
-  function buildTop10(pool: Array<Record<string, unknown>>, tagField: string) {
-    const counter: Record<string, number> = {};
-    const sources: Record<string, string[]> = {};
-    for (const c of pool) {
-      const raw =
-        tagField === "highlight_tag"
-          ? customerTagText(c, "highlight", locale)
-          : tagField === "issue_tag"
-            ? customerTagText(c, "issue", locale)
-            : String(c[tagField] || "");
-      if (!raw) continue;
-      const seen = new Set<string>();
-      for (const t of raw.split(",")) {
-        const tag = t.trim();
-        if (!tag || seen.has(tag)) continue;
-        seen.add(tag);
-        counter[tag] = (counter[tag] || 0) + 1;
-        if (!sources[tag]) sources[tag] = [];
-        if (sources[tag].length < 20) {
-          sources[tag].push(String(c.content || "").slice(0, 120));
-        }
-      }
-    }
-    const poolSize = pool.length || 1;
-    return Object.entries(counter)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([tag, count], i) => [
-        i + 1,
-        tag,
-        count,
-        `${((count / poolSize) * 100).toFixed(1)}%`,
-        (sources[tag] || []).join(" | "),
-      ]);
+  function formatPct(value: number) {
+    return `${value.toFixed(1)}%`;
   }
 
-  function iterSpecificIssueOccurrences(comment: Record<string, unknown>) {
-    const payload = parseAspectsPayload(comment);
-    const schemaVersion = String(payload?.specific_issue_schema_version || "");
-    const content = String(comment.content || "");
-    const subCategory = String(payload?.sub_category || comment.sub_category || comment.category || "");
-    const occurrences = getAspects(comment)
-      .filter((aspect) => {
-        return (
-          String(aspect.polarity || "").toLowerCase() === "negative" &&
-          aspect.display_allowed !== false &&
-          Boolean(aspect.specific_issue) &&
-          Boolean(aspect.canonical_issue_key)
-        );
-      })
-      .map((aspect) => {
-        const aspectKey = String(aspect.key || aspect.aspect_key || "");
-        return {
-          specificIssue: String(aspect.specific_issue || ""),
-          canonicalIssueKey: String(aspect.canonical_issue_key || ""),
-          aspectKey,
-          dimension: aspectKey
-            ? aspectLabel(aspectKey, locale)
-            : String(aspect.dimension || aspect.aspect_label || ""),
-          evidenceSpan: String(aspect.evidence_span || ""),
-          issueConfidence: String(aspect.issue_confidence || ""),
-          subCategory,
-          content,
-        };
-      });
-    if (occurrences.length > 0 || schemaVersion === "1.0") {
-      return occurrences;
-    }
-    return customerTagText(comment, "issue", locale)
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean)
-      .map((tag) => ({
-        specificIssue: tag,
-        canonicalIssueKey: safeIssueSlug(tag),
-        aspectKey: "",
-        dimension: "",
-        evidenceSpan: "",
-        issueConfidence: "low",
-        subCategory: String(comment.sub_category || comment.category || ""),
-        content,
-      }));
-  }
-
-  function buildSpecificIssueTop10(pool: Array<Record<string, unknown>>) {
+  function buildCustomerLabelTop10(labelType: "issue" | "highlight") {
     const groups = new Map<string, {
-      specificIssue: string;
-      canonicalIssueKey: string;
-      aspectKey: string;
+      label: string;
+      canonicalLabelKey: string;
       aspectKeys: string[];
-      dimension: string;
       dimensions: string[];
       evidenceSpans: string[];
-      issueConfidence: string;
-      comments: string[];
-      count: number;
+      confidence: string;
+      mentionCount: number;
     }>();
 
-    for (const comment of pool) {
+    for (const [index, comment] of comments.entries()) {
+      const commentId = comment.id ?? `row-${index}`;
       const counted = new Set<string>();
-      const seenOccurrences = new Set<string>();
-      for (const occurrence of iterSpecificIssueOccurrences(comment)) {
-        const occurrenceKey = `${occurrence.subCategory}::${occurrence.aspectKey}::${occurrence.canonicalIssueKey}`;
-        if (!occurrence.canonicalIssueKey || seenOccurrences.has(occurrenceKey)) continue;
-        seenOccurrences.add(occurrenceKey);
-        const key = `${occurrence.subCategory}::${occurrence.canonicalIssueKey}`;
+      for (const occurrence of customerLabelOccurrences(comment, labelType, locale)) {
+        if (!occurrence.canonicalLabelKey) continue;
+        const key = `${occurrence.subCategory}::${occurrence.canonicalLabelKey}`;
         const group = groups.get(key) || {
-          specificIssue: occurrence.specificIssue,
-          canonicalIssueKey: occurrence.canonicalIssueKey,
-          aspectKey: occurrence.aspectKey,
+          label: occurrence.label,
+          canonicalLabelKey: occurrence.canonicalLabelKey,
           aspectKeys: [],
-          dimension: occurrence.dimension,
           dimensions: [],
           evidenceSpans: [],
-          issueConfidence: occurrence.issueConfidence || "low",
-          comments: [],
-          count: 0,
+          confidence: occurrence.confidence || "low",
+          mentionCount: 0,
         };
+        if (!counted.has(`${commentId}::${key}`)) {
+          group.mentionCount += 1;
+          counted.add(`${commentId}::${key}`);
+        }
         if (occurrence.aspectKey && !group.aspectKeys.includes(occurrence.aspectKey)) {
           group.aspectKeys.push(occurrence.aspectKey);
         }
         if (occurrence.dimension && !group.dimensions.includes(occurrence.dimension)) {
           group.dimensions.push(occurrence.dimension);
         }
-        if (!counted.has(key)) {
-          group.count += 1;
-          counted.add(key);
-        }
-        if (occurrence.evidenceSpan && group.evidenceSpans.length < 20) {
+        if (occurrence.evidenceVerified && occurrence.evidenceSpan && group.evidenceSpans.length < 20) {
           group.evidenceSpans.push(occurrence.evidenceSpan);
         }
-        if (occurrence.content && group.comments.length < 20) {
-          group.comments.push(occurrence.content.slice(0, 120));
+        if (occurrence.confidence === "high") {
+          group.confidence = "high";
         }
         groups.set(key, group);
       }
     }
 
-    const poolSize = pool.length || 1;
+    const totalMentions = Array.from(groups.values()).reduce((sum, group) => sum + group.mentionCount, 0);
+    const totalReviews = comments.length || 1;
     return Array.from(groups.values())
-      .sort((a, b) => b.count - a.count || a.specificIssue.localeCompare(b.specificIssue))
+      .sort((a, b) => b.mentionCount - a.mentionCount || a.label.localeCompare(b.label))
       .slice(0, 10)
-      .map((group, i) => [
-        i + 1,
-        group.specificIssue,
-        group.count,
-        `${((group.count / poolSize) * 100).toFixed(1)}%`,
-        group.dimensions.join(", ") || group.dimension,
-        group.canonicalIssueKey,
-        group.aspectKeys.join(", ") || group.aspectKey,
-        group.evidenceSpans.join(" | "),
-        group.issueConfidence,
-        group.comments.join(" | "),
-      ]);
+      .map((group, i) => {
+        const mentionShare = totalMentions > 0 ? (group.mentionCount / totalMentions) * 100 : 0;
+        const impactShare = (group.mentionCount / totalReviews) * 100;
+        return [
+          i + 1,
+          group.label,
+          group.mentionCount,
+          formatPct(mentionShare),
+          group.mentionCount,
+          formatPct(impactShare),
+          group.evidenceSpans.join(" | "),
+          group.canonicalLabelKey,
+          group.dimensions.join(", "),
+          group.aspectKeys.join(", "),
+          group.confidence,
+        ];
+      });
   }
 
   if (moduleKey === "user_experience") {
-    const posData = [headers, ...buildTop10(positive, "highlight_tag")];
+    const posData = [labelHeaders, ...buildCustomerLabelTop10("highlight")];
     const wsPos = XLSX.utils.aoa_to_sheet(posData);
     XLSX.utils.book_append_sheet(wb, wsPos, locale === "zh" ? "正向反馈 TOP10" : "Positive Feedback TOP10");
-    const negData = [issueHeaders, ...buildSpecificIssueTop10(negative)];
+    const negData = [issueHeaders, ...buildCustomerLabelTop10("issue")];
     const wsNeg = XLSX.utils.aoa_to_sheet(negData);
     XLSX.utils.book_append_sheet(wb, wsNeg, locale === "zh" ? "负向反馈 TOP10" : "Negative Feedback TOP10");
   } else if (moduleKey === "purchase_motives") {
-    const data = [headers, ...buildTop10(positive, "highlight_tag")];
+    const data = [labelHeaders, ...buildCustomerLabelTop10("highlight")];
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "消费动机" : "Purchase Motives");
   } else if (moduleKey === "unmet_needs") {
-    const data = [issueHeaders, ...buildSpecificIssueTop10(negative)];
+    const data = [issueHeaders, ...buildCustomerLabelTop10("issue")];
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "未满足的需求" : "Unmet Needs");
   } else if (moduleKey === "consumer_profile") {
-    const posData = [headers, ...buildTop10(positive, "highlight_tag")];
+    const posData = [labelHeaders, ...buildCustomerLabelTop10("highlight")];
     const wsPos = XLSX.utils.aoa_to_sheet(posData);
     XLSX.utils.book_append_sheet(wb, wsPos, locale === "zh" ? "亮点标签 TOP10" : "Highlight Tags TOP10");
-    const negData = [headers, ...buildTop10(negative, "issue_tag")];
+    const negData = [issueHeaders, ...buildCustomerLabelTop10("issue")];
     const wsNeg = XLSX.utils.aoa_to_sheet(negData);
     XLSX.utils.book_append_sheet(wb, wsNeg, locale === "zh" ? "问题标签 TOP10" : "Issue Tags TOP10");
   } else {
-    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const ws = XLSX.utils.aoa_to_sheet([labelHeaders]);
     XLSX.utils.book_append_sheet(wb, ws, moduleKey);
   }
 
@@ -488,6 +370,8 @@ function TranslatedView({
     tagSource: "highlight_tag" | "issue_tag",
     canAction: boolean,
     meta: IssueMeta = {},
+    mentionShare = pct,
+    impactReviewShare = pct,
   ) {
     return (
       <div className="mt-2 flex items-center gap-1.5">
@@ -505,6 +389,8 @@ function TranslatedView({
             aspectKeys={meta.aspectKeys}
             dimension={meta.dimension}
             subCategory={meta.subCategory}
+            mentionShare={mentionShare}
+            impactReviewShare={impactReviewShare}
           />
         )}
         {canAction && session && sessionId > 0 && (
@@ -537,10 +423,14 @@ function TranslatedView({
               <div className="text-xs font-semibold text-[#059669]">{t("positiveFeedback")}</div>
               {positive.map((row: Record<string, unknown>, i: number) => {
                 const origRow = origPositive[i];
+                const metricRow = origRow || row;
                 const tag = String(row.customer_highlight || row.tag || "");
                 const origTag = String(origRow?.customer_highlight || origRow?.tag || tag);
                 const meta = highlightMetaFromRow(origRow, origTag);
-                const pct = Number(row.pct || 0);
+                const pct = rowMentionShare(metricRow);
+                const impactShare = rowImpactReviewShare(metricRow, comments?.length || 0);
+                const reviewCount = rowReviewCount(metricRow);
+                const evidenceRows = rowRepresentativeEvidence(metricRow);
                 const reason = String(row.reason || "");
                 return (
                   <div key={i} className="rounded-card border border-line bg-white p-3">
@@ -548,9 +438,14 @@ function TranslatedView({
                       <span className="text-xs font-bold text-soft">{i + 1}</span>
                       <span className="text-sm font-semibold text-ink">{tag}</span>
                       <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
+                      <span className="text-xs text-soft">{reviewCount} / {comments?.length || 0} ({impactShare.toFixed(1)}%)</span>
                     </div>
-                    {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
-                    {renderRowButtons(origTag, pct, reason, "highlight_tag", false, meta)}
+                    {evidenceRows.length > 0 ? (
+                      <p className="mt-1 text-xs text-soft italic">
+                        &ldquo;{evidenceRows[0].evidenceSpan}&rdquo;
+                      </p>
+                    ) : null}
+                    {renderRowButtons(origTag, pct, reason, "highlight_tag", false, meta, pct, impactShare)}
                   </div>
                 );
               })}
@@ -561,11 +456,15 @@ function TranslatedView({
               <div className="text-xs font-semibold text-[#dc2626]">{t("negativeFeedback")}</div>
               {negative.map((row: Record<string, unknown>, i: number) => {
                 const origRow = origNegative[i];
+                const metricRow = origRow || row;
                 const tag = issueLabel(row, issueLabel(origRow || {}, ""));
                 const origTag = issueLabel(origRow || {}, tag);
                 const meta = issueMetaFromRow(origRow, origTag);
                 const dimension = issueDimension(row) || meta.dimension || "";
-                const pct = Number(row.pct || 0);
+                const pct = rowMentionShare(metricRow);
+                const impactShare = rowImpactReviewShare(metricRow, comments?.length || 0);
+                const reviewCount = rowReviewCount(metricRow);
+                const evidenceRows = rowRepresentativeEvidence(metricRow);
                 const reason = String(row.reason || "");
                 return (
                   <div key={i} className="rounded-card border border-line bg-white p-3">
@@ -573,12 +472,17 @@ function TranslatedView({
                       <span className="text-xs font-bold text-soft">{i + 1}</span>
                       <span className="text-sm font-semibold text-ink">{tag}</span>
                       <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
+                      <span className="text-xs text-soft">{reviewCount} / {comments?.length || 0} ({impactShare.toFixed(1)}%)</span>
                     </div>
-                    {row.reason ? <p className="mt-1 text-xs text-soft italic">{reason}</p> : null}
+                    {evidenceRows.length > 0 ? (
+                      <p className="mt-1 text-xs text-soft italic">
+                        &ldquo;{evidenceRows[0].evidenceSpan}&rdquo;
+                      </p>
+                    ) : null}
                     {renderRowButtons(origTag, pct, reason, "issue_tag", !!showAction, {
                       ...meta,
                       dimension: meta.dimension || dimension,
-                    })}
+                    }, pct, impactShare)}
                   </div>
                 );
               })}
@@ -591,7 +495,11 @@ function TranslatedView({
         <div className="space-y-2">
           {rows.map((row: Record<string, unknown>, i: number) => {
             const origRow = origRows[i];
-            const pct = Number(row.pct || 0);
+            const metricRow = origRow || row;
+            const pct = rowMentionShare(metricRow);
+            const impactShare = rowImpactReviewShare(metricRow, comments?.length || 0);
+            const reviewCount = rowReviewCount(metricRow);
+            const evidenceRows = rowRepresentativeEvidence(metricRow);
             const reason = String(row.reason || row.detail || "");
             const tagSource: "highlight_tag" | "issue_tag" =
               moduleKey === "unmet_needs" ? "issue_tag" : "highlight_tag";
@@ -611,17 +519,16 @@ function TranslatedView({
                   {tag ? (
                     <span className="text-sm font-semibold text-ink">{tag}</span>
                   ) : null}
-                  {row.pct !== undefined && (
-                    <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
-                  )}
+                  <span className="text-xs text-soft">{pct.toFixed(1)}%</span>
+                  <span className="text-xs text-soft">{reviewCount} / {comments?.length || 0} ({impactShare.toFixed(1)}%)</span>
                 </div>
-                {(row.reason || row.detail) ? (
-                  <p className="mt-1 text-xs leading-5 text-soft">{reason}</p>
+                {evidenceRows.length > 0 ? (
+                  <p className="mt-1 text-xs leading-5 text-soft">&ldquo;{evidenceRows[0].evidenceSpan}&rdquo;</p>
                 ) : null}
                 {renderRowButtons(origTag, pct, reason, tagSource, canAction, {
                   ...meta,
                   dimension: meta.dimension || dimension,
-                })}
+                }, pct, impactShare)}
               </div>
             );
           })}

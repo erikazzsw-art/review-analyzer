@@ -190,12 +190,36 @@ export type AsinFetchResponse = {
   message: string;
 };
 
+export type AnalysisResultTagRow = Record<string, unknown> & {
+  tag?: string;
+  specific_issue?: string;
+  customer_highlight?: string;
+  canonical_label_key?: string;
+  canonical_issue_key?: string;
+  canonical_highlight_key?: string;
+  mention_count?: number;
+  mention_share?: number;
+  review_count?: number;
+  impact_review_share?: number;
+  raw_occurrence_count?: number;
+  count?: number;
+  pct?: number;
+  aspect_key?: string;
+  aspect_keys?: string[];
+  dimension?: string;
+  dimensions?: string[];
+  evidence_spans?: string[];
+  representative_evidence?: Array<string | Record<string, unknown>> | string;
+  representative_comments?: string[];
+  legacy_fallback?: boolean;
+};
+
 export type AnalysisResultModule = {
   summary: string;
-  rows: Array<Record<string, unknown>>;
+  rows: AnalysisResultTagRow[];
   evidence: string[];
-  positive: Array<Record<string, unknown>>;
-  negative: Array<Record<string, unknown>>;
+  positive: AnalysisResultTagRow[];
+  negative: AnalysisResultTagRow[];
 };
 
 export type AnalysisSession = {

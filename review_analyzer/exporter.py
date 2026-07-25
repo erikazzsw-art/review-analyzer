@@ -99,6 +99,58 @@ def _customer_highlight_tag_text(comment: dict) -> str:
     return ", ".join(customer_highlight_tags_for_comment(comment, locale="zh"))
 
 
+def _num(value: object, default: float = 0.0) -> float:
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
+def _int_num(value: object) -> int:
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 0
+
+
+def _mention_count(row: dict) -> int:
+    return _int_num(row.get("mention_count") if row.get("mention_count") is not None else row.get("count"))
+
+
+def _review_count(row: dict) -> int:
+    return _int_num(row.get("review_count") if row.get("review_count") is not None else row.get("count"))
+
+
+def _mention_share(row: dict) -> float:
+    return _num(row.get("mention_share") if row.get("mention_share") is not None else row.get("pct"))
+
+
+def _impact_review_share(row: dict) -> float:
+    return _num(row.get("impact_review_share") if row.get("impact_review_share") is not None else row.get("pct"))
+
+
+def _pct_text(value: float) -> str:
+    return f"{value:.1f}%"
+
+
+def _representative_evidence(row: dict) -> str:
+    evidence = row.get("representative_evidence")
+    if isinstance(evidence, list):
+        values: list[str] = []
+        for item in evidence:
+            if isinstance(item, dict):
+                span = str(item.get("evidence_span") or item.get("evidenceSpan") or item.get("text") or "").strip()
+            else:
+                span = str(item or "").strip()
+            if span:
+                values.append(span)
+        if values:
+            return " | ".join(values)
+    elif evidence:
+        return str(evidence)
+    return " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item)
+
+
 def _build_comments_data(
     comments: list[dict],
     *,
@@ -150,15 +202,17 @@ def _build_customer_highlight_top10_data(pool_comments: list[dict]) -> tuple[lis
     headers = [
         "排名",
         "客户亮点",
-        "出现次数",
-        "情绪池内提及占比",
+        "Mention Count",
+        "Mention Share",
+        "Review Count",
+        "Impact Review Share",
+        "Representative Evidence",
         "内部维度",
         "Canonical Highlight Key",
         "Aspect Key",
-        "Evidence Span",
         "Highlight Confidence",
         "Evidence Verified",
-        "代表性评论（前20条摘要）",
+        "Legacy Fallback",
     ]
     rows: list[list[str]] = []
     for rank, row in enumerate(build_customer_highlight_rows(pool_comments, locale="zh"), 1):
@@ -172,15 +226,17 @@ def _build_customer_highlight_top10_data(pool_comments: list[dict]) -> tuple[lis
             [
                 str(rank),
                 str(row.get("customer_highlight") or row.get("tag") or ""),
-                str(row.get("count") or ""),
-                f"{float(row.get('pct') or 0):.1f}%",
+                str(_mention_count(row)),
+                _pct_text(_mention_share(row)),
+                str(_review_count(row)),
+                _pct_text(_impact_review_share(row)),
+                _representative_evidence(row),
                 str(row.get("dimension") or ""),
                 str(row.get("canonical_highlight_key") or ""),
                 aspect_key_text,
-                " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("highlight_confidence") or ""),
                 "true" if row.get("evidence_spans") else "false",
-                " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
+                "true" if row.get("legacy_fallback") else "false",
             ]
         )
     return headers, rows
@@ -212,7 +268,7 @@ def _build_top10_data(
                     tag_sources[tag].append(content)
 
     pool_size = len(pool_comments) if pool_comments else 1
-    headers = ["排名", "标签", "出现次数", "占比", "代表性评论（前20条摘要）"]
+    headers = ["排名", "标签", "Mention Count", "Mention Share", "Representative Evidence"]
     rows = []
     for rank, (tag, count) in enumerate(tag_counter.most_common(10), 1):
         pct = f"{count / pool_size * 100:.1f}%"
@@ -227,15 +283,17 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
     headers = [
         "排名",
         "客户痛点",
-        "出现次数",
-        "情绪池内提及占比",
+        "Mention Count",
+        "Mention Share",
+        "Review Count",
+        "Impact Review Share",
+        "Representative Evidence",
         "内部维度",
         "Canonical Issue Key",
         "Aspect Key",
-        "Evidence Span",
         "Issue Confidence",
         "Evidence Verified",
-        "代表性评论（前20条摘要）",
+        "Legacy Fallback",
     ]
     rows: list[list[str]] = []
     for rank, row in enumerate(build_specific_issue_rows(pool_comments, locale="zh"), 1):
@@ -249,15 +307,17 @@ def _build_specific_issue_top10_data(pool_comments: list[dict]) -> tuple[list[st
             [
                 str(rank),
                 str(row.get("specific_issue") or row.get("tag") or ""),
-                str(row.get("count") or ""),
-                f"{float(row.get('pct') or 0):.1f}%",
+                str(_mention_count(row)),
+                _pct_text(_mention_share(row)),
+                str(_review_count(row)),
+                _pct_text(_impact_review_share(row)),
+                _representative_evidence(row),
                 str(row.get("dimension") or ""),
                 str(row.get("canonical_issue_key") or ""),
                 aspect_key_text,
-                " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("issue_confidence") or ""),
                 "true" if row.get("evidence_spans") else "false",
-                " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
+                "true" if row.get("legacy_fallback") else "false",
             ]
         )
     return headers, rows
@@ -333,7 +393,6 @@ def export_to_xlsx(
             ws2.write(row_idx, col_idx, val, cell_fmt)
 
     # Sheet3: TOP10 核心问题点
-    negative_comments = [c for c in comments if c.get("sentiment") == "negative"]
     ws3 = workbook.add_worksheet("TOP10 核心问题点")
     ws3.set_column("A:A", 6)
     ws3.set_column("B:B", 15)
@@ -345,9 +404,11 @@ def export_to_xlsx(
     ws3.set_column("H:H", 34)
     ws3.set_column("I:I", 16)
     ws3.set_column("J:J", 18)
-    ws3.set_column("K:K", 80)
+    ws3.set_column("K:K", 16)
+    ws3.set_column("L:L", 18)
+    ws3.set_column("M:M", 18)
 
-    t3_headers, t3_rows = _build_specific_issue_top10_data(negative_comments)
+    t3_headers, t3_rows = _build_specific_issue_top10_data(comments)
     for col_idx, h in enumerate(t3_headers):
         ws3.write(0, col_idx, h, header_fmt)
     for row_idx, row_data in enumerate(t3_rows, 1):
@@ -355,7 +416,6 @@ def export_to_xlsx(
             ws3.write(row_idx, col_idx, val, cell_fmt)
 
     # Sheet4: TOP10 产品亮点
-    positive_comments = [c for c in comments if c.get("sentiment") == "positive"]
     ws4 = workbook.add_worksheet("TOP10 产品亮点")
     ws4.set_column("A:A", 6)
     ws4.set_column("B:B", 15)
@@ -367,9 +427,11 @@ def export_to_xlsx(
     ws4.set_column("H:H", 34)
     ws4.set_column("I:I", 16)
     ws4.set_column("J:J", 18)
-    ws4.set_column("K:K", 80)
+    ws4.set_column("K:K", 16)
+    ws4.set_column("L:L", 18)
+    ws4.set_column("M:M", 18)
 
-    t4_headers, t4_rows = _build_customer_highlight_top10_data(positive_comments)
+    t4_headers, t4_rows = _build_customer_highlight_top10_data(comments)
     for col_idx, h in enumerate(t4_headers):
         ws4.write(0, col_idx, h, header_fmt)
     for row_idx, row_data in enumerate(t4_rows, 1):

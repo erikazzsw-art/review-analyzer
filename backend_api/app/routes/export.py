@@ -83,8 +83,8 @@ def export_full_xlsx(
 
 def _top10_headers(locale: str) -> list[str]:
     if locale == "zh":
-        return ["排名", "标签", "出现次数", "情绪池内提及占比", "代表性评论（前20条摘要）"]
-    return ["Rank", "Tag", "Count", "Sentiment-Pool Mention Share", "Representative Reviews (Top 20)"]
+        return ["排名", "标签", "Mention Count", "Mention Share", "Representative Evidence"]
+    return ["Rank", "Tag", "Mention Count", "Mention Share", "Representative Evidence"]
 
 
 def _customer_highlight_top10_headers(locale: str) -> list[str]:
@@ -92,28 +92,32 @@ def _customer_highlight_top10_headers(locale: str) -> list[str]:
         return [
             "排名",
             "客户亮点",
-            "出现次数",
-            "情绪池内提及占比",
+            "Mention Count",
+            "Mention Share",
+            "Review Count",
+            "Impact Review Share",
+            "Representative Evidence",
             "内部维度",
             "Canonical Highlight Key",
             "Aspect Key",
-            "Evidence Span",
             "Highlight Confidence",
             "Evidence Verified",
-            "代表性评论（前20条摘要）",
+            "Legacy Fallback",
         ]
     return [
         "Rank",
-        "Customer Highlight",
-        "Count",
-        "Sentiment-Pool Mention Share",
+        "Customer Label",
+        "Mention Count",
+        "Mention Share",
+        "Review Count",
+        "Impact Review Share",
+        "Representative Evidence",
         "Internal Aspect",
         "Canonical Highlight Key",
         "Aspect Key",
-        "Evidence Span",
         "Highlight Confidence",
         "Evidence Verified",
-        "Representative Reviews (Top 20)",
+        "Legacy Fallback",
     ]
 
 
@@ -122,28 +126,32 @@ def _specific_issue_top10_headers(locale: str) -> list[str]:
         return [
             "排名",
             "客户痛点",
-            "出现次数",
-            "情绪池内提及占比",
+            "Mention Count",
+            "Mention Share",
+            "Review Count",
+            "Impact Review Share",
+            "Representative Evidence",
             "内部维度",
             "Canonical Issue Key",
             "Aspect Key",
-            "Evidence Span",
             "Issue Confidence",
             "Evidence Verified",
-            "代表性评论（前20条摘要）",
+            "Legacy Fallback",
         ]
     return [
         "Rank",
         "Customer Issue",
-        "Count",
-        "Sentiment-Pool Mention Share",
+        "Mention Count",
+        "Mention Share",
+        "Review Count",
+        "Impact Review Share",
+        "Representative Evidence",
         "Internal Aspect",
         "Canonical Issue Key",
         "Aspect Key",
-        "Evidence Span",
         "Issue Confidence",
         "Evidence Verified",
-        "Representative Reviews (Top 20)",
+        "Legacy Fallback",
     ]
 
 
@@ -179,6 +187,58 @@ def _build_top10_rows(
     return rows
 
 
+def _num(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _int_num(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _mention_count(row: dict[str, Any]) -> int:
+    return _int_num(row.get("mention_count") if row.get("mention_count") is not None else row.get("count"))
+
+
+def _review_count(row: dict[str, Any]) -> int:
+    return _int_num(row.get("review_count") if row.get("review_count") is not None else row.get("count"))
+
+
+def _mention_share(row: dict[str, Any]) -> float:
+    return _num(row.get("mention_share") if row.get("mention_share") is not None else row.get("pct"))
+
+
+def _impact_review_share(row: dict[str, Any]) -> float:
+    return _num(row.get("impact_review_share") if row.get("impact_review_share") is not None else row.get("pct"))
+
+
+def _pct_text(value: float) -> str:
+    return f"{value:.1f}%"
+
+
+def _representative_evidence(row: dict[str, Any]) -> str:
+    evidence = row.get("representative_evidence")
+    if isinstance(evidence, list):
+        values: list[str] = []
+        for item in evidence:
+            if isinstance(item, dict):
+                span = str(item.get("evidence_span") or item.get("evidenceSpan") or item.get("text") or "").strip()
+            else:
+                span = str(item or "").strip()
+            if span:
+                values.append(span)
+        if values:
+            return " | ".join(values)
+    elif evidence:
+        return str(evidence)
+    return " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item)
+
+
 def _build_specific_issue_top10_rows(
     pool_comments: list[dict[str, Any]],
     locale: str,
@@ -195,15 +255,17 @@ def _build_specific_issue_top10_rows(
             [
                 rank,
                 str(row.get("specific_issue") or row.get("tag") or ""),
-                int(row.get("count") or 0),
-                f"{float(row.get('pct') or 0):.1f}%",
+                _mention_count(row),
+                _pct_text(_mention_share(row)),
+                _review_count(row),
+                _pct_text(_impact_review_share(row)),
+                _representative_evidence(row),
                 str(row.get("dimension") or ""),
                 str(row.get("canonical_issue_key") or ""),
                 aspect_key_text,
-                " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("issue_confidence") or ""),
                 "true" if row.get("evidence_spans") else "false",
-                " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
+                "true" if row.get("legacy_fallback") else "false",
             ]
         )
     return rows
@@ -225,15 +287,17 @@ def _build_customer_highlight_top10_rows(
             [
                 rank,
                 str(row.get("customer_highlight") or row.get("tag") or ""),
-                int(row.get("count") or 0),
-                f"{float(row.get('pct') or 0):.1f}%",
+                _mention_count(row),
+                _pct_text(_mention_share(row)),
+                _review_count(row),
+                _pct_text(_impact_review_share(row)),
+                _representative_evidence(row),
                 str(row.get("dimension") or ""),
                 str(row.get("canonical_highlight_key") or ""),
                 aspect_key_text,
-                " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item),
                 str(row.get("highlight_confidence") or ""),
                 "true" if row.get("evidence_spans") else "false",
-                " | ".join(str(item) for item in (row.get("representative_comments") or []) if item),
+                "true" if row.get("legacy_fallback") else "false",
             ]
         )
     return rows
@@ -244,8 +308,6 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
 
     wb = openpyxl.Workbook()
 
-    positive = [c for c in comments if c.get("sentiment") == "positive"]
-    negative = [c for c in comments if c.get("sentiment") == "negative"]
     headers = _top10_headers(locale)
     issue_headers = _specific_issue_top10_headers(locale)
     highlight_headers = _customer_highlight_top10_headers(locale)
@@ -255,27 +317,27 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
         pos_title = "正向反馈 TOP10" if locale == "zh" else "Positive Feedback TOP10"
         ws_pos.title = pos_title
         ws_pos.append(highlight_headers)
-        for row in _build_customer_highlight_top10_rows(positive, locale):
+        for row in _build_customer_highlight_top10_rows(comments, locale):
             ws_pos.append(row)
 
         neg_title = "负向反馈 TOP10" if locale == "zh" else "Negative Feedback TOP10"
         ws_neg = wb.create_sheet(title=neg_title)
         ws_neg.append(issue_headers)
-        for row in _build_specific_issue_top10_rows(negative, locale):
+        for row in _build_specific_issue_top10_rows(comments, locale):
             ws_neg.append(row)
 
     elif module_key == "purchase_motives":
         ws = wb.active
         ws.title = "Purchase Motives" if locale == "en" else "消费动机"
         ws.append(highlight_headers)
-        for row in _build_customer_highlight_top10_rows(positive, locale):
+        for row in _build_customer_highlight_top10_rows(comments, locale):
             ws.append(row)
 
     elif module_key == "unmet_needs":
         ws = wb.active
         ws.title = "Unmet Needs" if locale == "en" else "未满足的需求"
         ws.append(issue_headers)
-        for row in _build_specific_issue_top10_rows(negative, locale):
+        for row in _build_specific_issue_top10_rows(comments, locale):
             ws.append(row)
 
     elif module_key == "consumer_profile":
@@ -283,13 +345,13 @@ def _build_module_xlsx(module_key: str, comments: list[dict[str, Any]], locale: 
         pos_title = "亮点标签 TOP10" if locale == "zh" else "Highlight Tags TOP10"
         ws_pos.title = pos_title
         ws_pos.append(highlight_headers)
-        for row in _build_customer_highlight_top10_rows(positive, locale):
+        for row in _build_customer_highlight_top10_rows(comments, locale):
             ws_pos.append(row)
 
         neg_title = "问题标签 TOP10" if locale == "zh" else "Issue Tags TOP10"
         ws_neg = wb.create_sheet(title=neg_title)
         ws_neg.append(issue_headers)
-        for row in _build_specific_issue_top10_rows(negative, locale):
+        for row in _build_specific_issue_top10_rows(comments, locale):
             ws_neg.append(row)
 
     elif module_key == "recommendations":

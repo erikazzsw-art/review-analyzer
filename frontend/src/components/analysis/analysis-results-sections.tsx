@@ -6,6 +6,7 @@ import {
   ThumbsDown,
   ChevronRight,
   Download,
+  Info,
   Loader2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -18,7 +19,17 @@ import { CreateActionPanel } from "@/components/analysis/create-action-panel";
 import { SectionAnchorNav } from "@/components/analysis/section-anchor-nav";
 import { Button } from "@/components/ui/button";
 import { aspectLabel } from "@/lib/aspect-labels";
-import { customerTagText } from "@/lib/customer-labels";
+import {
+  customerLabelOccurrences,
+  customerTagText,
+  rowImpactReviewShare,
+  rowMentionCount,
+  rowMentionShare,
+  rowRepresentativeEvidence,
+  rowReviewCount,
+  rowUsesLegacyStats,
+  type CustomerLabelEvidence,
+} from "@/lib/customer-labels";
 import {
   Table,
   TableBody,
@@ -27,6 +38,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type RowItem = Record<string, unknown>;
 
@@ -82,68 +99,29 @@ function reviewBody(comment: Record<string, unknown>): string {
   return rv(comment.content || comment.body || comment.comment, "");
 }
 
-function getAspects(comment: Record<string, unknown>): Array<Record<string, unknown>> {
-  const raw = comment.aspects_json;
-  let parsed: unknown = raw;
-  if (typeof raw === "string" && raw.trim()) {
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = null;
-    }
-  }
-  const aspects = (parsed as { aspects?: unknown[] } | null | undefined)?.aspects;
-  return Array.isArray(aspects)
-    ? aspects.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
-    : [];
-}
-
-function issueEvidenceVerified(comment: Record<string, unknown>, aspect: Record<string, unknown>): boolean {
-  const raw = comment.aspects_json;
-  let parsed: unknown = raw;
-  if (typeof raw === "string" && raw.trim()) {
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = null;
-    }
-  }
-  const clusterPropagated = Boolean((parsed as { cluster_propagated?: unknown } | null | undefined)?.cluster_propagated);
-  const evidence = String(aspect.evidence_span || "").trim();
-  const content = reviewBody(comment);
-  return Boolean(evidence && content.includes(evidence) && !clusterPropagated);
-}
-
-function negativeIssueOccurrences(comment: Record<string, unknown>): Array<Record<string, unknown>> {
-  return getAspects(comment).filter(
-    (aspect) =>
-      String(aspect.polarity || "").toLowerCase() === "negative" &&
-      aspect.display_allowed !== false &&
-      Boolean(aspect.specific_issue),
-  );
-}
-
-function joinIssueField(comment: Record<string, unknown>, field: string): string {
-  return negativeIssueOccurrences(comment)
-    .map((aspect) => String(aspect[field] || "").trim())
+function joinIssueField(comment: Record<string, unknown>, field: string, locale: string): string {
+  return customerLabelOccurrences(comment, "issue", locale)
+    .map((occurrence) => {
+      if (field === "specific_issue") return occurrence.label;
+      if (field === "canonical_issue_key") return occurrence.canonicalLabelKey;
+      if (field === "key" || field === "aspect_key") return occurrence.aspectKey;
+      if (field === "evidence_span") return occurrence.evidenceSpan;
+      if (field === "issue_confidence") return occurrence.confidence;
+      return "";
+    })
     .filter(Boolean)
     .join(", ");
 }
 
-function joinIssueEvidenceVerified(comment: Record<string, unknown>): string {
-  return negativeIssueOccurrences(comment)
-    .map((aspect) => (issueEvidenceVerified(comment, aspect) ? "true" : "false"))
+function joinIssueEvidenceVerified(comment: Record<string, unknown>, locale: string): string {
+  return customerLabelOccurrences(comment, "issue", locale)
+    .map((occurrence) => (occurrence.evidenceVerified ? "true" : "false"))
     .join(", ");
 }
 
 function joinIssueDimension(comment: Record<string, unknown>, locale: string): string {
-  return negativeIssueOccurrences(comment)
-    .map((aspect) => {
-      const aspectKey = String(aspect.key || aspect.aspect_key || "").trim();
-      return aspectKey
-        ? aspectLabel(aspectKey, locale)
-        : String(aspect.dimension || aspect.aspect_label || "").trim();
-    })
+  return customerLabelOccurrences(comment, "issue", locale)
+    .map((occurrence) => occurrence.dimension || (occurrence.aspectKey ? aspectLabel(occurrence.aspectKey, locale) : ""))
     .filter(Boolean)
     .join(", ");
 }
@@ -176,13 +154,13 @@ function buildRawReviewsXlsx(
     rv(comment.improvement, ""),
     customerTagText(comment, "issue", locale),
     customerTagText(comment, "highlight", locale),
-    joinIssueField(comment, "specific_issue"),
-    joinIssueField(comment, "canonical_issue_key"),
+    joinIssueField(comment, "specific_issue", locale),
+    joinIssueField(comment, "canonical_issue_key", locale),
     joinIssueDimension(comment, locale),
-    joinIssueField(comment, "key") || joinIssueField(comment, "aspect_key"),
-    joinIssueField(comment, "evidence_span"),
-    joinIssueField(comment, "issue_confidence"),
-    joinIssueEvidenceVerified(comment),
+    joinIssueField(comment, "key", locale) || joinIssueField(comment, "aspect_key", locale),
+    joinIssueField(comment, "evidence_span", locale),
+    joinIssueField(comment, "issue_confidence", locale),
+    joinIssueEvidenceVerified(comment, locale),
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -232,9 +210,9 @@ function buildRawReviewsXlsx(
   });
 }
 
-function PctBar({ pct, color }: { pct: number; color: string }) {
+function PctBar({ pct, color, legacy }: { pct: number; color: string; legacy?: boolean }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" title={legacy ? "Legacy statistics from an older analysis batch." : undefined}>
       <div className="h-1.5 w-20 overflow-hidden rounded-full bg-[#f3f0f5]">
         <div
           className={`h-full rounded-full ${color}`}
@@ -244,7 +222,98 @@ function PctBar({ pct, color }: { pct: number; color: string }) {
       <span className="text-xs tabular-nums text-soft">
         {pct.toFixed(1)}%
       </span>
+      {legacy ? (
+        <span className="rounded-sm bg-[#f7f3ff] px-1 text-[10px] font-semibold text-[#7c3aed]">
+          legacy
+        </span>
+      ) : null}
     </div>
+  );
+}
+
+function metricText(key: "mention" | "impact" | "legacy", locale: string): string {
+  if (key === "mention") {
+    return locale.startsWith("zh")
+      ? "该标签在同类标签出现次数中的占比。"
+      : "Share of this label among all labels of the same type.";
+  }
+  if (key === "impact") {
+    return locale.startsWith("zh")
+      ? "命中该标签的评论数，占当前筛选范围总评论数的比例。"
+      : "Reviews that hit this label, as a share of all reviews in the current filter scope.";
+  }
+  return locale.startsWith("zh")
+    ? "旧分析批次使用历史统计口径。"
+    : "Older analysis batches use the historical statistics definition.";
+}
+
+function MetricHeader({
+  label,
+  tooltip,
+}: {
+  label: string;
+  tooltip: string;
+}) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex cursor-help items-center gap-1">
+            {label}
+            <Info className="h-3 w-3 text-soft/70" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs bg-ink text-white">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function MetricValueTooltip({
+  children,
+  legacy,
+  locale,
+}: {
+  children: ReactNode;
+  legacy: boolean;
+  locale: string;
+}) {
+  if (!legacy) return <>{children}</>;
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex cursor-help">{children}</span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs bg-ink text-white">
+          {metricText("legacy", locale)}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function ImpactReviewMetric({
+  row,
+  totalReviews,
+  locale,
+}: {
+  row: RowItem;
+  totalReviews: number;
+  locale: string;
+}) {
+  const legacy = rowUsesLegacyStats(row);
+  const reviewCount = rowReviewCount(row);
+  const impactShare = rowImpactReviewShare(row, totalReviews);
+  const text = legacy
+    ? `${reviewCount} (${impactShare.toFixed(1)}%)`
+    : `${reviewCount} / ${totalReviews} (${impactShare.toFixed(1)}%)`;
+  return (
+    <MetricValueTooltip legacy={legacy} locale={locale}>
+      <span className="text-xs tabular-nums text-soft">{text}</span>
+    </MetricValueTooltip>
   );
 }
 
@@ -253,28 +322,41 @@ function truncate(text: string, max = 140): string {
   return text.length > max ? text.slice(0, max) + "…" : text;
 }
 
-function extractQuotes(row: RowItem): string[] {
-  const evidence = row.evidence_spans;
-  if (Array.isArray(evidence) && evidence.length > 0) {
-    return evidence
-      .map((q) => String(q || "").trim())
-      .filter(Boolean)
-      .slice(0, 5)
-      .map((q) => truncate(q, 140));
+function RepresentativeEvidenceList({
+  evidence,
+  locale,
+  compact = false,
+}: {
+  evidence: CustomerLabelEvidence[];
+  locale: string;
+  compact?: boolean;
+}) {
+  if (evidence.length === 0) {
+    return (
+      <span className="text-xs text-soft/70">
+        {locale.startsWith("zh") ? "暂无可验证代表证据" : "No verified representative evidence"}
+      </span>
+    );
   }
-  const arr = row.representative_comments;
-  if (Array.isArray(arr) && arr.length > 0) {
-    return arr
-      .map((q) => String(q || "").trim())
-      .filter(Boolean)
-      .slice(0, 5)
-      .map((q) => truncate(q, 140));
-  }
-  const single = String(row.reason || row.detail || "").trim();
-  if (single && single !== "No representative comment found.") {
-    return [truncate(single, 140)];
-  }
-  return [];
+  return (
+    <ul className="space-y-1.5">
+      {evidence.slice(0, compact ? 2 : 3).map((item, qi) => (
+        <li key={`${item.evidenceSpan}-${qi}`} className="flex gap-1.5">
+          <span className="text-soft/60">•</span>
+          <details className="min-w-0">
+            <summary className="cursor-pointer list-none text-xs leading-5 text-soft">
+              &ldquo;{truncate(item.evidenceSpan, compact ? 110 : 140)}&rdquo;
+            </summary>
+            {item.review ? (
+              <p className="mt-1 rounded-card border border-line bg-[#faf8fb] p-2 text-xs leading-5 text-ink">
+                {item.review}
+              </p>
+            ) : null}
+          </details>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function rowIssueLabel(row: RowItem, fallback: string): string {
@@ -315,10 +397,6 @@ function rowSubCategory(row: RowItem): string {
   return String(row.sub_category || "");
 }
 
-function rowIsLegacyFallback(row: RowItem): boolean {
-  return row.legacy_fallback === true || String(row.issue_source || "") === "legacy_issue_tag";
-}
-
 type TagTableProps = {
   items: RowItem[];
   variant: "positive" | "negative" | "neutral";
@@ -352,35 +430,36 @@ function TagTable({
 
   const limited = items.slice(0, 10);
   const issueMode = variant === "negative" && tagSource === "issue_tag";
-  const scopedComments = comments?.filter((comment) => {
-    if (variant === "negative") {
-      return String(comment.sentiment || "").toLowerCase() === "negative";
-    }
-    if (variant === "positive") {
-      return String(comment.sentiment || "").toLowerCase() === "positive";
-    }
-    return true;
-  });
+  const scopedComments = comments;
+  const totalReviews = comments?.length || 0;
+  const localeValue = locale || "zh";
 
   if (issueMode) {
-    const issueHeader = limited.every(rowIsLegacyFallback) ? t("issueTag") : t("specificIssue");
     return (
       <>
         <div className="hidden md:block">
           <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[30%]">{issueHeader}</TableHead>
-                <TableHead className="w-36">{t("mentionPct")}</TableHead>
-                <TableHead>{t("evidence")}</TableHead>
+                <TableHead className="w-[24%]">{t("specificIssue")}</TableHead>
+                <TableHead className="w-40">
+                  <MetricHeader label={t("mentionShare")} tooltip={metricText("mention", localeValue)} />
+                </TableHead>
+                <TableHead className="w-44">
+                  <MetricHeader label={t("impactReviews")} tooltip={metricText("impact", localeValue)} />
+                </TableHead>
+                <TableHead>{t("representativeEvidence")}</TableHead>
                 <TableHead className="w-32">{t("action")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {limited.map((row, i) => {
                 const tag = rowIssueLabel(row, `#${i + 1}`);
-                const pct = Number(row.pct || 0);
-                const quotes = extractQuotes(row);
+                const mentionShare = rowMentionShare(row);
+                const impactShare = rowImpactReviewShare(row, totalReviews);
+                const mentionCount = rowMentionCount(row);
+                const legacy = rowUsesLegacyStats(row);
+                const evidence = rowRepresentativeEvidence(row);
                 const dimension = rowDimension(row);
                 const aspectKey = rowAspectKey(row);
                 const aspectKeys = rowAspectKeys(row);
@@ -394,21 +473,18 @@ function TagTable({
                       {tag}
                     </TableCell>
                     <TableCell>
-                      <PctBar pct={pct} color={barColor} />
+                      <MetricValueTooltip legacy={legacy} locale={localeValue}>
+                        <PctBar pct={mentionShare} color={barColor} legacy={legacy} />
+                      </MetricValueTooltip>
+                      <div className="mt-1 text-[10px] text-soft/70">
+                        {t("mentionsCount", { count: mentionCount })}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <ImpactReviewMetric row={row} totalReviews={totalReviews} locale={localeValue} />
                     </TableCell>
                     <TableCell className="text-xs leading-5 text-soft">
-                      {quotes.length > 0 ? (
-                        <ul className="space-y-1.5">
-                          {quotes.slice(0, 3).map((q, qi) => (
-                            <li key={qi} className="flex gap-1.5">
-                              <span className="text-soft/60">•</span>
-                              <span className="min-w-0">{q}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        "—"
-                      )}
+                      <RepresentativeEvidenceList evidence={evidence} locale={localeValue} />
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col items-start gap-1.5">
@@ -417,13 +493,15 @@ function TagTable({
                             tag={tag}
                             comments={scopedComments}
                             tagSource="issue_tag"
-                            locale={locale || "zh"}
+                            locale={localeValue}
                             specificIssue={tag}
                             aspectKey={aspectKey}
                             aspectKeys={aspectKeys}
                             canonicalIssueKey={canonicalIssueKey}
                             dimension={dimension}
                             subCategory={subCategory}
+                            mentionShare={mentionShare}
+                            impactReviewShare={impactShare}
                           />
                         )}
                         {showAction && sessionId > 0 && (
@@ -433,7 +511,7 @@ function TagTable({
                             sourceProductId={session.product_id}
                             sourceVersion={session.version}
                             tag={tag}
-                            pct={pct}
+                            pct={mentionShare}
                             reason={reasonForAction}
                             specificIssue={tag}
                             aspectKey={aspectKey}
@@ -452,8 +530,9 @@ function TagTable({
         <div className="grid gap-3 md:hidden">
           {limited.map((row, i) => {
             const tag = rowIssueLabel(row, `#${i + 1}`);
-            const pct = Number(row.pct || 0);
-            const quotes = extractQuotes(row).slice(0, 3);
+            const mentionShare = rowMentionShare(row);
+            const impactShare = rowImpactReviewShare(row, totalReviews);
+            const evidence = rowRepresentativeEvidence(row);
             const dimension = rowDimension(row);
             const aspectKey = rowAspectKey(row);
             const aspectKeys = rowAspectKeys(row);
@@ -467,32 +546,31 @@ function TagTable({
                   <div className="min-w-0 flex-1">
                     <div className="break-words text-sm font-semibold text-ink">{tag}</div>
                     <div className="mt-1 text-xs text-soft">
-                      {pct.toFixed(1)}%
+                      {t("mentionShare")}: {mentionShare.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-soft">
+                      {t("impactReviews")}: {rowReviewCount(row)} / {totalReviews} ({impactShare.toFixed(1)}%)
                     </div>
                   </div>
                 </div>
-                {quotes.length > 0 ? (
-                  <div className="mt-3 space-y-1.5">
-                    {quotes.map((q, qi) => (
-                      <p key={qi} className="text-xs leading-5 text-soft">
-                        &ldquo;{q}&rdquo;
-                      </p>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="mt-3">
+                  <RepresentativeEvidenceList evidence={evidence} locale={localeValue} compact />
+                </div>
                 <div className="mt-3 flex flex-wrap items-center gap-1.5">
                   {scopedComments && (
                     <DownloadTagButton
                       tag={tag}
                       comments={scopedComments}
                       tagSource="issue_tag"
-                      locale={locale || "zh"}
+                      locale={localeValue}
                       specificIssue={tag}
                       aspectKey={aspectKey}
                       aspectKeys={aspectKeys}
                       canonicalIssueKey={canonicalIssueKey}
                       dimension={dimension}
                       subCategory={subCategory}
+                      mentionShare={mentionShare}
+                      impactReviewShare={impactShare}
                     />
                   )}
                   {showAction && sessionId > 0 && (
@@ -502,7 +580,7 @@ function TagTable({
                       sourceProductId={session.product_id}
                       sourceVersion={session.version}
                       tag={tag}
-                      pct={pct}
+                      pct={mentionShare}
                       reason={reasonForAction}
                       specificIssue={tag}
                       aspectKey={aspectKey}
@@ -523,18 +601,25 @@ function TagTable({
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="w-10 text-center">#</TableHead>
-          <TableHead className="min-w-[120px]">{t("tag")}</TableHead>
-          <TableHead className="w-36">{t("mentionPct")}</TableHead>
-          <TableHead>{t("reprComments")}</TableHead>
-          <TableHead className="w-24" />
+          <TableHead className="min-w-[160px]">{t("tag")}</TableHead>
+          <TableHead className="w-40">
+            <MetricHeader label={t("mentionShare")} tooltip={metricText("mention", localeValue)} />
+          </TableHead>
+          <TableHead className="w-44">
+            <MetricHeader label={t("impactReviews")} tooltip={metricText("impact", localeValue)} />
+          </TableHead>
+          <TableHead>{t("representativeEvidence")}</TableHead>
+          <TableHead className="w-32">{t("download")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {limited.map((row, i) => {
           const tag = String(row.customer_highlight || row.tag || row.label || `#${i + 1}`);
-          const pct = Number(row.pct || 0);
-          const quotes = extractQuotes(row);
+          const mentionShare = rowMentionShare(row);
+          const impactShare = rowImpactReviewShare(row, totalReviews);
+          const mentionCount = rowMentionCount(row);
+          const legacy = rowUsesLegacyStats(row);
+          const evidence = rowRepresentativeEvidence(row);
           const reasonForAction = String(row.reason || row.detail || "");
           const aspectKey = rowAspectKey(row);
           const aspectKeys = rowAspectKeys(row);
@@ -542,42 +627,39 @@ function TagTable({
           const dimension = rowDimension(row);
           return (
             <TableRow key={`${variant}-${i}`} className="group align-top">
-              <TableCell className="text-center text-xs font-bold text-soft">
-                {i + 1}
-              </TableCell>
               <TableCell className="text-sm font-semibold text-ink">
+                <span className="mr-1.5 text-xs font-bold text-soft">#{i + 1}</span>
                 {tag}
               </TableCell>
               <TableCell>
-                <PctBar pct={pct} color={barColor} />
-              </TableCell>
-              <TableCell className="text-xs leading-5 text-soft">
-                {quotes.length > 0 ? (
-                  <ul className="space-y-1.5">
-                    {quotes.map((q, qi) => (
-                      <li key={qi} className="flex gap-1.5">
-                        <span className="text-soft/60">•</span>
-                        <span>{q}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  "—"
-                )}
+                <MetricValueTooltip legacy={legacy} locale={localeValue}>
+                  <PctBar pct={mentionShare} color={barColor} legacy={legacy} />
+                </MetricValueTooltip>
+                <div className="mt-1 text-[10px] text-soft/70">
+                  {t("mentionsCount", { count: mentionCount })}
+                </div>
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-1.5">
+                <ImpactReviewMetric row={row} totalReviews={totalReviews} locale={localeValue} />
+              </TableCell>
+              <TableCell className="text-xs leading-5 text-soft">
+                <RepresentativeEvidenceList evidence={evidence} locale={localeValue} />
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col items-start gap-1.5">
                   {scopedComments && tagSource && (
                     <DownloadTagButton
                       tag={tag}
                       comments={scopedComments}
                       tagSource={tagSource}
-                      locale={locale || "zh"}
+                      locale={localeValue}
                       customerHighlight={tagSource === "highlight_tag" ? tag : null}
                       canonicalHighlightKey={tagSource === "highlight_tag" ? canonicalHighlightKey : null}
                       aspectKey={tagSource === "highlight_tag" ? aspectKey : null}
                       aspectKeys={tagSource === "highlight_tag" ? aspectKeys : null}
                       dimension={tagSource === "highlight_tag" ? dimension : null}
+                      mentionShare={mentionShare}
+                      impactReviewShare={impactShare}
                     />
                   )}
                   {showAction && sessionId > 0 && (
@@ -587,7 +669,7 @@ function TagTable({
                       sourceProductId={session.product_id}
                       sourceVersion={session.version}
                       tag={tag}
-                      pct={pct}
+                      pct={mentionShare}
                       reason={reasonForAction}
                     />
                   )}
