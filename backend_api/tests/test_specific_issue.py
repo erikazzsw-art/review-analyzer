@@ -9,6 +9,7 @@ from backend_api.app.services.specific_issue import (
     build_customer_highlight_rows,
     build_specific_issue_rows,
     customer_highlight_tags_for_comment,
+    decorate_comment_customer_labels,
     enrich_aspects_json,
     iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
@@ -1265,6 +1266,7 @@ def test_new_occurrence_payload_keeps_cluster_propagated_for_audit_only() -> Non
         "sentiment": "positive",
         "aspects_json": {
             "cluster_propagated": True,
+            "sub_category": "上衣",
             "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
             "customer_label_occurrences": [
                 {
@@ -1301,3 +1303,301 @@ def test_new_occurrence_payload_keeps_cluster_propagated_for_audit_only() -> Non
     assert rows[0]["count"] == 1
     assert rows[0]["representative_comments"] == []
     assert rows[0]["evidence_spans"] == []
+
+
+def test_cluster_sentiment_recovery_issue_with_missing_evidence_is_suppressed() -> None:
+    content = (
+        "I got this sweater in navy and it is much cuter than online. "
+        "It is a great transition sweater and I love it."
+    )
+    comment = {
+        "id": 1,
+        "content": content,
+        "sentiment": "positive",
+        "aspects_json": {
+            "cluster_propagated": True,
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrences": [
+                {
+                    "comment_id": 1,
+                    "type": "issue",
+                    "raw_label": "Not Breathable",
+                    "canonical_label_key": "not_breathable",
+                    "display_label_en": "Not Breathable",
+                    "display_label_zh": "不够透气",
+                    "aspect_key": "comfort",
+                    "evidence_span": "flattering and comfortable",
+                    "evidence_start": -1,
+                    "evidence_end": -1,
+                    "confidence": "high",
+                    "source": "rule",
+                    "source_detail": "sentiment_recovery_rule",
+                    "evidence_verified": False,
+                    "cluster_propagated": True,
+                    "sub_category": "上衣",
+                    "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                    "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                    "display_allowed": True,
+                }
+            ],
+        },
+    }
+
+    assert iter_specific_issue_occurrences(comment, locale="en") == []
+    assert build_specific_issue_rows([comment], locale="en", limit=10) == []
+
+
+def test_waders_cluster_sentiment_recovery_issue_stays_audit_counted() -> None:
+    content = "The waders stayed warm, dry and comfortable the whole time."
+    comment = {
+        "id": 1,
+        "content": content,
+        "sentiment": "positive",
+        "aspects_json": {
+            "cluster_propagated": True,
+            "sub_category": "waders",
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrences": [
+                {
+                    "comment_id": 1,
+                    "type": "issue",
+                    "raw_label": "Not Breathable",
+                    "canonical_label_key": "not_breathable",
+                    "display_label_en": "Not Breathable",
+                    "display_label_zh": "不够透气",
+                    "aspect_key": "comfort",
+                    "evidence_span": "copied cluster evidence",
+                    "evidence_start": -1,
+                    "evidence_end": -1,
+                    "confidence": "high",
+                    "source": "rule",
+                    "source_detail": "sentiment_recovery_rule",
+                    "evidence_verified": False,
+                    "cluster_propagated": True,
+                    "sub_category": "waders",
+                    "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                    "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                    "display_allowed": True,
+                }
+            ],
+        },
+    }
+
+    occurrences = iter_specific_issue_occurrences(comment, locale="en")
+    rows = build_specific_issue_rows([comment], locale="en", limit=10)
+
+    assert len(occurrences) == 1
+    assert occurrences[0]["canonical_issue_key"] == "not_breathable"
+    assert rows[0]["count"] == 1
+    assert rows[0]["evidence_spans"] == []
+
+
+def test_decorate_preserves_existing_waders_audit_only_issue_occurrence() -> None:
+    content = "The waders stayed warm, dry and comfortable the whole time."
+    comment = {
+        "id": 1,
+        "content": content,
+        "sentiment": "positive",
+        "aspects_json": {
+            "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
+            "cluster_propagated": True,
+            "sub_category": "waders",
+            "aspects": [
+                {
+                    "key": "comfort",
+                    "polarity": "positive",
+                    "evidence_span": "stayed warm, dry and comfortable the whole time",
+                }
+            ],
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrences": [
+                {
+                    "comment_id": 1,
+                    "type": "issue",
+                    "raw_label": "Not Breathable",
+                    "canonical_label_key": "not_breathable",
+                    "display_label_en": "Not Breathable",
+                    "display_label_zh": "不够透气",
+                    "aspect_key": "comfort",
+                    "evidence_span": "stayed warm, dry and comfortable the whole time",
+                    "evidence_start": -1,
+                    "evidence_end": -1,
+                    "confidence": "high",
+                    "source": "rule",
+                    "source_detail": "sentiment_recovery_rule",
+                    "evidence_verified": False,
+                    "cluster_propagated": True,
+                    "sub_category": "waders",
+                    "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                    "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                    "display_allowed": True,
+                }
+            ],
+        },
+    }
+
+    decorated = decorate_comment_customer_labels(comment, locale="en")
+    rows = build_specific_issue_rows([decorated], locale="en", limit=10)
+
+    assert rows[0]["canonical_issue_key"] == "not_breathable"
+    assert rows[0]["count"] == 1
+    assert rows[0]["evidence_spans"] == []
+
+
+def test_decorate_still_suppresses_existing_apparel_dirty_breathability_issue() -> None:
+    content = "The sweater material is soft and the fit is cute."
+    comment = {
+        "id": 1,
+        "content": content,
+        "sentiment": "positive",
+        "aspects_json": {
+            "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
+            "cluster_propagated": True,
+            "sub_category": "上衣",
+            "aspects": [
+                {
+                    "key": "comfort",
+                    "polarity": "positive",
+                    "evidence_span": "flattering and comfortable",
+                }
+            ],
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrences": [
+                {
+                    "comment_id": 1,
+                    "type": "issue",
+                    "raw_label": "Not Breathable",
+                    "canonical_label_key": "not_breathable",
+                    "display_label_en": "Not Breathable",
+                    "display_label_zh": "不够透气",
+                    "aspect_key": "comfort",
+                    "evidence_span": "flattering and comfortable",
+                    "evidence_start": -1,
+                    "evidence_end": -1,
+                    "confidence": "high",
+                    "source": "rule",
+                    "source_detail": "sentiment_recovery_rule",
+                    "evidence_verified": False,
+                    "cluster_propagated": True,
+                    "sub_category": "上衣",
+                    "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                    "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                    "display_allowed": True,
+                }
+            ],
+        },
+    }
+
+    decorated = decorate_comment_customer_labels(comment, locale="en")
+
+    assert build_specific_issue_rows([decorated], locale="en", limit=10) == []
+
+
+def test_cluster_positive_comfort_sweater_text_does_not_recover_not_breathable() -> None:
+    content = (
+        "Fun detail with the lace. The sweatshirt material is soft and the fit is cute."
+    )
+    enriched = enrich_aspects_json(
+        {
+            "cluster_propagated": True,
+            "aspects": [
+                {
+                    "key": "comfort",
+                    "polarity": "positive",
+                    "evidence_span": "flattering and comfortable",
+                }
+            ],
+        },
+        sub_category="上衣",
+        content=content,
+        locale="en",
+        comment_id=1,
+    )
+
+    assert enriched is not None
+    issue_occurrences = [
+        item
+        for item in enriched["customer_label_occurrences"]
+        if item["type"] == "issue"
+    ]
+    assert issue_occurrences == []
+
+
+def test_comfort_sweat_word_recovers_not_breathable_without_sweater_false_hit() -> None:
+    sweat_content = "The fabric traps heat and sweat during long walks."
+    enriched = enrich_aspects_json(
+        {
+            "aspects": [
+                {
+                    "key": "comfort",
+                    "polarity": "positive",
+                    "evidence_span": "traps heat and sweat",
+                }
+            ],
+        },
+        sub_category="waders",
+        content=sweat_content,
+        locale="en",
+        comment_id=1,
+    )
+
+    assert enriched is not None
+    rows = build_specific_issue_rows(
+        [{"id": 1, "content": sweat_content, "aspects_json": enriched}],
+        locale="en",
+        limit=10,
+    )
+    assert rows[0]["canonical_issue_key"] == "not_breathable"
+
+    sweater_content = "The sweater material is soft and the fit is cute."
+    sweater_enriched = enrich_aspects_json(
+        {
+            "aspects": [
+                {
+                    "key": "comfort",
+                    "polarity": "positive",
+                    "evidence_span": "soft and cute",
+                }
+            ],
+        },
+        sub_category="上衣",
+        content=sweater_content,
+        locale="en",
+        comment_id=2,
+    )
+
+    assert sweater_enriched is not None
+    issue_occurrences = [
+        item
+        for item in sweater_enriched["customer_label_occurrences"]
+        if item["type"] == "issue"
+    ]
+    assert issue_occurrences == []
+
+
+def test_comfort_negative_heat_context_still_recovers_not_breathable() -> None:
+    content = "The fabric is too hot and makes me sweat while walking."
+    enriched = enrich_aspects_json(
+        {
+            "aspects": [
+                {
+                    "key": "comfort",
+                    "polarity": "positive",
+                    "evidence_span": "too hot",
+                }
+            ],
+        },
+        sub_category="apparel",
+        content=content,
+        locale="en",
+        comment_id=1,
+    )
+
+    assert enriched is not None
+    rows = build_specific_issue_rows(
+        [{"id": 1, "content": content, "aspects_json": enriched}],
+        locale="en",
+        limit=10,
+    )
+    assert rows[0]["canonical_issue_key"] == "not_breathable"
+    assert rows[0]["evidence_spans"] == ["too hot"]

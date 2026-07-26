@@ -216,6 +216,63 @@ def _first_regex(patterns: list[str], text: str) -> bool:
     return any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns)
 
 
+_NOT_BREATHABLE_ISSUE_PATTERNS = [
+    r"\bnot breathable\b",
+    r"\bdoes(?:n['’]?t| not)\s+breathe\b",
+    r"\btoo hot\b",
+    r"\buncomfortably hot\b",
+    r"\bnot good for hot weather\b",
+    r"\bhot and sweaty\b",
+    r"\bmakes?\s+(?:me|you|us)?\s*sweat\b",
+    r"\bmade\s+(?:me|you|us)?\s*sweat\b",
+    r"\bsweat\b",
+    r"\bsweaty\b",
+    r"\bsweating\b",
+]
+
+
+def _not_breathable_issue_hit(text: str) -> bool:
+    return _first_regex(_NOT_BREATHABLE_ISSUE_PATTERNS, text)
+
+
+def _is_apparel_comfort_sub_category(sub_category: str) -> bool:
+    cleaned = str(sub_category or "").strip()
+    normalized = _norm_text(cleaned)
+    return cleaned == "上衣" or normalized in {
+        "apparel",
+        "top",
+        "tops",
+        "shirt",
+        "shirts",
+        "blouse",
+        "blouses",
+        "t shirt",
+        "t shirts",
+        "tee",
+        "tees",
+        "men s crew t shirts",
+    }
+
+
+def _should_suppress_apparel_breathability_cluster_issue(
+    *,
+    canonical: str,
+    aspect_key: str,
+    sub_category: str,
+    source_detail: str,
+    cluster_propagated: bool,
+    evidence_verified: bool,
+) -> bool:
+    return (
+        canonical == "not_breathable"
+        and aspect_key in {"comfort", "breathability", "mobility"}
+        and _is_apparel_comfort_sub_category(sub_category)
+        and cluster_propagated
+        and not evidence_verified
+        and source_detail.lower() == "sentiment_recovery_rule"
+    )
+
+
 _NEGATED_WATER_LEAK_PATTERNS = [
     r"\bno\s+leaks?\b",
     r"\bno\s+water\s+intrusion\b",
@@ -674,6 +731,21 @@ def _project_customer_label_occurrence(
     confidence = _clean_confidence(occurrence.get("confidence"), default="low")
     source_detail = str(occurrence.get("source_detail") or "").strip()
     source = _clean_occurrence_source(str(occurrence.get("source") or ""), source_detail)
+    occurrence_sub_category = str(
+        occurrence.get("sub_category")
+        or comment.get("sub_category")
+        or comment.get("category")
+        or ""
+    )
+    if label_type == "issue" and _should_suppress_apparel_breathability_cluster_issue(
+        canonical=canonical,
+        aspect_key=aspect_key,
+        sub_category=occurrence_sub_category,
+        source_detail=source_detail,
+        cluster_propagated=cluster_propagated,
+        evidence_verified=evidence_verified,
+    ):
+        return None
     common = {
         "comment_id": comment.get("id")
         if comment.get("id") is not None
@@ -688,12 +760,7 @@ def _project_customer_label_occurrence(
         "dimension": dimension,
         "dimension_en": dimension_en,
         "dimension_zh": dimension_zh,
-        "sub_category": str(
-            occurrence.get("sub_category")
-            or comment.get("sub_category")
-            or comment.get("category")
-            or ""
-        ),
+        "sub_category": occurrence_sub_category,
         "evidence_span": evidence["evidence_span"],
         "evidence_start": evidence["evidence_start"],
         "evidence_end": evidence["evidence_end"],
@@ -825,7 +892,7 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
     if aspect_key in {"comfort", "breathability", "mobility"}:
         if _first_regex([r"\buncomfortable\b", r"\bhurts?\b", r"\bblister"], text):
             return ("Uncomfortable Fit", "uncomfortable_fit", "regex_alias_rule")
-        if _first_regex([r"\bhot\b", r"\bsweat", r"\bnot breathable\b"], text):
+        if _not_breathable_issue_hit(text):
             return ("Not Breathable", "not_breathable", "regex_alias_rule")
 
     if aspect_key in {"smell", "scent"}:
@@ -893,6 +960,7 @@ def _normalize_aspect_issue(
     sub_category: str,
     content: str,
     locale: str,
+    cluster_propagated: bool = False,
 ) -> dict[str, Any] | None:
     aspect_key = str(aspect.get("key") or aspect.get("aspect_key") or "").strip()
     if not aspect_key:
@@ -904,6 +972,15 @@ def _normalize_aspect_issue(
     recovered_rule_hit = None
     if polarity != "negative":
         recovered_rule_hit = _issue_from_rules(aspect_key, evidence, content)
+        if recovered_rule_hit and _should_suppress_apparel_breathability_cluster_issue(
+            canonical=recovered_rule_hit[1],
+            aspect_key=aspect_key,
+            sub_category=sub_category,
+            source_detail="sentiment_recovery_rule",
+            cluster_propagated=cluster_propagated,
+            evidence_verified=_locate_evidence_span(content, evidence)["evidence_verified"],
+        ):
+            recovered_rule_hit = _issue_from_rules(aspect_key, evidence, "")
         if not recovered_rule_hit:
             return None
     existing = None if recovered_rule_hit else _issue_from_existing(aspect, aspect_key, label, locale)
@@ -1251,6 +1328,22 @@ def enrich_aspects_json(
     content_text = str(content or "")
     existing_occurrences = enriched.get("customer_label_occurrences")
     occurrences: list[dict[str, Any]] = []
+    occurrence_keys: set[tuple[str, str, str, str, str]] = set()
+
+    def _remember_occurrence(item: dict[str, Any]) -> None:
+        occurrence_keys.add(
+            (
+                str(item.get("type") or ""),
+                str(item.get("canonical_label_key") or ""),
+                str(item.get("aspect_key") or ""),
+                str(item.get("raw_label") or ""),
+                str(item.get("source_detail") or ""),
+            )
+        )
+
+    def _append_occurrence(item: dict[str, Any]) -> None:
+        _remember_occurrence(item)
+        occurrences.append(item)
     for aspect in aspects:
         if not isinstance(aspect, dict):
             continue
@@ -1260,6 +1353,7 @@ def enrich_aspects_json(
             sub_category=normalized_sub_category,
             content=content_text,
             locale=locale,
+            cluster_propagated=cluster_propagated,
         )
         if issue:
             aspect.update(
@@ -1279,7 +1373,7 @@ def enrich_aspects_json(
                 }
             )
             if issue["display_allowed"]:
-                occurrences.append(
+                _append_occurrence(
                     _issue_occurrence_from_normalized(
                         comment_id=comment_id,
                         content=content_text,
@@ -1312,7 +1406,7 @@ def enrich_aspects_json(
                 }
             )
             if highlight["highlight_display_allowed"]:
-                occurrences.append(
+                _append_occurrence(
                     _highlight_occurrence_from_normalized(
                         comment_id=comment_id,
                         content=content_text,
@@ -1332,7 +1426,20 @@ def enrich_aspects_json(
             locale=locale,
         )
         if water_leak_occurrence:
-            occurrences.append(water_leak_occurrence)
+            _append_occurrence(water_leak_occurrence)
+    if isinstance(existing_occurrences, list):
+        for item in existing_occurrences:
+            if not isinstance(item, dict):
+                continue
+            key = (
+                str(item.get("type") or ""),
+                str(item.get("canonical_label_key") or ""),
+                str(item.get("aspect_key") or ""),
+                str(item.get("raw_label") or ""),
+                str(item.get("source_detail") or ""),
+            )
+            if key not in occurrence_keys:
+                _append_occurrence(copy.deepcopy(item))
     enriched["specific_issue_schema_version"] = SPECIFIC_ISSUE_SCHEMA_VERSION
     enriched["customer_label_schema_version"] = CUSTOMER_LABEL_SCHEMA_VERSION
     enriched["customer_label_occurrence_schema_version"] = CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
@@ -1445,6 +1552,7 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
                 sub_category=sub_category,
                 content=content,
                 locale=locale,
+                cluster_propagated=bool(aj.get("cluster_propagated") or aspect.get("cluster_propagated")),
             )
             if not issue or not issue["display_allowed"]:
                 continue
