@@ -44,3 +44,39 @@ data/taxonomy/v1.0/backup-*/
 /*.png
 /*.jpg
 /*.jpeg
+
+# 项目进度文档（仅本地留存，详见 CODEX.md「PROGRESS_V2.md 保护规则」）
+PROGRESS_V2.md
+PROGRESS_V2.md.backup
+
+# Golden set / raw data（不进 git，本地标注数据）
+data/golden_set/
+data/raw/
+
+# Test artifacts（不进 git）
+test-results/
+test_data/
+
+# Python 构建产物
+*.egg-info/
+
+# 根目录截图（Playwright MCP 产物已归位到 .playwright-mcp/，此处兜底）
+/screenshots/
+
+# Chrome 扩展商店素材（不进 git，仅本地留存）
+chrome-extension/promotional/
+chrome-extension/screenshots/
+chrome-extension/tests/STEP14-3-E2E-REPORT.md
+
+# 根目录误放的 npm 文件
+/package.json
+/package-lock.json
+
+# 一次性导入脚本（不进 git）
+data/taxonomy/import_taxonomy_to_db.py
+
+# review_analyzer 本地数据文件
+review_analyzer/data/
+
+# 误放的 SSH 别名文件
+/ubuntu@13.215.29.99
