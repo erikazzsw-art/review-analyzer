@@ -722,11 +722,11 @@ Phase 7 第一轮灰度入口风险审计（2026-07-27，本地代码审计完�
 | 检查项 | 结果 |
 |--------|------|
 | 当前分支 / 远端基线 | `develop == origin/develop == 719fa92` |
-| 最新生产 deploy | GitHub Actions `Deploy to Production` run `30243734186` completed/success；`head_sha=719fa929defa73a79b86b13f2a25d2854662691b`；2026-07-27 06:46:58 UTC 完成 |
+| 本次 preflight 已核实的 production deploy | GitHub Actions `Deploy to Production` run `30244302312` completed/success；`head_sha=0ebd022bc7aadd32bdb6d2c4c9066419e9bc8dbb`；2026-07-27 06:57:25 UTC 完成 |
 | 生产 results AI 开关 | 无法从本地确认；`deploy/docker-compose.yml` 通过 ECS 私有 `deploy/.env` 注入，仓库未提交生产 `RESULTS_AI_*` 值 |
 | 生产业务观察授权 | 当前对话未新增明确授权 |
 | 本轮生产动作 | 未请求 results、aggregate、export、QA、upload、reanalyze 或 compare；ledger / analytics / LLM delta 未产生 |
-| 下一门禁 | Erika 明确授权指定 session 与入口，并确认生产 `RESULTS_AI_ENHANCEMENT_ENABLED=false` 后，才可执行 session-level results 只读观察 |
+| 下一门禁 | Erika 明确授权指定 session 与入口，并确认生产 `RESULTS_AI_ENHANCEMENT_ENABLED=false` 后，才可执行 session-level results 只读观察；每次 `develop` push（含 docs-only）都会触发 deploy，观察前需重新核验最新 run |
 
 Phase 7 P0 / P1 验证记录：
 
@@ -780,7 +780,7 @@ Phase 7 P0 / P1 验证记录：
 - [ ] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；如重新开启，先确认 provider/model 可用并监控 timeout / empty-cache 日志。
 - [ ] Phase 7 后续小流量灰度只做观察与记录：选 3-5 个已有真实 session，对 Top Issue / Top Label、Representative Evidence、date filter 行为做只读核对；不执行生产上传、重分析、QA、aggregate/export smoke，避免触发 credit/quota/analytics/LLM 成本路径。
 - [x] Phase 7 第一轮灰度入口风险审计已完成：确认 session-level results/history 与 aggregate results、export、QA、upload/reanalyze、modern compare 的成本/写入边界；生产只读观察仍待 Erika 授权。
-- [x] Phase 7 第一轮灰度 preflight 已完成：GitHub Actions deploy run `30243734186` 成功并确认生产部署到 `719fa92`；生产 `RESULTS_AI_*` 仍需从 ECS 私有 `.env` 确认；当前未获得新增生产业务观察授权，因此未请求任何 production route。
+- [x] Phase 7 第一轮灰度 preflight 已完成：本次已核实 GitHub Actions deploy run `30244302312` 成功并确认生产部署到 `0ebd022`；生产 `RESULTS_AI_*` 仍需从 ECS 私有 `.env` 确认；`develop` 每次 push（含 docs-only）都会触发 deploy；当前未获得新增生产业务观察授权，因此未请求任何 production route。
 - [ ] 灰度观察期间保持口径冻结：不得修改 `Not Breathable` 标签逻辑，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法；发现异常先记录 session、label、evidence、筛选条件和候选修正规则，再决定是否进入后续修复任务。
 - [ ] 灰度观察 date 口径：确认前端与后端筛选持续使用 normalized `comments.review_date`，raw `comments.date` 仅用于展示；抽查 Amazon 文本日期样本，确保 `Reviewed in the United States on Month D, YYYY` 已归一化且不会被日期窗口误过滤。
 - [ ] 如需要任何生产业务 smoke（上传、重分析、QA、aggregate results、模块/完整导出等），必须先报告 credit ledger / analytics / LLM 成本风险、说明 session 数量与入口，再等待 Erika 明确授权。
@@ -796,7 +796,7 @@ Phase 7 P0 / P1 验证记录：
 | P0 gate | live `/analysis/results` + export 生产门禁 | 已完成（session 114/96） | 1. 已获授权并完成 aggregate results、模块导出、完整导出；2. 记录响应时间、comments count、XLSX 有效性、credit/analytics delta；3. 未扩展到上传或重分析 | P2 production DDL 前置确认已完成 |
 | P1 | worker 写路径优化 | staging/dev no-op 写入验证通过 | 1. 已审计写路径；2. 已实现 batch update 与小批量事务边界；3. 已补 fake DB/query count 单测并推送 `2d8c1a4`；4. 已完成 clueai-dev 60/300 临时 worker smoke；5. 如要继续，只能在 Erika 授权后跑真实上传/重分析或生产 live/export smoke | 授权任何会扣 credit、写 ledger 或 analytics 的真实业务 smoke 前需明确确认 session 数量/ID |
 | P2 | date text 规范化 + 索引 | production migration/backfill 验收完成 / 灰度观察中 | 1. `059`、parser、安全 backfill、读写 fallback 和索引已完成；2. clueai-dev 与 production migration/backfill 均已执行；3. dry-run/apply backfill 已记录 parsed/unparsed 统计；4. production session 95/96/114 date span 与 Amazon 精确日过滤验收通过；5. 未执行上传、重分析、QA、aggregate/export smoke 或扣费路径；6. 后续仅观察 3-5 个已有真实 session 的 Top Issue / Top Label、真实 evidence span、normalized `review_date` 筛选与 Amazon 文本日期不过滤 | 小流量灰度继续观察真实 results/filter 行为；任何生产业务 smoke 前需先确认 credit/analytics/LLM 成本风险并取得明确授权 |
-| Phase 7 第一轮灰度观察 | preflight 完成 / 生产观察待授权 | 1. 已确认最新生产 deploy run `30243734186` 成功，部署 commit `719fa92`；2. 已确认 session-level results 默认不扣 credit，但必须从 ECS 私有 `.env` 确认 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；3. 已确认 aggregate results、export、QA、upload/reanalyze、modern compare 的扣费/写入/LLM 风险；4. 已整理 114/96/111/110/95 观察字段、通过标准、停止条件；5. 未请求生产接口 | Erika 明确授权指定 session/入口并确认生产 AI 开关后，才执行 5 个已有 session 的只读观察；授权前不做任何 production business smoke |
+| Phase 7 第一轮灰度观察 | preflight 完成 / 生产观察待授权 | 1. 本次已核实 deploy run `30244302312` 成功，部署 commit `0ebd022`；2. 已确认 session-level results 默认不扣 credit，但必须从 ECS 私有 `.env` 确认 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；3. 已确认 aggregate results、export、QA、upload/reanalyze、modern compare 的扣费/写入/LLM 风险；4. 已整理 114/96/111/110/95 观察字段、通过标准、停止条件；5. 未请求生产接口；6. 每次 `develop` push（含 docs-only）都会触发 deploy，真实观察前需重新核验最新 run | Erika 明确授权指定 session/入口并确认生产 AI 开关后，才执行 5 个已有 session 的只读观察；授权前不做任何 production business smoke |
 
 后续 Erika 参与点：
 
