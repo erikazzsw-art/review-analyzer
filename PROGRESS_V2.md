@@ -10,16 +10,92 @@
 
 ## 总体进度
 
-| 指标 | 数值 |
-|------|------|
-| 总模块数 | 4 |
-| 已完成 | 4 |
-| 进行中 | 0 |
-| 未开始 | 0 |
-| 总体进度 | 100% |
+> 最后更新：2026-07-27 | 基于代码实际状态 + 文档 checkbox 统计
+
+### 按模块组
+
+| 模块组 | 子模块数 | 已完成 | 进行中 | 未开始 | 进度 | 备注 |
+|--------|---------|--------|--------|--------|------|------|
+| 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
+| 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
+| 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
+| 5. Next.js 迁移 | 8 | 8 | 0 | 0 | 100% | 5.1-5.8 全部完成，ECS 生产环境运行中 |
+| 6. 技术优化 | 9 | 6 | 0 | 3 | 67% | 6.1-6.6 完成（数据资产化→成本优化）；6.7-6.9 待 PMF 验证后启动 |
+| 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
+| 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
+| 9. 增值功能 | 6 | 1 | 2 | 3 | ~33% | 9.3 完成；9.1/9.2 部分完成；9.4/9.5/9.6 待启动 |
+| **总计** | **51** | **30** | **9** | **12** | **~70%** | |
+
+### 按状态明细
+
+**✅ 已完成（30 个子模块）**
+
+| 编号 | 名称 | 关键产出 |
+|------|------|---------|
+| 2.1 | 多产品仪表盘 | 总览页路由+表格UI+点击跳转 |
+| 2.2 | 版本对比视图 | 环比分析统一区块 |
+| 2.3 | RAG 问评论 | pgvector检索+DeepSeek回答+引用评论+Pro计费墙；2026-07-02 P0升级：意图路由+结构化聚合 |
+| 2.4 | Paddle 计费 | plan字段+Checkout+Webhook+第二产品限制 |
+| 3.x | ASIN多变体抓取 | 变体发现+产品信息保存+Worker重构+scraped_title |
+| 4.x | 本地收口 | 导航/工作台/AppShell/闭环流程（产品→行动→复盘） |
+| 5.1 | 前端工程骨架 | Next.js 15+React 19+Tailwind+登录前页面+设计Token |
+| 5.2 | FastAPI骨架与认证 | 登录/注册/退出/HttpOnly Cookie/me |
+| 5.3 | 工作台与产品管理 | /workspace + /products API+页面 |
+| 5.4 | 上传与分析异步化 | 上传拆分+分析job化+Redis+RQ |
+| 5.5 | 结果/对比/历史 | results/compare/history URL直达+对比报告 |
+| 5.6 | 问评论/行动/复盘 | RAG页面+闭环能力迁移 |
+| 5.7 | 文案/设置/计费 | /copywriter+/settings+Paddle Checkout/Webhook+QuotaDialog |
+| 5.8 | 部署与Streamlit下线 | ECS+Docker Compose+Nginx+HTTPS+域名分层，生产运行中 |
+| 6.1 | 数据资产化 | 1060行Taxonomy入库+全品类扩展87子品类+441aspect |
+| 6.2 | Taxonomy接入分析链路 | 动态prompt模板+品类白名单+回归测试 |
+| 6.3 | Golden Set多品类演进 | 品类级mini Golden Set+CI多品类回归+other占比监控+飞书告警 |
+| 6.4 | 商业化基建 | 多租户隔离+邮箱唯一+跨用户LLM复用(review_pool)+密码重置 |
+| 6.5 | LLM输出加固 | 强制JSON Schema输出+results AI fallback非阻塞 |
+| 6.6 | 成本优化 | Embedding选型+缓存98%命中率（100条仅2条走LLM） |
+| 7.1 | CI持续集成 | GitHub Actions: ruff lint+tsc typecheck+next build |
+| 7.5 | 数据埋点(PostHog) | SDK接入+analytics_events表+FastAPI中间件+关键事件埋点 |
+| 7.6 | 用户反馈浮窗 | migration+后端route(含邮件通知)+前端Widget(FAB+情绪+表单+双语+快捷键) |
+| 7.8 | shadcn/ui组件系统 | CSS变量体系+基础组件原语 |
+| 7.9 | 首页改造 | Phase 1布局与组件架构重构完成 |
+| 7.10 | 登录/注册改造 | 独立全屏双栏布局+全站营销文案中文化 |
+| 7.12 | 可观测性体系 | 5-Tab管理后台(概览/成本/任务/缓存/告警)+时间范围选择器+trace timeline |
+| 8.4 | LLM路由locale切换 | QA/Compare路由复用get_analysis_locale；locale=en→GPT-4o-mini→DeepSeek→Qwen |
+| 8.7 | Credit定价体系 | 海外4档套餐+统一credit池，已部署上线 |
+| 9.3 | 智能推送 | 设置页拆分为3子页+推送内容增强(B1-B6)+飞书Webhook推送 |
+
+**🔄 进行中（9 个子模块）**
+
+| 编号 | 名称 | 当前进度 | 剩余工作 |
+|------|------|---------|---------|
+| 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
+| 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
+| 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
+| 7.14 | i18n国际化 | 框架搭建起步 | 全站i18n文案+语言切换+路由locale |
+| 7.15 | 全面测试方案 | 33个测试/32通过/1已修复 | E2E覆盖+性能测试+边界用例 |
+| 8.1 | Erika手动执行 | SG迁移Phase 0-3b ✅ | Phase 4观察+收款/DataForSEO/法律文档 |
+| 8.3 | 后端合规能力 | 80% | Geo-Block+数据主权API+邮件双语化+Contact/Sub-processor已完成；数据保留清理待办 |
+| 9.1 | 评论自动获取 | Rainforest单次拉取已实现 | 定时拉取+多数据源+ASIN监听列表 |
+| 9.2 | API调用 | 基础路由存在 | v1公开API+认证+限流+文档 |
+
+**⏳ 待启动（12 个子模块）**
+
+| 编号 | 名称 | 启动条件 |
+|------|------|---------|
+| 6.7 | ABSA小模型fine-tune | PMF验证通过+≥5付费用户 |
+| 6.8 | 用户反馈回路 | PMF验证通过 |
+| 6.9 | Niche商业化启动 | PMF验证通过 |
+| 7.3 | 独立测试环境 | 团队扩展或付费用户需staging |
+| 7.4 | 预览环境 | 协作审查升级 |
+| 7.13 | Agent智能工作流 | 7.12 C1-C2完成 |
+| 8.2 | i18n框架+双语文案+法律页面 | 8.1完成 |
+| 8.5 | LLM集成+数据源改造 | ⏸️ 冻结（等Erika拍板） |
+| 8.6 | Beta发布准备 | 8.2-8.5完成 |
+| 9.4 | 邀请返佣增长 | ≥10付费用户 |
+| 9.5 | 自研评论标注模型 | ≥50付费用户+ABSA小模型验证 |
+| 9.6 | 团队管理(多租户) | ≥1付费用户 |
 
 ```
-[████████████████████] 100%
+[███████████████░░░░░░░] ~70%  (30 完成 / 9 进行中 / 12 待启动)
 ```
 
 ---
@@ -982,8 +1058,8 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 | `5.4` 上传与分析任务异步化 | 已完成 | 上传拆分、分析 job 化、Redis + RQ 跑通 | 仅回滚上传/分析异步链路与 worker |
 | `5.5` 结果/对比/历史迁移 | 已完成 | 迁移 `results / compare / history`，支持 URL 直达与显式对比报告生成 | 仅回滚分析阅读层 |
 | `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
-| `5.7` 文案/设置/计费迁移 | 未开始 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
-| `5.8` 部署与 Streamlit 下线路径 | 后置（本地配置已完成，ECS 线上验证等待 V4 稳定后再继续） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
+| `5.7` 文案/设置/计费迁移 | 已完成 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
+| `5.8` 部署与 Streamlit 下线路径 | 已完成（ECS 生产环境运行中） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
 
 ### 执行顺序
 
@@ -1370,8 +1446,9 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
   - [x] Phase 1-6.5 已完成代码、导出、前端展示、验证集和真实 Foxelli raw replay。
   - [x] Phase 7 P0 read-path 性能修复已完成并推送 `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
   - [x] Phase 7 第二批 / P1 authenticated route smoke 已完成：session 3/4/5 的 results、aggregate results、模块导出、完整导出均为 200。
+  - [x] Phase 7 生产部署已确认：GitHub Actions `Deploy to Production` run `30230691101` 已将 `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` 部署成功；生产只读 `/analysis/sessions/{id}/results` smoke 覆盖 114/96/111/110，均 200、无 `embedding`、无 SSL/connection error。
   - [x] 可以扩大 Phase 7 第二批 / P1 小流量灰度。
-  - [ ] 不建议直接生产全量发布；生产扩大前需要 Erika 明确授权会扣 credit 的 live `/analysis/results` 与 export smoke，或提供零扣费 staging。
+  - [ ] 不建议直接生产全量发布；生产扩大前仍需 Erika 明确授权会扣 credit 的 live `/analysis/results` 与 export smoke，或提供零扣费 staging。
 
   核心口径已冻结：
   - `Customer Issue`：前台展示给用户看的具体问题标签，例如 `Water Leaks Through`、`Missing Parts`。
@@ -1396,8 +1473,8 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
   | Phase 6 真实 Foxelli raw replay | ✅ 完成 | `scratch/session114_raw_replay.xlsx` 上传 clueai-dev 生成 session 3；最终 `Water Leaks Through=5 mentions / 5 reviews`，全部来自当前产品真实漏水原文 span，无旧风险 `9/9` 过计数 |
   | Phase 6.5 results LLM fallback | ✅ 完成 | `RESULTS_AI_ENHANCEMENT_ENABLED=false` 默认关闭；results 主 payload 先返回 heuristic，不被 DeepSeek / OpenAI enhancement 失败阻塞；AI 只能增强文本，不能覆盖 rows |
   | Phase 7 P0 read-path | ✅ 完成 | `get_comments()` 默认瘦列读取，不返回 `embedding`；`aspects_json` compact 投影；date span fallback 改 SQL `MIN/MAX`；连接关闭重试一次；`backend_api/tests` 176 passed |
-  | Phase 7 P1 authenticated smoke | ✅ 完成 | clueai-dev/preprod route 层 session 3/4/5 authenticated smoke 通过；未改 Not Breathable，未重构 Phase 1-6 核心算法 |
-  | Phase 7 生产扩大 | ⏳ 待决策 | 需要 live credit/export smoke 授权或零扣费 staging；通过后再扩大生产流量 |
+  | Phase 7 P1 authenticated smoke | ✅ 完成 | clueai-dev/preprod route 层 session 3/4/5 authenticated smoke 通过；生产只读 results smoke 覆盖 114/96/111/110；未改 Not Breathable，未重构 Phase 1-6 核心算法 |
+  | Phase 7 生产 credit/export 门禁 | ⏳ 待决策 | live `/analysis/results` 与 export 会扣 credit / 写 ledger；需要 Erika 授权或零扣费 staging；通过后再扩大生产流量 |
 
   真实样本验证记录：
 
@@ -1406,6 +1483,15 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
   | 3 | Foxelli Waders raw replay，92 reviews | `Water Leaks Through` count=5 / pct=62.5；`Comfortable To Wear` count=64 / pct=48.1；代表证据均为原文 span |
   | 4 | 432 reviews | `Breaks Easily` count=13 / pct=44.8；`Feels Well Made` count=290 / pct=92.7 |
   | 5 | 545 reviews | 无明确 Top Issue（`No clear friction`）；`Comfortable To Wear` count=463 / pct=89.6 |
+
+  生产只读 results smoke（已部署 `1d537fd` 后）：
+
+  | session | route | status / time | comments | Top Issue | Top Label | embedding | SSL/connection error |
+  |---------|-------|---------------|----------|-----------|-----------|-----------|----------------------|
+  | 114 | `/analysis/sessions/114/results` | 200 / 0.741s | 92 | `Not Breathable` | `Comfortable to Wear` | false | false |
+  | 96 | `/analysis/sessions/96/results` | 200 / 0.726s | 661 | `Value for Money` count=6 | `Value for Money` count=135 | false | false |
+  | 111 | `/analysis/sessions/111/results` | 200 / 0.394s | 100 | `Water Leaks Through` count=13 | `Keeps Water Out` count=17 | false | false |
+  | 110 | `/analysis/sessions/110/results` | 200 / 0.426s | 100 | `Water Leaks Through` count=13 | `Holds Up Well` count=46 | false | false |
 
   Phase 7 P0 / P1 验证记录：
 
@@ -1419,6 +1505,8 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
   | date span fallback | SQL `MIN/MAX` fallback 为 0.3s 级 |
   | LLM enhancement | 默认关闭，results 首开不依赖 provider |
   | credit / analytics | P1 smoke 进程内 patch `credit_consume` 与 `track_event` 为 no-op，未调用真实 QA/Ask、上传或重分析等扣费动作 |
+  | production deploy | GitHub Actions `Deploy to Production` run `30230691101` completed/success for `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` |
+  | production read-only smoke | `/analysis/sessions/{id}/results` 生产只读 smoke：114/96/111/110 均 200；最大 session 96（661 comments）0.726s；默认 payload 均无 `embedding`；无 SSL/connection error |
 
   相关文档 / 测试资产：
   - `docs/Customer_Issue_Label_Phase6验证报告.md`
@@ -1431,10 +1519,43 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 
   残留风险与下一步：
   - [ ] 生产全量发布前补 live `/analysis/results` 与 export smoke；若担心扣 credit，优先准备零扣费 staging。
+  - [ ] P1 worker 写路径优化尚未开始编码：目标是降低 per-comment `update_comment_analysis()` / cluster update 对共享 DB 环境和连接池的峰值压力；不是当前 P0 read-path 堆栈主因，但会放大后续上传/重分析风险。
+  - [ ] P2 date/index 技术债尚未开始编码：`date` 仍是 text，session 3 存在 Amazon 文本日期；缺少 `(user_id, session_id, id DESC)` 复合索引不是本次主因，但更大表会放大。
   - [ ] `Comfortable_to_Wear_reviews_57.xlsx` 风险已用 fixture 复刻；若要作为正式金样本，需要重新导入或重放真实 xlsx，并确认 missing evidence 不进入 Representative Evidence。
   - [ ] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；如重新开启，先确认 provider/model 可用并监控 timeout / empty-cache 日志。
   - [ ] 增加 label stats / 告警：单一标签突然 100%、verified evidence 比例过低、broad/internal label 进入 Top、cluster propagated 占比异常升高、long-tail 标签过多。
   - [ ] 新增类目时按“系统自动候选 + Erika 审核高频 canonical label”的方式走，不人工维护每条评论：先跑 3-5 个该类目产品样本，再审核 Top 候选标签的保留、合并、改名、禁用。
+
+  下一阶段任务拆解：
+
+  | 优先级 | 任务 | 当前阶段 | 建议步骤 | Erika 参与点 |
+  |--------|------|----------|----------|--------------|
+  | P0 gate | live `/analysis/results` + export 生产门禁 | 待授权 / 待零扣费 staging | 1. 确认是否允许扣 credit；2. 对 prod/staging 代表 session 跑 aggregate results、模块导出、完整导出；3. 记录响应时间、Top Issue/Label、导出 sheet、SSL/connection error；4. 通过后再扩大生产流量 | 现在即可参与：授权扣费 smoke 或提供零扣费 staging |
+  | P1 | worker 写路径优化 | 可开始编码准备 | 1. 审计 `update_comment_analysis()`、cluster update、embedding update 调用频率；2. 设计 batch update / batch upsert 与事务边界；3. 补 fake DB/query count 单测；4. 在 staging 跑小样本上传/重分析；5. 再跑较大样本观察 worker 日志、DB 连接、任务耗时 | 代码完成后参与：授权上传/重分析样本验证，因为会写 DB 且可能触发 LLM/credit |
+  | P2 | date text 规范化 + 索引 | 方案设计待开始 | 1. 盘点真实 date 格式，含 Amazon 文本日期；2. 设计 normalized date/backfill 或安全解析层；3. 评估并准备 `(user_id, session_id, id DESC)` 及 product/date 查询索引；4. staging migration；5. 验证 history/results/aggregate range 行为 | migration 前参与：确认 DDL 窗口、备份/回滚方案和抽样验收 |
+
+  新对话继续提示词：
+
+  ```text
+  请接着当前 ClueAI `develop` 分支推进 Phase 7 后续任务。先阅读 `PROGRESS_V2.md` 的 `Step C9.8: Customer Issue / Customer Label 口径重构与灰度验证`。
+
+  当前状态：
+  - P0 read-path 修复已 commit/push/deploy：`1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
+  - GitHub Actions `Deploy to Production` run `30230691101` 已 completed/success。
+  - 生产只读 `/analysis/sessions/{id}/results` smoke 已通过：114/96/111/110 均 200，最大 session 96（661 comments）0.726s，默认 payload 无 `embedding`，无 SSL/connection error。
+  - clueai-dev/preprod authenticated route smoke 已通过 session 3/4/5：session results、aggregate results、模块导出、完整导出均 200；credit/analytics 在验证进程内 no-op，未写 ledger。
+  - live `/analysis/results` 与 export 仍未在生产真实调用，因为会扣 credit / 写 ledger；需要 Erika 授权或零扣费 staging。
+
+  约束：
+  - 不再改 Not Breathable 标签逻辑。
+  - 不重构 Phase 1-6 Customer Issue / Customer Label 核心算法。
+  - 不调用会扣 credit、写 quota/credit ledger 或写 analytics 的业务动作；如必须调用，先说明风险并等待 Erika 确认。
+
+  下一步优先级：
+  1. 若 Erika 授权或提供零扣费 staging，先补 live `/analysis/results?...session_id={id}`、模块导出、完整导出 smoke，并记录响应时间、Top Issue/Label、导出 sheet、SSL/connection error。
+  2. 可以开始 P1 worker 写路径优化编码准备：审计 `update_comment_analysis()`、cluster update、embedding update 调用频率，设计 batch update/upsert 与事务边界，补 fake DB/query count 单测。
+  3. P2 date text 规范化与索引先做方案，不急于生产 DDL；migration 前需要 Erika 确认窗口、备份和回滚方案。
+  ```
 
   后续 Erika 参与点：
 
