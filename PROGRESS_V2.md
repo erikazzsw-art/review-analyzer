@@ -693,6 +693,30 @@ Phase 7 小流量灰度观察清单（准备阶段，仅文档整理；不触发
 - date filter 持续使用 normalized `comments.review_date`；raw `comments.date` 继续只做展示。
 - Amazon 文本日期样本不会因 raw date 格式被日期窗口误过滤。
 
+Phase 7 第一轮灰度入口风险审计（2026-07-27，本地代码审计完成；本轮未请求生产接口）：
+
+| 入口 | 本地代码行为 | 风险等级 | 第一轮灰度决策 |
+|------|--------------|----------|----------------|
+| `GET /analysis/sessions/{session_id}/results` | 按单个 session 读取 comments，默认移除 `embedding`，用本地 heuristic 生成模块；`RESULTS_AI_ENHANCEMENT_ENABLED=true` 时可能异步调用 LLM，但 route 本身不调用 `credit_consume` / `track_event` | 低风险候选，但依赖生产环境开关确认 | 仅在确认 `RESULTS_AI_ENHANCEMENT_ENABLED=false` 且 Erika 明确授权后，按 114/96/111/110/95 逐个只读观察；不从前台 aggregate 页面进入 |
+| `GET /analysis/history`、`GET /analysis/sessions/{id}/history` | 只读 session/history 数据，不跑 insight、QA 或 worker | 低风险 | 可用于定位已有 session；本轮仍只做本地方案整理，未请求生产 |
+| 旧 `GET /analysis/compare` | 读取 comments 并构造 deterministic dataset；当前 route 不走现代 compare cache/AI summary | 低到中风险 | 不作为第一轮必需入口；如要核对 compare date filter，先单独报告入口与影响范围 |
+| `GET /analysis/results` | 聚合 comments 后构造 insights；有结果时直接 `credit_consume(user_id, 6, "insight", product_id)`；AI enhancement 仍可能受环境开关影响 | 高风险 | 本轮禁止，不能把前台 `/analysis/results` 页面打开当成免费只读观察 |
+| `GET /analysis/sessions/{id}/export`、`/export/full` | 执行 quota 检查并各扣 1 credit，生成 XLSX | 高风险 | 本轮禁止；如需 smoke，先报告 ledger/analytics 影响并等待 Erika 授权 |
+| `POST /qa/ask`、`/qa/questions`、`POST /qa/conversations/{id}/messages` | 读取 `include_embedding=true` 的 comments，调用 RAG/LLM，扣 3 credits，并写入 QA conversation/message | 高风险 | 本轮禁止，不做 QA/RAG 验证 |
+| `POST /uploads`、`POST /analysis/jobs`、`POST /analysis/reanalyze` | 创建/重置 job，入队 worker；worker 会写 analysis/cluster/embedding、扣 review_analyze credits、记录 LLM usage/analytics，并可能 push | 最高风险 | 本轮禁止，不上传、不重分析、不启动 worker |
+| `POST /compare/dataset`、`/compare/reports`、`/compare/export` | 现代 compare 会生成/读取 compare cache，部分路径调用 AI summary 并写 DB；export 产生文件 | 高风险 | 本轮禁止，不以 compare 代替 results/filter 观察 |
+
+第一轮灰度观察执行顺序（获得授权后才执行生产部分）：
+
+1. 先记录生产 `RESULTS_AI_ENHANCEMENT_ENABLED`、disabled providers、当前 deploy commit；任一项无法确认则停止。
+2. 只调用已有 session 的 `GET /analysis/sessions/{session_id}/results`，顺序建议为 `114 → 96 → 111 → 110 → 95`；不打开会自动调用 aggregate 的前台 `/analysis/results` 主路径。
+3. 每个 session 记录 status、响应时间、comments count、Top Issue / Top Label、代表证据前 3 条、默认 date span、payload 是否包含 `embedding`、是否出现 SSL/connection error。
+4. 对 114/95 重点核对 Amazon 文本日期；对 111/110 重点核对漏水否定边界；对 96 重点核对同名 issue/highlight 语义；所有 session 都核对 evidence span 是否能回到原评论。
+5. 观察期间不得修改 `Not Breathable`、Phase 1-6 核心算法或 normalized date 口径；异常只记录，不现场修复。
+6. 任何 credit ledger 增量、analytics event、LLM usage/log、worker/job 状态变化、missing/propagated evidence、日期误过滤或 response error，立即停止后续 session 并报告。
+
+当前闭环状态：本地入口风险审计与第一轮执行方案已完成；生产只读观察仍待 Erika 明确授权，因此本轮没有新增 production 请求、ledger、analytics 或 LLM 成本。
+
 Phase 7 P0 / P1 验证记录：
 
 | 验证项 | 结果 |
@@ -744,6 +768,7 @@ Phase 7 P0 / P1 验证记录：
 - [ ] `Comfortable_to_Wear_reviews_57.xlsx` 风险已用 fixture 复刻；若要作为正式金样本，需要重新导入或重放真实 xlsx，并确认 missing evidence 不进入 Representative Evidence。
 - [ ] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；如重新开启，先确认 provider/model 可用并监控 timeout / empty-cache 日志。
 - [ ] Phase 7 后续小流量灰度只做观察与记录：选 3-5 个已有真实 session，对 Top Issue / Top Label、Representative Evidence、date filter 行为做只读核对；不执行生产上传、重分析、QA、aggregate/export smoke，避免触发 credit/quota/analytics/LLM 成本路径。
+- [x] Phase 7 第一轮灰度入口风险审计已完成：确认 session-level results/history 与 aggregate results、export、QA、upload/reanalyze、modern compare 的成本/写入边界；生产只读观察仍待 Erika 授权。
 - [ ] 灰度观察期间保持口径冻结：不得修改 `Not Breathable` 标签逻辑，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法；发现异常先记录 session、label、evidence、筛选条件和候选修正规则，再决定是否进入后续修复任务。
 - [ ] 灰度观察 date 口径：确认前端与后端筛选持续使用 normalized `comments.review_date`，raw `comments.date` 仅用于展示；抽查 Amazon 文本日期样本，确保 `Reviewed in the United States on Month D, YYYY` 已归一化且不会被日期窗口误过滤。
 - [ ] 如需要任何生产业务 smoke（上传、重分析、QA、aggregate results、模块/完整导出等），必须先报告 credit ledger / analytics / LLM 成本风险、说明 session 数量与入口，再等待 Erika 明确授权。
@@ -759,6 +784,7 @@ Phase 7 P0 / P1 验证记录：
 | P0 gate | live `/analysis/results` + export 生产门禁 | 已完成（session 114/96） | 1. 已获授权并完成 aggregate results、模块导出、完整导出；2. 记录响应时间、comments count、XLSX 有效性、credit/analytics delta；3. 未扩展到上传或重分析 | P2 production DDL 前置确认已完成 |
 | P1 | worker 写路径优化 | staging/dev no-op 写入验证通过 | 1. 已审计写路径；2. 已实现 batch update 与小批量事务边界；3. 已补 fake DB/query count 单测并推送 `2d8c1a4`；4. 已完成 clueai-dev 60/300 临时 worker smoke；5. 如要继续，只能在 Erika 授权后跑真实上传/重分析或生产 live/export smoke | 授权任何会扣 credit、写 ledger 或 analytics 的真实业务 smoke 前需明确确认 session 数量/ID |
 | P2 | date text 规范化 + 索引 | production migration/backfill 验收完成 / 灰度观察中 | 1. `059`、parser、安全 backfill、读写 fallback 和索引已完成；2. clueai-dev 与 production migration/backfill 均已执行；3. dry-run/apply backfill 已记录 parsed/unparsed 统计；4. production session 95/96/114 date span 与 Amazon 精确日过滤验收通过；5. 未执行上传、重分析、QA、aggregate/export smoke 或扣费路径；6. 后续仅观察 3-5 个已有真实 session 的 Top Issue / Top Label、真实 evidence span、normalized `review_date` 筛选与 Amazon 文本日期不过滤 | 小流量灰度继续观察真实 results/filter 行为；任何生产业务 smoke 前需先确认 credit/analytics/LLM 成本风险并取得明确授权 |
+| Phase 7 第一轮灰度观察 | 本地入口风险审计完成 / 生产观察待授权 | 1. 已确认 session-level results 默认不扣 credit，但必须先确认 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；2. 已确认 aggregate results、export、QA、upload/reanalyze、modern compare 的扣费/写入/LLM 风险；3. 已整理 114/96/111/110/95 观察字段、通过标准、停止条件；4. 未请求生产接口 | Erika 授权后才执行 5 个已有 session 的只读观察；授权前不做任何 production business smoke |
 
 后续 Erika 参与点：
 
