@@ -675,6 +675,24 @@ Phase 7 小流量灰度观察清单（准备阶段，仅文档整理；不触发
 |------|---------|----------|------------------------|--------------------------|------------------------|----------------------------|------------------|-------------|
 | 待记录 | 待记录 | 仅只读页面或已授权入口 | 待记录 | 是否来自真实 evidence span | 只观察，不修改 | 是否持续使用 normalized `review_date` | 是否误过滤 | 待记录 |
 
+灰度观察字段拆解（人工 / 只读核对项）：
+
+| session | Top Issue / Top Label 核对 | Representative Evidence 核对 | date filter 核对 | 异常记录规则 |
+|---------|-----------------------------|-------------------------------|------------------|--------------|
+| 114 | 记录 Top Issue `Not Breathable` 与 Top Label `Comfortable to Wear` 的 display label、count/share、前台文案；只判断是否符合用户直觉，不修改 `Not Breathable` 规则 | 抽查前 3 条 evidence，确认 span 可在原文中定位；不得出现 missing evidence、broad/internal label 或 cluster-propagated evidence | 默认 span 应沿用 `2018-12-05 ~ 2026-07-05`；Amazon `id=26410` 对应 `2026-07-05` 不得被精确日过滤排除；raw `date` 只展示 | 若 evidence 不在原文，记录 comment_id、label、raw evidence、原文片段、是否 propagated |
+| 96 | 记录 `Value for Money` 同时作为 issue/highlight 时的 count/share 与展示上下文，判断正负语义是否能区分 | 抽查 issue 与 highlight 各 2 条 evidence，确认同名标签不会共用错误 span | 默认 span 应沿用 `2024-04-10 ~ 2025-12-01`；任意日期筛选记录 SQL/页面行为是否仍基于 `review_date` | 若同名 issue/highlight 语义混淆，记录 label、sentiment、evidence、筛选条件 |
+| 111 | 记录 `Water Leaks Through` 与 `Keeps Water Out` 的正反向边界，确认否定漏水不污染 issue | 抽查漏水 issue evidence 是否明确表达 leak / wet / water through；抽查防水 highlight 是否明确表达 dry / waterproof / keeps water out | 若页面筛选日期，记录 range、返回评论数、是否排除 Amazon 文本日期误伤 | 若 `no leaks` / `remained dry` 进入 issue，记录原文、label、occurrence source |
+| 110 | 记录 `Water Leaks Through` 与 `Holds Up Well` 同屏展示是否符合用户直觉，观察 count/share 是否异常偏高 | 抽查 Top Issue/Label evidence 是否来自当前产品真实原文 span；不得由 internal aspect 代替前台 label | 记录 date range 展示是否来自 normalized span；raw date 不参与筛选判断 | 若 broad/internal label 进入 Top 或证据过宽，记录 display label、canonical key、aspect |
+| 95 | 首次补齐 Top Issue / Top Label、count/share、前台 evidence 与日期范围 | 抽查 Top Issue/Label 前 3 条 evidence，确认是否可回溯到原文；若缺 Top 数据先只记录缺口 | 默认 span 应沿用 `2023-02-07 ~ 2026-07-10`；如含 Amazon 文本日期，确认 normalized 后不过滤 | 未获授权前不主动请求生产 route；若授权后观察，先记录入口、session 数、ledger/analytics/LLM 风险说明 |
+
+灰度观察通过标准：
+- 3-5 个真实 session 的 Top Issue / Top Label 没有明显语义反转、同名污染或 100% 异常集中。
+- Representative Evidence 均来自真实 evidence span，且能在原评论中定位；missing evidence、cluster-propagated occurrence、broad/internal label 不进入前台代表证据。
+- `Not Breathable` 只做观察和记录，不改标签逻辑。
+- Phase 1-6 Customer Issue / Customer Label 核心算法保持冻结，不做重构。
+- date filter 持续使用 normalized `comments.review_date`；raw `comments.date` 继续只做展示。
+- Amazon 文本日期样本不会因 raw date 格式被日期窗口误过滤。
+
 Phase 7 P0 / P1 验证记录：
 
 | 验证项 | 结果 |
