@@ -731,39 +731,6 @@ Phase 7 P0 / P1 验证记录：
 
 ---
 
-## 变更日志
-
-| 日期 | 模块 | 变更 |
-|------|------|------|
-| 2026-05-26 | - | 建立 V2 进度追踪系统 |
-| 2026-05-27 | 2.1 | 确认多产品仪表盘已在 V1 阶段完整实现，标记为完成 |
-| 2026-05-27 | 2.2 | 版本对比视图完成，与环比分析合并为统一区块 |
-| 2026-06-03 | 2.3 | Ask your reviews 升级为向量版 RAG：embedding 入库、pgvector 余弦检索、DeepSeek 回答、引用评论、Pro 计费墙 |
-| 2026-06-03 | 2.4 | Paddle 计费链路完成：plan 字段、Checkout、Webhook、第二产品限制 |
-| 2026-06-03 | 2.5 | 本地完成产品档案数据模型与产品管理页首版，兼容旧 `product_id` 历史数据显示，未推送部署 |
-| 2026-06-03 | 2.6 | 本地完成上传流程升级首版：工作目的、产品绑定、自动识别 ASIN/SKU 子变体、session 绑定上下文，未推送部署 |
-| 2026-06-03 | 2.7 | 本地完成行动中心首版：独立 action store、结果页创建动作、行动中心状态流转，未推送部署 |
-| 2026-06-03 | 2.8 | 本地完成复盘追踪首版：独立 review store、行动中心生成 tracker、复盘页结果录入、结果页复盘提醒，未推送部署 |
-| 2026-06-04 | 商业化路径 | 新增「前端架构与商业化落地路径」章节：双层架构决策、按 MRR 里程碑触发的迁移路径、3.1.5 营销站（P1-7）最小可行范围；P2-6 修订为"产品层 Streamlit → Next.js 全迁移"，仅在 MRR > $3k 后启动 |
-| 2026-06-06 | 5.7 | 本地完成宣传文案 / 设置 / 计费迁移收口：`/copywriter`、`/settings`、Paddle Checkout / Webhook、计费状态回写，文案与设置页可用 |
-| 2026-06-06 | 5.8 | 本地完成部署与 Streamlit 下线路径：`frontend / backend_api / workers` 容器、Nginx、docker-compose、阿里云部署说明、域名分层与回退边界；同时补齐营销站 SEO 基础 |
-| 2026-06-06 | SEO | 本地补齐 Next.js 营销站可上线 SEO 基础：首页 / 定价 / 试用页独立 metadata、应用页 noindex、`robots.txt` / `sitemap.xml` / `opengraph-image` |
-| 2026-06-09 | 5.8 | 将 ECS 验证阶段调整为后置：本地部署配置已完成，但线上 DNS / HTTPS 验证等待 V4 核心功能稳定后再继续；明确不阻塞本地开发与测试 |
-| 2026-06-04 | V4 技术路线 | 新增「V4 技术优化与商业化落地路线图」章节：基于 Shulex 竞品对比 + 10 万条多类目数据资产，规划 7 个核心任务（数据资产化、商业化基建、LLM 输出加固、成本优化、ABSA 小模型、用户反馈回路、Niche 商业化），目标 8 周内把单条成本降 85%、准确率提升至 95%、找到 5 个付费用户验证 PMF |
-| 2026-06-12 | 7.5 | 新增「数据埋点与用户行为分析体系」：PostHog Cloud 注册 + Free plan + Paddle 数据源连接；前端 SDK 接入（analytics.ts + AnalyticsProvider）+ 后端 analytics_events 表 + FastAPI 中间件 + 登录/注册/上传关键事件埋点；Step 1-4 全部完成；独立深度学习文档 `数据埋点学习文档.md` |
-| 2026-06-14 | 7.6 | 用户反馈浮窗组件全部完成：migration + 后端 route（含邮件通知）+ 前端 Widget（FAB+情绪+表单+中英文自适应+快捷键）+ AppShell 集成 + PostHog 埋点；已推送 develop（3 commits） |
-| 2026-06-14 | 7.7 | 新增「中国大陆访问优化」计划：Phase A Cloudflare CDN + 性能优化（立即执行）；Phase B ICP 备案 + 国内节点（付费用户 ≥10 触发）|
-| 2026-06-18 | 前端测试 | 决策：当前阶段不引入前端测试框架（Vitest/Jest）。理由：快速迭代期、CI 已有 tsc+build 兜底、核心逻辑在后端。触发条件：出现复杂前端逻辑/状态机、频繁回归 bug、核心功能稳定进入维护期时引入 Vitest + React Testing Library |
-| 2026-06-25 | 9.3 增强 | 推送设置页重构（Part A）：设置页改为 sidebar 3 子页（push/api-keys/billing），推送页合并全局规则+产品规则+周期推送+升级规则为单页全宽布局；推送内容增强（Part B）：B1 条数+占比、B2 AI 总结建议、B3 可点击链接、B4 行动中心引导、B5 环比推送增强、B6 TOP 问题复盘进度 |
-| 2026-06-25 | 7.12 | 可观测性页面重构：从 265 行单页重构为 5-Tab 管理后台（概览/成本/任务/缓存/告警），新增时间范围选择器+模型状态灯行+可展开 trace timeline+成本堆叠柱状图；从用户 sidebar 移除，仅管理员 URL 访问；10 个新组件于 `components/observability/` |
-| 2026-06-30 | 6.3 | Golden Set 标签校准管理系统 + 管理员权限控制：golden_set 表 + boundary_note 字段 + CSV 上传 API + 准确率统计 + few-shot 注入 + /settings/golden-set 管理页 + users.is_admin + sidebar adminOnly 过滤 + 页面级权限守卫；migration 033/034/035 |
-| 2026-06-30 | 6.1 扩展 | 全品类 Taxonomy 批量扩展：新增 5 品类(outdoor/beauty/kitchen/automotive/office) 27 子品类 441 条 aspect 全部携带 boundary_note；表结构重建 migration 037；sub_category_categories.json 覆盖 87 子品类；docs/类目标签覆盖表.md 产出 |
-| 2026-07-07 | 6.4 Step 7 | 跨用户 LLM 分析结果复用：接通已有 review_pool 全局池 → L1 缓存除用户自己历史也查 pool（analyzer_version 校验隔离），CSV 上传的分析结果也回填 pool；migration 043 加 content_hash 部分索引 + comments.cache_hit_source 列；隐私政策 + 服务条款追加"分析结果聚合复用"条款；预期热门 ASIN 场景 DeepSeek 调用量下降 30–60% |
-| 2026-07-23 | LLM Router 旧链路迁移 | Review Q&A、结果翻译、Compare AI Summary、非结构化解析兜底、eval runner、已跟踪 taxonomy/golden 维护脚本统一迁移到 `backend_api.app.services.llm_router.router_completion()` 或 Router 兼容 shim；QA 与 Compare 路由复用 `get_analysis_locale(request)`；`locale="en"` 路由顺序为 GPT-4o-mini → DeepSeek → Qwen，`locale="zh"` 为 DeepSeek → GPT-4o-mini → Qwen；commit `71b0d4c` 已推送 `origin/develop` |
-| 2026-07-24~2026-07-27 | 5.9 | Customer Issue / Customer Label 口径重构、Phase 1-6.5 验证、Foxelli raw replay、Phase 7 P0 read-path、Phase 7 P1 authenticated route smoke；已从原 5.8 Step C9.8 提取为独立模块 5.9；底部 changelog 不再重复维护详细记录 |
-
----
-
 ## 6. 技术优化
 
 > 背景：基于 Shulex / VOC AI 竞品技术选型对比，结合 10 万条多类目评论源数据资产，制定从「LLM+Prompt 单点架构」演进到「ABSA 小模型 + Embedding 聚类 + LLM 生成」三层架构的可商业化落地技术路线。

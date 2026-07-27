@@ -47,6 +47,8 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 **执行顺序**：先更新文档，再提交 Git。文档更新和代码提交合并为同一个 commit。
 
+**PROGRESS_V2.md 不再维护独立的「变更日志」段落**（已于 2026-07-27 移除）。每个模块的任务明细中已经通过 `[x]` + `状态/时间` 字段记录了完成状态和时间戳，无需在文档底部重复维护一份按时间排序的变更表。任务完成后只需更新对应模块的任务明细行即可。
+
 ## Git 工作流与进度追踪
 
 - 项目进度文件：`PROGRESS_V2.md`
