@@ -19,7 +19,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 | 8 | 8 | 0 | 0 | 100% | 5.1-5.8 全部完成，ECS 生产环境运行中 |
+| 5. Next.js 迁移 | 9 | 9 | 0 | 0 | 100% | 5.1-5.9 全部完成，ECS 生产环境运行中 |
 | 6. 技术优化 | 9 | 6 | 0 | 3 | 67% | 6.1-6.6 完成（数据资产化→成本优化）；6.7-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -166,851 +166,13 @@
 
 ---
 
-## 3. ASIN 多变体抓取 + 产品管理增强
-
-- [x] ASIN 抓取面板新增「抓取所有变体」checkbox，自动发现同款所有子 ASIN 并合并分析（上限 20 变体）
-- [x] 抓取时自动保存产品信息（图片、品牌、评分、评论数）到产品管理
-- [x] 产品管理列表页改为卡片网格（图片 + 名称 + 品牌 + 星级 + 评论数 + 变体数）
-- [x] 新增产品详情页 `/products/[id]`，展示变体表格（ASIN、图片、变体名、品牌、价格等）
-- [x] 产品详情页可直接跳转该产品的评论分析结果
-- [x] 数据库迁移 031：products 表新增 image_url/brand/rating/ratings_total/reviews_total；product_variants 表新增 image_url/name/brand/price 等字段
-- [x] Worker 流程重构：先保存产品信息 → 再抓取评论 → 合并去重 → 分析
-- [x] products 表新增 scraped_title 字段（migration 046）：API 抓取标题与用户填写的 name 字段分离存储；Amazon 路径 name 改为用户填写优先，scraped_title 存 Rainforest 原始标题
-
----
-
-## 4. 本地收口进展（原 V2.5-V3.1，2026-06-09）
-
-- [x] 登录后全局 App Shell 已对齐 `clueai_v2_ui_prototype.html` 的柔和 V2 风格，导航、按钮、卡片、上传区和侧边栏视觉保持统一
-- [x] 新增统一页头层 `review_analyzer/page_shell.py`，核心页与高级页都能显示所属路径、当前说明和快捷回跳
-- [x] `今日工作台` 已成为默认落地页，头部文案按角色视角生成，和其余页面的体验一致
-- [x] 一级导航已固定为：今日工作台、产品管理、上传评论、评论分析、问评论、行动中心、复盘追踪、宣传文案、推送设置
-- [x] 用户可见的独立 `全部功能` 已取消，`analysis_hub.py` 仅保留 `分析结果 / 对比分析 / 历史记录` 三个分析子页
-- [x] `features` 仅作为旧路由兼容映射存在，已不再作为独立页面保留
-- [x] 上传完成后固定跳转到 `评论分析 > 分析结果`，并自动带上当前 `view_session_id`
-- [x] 分析结果页已按 6 段模块重构，前 5 段支持模块级翻译与 XLSX 下载，用户体验模块支持 5 种时间筛选
-- [x] 对比分析页已支持三类标准对比 + 功能点定向对比，并补齐整页翻译和 XLSX 下载
-- [x] `问评论` 已升级为独立一级导航 `评论问答知识库`，支持按 1-5 个产品聚合评论后做 RAG 问答并展示来源引用
-- [x] 产品管理、行动中心、复盘追踪已形成闭环：产品组/变体建档 -> TOP 问题建行动 -> 行动转复盘 -> 复盘结果回写
-- [x] 宣传文案页、推送设置页的跳转文案已对齐新的评论工作流结构
-
----
-
-## 模块依赖图
-
-```
-2.1 (多产品仪表盘)
-├─► 2.2 (版本对比) ◄─ 2.1
-├─► 2.3 (RAG) ◄─ 2.1
-└─► 2.4 (Stripe) ◄─ 2.1, 2.3
-```
-
-开发顺序: 2.1 → 2.2 & 2.3（2.2 先做）→ 2.4
-
----
-
-## 4.x 代码落地结果（基于当前代码）
-
-> 这部分不再按“待办计划”理解，而是按“已经落地的代码事实”记录。
-
-**结论:** 2.5-3.1 已全部在本地实现并收口。当前代码里没有独立的 `全部功能地图` 页面；旧 `features` 路由只作为兼容映射，最终会落到 `评论分析 > 分析结果`。
-
-### 当前导航
-
-| 路由 | 页面 |
-|------|------|
-| `dashboard` | 今日工作台 |
-| `products` | 产品管理 |
-| `upload` | 上传评论 |
-| `analysis` | 评论分析容器（分析结果 / 对比分析 / 历史记录） |
-| `rag` | 评论问答知识库 |
-| `actions` | 行动中心 |
-| `reviews` | 复盘追踪 |
-| `copywriter` | 宣传文案 |
-| `settings` | 推送设置 |
-
-### 阶段状态
-
-| 阶段 | 优先级 | 代码状态 | 当前结论 |
-|------|--------|----------|----------|
-| 2.5 | P0 | 已完成 | 产品管理已支持父体产品、变体 SKU、生命周期和产品资产汇总 |
-| 2.6 | P0 | 已完成 | 上传流程已支持工作目的、产品档案绑定和变体识别 |
-| 2.7 | P0 | 已完成 | 行动中心已能从 TOP 问题创建团队事项并更新状态 |
-| 2.8 | P0 | 已完成 | 复盘追踪已能记录改进前后指标并判断继续跟进或完结 |
-| 2.9 | P1 | 已完成 | 多产品 / 多变体 / 多版本对比已收敛到 `评论分析 > 对比分析` |
-| 3.0 | P1 | 已完成 | 今日工作台已按运营、产研、质检、管理者四种视角成型 |
-| 3.1 | P2 | 已完成并收口 | 独立全部功能地图已取消，相关高级能力保留在现有导航里 |
-
-### 文件结构映射
-
-| 文件 | 当前状态 | 说明 |
-|------|----------|------|
-| `supabase_schema.sql` | 已修改 | 已补充 products、product_variants、product_versions、action_items、review_trackers、comparison_reports 等表和索引 |
-| `review_analyzer/database.py` | 已收敛 | 保留共享连接与现有通用 CRUD，新模块不再继续堆进来 |
-| `review_analyzer/product_store.py` | 已新增 | 产品组、变体 SKU、产品版本 CRUD |
-| `review_analyzer/action_store.py` | 已新增 | 行动事项 CRUD 与状态流转 |
-| `review_analyzer/review_store.py` | 已新增 | 复盘追踪 CRUD、复盘结果更新 |
-| `review_analyzer/compare_store.py` | 已新增 | 多产品、同产品、变体、版本对比数据聚合 |
-| `review_analyzer/workspace_store.py` | 已新增 | 今日工作台的角色任务、风险 SKU、待复盘摘要 |
-| `review_analyzer/app.py` | 已修改 | 侧边栏导航和页面分发已收口，兼容旧 `features` 路由 |
-| `review_analyzer/pages/dashboard.py` | 已修改 | 从产品卡片仪表盘升级为“今日工作台”入口 |
-| `review_analyzer/pages/products.py` | 已新增 | 产品管理页：父体产品、变体 SKU、生命周期、版本和评论资产 |
-| `review_analyzer/pages/upload.py` | 已修改 | 上传流程增加工作目的、产品组/变体/版本绑定 |
-| `review_analyzer/pages/analysis_hub.py` | 已修改 | 评论分析容器页：分析结果 / 对比分析 / 历史记录 |
-| `review_analyzer/pages/results.py` | 已修改 | TOP 问题/亮点增加创建行动、加入复盘入口 |
-| `review_analyzer/pages/actions.py` | 已新增 | 行动中心：团队事项列表、状态流转、负责人和复盘时间 |
-| `review_analyzer/pages/reviews.py` | 已新增 | 复盘追踪页：改进前后指标、复盘结论、完结/继续跟进 |
-| `review_analyzer/pages/compare.py` | 已新增 | 多产品、同产品、同变体、跨版本对比 |
-| `review_analyzer/pages/rag_library.py` | 已接入 | 评论问答知识库：多产品范围问答与引用展示 |
-| `review_analyzer/workflow_prompts.py` | 已扩展 | 根据工作目的输出不同结构的建议 |
-| `review_analyzer/notifier.py` | 已修改 | 支持行动事项和复盘提醒推送到飞书 |
-| `review_analyzer/exporter.py` | 已修改 | 支持行动事项、复盘报告、多产品对比导出 |
-| `plan.md` | 已修改 | 需求变更日志已同步实际落地变更 |
-| `PROGRESS_V2.md` | 已修改 | 当前文档改为按代码事实记录进度 |
-
-说明：`review_analyzer/pages/features.py` 不再作为独立页面存在，`全部功能地图` 的职责已经被当前导航和各业务页拆开承担。
-
----
-
-### 4.1 数据模型升级
-
-**Files:**
-- Modify: `supabase_schema.sql`
-- Create: `review_analyzer/product_store.py`
-- Read-only dependency: `review_analyzer/database.py`（只复用 `get_connection`）
-
-- [x] **Step 1: 新增产品档案表结构**
-
-新增表：
-
-```sql
-CREATE TABLE IF NOT EXISTS products (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    parent_product_id TEXT NOT NULL,
-    name TEXT,
-    platform TEXT,
-    category TEXT,
-    lifecycle_stage TEXT DEFAULT 'growth',
-    current_version TEXT DEFAULT 'V1',
-    core_selling_points TEXT,
-    owner_role TEXT,
-    production_cycle_days INTEGER,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(user_id, parent_product_id)
-);
-```
-
-- [x] **Step 2: 新增变体 SKU 表结构**
-
-```sql
-CREATE TABLE IF NOT EXISTS product_variants (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    product_id INTEGER NOT NULL REFERENCES products(id),
-    variant_sku TEXT NOT NULL,
-    child_asin TEXT,
-    color TEXT,
-    size TEXT,
-    style TEXT,
-    material TEXT,
-    status TEXT DEFAULT 'active',
-    launched_at TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(user_id, variant_sku)
-);
-```
-
-- [x] **Step 3: 新增版本、行动、复盘、对比表结构**
-
-新增 `product_versions`、`action_items`、`review_trackers`、`comparison_reports`，字段必须覆盖 `plan_V2.md` 第 8、9、10 章定义。
-
-- [x] **Step 4: 在 product_store.py 新增 CRUD**
-
-新增函数：
-
-```python
-def create_product(user_id: int, data: dict) -> int: ...
-def get_products(user_id: int) -> list[dict]: ...
-def get_product_by_id(user_id: int, product_id: int) -> dict | None: ...
-def create_variant(user_id: int, product_id: int, data: dict) -> int: ...
-def get_variants(user_id: int, product_id: int) -> list[dict]: ...
-```
-
-- [x] **Step 5: 验证产品模块可执行**
-
-Run: `python3 -m py_compile review_analyzer/product_store.py`
-
-Expected: PASS，无语法错误。
-
-- [x] **Step 6: 回滚边界**
-
-如果产品档案数据模型实现错误，只 revert 本任务 commit；受影响文件应仅为 `supabase_schema.sql`、`review_analyzer/product_store.py`、`PROGRESS_V2.md`。
-
-- [x] **Step 7: 已完成 / 已入库**
-
-产品档案与变体数据模型已落到当前实现中，`supabase_schema.sql`、`review_analyzer/product_store.py` 和本节进度说明已同步完成。
-
----
-
-### 4.2 产品管理页
-
-**Files:**
-- Create: `review_analyzer/pages/products.py`
-- Modify: `review_analyzer/app.py`
-- Modify: `review_analyzer/product_store.py`
-- Read-only dependency: `review_analyzer/database.py`（读取现有 sessions/comments 统计）
-
-- [x] **Step 1: 新建产品管理页面骨架**
-
-页面必须包含：
-
-- 产品组列表。
-- 产品组详情。
-- 变体 SKU 列表。
-- 生命周期阶段。
-- 当前版本。
-- 最大问题、最大亮点、待复盘事项。
-
-- [x] **Step 2: app.py 增加导航**
-
-新增导航项：
-
-```python
-"products": ("产品管理")
-```
-
-页面分发新增：
-
-```python
-elif page == "products":
-    render_products()
-```
-
-- [x] **Step 3: 产品组视角统计**
-
-从现有 `comments.product_id` / `sessions.product_id` 聚合评论数、好评率、差评率、TOP 问题、TOP 亮点。
-
-- [x] **Step 4: 变体视角预留**
-
-如果评论暂未绑定 `variant_id`，页面显示“未绑定变体”，不阻塞父体产品视图。
-
-- [x] **Step 5: 空状态**
-
-无产品时显示：
-
-> 暂无产品档案。先上传评论，或新建一个产品组。
-
-- [x] **Step 6: 验收**
-
-Run: `streamlit run review_analyzer/app.py`
-
-Expected:
-
-- 侧边栏出现产品管理。
-- 已有产品能按产品组展示。
-- 无变体数据时页面不报错。
-
-- [ ] **Step 7: 回滚边界**
-
-如果产品管理页体验不符合预期，只 revert 本任务 commit；数据模型模块不回滚。
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add review_analyzer/pages/products.py review_analyzer/app.py review_analyzer/product_store.py PROGRESS_V2.md
-git commit -m "feat: add product management page"
-```
-
----
-
-### 4.3 上传流程升级
-
-**Files:**
-- Modify: `review_analyzer/pages/upload.py`
-- Modify: `supabase_schema.sql`
-- Modify: `review_analyzer/product_store.py`
-- Create: `review_analyzer/workflow_prompts.py`
-
-- [x] **Step 1: 上传 Step 1 增加工作目的**
-
-工作目的选项：
-
-```python
-WORKFLOW_PURPOSES = [
-    "竞品调研",
-    "新品上线监控",
-    "日常评论分析",
-    "Listing 优化",
-    "质量问题复盘",
-    "版本改版验证",
-]
-```
-
-- [x] **Step 2: 上传 Step 1 增加产品绑定**
-
-用户可选择：
-
-- 选择已有产品组。
-- 新建产品组。
-- 选择变体 SKU。
-- 不绑定变体，仅绑定产品组。
-
-- [x] **Step 3: session_data 写入工作目的**
-
-`sessions` 表新增 `workflow_purpose`、`product_ref_id`、`variant_ref_id` 字段。
-
-- [x] **Step 4: 分析完成后按目的跳转**
-
-- 竞品调研 → 分析结果页展示机会点。
-- Listing 优化 → 分析结果页突出 Listing 动作。
-- 质量问题复盘 → 自动提示加入复盘追踪。
-- 版本改版验证 → 展示版本对比区域。
-
-- [x] **Step 5: 验收**
-
-Run: `streamlit run review_analyzer/app.py`
-
-Expected:
-
-- 上传页第一步先选择工作目的。
-- 可绑定已有产品或新建产品。
-- 评论仍能正常分析入库。
-
-- [ ] **Step 6: 回滚边界**
-
-如果上传流程改造影响原有上传体验，只 revert 本任务 commit；产品管理页和产品数据模型不回滚。
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add review_analyzer/pages/upload.py review_analyzer/product_store.py review_analyzer/workflow_prompts.py supabase_schema.sql PROGRESS_V2.md
-git commit -m "feat: upgrade upload workflow with product binding"
-```
-
----
-
-### 4.4 行动中心
-
-**Files:**
-- Create: `review_analyzer/pages/actions.py`
-- Modify: `review_analyzer/pages/results.py`
-- Modify: `review_analyzer/app.py`
-- Create: `review_analyzer/action_store.py`
-- Modify: `supabase_schema.sql`
-
-- [x] **Step 1: 新增 action_items 模块**
-
-函数：
-
-```python
-def create_action_item(user_id: int, data: dict) -> int: ...
-def get_action_items(user_id: int, status: str | None = None) -> list[dict]: ...
-def update_action_status(user_id: int, action_id: int, status: str) -> None: ...
-```
-
-- [x] **Step 2: 结果页 TOP 问题增加按钮**
-
-每个 TOP 问题增加：
-
-- 创建运营动作。
-- 创建产研动作。
-- 创建质检动作。
-- 加入复盘追踪。
-
-- [x] **Step 3: 行动中心页面**
-
-页面展示：
-
-- 事项标题。
-- 来源产品 / 变体 / 批次。
-- 问题标签。
-- 当前占比。
-- 责任角色。
-- 建议动作。
-- 预计复盘时间。
-- 状态。
-
-- [x] **Step 4: 状态流转**
-
-状态：
-
-```text
-待处理 → 处理中 → 待复盘 → 已完结
-```
-
-允许“继续跟进”回到处理中。
-
-- [ ] **Step 5: 验收**
-
-Expected:
-
-- 从 TOP 问题创建行动成功。
-- 行动中心能看到该事项。
-- 状态修改后刷新不丢失。
-
-- [ ] **Step 6: 回滚边界**
-
-如果行动中心实现错误，只 revert 本任务 commit；上传流程、产品管理、产品数据模型不回滚。
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add review_analyzer/pages/actions.py review_analyzer/pages/results.py review_analyzer/app.py review_analyzer/action_store.py supabase_schema.sql PROGRESS_V2.md
-git commit -m "feat: add action center"
-```
-
----
-
-### 4.5 复盘追踪
-
-**Files:**
-- Create: `review_analyzer/pages/reviews.py`
-- Create: `review_analyzer/review_store.py`
-- Modify: `review_analyzer/pages/actions.py`
-- Modify: `review_analyzer/pages/results.py`
-- Modify: `review_analyzer/app.py`
-- Modify: `supabase_schema.sql`
-
-- [x] **Step 1: 新增 review_trackers 模块**
-
-函数：
-
-```python
-def create_review_tracker(user_id: int, data: dict) -> int: ...
-def get_review_trackers(user_id: int, status: str | None = None) -> list[dict]: ...
-def update_review_tracker_result(user_id: int, tracker_id: int, data: dict) -> None: ...
-```
-
-- [x] **Step 2: 支持从行动事项生成复盘**
-
-行动事项中可设置：
-
-- 初始问题标签。
-- 初始占比。
-- 改进动作。
-- 预计生效批次。
-- 预计复盘时间。
-
-- [x] **Step 3: 复盘页展示卡片**
-
-每张卡展示：
-
-- 跟进事项。
-- 初始问题占比。
-- 改进动作。
-- 预计生效批次。
-- 复盘评论范围。
-- 当前占比。
-- 结论：有效 / 未改善 / 继续跟进。
-
-- [x] **Step 4: 上传新评论后自动提示可复盘**
-
-当新上传评论的产品、问题标签、复盘时间匹配 tracker 时，分析结果页提示：
-
-> 这批评论可用于复盘「包装破损」问题。
-
-- [x] **Step 5: 验收**
-
-Expected:
-
-- 可从行动中心创建复盘。
-- 可手动录入复盘结果。
-- 可标记已改善、未改善、继续跟进、已完结。
-
-- [ ] **Step 6: 回滚边界**
-
-如果复盘追踪实现错误，只 revert 本任务 commit；行动中心保留，复盘入口可暂时隐藏。
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add review_analyzer/pages/reviews.py review_analyzer/review_store.py review_analyzer/pages/actions.py review_analyzer/pages/results.py review_analyzer/app.py supabase_schema.sql PROGRESS_V2.md
-git commit -m "feat: add review tracking workflow"
-```
-
----
-
-### 4.6 多产品 / 多变体 / 多版本对比
-
-**Files:**
-- Create: `review_analyzer/pages/compare.py`
-- Create: `review_analyzer/compare_store.py`
-- Modify: `review_analyzer/app.py`
-- Modify: `review_analyzer/workflow_prompts.py`
-- Modify: `supabase_schema.sql`
-
-- [x] **Step 1: 新增对比入口**
-
-支持选择：
-
-- 同产品时间对比。
-- 同产品版本对比。
-- 同父体变体对比。
-- 多产品横向对比。
-- 自定义对比。
-
-- [x] **Step 2: 新增对比数据聚合模块**
-
-函数：
-
-```python
-def get_comparison_dataset(user_id: int, filters: dict) -> dict: ...
-```
-
-返回评论数、好评率、差评率、TOP 问题、TOP 亮点、代表评论。
-
-- [x] **Step 3: 多产品对比 UI**
-
-展示：
-
-- 对比表。
-- 问题差异。
-- 亮点差异。
-- 风险产品。
-- 推荐动作。
-
-- [x] **Step 4: AI 输出可落地建议**
-
-当前对比页已支持规则建议 + AI 总结双层输出：
-- 规则建议负责稳定保底。
-- AI 总结负责补充经营判断、风险提醒和推荐动作。
-
-输出示例：
-
-> 带灯床架适合作为高客单价主推款，基础床架适合做价格款，抽屉床架当前质量问题偏高，建议暂缓加大投放。
-
-- [x] **Step 5: 验收**
-
-Expected:
-
-- 能选择 2 个以上产品对比。
-- 能选择同父体下多个变体对比。
-- 结果包含表格和行动建议。
-
-- [x] **Step 6: 回滚边界**
-
-如果对比页面输出不稳定，只 revert 本任务 commit；原有版本对比和产品管理不回滚。
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add review_analyzer/pages/compare.py review_analyzer/compare_store.py review_analyzer/app.py review_analyzer/workflow_prompts.py supabase_schema.sql PROGRESS_V2.md
-git commit -m "feat: add product comparison workflows"
-```
-
-- [x] **Step 8: 3.1 重做对比工作台（2026-06-23）**
-
-把 `/analysis/compare` 从「AI Report 生成器」改回「对比工作台」：
-- 后端新增 `POST /compare/dataset`（产品 + 版本 + 评论日期窗口） 和 `POST /compare/export`（XLSX 流），`compare_store.build_compare_specs_from_filters` / `dataset_to_xlsx_payload` 承接。
-- 前端新增 `compare-filter-bar`（时间环比 / 版本对比 / 多产品 / 自定义四模式 + 评论日期预设）、`compare-dashboard`（KPI ↑↓ 变化、问题/亮点 TOP 变化表、风险/机会、推荐动作）、`compare-workspace` 串联，AI 总结降级为辅助面板。下载 XLSX 是页面顶部主操作之一。
-- 旧 `compare-page-tabs.tsx` / `compare-report-panel.tsx` 删除。验证：`ruff` 全过，`tsc` 全过。
-
----
-
-### 4.7 角色化今日工作台
-
-**Files:**
-- Modify: `review_analyzer/pages/dashboard.py`
-- Create: `review_analyzer/workspace_store.py`
-- Modify: `review_analyzer/app.py`
-
-- [x] **Step 1: 仪表盘改为今日工作台**
-
-默认显示：
-
-- 今日最该处理的 1-3 件事。
-- 高风险 SKU。
-- 待复盘事项。
-- 角色推荐动作。
-
-- [x] **Step 2: 角色选择**
-
-角色：
-
-```python
-ROLES = ["运营", "产研", "质检", "管理者"]
-```
-
-用户可在工作台切换角色视角。
-
-- [x] **Step 3: 每个角色只展示 2-3 个核心入口**
-
-- 运营：差评处理、Listing 优化、复盘。
-- 产研：竞品分析、改版验证、新功能追踪。
-- 质检：质量客诉、改进记录、复盘。
-- 管理者：SKU 风险、未闭环事项、改版效果。
-
-- [x] **Step 4: 验收**
-
-Expected:
-
-- 用户进入系统后先看到今日工作台。
-- 不同角色看到不同任务入口。
-- 主按钮指向行动中心、产品管理或复盘追踪。
-
-- [x] **Step 5: 回滚边界**
-
-当前首页工作台只改 `dashboard.py + workspace_store.py + app.py`：
-- 若不满意，可只回滚这三个文件对应改动。
-- 产品管理、行动中心、复盘追踪、对比分析页面仍保持独立可用。
-
-如果今日工作台不符合使用习惯，只 revert 本任务 commit；已有产品管理、行动中心、复盘追踪页面仍可从导航进入。
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add review_analyzer/pages/dashboard.py review_analyzer/workspace_store.py review_analyzer/app.py PROGRESS_V2.md
-git commit -m "feat: add role-based workspace"
-```
-
----
-
-### 4.8 导航收口
-
-**Files:**
-- Modify: `review_analyzer/app.py`
-- Modify: `review_analyzer/pages/analysis_hub.py`
-- Historical: `review_analyzer/pages/features.py` 已不再作为独立页面保留
-
-- [x] **Step 1: 取消独立全部功能入口**
-
-当前侧边栏不再展示 `全部功能`，主导航直接指向今日工作台、产品管理、上传评论、评论分析、问评论、行动中心、复盘追踪、宣传文案和推送设置。
-
-- [x] **Step 2: 旧路由保持兼容**
-
-`features` 只作为历史入口保留，并由 `app.py` 兼容映射到 `评论分析 > 分析结果`，避免旧链接失效。
-
-- [x] **Step 3: 高级能力回归各自页面**
-
-历史记录、对比分析、问评论、宣传文案和推送设置等能力不再被“全部功能地图”统一收纳，而是直接放在对应业务页里。
-
-- [x] **Step 4: 验收**
-
-Expected:
-
-- 新用户按主工作流就能完成上传、分析、行动和复盘，不需要先进入功能地图。
-- 老用户通过侧边栏即可找到所有当前可用能力。
-
-- [x] **Step 5: 回滚边界**
-
-如果未来要重新设计信息架构，只需重新调整 `app.py` 的导航和旧路由兼容层，不需要再恢复独立功能地图页。
-
-- [x] **Step 6: 结论**
-
-3.1 在当前代码里已经转化为“导航收口”而不是“独立页面新增”，所以文档应按收口完成处理，不再把 `pages/features.py` 当成现存模块。
-
----
-
-### 执行自检清单
-
-- [ ] `plan_V2.md` 中每个 P0 需求都有对应任务。
-- [ ] 新增表都有对应 CRUD。
-- [ ] 新增页面都已加入 `app.py` 导航和页面分发。
-- [ ] 上传、分析结果、行动中心、复盘追踪之间能串成闭环。
-- [ ] 旧数据只有 `product_id` 时仍能显示，不强制用户立即迁移。
-- [ ] Free / Pro 计费墙逻辑不被新产品管理破坏。
-- [ ] 所有 Python 文件通过 `python3 -m py_compile`。
-- [ ] 完整流程验收：新建产品组 → 添加变体 → 上传评论 → 分析 → 创建行动 → 加入复盘 → 上传复盘评论 → 完结。
-
----
-
-## 下阶段商业化能力补齐清单
-
-> 背景：对比 VOC AI / Shulex、Jungle Scout 等成熟商业化产品后，ClueAI 当前更适合先走“轻量 AI SaaS + SKU 口碑改版闭环”路线。不要一开始追求海量数据平台，而是先把“评论变行动，行动能复盘”做顺，再逐步补齐自动化、数据资产和企业级能力。
-
-### 当前技术栈基线
-
-| 层级 | 当前技术 | 当前成熟度 |
-|------|----------|------------|
-| 前端 / Web | Streamlit + HTML 原型 | MVP 可用，商业化 UI 仍需打磨 |
-| 后端语言 | Python 3.10+ | 可支撑早期功能 |
-| 数据库 | Supabase PostgreSQL | 可支撑早期 SaaS 和多用户 |
-| 向量检索 | Supabase pgvector | 已具备 RAG 雏形 |
-| AI 分析 | DeepSeek API | 已具备评论分析和建议生成能力 |
-| RAG 问答 | embedding + pgvector + DeepSeek | 已具备当前产品评论问答 |
-| 文件解析 | CSV / Excel / Word / TXT | 已覆盖手动上传场景 |
-| 认证 | 自建登录注册 + bcrypt | 可用，后续需组织和权限 |
-| 计费 | Paddle Checkout + Webhook | 已具备早期付费墙 |
-| 通知 | 飞书 Webhook | 已具备基础团队通知 |
-
-### 与成熟商业化产品的差距
-
-| 维度 | ClueAI 当前 | 成熟商业化产品 | 下阶段策略 |
-|------|-------------|----------------|------------|
-| 数据来源 | 手动上传评论为主 | 自动抓取 / API / 大规模历史评论库 | 先做定时上传和半自动采集，再考虑平台 API |
-| 数据规模 | 用户自己的 SKU 数据 | 海量评论、关键词、ASIN、类目、竞品库 | 先沉淀用户自己的产品口碑资产 |
-| 自动化 | 上传后分析 | 定时监控、评分下降提醒、竞品变化提醒 | 先做定时分析和风险提醒 |
-| 业务覆盖 | 评论分析、RAG、初步计费 | 选品、Listing、广告、竞品、客服、品牌保护 | 先聚焦 SKU 改版闭环 |
-| 团队协作 | 行动中心规划中 | 权限、任务、团队、企业报表 | 先做角色、事项、状态、复盘 |
-| UI 成熟度 | 原型 + Streamlit 页面 | 完整 SaaS 交互、引导、空状态、模板 | 统一为柔和清爽女性运营风格 |
-| 数据可信度 | Prompt + 标签逻辑 | 长期数据资产、口径稳定、模型评估 | 增加标签准确率、Prompt 版本、复盘指标校验 |
-| 商业化 | Paddle 初步接入 | 套餐、试用、用量限制、企业销售 | 先完善 Free / Pro / 团队版边界 |
-
-### P0：当前阶段必须补齐
-
-这些能力直接服务 ClueAI 的核心差异化，优先级最高。
-
-| 编号 | 能力 | 目标 | 对应模块 |
-|------|------|------|----------|
-| P0-1 | 产品组 + 变体 SKU | 支持真实电商父体/子体结构 | 2.5 产品管理 |
-| P0-2 | 工作目的上传 | 让用户按场景上传评论，不从功能开始 | 2.6 上传流程 |
-| P0-3 | 行动中心 | TOP 问题能转成运营、产研、质检事项 | 2.7 行动中心 |
-| P0-4 | 复盘追踪 | 改进动作能持续追踪并判断是否有效 | 2.8 复盘追踪 |
-| P0-5 | 多产品/多变体对比 | 支持主推款、问题款、机会款判断 | 2.9 多产品对比 |
-| P0-6 | UI 风格统一 | 全站使用 `clueai_v2_ui_prototype.html` 的柔和清爽风格 | 3.0 UI 重构 |
-
-### P1：商业化体验增强
-
-这些能力提升留存和付费转化，但不应抢在闭环能力前面。
-
-| 编号 | 能力 | 目标 | 建议落地方式 |
-|------|------|------|--------------|
-| P1-1 | 定时分析 | 用户不用每次手动进入系统检查 | 后台定时任务 + 飞书提醒 |
-| P1-2 | 风险提醒 | 负面率、TOP 问题、评分异常自动提醒 | 复用 notifier.py，增加规则类型 |
-| P1-3 | 多产品 RAG | 支持“5 款床架一起问” | 从当前单产品 RAG 扩展过滤范围 |
-| P1-4 | 组织和角色 | 支持运营、产研、质检、管理者角色 | users 增加 organization / role |
-| P1-5 | 操作记录 | 记录谁创建/处理/完结了事项 | action_items 增加 audit 字段 |
-| P1-6 | 导出报告 | 输出复盘报告、多产品对比报告 | exporter.py 增加报告类型 |
-| P1-7 | Next.js 营销站（独立部署） | 拿到 SEO 流量、建立商业 SaaS 信任感、降低 CAC | 新建 `clueai.com` 主站，包含首页/定价/功能/案例/博客；app.clueai.com 仍由 Streamlit 提供；详见下文「前端架构与商业化落地路径」 |
-
-### P2：长期商业化护城河
-
-这些能力接近成熟商业平台，不建议在核心闭环未跑顺前投入太多。
-
-| 编号 | 能力 | 目标 | 风险 |
-|------|------|------|------|
-| P2-1 | 自动抓取评论 | 降低用户上传成本 | 平台规则、稳定性、合规成本 |
-| P2-2 | 大规模竞品库 | 建立数据资产 | 采集、清洗、存储和成本压力大 |
-| P2-3 | 关键词 / Listing / 广告联动 | 从评论分析延伸到增长优化 | 容易变成大而全工具 |
-| P2-4 | 客服话术 / 售后联动 | 将评论洞察接到客服体系 | 需要多平台工单和客服系统集成 |
-| P2-5 | 企业级权限 | 支持大团队、部门、权限矩阵 | 需要更完整账号体系 |
-| P2-6 | 产品层 Streamlit → Next.js 全迁移 | 提升 UI、性能和工程化，支持移动端 PWA / 嵌入式 widget / 团队版 | 仅在 MRR > $3k 后再考虑；营销层不在此范围（已拆到 P1-7） |
-
-### 下阶段推荐执行顺序
-
-| 顺序 | 阶段 | 做什么 | 为什么 |
-|------|------|--------|--------|
-| 1 | 2.5 | 产品组 + 变体 SKU | 没有产品档案，后续闭环无法稳定 |
-| 2 | 2.6 | 工作目的上传 | 降低用户理解成本，避免功能堆叠 |
-| 3 | 2.7 | 行动中心 | 让分析结果变成团队动作 |
-| 4 | 2.8 | 复盘追踪 | 形成 ClueAI 最核心差异化 |
-| 5 | 2.9 | 多产品 / 多变体对比 | 支持运营策略和主推款判断 |
-| 6 | 3.0 | 角色化工作台 + UI 统一 | 让不同伙伴进来就知道做什么 |
-| 7 | 3.1 | 全部功能地图收口（已完成） | 独立入口已取消，高级能力回归各自业务页 |
-| 7.5 | 3.1.5 | **Next.js 营销站独立部署（拿到 3-5 个付费用户后立即启动）** | 跨境卖家 60-70% 来自 SEO，Streamlit 没有 SEO；营销页是付费转化的信任构建器 |
-| 8 | 3.2 | 定时分析 + 风险提醒 | 提升留存和团队协作价值 |
-| 9 | 3.3 | 组织角色 + 操作记录 | 为团队版/企业版做准备 |
-| 10 | 4.0 | 自动采集 / 平台 API | 向成熟商业数据平台过渡 |
-| 11 | 5.0 | 产品层 Streamlit → Next.js 全迁移（MRR > $3k 后再考虑） | UI 升级带动客单价、支持移动端 / 嵌入式 widget / 团队版 |
-
-### 商业化判断
-
-ClueAI 当前不应正面硬刚成熟平台的数据规模，而应先打一个更尖锐的切入点：
-
-**中国跨境卖家的 SKU 口碑改版闭环工具。**
-
-短期判断标准：
-
-- [ ] 用户是否能在 3 步内从评论生成行动事项。
-- [ ] 运营、产研、质检是否能在各自页面看到自己的待处理事项。
-- [ ] 一个问题是否能从“发现”走到“复盘完结”。
-- [ ] 多次进入系统时，用户是否能看到自己沉淀的产品口碑资产。
-- [ ] 用户是否愿意为多产品管理、复盘追踪、Ask your reviews 付费。
-
----
-
-## 前端架构与商业化落地路径（2026-06-04 新增）
-
-> 背景：Erika 提出"是否需要从 Streamlit 切到 Next.js"。从**商业化盈利**的角度（不是面试角度）重新审视，结论不是"全切或全留"的二选一，而是**双层架构**。
-
-### 商业化角度，Streamlit 的 3 个真实痛点
-
-| 痛点 | 商业损失 | 严重程度 |
-|------|----------|----------|
-| 没有 SEO | 跨境卖家在 Google/百度搜"亚马逊评论分析工具"找不到 ClueAI → 获客只能靠付费投放，CAC 居高不下 | 🔴 致命 |
-| 登录前页面"工具感"重 | 试用→付费转化率低，$19-49/月的产品需要"商业 SaaS 质感"建立信任 | 🟡 严重 |
-| 移动端体验差 | 跨境卖家有大量在手机上看数据的场景（出差、晚上、临时查 SKU），Streamlit 移动端基本不可用 | 🟡 严重 |
-
-### 推荐方案：双层架构（不是全切）
-
-```
-┌─────────────────────────────────────────┐
-│  营销层 (Next.js / Framer / Webflow)     │
-│  - clueai.com 主站 (SEO + 转化)          │
-│  - /pricing /features /blog /case-studies│
-│  - 注册 / 登录 / Paddle 结账落地页        │
-└──────────────┬──────────────────────────┘
-               │ 用户付费后跳转
-               ▼
-┌─────────────────────────────────────────┐
-│  产品层 (保留 Streamlit)                  │
-│  - app.clueai.com 已登录后的工作台         │
-│  - 产品管理 / 上传 / 分析 / RAG / 行动中心 │
-│  - 内部工具，UI 精致度要求低              │
-└─────────────────────────────────────────┘
-```
-
-**为什么这样分：**
-
-1. B2B SaaS 60-70% 的付费用户来自 SEO 和内容营销（"亚马逊差评分析"、"SKU 改版工具"、"跨境卖家 VOC"这类长尾词）—— Streamlit 一个都吃不到
-2. 营销页是"信任构建器"，跨境卖家月付 $19-49 之前会反复看首页、定价、案例 —— 这一层必须像商业 SaaS
-3. 产品层的用户已经付过钱了 —— 看重的是"分析准不准、行动闭环顺不顺"，不是 UI 多炫
-
-### 按 MRR 里程碑触发的迁移路径（不按时间推进）
-
-| 里程碑 | 该做什么 | 成本 | 预期收益 |
-|--------|----------|------|----------|
-| 0 付费用户 → 第 1 个付费用户 | 拿现有 Streamlit 找种子用户（社群、知乎、亚马逊卖家圈），手动 onboarding | 0 | 验证付费意愿 |
-| MRR $0 → $500 | 新建 Next.js / Framer 营销站（5-7 个页面）。app 保持 Streamlit | 1-2 周或外包 ~$500 | 拿到第一批 SEO/口碑流量 |
-| MRR $500 → $3k | 营销站补案例 + 博客内容 + 试用引导优化。app 仍保持 Streamlit | 持续 | 内容飞轮启动 |
-| MRR $3k → $10k | 这时才考虑把 app 也迁到 Next.js（有钱投入 + UI 要求 + 团队版/嵌入式需求） | 3-4 周 | UI 升级带动客单价 |
-| MRR > $10k | 全栈现代化，加移动端 PWA、嵌入式 widget、企业版 | - | 进入规模化 |
-
-### 3.1.5 营销站最小可行范围（P1-7 的具体落地）
-
-**前置条件：拿到 3-5 个付费用户后立即启动。**
-
-页面清单（5-7 个）：
-
-| 页面 | 目的 | 内容要点 |
-|------|------|----------|
-| `/` 首页 | 吸引 + 价值主张 | "跨境卖家的 SKU 口碑改版闭环工具"，3 个核心价值点 + demo 截图 + CTA |
-| `/pricing` 定价页 | 转化 | Free / Pro / Team 三档，对照表 + FAQ + Paddle Checkout 按钮 |
-| `/features` 功能页 | 教育 | 多产品仪表盘、版本对比、Ask your reviews、行动中心、复盘追踪 |
-| `/case-studies` 案例页 | 信任 | 2-3 个种子用户案例（床架 SKU 改版、新品监控等） |
-| `/blog` 博客 | SEO 飞轮 | "亚马逊差评分析"、"SKU 改版方法论"、"跨境卖家 VOC 实操"长尾词 |
-| `/login` `/signup` | 入口 | 跳转到 app.clueai.com 的 Streamlit 登录页 |
-
-技术栈选项：
-
-| 选项 | 成本 | 适用 |
-|------|------|------|
-| Framer | $15-25/月 | Erika 自己拖拽搭建，最快 1 周上线，适合 MVP 验证 |
-| Webflow | $14-39/月 | 同 Framer，但博客 CMS 更强 |
-| Next.js + Tailwind + shadcn/ui | 0（代码自管） | AI 实现 1-2 周，可控性最高，未来可演进到产品层 |
-
-**推荐路径：先用 Framer 起步（1 周上线），MRR $500 后再考虑迁 Next.js。** 不要在拿到付费验证前花精力做 Next.js 营销站。
-
-### 一个反直觉的事实
-
-很多 AI SaaS 创始人犯的错是"先把产品做精致再开始卖" —— 结果是 6 个月后产品很美但没人用。
-
-ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去**：
-
-- 写 3-5 篇内容（"我用 ClueAI 复盘了一个亚马逊床架的 SKU 改版"）
-- 在亚马逊卖家群、Knowhere、雨果跨境社群发
-- 拉 5 个种子用户免费用，换案例和反馈
-- 如果 5 个种子用户里 1 个愿意付费 → 立刻做营销站（PMF 信号有了）
-- 如果 5 个都不愿付费 → 不是 UI 问题，是产品问题，切 Next.js 也救不了
-
-### 验收标准
-
-| 阶段 | 验收信号 | 进入下一阶段的触发条件 |
-|------|----------|------------------------|
-| 当前（3.1.5 启动前） | 5 个种子用户在用 Streamlit 版 | 至少 1 个种子用户愿意付费 → 启动 P1-7 营销站 |
-| P1-7 营销站上线 | clueai.com 首页 + 定价 + 5 个功能页上线，Paddle Checkout 跑通 | 自然搜索月访问 > 500 / MRR > $500 → 加博客内容 |
-| 营销站成熟 | 月新增付费 > 5 / MRR > $3k | 触发 5.0 产品层迁移 Next.js |
+## 3-4. ASIN 多变体抓取 + 本地收口（Streamlit 时期 · 已迁移）
+
+> 以上 §3（ASIN 多变体抓取）和 §4（本地收口 V2.5-V3.1）及「下阶段商业化能力补齐清单」「前端架构与商业化落地路径」均为 Streamlit 时期的实现与规划。
+> 已于 2026-06-05 ~ 2026-06-23 通过 [§5 Next.js 迁移](#5-nextjs-迁移)（5.1-5.8）完全重写并部署上线。
+> 详细任务步骤、文件引用、验收记录和商业化讨论见 **[历史归档_已废弃模块.md](notes/历史归档_已废弃模块.md)** A 类。
+>
+> 当前 prod 系统已不再运行任何 Streamlit 代码。
 
 ---
 
@@ -1060,6 +222,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 | `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
 | `5.7` 文案/设置/计费迁移 | 已完成 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
 | `5.8` 部署与 Streamlit 下线路径 | 已完成（ECS 生产环境运行中） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
+| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | 已完成（灰度中） | 标签口径冻结、occurrence 抽取、聚合算法、前端下载、性能优化、灰度验证 | 仅回滚标签/分析结果相关链路 |
 
 ### 执行顺序
 
@@ -1073,6 +236,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 | 6 | `5.6` | 闭环能力在分析阅读层稳定后再接入 |
 | 7 | `5.7` | 文案、设置、计费优先级低于核心工作流 |
 | 8 | `5.8` | 所有主路径稳定后再做部署固化与 Streamlit 下线 |
+| 9 | `5.9` | 分析结果页标签口径在 5.5 上线后暴露了数据准确性问题，独立重构验证 |
 
 ### 当前迁移验收总标准
 
@@ -1233,7 +397,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 > - ✅ 域名 `clueai-reviewlens.com` 已购买，DNS 在阿里云管理
 > - ⚠️ ECS 上 Docker 未安装 → Phase 1 需要先装
 
-**Phase A: 部署配置准备（已完成）**
+#### 5.8.1 部署配置准备（已完成）
 
 - [x] 建立 `frontend / backend_api / workers` Dockerfile
 - [x] 建立 `deploy/nginx.conf`
@@ -1243,7 +407,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 - [x] 明确 Streamlit 下线前置条件
 - [x] 若失败，只回滚部署配置，不回滚产品代码
 
-**Phase B: ECS 上线执行（2026-06-12 执行中）**
+#### 5.8.2 ECS 上线执行
 
 - [x] **Step 1: ECS 环境准备** ✅ 2026-06-12
   - Docker 29.5.3 + Docker Compose v5.1.4 安装完成
@@ -1286,26 +450,8 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 - [ ] **Step 8: 标记上线完成**
   - 本节状态更新为"已完成"
   - PROGRESS_V2.md 变更日志追加上线记录
-  docker compose -f deploy/docker-compose.yml exec nginx nginx -s reload
-  ```
 
-- [ ] **Step 6: 冒烟测试（~15 min）**
-  - `https://clueai-reviewlens.com/` 首页可打开
-  - `https://app.clueai-reviewlens.com/login` 登录页正常
-  - `https://api.clueai-reviewlens.com/health` 返回 200
-  - 注册新用户 → 登录成功
-  - 上传评论文件 → 分析任务完成 → 结果展示
-
-- [ ] **Step 7: 种子期配置（~15 min）**
-  - 放宽 Free 配额限制（让种子用户完整体验核心功能）
-  - 或直接在数据库把种子用户 plan 设为 `pro_early`
-  - 确认付费墙不阻止试用核心流程
-
-- [ ] **Step 8: 标记上线完成**
-  - 本节状态更新为”已完成”
-  - PROGRESS_V2.md 变更日志追加上线记录
-
-5.8 验收记录（Phase A）：
+5.8 验收记录（5.8.1）：
 
 - `python3 -m py_compile backend_api/app/main.py backend_api/app/routes/settings.py backend_api/app/routes/copywriter.py backend_api/app/routes/uploads.py workers/runner.py workers/queue.py workers/jobs.py`：PASS
 - `cd frontend && npx tsc --noEmit`：PASS
@@ -1315,15 +461,16 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 - `robots.txt / sitemap.xml / opengraph-image`：营销站 SEO 基础已补齐，营销页可索引、应用页 noindex
 - Streamlit 保留为回退口，部署层与业务层边界已明确
 
-**Phase C: UI 美化优化（与 Phase B 并行）**
+**Phase C: UI 美化优化（与 5.8.2 并行）**
 
 > 目标：种子用户拿到手时，看到的是一个视觉成熟、文案专业的产品，而非开发者原型。
 > 设计 spec 文档：`docs/figma-p0-prototype-spec.md`
 > 参考风格：Linear（精致度）+ PostHog（亲和感）+ Notion（简洁文案）
+> **编号说明**：Step C1–C10 保留原 C 前缀作为任务标识，以保持与 git commit 和讨论记录的可追溯性。结构上 C1–C4 归属 5.8.3、C5–C7 归属 5.8.4、C8–C10 归属 5.8.5。原 C9.8 已提取为独立模块 [5.9](#59-customer-issue--customer-label-口径重构与灰度验证)。
 
-**P0：上线前必做（现在执行）**
+#### 5.8.3 上线前必做（原 P0）
 
-> 触发条件：立即开始。Phase B 部署和 Phase C 美化可以并行推进。
+> 触发条件：立即开始。5.8.2 部署和 Phase C 美化可以并行推进。
 > 预计耗时：3-4 小时
 
 - [x] **Step C1: 字体正式引入（~20 min）**
@@ -1367,9 +514,9 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
   - Mobile 375px 模式无溢出，sidebar overlay 正常
   - 截图留档，标记 P0 完成
 
-**P1：上线后优先（下一阶段）**
+#### 5.8.4 上线后优先（原 P1）
 
-> 触发条件：Phase B 部署完成 + P0 验收通过 + 种子用户开始使用后的第一周内
+> 触发条件：5.8.2 部署完成 + P0 验收通过 + 种子用户开始使用后的第一周内
 > 预计耗时：4-6 小时
 
 - [ ] **Step C5: Landing Page 升级**
@@ -1393,7 +540,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
   - 可选：增加 FAQ 折叠区
   - 验证：3 张卡片视觉有明确主次区分
 
-**P2：种子用户反馈后迭代**
+#### 5.8.5 种子用户反馈后迭代（原 P2）
 
 > 触发条件：收集到 ≥ 5 个种子用户的使用反馈 + 明确知道哪些页面体验有问题
 > 按反馈优先级选做，不全部强制执行
@@ -1438,140 +585,129 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
   - [x] 模块右上角下载（用户体验/消费动机/未满足的需求/用户画像）改为 TOP10 格式（排名/标签/出现次数/提及占比/代表性评论前20条摘要）；user_experience 和 consumer_profile 输出正负两个 sheet
   - [x] 所有下载 Excel 表头支持 i18n：前端通过 `getLocale()` 传 locale，后端 export 端点接受 `?locale=zh|en` 参数
 
-- [x] **Step C9.8: Customer Issue / Customer Label 口径重构与灰度验证**（2026-07-24 ~ 2026-07-27）
-
-  > 背景：增长分析页的产品亮点 / 高频痛点曾把内部 aspect、前台 Customer Issue / Customer Label、代表评论、下载原文和 Mention Share 分母混在一起。典型问题包括 `Comfortable To Wear` 代表评论过宽、`Water Leaks Through` 被 `no leaks / remained dry` 等表达污染、高频痛点第一条 Mention Share 出现 100% 且用户不可解释。
-
-  当前结论：
-  - [x] Phase 1-6.5 已完成代码、导出、前端展示、验证集和真实 Foxelli raw replay。
-  - [x] Phase 7 P0 read-path 性能修复已完成并推送 `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
-  - [x] Phase 7 第二批 / P1 authenticated route smoke 已完成：session 3/4/5 的 results、aggregate results、模块导出、完整导出均为 200。
-  - [x] Phase 7 生产部署已确认：GitHub Actions `Deploy to Production` run `30230691101` 已将 `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` 部署成功；生产只读 `/analysis/sessions/{id}/results` smoke 覆盖 114/96/111/110，均 200、无 `embedding`、无 SSL/connection error。
-  - [x] Phase 7 P1 worker 写路径优化已完成编码与本地回归：analysis / cluster / embedding 写入改为批量事务，worker analysis 按 50 条 flush 并保留逐条 fallback。
-  - [x] 可以扩大 Phase 7 第二批 / P1 小流量灰度。
-  - [ ] 不建议直接生产全量发布；生产扩大前仍需 Erika 明确授权会扣 credit 的 live `/analysis/results` 与 export smoke，或提供零扣费 staging。
-
-  核心口径已冻结：
-  - `Customer Issue`：前台展示给用户看的具体问题标签，例如 `Water Leaks Through`、`Missing Parts`。
-  - `Customer Label`：前台展示给用户看的具体亮点标签，例如 `Comfortable To Wear`、`Feels Well Made`。
-  - `Aspect / Internal Aspect`：内部维度，只做归类、治理、下载审计和责任分发，不作为前台 Top 主标签。
-  - `Mention Share = mention_count / 同类 label mention_count 总数`。
-  - `Impact Review Share = review_count / 当前筛选范围总评论数`。
-  - 同一评论同一 canonical label 默认只计 1 次用于 Top 排名和 `review_count`。
-  - 代表评论只能来自 verified evidence span；`cluster_propagated=true` 和 evidence 不在原文中的 occurrence 不能进入 Representative Evidence。
-
-  Phase 状态总表：
-
-  | Phase | 状态 | 产物 / 结论 |
-  |------|------|-------------|
-  | Phase 0 口径冻结 | ✅ 完成 | 冻结 `Customer Issue / Customer Label / Mention Share / Impact Review Share / Aspect` 定义；旧 session 保守兼容 |
-  | Phase 1 当前问题止血 | ✅ 完成 | 防止 `no leaks / without leaks / didn't leak / remained dry / kept dry` 误触发 `Water Leaks Through`；missing evidence 与 cluster propagated 不进入代表证据 |
-  | Phase 2 标签数据层 | ✅ 完成 | 新增 `customer_label_catalog`、`customer_label_alias_rules`、`customer_label_candidates`；`customer_label_catalog.py` 支持 catalog / alias / candidate 保守解析；broad/internal label 可禁用 |
-  | Phase 3 occurrence 抽取 | ✅ 完成 | 新增并行 `customer_label_occurrences` schema；每个 occurrence 带 raw label、canonical key、display label、aspect、evidence span、confidence、source、`evidence_verified`、`cluster_propagated`、version |
-  | Phase 4 聚合算法 | ✅ 完成 | `_build_customer_label_rows()` 统一 Issue / Highlight 聚合；按同类 mention 分母算 `mention_share`；输出 `mention_count`、`review_count`、`impact_review_share`、`raw_occurrence_count`；正评中的真实 issue 和差评中的真实 highlight 都可进入 Top |
-  | Phase 5 前端和下载 | ✅ 完成 | 页面表头改为 `Customer Issue/Customer Label + Mention Share + Impact Reviews + Representative Evidence`；下载改为 occurrence 级 evidence + related reviews；导出补齐审计字段 |
-  | Phase 6 验证与回归 | ✅ 完成 | 新增固定验证集与 `test_customer_label_phase6_validation.py`，覆盖 Foxelli、Comfortable evidence 失配、mixed review、否定漏水、真实漏水、cluster propagated、床架、睫毛膏、legacy old session、Internal Aspect 过滤 |
-  | Phase 6 真实 Foxelli raw replay | ✅ 完成 | `scratch/session114_raw_replay.xlsx` 上传 clueai-dev 生成 session 3；最终 `Water Leaks Through=5 mentions / 5 reviews`，全部来自当前产品真实漏水原文 span，无旧风险 `9/9` 过计数 |
-  | Phase 6.5 results LLM fallback | ✅ 完成 | `RESULTS_AI_ENHANCEMENT_ENABLED=false` 默认关闭；results 主 payload 先返回 heuristic，不被 DeepSeek / OpenAI enhancement 失败阻塞；AI 只能增强文本，不能覆盖 rows |
-  | Phase 7 P0 read-path | ✅ 完成 | `get_comments()` 默认瘦列读取，不返回 `embedding`；`aspects_json` compact 投影；date span fallback 改 SQL `MIN/MAX`；连接关闭重试一次；`backend_api/tests` 176 passed |
-  | Phase 7 P1 authenticated smoke | ✅ 完成 | clueai-dev/preprod route 层 session 3/4/5 authenticated smoke 通过；生产只读 results smoke 覆盖 114/96/111/110；未改 Not Breathable，未重构 Phase 1-6 核心算法 |
-  | Phase 7 P1 worker write-path | ✅ 编码完成 / 待 staging 写入验证 | `update_comment_analysis_batch()`、`update_comment_clusters_batch()`、`update_comment_embeddings_batch()` 已落地；worker analysis 每 50 条批量写，cluster / RAG embedding 批量写；保留单条 API 和异常 fallback |
-  | Phase 7 生产 credit/export 门禁 | ⏳ 待决策 | live `/analysis/results` 与 export 会扣 credit / 写 ledger；需要 Erika 授权或零扣费 staging；通过后再扩大生产流量 |
-
-  真实样本验证记录：
-
-  | session | 样本 | 结果 |
-  |---------|------|------|
-  | 3 | Foxelli Waders raw replay，92 reviews | `Water Leaks Through` count=5 / pct=62.5；`Comfortable To Wear` count=64 / pct=48.1；代表证据均为原文 span |
-  | 4 | 432 reviews | `Breaks Easily` count=13 / pct=44.8；`Feels Well Made` count=290 / pct=92.7 |
-  | 5 | 545 reviews | 无明确 Top Issue（`No clear friction`）；`Comfortable To Wear` count=463 / pct=89.6 |
-
-  生产只读 results smoke（已部署 `1d537fd` 后）：
-
-  | session | route | status / time | comments | Top Issue | Top Label | embedding | SSL/connection error |
-  |---------|-------|---------------|----------|-----------|-----------|-----------|----------------------|
-  | 114 | `/analysis/sessions/114/results` | 200 / 0.741s | 92 | `Not Breathable` | `Comfortable to Wear` | false | false |
-  | 96 | `/analysis/sessions/96/results` | 200 / 0.726s | 661 | `Value for Money` count=6 | `Value for Money` count=135 | false | false |
-  | 111 | `/analysis/sessions/111/results` | 200 / 0.394s | 100 | `Water Leaks Through` count=13 | `Keeps Water Out` count=17 | false | false |
-  | 110 | `/analysis/sessions/110/results` | 200 / 0.426s | 100 | `Water Leaks Through` count=13 | `Holds Up Well` count=46 | false | false |
-
-  Phase 7 P0 / P1 验证记录：
-
-  | 验证项 | 结果 |
-  |--------|------|
-  | P0 commit | `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7` |
-  | P0 自动化 | `python3 -m pytest backend_api/tests`：176 passed；目标 ruff passed；`git diff --check` passed |
-  | P0 只读 DB smoke | session 3/4/5 compact read 成功，默认不带 `embedding`，未复现 SSL EOF；session 5 从历史 120s+/EOF 降到 31.3s |
-  | P1 authenticated route smoke | session results、aggregate results、模块导出、完整导出均 200 |
-  | embedding 边界 | 默认 results payload 不返回 `embedding`；QA/RAG 显式 `include_embedding=True` 可读 session 3 的 92/92 embeddings |
-  | date span fallback | SQL `MIN/MAX` fallback 为 0.3s 级 |
-  | LLM enhancement | 默认关闭，results 首开不依赖 provider |
-  | credit / analytics | P1 smoke 进程内 patch `credit_consume` 与 `track_event` 为 no-op，未调用真实 QA/Ask、上传或重分析等扣费动作 |
-  | production deploy | GitHub Actions `Deploy to Production` run `30230691101` completed/success for `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` |
-  | production read-only smoke | `/analysis/sessions/{id}/results` 生产只读 smoke：114/96/111/110 均 200；最大 session 96（661 comments）0.726s；默认 payload 均无 `embedding`；无 SSL/connection error |
-  | P1 write-path automation | `python3 -m pytest backend_api/tests workers/tests`：200 passed；target ruff passed；fake DB 单测验证 analysis / cluster / embedding batch 写入均为 1 次 values update + 1 次 commit，cache 字段缺失可 fallback |
-
-  相关文档 / 测试资产：
-  - `docs/Customer_Issue_Label_Phase6验证报告.md`
-  - `backend_api/tests/fixtures/customer_label_phase6_validation.json`
-  - `backend_api/tests/test_customer_label_phase6_validation.py`
-  - `backend_api/tests/test_export_customer_label_phase5.py`
-  - `backend_api/tests/test_analysis_results_llm_fallback.py`
-  - `backend_api/tests/test_database_read_path.py`
-  - `migrations/058_customer_label_catalog_alias_candidates.sql`
-
-  残留风险与下一步：
-  - [ ] 生产全量发布前补 live `/analysis/results` 与 export smoke；若担心扣 credit，优先准备零扣费 staging。
-  - [ ] P1 worker 写路径优化已完成编码，尚未做 staging 上传/重分析写入验证：目标是降低 per-comment `update_comment_analysis()` / cluster update / embedding update 对共享 DB 环境和连接池的峰值压力；后续验证会写 DB 且可能触发 LLM/credit。
-  - [ ] P2 date/index 技术债尚未开始编码：`date` 仍是 text，session 3 存在 Amazon 文本日期；缺少 `(user_id, session_id, id DESC)` 复合索引不是本次主因，但更大表会放大。
-  - [ ] `Comfortable_to_Wear_reviews_57.xlsx` 风险已用 fixture 复刻；若要作为正式金样本，需要重新导入或重放真实 xlsx，并确认 missing evidence 不进入 Representative Evidence。
-  - [ ] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；如重新开启，先确认 provider/model 可用并监控 timeout / empty-cache 日志。
-  - [ ] 增加 label stats / 告警：单一标签突然 100%、verified evidence 比例过低、broad/internal label 进入 Top、cluster propagated 占比异常升高、long-tail 标签过多。
-  - [ ] 新增类目时按“系统自动候选 + Erika 审核高频 canonical label”的方式走，不人工维护每条评论：先跑 3-5 个该类目产品样本，再审核 Top 候选标签的保留、合并、改名、禁用。
-
-  下一阶段任务拆解：
-
-  | 优先级 | 任务 | 当前阶段 | 建议步骤 | Erika 参与点 |
-  |--------|------|----------|----------|--------------|
-  | P0 gate | live `/analysis/results` + export 生产门禁 | 待授权 / 待零扣费 staging | 1. 确认是否允许扣 credit；2. 对 prod/staging 代表 session 跑 aggregate results、模块导出、完整导出；3. 记录响应时间、Top Issue/Label、导出 sheet、SSL/connection error；4. 通过后再扩大生产流量 | 现在即可参与：授权扣费 smoke 或提供零扣费 staging |
-  | P1 | worker 写路径优化 | 编码完成 / 待 staging 写入验证 | 1. 已审计 `update_comment_analysis()`、cluster update、embedding update 调用频率；2. 已实现 batch update 与小批量事务边界；3. 已补 fake DB/query count 单测；4. 待 staging 跑小样本上传/重分析；5. 再跑较大样本观察 worker 日志、DB 连接、任务耗时 | 现在可参与：授权上传/重分析样本验证，因为会写 DB 且可能触发 LLM/credit |
-  | P2 | date text 规范化 + 索引 | 方案设计待开始 | 1. 盘点真实 date 格式，含 Amazon 文本日期；2. 设计 normalized date/backfill 或安全解析层；3. 评估并准备 `(user_id, session_id, id DESC)` 及 product/date 查询索引；4. staging migration；5. 验证 history/results/aggregate range 行为 | migration 前参与：确认 DDL 窗口、备份/回滚方案和抽样验收 |
-
-  新对话继续提示词：
-
-  ```text
-  请接着当前 ClueAI `develop` 分支推进 Phase 7 后续任务。先阅读 `PROGRESS_V2.md` 的 `Step C9.8: Customer Issue / Customer Label 口径重构与灰度验证`。
-
-  当前状态：
-  - P0 read-path 修复已 commit/push/deploy：`1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
-  - GitHub Actions `Deploy to Production` run `30230691101` 已 completed/success。
-  - 生产只读 `/analysis/sessions/{id}/results` smoke 已通过：114/96/111/110 均 200，最大 session 96（661 comments）0.726s，默认 payload 无 `embedding`，无 SSL/connection error。
-  - clueai-dev/preprod authenticated route smoke 已通过 session 3/4/5：session results、aggregate results、模块导出、完整导出均 200；credit/analytics 在验证进程内 no-op，未写 ledger。
-  - live `/analysis/results` 与 export 仍未在生产真实调用，因为会扣 credit / 写 ledger；需要 Erika 授权或零扣费 staging。
-
-  约束：
-  - 不再改 Not Breathable 标签逻辑。
-  - 不重构 Phase 1-6 Customer Issue / Customer Label 核心算法。
-  - 不调用会扣 credit、写 quota/credit ledger 或写 analytics 的业务动作；如必须调用，先说明风险并等待 Erika 确认。
-
-  下一步优先级：
-  1. 若 Erika 授权或提供零扣费 staging，先补 live `/analysis/results?...session_id={id}`、模块导出、完整导出 smoke，并记录响应时间、Top Issue/Label、导出 sheet、SSL/connection error。
-  2. 可以开始 P1 worker 写路径优化编码准备：审计 `update_comment_analysis()`、cluster update、embedding update 调用频率，设计 batch update/upsert 与事务边界，补 fake DB/query count 单测。
-  3. P2 date text 规范化与索引先做方案，不急于生产 DDL；migration 前需要 Erika 确认窗口、备份和回滚方案。
-  ```
-
-  后续 Erika 参与点：
-
-  | 什么时候 | 需要做什么 | 预计人力 |
-  |----------|------------|----------|
-  | Phase 7 生产扩大前 | 授权 live credit/export smoke，或提供零扣费 staging | 5-10 分钟决策 |
-  | P1 小流量灰度 3-7 天内 | 看 3-5 个真实 session 的 Top Issue / Top Label、代表证据、下载是否符合预期 | 每天 15-30 分钟 |
-  | 新品类首次接入 | 审核该类目高频候选标签：保留 / 合并 / 改名 / 禁用 | 每个类目 30-60 分钟 |
-  | 稳定运行后 | 看异常告警和候选池，只处理高频、前台可见、低置信度或跨品类边界 case | 每周 10-20 分钟 |
+> **注意**：原 Step C9.8（Customer Issue / Customer Label 口径重构与灰度验证，2026-07-24 ~ 2026-07-27）因体量独立（完整 Phase 0-7 执行阶段、独立验证记录与风险清单），且属于数据层/标签架构重构而非 UI 美化，已提取为独立模块 [5.9](#59-customer-issue--customer-label-口径重构与灰度验证)。
 
 - [ ] **Step C10: 暗色模式（可选）**
   - 仅在种子用户反馈中有明确需求时执行
   - 需要为所有 color token 增加 dark 变体
+
+
+### 5.9 Customer Issue / Customer Label 口径重构与灰度验证
+
+> 原 5.8 Step C9.8，2026-07-24 ~ 2026-07-27。因体量独立（完整 Phase 0-7 执行阶段、独立验证记录与风险清单），且属于数据层/标签架构重构而非 UI 美化，单独成模块。
+
+> 背景：增长分析页的产品亮点 / 高频痛点曾把内部 aspect、前台 Customer Issue / Customer Label、代表评论、下载原文和 Mention Share 分母混在一起。典型问题包括 `Comfortable To Wear` 代表评论过宽、`Water Leaks Through` 被 `no leaks / remained dry` 等表达污染、高频痛点第一条 Mention Share 出现 100% 且用户不可解释。
+
+当前结论：
+- [x] Phase 1-6.5 已完成代码、导出、前端展示、验证集和真实 Foxelli raw replay。
+- [x] Phase 7 P0 read-path 性能修复已完成并推送 `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
+- [x] Phase 7 第二批 / P1 authenticated route smoke 已完成：session 3/4/5 的 results、aggregate results、模块导出、完整导出均为 200。
+- [x] Phase 7 生产部署已确认：GitHub Actions `Deploy to Production` run `30230691101` 已将 `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` 部署成功；生产只读 `/analysis/sessions/{id}/results` smoke 覆盖 114/96/111/110，均 200、无 `embedding`、无 SSL/connection error。
+- [x] Phase 7 P1 worker 写路径优化已完成编码、本地回归并推送 `origin/develop=2d8c1a4`：analysis / cluster / embedding 写入改为批量事务，worker analysis 按 50 条 flush 并保留逐条 fallback。
+- [x] 可以扩大 Phase 7 第二批 / P1 小流量灰度。
+- [ ] 不建议直接生产全量发布；生产扩大前仍需 Erika 明确授权会扣 credit 的 live `/analysis/results` 与 export smoke，或提供零扣费 staging。
+
+#### 5.9.1 核心口径定义
+
+- `Customer Issue`：前台展示给用户看的具体问题标签，例如 `Water Leaks Through`、`Missing Parts`。
+- `Customer Label`：前台展示给用户看的具体亮点标签，例如 `Comfortable To Wear`、`Feels Well Made`。
+- `Aspect / Internal Aspect`：内部维度，只做归类、治理、下载审计和责任分发，不作为前台 Top 主标签。
+- `Mention Share = mention_count / 同类 label mention_count 总数`。
+- `Impact Review Share = review_count / 当前筛选范围总评论数`。
+- 同一评论同一 canonical label 默认只计 1 次用于 Top 排名和 `review_count`。
+- 代表评论只能来自 verified evidence span；`cluster_propagated=true` 和 evidence 不在原文中的 occurrence 不能进入 Representative Evidence。
+
+#### 5.9.2 执行阶段总表
+
+| Phase | 状态 | 产物 / 结论 |
+|------|------|-------------|
+| Phase 0 口径冻结 | ✅ 完成 | 冻结 `Customer Issue / Customer Label / Mention Share / Impact Review Share / Aspect` 定义；旧 session 保守兼容 |
+| Phase 1 当前问题止血 | ✅ 完成 | 防止 `no leaks / without leaks / didn't leak / remained dry / kept dry` 误触发 `Water Leaks Through`；missing evidence 与 cluster propagated 不进入代表证据 |
+| Phase 2 标签数据层 | ✅ 完成 | 新增 `customer_label_catalog`、`customer_label_alias_rules`、`customer_label_candidates`；`customer_label_catalog.py` 支持 catalog / alias / candidate 保守解析；broad/internal label 可禁用 |
+| Phase 3 occurrence 抽取 | ✅ 完成 | 新增并行 `customer_label_occurrences` schema；每个 occurrence 带 raw label、canonical key、display label、aspect、evidence span、confidence、source、`evidence_verified`、`cluster_propagated`、version |
+| Phase 4 聚合算法 | ✅ 完成 | `_build_customer_label_rows()` 统一 Issue / Highlight 聚合；按同类 mention 分母算 `mention_share`；输出 `mention_count`、`review_count`、`impact_review_share`、`raw_occurrence_count`；正评中的真实 issue 和差评中的真实 highlight 都可进入 Top |
+| Phase 5 前端和下载 | ✅ 完成 | 页面表头改为 `Customer Issue/Customer Label + Mention Share + Impact Reviews + Representative Evidence`；下载改为 occurrence 级 evidence + related reviews；导出补齐审计字段 |
+| Phase 6 验证与回归 | ✅ 完成 | 新增固定验证集与 `test_customer_label_phase6_validation.py`，覆盖 Foxelli、Comfortable evidence 失配、mixed review、否定漏水、真实漏水、cluster propagated、床架、睫毛膏、legacy old session、Internal Aspect 过滤 |
+| Phase 6 真实 Foxelli raw replay | ✅ 完成 | `scratch/session114_raw_replay.xlsx` 上传 clueai-dev 生成 session 3；最终 `Water Leaks Through=5 mentions / 5 reviews`，全部来自当前产品真实漏水原文 span，无旧风险 `9/9` 过计数 |
+| Phase 6.5 results LLM fallback | ✅ 完成 | `RESULTS_AI_ENHANCEMENT_ENABLED=false` 默认关闭；results 主 payload 先返回 heuristic，不被 DeepSeek / OpenAI enhancement 失败阻塞；AI 只能增强文本，不能覆盖 rows |
+| Phase 7 P0 read-path | ✅ 完成 | `get_comments()` 默认瘦列读取，不返回 `embedding`；`aspects_json` compact 投影；date span fallback 改 SQL `MIN/MAX`；连接关闭重试一次；`backend_api/tests` 176 passed |
+| Phase 7 P1 authenticated smoke | ✅ 完成 | clueai-dev/preprod route 层 session 3/4/5 authenticated smoke 通过；生产只读 results smoke 覆盖 114/96/111/110；未改 Not Breathable，未重构 Phase 1-6 核心算法 |
+| Phase 7 P1 worker write-path | ✅ 已推送 / 待 staging 写入验证 | `origin/develop=2d8c1a4`；`update_comment_analysis_batch()`、`update_comment_clusters_batch()`、`update_comment_embeddings_batch()` 已落地；worker analysis 每 50 条批量写，cluster / RAG embedding 批量写；保留单条 API 和异常 fallback |
+| Phase 7 生产 credit/export 门禁 | ⏳ 待决策 | live `/analysis/results` 与 export 会扣 credit / 写 ledger；需要 Erika 授权或零扣费 staging；通过后再扩大生产流量 |
+
+#### 5.9.3 验证记录
+
+真实样本验证：
+
+| session | 样本 | 结果 |
+|---------|------|------|
+| 3 | Foxelli Waders raw replay，92 reviews | `Water Leaks Through` count=5 / pct=62.5；`Comfortable To Wear` count=64 / pct=48.1；代表证据均为原文 span |
+| 4 | 432 reviews | `Breaks Easily` count=13 / pct=44.8；`Feels Well Made` count=290 / pct=92.7 |
+| 5 | 545 reviews | 无明确 Top Issue（`No clear friction`）；`Comfortable To Wear` count=463 / pct=89.6 |
+
+生产只读 results smoke（已部署 `1d537fd` 后）：
+
+| session | route | status / time | comments | Top Issue | Top Label | embedding | SSL/connection error |
+|---------|-------|---------------|----------|-----------|-----------|-----------|----------------------|
+| 114 | `/analysis/sessions/114/results` | 200 / 0.741s | 92 | `Not Breathable` | `Comfortable to Wear` | false | false |
+| 96 | `/analysis/sessions/96/results` | 200 / 0.726s | 661 | `Value for Money` count=6 | `Value for Money` count=135 | false | false |
+| 111 | `/analysis/sessions/111/results` | 200 / 0.394s | 100 | `Water Leaks Through` count=13 | `Keeps Water Out` count=17 | false | false |
+| 110 | `/analysis/sessions/110/results` | 200 / 0.426s | 100 | `Water Leaks Through` count=13 | `Holds Up Well` count=46 | false | false |
+
+Phase 7 P0 / P1 验证记录：
+
+| 验证项 | 结果 |
+|--------|------|
+| P0 commit | `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7` |
+| P0 自动化 | `python3 -m pytest backend_api/tests`：176 passed；目标 ruff passed；`git diff --check` passed |
+| P0 只读 DB smoke | session 3/4/5 compact read 成功，默认不带 `embedding`，未复现 SSL EOF；session 5 从历史 120s+/EOF 降到 31.3s |
+| P1 authenticated route smoke | session results、aggregate results、模块导出、完整导出均 200 |
+| embedding 边界 | 默认 results payload 不返回 `embedding`；QA/RAG 显式 `include_embedding=True` 可读 session 3 的 92/92 embeddings |
+| date span fallback | SQL `MIN/MAX` fallback 为 0.3s 级 |
+| LLM enhancement | 默认关闭，results 首开不依赖 provider |
+| credit / analytics | P1 smoke 进程内 patch `credit_consume` 与 `track_event` 为 no-op，未调用真实 QA/Ask、上传或重分析等扣费动作 |
+| production deploy | GitHub Actions `Deploy to Production` run `30230691101` completed/success for `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` |
+| production read-only smoke | `/analysis/sessions/{id}/results` 生产只读 smoke：114/96/111/110 均 200；最大 session 96（661 comments）0.726s；默认 payload 均无 `embedding`；无 SSL/connection error |
+| P1 write-path commit / automation | `2d8c1a4 perf: batch worker comment writes` 已推送 `origin/develop`；`python3 -m pytest backend_api/tests workers/tests`：200 passed；target ruff passed；fake DB 单测验证 analysis / cluster / embedding batch 写入均为 1 次 values update + 1 次 commit，cache 字段缺失可 fallback |
+
+#### 5.9.4 相关文档与测试资产
+
+- `docs/Customer_Issue_Label_Phase6验证报告.md`
+- `backend_api/tests/fixtures/customer_label_phase6_validation.json`
+- `backend_api/tests/test_customer_label_phase6_validation.py`
+- `backend_api/tests/test_export_customer_label_phase5.py`
+- `backend_api/tests/test_analysis_results_llm_fallback.py`
+- `backend_api/tests/test_database_read_path.py`
+- `migrations/058_customer_label_catalog_alias_candidates.sql`
+
+#### 5.9.5 残留风险与下一步
+
+- [ ] 生产全量发布前补 live `/analysis/results` 与 export smoke；若担心扣 credit，优先准备零扣费 staging。
+- [ ] P1 worker 写路径优化已推送，尚未做 staging 上传/重分析写入验证：目标是降低 per-comment `update_comment_analysis()` / cluster update / embedding update 对共享 DB 环境和连接池的峰值压力；后续验证会写 DB 且可能触发 LLM/credit。
+- [ ] P2 date/index 技术债尚未开始编码：`date` 仍是 text，session 3 存在 Amazon 文本日期；缺少 `(user_id, session_id, id DESC)` 复合索引不是本次主因，但更大表会放大。
+- [ ] `Comfortable_to_Wear_reviews_57.xlsx` 风险已用 fixture 复刻；若要作为正式金样本，需要重新导入或重放真实 xlsx，并确认 missing evidence 不进入 Representative Evidence。
+- [ ] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；如重新开启，先确认 provider/model 可用并监控 timeout / empty-cache 日志。
+- [ ] 增加 label stats / 告警：单一标签突然 100%、verified evidence 比例过低、broad/internal label 进入 Top、cluster propagated 占比异常升高、long-tail 标签过多。
+- [ ] 新增类目时按"系统自动候选 + Erika 审核高频 canonical label"的方式走，不人工维护每条评论：先跑 3-5 个该类目产品样本，再审核 Top 候选标签的保留、合并、改名、禁用。
+
+#### 5.9.6 后续任务拆解与 Erika 参与点
+
+下一阶段任务拆解：
+
+| 优先级 | 任务 | 当前阶段 | 建议步骤 | Erika 参与点 |
+|--------|------|----------|----------|--------------|
+| P0 gate | live `/analysis/results` + export 生产门禁 | 待授权 / 待零扣费 staging | 1. 确认是否允许扣 credit；2. 对 prod/staging 代表 session 跑 aggregate results、模块导出、完整导出；3. 记录响应时间、Top Issue/Label、导出 sheet、SSL/connection error；4. 通过后再扩大生产流量 | 现在即可参与：授权扣费 smoke 或提供零扣费 staging |
+| P1 | worker 写路径优化 | 已推送 / 待 staging 写入验证 | 1. 已审计 `update_comment_analysis()`、cluster update、embedding update 调用频率；2. 已实现 batch update 与小批量事务边界；3. 已补 fake DB/query count 单测并推送 `2d8c1a4`；4. 待 staging 跑小样本上传/重分析；5. 再跑较大样本观察 worker 日志、DB 连接、任务耗时 | 现在可参与：授权上传/重分析样本验证，因为会写 DB 且可能触发 LLM/credit |
+| P2 | date text 规范化 + 索引 | 方案设计待开始 | 1. 盘点真实 date 格式，含 Amazon 文本日期；2. 设计 normalized date/backfill 或安全解析层；3. 评估并准备 `(user_id, session_id, id DESC)` 及 product/date 查询索引；4. staging migration；5. 验证 history/results/aggregate range 行为 | migration 前参与：确认 DDL 窗口、备份/回滚方案和抽样验收 |
+
+后续 Erika 参与点：
+
+| 什么时候 | 需要做什么 | 预计人力 |
+|----------|------------|----------|
+| Phase 7 生产扩大前 | 授权 live credit/export smoke，或提供零扣费 staging | 5-10 分钟决策 |
+| P1 小流量灰度 3-7 天内 | 看 3-5 个真实 session 的 Top Issue / Top Label、代表证据、下载是否符合预期 | 每天 15-30 分钟 |
+| 新品类首次接入 | 审核该类目高频候选标签：保留 / 合并 / 改名 / 禁用 | 每个类目 30-60 分钟 |
+| 稳定运行后 | 看异常告警和候选池，只处理高频、前台可见、低置信度或跨品类边界 case | 每周 10-20 分钟 |
 
 
 ## Git 分支策略
@@ -1615,7 +751,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 | 2026-06-30 | 6.1 扩展 | 全品类 Taxonomy 批量扩展：新增 5 品类(outdoor/beauty/kitchen/automotive/office) 27 子品类 441 条 aspect 全部携带 boundary_note；表结构重建 migration 037；sub_category_categories.json 覆盖 87 子品类；docs/类目标签覆盖表.md 产出 |
 | 2026-07-07 | 6.4 Step 7 | 跨用户 LLM 分析结果复用：接通已有 review_pool 全局池 → L1 缓存除用户自己历史也查 pool（analyzer_version 校验隔离），CSV 上传的分析结果也回填 pool；migration 043 加 content_hash 部分索引 + comments.cache_hit_source 列；隐私政策 + 服务条款追加"分析结果聚合复用"条款；预期热门 ASIN 场景 DeepSeek 调用量下降 30–60% |
 | 2026-07-23 | LLM Router 旧链路迁移 | Review Q&A、结果翻译、Compare AI Summary、非结构化解析兜底、eval runner、已跟踪 taxonomy/golden 维护脚本统一迁移到 `backend_api.app.services.llm_router.router_completion()` 或 Router 兼容 shim；QA 与 Compare 路由复用 `get_analysis_locale(request)`；`locale="en"` 路由顺序为 GPT-4o-mini → DeepSeek → Qwen，`locale="zh"` 为 DeepSeek → GPT-4o-mini → Qwen；commit `71b0d4c` 已推送 `origin/develop` |
-| 2026-07-24~2026-07-27 | Step C9.8 | Customer Issue / Customer Label 口径重构、Phase 1-6.5 验证、Foxelli raw replay、Phase 7 P0 read-path、Phase 7 P1 authenticated route smoke 已集中整理到上方 `Step C9.8`；底部 changelog 不再重复维护详细记录 |
+| 2026-07-24~2026-07-27 | 5.9 | Customer Issue / Customer Label 口径重构、Phase 1-6.5 验证、Foxelli raw replay、Phase 7 P0 read-path、Phase 7 P1 authenticated route smoke；已从原 5.8 Step C9.8 提取为独立模块 5.9；底部 changelog 不再重复维护详细记录 |
 
 ---
 
@@ -1916,52 +1052,10 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
     - `git filter-repo` 清理历史里的 commit `37032b0`（**所有上游凭证轮换完成后**才能做这一步）
   - 验收：新 key 已在本地生效；旧 key 在 git 历史中的清理待统一收尾
 
-  ---
+  #### Step 2.0d: Streamlit 退场 ✅ 已完成（2026-06-16）
 
-  #### Step 2.0d: Streamlit 退场（执行计划）
-
-  > **背景**：Next.js + FastAPI 已完全接管 prod 流量（5.2~5.8 全部完成）。Streamlit 仅作为 legacy 残留，当前 docker-compose 中 `profiles: legacy` 不启动。本计划正式移除 Streamlit 相关代码和配置。
-
-  **前置条件确认**（2026-06-16 评估）：
-
-  - [x] **数据迁移核对**：5.3~5.7 全部完成，用户/产品/评论/行动/复盘在 Next.js 端完整可用
-  - [x] **会话切换**：FastAPI HttpOnly Cookie 已接管（5.2 完成）
-  - [x] **Streamlit Cloud 下线**：✅ 2026-06-16 Erika 确认已关停、secrets 已清除
-  - [x] **域名收口**：Next.js 已接管 `app.clueai-reviewlens.com`
-  - [x] **`review_analyzer/.env` 处置**：当前指向 dev 库，被 backend_api 通过 `os.environ` 加载（非 Streamlit secrets），保留
-
-  ---
-
-  **Phase 1：删除纯 Streamlit UI 层（低风险，不影响 FastAPI）** ✅ 2026-06-16
-
-  - [x] 删除 `review_analyzer/app.py`（Streamlit 主入口，19KB）
-  - [x] 删除 `review_analyzer/page_shell.py`（Streamlit 页面壳）
-  - [x] 删除 `review_analyzer/i18n.py`（纯 Streamlit UI 国际化）
-  - [x] 删除 `.streamlit/` 目录（config.toml + secrets 模板）
-  - [x] 删除 `docker-compose.yml` 中 `streamlit` 服务定义（profiles: legacy 块）
-  - [x] 删除 `test_m8_full.py`（Streamlit 迁移测试，已过时）
-
-  **Phase 2：清理共享模块中的 Streamlit 残留（需逐文件验证）** ✅ 2026-06-16
-
-  - [x] `review_analyzer/database.py`：移除 `import streamlit as st`，`@st.cache_data` 装饰器，`st.secrets` fallback，`st.error/st.info/st.stop` → logger + raise
-  - [x] `review_analyzer/product_store.py`：移除 `@st.cache_data` 装饰器及 `.clear()` 调用
-  - [x] `review_analyzer/review_store.py`：同上，移除 `@st.cache_data` 及 `.clear()` 调用
-  - [x] `review_analyzer/action_store.py`：同上，移除 `@st.cache_data` 及 `.clear()` 调用
-  - [x] `review_analyzer/auth.py`：移除所有 Streamlit UI 函数，仅保留 FastAPI 使用的纯业务逻辑
-  - [x] `review_analyzer/workspace_store.py`：移除 `i18n` 依赖，内联 `pick()`/`role_label()` 为 thread-local 实现
-  - [x] `review_analyzer/workflow_prompts.py`：移除 `get_lang()` 依赖，改为参数传入 `lang`
-
-  **Phase 3：依赖清理与验证** ✅ 2026-06-16
-
-  - [x] 从 `requirements.txt` 和 `review_analyzer/requirements.txt` 移除 `streamlit` 及 `streamlit-authenticator`
-  - [x] 运行 `python -c "from review_analyzer.database import get_user_by_id"` 验证模块可正常 import
-  - [x] 运行 `cd frontend && npm run typecheck` 确认前端无影响
-  - [x] 运行 `python3 -m ruff check backend_api/ workers/ review_analyzer/` 确认 lint 通过
-  - [x] 更新 CLAUDE.md 中 Streamlit 相关说明（标记为已移除）
-
-  验收：`backend_api` + `workers` 正常启动，所有 `from review_analyzer.*` 的 import 无 `streamlit` 依赖报错 ✅
-
-  ---
+  > Next.js + FastAPI 已完全接管 prod 流量。Streamlit 代码和依赖已全部移除（3 Phase：UI 层删除 → 共享模块清理 → 依赖清理）。
+  > 详细执行记录见 **[历史归档_已废弃模块.md](notes/历史归档_已废弃模块.md)** B 类。
 
   ### Step 2.1: 建立开发数据库（1 小时，Erika 操作）
 
