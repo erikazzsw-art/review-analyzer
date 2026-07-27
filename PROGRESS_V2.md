@@ -659,6 +659,22 @@
 | 111 | `/analysis/sessions/111/results` | 200 / 0.394s | 100 | `Water Leaks Through` count=13 | `Keeps Water Out` count=17 | false | false |
 | 110 | `/analysis/sessions/110/results` | 200 / 0.426s | 100 | `Water Leaks Through` count=13 | `Holds Up Well` count=46 | false | false |
 
+Phase 7 小流量灰度观察清单（准备阶段，仅文档整理；不触发生产入口）：
+
+| session | 选择原因 | 已有基线 | 观察重点 | 执行边界 |
+|---------|----------|----------|----------|----------|
+| 114 | Foxelli / Amazon 文本日期样本，92 comments，已覆盖 production read-only results 与授权 export smoke | Top Issue `Not Breathable`，Top Label `Comfortable to Wear`；P2 normalized span `2018-12-05 ~ 2026-07-05`；Amazon 样本 `id=26410` 可精确映射到 `2026-07-05` | Representative Evidence 必须来自真实 evidence span；`Not Breathable` 只观察不改逻辑；Amazon 文本日期不得被精确日窗口误过滤 | 仅观察已有 results/filter 行为；不上传、不重分析、不 QA、不再跑 aggregate/export |
+| 96 | 较大真实 session，661 comments，覆盖 date span 与同名 issue/label 并存 | Top Issue `Value for Money` count=6，Top Label `Value for Money` count=135；P2 normalized span `2024-04-10 ~ 2025-12-01` | 核对 issue/highlight 同名时是否语义可解释；Representative Evidence 不得来自 missing / propagated span；date filter 持续走 `review_date` | 如需再次请求 production route，先确认是否会写 insight/export ledger |
+| 111 | 100 comments，issue/highlight 为防水正反向组合 | Top Issue `Water Leaks Through` count=13，Top Label `Keeps Water Out` count=17 | 继续观察否定漏水 / 防水正向表达不污染 `Water Leaks Through`；证据 span 必须能在原文中定位 | 只记录真实页面/只读结果，不触发重分析 |
+| 110 | 100 comments，漏水 issue + 耐用 highlight 组合 | Top Issue `Water Leaks Through` count=13，Top Label `Holds Up Well` count=46 | 核对 Top Issue / Top Label 同屏是否符合用户直觉；Representative Evidence 不得使用 broad/internal label 或 cluster-propagated evidence | 不跑上传、QA、aggregate/export smoke |
+| 95 | P2 production DDL/backfill 验收样本，date span 覆盖较新日期 | P2 normalized span `2023-02-07 ~ 2026-07-10`；Top Issue / Top Label 尚未记录在本轮灰度基线 | 可作为第 5 个只读观察候选，补 Top Issue / Top Label、evidence span、date filter 行为 | 未获授权前不新增生产业务 smoke；如进入观察，先说明入口和成本风险 |
+
+灰度观察记录模板：
+
+| 日期 | session | 观察入口 | Top Issue / Top Label | Representative Evidence | `Not Breathable` 口径 | date filter / `review_date` | Amazon 文本日期 | 结论 / 后续 |
+|------|---------|----------|------------------------|--------------------------|------------------------|----------------------------|------------------|-------------|
+| 待记录 | 待记录 | 仅只读页面或已授权入口 | 待记录 | 是否来自真实 evidence span | 只观察，不修改 | 是否持续使用 normalized `review_date` | 是否误过滤 | 待记录 |
+
 Phase 7 P0 / P1 验证记录：
 
 | 验证项 | 结果 |
