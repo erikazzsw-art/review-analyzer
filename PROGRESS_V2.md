@@ -1549,624 +1549,6 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-## 9. 增值功能
-
-> **目标**：上线后根据用户反馈分阶段引入新能力，避免一次开发太多导致延期。
-> 详细成本与定价配套见 `COST_PROFIT.md`。
-
-### 9.1 评论自动获取
-
-**痛点**：当前用户必须手动准备评论 Excel，门槛高，导致 Free 用户上手率低。
-
-**技术调研结论（2026-06-15 更新）**：
-
-评论自动获取存在三条路径，推荐分阶段推进：
-
-| 路径 | 方式 | 优势 | 劣势 | 状态 |
-|------|------|------|------|------|
-| **Rainforest API（后端自动）** | 服务端按 ASIN 调用 API 获取结构化评论 | 全自动、数据稳定、按需批量 | 有月费（$49起） | ✅ 单次拉取已实现 |
-| Chrome 插件（前端抓取） | 用户浏览亚马逊时，插件 parse DOM 提取评论 | 零服务端成本、利用用户登录态 | 需用户主动触发、受页面改版影响 | 后置 |
-| Amazon SP-API（卖家授权） | OAuth 授权后自动发现 ASIN + 拉取数据 | 最佳用户体验 | 需 Professional Seller 账号 + 审批 2-4 周 + 无法获取评论全文 | ❌ 当前阶段不走 |
-
-**SP-API 不推荐原因（2026-06-15 调研结论）**：
-1. 硬性要求拥有 Amazon Professional Seller 账号（$39.99/月）
-2. 开发者审批 2-4 周且早期产品易被拒
-3. SP-API 没有获取评论全文的端点（只有 Catalog/Orders 类权限）
-4. 即使通过审批，仍需 Rainforest 拉评论内容——SP-API 唯一增量价值是"自动发现 ASIN"
-5. 等 10+ 付费用户后再申请审批更容易通过
-
-**推荐路径：Rainforest API 三步走**
-- Phase 1：批量 ASIN 管理 + 定时自动拉取（无审批，现在可做）
-- Phase 2：Chrome 插件辅助（补充免费用户渠道）
-- Phase 3：SP-API 授权自动发现 ASIN（有 10+ 付费用户后启动）
-
-**第三方 API 选型对比**：
-
-| 维度 | Rainforest API（Traject Data）✅ 推荐 | Oxylabs E-Commerce Scraper |
-|------|--------------------------------------|---------------------------|
-| 定位 | 专注 Amazon/电商数据 | 通用爬虫 + 电商 API |
-| 入门价 | $49/月 = 5,000 请求 | $49/月 = 5,000 请求 |
-| 单次成本 | ~$0.01/请求 | ~$0.01/请求 |
-| 响应速度 | 2-5 秒 | 3-8 秒 |
-| 数据字段 | 评论文本/评分/日期/变体/图片/Verified/Helpful votes | 同等 |
-| 多国站点 | 16 个 Amazon 站点 | 主要站点 |
-| 免费试用 | 100 次（无需销售沟通） | 需申请 |
-| 文档质量 | 评论场景专属文档，字段映射清晰 | 通用文档 |
-
-**成本估算**（$49/月 Starter 套餐）：
-- 每次 API 请求返回 10 条评论
-- 日均可用：~166 次请求 = **~1,660 条评论/天**
-- 典型场景：10 ASIN × 5 页 = 50 请求/天，月用量 ~1,500 次，绰绰有余
-- 大批量场景（100 ASIN × 50 页）可临时升级 $99/月（15,000 请求）
-
----
-
-#### Phase 1: 批量 ASIN 管理 + 定时自动拉取（立即可做，无外部审批）
-
-**目标**：卖家输入自己的 ASIN 列表，系统自动定时拉取新评论并分析，体验接近"连接店铺"。
-
-**已实现基础**：
-- [x] `backend_api/app/services/rainforest.py` — Rainforest API 封装（16 站点、翻页、结构化解析）
-- [x] `backend_api/app/routes/scrape.py` — `POST /reviews/fetch-by-asin` 端点
-- [x] `workers/jobs.py` — `process_asin_fetch_job` 异步 Worker（拉取→存储→触发分析）
-- [x] `backend_api/app/schemas/scrape.py` — ASIN 校验 schema
-- [x] 配额控制：`quota_check(user_id, "asin_fetch")`（daily 周期：Free 1次/天, Pro 10次/天）
-- [x] `migrations/017_add_source_channel.sql` — comments/upload_jobs 新增 `source_channel` 字段
-- [x] `review_analyzer/quota.py` — 新增 `asin_fetch` 维度 + `daily` 周期类型支持
-- [x] `review_analyzer/database.py` — `create_upload_job` 支持 `source_channel` 写入
-- [x] `frontend/src/components/upload/asin-fetch-panel.tsx` — ASIN 拉取前端面板
-- [x] `frontend/src/app/upload/page.tsx` — 上传页增加"文件上传 / ASIN 自动拉取"双 Tab
-- [x] `frontend/src/lib/api/browser.ts` — `fetchByAsin` API 调用函数
-- [x] `requirements.txt` — 添加 `httpx>=0.27.0`
-- [x] Rainforest API Key 已配置并验证通过（免费额度 96 次）
-- [x] Fallback 机制：`type=reviews` 503 时自动降级到 `type=product` + `top_reviews`
-
-**Files:**
-- Create: `migrations/017_asin_watchlist.sql`（ASIN 监控列表表）
-- Create: `backend_api/app/routes/asin_watchlist.py`（ASIN 列表 CRUD 路由）
-- Create: `backend_api/app/schemas/asin_watchlist.py`（请求/响应 schema）
-- Create: `workers/asin_scheduler.py`（定时拉取调度器）
-- Modify: `frontend/src/app/products/page.tsx`（产品页增加 ASIN 绑定区块）
-- Modify: `workers/periodic_jobs.py`（注册定时拉取 job）
-- Modify: `review_analyzer/notifier.py`（新评论变化通知）
-
-- [x] **Step 1: ASIN 监控列表数据模型**
-  - 新增 `asin_watchlist` 表：
-    ```sql
-    CREATE TABLE IF NOT EXISTS asin_watchlist (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id),
-        asin TEXT NOT NULL,
-        marketplace TEXT NOT NULL DEFAULT 'us',
-        product_name TEXT,
-        product_id INTEGER REFERENCES products(id),
-        fetch_frequency TEXT DEFAULT 'daily',  -- daily / weekly / manual
-        last_fetched_at TIMESTAMPTZ,
-        last_review_count INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'active',  -- active / paused / error
-        error_message TEXT,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE(user_id, asin, marketplace)
-    );
-    ```
-  - 配额限制：Free 限 3 个 ASIN、Pro 限 20 个、Team 限 100 个
-
-- [x] **Step 2: ASIN 列表 CRUD API**
-  - `POST /asin-watchlist` — 添加 ASIN（支持单个或批量，最多 20 个/次）
-  - `GET /asin-watchlist` — 获取当前用户的监控列表（含状态、上次拉取时间、评论增量）
-  - `PATCH /asin-watchlist/{id}` — 修改频率 / 暂停 / 恢复
-  - `DELETE /asin-watchlist/{id}` — 移除监控
-  - `POST /asin-watchlist/{id}/fetch-now` — 立即触发一次拉取（扣配额）
-  - 添加时自动调用 `fetch_product_info` 获取产品名称/品类（已实现于 `rainforest.py`）
-
-- [x] **Step 3: 定时拉取调度**
-  - 基于 `rq-scheduler`（已在 9.3 引入）
-  - 每天凌晨 2:00 UTC 扫描所有 `status=active` 且 `fetch_frequency=daily` 的记录
-  - 每周一凌晨扫描 `fetch_frequency=weekly` 的记录
-  - 对每个 ASIN 入队一个 `process_asin_fetch_job`（复用现有 worker）
-  - 并发控制：同一用户最多 5 个并发拉取任务
-  - 失败重试：最多 3 次，第 3 次失败后标记 `status=error` 并通知用户
-  - **2026-06-30 优化**：定时抓取数据源从 Rainforest API（付费）切换为 woot.com（免费），零 API 成本实现自动监控。调用统一入口 `fetch_reviews()` → woot.com AJAX API
-
-- [x] **Step 4: 增量检测 + 去重**
-  - 拉取后与上次结果对比：按 `review_id` 去重，只入库新增评论
-  - 记录 `last_review_count`，如果新增 > 0 条：
-    - 自动触发分析 job
-    - 推送通知："{product_name} 新增 {N} 条评论，已自动分析"
-  - 如果连续 3 次拉取无新增 → 自动降频（daily→weekly），节约 API 配额
-
-- [x] **Step 5: 前端 — 产品页 ASIN 绑定**
-  - 产品管理页每个产品卡片增加"监控 ASIN"区块
-  - 支持：手动输入 ASIN / 粘贴 Amazon URL 自动提取 / 上传 CSV（一列 ASIN）
-  - 显示：监控状态、上次拉取时间、评论增量趋势迷你图
-  - 操作：立即刷新、暂停、删除
-  - 新用户引导："粘贴你的 Amazon 产品链接，系统自动每天更新评论"
-
-- [x] **Step 6: 前端 — 独立 ASIN 监控面板**
-  - 新建 `/data-sources` 页面（或在产品管理内作为 Tab）
-  - 全局视图：所有监控 ASIN 的状态一览
-  - 批量操作：全部暂停 / 全部恢复 / 批量添加
-  - 配额用量显示：本月已用 / 剩余 / 预估超量提醒
-
-- [x] **Step 7: 通知 + 异常报警**
-  - 新评论通知（飞书/邮件）："{product} 新增 {N} 条评论，负面率 {x}%，较上次{↑/↓}"
-  - 异常报警：负面率突增（>10pp）、差评数连续 3 天上升
-  - 配额预警：本月 API 调用量达 80% 时提醒用户
-
-- [ ] **Step 8: 验收**
-  - 用户添加 3 个 ASIN → 系统每天自动拉取 → 新增评论自动入库并分析
-  - 产品页能看到"最近 7 天评论增量"趋势
-  - 飞书收到新评论通知
-  - 配额用完后自动暂停拉取，不超额
-  - 手动"立即刷新"按钮可用
-
-- [ ] **Step 9: 回滚边界**
-  - 仅回滚本 Phase 新增文件 + 相关路由注册
-  - 不影响现有手动上传和单次 ASIN 拉取功能
-
----
-
-#### Phase 2: Chrome 插件（后置，补充免费用户渠道）
-
-> 触发条件：Phase 1 稳定运行 + 有用户反馈"不想花 Rainforest 配额"
-
-- [ ] **Step 10: Manifest V3 插件骨架**
-  - 支持 Amazon US/UK/DE/JP 评论页面
-  - 一键"抓取本页评论"，最多翻页 10 页
-  - 插件内登录校验，上传到 `POST /reviews/plugin-upload`
-- [ ] **Step 11: 后端接收 + 去重**
-  - 统一去重逻辑：按 (asin + reviewer_id + review_date) 去重
-  - 配额扣减：插件渠道 Free 限 100 条/次、Pro 限 1000 条/次
-  - `source_channel` 字段标记来源
-
----
-
-#### Phase 3: SP-API 授权自动发现 ASIN（后置）
-
-> 触发条件：付费用户 ≥ 10 + 有明确客户需求"希望自动同步店铺"
-> 前置条件：拥有 Amazon Professional Seller 账号 + 通过 SP-API 开发者审批
-
-- [ ] **Step 12: SP-API 开发者注册**
-  - 注册 Amazon Professional Seller 账号（$39.99/月）
-  - 申请 SP-API 开发者资格
-  - 创建 LWA（Login with Amazon）应用
-  - 申请 `Catalog Items` 权限组（用于获取卖家 ASIN 列表）
-  - 准备审核材料：产品截图、数据安全政策页、隐私政策页
-
-- [ ] **Step 13: OAuth 授权流程**
-  - 前端"连接 Amazon 店铺"按钮 → 跳转 Amazon OAuth 授权页
-  - 回调处理：获取 refresh_token → 加密存储
-  - 调用 Catalog Items API 拉取卖家所有在售 ASIN
-  - 自动创建 `asin_watchlist` 记录（复用 Phase 1 基础设施）
-
-- [ ] **Step 14: 自动 ASIN 同步**
-  - 每周同步一次卖家 ASIN 列表（新增/下架检测）
-  - 新增 ASIN 自动加入监控、下架 ASIN 自动暂停
-  - 配合 Phase 1 定时拉取，实现全自动闭环
-
-### 9.2 API 调用
-
-**目标**：服务代运营 Agency 与中型卖家的自动化需求。
-
-**Files:**
-- Create: `backend_api/app/routers/v1/api.py`（v1 公开 API）
-- Create: `backend_api/app/services/api_key.py`（API Key 生成/校验/限流）
-- Modify: `supabase_schema.sql`（增加 `api_keys` 表）
-
-- [ ] **Step 1: API Key 生成 + 管理界面**
-  - 用户中心增加"我的 API Keys"页面
-  - 单用户最多 5 个 Key，可命名、启停、查看用量
-- [ ] **Step 2: 核心端点**
-  - POST /v1/analyze（提交评论，异步返回 task_id）
-  - GET /v1/tasks/{task_id}（查询分析结果）
-  - GET /v1/usage（查询本月用量）
-- [ ] **Step 3: 限流 + 配额**
-  - Team 档：10000 次调用/月
-  - 单 Key 限速 60 次/分钟（防滥用）
-  - 超额按 ¥0.05/次计费
-- [ ] **Step 4: 文档站**
-  - mkdocs / Mintlify 搭建 docs.clueai.com
-  - OpenAPI Spec 自动生成 + Postman Collection
-
-### 9.3 智能推送 + 分责路由 + 升级行动闭环
-
-**目标**：定期推送产品 TOP 10 问题/亮点到飞书群，按责任部门分板块 @负责人；连续多期 TOP 问题自动升级，LLM 生成行动建议并写入行动中心，形成"发现→通知→行动→复盘"完整闭环。
-
-**竞品差异化**：Enterpret/Birdie/Shulex 等竞品止步于通知层，无一实现"连续升级→自动行动建议→回写追踪"闭环。
-
-**决策记录（2026-06-14 Erika 确认）**：
-- 推送触发：即时推送（已有）+ 周期汇总推送（新增）
-- 连续性：以推送周期为单位计数（连续 N 个推送周期）
-- 行动建议：LLM 自动生成 → 写入行动中心（status=todo）→ 飞书通知负责人确认
-- 消息结构：一条消息分板块（运营/质检/产研/客服/其他）
-- 分责规则：Aspect Taxonomy 自动映射 + 用户可在设置中调整
-- 周期：用户完全自定义（每日/每周/每两周/每月 + 具体时间）
-
-**Files:**
-- Create: `review_analyzer/department_router.py`（aspect→部门映射引擎）
-- Create: `review_analyzer/escalation.py`（升级判定引擎）
-- Create: `backend_api/app/services/action_advisor.py`（LLM 行动建议生成）
-- Create: `workers/periodic_jobs.py`（周期汇总推送 job）
-- Create: `workers/scheduler.py`（rq-scheduler 启动入口）
-- Create: `migrations/016_push_snapshots.sql`（快照表 + 升级状态表）
-- Modify: `review_analyzer/notifier.py`（升级为富文本分板块格式 + @mention）
-- Modify: `backend_api/app/schemas/settings.py`（新增周期/部门联系人/升级规则 schema）
-- Modify: `backend_api/app/routes/settings.py`（新增配置端点）
-- Modify: `frontend/src/components/settings/settings-panel.tsx`（新设置区块）
-- Modify: `workers/jobs.py`（分析完成后写入 push_snapshot）
-- Modify: `deploy/docker-compose.yml`（新增 scheduler service）
-
-**5 个责任部门分类**：
-
-| 部门 | 代码标识 | 对应 Aspect 举例 | 飞书 @对象 |
-|------|---------|-----------------|-----------|
-| 运营 | `ops` | value_for_money | 运营负责人 open_id |
-| 产品质检 | `qa` | durability, material, build_quality, packaging, shipping_damage, missing_parts, smell, safety | 质检负责人 open_id |
-| 产研 | `product` | aesthetics, comfort, size_fit, assembly, instructions, ease_of_use, weight_capacity, color_accuracy | 产研负责人 open_id |
-| 客服 | `cs` | customer_service | 客服负责人 open_id |
-| 其他 | `other` | other | 默认群通知 |
-
-- [x] **Step 1: 数据库 — 推送快照 + 升级状态表**
-  - `push_snapshots` 表：记录每次推送时的 TOP 问题排名和占比快照
-  - `issue_escalation_state` 表：记录每个问题标签的连续命中次数和升级状态
-  - 字段设计：`snapshot_type`（batch/periodic）、`top_issues` JSONB、`consecutive_count`、`escalated_at`
-  - 索引：user_id + product_id 组合索引
-  - ✅ `migrations/016_push_snapshots.sql` + `review_analyzer/push_snapshot_store.py`（2026-06-14）
-
-- [x] **Step 2: 部门映射引擎**
-  - 基于 `scripts/aspect_taxonomy.py` 的 FURNITURE_ASPECTS 建立默认 aspect→dept 映射表
-  - 用户自定义映射存入 `push_settings.dept_mapping` 字段，覆盖默认值
-  - 核心函数：`route_issues_by_department(top_issues, user_mapping) → dict[dept, list[issue]]`
-  - 支持多品类：不同品类的 taxonomy 映射到同一套部门体系
-  - ✅ `review_analyzer/department_router.py`（2026-06-14）
-
-- [x] **Step 3: 升级判定引擎**
-  - 每次生成推送快照时，更新 `issue_escalation_state` 的连续计数
-  - 升级条件（OR 关系，用户可配置）：连续 N 次在 TOP K **或** 占比超过阈值
-  - 默认配置：连续 3 个周期、TOP 3、占比 10%
-  - 已升级且 action_item 未完结的问题不重复升级
-  - 问题标签归一化：基于 aspect key 判断，避免同义标签重复计数
-  - ✅ `review_analyzer/escalation.py` + 18 个单元测试通过（2026-06-14）
-
-- [x] **Step 4: LLM 行动建议生成**
-  - 升级触发时调用 DeepSeek 生成行动建议
-  - Prompt 输入：问题标签 + 近 N 期占比趋势 + 责任部门 + 产品信息 + TOP 5 代表性评论原文
-  - Prompt 输出（structured JSON）：action_title / suggested_action / expected_timeline / priority
-  - 自动调用 `create_action_item()` 写入行动中心，status="todo"，owner_role=对应部门
-  - 成本控制：单次升级约 1 次 LLM 调用，不会批量触发
-  - ✅ `backend_api/app/services/action_advisor.py`（2026-06-14）
-
-- [x] **Step 5: 飞书富文本推送（分板块 + @mention）**
-  - 升级 `notifier.py` 为 `post`（富文本）消息格式
-  - 消息模板：产品标题 → 各部门板块（含 @mention）→ 升级行动摘要 → 亮点 TOP 3
-  - @mention 实现：`{"tag": "at", "user_id": "ou_xxx"}`，open_id 从用户设置读取
-  - 升级的问题标注 🔴 + ⚡ 视觉突出
-  - 无 open_id 配置时降级为文本提及（不 @）
-  - ✅ `review_analyzer/notifier.py` 新增 `build_rich_push_content()` + `send_rich_push()` + 9 个单元测试（2026-06-14）
-
-- [x] **Step 6: 周期调度器（rq-scheduler）**
-  - 新增 `workers/scheduler.py` 启动 rq-scheduler
-  - 用户配置存入 `push_settings.periodic_push`：frequency / day_of_week / day_of_month / time / timezone
-  - 调度逻辑：scheduler 进程每分钟扫描订阅，到期的用户触发 `periodic_digest_job`
-  - docker-compose 新增 scheduler service（复用 worker 镜像，不同启动命令）
-  - 失败重试 3 次，超时记录日志不降级
-  - ✅ `workers/scheduler.py` + `workers/periodic_jobs.py` + docker-compose 更新（2026-06-14）
-
-- [x] **Step 7: 前端设置页扩展**
-  - 推送设置区块新增：周期推送配置（频率选择器 + 时间选择器 + 时区）
-  - 部门负责人配置：5 个部门各一个飞书 open_id 输入框 + 帮助文案（如何获取 open_id）
-  - 升级规则配置：连续次数 / TOP N / 占比阈值（带默认值）
-  - Aspect-部门映射调整：展示默认映射表，允许用户修改个别 aspect 归属
-  - ✅ `frontend/src/components/settings/smart-push-settings.tsx` + tsc 通过（2026-06-14）
-
-- [x] **Step 8: Settings API 扩展**
-  - 新增 Pydantic schema：`PeriodicPushPayload`、`DeptContactPayload`、`EscalationRulePayload`
-  - 保存/读取端点：与现有 settings API 统一风格
-  - 验证逻辑：open_id 格式校验、时间格式校验、阈值范围校验
-  - ✅ `GET/PATCH /settings/smart-push` + schemas 扩展（2026-06-14）
-
-- [x] **Step 9: 即时推送升级（分析完成触发）**
-  - 修改 `workers/jobs.py`：分析完成后写入 `push_snapshots`（snapshot_type="batch"）
-  - 触发升级判定引擎检查
-  - 如果触发升级：生成行动建议 → 写入行动中心 → 推送包含升级标记
-  - 复用 Step 5 的富文本模板
-  - ✅ `workers/jobs.py` 新增 `_post_analysis_smart_push()` 集成到分析管道末尾（2026-06-14）
-
-- [x] **Step 10: 端到端测试 + 联调**
-  - 单元测试：department_router、escalation 模块规则判定
-  - 集成测试：模拟 3 次连续推送快照，验证升级触发 → LLM 调用 → action_item 写入
-  - 飞书联调：测试群验证富文本格式 + @mention 是否生效
-  - 回归：确保现有"分析完成即时推送"功能不受影响
-  - 前端验收：设置页配置 → 触发推送 → 行动中心查看自动生成的行动项
-  - ✅ 35 个单元/集成/回归测试全部通过，ruff + tsc 通过（2026-06-14）
-
-**配额联动**：
-- Free：仅即时推送（已有能力），无周期推送，无升级机制
-- Pro：即时推送 + 周期推送（每周），升级机制（3 次连续），单产品
-- Team：全部能力，多产品多部门，自定义周期
-
-### 9.4 邀请返佣增长
-
-**目标**：通过现有付费用户口碑推荐获取新用户，CAC 远低于广告投放，同时不侵蚀利润。
-
-**机制**：一次性阶梯返佣（现金为主 + 产品额度为辅）
-
-**核心规则：**
-
-| 项目 | 设定 |
-|------|------|
-| 返佣触发 | 好友通过邀请链接注册 → 完成首次付费 → 7天无退款 |
-| 返佣形式 | 现金（可提现） + 产品分析额度（即时到账） |
-| 阶梯依据 | 推荐人累计有效推荐人数 |
-| 被推荐人优惠 | 首月 8 折 |
-| 推荐人画像 | 现有付费用户（非 KOL/代理模式） |
-
-**阶梯表：**
-
-| 档位 | 累计有效推荐 | 现金奖励/人 | 额度奖励/人 | 推荐人称号 |
-|------|------------|-----------|-----------|-----------|
-| 铜牌 | 1-3 人 | ¥30 | 500 条分析额度 | 推荐新手 |
-| 银牌 | 4-10 人 | ¥50 | 1000 条额度 | 银牌推荐官 |
-| 金牌 | 11+ 人 | ¥80 | 2000 条额度 | 金牌推荐官 |
-
-> 升档后已发放奖励不追溯补差，从新档位起按新比例算。
-
-**经济模型验证（最低套餐 ¥99/月，平均留存 6 个月，LTV = ¥594）：**
-
-| 档位 | CAC（现金） | CAC/LTV | 对比广告获客（通常 30-50%） |
-|------|-----------|---------|--------------------------|
-| 铜牌 | ¥30 | 5% | 远低于广告 |
-| 银牌 | ¥50 | 8.4% | 远低于广告 |
-| 金牌 | ¥80 | 13.5% | 仍然健康 |
-
-额度成本：500 条分析约 ¥2-5（LLM API），可忽略。
-
-**防滥用规则：**
-- 同一设备/IP/手机号 7 天内只算 1 次有效推荐
-- 好友需完成至少 1 次真实分析任务（非空提交）
-- 7 天冷却期内退款 → 佣金不发放
-- 单账号单月最高提现 ¥5000
-- 发现批量刷单 → 冻结账号 + 追回已发佣金
-
-**Files:**
-- Create: `migrations/0XX_referral_rewards.sql`（邀请关系表 + 奖励记录表）
-- Create: `backend_api/app/schemas/referral.py`（Pydantic 模型）
-- Create: `backend_api/app/routes/referral.py`（邀请链接生成、奖励查询、提现申请）
-- Create: `backend_api/app/services/referral.py`（返佣计算、阶梯判定、防滥用校验）
-- Create: `frontend/src/app/(protected)/referral/page.tsx`（邀请中心页面）
-- Modify: `frontend/src/components/app/sidebar.tsx`（新增邀请中心导航入口）
-- Modify: `backend_api/app/main.py`（注册 referral router）
-
-- [ ] **Step 1: 数据库设计**
-  - 新建 `referral_links` 表：id, user_id(推荐人), code(唯一邀请码), created_at
-  - 新建 `referral_relations` 表：id, referrer_id, referee_id, referral_code, registered_at, first_paid_at, is_valid(7天冷却期后确认), created_at
-  - 新建 `referral_rewards` 表：id, user_id(推荐人), referee_id, reward_type('cash'|'quota'), cash_amount, quota_amount, tier_at_time('bronze'|'silver'|'gold'), status('pending'|'confirmed'|'withdrawn'), confirmed_at, withdrawn_at, created_at
-  - 新建 `withdrawal_requests` 表：id, user_id, amount, payment_method('wechat'|'alipay'), account_info(加密), status('pending'|'approved'|'paid'|'rejected'), created_at, processed_at
-  - 索引：referrer_id + is_valid、user_id + status
-
-- [ ] **Step 2: 后端核心逻辑**
-  - 邀请码生成（注册时自动分配唯一码，或用户主动生成）
-  - 注册时识别邀请来源（URL 参数 `?ref=CODE`）
-  - 好友首次付费后触发 7 天倒计时（RQ delayed job）
-  - 7 天后确认有效：计算推荐人当前档位 → 发放对应奖励
-  - 额度即时到账（修改用户 quota）、现金记入可提现余额
-
-- [ ] **Step 3: 前端邀请中心页面**
-  - 展示专属邀请链接 + 二维码（可复制/分享）
-  - 当前档位 + 进度条（"再推荐 X 人升级为银牌"）
-  - 推荐记录列表（好友昵称脱敏、状态：待付费/冷却中/已确认）
-  - 可提现余额 + 提现按钮（最低 ¥50）
-  - 推荐话术模板（一键复制）
-
-- [ ] **Step 4: 被推荐人首月 8 折**
-  - 注册时如携带 ref 参数，自动标记 `referred_by`
-  - Paddle checkout 时应用 20% discount（或走 coupon code）
-  - 折扣从平台毛利让出，不计入推荐人佣金基数
-
-- [ ] **Step 5: 提现流程（Phase 1 - 手动）**
-  - 用户提交提现申请（金额 + 支付宝/微信账号）
-  - 后台管理界面审核列表
-  - 人工每周统一打款
-  - 提现成功后状态更新 + 通知用户
-
-- [ ] **Step 6: 提现流程（Phase 2 - 自动，量起来后）**
-  - 对接微信商户平台「企业付款到零钱」或支付宝「单笔转账」API
-  - 自动审核规则（单笔 ≤ ¥500 自动通过）
-  - 需企业主体 + 支付资质
-
-- [ ] **Step 7: 埋点与数据监控**
-  - PostHog 事件：referral_link_copied、referral_link_shared、referee_registered、referee_paid、reward_confirmed、withdrawal_requested
-  - 核心指标看板：邀请转化率、人均推荐数、各档位分布、总佣金支出/月
-
-- [ ] **Step 8: 验收**
-  - `ruff check` + `tsc typecheck`：PASS
-  - 用户 A 生成邀请链接 → 用户 B 通过链接注册 → B 付费 → 7 天后 A 收到 ¥30 + 500 额度
-  - A 累计推荐 4 人后，第 5 人奖励自动升为 ¥50 + 1000 额度
-  - 提现申请正常创建，管理后台可见
-  - 防刷规则：同 IP 重复注册不计入有效推荐
-
-### 9.5 自研评论标注模型
-
-> **背景**：当前架构每条评论都需实时调用 DeepSeek API（~1-3 秒/条），432 条评论需 Worker 运行数分钟。
-> 竞品 Shulex 采用「自研 tagging model + 预标注入库」模式，用户请求时只做聚合统计，10 秒出结果。
-> 本任务通过知识蒸馏将 DeepSeek 的标注能力迁移到自研轻量模型，实现毫秒级推理 + 离线预标注。
-
-#### 阶段一：数据积累与标注质量监控（2-4 周，无额外开发成本）
-
-**前提**：Worker 增量写入已部署（7.11 bug fix），系统正常积累分析数据。
-
-- [ ] 确认 `comments` 表中已有字段满足训练需求：`content`, `sentiment`, `aspects_json`, `issue_tag`, `highlight_tag`, `is_processed`
-- [ ] 编写数据导出脚本 `scripts/export_training_data.py`：从生产 DB 导出 `is_processed=1` 的评论为 JSONL 格式
-  - 字段：content, rating, sentiment, aspects (from aspects_json), issue_tag, highlight_tag
-  - 过滤条件：`analyzer_version >= 'v2.4'`（确保用最新 prompt 标注的数据）
-  - 目标：≥10,000 条高质量标注样本
-- [ ] 在 `PROGRESS_V2.md` 中设置里程碑追踪：每周统计 `SELECT COUNT(*) FROM comments WHERE is_processed=1 AND analyzer_version >= 'v2.4'`
-- [ ] 建立标注质量基线：从 Golden Set（`data/golden_set/`）中导出人工标注对照集
-
-#### 阶段二：模型选型与 PoC 训练（2 周）
-
-**启动条件**：积累 ≥10,000 条标注数据
-
-- [ ] 模型选型评估（选 1 个）：
-  - 方案 A：`bert-base-chinese` fine-tune（多任务：sentiment + aspect 分类），推理 ~5ms/条
-  - 方案 B：`Qwen2-0.5B` LoRA fine-tune（保留一定生成能力，可输出 JSON），推理 ~50ms/条
-  - 方案 C：`distilbert-multilingual` + 分类头（跨语言支持好，推理 ~3ms/条）
-  - 评估标准：Golden Set 准确率 ≥ 90% + 推理速度 ≤ 50ms/条 + 显存 ≤ 2GB
-- [ ] 搭建训练环境：`review_analyzer/ml/` 目录结构
-  ```
-  review_analyzer/ml/
-  ├── train.py           # 训练脚本
-  ├── evaluate.py        # Golden Set 评测
-  ├── inference.py       # 推理服务封装
-  ├── export_onnx.py     # 导出 ONNX 用于生产部署
-  └── config.yaml        # 模型配置
-  ```
-- [ ] 训练 PoC 模型，在 Golden Set 上评测：
-  - sentiment accuracy ≥ 92%（对标 DeepSeek 的 ~95%）
-  - aspect top-1 key accuracy ≥ 88%
-  - issue_tag / highlight_tag 提取 F1 ≥ 0.85
-- [ ] 成本对比文档：自研模型 vs DeepSeek API（推理速度、成本/条、准确率）
-
-#### 阶段三：双轨运行 — Shadow Mode（2 周）
-
-**启动条件**：PoC 模型 Golden Set 达标
-
-- [ ] 部署自研模型为独立服务（Docker container，GPU 可选 / CPU ONNX 推理）
-- [ ] Worker 新增 Shadow Mode 配置：`USE_LOCAL_MODEL_SHADOW=true`
-  - 每条评论同时调 DeepSeek + 本地模型
-  - 本地模型结果不写入 `comments` 表，写入独立的 `ml_shadow_results` 表
-  - 对比两者的 sentiment / aspect 一致率
-- [ ] 建立自动化对比 dashboard（或定期脚本）：
-  - 一致率 ≥ 95% 进入下一阶段
-  - 不一致的 case 导出为「困难样本」加入训练集（active learning）
-- [ ] 持续迭代：困难样本回灌 → 重新训练 → 评测 → 直到一致率达标
-
-#### 阶段四：切换主链路（1 周）
-
-**启动条件**：Shadow Mode 一致率 ≥ 95% 持续 7 天
-
-- [ ] `workers/jobs.py` 新增模型路由开关：`ANALYSIS_ENGINE=local|deepseek|hybrid`
-  - `local`：全量走自研模型（毫秒级，无 API 成本）
-  - `deepseek`：保持现状（兜底）
-  - `hybrid`：自研模型主 + DeepSeek 对低置信度样本做二次确认
-- [ ] 压测：1000 条评论批量分析，确认 < 30 秒完成（对比当前 ~10 分钟）
-- [ ] 灰度切换：先 10% 流量 → 50% → 100%，每阶段观察 3 天
-- [ ] 切换后 DeepSeek API 降级为 fallback（置信度 < 0.8 时触发）
-
-#### 阶段五：预标注模式（长期方向）
-
-**启动条件**：阶段四成功，且有 9.1 评论自动获取功能
-
-- [ ] 评论入库时自动触发本地模型标注（类 Shulex 模式）
-- [ ] 用户点击「分析」时只做聚合统计 + LLM 摘要（10 秒内出结果）
-- [ ] 定期重标注：新模型版本上线后，对历史评论做批量重标注（夜间 cron job）
-
-#### 里程碑与退出标准
-
-| 里程碑 | 条件 | 预计时间 |
-|--------|------|---------|
-| 数据就绪 | ≥10,000 条 v2.4+ 标注数据 | 阶段一完成 |
-| PoC 达标 | Golden Set sentiment acc ≥ 92% | 阶段二完成 |
-| Shadow 达标 | 7 天一致率 ≥ 95% | 阶段三完成 |
-| 主链路切换 | 1000 条 < 30s + 无准确率回归 | 阶段四完成 |
-| 预标注上线 | 入库即标注 + 用户 10s 出结果 | 阶段五完成 |
-
-#### 成本收益预估
-
-| 维度 | 当前（DeepSeek API） | 目标（自研模型） |
-|------|---------------------|-----------------|
-| 推理速度 | 1-3 秒/条 | 3-50 毫秒/条 |
-| 432 条分析耗时 | 3-10 分钟 | < 30 秒 |
-| 成本/千条 | ¥0.3（API 费用） | ¥0.01（GPU 算力分摊） |
-| Worker 崩溃风险 | 高（长时间进程） | 极低（秒级完成） |
-| 依赖外部 API | 是（DeepSeek 宕机=全挂） | 否（自主可控） |
-
-#### 风险与应对
-
-| 风险 | 应对措施 |
-|------|---------|
-| 标注数据不足 | 阶段一期间优先积累数据；必要时用 DeepSeek 对历史未标注评论补标 |
-| 模型准确率不达标 | 保持 DeepSeek fallback，hybrid 模式不影响用户体验 |
-| GPU 成本 | ONNX 量化后可用 CPU 推理；阿里云 GPU 实例按需开 |
-| 新品类泛化差 | 持续收集用户反馈样本 + 定期 fine-tune |
-
----
-
-### 9 路线图原则
-
-- **不在 9 范围**：PDF 美化报告、A/B 文案批量、避雷文案、关键词命中预警、实时逐条推送 — 这些功能价值有限或可被替代，**永不开发**
-- **触发节奏**：每个里程碑任务必须有付费用户里程碑作为启动条件，避免过早投入
-- **配额联动**：每个新功能上线前同步更新 `COST_PROFIT.md` 的单价表与套餐配额
-- **返佣成本联动**：返佣方案调整时同步更新 `COST_PROFIT.md` 的获客成本模型，确保 CAC/LTV < 15%
-
----
-
-### 新品类接入 SOP（Taxonomy 扩展流程，2026-06-12 定稿）
-
-> **背景**：6.1 建立了 5 个核心品类（家居/3C/服饰/母婴/宠物）的 Taxonomy + 评测体系。
-> 后续新增品类时，按以下分级流程操作，避免重复探索。
-
-#### 一、轻量接入（大多数新品类，半天工作量）
-
-适用场景：用户反馈某品类分析结果"颗粒度粗"，或新签付费用户集中在某品类。
-
-| 步骤 | 操作 | 产物 | 耗时 |
-|------|------|------|------|
-| 1. 数据准备 | 收集该品类 500-3000 条评论（爬虫/用户上传/公开数据集） | `data/raw/{category}/` | 1h |
-| 2. Taxonomy 抽取 | `python3 scripts/extract_taxonomy_generic.py --category {name} --seed data/taxonomy/seeds/{name}.yaml` | `data/taxonomy/v1.0/{category}/{sub_cat}.yaml` | 1-2h（API 费用 ≈ ¥5-15） |
-| 3. 人工 Review | `python3 scripts/build_taxonomy_review_sheet.py` → 人工 review Excel → `python3 scripts/apply_taxonomy_review.py` | 修正后的 YAML | 1-2h |
-| 4. 入库 | `python3 scripts/import_v4t1_assets.py --category {name}` | PG `category_aspect_taxonomy` 表新增行 | 5min |
-| 5. Spot Check | 随机采样 10 条真实评论 → 跑 v2.4 prompt → 确认 Taxonomy 命中率 100% + 品类专属 aspect 有效出现 | 肉眼确认，无需 golden set | 15min |
-| 6. 上线 | 无需改代码（v2.4 动态从 DB 查 taxonomy），清 `taxonomy_loader` 缓存即可生效 | — | 0 |
-
-**验收标准（轻量）：**
-- Taxonomy 命中率 ≥ 95%（抽出的 aspect 落在品类 taxonomy 集内）
-- 品类专属 aspect 至少出现 1-2 个非 base 的 key
-- 零越界（不出现其他品类的专属 aspect）
-
-#### 二、深度验证（高价值核心品类，1-2 天工作量）
-
-适用场景：该品类付费用户超过总付费用户 20%，或客户反馈精度不够需要量化证明改进。
-
-在轻量接入的基础上，额外执行：
-
-| 步骤 | 操作 | 产物 | 耗时 |
-|------|------|------|------|
-| 6. 采样标注 | 从该品类评论中分层采样 50 条（rating × sentiment 交叉），人工标注 gold_sentiment + gold_aspects | `data/golden_set/v1.0/{category}_50.csv` | 3-4h |
-| 7. 评测跑分 | `python3 scripts/eval_v23_vs_v24.py`（改造支持多品类）或独立评测脚本 | 准确率 / 召回率 / F1 指标 | 30min |
-| 8. Bad Case 补充 | 把误判样本加入 `bad_cases` 表，作为后续 few-shot 种子 | `bad_cases` 表新增行 | 30min |
-| 9. 品类专属 few-shot | 在 prompt 末尾注入 2-3 条该品类的 few-shot 示例（6.3 Step 4 框架） | `prompts/annotate_v2.5.md`（若需要） | 1h |
-
-**验收标准（深度）：**
-- 情感准确率 ≥ 92%（对齐家居品类基线）
-- Aspect 抽取 F1 ≥ 0.75（precision × recall 均衡）
-- Bad Case 库该品类至少 10 条
-
-#### 三、工具链速查
-
-| 需求 | 脚本 | 说明 |
-|------|------|------|
-| 预处理原始评论 | `scripts/preprocess_reviews.py` | 按品类 YAML 配置清洗 |
-| Taxonomy 抽取 | `scripts/extract_taxonomy_generic.py` | 支持 seed extends，DeepSeek API |
-| 人工 Review 表 | `scripts/build_taxonomy_review_sheet.py` | 生成 Excel，标注保留/合并/删除 |
-| Review 决策应用 | `scripts/apply_taxonomy_review.py` | 把 review 决策写回 YAML |
-| 入库 | `scripts/import_v4t1_assets.py` | rglob YAML → PG 表，带 keepalive |
-| 评测对比 | `scripts/eval_v23_vs_v24.py` | v2.3 vs v2.4 + 跨品类验证 |
-| 缓存清除 | `taxonomy_loader.clear_cache()` | 新品类入库后需清缓存 |
-
-#### 四、已完成品类清单
-
-| 品类 | sub_category 数 | aspect 总行数 | 验证级别 | 完成日期 |
-|------|----------------|--------------|----------|----------|
-| 家居 | 6 | ~120 | 深度（500 条 golden set） | 2026-06-10 |
-| 3C | 11 | ~190 | 轻量（10 条 spot check） | 2026-06-11 |
-| 服饰 | 8 | ~170 | 轻量（10 条 spot check） | 2026-06-11 |
-| 母婴 | 9 | ~135 | 轻量（10 条 spot check） | 2026-06-11 |
-| 宠物 | 26 | ~450 | 轻量（10 条 spot check） | 2026-06-11 |
-| 户外 | — | — | 未接入（原始数据保留，Erika 决策暂缓） | — |
-
----
-
 ## 7. 运维基建
 
 > **目标**：建立自动化发布流水线，降低人工部署风险，为付费用户提供稳定交付保障。
@@ -2572,9 +1954,9 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 > 触发条件：月付费用户 ≥ 10，或大陆用户访问稳定性成为 Top 3 流失原因
 > 预计耗时：3-4 周（含备案审批等待期）
 > 目标：合规 + 国内用户体验与海外用户一致
-> 备案主体：个体工商户（2026-06-14 确认，详见 Step 5）
+> 备案主体：个体工商户（2026-06-14 确认，详见 Step B1）
 
-- [ ] **Step 5: ICP 备案准备（~2 hr 操作 + 7-20 天等待）**
+- [ ] **Step B1: ICP 备案准备（~2 hr 操作 + 7-20 天等待）**
   - **备案主体：个体工商户**（阿里云备案系统选"企业" → 主体类型"个体工商户"）
   - 前置条件：
     - [x] 域名实名认证（阿里云已完成）
@@ -2599,9 +1981,9 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
     - 网站实际内容需与备案信息一致（SaaS 商业服务，非个人博客）
     - 个体户备案审批速度与企业一致
 
-- [ ] **Step 5.5: 收款接入（备案通过后或并行准备）**
+- [ ] **Step B2: 收款接入（备案通过后或并行准备）**
 
-  #### 5.5.1 ICP 备案 vs ICP 经营许可证（判断依据）
+  #### B2.1 ICP 备案 vs ICP 经营许可证（判断依据）
 
   **核心结论：ClueAI 只需 ICP 备案即可合法收费，不需要 ICP 经营许可证。**
 
@@ -2618,14 +2000,14 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
   **常见误解**：收费 ≠ 经营性 ≠ 必须办 ICP 经营许可证。工信部的执法逻辑关注的是"平台性"而非"是否收费"。
 
-  #### 5.5.2 只需 ICP 备案的业务模式（ClueAI 属于此类）
+  #### B2.2 只需 ICP 备案的业务模式（ClueAI 属于此类）
 
   - ✅ 卖自研 SaaS 工具（订阅制），例如 ClueAI、Notion、腾讯文档订阅版
   - ✅ 卖自己的实体/数字商品（B2C 电商）
   - ✅ 企业官网收咨询费/服务费
   - ✅ 付费内容订阅（内容为自己创作）
 
-  #### 5.5.3 必须办 ICP 经营许可证的业务模式（未来若转型需重新评估）
+  #### B2.3 必须办 ICP 经营许可证的业务模式（未来若转型需重新评估）
 
   - ❌ 交易撮合平台（淘宝、闲鱼、Boss 直聘、大众点评）
   - ❌ 付费信息发布平台（58 同城、招聘网站）
@@ -2633,7 +2015,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - ❌ 网络支付 / 金融业务
   - ❌ 在线游戏运营（另需网络文化经营许可证）
 
-  #### 5.5.4 ClueAI 业务模式核对（6 项判断）
+  #### B2.4 ClueAI 业务模式核对（6 项判断）
 
   | 判断维度 | ClueAI 情况 | 结论 |
   |---------|------------|------|
@@ -2648,28 +2030,28 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - 《互联网信息服务管理办法》第 4 条
   - 《电信业务分类目录（2015版）》B25 信息服务业务
 
-  #### 5.5.5 个体户可用的收款方式
+  #### B2.5 个体户可用的收款方式
 
   - ✅ 支付宝商户号（网页支付 / 当面付）— 个体户直接申请，费率 0.6%
   - ✅ 微信支付商户号 — 个体户可申请，费率 0.6%
   - ❌ Stripe / Paddle — 需境外公司主体，个体户阶段不可用
   - 资金流转：商户号 → 经营者个人银行卡（个体户特权，无需对公账户）
 
-  #### 5.5.6 税务与开票
+  #### B2.6 税务与开票
 
   - 小规模纳税人：年开票 ≤120 万免增值税
   - SaaS 收入税目："信息技术服务"，税率 1%（小规模）/ 6%（一般纳税人）
   - 可开普票；专票需去税务局代开或升为一般纳税人
   - 推荐初期走"核定征收"，报税简单
 
-  #### 5.5.7 备案通过后的合规动作（法定要求，缺失有罚款风险）
+  #### B2.7 备案通过后的合规动作（法定要求，缺失有罚款风险）
 
   - [ ] `frontend/src/app/layout.tsx` footer 添加备案号 `京ICP备2026XXXXXXX号`，链接到 `https://beian.miit.gov.cn`
   - [ ] 网站实际内容与备案信息一致（备案时的"网站名称""服务类型"）
   - [ ] 不在网站上超出营业执照经营范围经营（营业执照主营："软件开发、信息技术咨询服务、技术服务"）
   - [x] 用户协议 / 隐私政策 / 退款政策 / 服务条款上线（已放到 footer）✅ 2026-07-06
 
-- [ ] **Step 5.6: 主体升级评估（持续关注，按触发条件执行）**
+- [ ] **Step B3: 主体升级评估（持续关注，按触发条件执行）**
   - **必须切换到公司主体的触发条件（任一命中即启动）：**
     - 需要申请 ICP 经营许可证（增值电信业务）— 仅限注册资本 ≥100 万的内资公司
     - 年收入超 500 万（强制转一般纳税人，公司形式更合适）
@@ -2680,7 +2062,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - 现阶段结论：**个体户完全够用**，备案能过、收款能做、税务简单（核定征收省心）
   - 建议升级时机：月收入稳定超 10 万 或 需要拿 ICP 经营许可证时
 
-- [ ] **Step 6: 国内 ECS 部署（备案通过后 ~4 hr）**
+- [ ] **Step B4: 国内 ECS 部署（备案通过后 ~4 hr）**
   - 购买阿里云国内 ECS（推荐 2C4G，杭州区或深圳区）
   - 复用现有 `deploy/docker-compose.yml` 部署
   - 国内 ECS 的 `deploy/.env` 配置：
@@ -2690,7 +2072,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - 安装 Docker + 拉取代码 + 构建 + 启动
   - 验证国内 ECS 各服务正常
 
-- [ ] **Step 7: DNS 智能解析（~30 min）**
+- [ ] **Step B5: DNS 智能解析（~30 min）**
   - 从 Cloudflare 切回阿里云 DNS（阿里云 DNS 支持按地域解析）
   - 或使用 Cloudflare 付费版 Geo Steering（$20/月，不推荐早期）
   - 推荐方案（阿里云 DNS）：
@@ -2699,12 +2081,12 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
     - 或统一走 Cloudflare 但 origin 按 geo 分流
   - 验证：国内 `dig` 解析到国内 IP，海外解析到 HK IP
 
-- [ ] **Step 8: 国内 HTTPS + CDN（~30 min）**
+- [ ] **Step B6: 国内 HTTPS + CDN（~30 min）**
   - 国内 ECS 签发 SSL 证书（阿里云免费证书 或 Let's Encrypt）
   - 可选：接入阿里云 CDN（需备案后才能用国内加速）
   - 备案号添加到 `frontend/src/app/layout.tsx` 底部 footer
 
-- [ ] **Step 9: 验收**
+- [ ] **Step B7: 验收**
   - 国内用户访问 `clueai-reviewlens.com` → 解析到国内 ECS
   - 海外用户访问同域名 → 解析到香港 ECS
   - 注册/登录/上传/分析全流程国内可用
@@ -4353,5 +3735,623 @@ CREATE TABLE workspace_invitations (
 
 **时间估算**：6-7 周（Week 1 Erika 手动 + Week 2-5 Claude 开发）
 **参考文档**：[OVERSEAS_COMPLIANCE_PLAN.md](OVERSEAS_COMPLIANCE_PLAN.md)
+
+---
+
+## 9. 增值功能
+
+> **目标**：上线后根据用户反馈分阶段引入新能力，避免一次开发太多导致延期。
+> 详细成本与定价配套见 `COST_PROFIT.md`。
+
+### 9.1 评论自动获取
+
+**痛点**：当前用户必须手动准备评论 Excel，门槛高，导致 Free 用户上手率低。
+
+**技术调研结论（2026-06-15 更新）**：
+
+评论自动获取存在三条路径，推荐分阶段推进：
+
+| 路径 | 方式 | 优势 | 劣势 | 状态 |
+|------|------|------|------|------|
+| **Rainforest API（后端自动）** | 服务端按 ASIN 调用 API 获取结构化评论 | 全自动、数据稳定、按需批量 | 有月费（$49起） | ✅ 单次拉取已实现 |
+| Chrome 插件（前端抓取） | 用户浏览亚马逊时，插件 parse DOM 提取评论 | 零服务端成本、利用用户登录态 | 需用户主动触发、受页面改版影响 | 后置 |
+| Amazon SP-API（卖家授权） | OAuth 授权后自动发现 ASIN + 拉取数据 | 最佳用户体验 | 需 Professional Seller 账号 + 审批 2-4 周 + 无法获取评论全文 | ❌ 当前阶段不走 |
+
+**SP-API 不推荐原因（2026-06-15 调研结论）**：
+1. 硬性要求拥有 Amazon Professional Seller 账号（$39.99/月）
+2. 开发者审批 2-4 周且早期产品易被拒
+3. SP-API 没有获取评论全文的端点（只有 Catalog/Orders 类权限）
+4. 即使通过审批，仍需 Rainforest 拉评论内容——SP-API 唯一增量价值是"自动发现 ASIN"
+5. 等 10+ 付费用户后再申请审批更容易通过
+
+**推荐路径：Rainforest API 三步走**
+- Phase 1：批量 ASIN 管理 + 定时自动拉取（无审批，现在可做）
+- Phase 2：Chrome 插件辅助（补充免费用户渠道）
+- Phase 3：SP-API 授权自动发现 ASIN（有 10+ 付费用户后启动）
+
+**第三方 API 选型对比**：
+
+| 维度 | Rainforest API（Traject Data）✅ 推荐 | Oxylabs E-Commerce Scraper |
+|------|--------------------------------------|---------------------------|
+| 定位 | 专注 Amazon/电商数据 | 通用爬虫 + 电商 API |
+| 入门价 | $49/月 = 5,000 请求 | $49/月 = 5,000 请求 |
+| 单次成本 | ~$0.01/请求 | ~$0.01/请求 |
+| 响应速度 | 2-5 秒 | 3-8 秒 |
+| 数据字段 | 评论文本/评分/日期/变体/图片/Verified/Helpful votes | 同等 |
+| 多国站点 | 16 个 Amazon 站点 | 主要站点 |
+| 免费试用 | 100 次（无需销售沟通） | 需申请 |
+| 文档质量 | 评论场景专属文档，字段映射清晰 | 通用文档 |
+
+**成本估算**（$49/月 Starter 套餐）：
+- 每次 API 请求返回 10 条评论
+- 日均可用：~166 次请求 = **~1,660 条评论/天**
+- 典型场景：10 ASIN × 5 页 = 50 请求/天，月用量 ~1,500 次，绰绰有余
+- 大批量场景（100 ASIN × 50 页）可临时升级 $99/月（15,000 请求）
+
+---
+
+#### Phase 1: 批量 ASIN 管理 + 定时自动拉取（立即可做，无外部审批）
+
+**目标**：卖家输入自己的 ASIN 列表，系统自动定时拉取新评论并分析，体验接近"连接店铺"。
+
+**已实现基础**：
+- [x] `backend_api/app/services/rainforest.py` — Rainforest API 封装（16 站点、翻页、结构化解析）
+- [x] `backend_api/app/routes/scrape.py` — `POST /reviews/fetch-by-asin` 端点
+- [x] `workers/jobs.py` — `process_asin_fetch_job` 异步 Worker（拉取→存储→触发分析）
+- [x] `backend_api/app/schemas/scrape.py` — ASIN 校验 schema
+- [x] 配额控制：`quota_check(user_id, "asin_fetch")`（daily 周期：Free 1次/天, Pro 10次/天）
+- [x] `migrations/017_add_source_channel.sql` — comments/upload_jobs 新增 `source_channel` 字段
+- [x] `review_analyzer/quota.py` — 新增 `asin_fetch` 维度 + `daily` 周期类型支持
+- [x] `review_analyzer/database.py` — `create_upload_job` 支持 `source_channel` 写入
+- [x] `frontend/src/components/upload/asin-fetch-panel.tsx` — ASIN 拉取前端面板
+- [x] `frontend/src/app/upload/page.tsx` — 上传页增加"文件上传 / ASIN 自动拉取"双 Tab
+- [x] `frontend/src/lib/api/browser.ts` — `fetchByAsin` API 调用函数
+- [x] `requirements.txt` — 添加 `httpx>=0.27.0`
+- [x] Rainforest API Key 已配置并验证通过（免费额度 96 次）
+- [x] Fallback 机制：`type=reviews` 503 时自动降级到 `type=product` + `top_reviews`
+
+**Files:**
+- Create: `migrations/017_asin_watchlist.sql`（ASIN 监控列表表）
+- Create: `backend_api/app/routes/asin_watchlist.py`（ASIN 列表 CRUD 路由）
+- Create: `backend_api/app/schemas/asin_watchlist.py`（请求/响应 schema）
+- Create: `workers/asin_scheduler.py`（定时拉取调度器）
+- Modify: `frontend/src/app/products/page.tsx`（产品页增加 ASIN 绑定区块）
+- Modify: `workers/periodic_jobs.py`（注册定时拉取 job）
+- Modify: `review_analyzer/notifier.py`（新评论变化通知）
+
+- [x] **Step 1: ASIN 监控列表数据模型**
+  - 新增 `asin_watchlist` 表：
+    ```sql
+    CREATE TABLE IF NOT EXISTS asin_watchlist (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        asin TEXT NOT NULL,
+        marketplace TEXT NOT NULL DEFAULT 'us',
+        product_name TEXT,
+        product_id INTEGER REFERENCES products(id),
+        fetch_frequency TEXT DEFAULT 'daily',  -- daily / weekly / manual
+        last_fetched_at TIMESTAMPTZ,
+        last_review_count INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'active',  -- active / paused / error
+        error_message TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, asin, marketplace)
+    );
+    ```
+  - 配额限制：Free 限 3 个 ASIN、Pro 限 20 个、Team 限 100 个
+
+- [x] **Step 2: ASIN 列表 CRUD API**
+  - `POST /asin-watchlist` — 添加 ASIN（支持单个或批量，最多 20 个/次）
+  - `GET /asin-watchlist` — 获取当前用户的监控列表（含状态、上次拉取时间、评论增量）
+  - `PATCH /asin-watchlist/{id}` — 修改频率 / 暂停 / 恢复
+  - `DELETE /asin-watchlist/{id}` — 移除监控
+  - `POST /asin-watchlist/{id}/fetch-now` — 立即触发一次拉取（扣配额）
+  - 添加时自动调用 `fetch_product_info` 获取产品名称/品类（已实现于 `rainforest.py`）
+
+- [x] **Step 3: 定时拉取调度**
+  - 基于 `rq-scheduler`（已在 9.3 引入）
+  - 每天凌晨 2:00 UTC 扫描所有 `status=active` 且 `fetch_frequency=daily` 的记录
+  - 每周一凌晨扫描 `fetch_frequency=weekly` 的记录
+  - 对每个 ASIN 入队一个 `process_asin_fetch_job`（复用现有 worker）
+  - 并发控制：同一用户最多 5 个并发拉取任务
+  - 失败重试：最多 3 次，第 3 次失败后标记 `status=error` 并通知用户
+  - **2026-06-30 优化**：定时抓取数据源从 Rainforest API（付费）切换为 woot.com（免费），零 API 成本实现自动监控。调用统一入口 `fetch_reviews()` → woot.com AJAX API
+
+- [x] **Step 4: 增量检测 + 去重**
+  - 拉取后与上次结果对比：按 `review_id` 去重，只入库新增评论
+  - 记录 `last_review_count`，如果新增 > 0 条：
+    - 自动触发分析 job
+    - 推送通知："{product_name} 新增 {N} 条评论，已自动分析"
+  - 如果连续 3 次拉取无新增 → 自动降频（daily→weekly），节约 API 配额
+
+- [x] **Step 5: 前端 — 产品页 ASIN 绑定**
+  - 产品管理页每个产品卡片增加"监控 ASIN"区块
+  - 支持：手动输入 ASIN / 粘贴 Amazon URL 自动提取 / 上传 CSV（一列 ASIN）
+  - 显示：监控状态、上次拉取时间、评论增量趋势迷你图
+  - 操作：立即刷新、暂停、删除
+  - 新用户引导："粘贴你的 Amazon 产品链接，系统自动每天更新评论"
+
+- [x] **Step 6: 前端 — 独立 ASIN 监控面板**
+  - 新建 `/data-sources` 页面（或在产品管理内作为 Tab）
+  - 全局视图：所有监控 ASIN 的状态一览
+  - 批量操作：全部暂停 / 全部恢复 / 批量添加
+  - 配额用量显示：本月已用 / 剩余 / 预估超量提醒
+
+- [x] **Step 7: 通知 + 异常报警**
+  - 新评论通知（飞书/邮件）："{product} 新增 {N} 条评论，负面率 {x}%，较上次{↑/↓}"
+  - 异常报警：负面率突增（>10pp）、差评数连续 3 天上升
+  - 配额预警：本月 API 调用量达 80% 时提醒用户
+
+- [ ] **Step 8: 验收**
+  - 用户添加 3 个 ASIN → 系统每天自动拉取 → 新增评论自动入库并分析
+  - 产品页能看到"最近 7 天评论增量"趋势
+  - 飞书收到新评论通知
+  - 配额用完后自动暂停拉取，不超额
+  - 手动"立即刷新"按钮可用
+
+- [ ] **Step 9: 回滚边界**
+  - 仅回滚本 Phase 新增文件 + 相关路由注册
+  - 不影响现有手动上传和单次 ASIN 拉取功能
+
+---
+
+#### Phase 2: Chrome 插件（后置，补充免费用户渠道）
+
+> 触发条件：Phase 1 稳定运行 + 有用户反馈"不想花 Rainforest 配额"
+
+- [ ] **Step 10: Manifest V3 插件骨架**
+  - 支持 Amazon US/UK/DE/JP 评论页面
+  - 一键"抓取本页评论"，最多翻页 10 页
+  - 插件内登录校验，上传到 `POST /reviews/plugin-upload`
+- [ ] **Step 11: 后端接收 + 去重**
+  - 统一去重逻辑：按 (asin + reviewer_id + review_date) 去重
+  - 配额扣减：插件渠道 Free 限 100 条/次、Pro 限 1000 条/次
+  - `source_channel` 字段标记来源
+
+---
+
+#### Phase 3: SP-API 授权自动发现 ASIN（后置）
+
+> 触发条件：付费用户 ≥ 10 + 有明确客户需求"希望自动同步店铺"
+> 前置条件：拥有 Amazon Professional Seller 账号 + 通过 SP-API 开发者审批
+
+- [ ] **Step 12: SP-API 开发者注册**
+  - 注册 Amazon Professional Seller 账号（$39.99/月）
+  - 申请 SP-API 开发者资格
+  - 创建 LWA（Login with Amazon）应用
+  - 申请 `Catalog Items` 权限组（用于获取卖家 ASIN 列表）
+  - 准备审核材料：产品截图、数据安全政策页、隐私政策页
+
+- [ ] **Step 13: OAuth 授权流程**
+  - 前端"连接 Amazon 店铺"按钮 → 跳转 Amazon OAuth 授权页
+  - 回调处理：获取 refresh_token → 加密存储
+  - 调用 Catalog Items API 拉取卖家所有在售 ASIN
+  - 自动创建 `asin_watchlist` 记录（复用 Phase 1 基础设施）
+
+- [ ] **Step 14: 自动 ASIN 同步**
+  - 每周同步一次卖家 ASIN 列表（新增/下架检测）
+  - 新增 ASIN 自动加入监控、下架 ASIN 自动暂停
+  - 配合 Phase 1 定时拉取，实现全自动闭环
+
+### 9.2 API 调用
+
+**目标**：服务代运营 Agency 与中型卖家的自动化需求。
+
+**Files:**
+- Create: `backend_api/app/routers/v1/api.py`（v1 公开 API）
+- Create: `backend_api/app/services/api_key.py`（API Key 生成/校验/限流）
+- Modify: `supabase_schema.sql`（增加 `api_keys` 表）
+
+- [ ] **Step 1: API Key 生成 + 管理界面**
+  - 用户中心增加"我的 API Keys"页面
+  - 单用户最多 5 个 Key，可命名、启停、查看用量
+- [ ] **Step 2: 核心端点**
+  - POST /v1/analyze（提交评论，异步返回 task_id）
+  - GET /v1/tasks/{task_id}（查询分析结果）
+  - GET /v1/usage（查询本月用量）
+- [ ] **Step 3: 限流 + 配额**
+  - Team 档：10000 次调用/月
+  - 单 Key 限速 60 次/分钟（防滥用）
+  - 超额按 ¥0.05/次计费
+- [ ] **Step 4: 文档站**
+  - mkdocs / Mintlify 搭建 docs.clueai.com
+  - OpenAPI Spec 自动生成 + Postman Collection
+
+### 9.3 智能推送 + 分责路由 + 升级行动闭环
+
+**目标**：定期推送产品 TOP 10 问题/亮点到飞书群，按责任部门分板块 @负责人；连续多期 TOP 问题自动升级，LLM 生成行动建议并写入行动中心，形成"发现→通知→行动→复盘"完整闭环。
+
+**竞品差异化**：Enterpret/Birdie/Shulex 等竞品止步于通知层，无一实现"连续升级→自动行动建议→回写追踪"闭环。
+
+**决策记录（2026-06-14 Erika 确认）**：
+- 推送触发：即时推送（已有）+ 周期汇总推送（新增）
+- 连续性：以推送周期为单位计数（连续 N 个推送周期）
+- 行动建议：LLM 自动生成 → 写入行动中心（status=todo）→ 飞书通知负责人确认
+- 消息结构：一条消息分板块（运营/质检/产研/客服/其他）
+- 分责规则：Aspect Taxonomy 自动映射 + 用户可在设置中调整
+- 周期：用户完全自定义（每日/每周/每两周/每月 + 具体时间）
+
+**Files:**
+- Create: `review_analyzer/department_router.py`（aspect→部门映射引擎）
+- Create: `review_analyzer/escalation.py`（升级判定引擎）
+- Create: `backend_api/app/services/action_advisor.py`（LLM 行动建议生成）
+- Create: `workers/periodic_jobs.py`（周期汇总推送 job）
+- Create: `workers/scheduler.py`（rq-scheduler 启动入口）
+- Create: `migrations/016_push_snapshots.sql`（快照表 + 升级状态表）
+- Modify: `review_analyzer/notifier.py`（升级为富文本分板块格式 + @mention）
+- Modify: `backend_api/app/schemas/settings.py`（新增周期/部门联系人/升级规则 schema）
+- Modify: `backend_api/app/routes/settings.py`（新增配置端点）
+- Modify: `frontend/src/components/settings/settings-panel.tsx`（新设置区块）
+- Modify: `workers/jobs.py`（分析完成后写入 push_snapshot）
+- Modify: `deploy/docker-compose.yml`（新增 scheduler service）
+
+**5 个责任部门分类**：
+
+| 部门 | 代码标识 | 对应 Aspect 举例 | 飞书 @对象 |
+|------|---------|-----------------|-----------|
+| 运营 | `ops` | value_for_money | 运营负责人 open_id |
+| 产品质检 | `qa` | durability, material, build_quality, packaging, shipping_damage, missing_parts, smell, safety | 质检负责人 open_id |
+| 产研 | `product` | aesthetics, comfort, size_fit, assembly, instructions, ease_of_use, weight_capacity, color_accuracy | 产研负责人 open_id |
+| 客服 | `cs` | customer_service | 客服负责人 open_id |
+| 其他 | `other` | other | 默认群通知 |
+
+- [x] **Step 1: 数据库 — 推送快照 + 升级状态表**
+  - `push_snapshots` 表：记录每次推送时的 TOP 问题排名和占比快照
+  - `issue_escalation_state` 表：记录每个问题标签的连续命中次数和升级状态
+  - 字段设计：`snapshot_type`（batch/periodic）、`top_issues` JSONB、`consecutive_count`、`escalated_at`
+  - 索引：user_id + product_id 组合索引
+  - ✅ `migrations/016_push_snapshots.sql` + `review_analyzer/push_snapshot_store.py`（2026-06-14）
+
+- [x] **Step 2: 部门映射引擎**
+  - 基于 `scripts/aspect_taxonomy.py` 的 FURNITURE_ASPECTS 建立默认 aspect→dept 映射表
+  - 用户自定义映射存入 `push_settings.dept_mapping` 字段，覆盖默认值
+  - 核心函数：`route_issues_by_department(top_issues, user_mapping) → dict[dept, list[issue]]`
+  - 支持多品类：不同品类的 taxonomy 映射到同一套部门体系
+  - ✅ `review_analyzer/department_router.py`（2026-06-14）
+
+- [x] **Step 3: 升级判定引擎**
+  - 每次生成推送快照时，更新 `issue_escalation_state` 的连续计数
+  - 升级条件（OR 关系，用户可配置）：连续 N 次在 TOP K **或** 占比超过阈值
+  - 默认配置：连续 3 个周期、TOP 3、占比 10%
+  - 已升级且 action_item 未完结的问题不重复升级
+  - 问题标签归一化：基于 aspect key 判断，避免同义标签重复计数
+  - ✅ `review_analyzer/escalation.py` + 18 个单元测试通过（2026-06-14）
+
+- [x] **Step 4: LLM 行动建议生成**
+  - 升级触发时调用 DeepSeek 生成行动建议
+  - Prompt 输入：问题标签 + 近 N 期占比趋势 + 责任部门 + 产品信息 + TOP 5 代表性评论原文
+  - Prompt 输出（structured JSON）：action_title / suggested_action / expected_timeline / priority
+  - 自动调用 `create_action_item()` 写入行动中心，status="todo"，owner_role=对应部门
+  - 成本控制：单次升级约 1 次 LLM 调用，不会批量触发
+  - ✅ `backend_api/app/services/action_advisor.py`（2026-06-14）
+
+- [x] **Step 5: 飞书富文本推送（分板块 + @mention）**
+  - 升级 `notifier.py` 为 `post`（富文本）消息格式
+  - 消息模板：产品标题 → 各部门板块（含 @mention）→ 升级行动摘要 → 亮点 TOP 3
+  - @mention 实现：`{"tag": "at", "user_id": "ou_xxx"}`，open_id 从用户设置读取
+  - 升级的问题标注 🔴 + ⚡ 视觉突出
+  - 无 open_id 配置时降级为文本提及（不 @）
+  - ✅ `review_analyzer/notifier.py` 新增 `build_rich_push_content()` + `send_rich_push()` + 9 个单元测试（2026-06-14）
+
+- [x] **Step 6: 周期调度器（rq-scheduler）**
+  - 新增 `workers/scheduler.py` 启动 rq-scheduler
+  - 用户配置存入 `push_settings.periodic_push`：frequency / day_of_week / day_of_month / time / timezone
+  - 调度逻辑：scheduler 进程每分钟扫描订阅，到期的用户触发 `periodic_digest_job`
+  - docker-compose 新增 scheduler service（复用 worker 镜像，不同启动命令）
+  - 失败重试 3 次，超时记录日志不降级
+  - ✅ `workers/scheduler.py` + `workers/periodic_jobs.py` + docker-compose 更新（2026-06-14）
+
+- [x] **Step 7: 前端设置页扩展**
+  - 推送设置区块新增：周期推送配置（频率选择器 + 时间选择器 + 时区）
+  - 部门负责人配置：5 个部门各一个飞书 open_id 输入框 + 帮助文案（如何获取 open_id）
+  - 升级规则配置：连续次数 / TOP N / 占比阈值（带默认值）
+  - Aspect-部门映射调整：展示默认映射表，允许用户修改个别 aspect 归属
+  - ✅ `frontend/src/components/settings/smart-push-settings.tsx` + tsc 通过（2026-06-14）
+
+- [x] **Step 8: Settings API 扩展**
+  - 新增 Pydantic schema：`PeriodicPushPayload`、`DeptContactPayload`、`EscalationRulePayload`
+  - 保存/读取端点：与现有 settings API 统一风格
+  - 验证逻辑：open_id 格式校验、时间格式校验、阈值范围校验
+  - ✅ `GET/PATCH /settings/smart-push` + schemas 扩展（2026-06-14）
+
+- [x] **Step 9: 即时推送升级（分析完成触发）**
+  - 修改 `workers/jobs.py`：分析完成后写入 `push_snapshots`（snapshot_type="batch"）
+  - 触发升级判定引擎检查
+  - 如果触发升级：生成行动建议 → 写入行动中心 → 推送包含升级标记
+  - 复用 Step 5 的富文本模板
+  - ✅ `workers/jobs.py` 新增 `_post_analysis_smart_push()` 集成到分析管道末尾（2026-06-14）
+
+- [x] **Step 10: 端到端测试 + 联调**
+  - 单元测试：department_router、escalation 模块规则判定
+  - 集成测试：模拟 3 次连续推送快照，验证升级触发 → LLM 调用 → action_item 写入
+  - 飞书联调：测试群验证富文本格式 + @mention 是否生效
+  - 回归：确保现有"分析完成即时推送"功能不受影响
+  - 前端验收：设置页配置 → 触发推送 → 行动中心查看自动生成的行动项
+  - ✅ 35 个单元/集成/回归测试全部通过，ruff + tsc 通过（2026-06-14）
+
+**配额联动**：
+- Free：仅即时推送（已有能力），无周期推送，无升级机制
+- Pro：即时推送 + 周期推送（每周），升级机制（3 次连续），单产品
+- Team：全部能力，多产品多部门，自定义周期
+
+### 9.4 邀请返佣增长
+
+**目标**：通过现有付费用户口碑推荐获取新用户，CAC 远低于广告投放，同时不侵蚀利润。
+
+**机制**：一次性阶梯返佣（现金为主 + 产品额度为辅）
+
+**核心规则：**
+
+| 项目 | 设定 |
+|------|------|
+| 返佣触发 | 好友通过邀请链接注册 → 完成首次付费 → 7天无退款 |
+| 返佣形式 | 现金（可提现） + 产品分析额度（即时到账） |
+| 阶梯依据 | 推荐人累计有效推荐人数 |
+| 被推荐人优惠 | 首月 8 折 |
+| 推荐人画像 | 现有付费用户（非 KOL/代理模式） |
+
+**阶梯表：**
+
+| 档位 | 累计有效推荐 | 现金奖励/人 | 额度奖励/人 | 推荐人称号 |
+|------|------------|-----------|-----------|-----------|
+| 铜牌 | 1-3 人 | ¥30 | 500 条分析额度 | 推荐新手 |
+| 银牌 | 4-10 人 | ¥50 | 1000 条额度 | 银牌推荐官 |
+| 金牌 | 11+ 人 | ¥80 | 2000 条额度 | 金牌推荐官 |
+
+> 升档后已发放奖励不追溯补差，从新档位起按新比例算。
+
+**经济模型验证（最低套餐 ¥99/月，平均留存 6 个月，LTV = ¥594）：**
+
+| 档位 | CAC（现金） | CAC/LTV | 对比广告获客（通常 30-50%） |
+|------|-----------|---------|--------------------------|
+| 铜牌 | ¥30 | 5% | 远低于广告 |
+| 银牌 | ¥50 | 8.4% | 远低于广告 |
+| 金牌 | ¥80 | 13.5% | 仍然健康 |
+
+额度成本：500 条分析约 ¥2-5（LLM API），可忽略。
+
+**防滥用规则：**
+- 同一设备/IP/手机号 7 天内只算 1 次有效推荐
+- 好友需完成至少 1 次真实分析任务（非空提交）
+- 7 天冷却期内退款 → 佣金不发放
+- 单账号单月最高提现 ¥5000
+- 发现批量刷单 → 冻结账号 + 追回已发佣金
+
+**Files:**
+- Create: `migrations/0XX_referral_rewards.sql`（邀请关系表 + 奖励记录表）
+- Create: `backend_api/app/schemas/referral.py`（Pydantic 模型）
+- Create: `backend_api/app/routes/referral.py`（邀请链接生成、奖励查询、提现申请）
+- Create: `backend_api/app/services/referral.py`（返佣计算、阶梯判定、防滥用校验）
+- Create: `frontend/src/app/(protected)/referral/page.tsx`（邀请中心页面）
+- Modify: `frontend/src/components/app/sidebar.tsx`（新增邀请中心导航入口）
+- Modify: `backend_api/app/main.py`（注册 referral router）
+
+- [ ] **Step 1: 数据库设计**
+  - 新建 `referral_links` 表：id, user_id(推荐人), code(唯一邀请码), created_at
+  - 新建 `referral_relations` 表：id, referrer_id, referee_id, referral_code, registered_at, first_paid_at, is_valid(7天冷却期后确认), created_at
+  - 新建 `referral_rewards` 表：id, user_id(推荐人), referee_id, reward_type('cash'|'quota'), cash_amount, quota_amount, tier_at_time('bronze'|'silver'|'gold'), status('pending'|'confirmed'|'withdrawn'), confirmed_at, withdrawn_at, created_at
+  - 新建 `withdrawal_requests` 表：id, user_id, amount, payment_method('wechat'|'alipay'), account_info(加密), status('pending'|'approved'|'paid'|'rejected'), created_at, processed_at
+  - 索引：referrer_id + is_valid、user_id + status
+
+- [ ] **Step 2: 后端核心逻辑**
+  - 邀请码生成（注册时自动分配唯一码，或用户主动生成）
+  - 注册时识别邀请来源（URL 参数 `?ref=CODE`）
+  - 好友首次付费后触发 7 天倒计时（RQ delayed job）
+  - 7 天后确认有效：计算推荐人当前档位 → 发放对应奖励
+  - 额度即时到账（修改用户 quota）、现金记入可提现余额
+
+- [ ] **Step 3: 前端邀请中心页面**
+  - 展示专属邀请链接 + 二维码（可复制/分享）
+  - 当前档位 + 进度条（"再推荐 X 人升级为银牌"）
+  - 推荐记录列表（好友昵称脱敏、状态：待付费/冷却中/已确认）
+  - 可提现余额 + 提现按钮（最低 ¥50）
+  - 推荐话术模板（一键复制）
+
+- [ ] **Step 4: 被推荐人首月 8 折**
+  - 注册时如携带 ref 参数，自动标记 `referred_by`
+  - Paddle checkout 时应用 20% discount（或走 coupon code）
+  - 折扣从平台毛利让出，不计入推荐人佣金基数
+
+- [ ] **Step 5: 提现流程（Phase 1 - 手动）**
+  - 用户提交提现申请（金额 + 支付宝/微信账号）
+  - 后台管理界面审核列表
+  - 人工每周统一打款
+  - 提现成功后状态更新 + 通知用户
+
+- [ ] **Step 6: 提现流程（Phase 2 - 自动，量起来后）**
+  - 对接微信商户平台「企业付款到零钱」或支付宝「单笔转账」API
+  - 自动审核规则（单笔 ≤ ¥500 自动通过）
+  - 需企业主体 + 支付资质
+
+- [ ] **Step 7: 埋点与数据监控**
+  - PostHog 事件：referral_link_copied、referral_link_shared、referee_registered、referee_paid、reward_confirmed、withdrawal_requested
+  - 核心指标看板：邀请转化率、人均推荐数、各档位分布、总佣金支出/月
+
+- [ ] **Step 8: 验收**
+  - `ruff check` + `tsc typecheck`：PASS
+  - 用户 A 生成邀请链接 → 用户 B 通过链接注册 → B 付费 → 7 天后 A 收到 ¥30 + 500 额度
+  - A 累计推荐 4 人后，第 5 人奖励自动升为 ¥50 + 1000 额度
+  - 提现申请正常创建，管理后台可见
+  - 防刷规则：同 IP 重复注册不计入有效推荐
+
+### 9.5 自研评论标注模型
+
+> **背景**：当前架构每条评论都需实时调用 DeepSeek API（~1-3 秒/条），432 条评论需 Worker 运行数分钟。
+> 竞品 Shulex 采用「自研 tagging model + 预标注入库」模式，用户请求时只做聚合统计，10 秒出结果。
+> 本任务通过知识蒸馏将 DeepSeek 的标注能力迁移到自研轻量模型，实现毫秒级推理 + 离线预标注。
+
+#### 阶段一：数据积累与标注质量监控（2-4 周，无额外开发成本）
+
+**前提**：Worker 增量写入已部署（7.11 bug fix），系统正常积累分析数据。
+
+- [ ] 确认 `comments` 表中已有字段满足训练需求：`content`, `sentiment`, `aspects_json`, `issue_tag`, `highlight_tag`, `is_processed`
+- [ ] 编写数据导出脚本 `scripts/export_training_data.py`：从生产 DB 导出 `is_processed=1` 的评论为 JSONL 格式
+  - 字段：content, rating, sentiment, aspects (from aspects_json), issue_tag, highlight_tag
+  - 过滤条件：`analyzer_version >= 'v2.4'`（确保用最新 prompt 标注的数据）
+  - 目标：≥10,000 条高质量标注样本
+- [ ] 在 `PROGRESS_V2.md` 中设置里程碑追踪：每周统计 `SELECT COUNT(*) FROM comments WHERE is_processed=1 AND analyzer_version >= 'v2.4'`
+- [ ] 建立标注质量基线：从 Golden Set（`data/golden_set/`）中导出人工标注对照集
+
+#### 阶段二：模型选型与 PoC 训练（2 周）
+
+**启动条件**：积累 ≥10,000 条标注数据
+
+- [ ] 模型选型评估（选 1 个）：
+  - 方案 A：`bert-base-chinese` fine-tune（多任务：sentiment + aspect 分类），推理 ~5ms/条
+  - 方案 B：`Qwen2-0.5B` LoRA fine-tune（保留一定生成能力，可输出 JSON），推理 ~50ms/条
+  - 方案 C：`distilbert-multilingual` + 分类头（跨语言支持好，推理 ~3ms/条）
+  - 评估标准：Golden Set 准确率 ≥ 90% + 推理速度 ≤ 50ms/条 + 显存 ≤ 2GB
+- [ ] 搭建训练环境：`review_analyzer/ml/` 目录结构
+  ```
+  review_analyzer/ml/
+  ├── train.py           # 训练脚本
+  ├── evaluate.py        # Golden Set 评测
+  ├── inference.py       # 推理服务封装
+  ├── export_onnx.py     # 导出 ONNX 用于生产部署
+  └── config.yaml        # 模型配置
+  ```
+- [ ] 训练 PoC 模型，在 Golden Set 上评测：
+  - sentiment accuracy ≥ 92%（对标 DeepSeek 的 ~95%）
+  - aspect top-1 key accuracy ≥ 88%
+  - issue_tag / highlight_tag 提取 F1 ≥ 0.85
+- [ ] 成本对比文档：自研模型 vs DeepSeek API（推理速度、成本/条、准确率）
+
+#### 阶段三：双轨运行 — Shadow Mode（2 周）
+
+**启动条件**：PoC 模型 Golden Set 达标
+
+- [ ] 部署自研模型为独立服务（Docker container，GPU 可选 / CPU ONNX 推理）
+- [ ] Worker 新增 Shadow Mode 配置：`USE_LOCAL_MODEL_SHADOW=true`
+  - 每条评论同时调 DeepSeek + 本地模型
+  - 本地模型结果不写入 `comments` 表，写入独立的 `ml_shadow_results` 表
+  - 对比两者的 sentiment / aspect 一致率
+- [ ] 建立自动化对比 dashboard（或定期脚本）：
+  - 一致率 ≥ 95% 进入下一阶段
+  - 不一致的 case 导出为「困难样本」加入训练集（active learning）
+- [ ] 持续迭代：困难样本回灌 → 重新训练 → 评测 → 直到一致率达标
+
+#### 阶段四：切换主链路（1 周）
+
+**启动条件**：Shadow Mode 一致率 ≥ 95% 持续 7 天
+
+- [ ] `workers/jobs.py` 新增模型路由开关：`ANALYSIS_ENGINE=local|deepseek|hybrid`
+  - `local`：全量走自研模型（毫秒级，无 API 成本）
+  - `deepseek`：保持现状（兜底）
+  - `hybrid`：自研模型主 + DeepSeek 对低置信度样本做二次确认
+- [ ] 压测：1000 条评论批量分析，确认 < 30 秒完成（对比当前 ~10 分钟）
+- [ ] 灰度切换：先 10% 流量 → 50% → 100%，每阶段观察 3 天
+- [ ] 切换后 DeepSeek API 降级为 fallback（置信度 < 0.8 时触发）
+
+#### 阶段五：预标注模式（长期方向）
+
+**启动条件**：阶段四成功，且有 9.1 评论自动获取功能
+
+- [ ] 评论入库时自动触发本地模型标注（类 Shulex 模式）
+- [ ] 用户点击「分析」时只做聚合统计 + LLM 摘要（10 秒内出结果）
+- [ ] 定期重标注：新模型版本上线后，对历史评论做批量重标注（夜间 cron job）
+
+#### 里程碑与退出标准
+
+| 里程碑 | 条件 | 预计时间 |
+|--------|------|---------|
+| 数据就绪 | ≥10,000 条 v2.4+ 标注数据 | 阶段一完成 |
+| PoC 达标 | Golden Set sentiment acc ≥ 92% | 阶段二完成 |
+| Shadow 达标 | 7 天一致率 ≥ 95% | 阶段三完成 |
+| 主链路切换 | 1000 条 < 30s + 无准确率回归 | 阶段四完成 |
+| 预标注上线 | 入库即标注 + 用户 10s 出结果 | 阶段五完成 |
+
+#### 成本收益预估
+
+| 维度 | 当前（DeepSeek API） | 目标（自研模型） |
+|------|---------------------|-----------------|
+| 推理速度 | 1-3 秒/条 | 3-50 毫秒/条 |
+| 432 条分析耗时 | 3-10 分钟 | < 30 秒 |
+| 成本/千条 | ¥0.3（API 费用） | ¥0.01（GPU 算力分摊） |
+| Worker 崩溃风险 | 高（长时间进程） | 极低（秒级完成） |
+| 依赖外部 API | 是（DeepSeek 宕机=全挂） | 否（自主可控） |
+
+#### 风险与应对
+
+| 风险 | 应对措施 |
+|------|---------|
+| 标注数据不足 | 阶段一期间优先积累数据；必要时用 DeepSeek 对历史未标注评论补标 |
+| 模型准确率不达标 | 保持 DeepSeek fallback，hybrid 模式不影响用户体验 |
+| GPU 成本 | ONNX 量化后可用 CPU 推理；阿里云 GPU 实例按需开 |
+| 新品类泛化差 | 持续收集用户反馈样本 + 定期 fine-tune |
+
+---
+
+### 9 路线图原则
+
+- **不在 9 范围**：PDF 美化报告、A/B 文案批量、避雷文案、关键词命中预警、实时逐条推送 — 这些功能价值有限或可被替代，**永不开发**
+- **触发节奏**：每个里程碑任务必须有付费用户里程碑作为启动条件，避免过早投入
+- **配额联动**：每个新功能上线前同步更新 `COST_PROFIT.md` 的单价表与套餐配额
+- **返佣成本联动**：返佣方案调整时同步更新 `COST_PROFIT.md` 的获客成本模型，确保 CAC/LTV < 15%
+
+---
+
+### 10. 新品类接入 SOP（Taxonomy 扩展流程，2026-06-12 定稿）
+
+> **背景**：6.1 建立了 5 个核心品类（家居/3C/服饰/母婴/宠物）的 Taxonomy + 评测体系。
+> 后续新增品类时，按以下分级流程操作，避免重复探索。
+
+#### 10.1. 轻量接入（大多数新品类，半天工作量）
+
+适用场景：用户反馈某品类分析结果"颗粒度粗"，或新签付费用户集中在某品类。
+
+| 步骤 | 操作 | 产物 | 耗时 |
+|------|------|------|------|
+| 1. 数据准备 | 收集该品类 500-3000 条评论（爬虫/用户上传/公开数据集） | `data/raw/{category}/` | 1h |
+| 2. Taxonomy 抽取 | `python3 scripts/extract_taxonomy_generic.py --category {name} --seed data/taxonomy/seeds/{name}.yaml` | `data/taxonomy/v1.0/{category}/{sub_cat}.yaml` | 1-2h（API 费用 ≈ ¥5-15） |
+| 3. 人工 Review | `python3 scripts/build_taxonomy_review_sheet.py` → 人工 review Excel → `python3 scripts/apply_taxonomy_review.py` | 修正后的 YAML | 1-2h |
+| 4. 入库 | `python3 scripts/import_v4t1_assets.py --category {name}` | PG `category_aspect_taxonomy` 表新增行 | 5min |
+| 5. Spot Check | 随机采样 10 条真实评论 → 跑 v2.4 prompt → 确认 Taxonomy 命中率 100% + 品类专属 aspect 有效出现 | 肉眼确认，无需 golden set | 15min |
+| 6. 上线 | 无需改代码（v2.4 动态从 DB 查 taxonomy），清 `taxonomy_loader` 缓存即可生效 | — | 0 |
+
+**验收标准（轻量）：**
+- Taxonomy 命中率 ≥ 95%（抽出的 aspect 落在品类 taxonomy 集内）
+- 品类专属 aspect 至少出现 1-2 个非 base 的 key
+- 零越界（不出现其他品类的专属 aspect）
+
+#### 10.2. 深度验证（高价值核心品类，1-2 天工作量）
+
+适用场景：该品类付费用户超过总付费用户 20%，或客户反馈精度不够需要量化证明改进。
+
+在轻量接入的基础上，额外执行：
+
+| 步骤 | 操作 | 产物 | 耗时 |
+|------|------|------|------|
+| 6. 采样标注 | 从该品类评论中分层采样 50 条（rating × sentiment 交叉），人工标注 gold_sentiment + gold_aspects | `data/golden_set/v1.0/{category}_50.csv` | 3-4h |
+| 7. 评测跑分 | `python3 scripts/eval_v23_vs_v24.py`（改造支持多品类）或独立评测脚本 | 准确率 / 召回率 / F1 指标 | 30min |
+| 8. Bad Case 补充 | 把误判样本加入 `bad_cases` 表，作为后续 few-shot 种子 | `bad_cases` 表新增行 | 30min |
+| 9. 品类专属 few-shot | 在 prompt 末尾注入 2-3 条该品类的 few-shot 示例（6.3 Step 4 框架） | `prompts/annotate_v2.5.md`（若需要） | 1h |
+
+**验收标准（深度）：**
+- 情感准确率 ≥ 92%（对齐家居品类基线）
+- Aspect 抽取 F1 ≥ 0.75（precision × recall 均衡）
+- Bad Case 库该品类至少 10 条
+
+#### 10.3. 工具链速查
+
+| 需求 | 脚本 | 说明 |
+|------|------|------|
+| 预处理原始评论 | `scripts/preprocess_reviews.py` | 按品类 YAML 配置清洗 |
+| Taxonomy 抽取 | `scripts/extract_taxonomy_generic.py` | 支持 seed extends，DeepSeek API |
+| 人工 Review 表 | `scripts/build_taxonomy_review_sheet.py` | 生成 Excel，标注保留/合并/删除 |
+| Review 决策应用 | `scripts/apply_taxonomy_review.py` | 把 review 决策写回 YAML |
+| 入库 | `scripts/import_v4t1_assets.py` | rglob YAML → PG 表，带 keepalive |
+| 评测对比 | `scripts/eval_v23_vs_v24.py` | v2.3 vs v2.4 + 跨品类验证 |
+| 缓存清除 | `taxonomy_loader.clear_cache()` | 新品类入库后需清缓存 |
+
+#### 10.4. 已完成品类清单
+
+| 品类 | sub_category 数 | aspect 总行数 | 验证级别 | 完成日期 |
+|------|----------------|--------------|----------|----------|
+| 家居 | 6 | ~120 | 深度（500 条 golden set） | 2026-06-10 |
+| 3C | 11 | ~190 | 轻量（10 条 spot check） | 2026-06-11 |
+| 服饰 | 8 | ~170 | 轻量（10 条 spot check） | 2026-06-11 |
+| 母婴 | 9 | ~135 | 轻量（10 条 spot check） | 2026-06-11 |
+| 宠物 | 26 | ~450 | 轻量（10 条 spot check） | 2026-06-11 |
+| 户外 | — | — | 未接入（原始数据保留，Erika 决策暂缓） | — |
 
 ---
