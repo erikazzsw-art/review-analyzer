@@ -599,20 +599,20 @@
 > 背景：增长分析页的产品亮点 / 高频痛点曾把内部 aspect、前台 Customer Issue / Customer Label、代表评论、下载原文和 Mention Share 分母混在一起。典型问题包括 `Comfortable To Wear` 代表评论过宽、`Water Leaks Through` 被 `no leaks / remained dry` 等表达污染、高频痛点第一条 Mention Share 出现 100% 且用户不可解释。
 
 当前结论：
-- [x] Phase 1-6.5 已完成代码、导出、前端展示、验证集和真实 Foxelli raw replay。
-- [x] Phase 7 P0 read-path 性能修复已完成并推送 `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
-- [x] Phase 7 第二批 / P1 authenticated route smoke 已完成：session 3/4/5 的 results、aggregate results、模块导出、完整导出均为 200。
-- [x] Phase 7 生产部署已确认：GitHub Actions `Deploy to Production` run `30230691101` 已将 `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` 部署成功；生产只读 `/analysis/sessions/{id}/results` smoke 覆盖 114/96/111/110，均 200、无 `embedding`、无 SSL/connection error。
-- [x] Phase 7 P1 worker 写路径优化已完成编码、本地回归并推送 `origin/develop=2d8c1a4`：analysis / cluster / embedding 写入改为批量事务，worker analysis 按 50 条 flush 并保留逐条 fallback。
-- [x] Phase 7 P1 worker 写路径优化部署已确认：GitHub Actions `Deploy to Production` run `30236160482` completed/success for `2d8c1a4`，deploy job 于 2026-07-27 04:07:47 UTC 完成。
-- [x] Phase 7 P1 staging/dev 写路径 smoke 已完成：clueai-dev 60 条与 300 条临时 worker smoke 均通过，credit / ledger / analytics / review_pool / push 均在验证进程内 no-op，临时数据已清理。
-- [x] Phase 7 P2 date/index 已完成 production migration/backfill/行为验收：Erika 已确认 production 备份/PITR、当前维护窗口、`059 DOWN` + 备份恢复回滚方案、验收样本 session 95/96/114；生产 `059` 已执行并提交，`comments=8340` 行数不变，`review_date` 8325/8340、NULL=15（均为空 raw date）、ISO 7711/7711、Amazon 文本 614/614；3 个新索引存在；Amazon 文本日期精确日过滤返回正确样本。
-- [x] Phase 7 生产 live `/analysis/results` + export smoke 已获 Erika 授权并完成：仅 session 114/96；aggregate results、`user_experience` 模块导出、完整导出均 200，导出文件为有效 XLSX。
-- [x] Phase 7 第一轮只读灰度门禁结论已收口为 FAIL / STOP at session 114；不继续扩大到 96/111/110/95。
-- [x] P2 production DDL/backfill gate 已完成；未执行生产上传、重分析、QA、aggregate/export smoke，未触发 credit/quota/analytics/LLM 成本路径。
-- [x] Phase 7 第一轮生产只读灰度观察已按停止条件收口：Erika 授权后仅请求 session 114 的 `GET /analysis/sessions/114/results`；返回 200 且 credit / analytics / LLM / upload_jobs delta 全部为 0，但 Top Issue / Top Label 的 Representative Evidence 只各有 1 条 verified span，其余高频 occurrence 为 cluster-propagated evidence，已停止 96/111/110/95 后续观察。
-- [x] Phase 7 正向门禁项已核对通过：生产 `RESULTS_AI_ENHANCEMENT_ENABLED` effective=false；session-level read-only route、payload 无 `embedding`、无 SSL/connection error、credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0；date span、`review_date` 与 Amazon 文本日期归一化链路正常。
-- [ ] Phase 7 当前不得直接收口为通过；下一步不是继续灰度，而是开独立 P0 修复/验证任务。
+- Phase 1-6.5 已完成代码、导出、前端展示、验证集和真实 Foxelli raw replay。
+- Phase 7 P0 read-path 性能修复已完成并推送 `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
+- Phase 7 第二批 / P1 authenticated route smoke 已完成：session 3/4/5 的 results、aggregate results、模块导出、完整导出均为 200。
+- Phase 7 生产部署已确认：GitHub Actions `Deploy to Production` run `30230691101` 已将 `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` 部署成功；生产只读 `/analysis/sessions/{id}/results` smoke 覆盖 114/96/111/110，均 200、无 `embedding`、无 SSL/connection error。
+- Phase 7 P1 worker 写路径优化已完成编码、本地回归并推送 `origin/develop=2d8c1a4`：analysis / cluster / embedding 写入改为批量事务，worker analysis 按 50 条 flush 并保留逐条 fallback。
+- Phase 7 P1 worker 写路径优化部署已确认：GitHub Actions `Deploy to Production` run `30236160482` completed/success for `2d8c1a4`，deploy job 于 2026-07-27 04:07:47 UTC 完成。
+- Phase 7 P1 staging/dev 写路径 smoke 已完成：clueai-dev 60 条与 300 条临时 worker smoke 均通过，credit / ledger / analytics / review_pool / push 均在验证进程内 no-op，临时数据已清理。
+- Phase 7 P2 date/index 已完成 production migration/backfill/行为验收：Erika 已确认 production 备份/PITR、当前维护窗口、`059 DOWN` + 备份恢复回滚方案、验收样本 session 95/96/114；生产 `059` 已执行并提交，`comments=8340` 行数不变，`review_date` 8325/8340、NULL=15（均为空 raw date）、ISO 7711/7711、Amazon 文本 614/614；3 个新索引存在；Amazon 文本日期精确日过滤返回正确样本。
+- Phase 7 生产 live `/analysis/results` + export smoke 已获 Erika 授权并完成：仅 session 114/96；aggregate results、`user_experience` 模块导出、完整导出均 200，导出文件为有效 XLSX。
+- Phase 7 第一轮只读灰度门禁结论已收口为 FAIL / STOP at session 114；不继续扩大到 96/111/110/95。
+- P2 production DDL/backfill gate 已完成；未执行生产上传、重分析、QA、aggregate/export smoke，未触发 credit/quota/analytics/LLM 成本路径。
+- Phase 7 第一轮生产只读灰度观察已按停止条件收口：Erika 授权后仅请求 session 114 的 `GET /analysis/sessions/114/results`；返回 200 且 credit / analytics / LLM / upload_jobs delta 全部为 0，但 Top Issue / Top Label 的 Representative Evidence 只各有 1 条 verified span，其余高频 occurrence 为 cluster-propagated evidence，已停止 96/111/110/95 后续观察。
+- Phase 7 正向门禁项已核对通过：生产 `RESULTS_AI_ENHANCEMENT_ENABLED` effective=false；session-level read-only route、payload 无 `embedding`、无 SSL/connection error、credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0；date span、`review_date` 与 Amazon 文本日期归一化链路正常。
+- **规则**：Phase 7 当前不得直接收口为通过；下一步不是继续灰度，而是开独立 P0 修复/验证任务。
 
 #### 5.9.1 核心口径定义
 
@@ -815,17 +815,17 @@ Phase 7 P0 / P1 验证记录：
 
 > 本节只保留 Phase 7 收口相关风险与 guardrail。50 付费用户承接能力任务已集中到 [5.9.7](#597-50-付费用户-readinessphase-7-收口后)：生产真实上传 / 重分析 smoke 归入 `50U-T1`，正式 gold sample 与 label stats / 告警归入 `50U-T2`，运营 SOP 与上线门禁归入 `50U-T3`。新品类扩展不作为 Phase 7 或 50U readiness 必需项，后续按类目接入节奏单独排期。
 
-- [x] 已完成生产 live `/analysis/results` 与 export smoke：Erika 授权 session 114/96 后，aggregate results、单模块导出、完整导出均 200；本次真实扣减 16 credits、写入 6 条 ledger，analytics_events +0。
-- [x] P1 worker 写路径优化已完成 staging/dev no-op 写入验证：临时 60 条与 300 条 worker smoke 均通过，确认 analysis 50 条 flush、cluster batch、embedding batch 的真实 DB 写入路径可用；未触发真实 credit、ledger、analytics、review_pool 或 push。
-- [x] P2 date/index 已完成 clueai-dev migration、dry-run/apply backfill 与 history/results/aggregate/export 行为验收；raw `date` 继续保留展示，`review_date` 只作为 normalized filter/index 字段。
-- [x] P2 production DDL/backfill 已执行并验收：production `059` committed，backfill dry-run/apply 通过，ISO/Amazon 文本日期均已归一化，默认/session fallback 使用 normalized span。
-- [x] Phase 7 收口前基线复核（2026-07-27）：本地 `develop`、HEAD、本地 `origin/develop` 均为 `d8cc2d5c398760734be0644abd25f0b1ded04267`；GitHub Actions `Deploy to Production` run `30246360986` completed/success；工作树存在既有未提交改动，本轮只允许提交 `PROGRESS_V2.md`。
-- [x] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`：2026-07-27 已通过 ECS `deploy/.env`、api 容器 env 与运行时 `_results_ai_enabled()` 三重只读核验，effective=false。
-- [x] Phase 7 第一轮灰度入口风险审计已完成：确认 session-level results/history 与 aggregate results、export、QA、upload/reanalyze、modern compare 的成本/写入边界。
-- [x] Phase 7 第一轮灰度 preflight 已完成：本次已核实 GitHub Actions deploy run `30244595426` 成功并确认生产部署到 `35de389`；生产 `RESULTS_AI_ENHANCEMENT_ENABLED` effective=false；观察前仍需每次重新核验最新 run。
-- [x] Phase 7 第一轮生产只读观察已执行并按异常停止：仅请求 session 114；未请求 96/111/110/95；未产生 credit / analytics / LLM / worker delta；异常为 Representative Evidence verified 覆盖不足和 cluster-propagated evidence 风险。
-- [x] Phase 7 正向门禁项已通过：session 114 read-only route 200 / 0.620s、comments=92、payload 无 `embedding`、无 SSL/connection error，credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0，date span / `review_date` / Amazon 文本日期链路正常。
-- [ ] Phase 7 后续小流量灰度暂停扩大：先处理 session 114 cluster-propagated occurrence / Representative Evidence 门禁，再申请下一轮生产只读观察授权；不执行生产上传、重分析、QA、aggregate/export smoke，避免触发 credit/quota/analytics/LLM 成本路径。
+- 已完成生产 live `/analysis/results` 与 export smoke：Erika 授权 session 114/96 后，aggregate results、单模块导出、完整导出均 200；本次真实扣减 16 credits、写入 6 条 ledger，analytics_events +0。
+- P1 worker 写路径优化已完成 staging/dev no-op 写入验证：临时 60 条与 300 条 worker smoke 均通过，确认 analysis 50 条 flush、cluster batch、embedding batch 的真实 DB 写入路径可用；未触发真实 credit、ledger、analytics、review_pool 或 push。
+- P2 date/index 已完成 clueai-dev migration、dry-run/apply backfill 与 history/results/aggregate/export 行为验收；raw `date` 继续保留展示，`review_date` 只作为 normalized filter/index 字段。
+- P2 production DDL/backfill 已执行并验收：production `059` committed，backfill dry-run/apply 通过，ISO/Amazon 文本日期均已归一化，默认/session fallback 使用 normalized span。
+- Phase 7 收口前基线复核（2026-07-27）：本地 `develop`、HEAD、本地 `origin/develop` 均为 `d8cc2d5c398760734be0644abd25f0b1ded04267`；GitHub Actions `Deploy to Production` run `30246360986` completed/success；工作树存在既有未提交改动，本轮只允许提交 `PROGRESS_V2.md`。
+- Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`：2026-07-27 已通过 ECS `deploy/.env`、api 容器 env 与运行时 `_results_ai_enabled()` 三重只读核验，effective=false。
+- Phase 7 第一轮灰度入口风险审计已完成：确认 session-level results/history 与 aggregate results、export、QA、upload/reanalyze、modern compare 的成本/写入边界。
+- Phase 7 第一轮灰度 preflight 已完成：本次已核实 GitHub Actions deploy run `30244595426` 成功并确认生产部署到 `35de389`；生产 `RESULTS_AI_ENHANCEMENT_ENABLED` effective=false；观察前仍需每次重新核验最新 run。
+- Phase 7 第一轮生产只读观察已执行并按异常停止：仅请求 session 114；未请求 96/111/110/95；未产生 credit / analytics / LLM / worker delta；异常为 Representative Evidence verified 覆盖不足和 cluster-propagated evidence 风险。
+- Phase 7 正向门禁项已通过：session 114 read-only route 200 / 0.620s、comments=92、payload 无 `embedding`、无 SSL/connection error，credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0，date span / `review_date` / Amazon 文本日期链路正常。
+- **规则**：Phase 7 后续小流量灰度暂停扩大。先处理 session 114 cluster-propagated occurrence / Representative Evidence 门禁，再申请下一轮生产只读观察授权；不执行生产上传、重分析、QA、aggregate/export smoke，避免触发 credit/quota/analytics/LLM 成本路径。
 
 Phase 7 guardrail（约束，不作为单独待办）：
 - 口径冻结：不得修改 `Not Breathable` 标签逻辑，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法；发现异常先记录 session、label、evidence、筛选条件和候选修正规则，再决定是否进入后续修复任务。
@@ -873,11 +873,11 @@ Phase 7 guardrail（约束，不作为单独待办）：
 | 50U-T3 运营 runbook 与上线门禁 | P1 | 0.5-1 天 | 让 50 用户期间的问题可定位、可回滚、可补偿、可沟通 | 1. 上传失败排查 SOP；2. worker 卡住排查 SOP；3. LLM 成本异常核对 SOP；4. credit 扣错补偿 SOP；5. analytics / ledger / LLM usage 对账 SOP；6. `review_date` / date filter 异常定位 SOP；7. `Not Breathable` / evidence 异常记录规则；8. 50 用户前最终 checklist；9. 50 用户期间每日/每周观察项 | 确认补偿口径、人工响应时限、50 用户期间观察频率与升级联系人 |
 
 readiness 节奏：
-- [x] Phase 7 第一轮只读灰度观察与结论门禁已完成，结论为 FAIL / STOP at session 114；Phase 7 不可按通过收口。
+- Phase 7 第一轮只读灰度观察与结论门禁已完成，结论为 FAIL / STOP at session 114；Phase 7 不可按通过收口。
 - [ ] 先启动独立 Phase 7 P0 修复/验证：cluster-propagated occurrence 进入 Top 统计风险、Representative Evidence verified/source-review 门禁，且冻结 `Not Breathable` 与 Phase 1-6 核心算法。
 - [ ] P0 修复在 staging/session 114 replay 或 fixture/gold sample 通过后，再申请下一轮生产只读灰度观察授权；下一轮通过前不进入 50U readiness。
-- [ ] `50U-T1`、`50U-T2`、`50U-T3` 暂不启动；其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须等待 Phase 7 P0 修复和下一轮只读灰度通过后再申请授权。
-- [ ] 生产真实上传 smoke 不应在当前阻塞未解决前执行；如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
+- **规则**：`50U-T1`、`50U-T2`、`50U-T3` 暂不启动。其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须等待 Phase 7 P0 修复和下一轮只读灰度通过后再申请授权。
+- **规则**：生产真实上传 smoke 不应在当前阻塞未解决前执行；如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
 
 
 ## Git 分支策略
