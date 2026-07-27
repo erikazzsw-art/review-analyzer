@@ -138,10 +138,7 @@ def test_enrich_aspects_json_adds_customer_label_occurrences_for_issue_and_highl
 
     assert enriched is not None
     assert enriched["customer_label_occurrence_schema_version"] == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
-    assert (
-        enriched["customer_label_occurrence_ruleset_version"]
-        == CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
-    )
+    assert enriched["customer_label_occurrence_ruleset_version"] == CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
     occurrences = enriched["customer_label_occurrences"]
     assert len(occurrences) == 2
     assert all(set(item) >= _OCCURRENCE_REQUIRED_FIELDS for item in occurrences)
@@ -549,9 +546,7 @@ def test_old_product_leak_context_does_not_create_water_issue() -> None:
             locale="en",
         )
 
-        assert [
-            item for item in occurrences if item.get("canonical_issue_key") == "water_leaks_through"
-        ] == []
+        assert [item for item in occurrences if item.get("canonical_issue_key") == "water_leaks_through"] == []
 
 
 def test_iter_specific_issue_occurrences_filters_broad_new_schema_without_legacy_fallback() -> None:
@@ -861,10 +856,13 @@ def test_customer_highlight_rows_filter_broad_aspects_and_keep_customer_labels()
 
 
 def test_customer_highlight_legacy_fallback_is_locale_safe_and_conservative() -> None:
-    assert customer_highlight_tags_for_comment(
-        {"content": "很好", "highlight_tag": "防水可靠", "aspects_json": None},
-        locale="en",
-    ) == []
+    assert (
+        customer_highlight_tags_for_comment(
+            {"content": "很好", "highlight_tag": "防水可靠", "aspects_json": None},
+            locale="en",
+        )
+        == []
+    )
     assert customer_highlight_tags_for_comment(
         {"content": "很好", "highlight_tag": "防水可靠", "aspects_json": None},
         locale="zh",
@@ -998,8 +996,8 @@ def test_build_specific_issue_rows_groups_by_subcategory_and_canonical_issue_for
     assert len(rows) == 2
     outdoor = next(row for row in rows if row["sub_category"] == "outdoor")
     travel = next(row for row in rows if row["sub_category"] == "travel")
-    assert outdoor["count"] == 3
-    assert outdoor["pct"] == 75.0
+    assert outdoor["count"] == 2
+    assert outdoor["pct"] == 66.7
     assert outdoor["aspect_key"] == "accessory_storage"
     assert outdoor["aspect_keys"] == ["accessory_storage", "capacity"]
     assert outdoor["dimension"] == "Accessories & Storage, Capacity"
@@ -1009,10 +1007,15 @@ def test_build_specific_issue_rows_groups_by_subcategory_and_canonical_issue_for
         "The pocket got wet in light rain.",
         "Water seeped into the pocket and soaked my gear.",
     ]
+    assert outdoor["cluster_propagated"] is False
+    assert outdoor["has_cluster_propagated_occurrences"] is True
+    assert outdoor["propagated_occurrence_count"] == 1
+    assert outdoor["total_occurrence_count"] == 3
+    assert outdoor["source_review_occurrence_count"] == 2
     assert travel["count"] == 1
 
 
-def test_specific_issue_rows_keep_cluster_propagated_only_rows_with_fallback_comment() -> None:
+def test_specific_issue_rows_drop_cluster_propagated_only_rows_from_frontstage_top() -> None:
     content = "The pocket got wet again, but this was copied cluster evidence."
     rows = build_specific_issue_rows(
         [
@@ -1043,14 +1046,10 @@ def test_specific_issue_rows_keep_cluster_propagated_only_rows_with_fallback_com
         limit=10,
     )
 
-    assert len(rows) == 1
-    assert rows[0]["count"] == 1
-    assert rows[0]["specific_issue"] == "Pocket Not Waterproof"
-    assert rows[0]["representative_comments"] == []
-    assert rows[0]["evidence_spans"] == []
+    assert rows == []
 
 
-def test_specific_issue_rows_do_not_use_missing_evidence_as_representative_comment() -> None:
+def test_specific_issue_rows_drop_missing_evidence_only_rows_from_frontstage_top() -> None:
     rows = build_specific_issue_rows(
         [
             {
@@ -1079,10 +1078,7 @@ def test_specific_issue_rows_do_not_use_missing_evidence_as_representative_comme
         limit=10,
     )
 
-    assert len(rows) == 1
-    assert rows[0]["count"] == 1
-    assert rows[0]["representative_comments"] == []
-    assert rows[0]["evidence_spans"] == []
+    assert rows == []
 
 
 def test_new_occurrence_payload_keeps_missing_evidence_but_not_as_representative() -> None:
@@ -1124,9 +1120,7 @@ def test_new_occurrence_payload_keeps_missing_evidence_but_not_as_representative
     assert occurrences[0]["comment_id"] == 1
     assert occurrences[0]["evidence_verified"] is False
     assert occurrences[0]["verified_evidence"] is False
-    assert rows[0]["count"] == 1
-    assert rows[0]["representative_comments"] == []
-    assert rows[0]["evidence_spans"] == []
+    assert rows == []
 
 
 def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across_dimensions() -> None:
@@ -1220,7 +1214,7 @@ def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across
     assert runs_small["dimension"] == "Size & Fit, Boot Fit"
 
 
-def test_customer_highlight_rows_keep_cluster_propagated_only_rows_with_fallback_comment() -> None:
+def test_customer_highlight_rows_drop_cluster_propagated_only_rows_from_frontstage_top() -> None:
     content = "They kept my feet dry on a rainy hike."
     rows = build_customer_highlight_rows(
         [
@@ -1251,11 +1245,7 @@ def test_customer_highlight_rows_keep_cluster_propagated_only_rows_with_fallback
         limit=10,
     )
 
-    assert len(rows) == 1
-    assert rows[0]["count"] == 1
-    assert rows[0]["customer_highlight"] == "Keeps Water Out"
-    assert rows[0]["representative_comments"] == []
-    assert rows[0]["evidence_spans"] == []
+    assert rows == []
 
 
 def test_new_occurrence_payload_keeps_cluster_propagated_for_audit_only() -> None:
@@ -1300,15 +1290,137 @@ def test_new_occurrence_payload_keeps_cluster_propagated_for_audit_only() -> Non
     assert occurrences[0]["evidence_verified"] is True
     assert occurrences[0]["verified_evidence"] is False
     assert occurrences[0]["cluster_propagated"] is True
-    assert rows[0]["count"] == 1
-    assert rows[0]["representative_comments"] == []
-    assert rows[0]["evidence_spans"] == []
+    assert rows == []
+
+
+def test_phase7_frontstage_top_rows_ignore_cluster_propagated_session114_shape() -> None:
+    def occurrence(
+        *,
+        label_type: str,
+        canonical: str,
+        display: str,
+        aspect_key: str,
+        evidence: str,
+        comment_id: int,
+        cluster_propagated: bool = False,
+    ) -> dict[str, object]:
+        item = _label_occurrence(
+            label_type=label_type,
+            canonical=canonical,
+            display=display,
+            aspect_key=aspect_key,
+            evidence=evidence,
+            comment_id=comment_id,
+        )
+        item["cluster_propagated"] = cluster_propagated
+        return item
+
+    comments: list[dict[str, object]] = [
+        _comment_with_occurrences(
+            comment_id=1,
+            content="The fabric is too hot during long walks.",
+            occurrences=[
+                occurrence(
+                    label_type="issue",
+                    canonical="not_breathable",
+                    display="Not Breathable",
+                    aspect_key="comfort",
+                    evidence="too hot",
+                    comment_id=1,
+                )
+            ],
+            sentiment="negative",
+            sub_category="apparel",
+        ),
+        _comment_with_occurrences(
+            comment_id=2,
+            content="These waders are comfortable to wear for hours.",
+            occurrences=[
+                occurrence(
+                    label_type="highlight",
+                    canonical="comfortable_to_wear",
+                    display="Comfortable To Wear",
+                    aspect_key="comfort",
+                    evidence="comfortable to wear",
+                    comment_id=2,
+                )
+            ],
+            sentiment="positive",
+            sub_category="apparel",
+        ),
+    ]
+    for comment_id in range(3, 8):
+        comments.append(
+            _comment_with_occurrences(
+                comment_id=comment_id,
+                content=f"Cluster copied issue review {comment_id}: too hot after a walk.",
+                occurrences=[
+                    occurrence(
+                        label_type="issue",
+                        canonical="not_breathable",
+                        display="Not Breathable",
+                        aspect_key="comfort",
+                        evidence="too hot",
+                        comment_id=comment_id,
+                        cluster_propagated=True,
+                    )
+                ],
+                sentiment="negative",
+                sub_category="apparel",
+            )
+        )
+    for comment_id in range(8, 12):
+        comments.append(
+            _comment_with_occurrences(
+                comment_id=comment_id,
+                content=(f"Cluster copied highlight review {comment_id}: comfortable to wear around camp."),
+                occurrences=[
+                    occurrence(
+                        label_type="highlight",
+                        canonical="comfortable_to_wear",
+                        display="Comfortable To Wear",
+                        aspect_key="comfort",
+                        evidence="comfortable to wear",
+                        comment_id=comment_id,
+                        cluster_propagated=True,
+                    )
+                ],
+                sentiment="positive",
+                sub_category="apparel",
+            )
+        )
+
+    issue_rows = build_specific_issue_rows(comments, locale="en", limit=10)
+    highlight_rows = build_customer_highlight_rows(comments, locale="en", limit=10)
+    breathable = next(row for row in issue_rows if row["canonical_issue_key"] == "not_breathable")
+    comfortable = next(row for row in highlight_rows if row["canonical_highlight_key"] == "comfortable_to_wear")
+
+    assert breathable["mention_count"] == 1
+    assert breathable["review_count"] == 1
+    assert breathable["raw_occurrence_count"] == 1
+    assert breathable["total_occurrence_count"] == 6
+    assert breathable["propagated_occurrence_count"] == 5
+    assert breathable["cluster_propagated"] is False
+    assert breathable["has_cluster_propagated_occurrences"] is True
+    assert breathable["evidence_spans"] == ["too hot"]
+    assert breathable["representative_comments"] == ["The fabric is too hot during long walks."]
+    assert "too hot" in breathable["representative_comments"][0]
+
+    assert comfortable["mention_count"] == 1
+    assert comfortable["review_count"] == 1
+    assert comfortable["raw_occurrence_count"] == 1
+    assert comfortable["total_occurrence_count"] == 5
+    assert comfortable["propagated_occurrence_count"] == 4
+    assert comfortable["cluster_propagated"] is False
+    assert comfortable["has_cluster_propagated_occurrences"] is True
+    assert comfortable["evidence_spans"] == ["comfortable to wear"]
+    assert comfortable["representative_comments"] == ["These waders are comfortable to wear for hours."]
+    assert "comfortable to wear" in comfortable["representative_comments"][0]
 
 
 def test_cluster_sentiment_recovery_issue_with_missing_evidence_is_suppressed() -> None:
     content = (
-        "I got this sweater in navy and it is much cuter than online. "
-        "It is a great transition sweater and I love it."
+        "I got this sweater in navy and it is much cuter than online. It is a great transition sweater and I love it."
     )
     comment = {
         "id": 1,
@@ -1388,8 +1500,7 @@ def test_waders_cluster_sentiment_recovery_issue_stays_audit_counted() -> None:
 
     assert len(occurrences) == 1
     assert occurrences[0]["canonical_issue_key"] == "not_breathable"
-    assert rows[0]["count"] == 1
-    assert rows[0]["evidence_spans"] == []
+    assert rows == []
 
 
 def test_decorate_preserves_existing_waders_audit_only_issue_occurrence() -> None:
@@ -1437,11 +1548,12 @@ def test_decorate_preserves_existing_waders_audit_only_issue_occurrence() -> Non
     }
 
     decorated = decorate_comment_customer_labels(comment, locale="en")
+    occurrences = iter_specific_issue_occurrences(decorated, locale="en")
     rows = build_specific_issue_rows([decorated], locale="en", limit=10)
 
-    assert rows[0]["canonical_issue_key"] == "not_breathable"
-    assert rows[0]["count"] == 1
-    assert rows[0]["evidence_spans"] == []
+    assert len(occurrences) == 1
+    assert occurrences[0]["canonical_issue_key"] == "not_breathable"
+    assert rows == []
 
 
 def test_decorate_still_suppresses_existing_apparel_dirty_breathability_issue() -> None:
@@ -1494,9 +1606,7 @@ def test_decorate_still_suppresses_existing_apparel_dirty_breathability_issue() 
 
 
 def test_cluster_positive_comfort_sweater_text_does_not_recover_not_breathable() -> None:
-    content = (
-        "Fun detail with the lace. The sweatshirt material is soft and the fit is cute."
-    )
+    content = "Fun detail with the lace. The sweatshirt material is soft and the fit is cute."
     enriched = enrich_aspects_json(
         {
             "cluster_propagated": True,
@@ -1515,11 +1625,7 @@ def test_cluster_positive_comfort_sweater_text_does_not_recover_not_breathable()
     )
 
     assert enriched is not None
-    issue_occurrences = [
-        item
-        for item in enriched["customer_label_occurrences"]
-        if item["type"] == "issue"
-    ]
+    issue_occurrences = [item for item in enriched["customer_label_occurrences"] if item["type"] == "issue"]
     assert issue_occurrences == []
 
 
@@ -1567,11 +1673,7 @@ def test_comfort_sweat_word_recovers_not_breathable_without_sweater_false_hit() 
     )
 
     assert sweater_enriched is not None
-    issue_occurrences = [
-        item
-        for item in sweater_enriched["customer_label_occurrences"]
-        if item["type"] == "issue"
-    ]
+    issue_occurrences = [item for item in sweater_enriched["customer_label_occurrences"] if item["type"] == "issue"]
     assert issue_occurrences == []
 
 

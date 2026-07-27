@@ -83,9 +83,7 @@ def test_phase6_fixed_validation_set_top_metrics_and_samples() -> None:
 
     mixed_issue = next(row for row in issue_rows if row["canonical_issue_key"] == "missing_accessories")
     mixed_highlight = next(
-        row
-        for row in highlight_rows
-        if row["canonical_highlight_key"] == "satisfactory_appearance_workmanship"
+        row for row in highlight_rows if row["canonical_highlight_key"] == "satisfactory_appearance_workmanship"
     )
     assert mixed_issue["specific_issue"] == "Missing Accessories"
     assert mixed_issue["representative_comments"] == [
@@ -114,11 +112,7 @@ def test_phase6_evidence_verification_blocks_bad_evidence_and_cluster_representa
     assert comfortable_occurrences[0]["verified_evidence"] is False
 
     highlight_rows = build_customer_highlight_rows(comments, locale="en", limit=20)
-    comfortable = next(row for row in highlight_rows if row["canonical_highlight_key"] == "comfortable_to_wear")
-    assert comfortable["mention_count"] == 1
-    assert comfortable["evidence_verified"] is False
-    assert comfortable["representative_comments"] == []
-    assert comfortable["evidence_spans"] == []
+    assert all(row["canonical_highlight_key"] != "comfortable_to_wear" for row in highlight_rows)
 
     cluster_comment = _comment(comments, "cluster-propagated-audit-only")
     cluster_occurrences = iter_specific_issue_occurrences(cluster_comment, locale="en")
@@ -128,12 +122,7 @@ def test_phase6_evidence_verification_blocks_bad_evidence_and_cluster_representa
     assert cluster_occurrences[0]["cluster_propagated"] is True
 
     issue_rows = build_specific_issue_rows(comments, locale="en", limit=20)
-    cluster_row = next(row for row in issue_rows if row["canonical_issue_key"] == "pocket_not_waterproof")
-    assert cluster_row["mention_count"] == 1
-    assert cluster_row["cluster_propagated"] is True
-    assert cluster_row["evidence_verified"] is False
-    assert cluster_row["representative_comments"] == []
-    assert cluster_row["evidence_spans"] == []
+    assert all(row["canonical_issue_key"] != "pocket_not_waterproof" for row in issue_rows)
 
 
 def test_phase6_occurrence_aggregation_uses_distinct_reviews_for_denominators() -> None:
@@ -204,9 +193,7 @@ def test_phase6_insight_engine_keeps_mixed_sentiment_occurrences(monkeypatch: An
 
     insights = build_results_insights(1, _phase6_comments(), {"product_id": "phase6"}, locale="en")
     issue_keys = {
-        row["canonical_issue_key"]
-        for row in insights["user_experience"]["negative"]
-        if row.get("canonical_issue_key")
+        row["canonical_issue_key"] for row in insights["user_experience"]["negative"] if row.get("canonical_issue_key")
     }
     highlight_keys = {
         row["canonical_highlight_key"]
@@ -246,23 +233,13 @@ def test_phase6_export_payload_contains_audit_fields_and_matches_rows() -> None:
     neg_by_label = {str(row[1]): row for row in neg_rows if row[1]}
     pos_by_label = {str(row[1]): row for row in pos_rows if row[1]}
 
-    cluster_idx = negative_headers.index("Cluster Propagated")
-    evidence_idx = negative_headers.index("Evidence Verified")
-    assert neg_by_label["Pocket Not Waterproof"][evidence_idx] == "false"
-    assert neg_by_label["Pocket Not Waterproof"][cluster_idx] == "true"
+    assert "Pocket Not Waterproof" not in neg_by_label
 
-    pos_cluster_idx = positive_headers.index("Cluster Propagated")
-    pos_evidence_idx = positive_headers.index("Evidence Verified")
-    assert pos_by_label["Comfortable To Wear"][pos_evidence_idx] == "false"
-    assert pos_by_label["Comfortable To Wear"][pos_cluster_idx] == "false"
+    assert "Comfortable To Wear" not in pos_by_label
 
     issue_headers, issue_rows = _build_specific_issue_top10_data(comments)
     highlight_headers, highlight_rows = _build_customer_highlight_top10_data(comments)
     assert "Cluster Propagated" in issue_headers
     assert "Cluster Propagated" in highlight_headers
 
-    zh_cluster_idx = issue_headers.index("Cluster Propagated")
-    zh_evidence_idx = issue_headers.index("Evidence Verified")
-    zh_pocket = next(row for row in issue_rows if row[1] == "口袋不防水")
-    assert zh_pocket[zh_evidence_idx] == "false"
-    assert zh_pocket[zh_cluster_idx] == "true"
+    assert all(row[1] != "口袋不防水" for row in issue_rows)

@@ -183,14 +183,10 @@ def test_build_results_insights_keeps_top_rows_when_results_ai_fails(monkeypatch
     )
 
     water = next(
-        row
-        for row in insights["user_experience"]["negative"]
-        if row["canonical_issue_key"] == "water_leaks_through"
+        row for row in insights["user_experience"]["negative"] if row["canonical_issue_key"] == "water_leaks_through"
     )
     highlight = next(
-        row
-        for row in insights["user_experience"]["positive"]
-        if row["canonical_highlight_key"] == "keeps_water_out"
+        row for row in insights["user_experience"]["positive"] if row["canonical_highlight_key"] == "keeps_water_out"
     )
 
     assert water["specific_issue"] == "Water Leaks Through"
@@ -207,7 +203,7 @@ def test_build_results_insights_keeps_top_rows_when_results_ai_fails(monkeypatch
 def test_results_routes_return_200_when_results_ai_router_fails(monkeypatch: Any) -> None:
     from backend_api.app.routes import analysis
 
-    comments = _route_comments()
+    comments = [{**comment, "embedding": [0.1, 0.2]} for comment in _route_comments()]
     session = _session(len(comments))
 
     _enable_failing_results_ai(monkeypatch)
@@ -238,6 +234,7 @@ def test_results_routes_return_200_when_results_ai_router_fails(monkeypatch: Any
 
     for response in (session_response, aggregate_response):
         body = response.json()
+        assert all("embedding" not in comment for comment in body["comments"])
         water = _water_row(body)
         assert water["tag"] == "Water Leaks Through"
         assert water["mention_count"] == 2

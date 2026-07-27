@@ -353,7 +353,11 @@ def _water_leak_issue_hit(evidence: str, content: str) -> bool:
     text = re.sub(r"\bno\s+water\s+intrusion\b", " ", text)
     text = re.sub(r"\bwithout\s+(any\s+)?leaks?\b", " ", text)
     text = re.sub(r"\bnever\s+(had\s+)?leaks?\b", " ", text)
-    text = re.sub(r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+(?:experience|experienced|had|have|see|seen)\s+(?:any\s+)?leak(?:ing|s)?\b", " ", text)
+    text = re.sub(
+        r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+(?:experience|experienced|had|have|see|seen)\s+(?:any\s+)?leak(?:ing|s)?\b",
+        " ",
+        text,
+    )
     text = re.sub(r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak(?:ed|ing|s)?\b", " ", text)
     text = re.sub(r"\b(?:do|does|did)(?:n['’]?t| not)\s+see[^.!?\n]{0,80}\bleak\b", " ", text)
     text = re.sub(r"\bnot\s+a\s+leak\b", " ", text)
@@ -615,18 +619,14 @@ def _append_content_rule_issue_occurrences(
     aspects_json: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     if any(
-        str(item.get("canonical_issue_key") or item.get("canonical_label_key") or "")
-        == "water_leaks_through"
+        str(item.get("canonical_issue_key") or item.get("canonical_label_key") or "") == "water_leaks_through"
         for item in occurrences
     ):
         return occurrences
 
     content = str(comment.get("content") or "").strip()
     sub_category = str(
-        (aspects_json or {}).get("sub_category")
-        or comment.get("sub_category")
-        or comment.get("category")
-        or ""
+        (aspects_json or {}).get("sub_category") or comment.get("sub_category") or comment.get("category") or ""
     )
     occurrence = _water_leak_occurrence_from_content(
         comment_id=comment.get("id"),
@@ -732,10 +732,7 @@ def _project_customer_label_occurrence(
     source_detail = str(occurrence.get("source_detail") or "").strip()
     source = _clean_occurrence_source(str(occurrence.get("source") or ""), source_detail)
     occurrence_sub_category = str(
-        occurrence.get("sub_category")
-        or comment.get("sub_category")
-        or comment.get("category")
-        or ""
+        occurrence.get("sub_category") or comment.get("sub_category") or comment.get("category") or ""
     )
     if label_type == "issue" and _should_suppress_apparel_breathability_cluster_issue(
         canonical=canonical,
@@ -747,9 +744,7 @@ def _project_customer_label_occurrence(
     ):
         return None
     common = {
-        "comment_id": comment.get("id")
-        if comment.get("id") is not None
-        else occurrence.get("comment_id"),
+        "comment_id": comment.get("id") if comment.get("id") is not None else occurrence.get("comment_id"),
         "content": content,
         "type": label_type,
         "raw_label": str(occurrence.get("raw_label") or "").strip(),
@@ -770,12 +765,8 @@ def _project_customer_label_occurrence(
         "evidence_verified": evidence_verified,
         "verified_evidence": representative_verified,
         "cluster_propagated": cluster_propagated,
-        "schema_version": str(
-            occurrence.get("schema_version") or CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
-        ),
-        "ruleset_version": str(
-            occurrence.get("ruleset_version") or CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
-        ),
+        "schema_version": str(occurrence.get("schema_version") or CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION),
+        "ruleset_version": str(occurrence.get("ruleset_version") or CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION),
         "display_allowed": True,
         "source_review_allowed": bool(content and representative_verified),
         "legacy_fallback": False,
@@ -858,7 +849,9 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Water Leaks Through", "water_leaks_through", "regex_alias_rule")
 
     if aspect_key in {"zipper_quality"}:
-        if _first_regex([r"\bzipper\b.*\b(broke|break|stuck|jam|fail|cheap)", r"\b(broke|stuck|jammed).*\bzipper\b"], text):
+        if _first_regex(
+            [r"\bzipper\b.*\b(broke|break|stuck|jam|fail|cheap)", r"\b(broke|stuck|jammed).*\bzipper\b"], text
+        ):
             return ("Zipper Fails", "zipper_fails", "regex_alias_rule")
 
     if aspect_key in {"assembly", "instructions"}:
@@ -872,7 +865,13 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Missing Parts", "missing_parts", "regex_alias_rule")
 
     if aspect_key in {"shipping_damage", "packaging"}:
-        if _first_regex([r"\b(arrived|came|delivered)\b.*\b(damaged|broken|cracked|bent)", r"\bpackag(e|ing)\b.*\b(damaged|crushed|torn)"], text):
+        if _first_regex(
+            [
+                r"\b(arrived|came|delivered)\b.*\b(damaged|broken|cracked|bent)",
+                r"\bpackag(e|ing)\b.*\b(damaged|crushed|torn)",
+            ],
+            text,
+        ):
             return ("Arrived Damaged", "arrived_damaged", "regex_alias_rule")
 
     if aspect_key in {"durability", "build_quality", "stability", "material", "strength"}:
@@ -896,7 +895,13 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Not Breathable", "not_breathable", "regex_alias_rule")
 
     if aspect_key in {"smell", "scent"}:
-        if _first_regex([r"\b(strong|bad|chemical|awful)\b.*\b(smell|odor|scent)", r"\b(smell|odor|scent)\b.*\b(strong|bad|chemical|awful)"], text):
+        if _first_regex(
+            [
+                r"\b(strong|bad|chemical|awful)\b.*\b(smell|odor|scent)",
+                r"\b(smell|odor|scent)\b.*\b(strong|bad|chemical|awful)",
+            ],
+            text,
+        ):
             return ("Strong Chemical Smell", "strong_chemical_smell", "regex_alias_rule")
 
     if aspect_key in {"value_for_money"}:
@@ -915,18 +920,26 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
         return ("Mascara Flakes", "mascara_flakes", "regex_alias_rule")
     if aspect_key in {"curl_hold"} and _first_regex([r"\bcurl\b.*\b(hold|last|stay|drop)", r"\bdoes not hold\b"], text):
         return ("Curl Does Not Hold", "curl_does_not_hold", "regex_alias_rule")
-    if aspect_key in {"lengthening_effect"} and _first_regex([r"\b(no|not enough|little)\b.*\blength", r"\bdoes not lengthen\b"], text):
+    if aspect_key in {"lengthening_effect"} and _first_regex(
+        [r"\b(no|not enough|little)\b.*\blength", r"\bdoes not lengthen\b"], text
+    ):
         return ("Not Enough Length", "not_enough_length", "regex_alias_rule")
-    if aspect_key in {"volumizing_effect"} and _first_regex([r"\b(no|not enough|little)\b.*\bvolume", r"\bdoes not volumize\b"], text):
+    if aspect_key in {"volumizing_effect"} and _first_regex(
+        [r"\b(no|not enough|little)\b.*\bvolume", r"\bdoes not volumize\b"], text
+    ):
         return ("Not Enough Volume", "not_enough_volume", "regex_alias_rule")
     if aspect_key in {"eye_sensitivity"} and _first_regex([r"\birritat|burn|sting|sensitive"], text):
         return ("Irritates Eyes", "irritates_eyes", "regex_alias_rule")
 
     if aspect_key in {"noise"} and _first_regex([r"\bsqueak|creak|noisy|noise"], text):
         return ("Makes Squeaking Noise", "makes_squeaking_noise", "regex_alias_rule")
-    if aspect_key in {"battery_life"} and _first_regex([r"\bbattery\b.*\b(short|dies|drain|last)", r"\bdoes not hold a charge\b"], text):
+    if aspect_key in {"battery_life"} and _first_regex(
+        [r"\bbattery\b.*\b(short|dies|drain|last)", r"\bdoes not hold a charge\b"], text
+    ):
         return ("Battery Dies Quickly", "battery_dies_quickly", "regex_alias_rule")
-    if aspect_key in {"charging"} and _first_regex([r"\b(charger|charging|charge)\b.*\b(stop|fail|slow|does not work|won't)"], text):
+    if aspect_key in {"charging"} and _first_regex(
+        [r"\b(charger|charging|charge)\b.*\b(stop|fail|slow|does not work|won't)"], text
+    ):
         return ("Charging Fails", "charging_fails", "regex_alias_rule")
 
     return None
@@ -948,7 +961,9 @@ def _issue_from_existing(
     canonical = str(aspect.get("canonical_issue_key") or "").strip() or _slug(issue)
     issue_zh = specific_issue_zh or _specific_issue_zh_label(canonical, issue)
     display_label = issue_zh if locale.startswith("zh") else issue
-    display_allowed = _is_customer_label_allowed(display_label, locale=locale, aspect_key=aspect_key, aspect_label=label)
+    display_allowed = _is_customer_label_allowed(
+        display_label, locale=locale, aspect_key=aspect_key, aspect_label=label
+    )
     if aspect.get("display_allowed") is False or aspect.get("issue_source") == "broad_fallback":
         display_allowed = False
     return (issue, issue_zh, canonical, "llm_canonical_hint", raw_issue, display_allowed)
@@ -1001,7 +1016,9 @@ def _normalize_aspect_issue(
             if recovered_rule_hit:
                 source = "sentiment_recovery_rule"
             display_label = issue_zh if locale.startswith("zh") else issue
-            display_allowed = _is_customer_label_allowed(display_label, locale=locale, aspect_key=aspect_key, aspect_label=label)
+            display_allowed = _is_customer_label_allowed(
+                display_label, locale=locale, aspect_key=aspect_key, aspect_label=label
+            )
         else:
             issue = f"{label} Issue"
             issue_zh = f"{label}问题" if locale.startswith("zh") else issue
@@ -1079,11 +1096,20 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
         return None
 
     if aspect_key in {"waterproof", "waterproof_performance", "seam_integrity"}:
-        if _first_regex([r"\b(waterproof|kept|keep|keeps|stayed|stay)\b.*\b(dry|water out)\b", r"\bnever get wet\b", r"\bno leaks?\b"], text):
+        if _first_regex(
+            [
+                r"\b(waterproof|kept|keep|keeps|stayed|stay)\b.*\b(dry|water out)\b",
+                r"\bnever get wet\b",
+                r"\bno leaks?\b",
+            ],
+            text,
+        ):
             return _highlight_label("Keeps Water Out", "防水可靠", "keeps_water_out", "regex_alias_rule")
 
     if aspect_key in {"boot_fit", "size_fit"}:
-        if _first_regex([r"\bfit(s|ted)?\b.*\b(perfect|great|well|right|true)\b", r"\btrue to size\b", r"\bboots? fit"], text):
+        if _first_regex(
+            [r"\bfit(s|ted)?\b.*\b(perfect|great|well|right|true)\b", r"\btrue to size\b", r"\bboots? fit"], text
+        ):
             return _highlight_label("Fits as Expected", "尺码合适", "fits_as_expected", "regex_alias_rule")
 
     if aspect_key in {"comfort", "breathability", "mobility"}:
@@ -1095,28 +1121,67 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
     if aspect_key in {"build_quality", "durability", "material", "strength", "stability"}:
         if _first_regex([r"\b(held|holds?) up\b", r"\bstill going strong\b", r"\bdurable\b", r"\btough\b"], text):
             return _highlight_label("Holds Up Well", "耐用可靠", "holds_up_well", "regex_alias_rule")
-        if _first_regex([r"\b(good|great|nice|excellent)\b.*\bquality\b", r"\bquality product\b", r"\bwell made\b", r"\bsturdy\b", r"\bsolid\b"], text):
+        if _first_regex(
+            [
+                r"\b(good|great|nice|excellent)\b.*\bquality\b",
+                r"\bquality product\b",
+                r"\bwell made\b",
+                r"\bsturdy\b",
+                r"\bsolid\b",
+            ],
+            text,
+        ):
             return _highlight_label("Feels Well Made", "做工扎实", "feels_well_made", "regex_alias_rule")
 
     if aspect_key in {"value_for_money"}:
-        if _first_regex([r"\bgood value\b", r"\bgreat value\b", r"\bfor the price\b", r"\bworth\b", r"\baffordable\b", r"\bcost way less\b"], text):
-            return _highlight_label("Good Value for the Price", "性价比高", "good_value_for_the_price", "regex_alias_rule")
+        if _first_regex(
+            [
+                r"\bgood value\b",
+                r"\bgreat value\b",
+                r"\bfor the price\b",
+                r"\bworth\b",
+                r"\baffordable\b",
+                r"\bcost way less\b",
+            ],
+            text,
+        ):
+            return _highlight_label(
+                "Good Value for the Price", "性价比高", "good_value_for_the_price", "regex_alias_rule"
+            )
 
     if aspect_key in {"ease_of_use"}:
         if _first_regex([r"\beasy to use\b", r"\beasy\b.*\b(clean|put on|fit|adjust)", r"\bconvenient\b"], text):
             return _highlight_label("Easy To Use", "使用方便", "easy_to_use", "regex_alias_rule")
 
     if aspect_key in {"accessory_storage", "organization", "capacity"}:
-        if _first_regex([r"\b(plenty|enough|great|good)\b.*\b(pockets?|storage|room|space)\b", r"\bconvenient storage\b"], text):
+        if _first_regex(
+            [r"\b(plenty|enough|great|good)\b.*\b(pockets?|storage|room|space)\b", r"\bconvenient storage\b"], text
+        ):
             return _highlight_label("Useful Storage Space", "收纳空间实用", "useful_storage_space", "regex_alias_rule")
 
     if aspect_key in {"grip"}:
-        if _first_regex([r"\b(good|great|solid)\b.*\b(grip|traction)\b", r"\bnon[- ]?slip\b", r"\bsoles?\b.*\b(thick|grip|traction)\b"], text):
+        if _first_regex(
+            [
+                r"\b(good|great|solid)\b.*\b(grip|traction)\b",
+                r"\bnon[- ]?slip\b",
+                r"\bsoles?\b.*\b(thick|grip|traction)\b",
+            ],
+            text,
+        ):
             return _highlight_label("Good Traction", "抓地稳", "good_traction", "regex_alias_rule")
 
     if aspect_key in {"shipping_damage", "packaging"}:
-        if _first_regex([r"\bfast\b.*\b(delivery|shipping)\b", r"\barrived\b.*\b(on time|scheduled|intact|safe)\b", r"\bcame on time\b"], text):
-            return _highlight_label("Arrives On Time and Intact", "到货及时完好", "arrives_on_time_and_intact", "regex_alias_rule")
+        if _first_regex(
+            [
+                r"\bfast\b.*\b(delivery|shipping)\b",
+                r"\barrived\b.*\b(on time|scheduled|intact|safe)\b",
+                r"\bcame on time\b",
+            ],
+            text,
+        ):
+            return _highlight_label(
+                "Arrives On Time and Intact", "到货及时完好", "arrives_on_time_and_intact", "regex_alias_rule"
+            )
 
     if aspect_key in {"aesthetics", "color_accuracy"}:
         if _first_regex([r"\b(look|looks|looked)\b.*\b(great|good|nice|beautiful)\b", r"\bnice looking\b"], text):
@@ -1136,7 +1201,9 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
 
     if aspect_key in {"clumping", "separation_definition"}:
         if _first_regex([r"\b(no|without)\b.*\bclump", r"\bseparat(es|ed|ion)\b"], text):
-            return _highlight_label("Separates Without Clumps", "不易结块根根分明", "separates_without_clumps", "regex_alias_rule")
+            return _highlight_label(
+                "Separates Without Clumps", "不易结块根根分明", "separates_without_clumps", "regex_alias_rule"
+            )
 
     if aspect_key in {"smudge_resistance"}:
         if _first_regex([r"\b(no|without|not)\b.*\b(smudge|smear|run)", r"\bsmudge[- ]?proof\b"], text):
@@ -1144,7 +1211,9 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
 
     if aspect_key in {"lengthening_effect"}:
         if _first_regex([r"\blength(en|ens|ening)?\b", r"\blong lashes\b"], text):
-            return _highlight_label("Adds Noticeable Length", "纤长效果明显", "adds_noticeable_length", "regex_alias_rule")
+            return _highlight_label(
+                "Adds Noticeable Length", "纤长效果明显", "adds_noticeable_length", "regex_alias_rule"
+            )
 
     if aspect_key in {"volumizing_effect"}:
         if _first_regex([r"\bvolume\b", r"\bvolumiz"], text):
@@ -1210,7 +1279,12 @@ def _generic_positive_highlight(
         _slug(highlight_en),
         "generic_positive_fallback",
         evidence,
-        _is_customer_label_allowed(display_label, locale=locale, aspect_key=aspect_key, aspect_label=label_zh if locale.startswith("zh") else label_en),
+        _is_customer_label_allowed(
+            display_label,
+            locale=locale,
+            aspect_key=aspect_key,
+            aspect_label=label_zh if locale.startswith("zh") else label_en,
+        ),
     )
 
 
@@ -1344,6 +1418,7 @@ def enrich_aspects_json(
     def _append_occurrence(item: dict[str, Any]) -> None:
         _remember_occurrence(item)
         occurrences.append(item)
+
     for aspect in aspects:
         if not isinstance(aspect, dict):
             continue
@@ -1364,9 +1439,7 @@ def enrich_aspects_json(
                     "issue_confidence": issue["issue_confidence"],
                     "issue_source": issue["issue_source"],
                     "customer_label_catalog_source": issue["customer_label_catalog_source"],
-                    "customer_label_catalog_ruleset_version": issue[
-                        "customer_label_catalog_ruleset_version"
-                    ],
+                    "customer_label_catalog_ruleset_version": issue["customer_label_catalog_ruleset_version"],
                     "specific_issue_raw": issue["specific_issue_raw"],
                     "display_allowed": issue["display_allowed"],
                     "aspect_label": issue["dimension"],
@@ -1397,9 +1470,7 @@ def enrich_aspects_json(
                     "highlight_confidence": highlight["highlight_confidence"],
                     "highlight_source": highlight["highlight_source"],
                     "customer_label_catalog_source": highlight["customer_label_catalog_source"],
-                    "customer_label_catalog_ruleset_version": highlight[
-                        "customer_label_catalog_ruleset_version"
-                    ],
+                    "customer_label_catalog_ruleset_version": highlight["customer_label_catalog_ruleset_version"],
                     "customer_highlight_raw": highlight["customer_highlight_raw"],
                     "highlight_display_allowed": highlight["highlight_display_allowed"],
                     "aspect_label": highlight["dimension"],
@@ -1415,10 +1486,7 @@ def enrich_aspects_json(
                         cluster_propagated=cluster_propagated,
                     )
                 )
-    if not any(
-        str(item.get("canonical_label_key") or "") == "water_leaks_through"
-        for item in occurrences
-    ):
+    if not any(str(item.get("canonical_label_key") or "") == "water_leaks_through" for item in occurrences):
         water_leak_occurrence = _water_leak_occurrence_from_content(
             comment_id=comment_id,
             content=content_text,
@@ -1510,6 +1578,14 @@ def _append_unique_snippet(target: list[str], content: str, limit: int = 240) ->
         target.append(snippet)
 
 
+def _is_frontstage_countable_occurrence(occurrence: dict[str, Any]) -> bool:
+    if occurrence.get("cluster_propagated"):
+        return False
+    if occurrence.get("legacy_fallback"):
+        return True
+    return bool(occurrence.get("source_review_allowed"))
+
+
 def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en") -> list[dict[str, Any]]:
     content = str(comment.get("content") or "").strip()
     aj = coerce_aspects_json(comment.get("aspects_json"))
@@ -1536,10 +1612,7 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
         sub_category = str(aj.get("sub_category") or comment.get("sub_category") or "")
         aspects = [aspect for aspect in aj.get("aspects") or [] if isinstance(aspect, dict)]
         has_specific_issue_payload = any(
-            any(
-                key in aspect
-                for key in ("specific_issue", "canonical_issue_key", "display_allowed", "issue_source")
-            )
+            any(key in aspect for key in ("specific_issue", "canonical_issue_key", "display_allowed", "issue_source"))
             for aspect in aspects
         )
         if schema_version != SPECIFIC_ISSUE_SCHEMA_VERSION and not has_specific_issue_payload:
@@ -1621,6 +1694,9 @@ def _build_customer_label_rows(
     groups: dict[tuple[str, str], dict[str, Any]] = {}
     comment_counts: dict[tuple[str, str], set[Any]] = defaultdict(set)
     raw_occurrence_counter: Counter[tuple[str, str]] = Counter()
+    total_occurrence_counter: Counter[tuple[str, str]] = Counter()
+    propagated_occurrence_counter: Counter[tuple[str, str]] = Counter()
+    unverified_occurrence_counter: Counter[tuple[str, str]] = Counter()
     confidence_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
     label_counter: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
 
@@ -1630,14 +1706,17 @@ def _build_customer_label_rows(
             comment_id = f"row-{fallback_index}"
         counted_in_comment: set[tuple[str, str]] = set()
         for occurrence in iterator(comment, locale=locale):
-            canonical = str(
-                occurrence.get(canonical_field)
-                or occurrence.get("canonical_label_key")
-                or ""
-            ).strip()
+            canonical = str(occurrence.get(canonical_field) or occurrence.get("canonical_label_key") or "").strip()
             if not canonical:
                 continue
             key = (str(occurrence.get("sub_category") or ""), canonical)
+            total_occurrence_counter[key] += 1
+            if occurrence.get("cluster_propagated"):
+                propagated_occurrence_counter[key] += 1
+            if not occurrence.get("legacy_fallback") and not occurrence.get("source_review_allowed"):
+                unverified_occurrence_counter[key] += 1
+            if not _is_frontstage_countable_occurrence(occurrence):
+                continue
             raw_occurrence_counter[key] += 1
             if key not in groups:
                 is_legacy = bool(occurrence.get("legacy_fallback"))
@@ -1665,15 +1744,14 @@ def _build_customer_label_rows(
                     "representative_comments": [],
                     "evidence_spans": [],
                     "cluster_propagated": False,
+                    "has_cluster_propagated_occurrences": False,
                     "reason": "",
                 }
             if not occurrence.get("legacy_fallback"):
                 groups[key]["legacy_fallback"] = False
                 groups[key][is_specific_field] = True
                 groups[key][schema_field] = schema_version
-                groups[key][
-                    "customer_label_occurrence_schema_version"
-                ] = CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
+                groups[key]["customer_label_occurrence_schema_version"] = CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
             aspect_key = str(occurrence.get("aspect_key") or "")
             if aspect_key and aspect_key not in groups[key]["aspect_keys"]:
                 groups[key]["aspect_keys"].append(aspect_key)
@@ -1683,8 +1761,6 @@ def _build_customer_label_rows(
             source = str(occurrence.get(source_field) or "")
             if source and source not in groups[key][sources_field]:
                 groups[key][sources_field].append(source)
-            if occurrence.get("cluster_propagated"):
-                groups[key]["cluster_propagated"] = True
             label_counter[key][str(occurrence.get(label_field) or groups[key][label_field])] += 1
             if key not in counted_in_comment:
                 comment_counts[key].add(comment_id)
@@ -1726,13 +1802,18 @@ def _build_customer_label_rows(
                 "review_count": mention_count,
                 "impact_review_share": impact_review_share,
                 "raw_occurrence_count": raw_occurrence_counter[key],
+                "total_occurrence_count": total_occurrence_counter[key],
+                "propagated_occurrence_count": propagated_occurrence_counter[key],
+                "unverified_occurrence_count": unverified_occurrence_counter[key],
+                "source_review_occurrence_count": raw_occurrence_counter[key],
                 "count": mention_count,
                 "pct": mention_share,
                 confidence_field: conf,
                 "representative_comments": examples,
                 "evidence_spans": evidence_spans,
                 "evidence_verified": bool(evidence_spans),
-                "cluster_propagated": bool(row.get("cluster_propagated")),
+                "cluster_propagated": False,
+                "has_cluster_propagated_occurrences": (propagated_occurrence_counter[key] > 0),
                 "reason": examples[0] if examples else "No representative comment found.",
             }
         )
@@ -1936,8 +2017,7 @@ def decorate_comment_customer_labels(comment: dict[str, Any], locale: str = "en"
         has_new_payload = (
             str(aj.get("specific_issue_schema_version") or "") == SPECIFIC_ISSUE_SCHEMA_VERSION
             or str(aj.get("customer_label_schema_version") or "") == CUSTOMER_LABEL_SCHEMA_VERSION
-            or str(aj.get("customer_label_occurrence_schema_version") or "")
-            == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
+            or str(aj.get("customer_label_occurrence_schema_version") or "") == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
             or any(
                 isinstance(aspect, dict)
                 and any(
