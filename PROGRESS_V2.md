@@ -24,7 +24,7 @@
 
 ---
 
-## 2. V2 核心模块
+## 2. 核心模块
 
 ### 2.1 多产品仪表盘
 - 分支: `develop`（已在主开发线实现）
@@ -103,7 +103,7 @@
 
 ---
 
-## 2.5-3.1 本地收口进展补充（2026-06-09）
+## 4. 本地收口进展（原 V2.5-V3.1，2026-06-09）
 
 - [x] 登录后全局 App Shell 已对齐 `clueai_v2_ui_prototype.html` 的柔和 V2 风格，导航、按钮、卡片、上传区和侧边栏视觉保持统一
 - [x] 新增统一页头层 `review_analyzer/page_shell.py`，核心页与高级页都能显示所属路径、当前说明和快捷回跳
@@ -129,11 +129,11 @@
 └─► 2.4 (Stripe) ◄─ 2.1, 2.3
 ```
 
-开发顺序: 2.1 → 2.2 & 2.3（M2 先做）→ 2.4
+开发顺序: 2.1 → 2.2 & 2.3（2.2 先做）→ 2.4
 
 ---
 
-## 2.5-3.1 代码落地结果（基于当前代码）
+## 4.x 代码落地结果（基于当前代码）
 
 > 这部分不再按“待办计划”理解，而是按“已经落地的代码事实”记录。
 
@@ -823,8 +823,8 @@ Expected:
 | 6 | 3.0 | 角色化工作台 + UI 统一 | 让不同伙伴进来就知道做什么 |
 | 7 | 3.1 | 全部功能地图收口（已完成） | 独立入口已取消，高级能力回归各自业务页 |
 | 7.5 | 3.1.5 | **Next.js 营销站独立部署（拿到 3-5 个付费用户后立即启动）** | 跨境卖家 60-70% 来自 SEO，Streamlit 没有 SEO；营销页是付费转化的信任构建器 |
-| 8 | V3.2 | 定时分析 + 风险提醒 | 提升留存和团队协作价值 |
-| 9 | V3.3 | 组织角色 + 操作记录 | 为团队版/企业版做准备 |
+| 8 | 3.2 | 定时分析 + 风险提醒 | 提升留存和团队协作价值 |
+| 9 | 3.3 | 组织角色 + 操作记录 | 为团队版/企业版做准备 |
 | 10 | 4.0 | 自动采集 / 平台 API | 向成熟商业数据平台过渡 |
 | 11 | 5.0 | 产品层 Streamlit → Next.js 全迁移（MRR > $3k 后再考虑） | UI 升级带动客单价、支持移动端 / 嵌入式 widget / 团队版 |
 
@@ -1006,7 +1006,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 - [x] 结果页、对比页、历史页支持 URL 直达
 - [x] 问评论、行动中心、复盘追踪形成完整闭环
 - [x] Paddle 计费链路在新架构下可用
-- [ ] 阿里云部署结构可启动，Nginx 反代、域名与 HTTPS 可工作（后置，不阻塞本地 V4）
+- [ ] 阿里云部署结构可启动，Nginx 反代、域名与 HTTPS 可工作（后置，不阻塞本地开发验证）
 - [x] Streamlit 在迁移期间始终保留可回退主路径
 
 ### 5.1 前端工程骨架
@@ -1150,7 +1150,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 
 ### 5.8 部署与 Streamlit 下线路径
 
-> 当前状态：**可以执行上线**。6.1~T4 已全部完成，本地功能闭环稳定，部署配置就绪。当前瓶颈是”部署上线”而非”功能开发”。
+> 当前状态：**可以执行上线**。6.1~6.6 已全部完成，本地功能闭环稳定，部署配置就绪。当前瓶颈是”部署上线”而非”功能开发”。
 
 > 前置条件确认（2026-06-12）：
 > - ✅ 阿里云 ECS 已购买（2C4G），运行中
@@ -1495,7 +1495,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 
 ---
 
-## 6. V4 技术优化
+## 6. 技术优化
 
 > 背景：基于 Shulex / VOC AI 竞品技术选型对比，结合 10 万条多类目评论源数据资产，制定从「LLM+Prompt 单点架构」演进到「ABSA 小模型 + Embedding 聚类 + LLM 生成」三层架构的可商业化落地技术路线。
 >
@@ -1509,7 +1509,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 
 ### 与 Shulex 的差距地图
 
-| 维度 | 当前 V1/V2 | 目标 V4 | Shulex 现状 | 优先级 |
+| 维度 | V1/V2 阶段 | V4 目标 | Shulex 现状 | 优先级 |
 |------|---------|---------|------------|--------|
 | 分析单元 | 逐条 LLM | Embedding 聚类 + LLM 打标签 | 同 | P0 |
 | 输出格式 | Prompt 约束自由文本 | 强制 JSON Schema | 同 | P0 |
@@ -1521,7 +1521,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 
 ### 预期收益对比
 
-| 指标 | 当前 V1 | 优化后 V4 | 提升幅度 |
+| 指标 | V1 阶段 | V4 目标 | 提升幅度 |
 |------|--------|----------|---------|
 | 情感分类准确率 | ~90% | 95-97% | +5-7pp |
 | 痛点分类准确率 | <85% | 90-93% | +5-8pp |
@@ -1796,11 +1796,11 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
   #### Step 2.0d: Streamlit 退场（执行计划）
 
-  > **背景**：Next.js + FastAPI 已完全接管 prod 流量（5.2~M8 全部完成）。Streamlit 仅作为 legacy 残留，当前 docker-compose 中 `profiles: legacy` 不启动。本计划正式移除 Streamlit 相关代码和配置。
+  > **背景**：Next.js + FastAPI 已完全接管 prod 流量（5.2~5.8 全部完成）。Streamlit 仅作为 legacy 残留，当前 docker-compose 中 `profiles: legacy` 不启动。本计划正式移除 Streamlit 相关代码和配置。
 
   **前置条件确认**（2026-06-16 评估）：
 
-  - [x] **数据迁移核对**：5.3~M7 全部完成，用户/产品/评论/行动/复盘在 Next.js 端完整可用
+  - [x] **数据迁移核对**：5.3~5.7 全部完成，用户/产品/评论/行动/复盘在 Next.js 端完整可用
   - [x] **会话切换**：FastAPI HttpOnly Cookie 已接管（5.2 完成）
   - [x] **Streamlit Cloud 下线**：✅ 2026-06-16 Erika 确认已关停、secrets 已清除
   - [x] **域名收口**：Next.js 已接管 `app.clueai-reviewlens.com`
@@ -2193,7 +2193,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 **目标：** 把 ABSA（情感 + Aspect 抽取）这种结构化任务从 LLM 收回到 fine-tuned 小模型，是准确率天花板的真正解药。
 
-**注意：** 这是高 ROI 但高投入的任务，建议在 6.1/T2/T3/T4 完成且拿到至少 5 个付费用户后再启动。如果 PMF 验证不通过，跳过此任务。
+**注意：** 这是高 ROI 但高投入的任务，建议在 6.1/6.4/6.5/6.6 完成且拿到至少 5 个付费用户后再启动。如果 PMF 验证不通过，跳过此任务。
 
 **Files:**
 - Create: `ml/absa/` 目录（训练脚本、数据集、模型 checkpoint）
@@ -2318,7 +2318,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### V4 任务依赖关系
+### 6 任务依赖关系
 
 ```
 6.1 (数据资产化) ──┬──► 6.3 (LLM 输出加固) ──┬──► 6.5 (ABSA 小模型)
@@ -2327,23 +2327,23 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
                      └──► 6.2 (Taxonomy 接入) ──► 6.3 (Golden Set 多品类演进)
                                                           ↑ 新品类上线时触发
 6.2 (商业化基建) ──► 6.7 (Niche 商业化)
-                       └──► (依赖 T3 + T4 完成)
+                       └──► (依赖 6.5 + 6.6 完成)
 ```
 
 执行顺序建议：
-1. **Week 1-2:** T1（数据资产化）+ T2（商业化基建）并行启动 — 这是所有后续工作的地基
-2. **Week 3-4:** T3（LLM 输出加固）+ T7 启动品类选定与白皮书
-3. **Week 4-6:** T4（成本优化）+ T7 种子用户招募
-4. **Week 5-7:** T6（反馈回路）+ T7 1对1 跟进
-5. **Week 6-8:** T5（ABSA 小模型，可选）+ T7 转化付费
+1. **Week 1-2:** 6.1（数据资产化）+ 6.4（商业化基建）并行启动 — 这是所有后续工作的地基
+2. **Week 3-4:** 6.5（LLM 输出加固）+ 6.9 启动品类选定与白皮书
+3. **Week 4-6:** 6.6（成本优化）+ 6.9 种子用户招募
+4. **Week 5-7:** 6.8（反馈回路）+ 6.9 1对1 跟进
+5. **Week 6-8:** 6.7（ABSA 小模型，可选）+ 6.9 转化付费
 
-### V4 优先级精简版（如果只能做 3 件事）
+### 6 优先级精简版
 
 1. **6.1 数据资产化（Week 1-2）** — 不做这个，后面所有优化都没法度量。零技术风险，纯运营投入。
 2. **6.7 Niche 商业化（Week 4-8）** — 不做这个，技术优化全是沉没成本。商业化决定产品方向。
 3. **6.4 成本优化（Week 4-6）** — 单点技改成本最低、降本最猛，让前 50 个用户的毛利可控。
 
-### V4 阶段验收标准（商业化角度）
+### 6 阶段验收标准
 
 - [ ] 单条评论成本从 ¥0.0002 降到 ¥0.00003（降 85%）
 - [ ] Golden Set 测试集情感准确率 ≥ 95%、痛点分类 ≥ 90%
@@ -2355,9 +2355,9 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-## 9. V5 增值功能
+## 9. 增值功能
 
-> **目标**：上线后根据用户反馈分阶段引入新能力，避免一次开发太多导致 V4 延期。
+> **目标**：上线后根据用户反馈分阶段引入新能力，避免一次开发太多导致延期。
 > 详细成本与定价配套见 `COST_PROFIT.md`。
 
 ### 9.1 评论自动获取
@@ -2898,10 +2898,10 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### V5 路线图原则
+### 9 路线图原则
 
-- **不在 V5 范围**：PDF 美化报告、A/B 文案批量、避雷文案、关键词命中预警、实时逐条推送 — 这些功能价值有限或可被替代，**永不开发**
-- **触发节奏**：每个 V5 任务必须有付费用户里程碑作为启动条件，避免过早投入
+- **不在 9 范围**：PDF 美化报告、A/B 文案批量、避雷文案、关键词命中预警、实时逐条推送 — 这些功能价值有限或可被替代，**永不开发**
+- **触发节奏**：每个里程碑任务必须有付费用户里程碑作为启动条件，避免过早投入
 - **配额联动**：每个新功能上线前同步更新 `COST_PROFIT.md` 的单价表与套餐配额
 - **返佣成本联动**：返佣方案调整时同步更新 `COST_PROFIT.md` 的获客成本模型，确保 CAC/LTV < 15%
 
@@ -2973,7 +2973,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-## 7. V4.5 运维基建
+## 7. 运维基建
 
 > **目标**：建立自动化发布流水线，降低人工部署风险，为付费用户提供稳定交付保障。
 
@@ -3799,7 +3799,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - 现状：Golden Set 499 条，手动跑
   - 方案：CI 集成（prompt 变更触发回归）+ 线上抽样（GPT-4o 二次评判）+ 月度报告
   - 改动：`backend_api/app/services/quality_sampler.py` + migration 020
-  - 与 6.3/T6 关系：T3 的质量保障自动化延伸，与 T6（用户反馈）互补
+  - 与 6.3/6.8 关系：6.5 的质量保障自动化延伸，与 6.8（用户反馈）互补
   - **实现备注：**
     - CI 部分已有 `.github/workflows/golden-set-regression.yml`（prompt 变更自动触发，准确率门槛 93%）
     - 线上抽样：`quality_sampler.py` — 每 200 条抽 1 条，`judge_annotation()` 用 LLM 二次评判，结果写入 `annotation_quality_log` 表
@@ -4508,8 +4508,8 @@ CREATE TABLE workspace_invitations (
 > B（HK 直调 OpenAI）**永久移除**（已实测证伪）。D（保持 DeepSeek 主）技术上可行但偏离"用国际大厂 LLM 强化海外品牌力"目标。
 >
 > **待 Erika 拍板 A vs C**。拍板后：
-> - 选 A → 按 [Lightsail SG 迁移计划](#) 走 4 阶段（Cloudflare TTL / Lightsail 开机 / hosts 验证 / DNS 切换），M4 里"Bedrock 集成"改为迁移后跑"OpenAI GPT-4o-mini 直连"
-> - 选 C → `llm_router.py` 加 `provider="openrouter"` 分支，M4 里"Bedrock 集成"改为"OpenRouter 集成 + Anthropic Claude Haiku 4.5 via OpenRouter"
+> - 选 A → 按 [Lightsail SG 迁移计划](#) 走 4 阶段（Cloudflare TTL / Lightsail 开机 / hosts 验证 / DNS 切换），8.5 里"Bedrock 集成"改为迁移后跑"OpenAI GPT-4o-mini 直连"
+> - 选 C → `llm_router.py` 加 `provider="openrouter"` 分支，8.5 里"Bedrock 集成"改为"OpenRouter 集成 + Anthropic Claude Haiku 4.5 via OpenRouter"
 >
 > **AWS Bedrock IAM 用户 / Policy / AK/SK 现状处理**：
 > - 本地 `review_analyzer/.env` 已删除 `AWS_BEDROCK_*` 三行（防误提交，2026-07-03 完成）
@@ -4571,7 +4571,7 @@ CREATE TABLE workspace_invitations (
 ### 8.2 i18n 框架 + 双语文案 + 法律页面
 
 - 状态: ⏳ 待启动 | 分支: `feature/v4-i18n-framework`
-- 依赖: M1（Erika 完成 Cloudflare 接入 + 法律文档生成）
+- 依赖: 8.1（Erika 完成 Cloudflare 接入 + 法律文档生成）
 
 **2.1 next-intl 框架搭建（3 天）** ✅ 2026-07-07 完成（路线 A：cookie + middleware，不做 `app/[locale]/` 目录改造）
 - [x] `npm install next-intl` 到 frontend（`next-intl@4.13.0` 已装）
@@ -4767,7 +4767,7 @@ CREATE TABLE workspace_invitations (
 ### 8.4 LLM 路由 locale 切换（前置准备）
 
 - 状态: ✅ 完成 | 分支: `develop`
-- 依赖: 无（不阻塞 M4 决策；不接触 Bedrock/OpenRouter，仅在现有 DeepSeek/OpenAI/Qwen 三家里按 locale 换 fallback 优先级）
+- 依赖: 无（不阻塞 8.5 决策；不接触 Bedrock/OpenRouter，仅在现有 DeepSeek/OpenAI/Qwen 三家里按 locale 换 fallback 优先级）
 - 背景: 海外用户默认走 GPT-4o-mini 优先链（英文能力 + 品牌信任），国内用户保持 DeepSeek 优先。**统一英文 prompt**，不做中英双 prompt。
 
 **改动清单**
@@ -4798,13 +4798,13 @@ CREATE TABLE workspace_invitations (
 ### 8.5 LLM 集成 + 数据源改造
 
 - 状态: ⏸️ 冻结（等 Erika 拍板 A vs C，见上方"📌 2026-07-03 决策定型"块）| 分支: `feature/v4-bedrock-dataforseo`
-- 依赖: **M1（ECS 迁移到 SG 完成）+ M3（合规基础）**  ← 2026-07-03 依赖变更：M1 前置条件由"AWS Bedrock 申请 + AK/SK 到位"改为"ECS 迁移到 SG/US 完成"（两次实测证明 HK IP 被 Anthropic/OpenAI 双双 403）
+- 依赖: **8.1（ECS 迁移到 SG 完成）+ 8.3（合规基础）**  ← 2026-07-03 依赖变更：8.1 前置条件由"AWS Bedrock 申请 + AK/SK 到位"改为"ECS 迁移到 SG/US 完成"（两次实测证明 HK IP 被 Anthropic/OpenAI 双双 403）
 
-> **⚠️ 2026-07-03 M4 章节标题保留但内容需按最终选型重写**
-> - 选 A（SG 迁移）+ OpenAI 直连 → M4 改为"OpenAI GPT-4o-mini 主链路集成"，删除 Bedrock 分支
-> - 选 A（SG 迁移）+ Bedrock → M4 保持现状（下述 4.1-4.5 步骤）
-> - 选 C（OpenRouter 中转）→ M4 改为"OpenRouter 集成"，新增 `provider="openrouter"` 分支代替 `provider="bedrock"`
-> - 拍板前**不启动 M4 任何编码任务**
+> **⚠️ 2026-07-03 8.5 章节标题保留但内容需按最终选型重写**
+> - 选 A（SG 迁移）+ OpenAI 直连 → 8.5 改为"OpenAI GPT-4o-mini 主链路集成"，删除 Bedrock 分支
+> - 选 A（SG 迁移）+ Bedrock → 8.5 保持现状（下述步骤）
+> - 选 C（OpenRouter 中转）→ 8.5 改为"OpenRouter 集成"，新增 `provider="openrouter"` 分支代替 `provider="bedrock"`
+> - 拍板前**不启动 8.5 任何编码任务**
 
 > **技术背景**:项目已有 `backend_api/app/services/llm_router.py`(6.4 三级 fallback: DeepSeek/OpenAI/Qwen + 熔断)。本 Milestone **扩展现有 router 支持 Bedrock provider**,不新建 llm_client 抽象层。
 
@@ -4876,7 +4876,7 @@ CREATE TABLE workspace_invitations (
 ### 8.6 Beta 发布准备
 
 - 状态: ⏳ 待启动 | 分支: `feature/v4-beta-launch`
-- 依赖: M4（技术改造全部完成）
+- 依赖: 8.5（技术改造全部完成）
 
 **5.1 早鸟定价配置**
 - [ ] `frontend/src/app/pricing/page.tsx` 新增 "Early Bird -50%" 折扣位
@@ -4924,7 +4924,7 @@ CREATE TABLE workspace_invitations (
 ### 8.7 Credit 定价体系改造
 
 - 状态: ✅ 基建完成（6.1-6.9 已部署验证） | 分支: `develop`
-- 依赖: M3（用户注册/locale 已区分海外流量）
+- 依赖: 8.3（用户注册/locale 已区分海外流量）
 - 设计文档: `~/.claude/plans/cheeky-percolating-zephyr.md`（含完整成本测算 + 套餐详表 + 套利验证）
 
 **背景**：现有配额体系是 8 维独立限制（评论条数 / Ask 次数 / 文案 / Excel / 对比 / Webhook / 规则数），用户理解成本高、加功能就要新开限额。海外市场最强竞品 VOC AI 采用统一 credit 池，我们需要对齐并差异化。
@@ -5146,15 +5146,15 @@ CREATE TABLE workspace_invitations (
 
 | Milestone | 内容 | 状态 | 进度 |
 |-----------|------|------|------|
-| M1 | Erika 手动准备（账户/文档 + AWS Bedrock） | 🔄 进行中 | SG 迁移 Phase 0-3b ✅（Phase 4 观察中到 07-12），收款/DataForSEO/法律文档待办 |
-| M2 | i18n 框架 + 双语文案 + 法律页面 + Terms Gate | ⏳ 待启动 | 0% |
-| M3 | 后端合规能力（geo-block / 数据主权 API / 邮件双语） | 🔄 进行中 | 80%（3.1 Geo-Block + 3.2 数据主权 API + 3.3 邮件双语化 + 3.4 Contact/Sub-processor 页已完成；3.5 数据保留清理待办） |
-| M4 | Bedrock LLM 集成 + 数据源改造 | ⏳ 待启动 | 0% |
-| M5 | Beta 发布 + 部署 + 监控 | ⏳ 待启动 | 0% |
-| M6 | Credit 定价体系改造（海外 4 档套餐 + 统一 credit 池）| ✅ 基建完成 | 6.1-6.9 已部署上线，6.10 文档待同步，待确认「即时发放当月余额」逻辑 |
+| 8.1 | Erika 手动准备（账户/文档 + AWS Bedrock） | 🔄 进行中 | SG 迁移 Phase 0-3b ✅（Phase 4 观察中到 07-12），收款/DataForSEO/法律文档待办 |
+| 8.2 | i18n 框架 + 双语文案 + 法律页面 + Terms Gate | ⏳ 待启动 | 0% |
+| 8.3 | 后端合规能力（geo-block / 数据主权 API / 邮件双语） | 🔄 进行中 | 80%（Geo-Block + 数据主权 API + 邮件双语化 + Contact/Sub-processor 页已完成；数据保留清理待办） |
+| 8.5 | LLM 集成 + 数据源改造 | ⏳ 待启动 | 0% |
+| 8.6 | Beta 发布 + 部署 + 监控 | ⏳ 待启动 | 0% |
+| 8.7 | Credit 定价体系改造（海外 4 档套餐 + 统一 credit 池）| ✅ 基建完成 | 已部署上线，文档待同步 |
 
 ```
-[                    ] 0%  (0/5 modules)
+[                    ] 0%  (0/7 modules)
 ```
 
 **时间估算**：6-7 周（Week 1 Erika 手动 + Week 2-5 Claude 开发）
