@@ -50,7 +50,9 @@ from review_analyzer.database import (
     get_upload_job,
     log_llm_usage_batch,
     update_comment_analysis,
+    update_comment_analysis_batch,
     update_comment_cluster,
+    update_comment_clusters_batch,
     update_session_stats,
     update_session_warnings,
     update_upload_job,
@@ -70,6 +72,7 @@ from .queue import get_queue
 # 旧 review_analyzer.analyzer.analyze_batch 仍保留供 Streamlit 直接调用，不在 worker 通道使用
 PROMPT_VERSION = DEFAULT_ANNOTATE_VERSION  # "v2.1"
 ANALYZER_VERSION = "v4_deep"
+COMMENT_ANALYSIS_WRITE_BATCH_SIZE = 50
 
 logger = logging.getLogger(__name__)
 
@@ -469,14 +472,36 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     for nid in cluster_result.noise_ids:
                         id_to_cluster[nid] = (-1, nid)
 
-                    for cid, (clabel, rep_id) in id_to_cluster.items():
-                        try:
-                            update_comment_cluster(user_id, cid, clabel, rep_id)
-                        except Exception:
-                            logger.exception(
-                                "update_comment_cluster failed for comment_id=%s user_id=%s",
-                                cid, user_id,
-                            )
+                    cluster_updates = [
+                        {
+                            "comment_id": cid,
+                            "cluster_id": clabel,
+                            "cluster_representative_id": rep_id,
+                        }
+                        for cid, (clabel, rep_id) in id_to_cluster.items()
+                    ]
+                    try:
+                        update_comment_clusters_batch(user_id, cluster_updates)
+                    except Exception:
+                        logger.exception(
+                            "update_comment_clusters_batch failed for user_id=%s count=%d",
+                            user_id,
+                            len(cluster_updates),
+                        )
+                        for row in cluster_updates:
+                            try:
+                                update_comment_cluster(
+                                    user_id,
+                                    int(row["comment_id"]),
+                                    int(row["cluster_id"]),
+                                    int(row["cluster_representative_id"]),
+                                )
+                            except Exception:
+                                logger.exception(
+                                    "update_comment_cluster failed for comment_id=%s user_id=%s",
+                                    row["comment_id"],
+                                    user_id,
+                                )
 
                     for c, r in zip(llm_emb_comments, v4_results):
                         id_to_v4[c["id"]] = r
@@ -534,10 +559,32 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         else:
             ordered_v4_results = []
 
-        # 增量写入：每条评论分析完立即持久化，崩溃不丢进度
+        # 小批量增量写入：降低连接/commit 压力，同时避免回到全量末尾才保存。
+        def _flush_analysis_updates(updates: list[tuple[int, dict]]) -> None:
+            if not updates:
+                return
+            try:
+                update_comment_analysis_batch(user_id, updates)
+            except Exception:
+                logger.exception(
+                    "update_comment_analysis_batch failed for user_id=%s count=%d; falling back to per-comment writes",
+                    user_id,
+                    len(updates),
+                )
+                for cid, analysis in updates:
+                    try:
+                        update_comment_analysis(user_id, cid, analysis)
+                    except Exception:
+                        logger.exception(
+                            "update_comment_analysis failed for comment_id=%s user_id=%s",
+                            cid,
+                            user_id,
+                        )
+
         positive_count = 0
         negative_count = 0
         results = []
+        analysis_updates: list[tuple[int, dict]] = []
         for comment, v4 in zip(unprocessed, ordered_v4_results):
             if v4.get("error"):
                 result = {
@@ -591,7 +638,11 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 except (TypeError, ValueError):
                     pass
 
-            update_comment_analysis(user_id, int(comment["id"]), result)
+            analysis_updates.append((int(comment["id"]), result))
+            if len(analysis_updates) >= COMMENT_ANALYSIS_WRITE_BATCH_SIZE:
+                _flush_analysis_updates(analysis_updates)
+                analysis_updates = []
+
             results.append(result)
 
             if result.get("sentiment") == "positive":
@@ -599,6 +650,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             elif result.get("sentiment") == "negative":
                 negative_count += 1
 
+        _flush_analysis_updates(analysis_updates)
         update_session_stats(user_id, session_id, len(unprocessed), positive_count, negative_count)
 
         # M6: 扣减 credit（review_analyze = 1 credit/条）

@@ -107,6 +107,12 @@ def _clear_cache(func) -> None:
         clear()
 
 
+def _clear_comment_analysis_caches() -> None:
+    _clear_cache(get_comments)
+    _clear_cache(get_comments_deduped)
+    _clear_cache(get_product_stats_deduped)
+
+
 def _get_connection_pool():
     """全局共享的 PostgreSQL 连接池，创建失败后定期重试。"""
     global _connection_pool, _pool_creation_failed, _pool_last_attempt
@@ -644,18 +650,42 @@ def _vector_to_sql(vector: list[float]) -> str:
     return "[" + ",".join(str(float(value)) for value in vector) + "]"
 
 
+def _execute_values_attempted_count(rows: list[tuple]) -> int:
+    return len(rows)
+
+
 def update_comment_embedding(user_id: int, comment_id: int, embedding: list[float]) -> None:
     """写入单条评论 embedding。"""
+    update_comment_embeddings_batch(user_id, [{"comment_id": comment_id, "embedding": embedding}])
+
+
+def update_comment_embeddings_batch(user_id: int, embeddings: list[dict]) -> int:
+    """批量写入评论 embedding，共用一个连接和事务。"""
+    rows = [
+        (user_id, int(item["comment_id"]), _vector_to_sql(item["embedding"]))
+        for item in embeddings
+        if item.get("embedding")
+    ]
+    if not rows:
+        return 0
+
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE comments SET embedding = %s::vector WHERE id = %s AND user_id = %s",
-                (_vector_to_sql(embedding), comment_id, user_id),
+            psycopg2.extras.execute_values(
+                cur,
+                """UPDATE comments AS c
+                   SET embedding = v.embedding::vector
+                   FROM (VALUES %s) AS v(user_id, comment_id, embedding)
+                   WHERE c.id = v.comment_id AND c.user_id = v.user_id""",
+                rows,
+                page_size=100,
             )
+            updated = _execute_values_attempted_count(rows)
             conn.commit()
             _clear_cache(get_comments)
             _clear_cache(get_comments_deduped)
+            return updated
     finally:
         conn.close()
 
@@ -886,58 +916,129 @@ def get_comment_by_id(user_id: int, comment_id: int) -> dict | None:
         conn.close()
 
 
+def _comment_analysis_update_row(
+    user_id: int,
+    comment_id: int,
+    analysis: dict,
+    *,
+    include_cache_fields: bool,
+) -> tuple:
+    base = (
+        user_id,
+        int(comment_id),
+        analysis.get("sentiment"),
+        analysis.get("content_sentiment", analysis.get("sentiment")),
+        analysis.get("category"),
+        analysis.get("priority"),
+        analysis.get("reason"),
+        analysis.get("improvement"),
+        analysis.get("issue_tag", ""),
+        analysis.get("highlight_tag", ""),
+        json.dumps(analysis["aspects_json"], ensure_ascii=False) if analysis.get("aspects_json") else None,
+        analysis.get("analyzer_version", "legacy"),
+    )
+    if not include_cache_fields:
+        return base
+    return base + (
+        analysis.get("cache_hit_level"),
+        analysis.get("cache_source_id"),
+        analysis.get("cache_hit_source"),
+    )
+
+
+def _execute_comment_analysis_values(cur, rows: list[tuple], *, include_cache_fields: bool) -> int:
+    if include_cache_fields:
+        psycopg2.extras.execute_values(
+            cur,
+            """UPDATE comments AS c
+               SET sentiment = v.sentiment,
+                   content_sentiment = v.content_sentiment,
+                   category = v.category,
+                   priority = v.priority,
+                   reason = v.reason,
+                   improvement = v.improvement,
+                   issue_tag = v.issue_tag,
+                   highlight_tag = v.highlight_tag,
+                   aspects_json = v.aspects_json::jsonb,
+                   analyzer_version = v.analyzer_version,
+                   cache_hit_level = v.cache_hit_level,
+                   cache_source_id = v.cache_source_id,
+                   cache_hit_source = v.cache_hit_source,
+                   is_processed = 1
+               FROM (VALUES %s) AS v(user_id, comment_id, sentiment, content_sentiment, category, priority,
+                                      reason, improvement, issue_tag, highlight_tag, aspects_json, analyzer_version,
+                                      cache_hit_level, cache_source_id, cache_hit_source)
+               WHERE c.id = v.comment_id AND c.user_id = v.user_id""",
+            rows,
+            page_size=100,
+        )
+    else:
+        psycopg2.extras.execute_values(
+            cur,
+            """UPDATE comments AS c
+               SET sentiment = v.sentiment,
+                   content_sentiment = v.content_sentiment,
+                   category = v.category,
+                   priority = v.priority,
+                   reason = v.reason,
+                   improvement = v.improvement,
+                   issue_tag = v.issue_tag,
+                   highlight_tag = v.highlight_tag,
+                   aspects_json = v.aspects_json::jsonb,
+                   analyzer_version = v.analyzer_version,
+                   is_processed = 1
+               FROM (VALUES %s) AS v(user_id, comment_id, sentiment, content_sentiment, category, priority,
+                                      reason, improvement, issue_tag, highlight_tag, aspects_json, analyzer_version)
+               WHERE c.id = v.comment_id AND c.user_id = v.user_id""",
+            rows,
+            page_size=100,
+        )
+    return _execute_values_attempted_count(rows)
+
+
 def update_comment_analysis(user_id: int, comment_id: int, analysis: dict) -> None:
+    update_comment_analysis_batch(user_id, [(comment_id, analysis)])
+
+
+def update_comment_analysis_batch(
+    user_id: int,
+    analyses: list[tuple[int, dict]] | list[dict],
+) -> int:
+    """批量写入评论分析结果，共用一个连接和事务。"""
+    normalized: list[tuple[int, dict]] = []
+    for item in analyses:
+        if isinstance(item, dict):
+            normalized.append((int(item["comment_id"]), item["analysis"]))
+        else:
+            comment_id, analysis = item
+            normalized.append((int(comment_id), analysis))
+    if not normalized:
+        return 0
+
+    include_cache_fields = any(analysis.get("cache_hit_level") is not None for _, analysis in normalized)
+    rows = [
+        _comment_analysis_update_row(user_id, comment_id, analysis, include_cache_fields=include_cache_fields)
+        for comment_id, analysis in normalized
+    ]
+
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            base_sql = """UPDATE comments
-                   SET sentiment = %s, content_sentiment = %s, category = %s, priority = %s, reason = %s,
-                       improvement = %s, issue_tag = %s, highlight_tag = %s,
-                       aspects_json = %s, analyzer_version = %s,
-                       is_processed = 1
-                   WHERE id = %s AND user_id = %s"""
-            base_params = (
-                analysis.get("sentiment"),
-                analysis.get("content_sentiment", analysis.get("sentiment")),
-                analysis.get("category"),
-                analysis.get("priority"),
-                analysis.get("reason"),
-                analysis.get("improvement"),
-                analysis.get("issue_tag", ""),
-                analysis.get("highlight_tag", ""),
-                json.dumps(analysis["aspects_json"], ensure_ascii=False) if analysis.get("aspects_json") else None,
-                analysis.get("analyzer_version", "legacy"),
-                comment_id,
-                user_id,
-            )
-            if analysis.get("cache_hit_level") is not None:
+            if include_cache_fields:
                 try:
-                    cur.execute(
-                        """UPDATE comments
-                           SET sentiment = %s, content_sentiment = %s, category = %s, priority = %s, reason = %s,
-                               improvement = %s, issue_tag = %s, highlight_tag = %s,
-                               aspects_json = %s, analyzer_version = %s,
-                               cache_hit_level = %s, cache_source_id = %s,
-                               cache_hit_source = %s,
-                               is_processed = 1
-                           WHERE id = %s AND user_id = %s""",
-                        base_params[:-2] + (
-                            analysis.get("cache_hit_level"),
-                            analysis.get("cache_source_id"),
-                            analysis.get("cache_hit_source"),
-                            comment_id,
-                            user_id,
-                        ),
-                    )
+                    updated = _execute_comment_analysis_values(cur, rows, include_cache_fields=True)
                 except Exception:
                     conn.rollback()
-                    cur.execute(base_sql, base_params)
+                    fallback_rows = [
+                        _comment_analysis_update_row(user_id, comment_id, analysis, include_cache_fields=False)
+                        for comment_id, analysis in normalized
+                    ]
+                    updated = _execute_comment_analysis_values(cur, fallback_rows, include_cache_fields=False)
             else:
-                cur.execute(base_sql, base_params)
+                updated = _execute_comment_analysis_values(cur, rows, include_cache_fields=False)
             conn.commit()
-            _clear_cache(get_comments)
-            _clear_cache(get_comments_deduped)
-            _clear_cache(get_product_stats_deduped)
+            _clear_comment_analysis_caches()
+            return updated
     finally:
         conn.close()
 
@@ -1111,16 +1212,48 @@ def update_comment_cluster(
     user_id: int, comment_id: int, cluster_id: int, representative_id: int
 ) -> None:
     """写入单条评论的聚类结果."""
+    update_comment_clusters_batch(
+        user_id,
+        [
+            {
+                "comment_id": comment_id,
+                "cluster_id": cluster_id,
+                "cluster_representative_id": representative_id,
+            }
+        ],
+    )
+
+
+def update_comment_clusters_batch(user_id: int, clusters: list[dict]) -> int:
+    """批量写入评论聚类元数据，共用一个连接和事务。"""
+    rows = [
+        (
+            user_id,
+            int(item["comment_id"]),
+            item.get("cluster_id"),
+            item.get("cluster_representative_id"),
+        )
+        for item in clusters
+    ]
+    if not rows:
+        return 0
+
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                """UPDATE comments
-                   SET cluster_id = %s, cluster_representative_id = %s
-                   WHERE id = %s AND user_id = %s""",
-                (cluster_id, representative_id, comment_id, user_id),
+            psycopg2.extras.execute_values(
+                cur,
+                """UPDATE comments AS c
+                   SET cluster_id = v.cluster_id,
+                       cluster_representative_id = v.cluster_representative_id
+                   FROM (VALUES %s) AS v(user_id, comment_id, cluster_id, cluster_representative_id)
+                   WHERE c.id = v.comment_id AND c.user_id = v.user_id""",
+                rows,
+                page_size=100,
             )
+            updated = _execute_values_attempted_count(rows)
             conn.commit()
+            return updated
     finally:
         conn.close()
 

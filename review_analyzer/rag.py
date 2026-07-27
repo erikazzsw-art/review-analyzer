@@ -19,7 +19,7 @@ from review_analyzer.database import (
     get_setting,
     search_comments_by_embedding,
     search_comments_by_fulltext,
-    update_comment_embedding,
+    update_comment_embeddings_batch,
 )
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -147,11 +147,11 @@ def embed_session_comments(user_id: int, session_id: int) -> dict:
         return {"ok": True, "embedded": 0, "total": len(comments), "error": ""}
 
     embeddings = generate_embeddings_batch(texts, user_id)
-    embedded = 0
+    embedding_updates = []
     for comment, embedding in zip(valid_comments, embeddings):
         if embedding:
-            update_comment_embedding(user_id, int(comment["id"]), embedding)
-            embedded += 1
+            embedding_updates.append({"comment_id": int(comment["id"]), "embedding": embedding})
+    embedded = update_comment_embeddings_batch(user_id, embedding_updates)
 
     return {"ok": True, "embedded": embedded, "total": len(comments), "error": ""}
 
@@ -174,12 +174,11 @@ def ensure_comment_embeddings(user_id: int, comments: list[dict]) -> int:
         return 0
 
     embeddings = generate_embeddings_batch(texts, user_id)
-    embedded = 0
+    embedding_updates = []
     for comment, embedding in zip(targets, embeddings):
         if embedding:
-            update_comment_embedding(user_id, int(comment["id"]), embedding)
-            embedded += 1
-    return embedded
+            embedding_updates.append({"comment_id": int(comment["id"]), "embedding": embedding})
+    return update_comment_embeddings_batch(user_id, embedding_updates)
 
 
 def _tokenize(text: str) -> list[str]:
