@@ -606,10 +606,10 @@
 - [x] Phase 7 P1 worker 写路径优化已完成编码、本地回归并推送 `origin/develop=2d8c1a4`：analysis / cluster / embedding 写入改为批量事务，worker analysis 按 50 条 flush 并保留逐条 fallback。
 - [x] Phase 7 P1 worker 写路径优化部署已确认：GitHub Actions `Deploy to Production` run `30236160482` completed/success for `2d8c1a4`，deploy job 于 2026-07-27 04:07:47 UTC 完成。
 - [x] Phase 7 P1 staging/dev 写路径 smoke 已完成：clueai-dev 60 条与 300 条临时 worker smoke 均通过，credit / ledger / analytics / review_pool / push 均在验证进程内 no-op，临时数据已清理。
-- [x] Phase 7 P2 date/index 已完成 clueai-dev migration/backfill/行为验收：`059` 已在 dev 执行，1501/1501 comments 均有 `review_date`，NULL=0；ISO 1409/1409、Amazon 文本 92/92 均归一化；3 个新索引存在；暂未执行 production DDL。
+- [x] Phase 7 P2 date/index 已完成 production migration/backfill/行为验收：Erika 已确认 production 备份/PITR、当前维护窗口、`059 DOWN` + 备份恢复回滚方案、验收样本 session 95/96/114；生产 `059` 已执行并提交，`comments=8340` 行数不变，`review_date` 8325/8340、NULL=15（均为空 raw date）、ISO 7711/7711、Amazon 文本 614/614；3 个新索引存在；Amazon 文本日期精确日过滤返回正确样本。
 - [x] Phase 7 生产 live `/analysis/results` + export smoke 已获 Erika 授权并完成：仅 session 114/96；aggregate results、`user_experience` 模块导出、完整导出均 200，导出文件为有效 XLSX。
 - [x] 可以扩大 Phase 7 第二批 / P1 小流量灰度。
-- [ ] 不建议直接生产执行 P2 DDL；仍需确认备份、维护窗口、回滚方案和验收样本后，才可执行 production migration/backfill。
+- [x] P2 production DDL/backfill gate 已完成；未执行生产上传、重分析、QA、aggregate/export smoke，未触发 credit/quota/analytics/LLM 成本路径。
 
 #### 5.9.1 核心口径定义
 
@@ -637,7 +637,7 @@
 | Phase 7 P0 read-path | ✅ 完成 | `get_comments()` 默认瘦列读取，不返回 `embedding`；`aspects_json` compact 投影；date span fallback 改 SQL `MIN/MAX`；连接关闭重试一次；`backend_api/tests` 176 passed |
 | Phase 7 P1 authenticated smoke | ✅ 完成 | clueai-dev/preprod route 层 session 3/4/5 authenticated smoke 通过；生产只读 results smoke 覆盖 114/96/111/110；未改 Not Breathable，未重构 Phase 1-6 核心算法 |
 | Phase 7 P1 worker write-path | ✅ 已推送 / staging 写入验证通过 | `origin/develop=2d8c1a4`；GitHub Actions deploy run `30236160482` success；clueai-dev 60 条与 300 条临时 worker smoke 通过；analysis 每 50 条 flush，cluster / embedding 批量写，保留单条 API 和异常 fallback |
-| Phase 7 P2 date/index | ✅ dev migration/backfill 验收完成 / prod pending | clueai-dev 已执行 `059`，`review_date` 1501/1501、NULL=0，ISO 1409/1409、Amazon 文本 92/92；3 个索引存在；`get_comments` range/date span 与 product/compare 聚合优先 normalized date，旧库保留 fallback；暂未执行 production DDL |
+| Phase 7 P2 date/index | ✅ production migration/backfill 验收完成 | clueai-dev 已执行 `059`，`review_date` 1501/1501、NULL=0，ISO 1409/1409、Amazon 文本 92/92；production 已执行 `059`，`review_date` 8325/8340、NULL=15（均为空 raw date）、ISO 7711/7711、Amazon 文本 614/614；3 个索引存在；`get_comments` range/date span 与 product/compare 聚合优先 normalized date，旧库保留 fallback |
 | Phase 7 生产 credit/export 门禁 | ✅ 已完成（限定样本） | Erika 于 2026-07-27 授权 session 114/96；aggregate `/analysis/results`、模块导出、完整导出均 200；共写入 6 条 credit ledger（2 insight、4 export），analytics_events +0 |
 
 #### 5.9.3 验证记录
@@ -681,6 +681,9 @@ Phase 7 P0 / P1 验证记录：
 | P2 code / local regression | `migrations/059_add_comments_review_date.sql`、`review_dates.py`、安全 dry-run backfill 脚本已完成；写入优先填 `review_date`，读取/日期跨度/compare/product 聚合优先 normalized date，旧库无列时 fallback；`python3 -m pytest backend_api/tests workers/tests`：207 passed；target ruff 与 `git diff --check` passed |
 | P2 dev migration/backfill | clueai-dev only：`059` 执行成功；`python3 scripts/backfill_comments_review_date.py --help` OK；`--limit 200` dry-run：`total_seen=200`、`already_normalized=200`、pending/unparsed/updated 均 0；`--apply`：`total_seen=1501`、`already_normalized=1501`、`updated=0`；DB 统计 `total_comments=1501`、`normalized_comments=1501`、`NULL=0`、ISO 1409/1409、Amazon 文本 92/92；`idx_comments_user_session_id_desc`、`idx_comments_user_product_review_date_id_desc`、`idx_comments_user_product_variant_review_date_id_desc` 均存在 |
 | P2 dev behavior smoke | `get_comments` date filter 生成 `review_date >= %s::date` / `review_date <= %s::date`；Amazon 样本 `id=435`（`Reviewed in the United States on July 5, 2026` → `2026-07-05`）在精确日窗口返回 1 条且被包含；default/session fallback 用 normalized span `2018-12-05 ~ 2026-07-05`；history total=1，session results comments=92，aggregate default comments=92，custom day comments=1，module export XLSX 7107 bytes 且 ZIP header OK；验证进程内 patch insights/credit/quota 为 no-op，未触发 LLM、ledger、analytics、上传或重分析 |
+| P2 production pre-confirmation | Erika 于 2026-07-27 确认 production 备份/PITR 已可用、当前为维护窗口、接受 `059 DOWN` + 备份恢复回滚方案、使用 session 95/96/114 作为验收样本；本地无 `psql`/`pg_dump`/`ossutil`，按项目文档的 Python + psycopg2 生产流程执行 |
+| P2 production migration/backfill | production：`059` 执行并 commit，comments 行数 `8340 -> 8340`；`python3 scripts/backfill_comments_review_date.py --database-url-env PROD_DATABASE_URL --allow-prod --limit 200`：`total_seen=200`、`already_normalized=200`、pending/unparsed/updated 均 0；`--apply`：`total_seen=8340`、`already_normalized=8325`、`blank_raw_date=15`、pending/unparsed/updated 均 0；DB 统计 `review_date` 8325/8340、NULL=15、nonblank unparsed=0、ISO 7711/7711、Amazon 文本 614/614；`idx_comments_user_session_id_desc`、`idx_comments_user_product_review_date_id_desc`、`idx_comments_user_product_variant_review_date_id_desc` 均存在 |
+| P2 production behavior smoke | `get_comments` date filter 生成 `review_date >= %s::date` / `review_date <= %s::date`；Amazon 样本 `id=26410`（`Reviewed in the United States on July 5, 2026` → `2026-07-05`）在精确日窗口返回 1 条且被包含；session 95 default span `2023-02-07 ~ 2026-07-10`，session 96 `2024-04-10 ~ 2025-12-01`，session 114 `2018-12-05 ~ 2026-07-05`；compare `date_from/date_to` 同样返回 `id=26410`；未触发上传、重分析、QA、aggregate/export smoke、credit/quota/analytics/LLM 成本路径 |
 | production authorized results/export smoke | session 114：aggregate results 200 / 1.45s、92/92 comments、range fallback `all`，模块/完整导出 200；session 96：aggregate results 200 / 0.56s、661/661 comments、range `2024-04-10 ~ 2025-12-01`，模块/完整导出 200；全部 XLSX 为有效 ZIP header |
 | production credit / analytics delta | 本次 6 个已授权请求新增 6 条 credit ledger：2 条 `insight`、4 条 `export`，总扣减 16 credits；analytics_events +0；未触发上传、重分析、QA 或 push |
 
@@ -703,7 +706,7 @@ Phase 7 P0 / P1 验证记录：
 - [x] P1 worker 写路径优化已完成 staging/dev no-op 写入验证：临时 60 条与 300 条 worker smoke 均通过，确认 analysis 50 条 flush、cluster batch、embedding batch 的真实 DB 写入路径可用；未触发真实 credit、ledger、analytics、review_pool 或 push。
 - [ ] P1 仍未跑真实业务 `/uploads` 或重分析入口：这些入口会扣 credit、写 ledger / analytics，必须先说明风险并等待 Erika 明确授权；如要生产扩大，仍需选择代表 session / 样本并记录真实 worker 容器日志。
 - [x] P2 date/index 已完成 clueai-dev migration、dry-run/apply backfill 与 history/results/aggregate/export 行为验收；raw `date` 继续保留展示，`review_date` 只作为 normalized filter/index 字段。
-- [ ] P2 production DDL/backfill 仍未执行；需要先确认备份、维护窗口、回滚方案和验收样本，再单独授权。
+- [x] P2 production DDL/backfill 已执行并验收：production `059` committed，backfill dry-run/apply 通过，ISO/Amazon 文本日期均已归一化，默认/session fallback 使用 normalized span。
 - [ ] `Comfortable_to_Wear_reviews_57.xlsx` 风险已用 fixture 复刻；若要作为正式金样本，需要重新导入或重放真实 xlsx，并确认 missing evidence 不进入 Representative Evidence。
 - [ ] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；如重新开启，先确认 provider/model 可用并监控 timeout / empty-cache 日志。
 - [ ] 增加 label stats / 告警：单一标签突然 100%、verified evidence 比例过低、broad/internal label 进入 Top、cluster propagated 占比异常升高、long-tail 标签过多。
@@ -715,15 +718,15 @@ Phase 7 P0 / P1 验证记录：
 
 | 优先级 | 任务 | 当前阶段 | 建议步骤 | Erika 参与点 |
 |--------|------|----------|----------|--------------|
-| P0 gate | live `/analysis/results` + export 生产门禁 | 已完成（session 114/96） | 1. 已获授权并完成 aggregate results、模块导出、完整导出；2. 记录响应时间、comments count、XLSX 有效性、credit/analytics delta；3. 未扩展到上传或重分析 | production DDL 前确认备份、窗口、回滚和验收样本 |
+| P0 gate | live `/analysis/results` + export 生产门禁 | 已完成（session 114/96） | 1. 已获授权并完成 aggregate results、模块导出、完整导出；2. 记录响应时间、comments count、XLSX 有效性、credit/analytics delta；3. 未扩展到上传或重分析 | P2 production DDL 前置确认已完成 |
 | P1 | worker 写路径优化 | staging/dev no-op 写入验证通过 | 1. 已审计写路径；2. 已实现 batch update 与小批量事务边界；3. 已补 fake DB/query count 单测并推送 `2d8c1a4`；4. 已完成 clueai-dev 60/300 临时 worker smoke；5. 如要继续，只能在 Erika 授权后跑真实上传/重分析或生产 live/export smoke | 授权任何会扣 credit、写 ledger 或 analytics 的真实业务 smoke 前需明确确认 session 数量/ID |
-| P2 | date text 规范化 + 索引 | dev migration 验收完成 / prod pending | 1. `059`、parser、安全 backfill、读写 fallback 和索引已完成；2. clueai-dev migration 已执行；3. dry-run/apply backfill 已记录 parsed/unparsed 统计；4. history/results/aggregate/export 验收通过；5. production DDL 单独审批 | production DDL 前确认备份、窗口、回滚和验收样本 |
+| P2 | date text 规范化 + 索引 | production migration/backfill 验收完成 | 1. `059`、parser、安全 backfill、读写 fallback 和索引已完成；2. clueai-dev 与 production migration/backfill 均已执行；3. dry-run/apply backfill 已记录 parsed/unparsed 统计；4. production session 95/96/114 date span 与 Amazon 精确日过滤验收通过；5. 未执行上传、重分析、QA、aggregate/export smoke 或扣费路径 | 小流量灰度继续观察真实 results/filter 行为 |
 
 后续 Erika 参与点：
 
 | 什么时候 | 需要做什么 | 预计人力 |
 |----------|------------|----------|
-| P2 production DDL 前 | 确认备份、维护窗口、回滚方案与验收样本 | 5-10 分钟决策 |
+| P2 production DDL 前 | 已确认备份/PITR、维护窗口、回滚方案与验收样本；production `059`/backfill/只读验收完成 | 已完成 |
 | P1 小流量灰度 3-7 天内 | 看 3-5 个真实 session 的 Top Issue / Top Label、代表证据、下载是否符合预期 | 每天 15-30 分钟 |
 | 新品类首次接入 | 审核该类目高频候选标签：保留 / 合并 / 改名 / 禁用 | 每个类目 30-60 分钟 |
 | 稳定运行后 | 看异常告警和候选池，只处理高频、前台可见、低置信度或跨品类边界 case | 每周 10-20 分钟 |
