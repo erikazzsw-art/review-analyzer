@@ -612,7 +612,10 @@
 - P2 production DDL/backfill gate 已完成；未执行生产上传、重分析、QA、aggregate/export smoke，未触发 credit/quota/analytics/LLM 成本路径。
 - Phase 7 第一轮生产只读灰度观察已按停止条件收口：Erika 授权后仅请求 session 114 的 `GET /analysis/sessions/114/results`；返回 200 且 credit / analytics / LLM / upload_jobs delta 全部为 0，但 Top Issue / Top Label 的 Representative Evidence 只各有 1 条 verified span，其余高频 occurrence 为 cluster-propagated evidence，已停止 96/111/110/95 后续观察。
 - Phase 7 正向门禁项已核对通过：生产 `RESULTS_AI_ENHANCEMENT_ENABLED` effective=false；session-level read-only route、payload 无 `embedding`、无 SSL/connection error、credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0；date span、`review_date` 与 Amazon 文本日期归一化链路正常。
-- **规则**：Phase 7 当前不得直接收口为通过；下一步不是继续灰度，而是开独立 P0 修复/验证任务。
+- Phase 7 P0 Evidence/Propagation 修复已完成并推送 `origin/develop=5d1ae587f5f09b3f00cfdaad6b10d21565e9fefb`；GitHub Actions `Deploy to Production` run `30249258312` completed/success。
+- Phase 7 修复后第二轮生产只读灰度已获 Erika 授权 A：使用本地生产 session secret，仅调用 `GET /analysis/sessions/{id}/results` 与生产数据库 SELECT；未调用 `/analysis/results`、export、QA、upload、analysis job、reanalyze 或 modern compare。
+- Phase 7 修复后第二轮只读灰度按停止条件收口为 FAIL / STOP at session 96：session 114 通过核心 evidence/propagation 观察，但 session 96 的 Top Issue / Top Label 均无可定位 Representative Evidence，已停止 111/110/95；credit / analytics / LLM / upload_jobs delta 全部为 0。
+- **规则**：Phase 7 当前仍不得直接收口为通过；不进入 5.9.7 50 付费用户 readiness。下一步是独立修复 session 96 `Value for Money` legacy/top row Representative Evidence 缺口，并复核前端 occurrence recount/export 风险。
 
 #### 5.9.1 核心口径定义
 
@@ -643,6 +646,7 @@
 | Phase 7 P2 date/index | ✅ production migration/backfill 验收完成 | clueai-dev 已执行 `059`，`review_date` 1501/1501、NULL=0，ISO 1409/1409、Amazon 文本 92/92；production 已执行 `059`，`review_date` 8325/8340、NULL=15（均为空 raw date）、ISO 7711/7711、Amazon 文本 614/614；3 个索引存在；`get_comments` range/date span 与 product/compare 聚合优先 normalized date，旧库保留 fallback |
 | Phase 7 生产 credit/export 门禁 | ✅ 已完成（限定样本） | Erika 于 2026-07-27 授权 session 114/96；aggregate `/analysis/results`、模块导出、完整导出均 200；共写入 6 条 credit ledger（2 insight、4 export），analytics_events +0 |
 | Phase 7 第一轮生产只读灰度观察 | ❌ FAIL / STOP at session 114 | Erika 授权后仅执行 session 114 的 session-level results；200 / 0.620s、92 comments、无 embedding、无 SSL error、ledger/analytics/LLM/upload_jobs delta=0，date/review_date/Amazon 文本日期链路通过；但 Top Issue `Not Breathable` 与 Top Label `Comfortable to Wear` 均只有 1 条 verified Representative Evidence，其余高频 occurrence 为 cluster-propagated evidence，96/111/110/95 未请求 |
+| Phase 7 修复后第二轮生产只读灰度观察 | ❌ FAIL / STOP at session 96 | P0 Evidence/Propagation 修复部署 run `30249258312` success；Erika 授权 A 后仅请求 session-level results，顺序执行 114 -> 96 后停止；114 的 Top Issue `Water Leaks Through` 与 Top Label `Comfortable to Wear` 代表证据可定位且 API Top 统计未被 propagated 放大；96 的 `Value for Money` Top Issue / Top Label 均无 Representative Evidence，触发停止条件；111/110/95 未请求；delta 全部为 0 |
 
 #### 5.9.3 验证记录
 
@@ -770,6 +774,43 @@ session 114 异常记录（只记录，不现场修复）：
 - 后续建议：暂停扩大生产只读观察；先开独立 P0 修复/验证任务，重点审计 cluster-propagated occurrence 是否应进入 Top 计数、Representative Evidence 是否必须只取 `source_review_allowed=true` / `verified_evidence=true`，并用 session 114 replay/gold sample 在 staging 复核后再申请下一轮生产观察授权。
 - 门禁判断：Phase 7 不应直接收口为通过；不继续观察 96/111/110/95；不执行上传、重分析、QA、aggregate/export smoke。
 
+Phase 7 修复后第二轮生产只读灰度（2026-07-27，授权 A 后执行）：
+
+| 检查项 | 结果 |
+|--------|------|
+| 当前分支 / 远端基线 | 本地 `develop`、HEAD、本地 `origin/develop` 均为 `5d1ae587f5f09b3f00cfdaad6b10d21565e9fefb`；工作树仍有既有未提交用户改动，未触碰、未回滚 |
+| 最新 production deploy | GitHub Actions `Deploy to Production` run `30249258312` completed/success；`head_sha=5d1ae587f5f09b3f00cfdaad6b10d21565e9fefb`；2026-07-27 08:18:30 UTC 更新完成 |
+| 生产业务观察授权 | Erika 明确授权 A：允许使用本地生产 session secret，仅调用 `GET /analysis/sessions/{id}/results` 和数据库 SELECT |
+| TLS / 客户端 | 生产请求使用 `urllib + certifi CA bundle`，证书校验开启；本地 macOS Python 系统 CA 初次出现 local issuer failure，未关闭校验，改用 certifi 后授权请求无 SSL/connection error |
+| 本轮生产动作 | 仅请求 `GET /analysis/sessions/114/results` 与 `GET /analysis/sessions/96/results`；按 session 96 停止条件收口，未请求 111/110/95；未请求 `/analysis/results`、export、QA、upload、analysis job、reanalyze、modern compare dataset/report/export |
+
+第二轮生产只读观察结果：
+
+| session | route | status / time | comments | payload embedding | Top Issue | Top Label | Representative Evidence | propagated / Top 统计 | date / Amazon | 结论 |
+|---------|-------|---------------|----------|-------------------|-----------|-----------|--------------------------|------------------------|---------------|------|
+| 114 | `GET /analysis/sessions/114/results` | 200 / 1.136s | 92 / DB 92 | false | `Water Leaks Through` count=5 / share=83.3 / impact=5.4；raw=5、total=5、propagated=0 | `Comfortable to Wear` count=1 / share=33.3 / impact=1.1；raw=1、total=63、propagated=62 | Issue 3/3 verified span：`Both feet are leaking around where the boot connects to the wader`、`leak at the seams`、`water leaking in`；Label 1/1 verified span：`These waders are very comfortable` | API row 未被 propagated occurrence 放大；`Not Breathable` 不再是 API Top Issue；只读审计发现前端 occurrence recount/export 若现场重算仍可能看到 `Not Breathable` 77/76 propagated、`Comfortable to Wear` 63/62 propagated，本轮未调用 export | `review_date` 92/92；normalized span `2018-12-05 ~ 2026-07-05`；Amazon 文本 92/92 normalized；样本 `id=26410` raw=`Reviewed in the United States on July 5, 2026` -> `2026-07-05` | 114 通过核心 evidence/propagation 观察 |
+| 96 | `GET /analysis/sessions/96/results` | 200 / 1.243s | 661 / DB 661 | false | `Value for Money` count=6 / share=12.2 / impact=0.9；raw=6、total=6、propagated=0；`evidence_verified=false` | `Value for Money` count=135 / share=66.5 / impact=20.4；raw=135、total=135、propagated=0；`evidence_verified=false` | FAIL：Issue 与 Label 均无 `evidence_spans`，Representative Evidence checked_count=0，不可定位 | API row 未被 propagated occurrence 放大；无前端 occurrence propagated recount 风险 | `review_date` 661/661；normalized span `2024-04-10 ~ 2025-12-01`；无 Amazon 文本日期 | 触发停止条件 |
+| 111 | 未请求 | - | - | - | 既有基线 `Water Leaks Through` count=13 | 既有基线 `Keeps Water Out` count=17 | 未观察 | 未观察 | 未观察 | 因 96 失败停止 |
+| 110 | 未请求 | - | - | - | 既有基线 `Water Leaks Through` count=13 | 既有基线 `Holds Up Well` count=46 | 未观察 | 未观察 | 未观察 | 因 96 失败停止 |
+| 95 | 未请求 | - | - | - | 未补齐 | 未补齐 | 未观察 | 未观察 | 未观察 | 因 96 失败停止 |
+
+第二轮生产只读 delta 核对：
+
+| 项目 | baseline | after session 96 stop | delta |
+|------|----------|-----------------------|-------|
+| `credit_ledger` for user 9 | count=295, max_id=304, delta_sum=15267 | count=295, max_id=304, delta_sum=15267 | 0 |
+| `user_credits` for user 9 | balance=14967, monthly_grant=15000 | balance=14967, monthly_grant=15000 | unchanged |
+| `analytics_events` for user 9 | count=4166, max_id=4726 | count=4166, max_id=4726 | 0 |
+| `llm_usage_log` for user 9 | count=2603, max_id=2653, tokens_in=12130086, tokens_out=470608, cost_yuan=15.89495 | unchanged | 0 |
+| `upload_jobs` for sessions 95/96/110/111/114 | jobs 75/77/91/92/95 均 `done` | 状态、processed_rows、updated_at、completed_at 均不变 | unchanged |
+
+第二轮结论与后续建议：
+- 结论：FAIL / STOP at session 96。session 114 的修复后 API Top 统计与 Representative Evidence 已符合核心门禁，payload 无 `embedding`、无 SSL/connection error、date/Amazon 正常、delta 全部为 0；但 session 96 的 Top Issue / Top Label 都缺 Representative Evidence，触发停止条件。
+- `Not Breathable` 保持既有逻辑冻结；修复后 API Top Issue 已从第一轮的 `Not Breathable` 转为真实漏水 `Water Leaks Through`，本轮未改标签逻辑。
+- `cluster_propagated` occurrence 未继续放大 API Top 统计；但前端 `customerLabelOccurrences()` 的 occurrence recount/export 路径仍有传播行重算风险，本轮未触发 export，后续需单独修复或加门禁。
+- 门禁判断：Phase 7 仍不可收口为通过；不进入 5.9.7 50 付费用户 readiness；不执行生产上传、重分析、QA、aggregate/export smoke。
+- 下一步：修复 session 96 `Value for Money` legacy/top row Representative Evidence 缺口，并把前端 occurrence recount/export 的 propagated 过滤纳入回归。
+
 Phase 7 P0 / P1 验证记录：
 
 | 验证项 | 结果 |
@@ -819,13 +860,13 @@ Phase 7 P0 / P1 验证记录：
 - P1 worker 写路径优化已完成 staging/dev no-op 写入验证：临时 60 条与 300 条 worker smoke 均通过，确认 analysis 50 条 flush、cluster batch、embedding batch 的真实 DB 写入路径可用；未触发真实 credit、ledger、analytics、review_pool 或 push。
 - P2 date/index 已完成 clueai-dev migration、dry-run/apply backfill 与 history/results/aggregate/export 行为验收；raw `date` 继续保留展示，`review_date` 只作为 normalized filter/index 字段。
 - P2 production DDL/backfill 已执行并验收：production `059` committed，backfill dry-run/apply 通过，ISO/Amazon 文本日期均已归一化，默认/session fallback 使用 normalized span。
-- Phase 7 收口前基线复核（2026-07-27）：本地 `develop`、HEAD、本地 `origin/develop` 均为 `d8cc2d5c398760734be0644abd25f0b1ded04267`；GitHub Actions `Deploy to Production` run `30246360986` completed/success；工作树存在既有未提交改动，本轮只允许提交 `PROGRESS_V2.md`。
+- Phase 7 修复后收口前基线复核（2026-07-27）：本地 `develop`、HEAD、本地 `origin/develop` 均为 `5d1ae587f5f09b3f00cfdaad6b10d21565e9fefb`；GitHub Actions `Deploy to Production` run `30249258312` completed/success；工作树存在既有未提交改动，本轮只允许提交 `PROGRESS_V2.md`。
 - Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`：2026-07-27 已通过 ECS `deploy/.env`、api 容器 env 与运行时 `_results_ai_enabled()` 三重只读核验，effective=false。
 - Phase 7 第一轮灰度入口风险审计已完成：确认 session-level results/history 与 aggregate results、export、QA、upload/reanalyze、modern compare 的成本/写入边界。
-- Phase 7 第一轮灰度 preflight 已完成：本次已核实 GitHub Actions deploy run `30244595426` 成功并确认生产部署到 `35de389`；生产 `RESULTS_AI_ENHANCEMENT_ENABLED` effective=false；观察前仍需每次重新核验最新 run。
 - Phase 7 第一轮生产只读观察已执行并按异常停止：仅请求 session 114；未请求 96/111/110/95；未产生 credit / analytics / LLM / worker delta；异常为 Representative Evidence verified 覆盖不足和 cluster-propagated evidence 风险。
-- Phase 7 正向门禁项已通过：session 114 read-only route 200 / 0.620s、comments=92、payload 无 `embedding`、无 SSL/connection error，credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0，date span / `review_date` / Amazon 文本日期链路正常。
-- **规则**：Phase 7 后续小流量灰度暂停扩大。先处理 session 114 cluster-propagated occurrence / Representative Evidence 门禁，再申请下一轮生产只读观察授权；不执行生产上传、重分析、QA、aggregate/export smoke，避免触发 credit/quota/analytics/LLM 成本路径。
+- Phase 7 修复后第二轮生产只读观察已执行并按异常停止：Erika 授权 A 后仅请求 session 114/96；114 核心 evidence/propagation 观察通过，96 因 Top Issue / Top Label Representative Evidence 缺失停止；未请求 111/110/95；未产生 credit / analytics / LLM / worker delta。
+- Phase 7 第二轮正向项：session-level results 114/96 均 200、payload 无 `embedding`、无 SSL/connection error，credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0，date span / `review_date` / Amazon 文本日期链路正常。
+- **规则**：Phase 7 后续小流量灰度暂停扩大。先处理 session 96 `Value for Money` Representative Evidence 缺口，并复核前端 occurrence recount/export 的 propagated 过滤，再申请下一轮生产只读观察授权；不执行生产上传、重分析、QA、aggregate/export smoke，避免触发 credit/quota/analytics/LLM 成本路径。
 
 Phase 7 guardrail（约束，不作为单独待办）：
 - 口径冻结：不得修改 `Not Breathable` 标签逻辑，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法；发现异常先记录 session、label、evidence、筛选条件和候选修正规则，再决定是否进入后续修复任务。
@@ -833,11 +874,12 @@ Phase 7 guardrail（约束，不作为单独待办）：
 - 生产业务 smoke 门禁：任何上传、重分析、QA、aggregate results、模块/完整导出等动作，必须先报告 credit ledger / analytics / LLM 成本风险、说明 session 数量与入口，并等待 Erika 明确授权。
 
 独立 P0 修复/验证任务定义（下一步，不属于继续灰度）：
-- [ ] 审计 `cluster_propagated=true` occurrence 是否应进入 Top Issue / Top Label 的 `mention_count`、`review_count` 与排序；若保留为支撑信号，必须避免放大前台高频 Top 统计。
-- [ ] 审计 Representative Evidence 选择门禁：代表证据必须只取真实 source review 中可定位的 span，字段口径按 `source_review_allowed=true` 与 `verified_evidence=true`（现有实现中对应 `evidence_verified=true`）核对；missing / propagated evidence 不得进入前台代表证据。
-- [ ] 保持 `Not Breathable` 标签逻辑冻结；本 P0 只处理 Top 统计与 Representative Evidence 进入条件，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法。
-- [ ] 先在 staging 的 session 114 replay 或 fixture/gold sample 中验证：`Not Breathable` / `Comfortable to Wear` 的 Top 计数、Representative Evidence、date/Amazon 链路和 read-only delta 均需可重复复核。
-- [ ] P0 修复与 staging/fixture 验证通过后，再申请下一轮生产只读灰度观察授权；未获授权前不请求 96/111/110/95，不执行上传、重分析、QA、aggregate/export smoke。
+- [x] session 114 cluster-propagated occurrence / Representative Evidence 核心修复已通过第二轮生产只读观察：API Top Issue 转为 `Water Leaks Through`，代表证据 3/3 verified，API Top 统计未被 propagated 放大。
+- [ ] 修复 session 96 `Value for Money` Top Issue / Top Label 缺 Representative Evidence：legacy/top row 或 occurrence 为空时必须提供可定位 evidence，或明确不展示无法验证的 Representative Evidence。
+- [ ] 审计前端 `customerLabelOccurrences()` 及 export/recount 路径：不得把 `cluster_propagated=true` occurrence 重新计入 Top 统计或导出代表证据；本轮只读未触发 export，但已观察到 114 的潜在 recount 风险。
+- [ ] 保持 `Not Breathable` 标签逻辑冻结；本 P0 只处理 Top 统计、Representative Evidence 与前端 recount/export 进入条件，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法。
+- [ ] 先在 staging/session 96 或 fixture/gold sample 中验证：`Value for Money` 的 Top 计数、Representative Evidence、date 链路和 read-only delta 均需可重复复核；同时保留 session 114 回归。
+- [ ] P0 修复与 staging/fixture 验证通过后，再申请下一轮生产只读灰度观察授权；未获授权前不请求 111/110/95，不执行上传、重分析、QA、aggregate/export smoke。
 
 #### 5.9.6 后续任务拆解与 Erika 参与点
 
@@ -848,21 +890,22 @@ Phase 7 guardrail（约束，不作为单独待办）：
 | P0 gate | live `/analysis/results` + export 生产门禁 | 已完成（session 114/96） | 1. 已获授权并完成 aggregate results、模块导出、完整导出；2. 记录响应时间、comments count、XLSX 有效性、credit/analytics delta；3. 未扩展到上传或重分析 | P2 production DDL 前置确认已完成 |
 | P1 | worker 写路径优化 | staging/dev no-op 写入验证通过 | 1. 已审计写路径；2. 已实现 batch update 与小批量事务边界；3. 已补 fake DB/query count 单测并推送 `2d8c1a4`；4. 已完成 clueai-dev 60/300 临时 worker smoke；5. 如要继续，只能在 Erika 授权后跑真实上传/重分析或生产 live/export smoke | 授权任何会扣 credit、写 ledger 或 analytics 的真实业务 smoke 前需明确确认 session 数量/ID |
 | P2 | date text 规范化 + 索引 | production migration/backfill 验收完成 / date 链路通过 | 1. `059`、parser、安全 backfill、读写 fallback 和索引已完成；2. clueai-dev 与 production migration/backfill 均已执行；3. dry-run/apply backfill 已记录 parsed/unparsed 统计；4. production session 95/96/114 date span 与 Amazon 精确日过滤验收通过；5. session 114 第一轮只读观察确认 date/review_date/Amazon 文本日期链路正常；6. 未执行上传、重分析、QA、aggregate/export smoke 或扣费路径 | P2 date 本身不阻塞；当前阻塞来自 Representative Evidence / cluster propagation 质量门禁 |
-| Phase 7 第一轮灰度观察 | 已执行 / FAIL / STOP at session 114 | 1. 观察前已核实 deploy run `30244595426` 成功、部署 commit `35de389`；收口前已复核最新文档 deploy run `30246360986` completed/success for `d8cc2d5`；2. 已从 ECS `.env`、api env 与运行时代码确认 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；3. Erika 授权后仅请求 `GET /analysis/sessions/114/results`；4. 114 返回 200、92 comments、无 embedding、无 SSL error、date/Amazon 正常、ledger/analytics/LLM/upload_jobs delta=0；5. Top Issue / Top Label Representative Evidence 仅 1/3 verified，大量 occurrence 为 cluster-propagated；6. 已停止 96/111/110/95 | 先开 P0 处理 session 114 Representative Evidence / cluster propagation 质量门禁；修复和 staging 验证后，再由 Erika 授权下一轮生产只读观察 |
-| Phase 7 P0 修复/验证 | 待启动 | 1. 审计 cluster-propagated occurrence 是否进入 Top Issue / Top Label 计数；2. 审计 Representative Evidence 是否必须只取 `source_review_allowed=true` / `verified_evidence=true`；3. 冻结 `Not Breathable` 与 Phase 1-6 核心算法；4. staging session 114 replay 或 fixture/gold sample 先验收；5. 通过后再申请下一轮生产只读灰度授权 | 审核 P0 修复验收样本；确认是否授权下一轮只读生产观察 |
+| Phase 7 第一轮灰度观察 | 已执行 / FAIL / STOP at session 114 | 1. 观察前已核实 deploy run `30244595426` 成功、部署 commit `35de389`；收口前已复核最新文档 deploy run `30246360986` completed/success for `d8cc2d5`；2. 已从 ECS `.env`、api env 与运行时代码确认 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；3. Erika 授权后仅请求 `GET /analysis/sessions/114/results`；4. 114 返回 200、92 comments、无 embedding、无 SSL error、date/Amazon 正常、ledger/analytics/LLM/upload_jobs delta=0；5. Top Issue / Top Label Representative Evidence 仅 1/3 verified，大量 occurrence 为 cluster-propagated；6. 已停止 96/111/110/95 | 已完成后续 P0 Evidence/Propagation 修复，进入第二轮只读观察 |
+| Phase 7 P0 Evidence/Propagation 修复/验证 | 已完成 / 第二轮 114 通过 | 1. 修复已推送 `5d1ae58` 并由 deploy run `30249258312` 部署成功；2. 第二轮 114 返回 200、92 comments、无 embedding、无 SSL error、date/Amazon 正常、delta=0；3. 114 Top Issue `Water Leaks Through` count=5，Representative Evidence 3/3 verified；4. API Top 统计未被 propagated occurrence 放大；5. 但第二轮继续到 96 后因 Representative Evidence 缺失停止 | 审核第二轮记录；下一步聚焦 session 96 和前端 recount/export 风险 |
+| Phase 7 第二轮灰度观察 | 已执行 / FAIL / STOP at session 96 | 1. Erika 授权 A 后仅请求 session-level results；2. 114 通过核心修复观察；3. 96 返回 200、661 comments、无 embedding、无 SSL error、date 正常、delta=0；4. 96 Top Issue / Top Label 均为 `Value for Money`，但无 `evidence_spans` 且 `evidence_verified=false`；5. 已停止 111/110/95，不进入 50U readiness | 修复 session 96 Representative Evidence 缺口后，再确认是否授权下一轮只读生产观察 |
 
 后续 Erika 参与点：
 
 | 什么时候 | 需要做什么 | 预计人力 |
 |----------|------------|----------|
 | P2 production DDL 前 | 已确认备份/PITR、维护窗口、回滚方案与验收样本；production `059`/backfill/只读验收完成 | 已完成 |
-| Phase 7 P0 修复验证后 | 查看 staging/session 114 replay 或 fixture/gold sample 结果；确认 Representative Evidence 与 Top 计数门禁已修复后，再决定是否授权下一轮生产只读观察；当前不请求 96/111/110/95，不做上传、重分析、QA 或 export/aggregate smoke | 15-30 分钟 |
+| Phase 7 session 96 修复验证后 | 查看 staging/session 96 或 fixture/gold sample 结果；确认 `Value for Money` Representative Evidence、Top 计数、前端 recount/export 过滤均已修复后，再决定是否授权下一轮生产只读观察；当前不请求 111/110/95，不做上传、重分析、QA 或 export/aggregate smoke | 15-30 分钟 |
 | 新品类首次接入 | 审核该类目高频候选标签：保留 / 合并 / 改名 / 禁用 | 每个类目 30-60 分钟 |
 | 稳定运行后 | 看异常告警和候选池，只处理高频、前台可见、低置信度或跨品类边界 case | 每周 10-20 分钟 |
 
 #### 5.9.7 50 付费用户 readiness（Phase 7 收口后）
 
-目标：Phase 7 P0 修复和下一轮只读灰度通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 第一轮结论为 FAIL / STOP at session 114，因此 `50U-T1` / `50U-T2` / `50U-T3` 暂不启动；生产真实上传 smoke 不应在 Representative Evidence / cluster propagation 阻塞解除前执行。
+目标：Phase 7 修复和下一轮只读灰度通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 第二轮结论为 FAIL / STOP at session 96，因此 `50U-T1` / `50U-T2` / `50U-T3` 暂不启动；生产真实上传 smoke 不应在 Representative Evidence / frontstage recount 阻塞解除前执行。
 
 术语说明：`50U-T2` 指“50 users readiness Task 2”，即质量保障与回归基线任务；它把正式 gold sample、Representative Evidence 回归、label stats / 告警集中处理，用来防止 Top Issue / Top Label 质量在承接 50 个付费用户时静默回退。
 
@@ -873,10 +916,11 @@ Phase 7 guardrail（约束，不作为单独待办）：
 | 50U-T3 运营 runbook 与上线门禁 | P1 | 0.5-1 天 | 让 50 用户期间的问题可定位、可回滚、可补偿、可沟通 | 1. 上传失败排查 SOP；2. worker 卡住排查 SOP；3. LLM 成本异常核对 SOP；4. credit 扣错补偿 SOP；5. analytics / ledger / LLM usage 对账 SOP；6. `review_date` / date filter 异常定位 SOP；7. `Not Breathable` / evidence 异常记录规则；8. 50 用户前最终 checklist；9. 50 用户期间每日/每周观察项 | 确认补偿口径、人工响应时限、50 用户期间观察频率与升级联系人 |
 
 readiness 节奏：
-- Phase 7 第一轮只读灰度观察与结论门禁已完成，结论为 FAIL / STOP at session 114；Phase 7 不可按通过收口。
-- [ ] 先启动独立 Phase 7 P0 修复/验证：cluster-propagated occurrence 进入 Top 统计风险、Representative Evidence verified/source-review 门禁，且冻结 `Not Breathable` 与 Phase 1-6 核心算法。
-- [ ] P0 修复在 staging/session 114 replay 或 fixture/gold sample 通过后，再申请下一轮生产只读灰度观察授权；下一轮通过前不进入 50U readiness。
-- **规则**：`50U-T1`、`50U-T2`、`50U-T3` 暂不启动。其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须等待 Phase 7 P0 修复和下一轮只读灰度通过后再申请授权。
+- Phase 7 修复后第二轮只读灰度观察与结论门禁已完成，结论为 FAIL / STOP at session 96；Phase 7 不可按通过收口。
+- [x] Phase 7 P0 Evidence/Propagation 修复已通过 session 114 只读观察：Representative Evidence 与 API Top 统计门禁恢复，且冻结 `Not Breathable` 与 Phase 1-6 核心算法。
+- [ ] 先启动 session 96 Representative Evidence 缺口修复/验证：`Value for Money` Top Issue / Top Label 必须有可定位代表证据；同时修复或门禁前端 occurrence recount/export 的 propagated 过滤。
+- [ ] session 96 修复在 staging/fixture/gold sample 通过后，再申请下一轮生产只读灰度观察授权；下一轮通过前不进入 50U readiness。
+- **规则**：`50U-T1`、`50U-T2`、`50U-T3` 暂不启动。其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须等待 Phase 7 第二轮阻塞解除和下一轮只读灰度通过后再申请授权。
 - **规则**：生产真实上传 smoke 不应在当前阻塞未解决前执行；如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
 
 
