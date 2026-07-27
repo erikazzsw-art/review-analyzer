@@ -73,7 +73,14 @@ def ask_reviews(
     selected_rows = [product_map[product_id] for product_id in product_ids if product_id in product_map]
     selected_comments = []
     for product_id in product_ids:
-        selected_comments.extend(get_comments(user_id, product_id=product_id))
+        selected_comments.extend(
+            get_comments(
+                user_id,
+                product_id=product_id,
+                include_embedding=True,
+                compact_aspects_json=False,
+            )
+        )
 
     if not selected_comments:
         return QaAskResponse(answer="No review data is available for the selected products.", retrieval_method="text")
@@ -273,7 +280,14 @@ def send_message(
 
     selected_comments: list[dict] = []
     for pid in product_ids:
-        selected_comments.extend(get_comments(user_id, product_id=pid))
+        selected_comments.extend(
+            get_comments(
+                user_id,
+                product_id=pid,
+                include_embedding=True,
+                compact_aspects_json=False,
+            )
+        )
     if not selected_comments:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No review data available for selected products.")
     selected_comments = _dedupe_comments(selected_comments)

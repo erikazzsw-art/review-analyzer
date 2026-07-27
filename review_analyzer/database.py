@@ -5,6 +5,7 @@ import logging
 import os
 import time as _time
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 import psycopg2
@@ -42,6 +43,61 @@ _connection_pool = None
 _pool_creation_failed = False
 _pool_last_attempt = 0.0
 _POOL_RETRY_INTERVAL = 10.0  # 连接池创建失败后 10 秒才允许重试
+
+_COMMENT_READ_COLUMNS = (
+    "id",
+    "user_id",
+    "product_id",
+    "version",
+    "content",
+    "rating",
+    "date",
+    "reviewer",
+    "source",
+    "content_hash",
+    "sentiment",
+    "content_sentiment",
+    "category",
+    "priority",
+    "reason",
+    "improvement",
+    "issue_tag",
+    "highlight_tag",
+    "is_processed",
+    "session_id",
+    "analyzer_version",
+    "created_at",
+    "updated_at",
+    "deleted_at",
+    "cache_hit_level",
+    "cache_source_id",
+    "cache_hit_source",
+    "source_variant_asin",
+    "source_channel",
+    "cluster_id",
+    "cluster_representative_id",
+)
+_COMMENT_EMBEDDING_COLUMN = "embedding"
+_COMMENT_READ_RETRY_ERRORS = (psycopg2.OperationalError, psycopg2.InterfaceError)
+
+_COMPACT_ASPECTS_JSON_SQL = """
+CASE
+    WHEN aspects_json IS NULL THEN NULL
+    WHEN aspects_json->>'customer_label_occurrence_schema_version' = '1.0'
+         THEN jsonb_strip_nulls(jsonb_build_object(
+             'customer_label_occurrence_schema_version', aspects_json->'customer_label_occurrence_schema_version',
+             'customer_label_occurrence_ruleset_version', aspects_json->'customer_label_occurrence_ruleset_version',
+             'specific_issue_schema_version', aspects_json->'specific_issue_schema_version',
+             'customer_label_schema_version', aspects_json->'customer_label_schema_version',
+             'issue_ruleset_version', aspects_json->'issue_ruleset_version',
+             'highlight_ruleset_version', aspects_json->'highlight_ruleset_version',
+             'sub_category', aspects_json->'sub_category',
+             'cluster_propagated', aspects_json->'cluster_propagated',
+             'customer_label_occurrences', aspects_json->'customer_label_occurrences'
+         ))
+    ELSE aspects_json
+END AS aspects_json
+""".strip()
 
 
 def _clear_cache(func) -> None:
@@ -700,33 +756,118 @@ def get_comments(
     date_start: str | None = None,
     date_end: str | None = None,
     source_variant_asin: str | None = None,
+    *,
+    include_embedding: bool = False,
+    compact_aspects_json: bool = True,
 ) -> list[dict]:
-    query = "SELECT * FROM comments WHERE user_id = %s"
-    params: list = [user_id]
+    columns = list(_COMMENT_READ_COLUMNS)
+    if compact_aspects_json:
+        columns.append(_COMPACT_ASPECTS_JSON_SQL)
+    else:
+        columns.append("aspects_json")
+    if include_embedding:
+        columns.append(_COMMENT_EMBEDDING_COLUMN)
+    query = f"SELECT {', '.join(columns)} FROM comments"
+    where, params = _build_comments_where_clause(
+        user_id,
+        product_id=product_id,
+        session_id=session_id,
+        version=version,
+        date_start=date_start,
+        date_end=date_end,
+        source_variant_asin=source_variant_asin,
+    )
+    query += f" WHERE {where} ORDER BY id DESC"
+
+    last_error: Exception | None = None
+    for attempt in range(2):
+        conn = get_connection()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(query, params)
+                return [dict(r) for r in cur.fetchall()]
+        except _COMMENT_READ_RETRY_ERRORS as exc:
+            last_error = exc
+            if attempt == 1:
+                raise
+            logger.warning(
+                "get_comments read connection failed; retrying once "
+                "(user_id=%s session_id=%s product_id=%s include_embedding=%s): %s",
+                user_id,
+                session_id,
+                product_id,
+                include_embedding,
+                exc,
+            )
+        finally:
+            conn.close()
+    if last_error:
+        raise last_error
+    return []
+
+
+def _build_comments_where_clause(
+    user_id: int,
+    *,
+    product_id: str | None = None,
+    session_id: int | None = None,
+    version: str | None = None,
+    date_start: str | None = None,
+    date_end: str | None = None,
+    source_variant_asin: str | None = None,
+) -> tuple[str, list[Any]]:
+    clauses = ["user_id = %s"]
+    params: list[Any] = [user_id]
     if product_id is not None:
-        query += " AND product_id = %s"
+        clauses.append("product_id = %s")
         params.append(product_id)
     if session_id is not None:
-        query += " AND session_id = %s"
+        clauses.append("session_id = %s")
         params.append(session_id)
     if version is not None:
-        query += " AND version = %s"
+        clauses.append("version = %s")
         params.append(version)
     if date_start is not None:
-        query += " AND date >= %s"
+        clauses.append("date >= %s")
         params.append(date_start)
     if date_end is not None:
-        query += " AND date <= %s"
+        clauses.append("date <= %s")
         params.append(date_end)
     if source_variant_asin is not None:
-        query += " AND LOWER(source_variant_asin) = LOWER(%s)"
+        clauses.append("LOWER(source_variant_asin) = LOWER(%s)")
         params.append(source_variant_asin)
-    query += " ORDER BY id DESC"
+    return " AND ".join(clauses), params
+
+
+def get_comments_date_span(
+    user_id: int,
+    product_id: str | None = None,
+    session_id: int | None = None,
+    source_variant_asin: str | None = None,
+) -> tuple[str, str]:
+    """Return min/max ISO-like review dates without loading comment payloads."""
+    where, params = _build_comments_where_clause(
+        user_id,
+        product_id=product_id,
+        session_id=session_id,
+        source_variant_asin=source_variant_asin,
+    )
+    query = f"""
+        SELECT
+            MIN(SUBSTRING(date FROM 1 FOR 10)) AS min_date,
+            MAX(SUBSTRING(date FROM 1 FOR 10)) AS max_date
+        FROM comments
+        WHERE {where}
+          AND date ~ '^[0-9]{{4}}'
+    """
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(query, params)
-            return [dict(r) for r in cur.fetchall()]
+            row = cur.fetchone()
+            if not row:
+                return "", ""
+            return str(row.get("min_date") or ""), str(row.get("max_date") or "")
     finally:
         conn.close()
 

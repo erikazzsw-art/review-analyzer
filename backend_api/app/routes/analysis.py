@@ -30,6 +30,7 @@ from review_analyzer.compare_store import build_compare_group_specs, get_compari
 from review_analyzer.database import (
     delete_session,
     get_comments,
+    get_comments_date_span,
     get_session_by_id,
     get_sessions,
     get_upload_jobs_by_session,
@@ -509,17 +510,12 @@ def _comments_date_span(
     variant_asin: str | None = None,
 ) -> tuple[str, str]:
     """返回 (min_date, max_date)。无评论或无有效日期时返回 ('', '')。"""
-    comments = get_comments(
+    return get_comments_date_span(
         user_id,
         session_id=session_id,
         product_id=product_id,
         source_variant_asin=variant_asin,
     )
-    dates = [str(c.get("date") or "").strip() for c in comments]
-    dates = [d for d in dates if d and d[:4].isdigit()]
-    if not dates:
-        return "", ""
-    return min(dates)[:10], max(dates)[:10]
 
 
 def _fmt_time_label(range_label: str, start_iso: str, end_iso: str) -> str:
