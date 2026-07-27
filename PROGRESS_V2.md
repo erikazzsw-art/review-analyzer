@@ -709,6 +709,10 @@ Phase 7 P0 / P1 验证记录：
 - [x] P2 production DDL/backfill 已执行并验收：production `059` committed，backfill dry-run/apply 通过，ISO/Amazon 文本日期均已归一化，默认/session fallback 使用 normalized span。
 - [ ] `Comfortable_to_Wear_reviews_57.xlsx` 风险已用 fixture 复刻；若要作为正式金样本，需要重新导入或重放真实 xlsx，并确认 missing evidence 不进入 Representative Evidence。
 - [ ] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；如重新开启，先确认 provider/model 可用并监控 timeout / empty-cache 日志。
+- [ ] Phase 7 后续小流量灰度只做观察与记录：选 3-5 个已有真实 session，对 Top Issue / Top Label、Representative Evidence、date filter 行为做只读核对；不执行生产上传、重分析、QA、aggregate/export smoke，避免触发 credit/quota/analytics/LLM 成本路径。
+- [ ] 灰度观察期间保持口径冻结：不得修改 `Not Breathable` 标签逻辑，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法；发现异常先记录 session、label、evidence、筛选条件和候选修正规则，再决定是否进入后续修复任务。
+- [ ] 灰度观察 date 口径：确认前端与后端筛选持续使用 normalized `comments.review_date`，raw `comments.date` 仅用于展示；抽查 Amazon 文本日期样本，确保 `Reviewed in the United States on Month D, YYYY` 已归一化且不会被日期窗口误过滤。
+- [ ] 如需要任何生产业务 smoke（上传、重分析、QA、aggregate results、模块/完整导出等），必须先报告 credit ledger / analytics / LLM 成本风险、说明 session 数量与入口，再等待 Erika 明确授权。
 - [ ] 增加 label stats / 告警：单一标签突然 100%、verified evidence 比例过低、broad/internal label 进入 Top、cluster propagated 占比异常升高、long-tail 标签过多。
 - [ ] 新增类目时按"系统自动候选 + Erika 审核高频 canonical label"的方式走，不人工维护每条评论：先跑 3-5 个该类目产品样本，再审核 Top 候选标签的保留、合并、改名、禁用。
 
@@ -720,14 +724,14 @@ Phase 7 P0 / P1 验证记录：
 |--------|------|----------|----------|--------------|
 | P0 gate | live `/analysis/results` + export 生产门禁 | 已完成（session 114/96） | 1. 已获授权并完成 aggregate results、模块导出、完整导出；2. 记录响应时间、comments count、XLSX 有效性、credit/analytics delta；3. 未扩展到上传或重分析 | P2 production DDL 前置确认已完成 |
 | P1 | worker 写路径优化 | staging/dev no-op 写入验证通过 | 1. 已审计写路径；2. 已实现 batch update 与小批量事务边界；3. 已补 fake DB/query count 单测并推送 `2d8c1a4`；4. 已完成 clueai-dev 60/300 临时 worker smoke；5. 如要继续，只能在 Erika 授权后跑真实上传/重分析或生产 live/export smoke | 授权任何会扣 credit、写 ledger 或 analytics 的真实业务 smoke 前需明确确认 session 数量/ID |
-| P2 | date text 规范化 + 索引 | production migration/backfill 验收完成 | 1. `059`、parser、安全 backfill、读写 fallback 和索引已完成；2. clueai-dev 与 production migration/backfill 均已执行；3. dry-run/apply backfill 已记录 parsed/unparsed 统计；4. production session 95/96/114 date span 与 Amazon 精确日过滤验收通过；5. 未执行上传、重分析、QA、aggregate/export smoke 或扣费路径 | 小流量灰度继续观察真实 results/filter 行为 |
+| P2 | date text 规范化 + 索引 | production migration/backfill 验收完成 / 灰度观察中 | 1. `059`、parser、安全 backfill、读写 fallback 和索引已完成；2. clueai-dev 与 production migration/backfill 均已执行；3. dry-run/apply backfill 已记录 parsed/unparsed 统计；4. production session 95/96/114 date span 与 Amazon 精确日过滤验收通过；5. 未执行上传、重分析、QA、aggregate/export smoke 或扣费路径；6. 后续仅观察 3-5 个已有真实 session 的 Top Issue / Top Label、真实 evidence span、normalized `review_date` 筛选与 Amazon 文本日期不过滤 | 小流量灰度继续观察真实 results/filter 行为；任何生产业务 smoke 前需先确认 credit/analytics/LLM 成本风险并取得明确授权 |
 
 后续 Erika 参与点：
 
 | 什么时候 | 需要做什么 | 预计人力 |
 |----------|------------|----------|
 | P2 production DDL 前 | 已确认备份/PITR、维护窗口、回滚方案与验收样本；production `059`/backfill/只读验收完成 | 已完成 |
-| P1 小流量灰度 3-7 天内 | 看 3-5 个真实 session 的 Top Issue / Top Label、代表证据、下载是否符合预期 | 每天 15-30 分钟 |
+| Phase 7 小流量灰度 3-7 天内 | 看 3-5 个已有真实 session 的 Top Issue / Top Label、代表证据是否来自真实 evidence span、`Not Breathable` 是否保持冻结口径、date filter 是否持续使用 normalized `review_date`、Amazon 文本日期是否没有误过滤；不做上传、重分析、QA 或 export/aggregate smoke，除非另行授权 | 每天 15-30 分钟 |
 | 新品类首次接入 | 审核该类目高频候选标签：保留 / 合并 / 改名 / 禁用 | 每个类目 30-60 分钟 |
 | 稳定运行后 | 看异常告警和候选池，只处理高频、前台可见、低置信度或跨品类边界 case | 每周 10-20 分钟 |
 
