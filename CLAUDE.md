@@ -107,7 +107,7 @@ Erika 2026-07-08 约定：本地散落的探索性文档、截图、临时脚本
 | 目录 | 用途 | 是否进 git |
 |------|------|-----------|
 | 根目录 | `TEST_LOG.md` / `README.md` / `CLAUDE.md` / `CODEX.md` / `需求记录/CHANGELOG.md` 等主线文档 | ✔ 跟代码一起 push |
-| 根目录 | `PROGRESS_V2.md`（项目进度文档，仅本地留存，不进 git） | ✘ 永不进 git（`.gitignore` 挡住） |
+| 根目录 | `PROGRESS_V2.md`（项目进度文档，每次修改跟随代码一起 commit） | ✔ 跟代码一起 push（2026-07-27 规则变更） |
 | `docs/` | 团队规范 / 正式技术文档（api-guide / database-guide / git-commit 等） | ✔ 跟代码一起 push（不强制单独 push） |
 | `notes/` | Erika 个人笔记 / 探索性 md / 一次性调研 / 面试稿 / 方法论 | ✘ 永不进 git（`.gitignore` 挡住） |
 | `scratch/` | 临时脚本 / 实验数据 / 一次性 SQL | ✘ 永不进 git |

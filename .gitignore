@@ -45,9 +45,7 @@ data/taxonomy/v1.0/backup-*/
 /*.jpg
 /*.jpeg
 
-# 项目进度文档（仅本地留存，详见 CODEX.md「PROGRESS_V2.md 保护规则」）
-PROGRESS_V2.md
-PROGRESS_V2.md.backup
+# PROGRESS_V2.md 不再 ignore，每次修改跟随代码一起 commit（2026-07-27 规则变更）
 
 # Golden set / raw data（不进 git，本地标注数据）
 data/golden_set/

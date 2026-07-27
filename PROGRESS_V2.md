@@ -1,6 +1,6 @@
 # ClueAI V2 项目进度追踪
 
-> 最后更新：2026-06-12  
+> 最后更新：2026-07-27
 > V2 目标：商业化升级，4 项核心功能跑通可运营  
 > 时间窗口：2026-05-26 ~ 2026-06-20（4 周）  
 > 每日投入：7 小时  
@@ -24,9 +24,9 @@
 
 ---
 
-## 模块进度明细
+## 2. V2 核心模块
 
-### V2-M1: 多产品仪表盘 (Multi-Product Dashboard)
+### 2.1 多产品仪表盘
 - 分支: `develop`（已在主开发线实现）
 - 状态: 已完成 | 进度: 100%
 - 时间: 提前完成（V1 阶段已落地）
@@ -40,9 +40,9 @@
   - [x] 边缘情况处理（0/1个产品、空数据）
   - [x] 置顶 toggle（☆ ↔ 📌）、搜索、删除二次确认
 
-### V2-M2: 版本对比视图 (Version Comparison)
+### 2.2 版本对比视图
 - 分支: `develop`（提前合并进主开发线）
-- 状态: 已完成 | 进度: 100% | 依赖: V2-M1
+- 状态: 已完成 | 进度: 100% | 依赖: 2.1
 - 时间: 2026-05-27（提前完成）
 - 任务:
   - [x] 梳理 version 字段数据结构，设计对比查询逻辑
@@ -54,9 +54,9 @@
   - [x] 版本升级说明可在结果页内联编辑（expander）
   - [x] 行动建议集成到对比输出
 
-### V2-M3: RAG "Ask your reviews" (检索增强问答)
+### 2.3 RAG 问评论
 - 分支: `develop`（已在主开发线实现）
-- 状态: 已完成 | 进度: 100% | 依赖: V2-M1
+- 状态: 已完成 | 进度: 100% | 依赖: 2.1
 - 时间: 2026-06-03
 - 新增技术: Embedding API + Supabase pgvector 余弦检索 + DeepSeek 生成回答；文本检索作为 fallback
 - 任务:
@@ -73,9 +73,9 @@
   - [x] Free 用户入口触发升级提示
   - [x] **2026-07-02 P0 升级**：从单一检索 RAG 升级为意图路由 + 结构化聚合，修复 4 个内置示例问题（差评原因/质量最好/最常提到的优点/共同质量问题）在真实数据下答不出来的问题；对齐 Shulex VOC 问评论能力矩阵。P1 待做：完整意图分类 LLM 兜底、rating_breakdown/consumer_insight/trend handler、前端 4 分组建议问题
 
-### V2-M4: Paddle 计费 (Subscription & Paywall)
+### 2.4 Paddle 计费
 - 分支: `develop`（已在主开发线实现）
-- 状态: 已完成 | 进度: 100% | 依赖: V2-M1, V2-M3
+- 状态: 已完成 | 进度: 100% | 依赖: 2.1, 2.3
 - 时间: 2026-06-03
 - 新增技术: Paddle Checkout、Webhook
 - 任务:
@@ -90,7 +90,7 @@
 
 ---
 
-## ASIN 多变体抓取 + 产品管理增强（2026-06-29）
+## 3. ASIN 多变体抓取 + 产品管理增强
 
 - [x] ASIN 抓取面板新增「抓取所有变体」checkbox，自动发现同款所有子 ASIN 并合并分析（上限 20 变体）
 - [x] 抓取时自动保存产品信息（图片、品牌、评分、评论数）到产品管理
@@ -103,7 +103,7 @@
 
 ---
 
-## V2.5-V3.1 本地收口进展补充（2026-06-09）
+## 2.5-3.1 本地收口进展补充（2026-06-09）
 
 - [x] 登录后全局 App Shell 已对齐 `clueai_v2_ui_prototype.html` 的柔和 V2 风格，导航、按钮、卡片、上传区和侧边栏视觉保持统一
 - [x] 新增统一页头层 `review_analyzer/page_shell.py`，核心页与高级页都能显示所属路径、当前说明和快捷回跳
@@ -123,21 +123,21 @@
 ## 模块依赖图
 
 ```
-V2-M1 (多产品仪表盘)
-├─► V2-M2 (版本对比) ◄─ V2-M1
-├─► V2-M3 (RAG) ◄─ V2-M1
-└─► V2-M4 (Stripe) ◄─ V2-M1, V2-M3
+2.1 (多产品仪表盘)
+├─► 2.2 (版本对比) ◄─ 2.1
+├─► 2.3 (RAG) ◄─ 2.1
+└─► 2.4 (Stripe) ◄─ 2.1, 2.3
 ```
 
-开发顺序: V2-M1 → V2-M2 & V2-M3（M2 先做）→ V2-M4
+开发顺序: 2.1 → 2.2 & 2.3（M2 先做）→ 2.4
 
 ---
 
-## V2.5-V3.1 代码落地结果（基于当前代码）
+## 2.5-3.1 代码落地结果（基于当前代码）
 
 > 这部分不再按“待办计划”理解，而是按“已经落地的代码事实”记录。
 
-**结论:** V2.5-V3.1 已全部在本地实现并收口。当前代码里没有独立的 `全部功能地图` 页面；旧 `features` 路由只作为兼容映射，最终会落到 `评论分析 > 分析结果`。
+**结论:** 2.5-3.1 已全部在本地实现并收口。当前代码里没有独立的 `全部功能地图` 页面；旧 `features` 路由只作为兼容映射，最终会落到 `评论分析 > 分析结果`。
 
 ### 当前导航
 
@@ -157,13 +157,13 @@ V2-M1 (多产品仪表盘)
 
 | 阶段 | 优先级 | 代码状态 | 当前结论 |
 |------|--------|----------|----------|
-| V2.5 | P0 | 已完成 | 产品管理已支持父体产品、变体 SKU、生命周期和产品资产汇总 |
-| V2.6 | P0 | 已完成 | 上传流程已支持工作目的、产品档案绑定和变体识别 |
-| V2.7 | P0 | 已完成 | 行动中心已能从 TOP 问题创建团队事项并更新状态 |
-| V2.8 | P0 | 已完成 | 复盘追踪已能记录改进前后指标并判断继续跟进或完结 |
-| V2.9 | P1 | 已完成 | 多产品 / 多变体 / 多版本对比已收敛到 `评论分析 > 对比分析` |
-| V3.0 | P1 | 已完成 | 今日工作台已按运营、产研、质检、管理者四种视角成型 |
-| V3.1 | P2 | 已完成并收口 | 独立全部功能地图已取消，相关高级能力保留在现有导航里 |
+| 2.5 | P0 | 已完成 | 产品管理已支持父体产品、变体 SKU、生命周期和产品资产汇总 |
+| 2.6 | P0 | 已完成 | 上传流程已支持工作目的、产品档案绑定和变体识别 |
+| 2.7 | P0 | 已完成 | 行动中心已能从 TOP 问题创建团队事项并更新状态 |
+| 2.8 | P0 | 已完成 | 复盘追踪已能记录改进前后指标并判断继续跟进或完结 |
+| 2.9 | P1 | 已完成 | 多产品 / 多变体 / 多版本对比已收敛到 `评论分析 > 对比分析` |
+| 3.0 | P1 | 已完成 | 今日工作台已按运营、产研、质检、管理者四种视角成型 |
+| 3.1 | P2 | 已完成并收口 | 独立全部功能地图已取消，相关高级能力保留在现有导航里 |
 
 ### 文件结构映射
 
@@ -196,7 +196,7 @@ V2-M1 (多产品仪表盘)
 
 ---
 
-### V2.5 Task 1: 数据模型升级
+### 4.1 数据模型升级
 
 **Files:**
 - Modify: `supabase_schema.sql`
@@ -277,7 +277,7 @@ Expected: PASS，无语法错误。
 
 ---
 
-### V2.5 Task 2: 产品管理页
+### 4.2 产品管理页
 
 **Files:**
 - Create: `review_analyzer/pages/products.py`
@@ -348,7 +348,7 @@ git commit -m "feat: add product management page"
 
 ---
 
-### V2.6 Task 3: 上传流程升级
+### 4.3 上传流程升级
 
 **Files:**
 - Modify: `review_analyzer/pages/upload.py`
@@ -414,7 +414,7 @@ git commit -m "feat: upgrade upload workflow with product binding"
 
 ---
 
-### V2.7 Task 4: 行动中心
+### 4.4 行动中心
 
 **Files:**
 - Create: `review_analyzer/pages/actions.py`
@@ -486,7 +486,7 @@ git commit -m "feat: add action center"
 
 ---
 
-### V2.8 Task 5: 复盘追踪
+### 4.5 复盘追踪
 
 **Files:**
 - Create: `review_analyzer/pages/reviews.py`
@@ -555,7 +555,7 @@ git commit -m "feat: add review tracking workflow"
 
 ---
 
-### V2.9 Task 6: 多产品 / 多变体 / 多版本对比
+### 4.6 多产品 / 多变体 / 多版本对比
 
 **Files:**
 - Create: `review_analyzer/pages/compare.py`
@@ -623,7 +623,7 @@ git add review_analyzer/pages/compare.py review_analyzer/compare_store.py review
 git commit -m "feat: add product comparison workflows"
 ```
 
-- [x] **Step 8: V3.1 重做对比工作台（2026-06-23）**
+- [x] **Step 8: 3.1 重做对比工作台（2026-06-23）**
 
 把 `/analysis/compare` 从「AI Report 生成器」改回「对比工作台」：
 - 后端新增 `POST /compare/dataset`（产品 + 版本 + 评论日期窗口） 和 `POST /compare/export`（XLSX 流），`compare_store.build_compare_specs_from_filters` / `dataset_to_xlsx_payload` 承接。
@@ -632,7 +632,7 @@ git commit -m "feat: add product comparison workflows"
 
 ---
 
-### V3.0 Task 7: 角色化今日工作台
+### 4.7 角色化今日工作台
 
 **Files:**
 - Modify: `review_analyzer/pages/dashboard.py`
@@ -690,7 +690,7 @@ git commit -m "feat: add role-based workspace"
 
 ---
 
-### V3.1 收口说明：不再保留独立全部功能地图
+### 4.8 导航收口
 
 **Files:**
 - Modify: `review_analyzer/app.py`
@@ -722,7 +722,7 @@ Expected:
 
 - [x] **Step 6: 结论**
 
-V3.1 在当前代码里已经转化为“导航收口”而不是“独立页面新增”，所以文档应按收口完成处理，不再把 `pages/features.py` 当成现存模块。
+3.1 在当前代码里已经转化为“导航收口”而不是“独立页面新增”，所以文档应按收口完成处理，不再把 `pages/features.py` 当成现存模块。
 
 ---
 
@@ -777,12 +777,12 @@ V3.1 在当前代码里已经转化为“导航收口”而不是“独立页面
 
 | 编号 | 能力 | 目标 | 对应模块 |
 |------|------|------|----------|
-| P0-1 | 产品组 + 变体 SKU | 支持真实电商父体/子体结构 | V2.5 产品管理 |
-| P0-2 | 工作目的上传 | 让用户按场景上传评论，不从功能开始 | V2.6 上传流程 |
-| P0-3 | 行动中心 | TOP 问题能转成运营、产研、质检事项 | V2.7 行动中心 |
-| P0-4 | 复盘追踪 | 改进动作能持续追踪并判断是否有效 | V2.8 复盘追踪 |
-| P0-5 | 多产品/多变体对比 | 支持主推款、问题款、机会款判断 | V2.9 多产品对比 |
-| P0-6 | UI 风格统一 | 全站使用 `clueai_v2_ui_prototype.html` 的柔和清爽风格 | V3.0 UI 重构 |
+| P0-1 | 产品组 + 变体 SKU | 支持真实电商父体/子体结构 | 2.5 产品管理 |
+| P0-2 | 工作目的上传 | 让用户按场景上传评论，不从功能开始 | 2.6 上传流程 |
+| P0-3 | 行动中心 | TOP 问题能转成运营、产研、质检事项 | 2.7 行动中心 |
+| P0-4 | 复盘追踪 | 改进动作能持续追踪并判断是否有效 | 2.8 复盘追踪 |
+| P0-5 | 多产品/多变体对比 | 支持主推款、问题款、机会款判断 | 2.9 多产品对比 |
+| P0-6 | UI 风格统一 | 全站使用 `clueai_v2_ui_prototype.html` 的柔和清爽风格 | 3.0 UI 重构 |
 
 ### P1：商业化体验增强
 
@@ -815,18 +815,18 @@ V3.1 在当前代码里已经转化为“导航收口”而不是“独立页面
 
 | 顺序 | 阶段 | 做什么 | 为什么 |
 |------|------|--------|--------|
-| 1 | V2.5 | 产品组 + 变体 SKU | 没有产品档案，后续闭环无法稳定 |
-| 2 | V2.6 | 工作目的上传 | 降低用户理解成本，避免功能堆叠 |
-| 3 | V2.7 | 行动中心 | 让分析结果变成团队动作 |
-| 4 | V2.8 | 复盘追踪 | 形成 ClueAI 最核心差异化 |
-| 5 | V2.9 | 多产品 / 多变体对比 | 支持运营策略和主推款判断 |
-| 6 | V3.0 | 角色化工作台 + UI 统一 | 让不同伙伴进来就知道做什么 |
-| 7 | V3.1 | 全部功能地图收口（已完成） | 独立入口已取消，高级能力回归各自业务页 |
-| 7.5 | V3.1.5 | **Next.js 营销站独立部署（拿到 3-5 个付费用户后立即启动）** | 跨境卖家 60-70% 来自 SEO，Streamlit 没有 SEO；营销页是付费转化的信任构建器 |
+| 1 | 2.5 | 产品组 + 变体 SKU | 没有产品档案，后续闭环无法稳定 |
+| 2 | 2.6 | 工作目的上传 | 降低用户理解成本，避免功能堆叠 |
+| 3 | 2.7 | 行动中心 | 让分析结果变成团队动作 |
+| 4 | 2.8 | 复盘追踪 | 形成 ClueAI 最核心差异化 |
+| 5 | 2.9 | 多产品 / 多变体对比 | 支持运营策略和主推款判断 |
+| 6 | 3.0 | 角色化工作台 + UI 统一 | 让不同伙伴进来就知道做什么 |
+| 7 | 3.1 | 全部功能地图收口（已完成） | 独立入口已取消，高级能力回归各自业务页 |
+| 7.5 | 3.1.5 | **Next.js 营销站独立部署（拿到 3-5 个付费用户后立即启动）** | 跨境卖家 60-70% 来自 SEO，Streamlit 没有 SEO；营销页是付费转化的信任构建器 |
 | 8 | V3.2 | 定时分析 + 风险提醒 | 提升留存和团队协作价值 |
 | 9 | V3.3 | 组织角色 + 操作记录 | 为团队版/企业版做准备 |
-| 10 | V4.0 | 自动采集 / 平台 API | 向成熟商业数据平台过渡 |
-| 11 | V5.0 | 产品层 Streamlit → Next.js 全迁移（MRR > $3k 后再考虑） | UI 升级带动客单价、支持移动端 / 嵌入式 widget / 团队版 |
+| 10 | 4.0 | 自动采集 / 平台 API | 向成熟商业数据平台过渡 |
+| 11 | 5.0 | 产品层 Streamlit → Next.js 全迁移（MRR > $3k 后再考虑） | UI 升级带动客单价、支持移动端 / 嵌入式 widget / 团队版 |
 
 ### 商业化判断
 
@@ -891,7 +891,7 @@ ClueAI 当前不应正面硬刚成熟平台的数据规模，而应先打一个�
 | MRR $3k → $10k | 这时才考虑把 app 也迁到 Next.js（有钱投入 + UI 要求 + 团队版/嵌入式需求） | 3-4 周 | UI 升级带动客单价 |
 | MRR > $10k | 全栈现代化，加移动端 PWA、嵌入式 widget、企业版 | - | 进入规模化 |
 
-### V3.1.5 营销站最小可行范围（P1-7 的具体落地）
+### 3.1.5 营销站最小可行范围（P1-7 的具体落地）
 
 **前置条件：拿到 3-5 个付费用户后立即启动。**
 
@@ -932,13 +932,13 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 
 | 阶段 | 验收信号 | 进入下一阶段的触发条件 |
 |------|----------|------------------------|
-| 当前（V3.1.5 启动前） | 5 个种子用户在用 Streamlit 版 | 至少 1 个种子用户愿意付费 → 启动 P1-7 营销站 |
+| 当前（3.1.5 启动前） | 5 个种子用户在用 Streamlit 版 | 至少 1 个种子用户愿意付费 → 启动 P1-7 营销站 |
 | P1-7 营销站上线 | clueai.com 首页 + 定价 + 5 个功能页上线，Paddle Checkout 跑通 | 自然搜索月访问 > 500 / MRR > $500 → 加博客内容 |
-| 营销站成熟 | 月新增付费 > 5 / MRR > $3k | 触发 V5.0 产品层迁移 Next.js |
+| 营销站成熟 | 月新增付费 > 5 / MRR > $3k | 触发 5.0 产品层迁移 Next.js |
 
 ---
 
-## Next.js 迁移执行计划（2026-06-05 新增）
+## 5. Next.js 迁移
 
 > 背景：在重新核对当前代码结构、`plan_V2.md`、`plan.md`、`业务场景与用户洞察.md` 以及成熟竞品的公开架构后，Erika 已明确采用新的迁移决策：
 >
@@ -976,27 +976,27 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 
 | 模块 | 状态 | 目标 | 回滚边界 |
 |------|------|------|----------|
-| `NX-M1` 前端工程骨架 | 已完成 | 新建 Next.js 工程、登录前页面、全局设计 Token | 仅回滚 `frontend/` |
-| `NX-M2` FastAPI 骨架与认证 | 已完成 | 新建 API 服务、登录注册、HttpOnly Cookie 会话 | 仅回滚 `backend_api/` 与少量认证辅助改动 |
-| `NX-M3` 工作台与产品管理迁移 | 已完成 | 打通 `/workspace` 与 `/products` 的 API + 页面 | 仅回滚工作台/产品相关新接口与新页面 |
-| `NX-M4` 上传与分析任务异步化 | 已完成 | 上传拆分、分析 job 化、Redis + RQ 跑通 | 仅回滚上传/分析异步链路与 worker |
-| `NX-M5` 结果/对比/历史迁移 | 已完成 | 迁移 `results / compare / history`，支持 URL 直达与显式对比报告生成 | 仅回滚分析阅读层 |
-| `NX-M6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
-| `NX-M7` 文案/设置/计费迁移 | 未开始 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
-| `NX-M8` 部署与 Streamlit 下线路径 | 后置（本地配置已完成，ECS 线上验证等待 V4 稳定后再继续） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
+| `5.1` 前端工程骨架 | 已完成 | 新建 Next.js 工程、登录前页面、全局设计 Token | 仅回滚 `frontend/` |
+| `5.2` FastAPI 骨架与认证 | 已完成 | 新建 API 服务、登录注册、HttpOnly Cookie 会话 | 仅回滚 `backend_api/` 与少量认证辅助改动 |
+| `5.3` 工作台与产品管理迁移 | 已完成 | 打通 `/workspace` 与 `/products` 的 API + 页面 | 仅回滚工作台/产品相关新接口与新页面 |
+| `5.4` 上传与分析任务异步化 | 已完成 | 上传拆分、分析 job 化、Redis + RQ 跑通 | 仅回滚上传/分析异步链路与 worker |
+| `5.5` 结果/对比/历史迁移 | 已完成 | 迁移 `results / compare / history`，支持 URL 直达与显式对比报告生成 | 仅回滚分析阅读层 |
+| `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
+| `5.7` 文案/设置/计费迁移 | 未开始 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
+| `5.8` 部署与 Streamlit 下线路径 | 后置（本地配置已完成，ECS 线上验证等待 V4 稳定后再继续） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
 
 ### 执行顺序
 
 | 顺序 | 模块 | 为什么先做 |
 |------|------|------------|
-| 1 | `NX-M1` | 先建立新的前端壳层和登录前体验，不碰旧主流程 |
-| 2 | `NX-M2` | 先把认证与会话从 `st.session_state` 中剥离出来 |
-| 3 | `NX-M3` | 工作台和产品管理最适合先作为只读模块迁移 |
-| 4 | `NX-M4` | 上传与分析是核心工作流，异步化是整个迁移的中轴 |
-| 5 | `NX-M5` | 结果、对比、历史依赖上传与分析链路稳定后再迁 |
-| 6 | `NX-M6` | 闭环能力在分析阅读层稳定后再接入 |
-| 7 | `NX-M7` | 文案、设置、计费优先级低于核心工作流 |
-| 8 | `NX-M8` | 所有主路径稳定后再做部署固化与 Streamlit 下线 |
+| 1 | `5.1` | 先建立新的前端壳层和登录前体验，不碰旧主流程 |
+| 2 | `5.2` | 先把认证与会话从 `st.session_state` 中剥离出来 |
+| 3 | `5.3` | 工作台和产品管理最适合先作为只读模块迁移 |
+| 4 | `5.4` | 上传与分析是核心工作流，异步化是整个迁移的中轴 |
+| 5 | `5.5` | 结果、对比、历史依赖上传与分析链路稳定后再迁 |
+| 6 | `5.6` | 闭环能力在分析阅读层稳定后再接入 |
+| 7 | `5.7` | 文案、设置、计费优先级低于核心工作流 |
+| 8 | `5.8` | 所有主路径稳定后再做部署固化与 Streamlit 下线 |
 
 ### 当前迁移验收总标准
 
@@ -1009,7 +1009,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 - [ ] 阿里云部署结构可启动，Nginx 反代、域名与 HTTPS 可工作（后置，不阻塞本地 V4）
 - [x] Streamlit 在迁移期间始终保留可回退主路径
 
-### NX-M1: 前端工程骨架
+### 5.1 前端工程骨架
 
 - [x] 建立 `frontend/` 目录
 - [x] 完成 `package.json / tsconfig / next.config / tailwind.config`
@@ -1019,7 +1019,7 @@ ClueAI 现在该做的不是切 Next.js，是**先用现有 Streamlit 卖出去*
 - [x] 验收首页首屏 3 秒内说清“评论洞察 -> 行动跟进 -> 复盘验证”
 - [x] 若失败，只回滚 `frontend/` 与本节进度勾选
 
-NX-M1 验收记录：
+5.1 验收记录：
 
 - `npm run typecheck`：PASS
 - `npm run build`：PASS
@@ -1033,7 +1033,7 @@ NX-M1 验收记录：
   - `/workspace`（占位页，供后续模块承接）
 - 当前仅新增 `frontend/` 工程，不影响现有 Streamlit 主流程
 
-### NX-M2: FastAPI 骨架与认证
+### 5.2 FastAPI 骨架与认证
 
 - [x] 建立 `backend_api/` 目录
 - [x] 建立 `main.py / config.py / deps.py`
@@ -1043,7 +1043,7 @@ NX-M1 验收记录：
 - [x] 本地跑通 `uvicorn backend_api.app.main:app --reload`
 - [x] 若失败，只回滚 `backend_api/` 与认证迁移辅助改动
 
-NX-M2 验收记录：
+5.2 验收记录：
 
 - `python3 -m py_compile backend_api/app/main.py backend_api/app/config.py backend_api/app/deps.py backend_api/app/routes/auth.py backend_api/app/routes/me.py backend_api/app/schemas/auth.py`：PASS
 - `python3 -c "import fastapi, uvicorn; print('api-deps-ok')"`：PASS
@@ -1060,7 +1060,7 @@ NX-M2 验收记录：
   - `/me`
 - 当前仍保留现有 Streamlit 登录主链路，FastAPI 认证层作为 Next.js 迁移专用新模块存在
 
-### NX-M3: 工作台与产品管理迁移
+### 5.3 工作台与产品管理迁移
 
 - [x] 新增 `GET /workspace/summary`
 - [x] 新增 `GET /products`
@@ -1069,7 +1069,7 @@ NX-M2 验收记录：
 - [x] 验收数据口径与当前 Streamlit 页面一致
 - [x] 若失败，只回滚工作台/产品模块
 
-### NX-M4: 上传与分析任务异步化
+### 5.4 上传与分析任务异步化
 
 - [x] 新增 `POST /uploads`
 - [x] 新增 `POST /analysis/jobs`
@@ -1083,7 +1083,7 @@ NX-M2 验收记录：
 - [x] 修复：删除分析记录失败 — upload_jobs/action_items 外键阻止 session 删除 + 前端静默吞错误（2026-06-23）
 - [x] 修复：upload/page.tsx server/client 组件拆分，解决 next build 报 next/headers 错误（2026-06-23）
 
-### NX-M5: 结果 / 对比 / 历史迁移
+### 5.5 结果 / 对比 / 历史迁移
 
 - [x] 新增 `GET /analysis/sessions/{session_id}/results`
 - [x] 新增结果、对比、历史读取接口
@@ -1095,7 +1095,7 @@ NX-M2 验收记录：
 - [x] 修复：对比分析版本下拉框只显示"全部版本"，改用 sessions.version 聚合实际版本（2026-06-26）
 - [x] 修复：历史记录删除后对比分析产品列表不同步，改为 client-side 挂载刷新（2026-06-26）
 
-### NX-M6: 问评论 / 行动中心 / 复盘追踪迁移
+### 5.6 问评论 / 行动中心 / 复盘追踪迁移
 
 - [x] 新增 `POST /qa/questions`
 - [x] 新增 `GET/POST/PATCH /actions`
@@ -1114,7 +1114,7 @@ NX-M2 验收记录：
   - [x] `qa_handlers.py` 删除 DeepSeek 直连 client、base_url 与 `deepseek-chat` 硬编码，统一走 `router_completion(locale=...)`
   - [x] `/qa/ask`、`/qa/questions`、多轮对话消息入口复用 `get_analysis_locale(request)`，默认海外英文链路优先
 
-NX-M6 验收记录：
+5.6 验收记录：
 
 - `python3 -m py_compile backend_api/app/main.py backend_api/app/routes/analysis.py backend_api/app/routes/compare.py backend_api/app/routes/actions.py backend_api/app/routes/qa.py review_analyzer/action_store.py review_analyzer/review_store.py review_analyzer/insight_engine.py review_analyzer/translation.py review_analyzer/analysis_export.py`：PASS
 - `cd frontend && npx tsc --noEmit`：PASS
@@ -1124,7 +1124,7 @@ NX-M6 验收记录：
 - 从 `/analysis/results` 可直接创建 action，再把 action 生成 tracker，最后在复盘页回写结果：PASS
 - 2026-07-23 问评论 Router 迁移回归：`python3 -m pytest backend_api/tests/test_qa_llm_router.py -q`：PASS（3 passed）；`python3 -m ruff check review_analyzer/qa_handlers.py review_analyzer/rag.py review_analyzer/translation.py review_analyzer/compare_store.py review_analyzer/parser.py review_analyzer/router_client.py review_analyzer/eval/runner.py backend_api/app/routes/qa.py backend_api/app/routes/compare.py backend_api/app/services/action_advisor.py`：PASS；`python3 -m py_compile` 覆盖本次 runtime + 已跟踪 scripts：PASS
 
-### NX-M7: 宣传文案 / 设置 / 计费迁移
+### 5.7 宣传文案 / 设置 / 计费迁移
 
 - [x] 新增 `GET /settings`
 - [x] 新增 `PATCH /settings`
@@ -1139,7 +1139,7 @@ NX-M6 验收记录：
 - [x] 订阅计费从推送设置移入 QuotaDialog（Pro 管理订阅 / Free 升级套餐）
 - [x] 系统设置页新增账户信息 + API 密钥管理 + 数据导出占位
 
-NX-M7 验收记录：
+5.7 验收记录：
 
 - `python3 -m py_compile backend_api/app/main.py backend_api/app/routes/settings.py backend_api/app/routes/copywriter.py backend_api/app/routes/billing.py review_analyzer/paddle_billing.py review_analyzer/pages/copywriter.py review_analyzer/pages/settings.py`：PASS
 - `cd frontend && npx tsc --noEmit`：PASS
@@ -1148,9 +1148,9 @@ NX-M7 验收记录：
 - `POST /billing/checkout` 与 `POST /billing/webhook`：PASS，计费链路可创建并回写套餐状态
 - 低频高级页和计费模块已按独立边界落地，主闭环不受影响
 
-### NX-M8: 部署与 Streamlit 下线路径
+### 5.8 部署与 Streamlit 下线路径
 
-> 当前状态：**可以执行上线**。V4-T1~T4 已全部完成，本地功能闭环稳定，部署配置就绪。当前瓶颈是”部署上线”而非”功能开发”。
+> 当前状态：**可以执行上线**。6.1~T4 已全部完成，本地功能闭环稳定，部署配置就绪。当前瓶颈是”部署上线”而非”功能开发”。
 
 > 前置条件确认（2026-06-12）：
 > - ✅ 阿里云 ECS 已购买（2C4G），运行中
@@ -1229,7 +1229,7 @@ NX-M7 验收记录：
   - 本节状态更新为”已完成”
   - PROGRESS_V2.md 变更日志追加上线记录
 
-NX-M8 验收记录（Phase A）：
+5.8 验收记录（Phase A）：
 
 - `python3 -m py_compile backend_api/app/main.py backend_api/app/routes/settings.py backend_api/app/routes/copywriter.py backend_api/app/routes/uploads.py workers/runner.py workers/queue.py workers/jobs.py`：PASS
 - `cd frontend && npx tsc --noEmit`：PASS
@@ -1362,6 +1362,89 @@ NX-M8 验收记录（Phase A）：
   - [x] 模块右上角下载（用户体验/消费动机/未满足的需求/用户画像）改为 TOP10 格式（排名/标签/出现次数/提及占比/代表性评论前20条摘要）；user_experience 和 consumer_profile 输出正负两个 sheet
   - [x] 所有下载 Excel 表头支持 i18n：前端通过 `getLocale()` 传 locale，后端 export 端点接受 `?locale=zh|en` 参数
 
+- [x] **Step C9.8: Customer Issue / Customer Label 口径重构与灰度验证**（2026-07-24 ~ 2026-07-27）
+
+  > 背景：增长分析页的产品亮点 / 高频痛点曾把内部 aspect、前台 Customer Issue / Customer Label、代表评论、下载原文和 Mention Share 分母混在一起。典型问题包括 `Comfortable To Wear` 代表评论过宽、`Water Leaks Through` 被 `no leaks / remained dry` 等表达污染、高频痛点第一条 Mention Share 出现 100% 且用户不可解释。
+
+  当前结论：
+  - [x] Phase 1-6.5 已完成代码、导出、前端展示、验证集和真实 Foxelli raw replay。
+  - [x] Phase 7 P0 read-path 性能修复已完成并推送 `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
+  - [x] Phase 7 第二批 / P1 authenticated route smoke 已完成：session 3/4/5 的 results、aggregate results、模块导出、完整导出均为 200。
+  - [x] 可以扩大 Phase 7 第二批 / P1 小流量灰度。
+  - [ ] 不建议直接生产全量发布；生产扩大前需要 Erika 明确授权会扣 credit 的 live `/analysis/results` 与 export smoke，或提供零扣费 staging。
+
+  核心口径已冻结：
+  - `Customer Issue`：前台展示给用户看的具体问题标签，例如 `Water Leaks Through`、`Missing Parts`。
+  - `Customer Label`：前台展示给用户看的具体亮点标签，例如 `Comfortable To Wear`、`Feels Well Made`。
+  - `Aspect / Internal Aspect`：内部维度，只做归类、治理、下载审计和责任分发，不作为前台 Top 主标签。
+  - `Mention Share = mention_count / 同类 label mention_count 总数`。
+  - `Impact Review Share = review_count / 当前筛选范围总评论数`。
+  - 同一评论同一 canonical label 默认只计 1 次用于 Top 排名和 `review_count`。
+  - 代表评论只能来自 verified evidence span；`cluster_propagated=true` 和 evidence 不在原文中的 occurrence 不能进入 Representative Evidence。
+
+  Phase 状态总表：
+
+  | Phase | 状态 | 产物 / 结论 |
+  |------|------|-------------|
+  | Phase 0 口径冻结 | ✅ 完成 | 冻结 `Customer Issue / Customer Label / Mention Share / Impact Review Share / Aspect` 定义；旧 session 保守兼容 |
+  | Phase 1 当前问题止血 | ✅ 完成 | 防止 `no leaks / without leaks / didn't leak / remained dry / kept dry` 误触发 `Water Leaks Through`；missing evidence 与 cluster propagated 不进入代表证据 |
+  | Phase 2 标签数据层 | ✅ 完成 | 新增 `customer_label_catalog`、`customer_label_alias_rules`、`customer_label_candidates`；`customer_label_catalog.py` 支持 catalog / alias / candidate 保守解析；broad/internal label 可禁用 |
+  | Phase 3 occurrence 抽取 | ✅ 完成 | 新增并行 `customer_label_occurrences` schema；每个 occurrence 带 raw label、canonical key、display label、aspect、evidence span、confidence、source、`evidence_verified`、`cluster_propagated`、version |
+  | Phase 4 聚合算法 | ✅ 完成 | `_build_customer_label_rows()` 统一 Issue / Highlight 聚合；按同类 mention 分母算 `mention_share`；输出 `mention_count`、`review_count`、`impact_review_share`、`raw_occurrence_count`；正评中的真实 issue 和差评中的真实 highlight 都可进入 Top |
+  | Phase 5 前端和下载 | ✅ 完成 | 页面表头改为 `Customer Issue/Customer Label + Mention Share + Impact Reviews + Representative Evidence`；下载改为 occurrence 级 evidence + related reviews；导出补齐审计字段 |
+  | Phase 6 验证与回归 | ✅ 完成 | 新增固定验证集与 `test_customer_label_phase6_validation.py`，覆盖 Foxelli、Comfortable evidence 失配、mixed review、否定漏水、真实漏水、cluster propagated、床架、睫毛膏、legacy old session、Internal Aspect 过滤 |
+  | Phase 6 真实 Foxelli raw replay | ✅ 完成 | `scratch/session114_raw_replay.xlsx` 上传 clueai-dev 生成 session 3；最终 `Water Leaks Through=5 mentions / 5 reviews`，全部来自当前产品真实漏水原文 span，无旧风险 `9/9` 过计数 |
+  | Phase 6.5 results LLM fallback | ✅ 完成 | `RESULTS_AI_ENHANCEMENT_ENABLED=false` 默认关闭；results 主 payload 先返回 heuristic，不被 DeepSeek / OpenAI enhancement 失败阻塞；AI 只能增强文本，不能覆盖 rows |
+  | Phase 7 P0 read-path | ✅ 完成 | `get_comments()` 默认瘦列读取，不返回 `embedding`；`aspects_json` compact 投影；date span fallback 改 SQL `MIN/MAX`；连接关闭重试一次；`backend_api/tests` 176 passed |
+  | Phase 7 P1 authenticated smoke | ✅ 完成 | clueai-dev/preprod route 层 session 3/4/5 authenticated smoke 通过；未改 Not Breathable，未重构 Phase 1-6 核心算法 |
+  | Phase 7 生产扩大 | ⏳ 待决策 | 需要 live credit/export smoke 授权或零扣费 staging；通过后再扩大生产流量 |
+
+  真实样本验证记录：
+
+  | session | 样本 | 结果 |
+  |---------|------|------|
+  | 3 | Foxelli Waders raw replay，92 reviews | `Water Leaks Through` count=5 / pct=62.5；`Comfortable To Wear` count=64 / pct=48.1；代表证据均为原文 span |
+  | 4 | 432 reviews | `Breaks Easily` count=13 / pct=44.8；`Feels Well Made` count=290 / pct=92.7 |
+  | 5 | 545 reviews | 无明确 Top Issue（`No clear friction`）；`Comfortable To Wear` count=463 / pct=89.6 |
+
+  Phase 7 P0 / P1 验证记录：
+
+  | 验证项 | 结果 |
+  |--------|------|
+  | P0 commit | `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7` |
+  | P0 自动化 | `python3 -m pytest backend_api/tests`：176 passed；目标 ruff passed；`git diff --check` passed |
+  | P0 只读 DB smoke | session 3/4/5 compact read 成功，默认不带 `embedding`，未复现 SSL EOF；session 5 从历史 120s+/EOF 降到 31.3s |
+  | P1 authenticated route smoke | session results、aggregate results、模块导出、完整导出均 200 |
+  | embedding 边界 | 默认 results payload 不返回 `embedding`；QA/RAG 显式 `include_embedding=True` 可读 session 3 的 92/92 embeddings |
+  | date span fallback | SQL `MIN/MAX` fallback 为 0.3s 级 |
+  | LLM enhancement | 默认关闭，results 首开不依赖 provider |
+  | credit / analytics | P1 smoke 进程内 patch `credit_consume` 与 `track_event` 为 no-op，未调用真实 QA/Ask、上传或重分析等扣费动作 |
+
+  相关文档 / 测试资产：
+  - `docs/Customer_Issue_Label_Phase6验证报告.md`
+  - `backend_api/tests/fixtures/customer_label_phase6_validation.json`
+  - `backend_api/tests/test_customer_label_phase6_validation.py`
+  - `backend_api/tests/test_export_customer_label_phase5.py`
+  - `backend_api/tests/test_analysis_results_llm_fallback.py`
+  - `backend_api/tests/test_database_read_path.py`
+  - `migrations/058_customer_label_catalog_alias_candidates.sql`
+
+  残留风险与下一步：
+  - [ ] 生产全量发布前补 live `/analysis/results` 与 export smoke；若担心扣 credit，优先准备零扣费 staging。
+  - [ ] `Comfortable_to_Wear_reviews_57.xlsx` 风险已用 fixture 复刻；若要作为正式金样本，需要重新导入或重放真实 xlsx，并确认 missing evidence 不进入 Representative Evidence。
+  - [ ] Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；如重新开启，先确认 provider/model 可用并监控 timeout / empty-cache 日志。
+  - [ ] 增加 label stats / 告警：单一标签突然 100%、verified evidence 比例过低、broad/internal label 进入 Top、cluster propagated 占比异常升高、long-tail 标签过多。
+  - [ ] 新增类目时按“系统自动候选 + Erika 审核高频 canonical label”的方式走，不人工维护每条评论：先跑 3-5 个该类目产品样本，再审核 Top 候选标签的保留、合并、改名、禁用。
+
+  后续 Erika 参与点：
+
+  | 什么时候 | 需要做什么 | 预计人力 |
+  |----------|------------|----------|
+  | Phase 7 生产扩大前 | 授权 live credit/export smoke，或提供零扣费 staging | 5-10 分钟决策 |
+  | P1 小流量灰度 3-7 天内 | 看 3-5 个真实 session 的 Top Issue / Top Label、代表证据、下载是否符合预期 | 每天 15-30 分钟 |
+  | 新品类首次接入 | 审核该类目高频候选标签：保留 / 合并 / 改名 / 禁用 | 每个类目 30-60 分钟 |
+  | 稳定运行后 | 看异常告警和候选池，只处理高频、前台可见、低置信度或跨品类边界 case | 每周 10-20 分钟 |
+
 - [ ] **Step C10: 暗色模式（可选）**
   - 仅在种子用户反馈中有明确需求时执行
   - 需要为所有 color token 增加 dark 变体
@@ -1384,47 +1467,41 @@ NX-M8 验收记录（Phase A）：
 | 日期 | 模块 | 变更 |
 |------|------|------|
 | 2026-05-26 | - | 建立 V2 进度追踪系统 |
-| 2026-05-27 | V2-M1 | 确认多产品仪表盘已在 V1 阶段完整实现，标记为完成 |
-| 2026-05-27 | V2-M2 | 版本对比视图完成，与环比分析合并为统一区块 |
-| 2026-06-03 | V2-M3 | Ask your reviews 升级为向量版 RAG：embedding 入库、pgvector 余弦检索、DeepSeek 回答、引用评论、Pro 计费墙 |
-| 2026-06-03 | V2-M4 | Paddle 计费链路完成：plan 字段、Checkout、Webhook、第二产品限制 |
-| 2026-06-03 | V2.5 | 本地完成产品档案数据模型与产品管理页首版，兼容旧 `product_id` 历史数据显示，未推送部署 |
-| 2026-06-03 | V2.6 | 本地完成上传流程升级首版：工作目的、产品绑定、自动识别 ASIN/SKU 子变体、session 绑定上下文，未推送部署 |
-| 2026-06-03 | V2.7 | 本地完成行动中心首版：独立 action store、结果页创建动作、行动中心状态流转，未推送部署 |
-| 2026-06-03 | V2.8 | 本地完成复盘追踪首版：独立 review store、行动中心生成 tracker、复盘页结果录入、结果页复盘提醒，未推送部署 |
-| 2026-06-04 | 商业化路径 | 新增「前端架构与商业化落地路径」章节：双层架构决策、按 MRR 里程碑触发的迁移路径、V3.1.5 营销站（P1-7）最小可行范围；P2-6 修订为"产品层 Streamlit → Next.js 全迁移"，仅在 MRR > $3k 后启动 |
-| 2026-06-06 | NX-M7 | 本地完成宣传文案 / 设置 / 计费迁移收口：`/copywriter`、`/settings`、Paddle Checkout / Webhook、计费状态回写，文案与设置页可用 |
-| 2026-06-06 | NX-M8 | 本地完成部署与 Streamlit 下线路径：`frontend / backend_api / workers` 容器、Nginx、docker-compose、阿里云部署说明、域名分层与回退边界；同时补齐营销站 SEO 基础 |
+| 2026-05-27 | 2.1 | 确认多产品仪表盘已在 V1 阶段完整实现，标记为完成 |
+| 2026-05-27 | 2.2 | 版本对比视图完成，与环比分析合并为统一区块 |
+| 2026-06-03 | 2.3 | Ask your reviews 升级为向量版 RAG：embedding 入库、pgvector 余弦检索、DeepSeek 回答、引用评论、Pro 计费墙 |
+| 2026-06-03 | 2.4 | Paddle 计费链路完成：plan 字段、Checkout、Webhook、第二产品限制 |
+| 2026-06-03 | 2.5 | 本地完成产品档案数据模型与产品管理页首版，兼容旧 `product_id` 历史数据显示，未推送部署 |
+| 2026-06-03 | 2.6 | 本地完成上传流程升级首版：工作目的、产品绑定、自动识别 ASIN/SKU 子变体、session 绑定上下文，未推送部署 |
+| 2026-06-03 | 2.7 | 本地完成行动中心首版：独立 action store、结果页创建动作、行动中心状态流转，未推送部署 |
+| 2026-06-03 | 2.8 | 本地完成复盘追踪首版：独立 review store、行动中心生成 tracker、复盘页结果录入、结果页复盘提醒，未推送部署 |
+| 2026-06-04 | 商业化路径 | 新增「前端架构与商业化落地路径」章节：双层架构决策、按 MRR 里程碑触发的迁移路径、3.1.5 营销站（P1-7）最小可行范围；P2-6 修订为"产品层 Streamlit → Next.js 全迁移"，仅在 MRR > $3k 后启动 |
+| 2026-06-06 | 5.7 | 本地完成宣传文案 / 设置 / 计费迁移收口：`/copywriter`、`/settings`、Paddle Checkout / Webhook、计费状态回写，文案与设置页可用 |
+| 2026-06-06 | 5.8 | 本地完成部署与 Streamlit 下线路径：`frontend / backend_api / workers` 容器、Nginx、docker-compose、阿里云部署说明、域名分层与回退边界；同时补齐营销站 SEO 基础 |
 | 2026-06-06 | SEO | 本地补齐 Next.js 营销站可上线 SEO 基础：首页 / 定价 / 试用页独立 metadata、应用页 noindex、`robots.txt` / `sitemap.xml` / `opengraph-image` |
-| 2026-06-09 | NX-M8 | 将 ECS 验证阶段调整为后置：本地部署配置已完成，但线上 DNS / HTTPS 验证等待 V4 核心功能稳定后再继续；明确不阻塞本地开发与测试 |
+| 2026-06-09 | 5.8 | 将 ECS 验证阶段调整为后置：本地部署配置已完成，但线上 DNS / HTTPS 验证等待 V4 核心功能稳定后再继续；明确不阻塞本地开发与测试 |
 | 2026-06-04 | V4 技术路线 | 新增「V4 技术优化与商业化落地路线图」章节：基于 Shulex 竞品对比 + 10 万条多类目数据资产，规划 7 个核心任务（数据资产化、商业化基建、LLM 输出加固、成本优化、ABSA 小模型、用户反馈回路、Niche 商业化），目标 8 周内把单条成本降 85%、准确率提升至 95%、找到 5 个付费用户验证 PMF |
-| 2026-06-12 | V4.5-T5 | 新增「数据埋点与用户行为分析体系」：PostHog Cloud 注册 + Free plan + Paddle 数据源连接；前端 SDK 接入（analytics.ts + AnalyticsProvider）+ 后端 analytics_events 表 + FastAPI 中间件 + 登录/注册/上传关键事件埋点；Step 1-4 全部完成；独立深度学习文档 `数据埋点学习文档.md` |
-| 2026-06-14 | V4.5-T6 | 用户反馈浮窗组件全部完成：migration + 后端 route（含邮件通知）+ 前端 Widget（FAB+情绪+表单+中英文自适应+快捷键）+ AppShell 集成 + PostHog 埋点；已推送 develop（3 commits） |
-| 2026-06-14 | V4.5-T7 | 新增「中国大陆访问优化」计划：Phase A Cloudflare CDN + 性能优化（立即执行）；Phase B ICP 备案 + 国内节点（付费用户 ≥10 触发）|
+| 2026-06-12 | 7.5 | 新增「数据埋点与用户行为分析体系」：PostHog Cloud 注册 + Free plan + Paddle 数据源连接；前端 SDK 接入（analytics.ts + AnalyticsProvider）+ 后端 analytics_events 表 + FastAPI 中间件 + 登录/注册/上传关键事件埋点；Step 1-4 全部完成；独立深度学习文档 `数据埋点学习文档.md` |
+| 2026-06-14 | 7.6 | 用户反馈浮窗组件全部完成：migration + 后端 route（含邮件通知）+ 前端 Widget（FAB+情绪+表单+中英文自适应+快捷键）+ AppShell 集成 + PostHog 埋点；已推送 develop（3 commits） |
+| 2026-06-14 | 7.7 | 新增「中国大陆访问优化」计划：Phase A Cloudflare CDN + 性能优化（立即执行）；Phase B ICP 备案 + 国内节点（付费用户 ≥10 触发）|
 | 2026-06-18 | 前端测试 | 决策：当前阶段不引入前端测试框架（Vitest/Jest）。理由：快速迭代期、CI 已有 tsc+build 兜底、核心逻辑在后端。触发条件：出现复杂前端逻辑/状态机、频繁回归 bug、核心功能稳定进入维护期时引入 Vitest + React Testing Library |
-| 2026-06-25 | V5-T3 增强 | 推送设置页重构（Part A）：设置页改为 sidebar 3 子页（push/api-keys/billing），推送页合并全局规则+产品规则+周期推送+升级规则为单页全宽布局；推送内容增强（Part B）：B1 条数+占比、B2 AI 总结建议、B3 可点击链接、B4 行动中心引导、B5 环比推送增强、B6 TOP 问题复盘进度 |
-| 2026-06-25 | V4.5-T12 | 可观测性页面重构：从 265 行单页重构为 5-Tab 管理后台（概览/成本/任务/缓存/告警），新增时间范围选择器+模型状态灯行+可展开 trace timeline+成本堆叠柱状图；从用户 sidebar 移除，仅管理员 URL 访问；10 个新组件于 `components/observability/` |
-| 2026-06-30 | V4-T1.6 | Golden Set 标签校准管理系统 + 管理员权限控制：golden_set 表 + boundary_note 字段 + CSV 上传 API + 准确率统计 + few-shot 注入 + /settings/golden-set 管理页 + users.is_admin + sidebar adminOnly 过滤 + 页面级权限守卫；migration 033/034/035 |
-| 2026-06-30 | V4-T1 扩展 | 全品类 Taxonomy 批量扩展：新增 5 品类(outdoor/beauty/kitchen/automotive/office) 27 子品类 441 条 aspect 全部携带 boundary_note；表结构重建 migration 037；sub_category_categories.json 覆盖 87 子品类；docs/类目标签覆盖表.md 产出 |
-| 2026-07-07 | V4-T4 Step 7 | 跨用户 LLM 分析结果复用：接通已有 review_pool 全局池 → L1 缓存除用户自己历史也查 pool（analyzer_version 校验隔离），CSV 上传的分析结果也回填 pool；migration 043 加 content_hash 部分索引 + comments.cache_hit_source 列；隐私政策 + 服务条款追加"分析结果聚合复用"条款；预期热门 ASIN 场景 DeepSeek 调用量下降 30–60% |
+| 2026-06-25 | 9.3 增强 | 推送设置页重构（Part A）：设置页改为 sidebar 3 子页（push/api-keys/billing），推送页合并全局规则+产品规则+周期推送+升级规则为单页全宽布局；推送内容增强（Part B）：B1 条数+占比、B2 AI 总结建议、B3 可点击链接、B4 行动中心引导、B5 环比推送增强、B6 TOP 问题复盘进度 |
+| 2026-06-25 | 7.12 | 可观测性页面重构：从 265 行单页重构为 5-Tab 管理后台（概览/成本/任务/缓存/告警），新增时间范围选择器+模型状态灯行+可展开 trace timeline+成本堆叠柱状图；从用户 sidebar 移除，仅管理员 URL 访问；10 个新组件于 `components/observability/` |
+| 2026-06-30 | 6.3 | Golden Set 标签校准管理系统 + 管理员权限控制：golden_set 表 + boundary_note 字段 + CSV 上传 API + 准确率统计 + few-shot 注入 + /settings/golden-set 管理页 + users.is_admin + sidebar adminOnly 过滤 + 页面级权限守卫；migration 033/034/035 |
+| 2026-06-30 | 6.1 扩展 | 全品类 Taxonomy 批量扩展：新增 5 品类(outdoor/beauty/kitchen/automotive/office) 27 子品类 441 条 aspect 全部携带 boundary_note；表结构重建 migration 037；sub_category_categories.json 覆盖 87 子品类；docs/类目标签覆盖表.md 产出 |
+| 2026-07-07 | 6.4 Step 7 | 跨用户 LLM 分析结果复用：接通已有 review_pool 全局池 → L1 缓存除用户自己历史也查 pool（analyzer_version 校验隔离），CSV 上传的分析结果也回填 pool；migration 043 加 content_hash 部分索引 + comments.cache_hit_source 列；隐私政策 + 服务条款追加"分析结果聚合复用"条款；预期热门 ASIN 场景 DeepSeek 调用量下降 30–60% |
 | 2026-07-23 | LLM Router 旧链路迁移 | Review Q&A、结果翻译、Compare AI Summary、非结构化解析兜底、eval runner、已跟踪 taxonomy/golden 维护脚本统一迁移到 `backend_api.app.services.llm_router.router_completion()` 或 Router 兼容 shim；QA 与 Compare 路由复用 `get_analysis_locale(request)`；`locale="en"` 路由顺序为 GPT-4o-mini → DeepSeek → Qwen，`locale="zh"` 为 DeepSeek → GPT-4o-mini → Qwen；commit `71b0d4c` 已推送 `origin/develop` |
-| 2026-07-24 | Step C9.8 Phase 3 occurrence 抽取 | 新增并行 `customer_label_occurrences` JSON schema，先通过后处理从现有 aspect/evidence 派生 issue/highlight occurrence，不改 LLM prompt；occurrence 统一包含 `comment_id`、`type`、`raw_label`、`canonical_label_key`、中英文展示名、`aspect_key`、`evidence_span`、`evidence_start/end`、`confidence`、`source`、`evidence_verified`、`cluster_propagated`、schema/ruleset version；issue/highlight iterator 优先读取新 occurrence 并投影回旧字段，旧 `aspects_json.aspects[]` 与 `issue_tag/highlight_tag` 继续兼容；找不到真实 evidence 时保留 occurrence 但 `evidence_verified=false`，cluster propagated occurrence 仅作统计/审计候选，不进入代表 evidence；继续保护 `no leaks / without leaks / didn't leak / remained dry / kept dry` 不触发 `Water Leaks Through`。验证：目标测试 31 passed、目标 ruff 通过。未进入 Phase 4 occurrence 聚合、前端表头、Mention Share 分母、Impact Review Share 或 occurrence 级下载 |
-| 2026-07-24 | Customer Issue / Label Phase 4 聚合算法重构 | `specific_issue.py` 抽出统一 `_build_customer_label_rows()`，Issue/Highlight 均从 occurrence 聚合；Top 统计按同类 label mention 分母计算 `mention_share`，同一评论同一 canonical label 跨多个 aspect 只计 1 次，额外输出 `mention_count`、`review_count`、`impact_review_share`、`raw_occurrence_count`，并保持 `count=mention_count`、`pct=mention_share` 兼容；代表评论仍只使用 verified evidence，cluster propagated 与 missing evidence 不进入代表评论，legacy old session 继续返回 rows 不崩但不放宽代表评论；`insight_engine.py` 改为基于全部当前筛选 comments 生成 issue/highlight rows，不再先按整体 positive/negative sentiment 过滤，正评里的真实 issue 与差评里的真实 highlight 均可进入 Top。验证：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_catalog.py` 34 passed；`python3 -m py_compile backend_api/app/services/specific_issue.py review_analyzer/insight_engine.py` 通过；`python3 -m ruff check backend_api/app/services/specific_issue.py review_analyzer/insight_engine.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_catalog.py` 通过。残留风险/Phase 5：前端表头、翻译视图、下载按钮筛选范围与 occurrence 级下载仍沿用旧 UI 结构，`Aspect` 继续仅作为 metadata，不作为前台主标签 |
-| 2026-07-25 | Customer Issue / Label Phase 5 前端展示和下载重构 | 前端 Top 表改为 `Customer Issue/Customer Label + Mention Share + Impact Reviews + Representative Evidence + Actions/Download`，Mention Share 使用 Phase 4 `mention_share`，Impact Reviews 使用 `review_count / 当前筛选范围总评论数` 与 `impact_review_share`；新增统一前端 helper（`rowMentionShare`、`rowImpactReviewShare`、`rowMentionCount`、`rowReviewCount`、occurrence 投影与 Representative Evidence 抽取），`analysis-results-sections.tsx`、`module-card.tsx`、`download-tag-button.tsx` 共用同一口径；Representative Evidence 只展示 `evidence_spans/representative_evidence`，可展开完整原文，不再用无 verified evidence 的整条评论兜底；标签下载保留单个 `Download Evidence + Reviews` 按钮，文件名与 sheet 名标明 `evidence_and_related_reviews`，表内用 `Record Scope = Verified Evidence / Related Review` 与 `Evidence Verified` 区分 verified evidence 和 related review，导出字段包含 Type、Customer Issue / Label、Canonical Label Key、Mention Share、Impact Review Share、Raw Label、Aspect、Evidence Span、Evidence Verified、Cluster Propagated、Review、Rating、Date、Reviewer、Confidence、Source；后端 `backend_api/app/routes/export.py` 与 `review_analyzer/exporter.py` 的 TOP 问题/TOP 亮点 sheet 同步 Phase 4 字段并改用当前筛选全部评论，legacy 缺字段时 fallback 到 `count/pct` 且不崩。验证：`npm run typecheck --prefix frontend` 通过；`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_catalog.py backend_api/tests/test_export_customer_label_phase5.py` 36 passed；旧口径展示文案扫描无残留。残留风险/Phase 6：需用真实 Foxelli session 114、Comfortable_to_Wear_reviews_57.xlsx 与线上 mixed review 样本做 UI/下载灰度验收；当前未启动浏览器人工走查 |
-| 2026-07-25 | Customer Issue / Label Phase 6 验证与回归 | 新增固定验证集 `backend_api/tests/fixtures/customer_label_phase6_validation.json` 与回归测试 `backend_api/tests/test_customer_label_phase6_validation.py`，覆盖 Foxelli session 114 风险复刻、Comfortable evidence 失配、mixed review 双贡献、`no leaks/remained dry/kept dry` 否定表达、真实 `water leaking in/Water came in` 问题触发、cluster propagated 审计样本、床架、睫毛膏、legacy old aspects_json、negative overall highlight、Internal Aspect 过滤；验证 Top Issue / Top Label 使用同类 mention 分母、Impact Review Share 使用当前筛选总评论数、`count/pct` 兼容字段不冲突、review_count distinct、representative evidence 仅来自 verified evidence span。Phase 6 发现并最小修复导出审计字段缺口：聚合 row 增加 `evidence_verified/cluster_propagated`，后端模块导出与完整导出 TOP sheet 增加 `Cluster Propagated`，源评论明细和前端本地 XLSX fallback 同步审计列。验证：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_catalog.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py` 41 passed；`python3 -m ruff check backend_api/app/services/specific_issue.py backend_api/app/routes/export.py review_analyzer/exporter.py review_analyzer/insight_engine.py backend_api/tests/test_customer_label_phase6_validation.py` 通过；`npm run typecheck --prefix frontend` 通过；`git diff --check` 通过。报告：`docs/Customer_Issue_Label_Phase6验证报告.md`。残留风险/Phase 7：本地仓库和 SQLite DB 未包含真实 Foxelli session 114 / Comfortable xlsx，需在只读/预发环境补跑真实样本；本轮未启动浏览器人工点击下载验证 |
-| 2026-07-25 | Customer Issue / Label Phase 6 真实 Foxelli session 114 补跑 | 用户从 prod 只读导出 session 114 到 `scratch/session114_comments.xlsx`（文件原为 xlsx 内容但误用 `.csv` 扩展名，已更名）；本地读取 sheet `Supabase Snippet Untitled query`，共 92 条评论，字段包含 `id/content/rating/date/reviewer/source/sentiment/category/priority/reason/improvement/issue_tag/highlight_tag/aspects_json`。聚合结果：Top Issue rows=2，issue mention 总数 78，`Water Leaks Through` rows=0，旧风险 `Water Leaks Through=9/9` 未复现；但真实漏水候选评论 `26452/26465/26483/26492` 未进入 `Water Leaks Through`，当前 persisted occurrence payload 主要为 cluster propagated 的 `Not Breathable`/`Uncomfortable Fit`，且 evidence 多不在原文。结论：Phase 6 聚合/evidence 保护阻止了水漏误计和无证据代表证据，但真实旧 session 114 需要在预发重分析或重建 occurrence 后再作为 Phase 7 灰度金样本；不建议用纯 content regex 硬恢复，以免把“上一双 waders slow leak、本产品 didn't leak”的评论误召回 |
-| 2026-07-25 | Customer Issue / Label Phase 6 真实 raw replay 完成 | 使用干净文件 `scratch/session114_raw_replay.xlsx`（仅 `id/content/rating/date/reviewer/source`，92 条）上传 clueai-dev，生成 `job_id=2`、`session_id=3`，产品 `Foxelli Waders - Session114 Phase6 Replay`，版本 `phase6-session114-replay-20260725`；用户指定 SQL 返回 `id=3,total_reviews=92,created_at=2026-07-25 05:45:21.831682+00:00`。真实回放发现并最小修复：旧 cluster payload 会掩盖当前产品真实漏水 evidence，新增保守当前产品水漏原文规则，只召回 waders/boots/seams/material 等明确漏水 span，并过滤 `no leaks/kept dry/didn't experience leaking/no leakage/not a leak yet`、旧产品/其他品牌/Magellan、口袋/手机袋进水上下文；occurrence 级 `cluster_propagated=false` 改为优先于顶层 `aspects_json.cluster_propagated=true`，保证代表证据不被错误排除；完整 XLSX 的 `AI Notice / AI 标注` 非法 sheet 名改为 `AI Notice`。最终页面主数据源与 3001 HTML：`Water Leaks Through` 为 5 mentions、Mention Share 62.5%、Review Count 5、Impact Review Share 5.4%、Representative Evidence 均为原文 span（`Both feet are leaking around where the boot connects to the wader`、`leak at the seams`、`water leaking in`、`not 100% waterproof material`、`were leaking a little bit`），`Evidence Verified=true`、`Cluster Propagated=false`；模块导出和完整导出均 200 且 TOP sheet/源评论明细字段一致。验证：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_catalog.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py` 45 passed；目标 ruff 与 `git diff --check` 通过。残留：`Comfortable_to_Wear_reviews_57.xlsx` 未入库；LLM router 当前 DeepSeek `deepseek-chat` 配置被服务端拒绝且 OpenAI connection error 会拖慢 results 首开，建议后续单独修正模型配置或改成非阻塞文本增强 |
-| 2026-07-25 | Customer Issue / Label Phase 6.5 results LLM fallback 非阻塞/配置修复 | 已完成轻量发布门禁，不重构 Phase 1-6 Customer Issue / Customer Label 核心逻辑。`review_analyzer/insight_engine.py` 将 results AI 文本增强改为可配置附加层：默认关闭 `RESULTS_AI_ENHANCEMENT_ENABLED=false`，先返回 heuristic 主 payload；开启后先查进程内缓存，使用后台线程、in-flight 去重、短等待 `RESULTS_AI_ENHANCEMENT_TIMEOUT_SECONDS`、provider timeout `RESULTS_AI_PROVIDER_TIMEOUT_SECONDS`、失败空值缓存与日志降级；AI 只增强 summary/evidence 等文本字段，继续禁止覆盖 `positive/negative/rows`。`llm_router.py` 增加 per-call `disabled_providers/request_timeout/max_model_attempts`，results AI 默认 `RESULTS_AI_DISABLED_PROVIDERS=deepseek` 且最多尝试 1 个 provider，不硬猜 DeepSeek 新模型名。新增 `backend_api/tests/test_analysis_results_llm_fallback.py` 覆盖 router 抛错时 `/analysis/sessions/{id}/results` 与 `/analysis/results` 仍 200，且 `Water Leaks Through` Top Issue 与 `Keeps Water Out` Top Label 不受 AI summary 失败影响。验证：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_catalog.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py` 47 passed；目标 ruff、`npm run typecheck --prefix frontend`、`git diff --check` 通过。session 3 smoke：localhost `/health` 200；真实 `/analysis/sessions/3/results`、`/analysis/results?...session_id=3`、`/analysis/sessions/3/export?...` 因当前终端无登录态返回 401，且本地 SQLite `sessions/comments` 均为 0，无法在本工作区重跑真实 session 3；此前 Phase 6 已在 clueai-dev 验证 session 3 `Water Leaks Through=5 mentions / 5 reviews` 与导出 200，Phase 6.5 新增自动化覆盖同一路由的 LLM 失败降级。结论：可进入 Phase 7 小流量灰度，但建议在 clueai-dev 有登录态环境补跑一次真实 session 3 HTTP smoke 作为发布前记录 |
+| 2026-07-24~2026-07-27 | Step C9.8 | Customer Issue / Customer Label 口径重构、Phase 1-6.5 验证、Foxelli raw replay、Phase 7 P0 read-path、Phase 7 P1 authenticated route smoke 已集中整理到上方 `Step C9.8`；底部 changelog 不再重复维护详细记录 |
 
 ---
 
-## V4 技术优化与商业化落地路线图（2026-06-04 新增）
+## 6. V4 技术优化
 
 > 背景：基于 Shulex / VOC AI 竞品技术选型对比，结合 10 万条多类目评论源数据资产，制定从「LLM+Prompt 单点架构」演进到「ABSA 小模型 + Embedding 聚类 + LLM 生成」三层架构的可商业化落地技术路线。
 >
 > 优化函数：商业化盈利（不是面试展示），目标按 ROI 排序。
 >
-> 总投入：8 周，与 V2.5-V3.1 业务功能并行推进。
+> 总投入：8 周，与 2.5-3.1 业务功能并行推进。
 
 ### 核心思路（一句话）
 
@@ -1455,7 +1532,7 @@ NX-M8 验收记录（Phase A）：
 
 ---
 
-### V4-T1: 数据资产化（Week 1-2，最高 ROI）
+### 6.1 数据资产化
 
 **目标：** 把 10 万条原始数据加工成可复用的评测基准、品类 Taxonomy 和 Bad Case 库，作为后续所有优化的度量底座。
 
@@ -1512,9 +1589,9 @@ NX-M8 验收记录（Phase A）：
 
 ---
 
-### V4-T1.5: Taxonomy 接入分析链路（Week 2，半天工作量，承接 V4-T1 Step 3）
+### 6.2 Taxonomy 接入分析链路
 
-**背景（2026-06-10 发现的问题）：** V4-T1 Step 3 完成后，`category_aspect_taxonomy` 表已入库 1060 行（60 子品类 × 平均 17.7 aspect），但全代码搜索 0 处 SELECT —— 整个分析调用链（`workers/jobs.py` → `deep_analyzer.py` → prompt v2.3）完全绕过该表。
+**背景（2026-06-10 发现的问题）：** 6.1 Step 3 完成后，`category_aspect_taxonomy` 表已入库 1060 行（60 子品类 × 平均 17.7 aspect），但全代码搜索 0 处 SELECT —— 整个分析调用链（`workers/jobs.py` → `deep_analyzer.py` → prompt v2.3）完全绕过该表。
 
 **当前现状：**
 - AI 抽取 100% 依赖 `backend_api/app/prompts/annotate_v2.3.md` 中**硬编码的 19 类家具 aspect**
@@ -1522,7 +1599,7 @@ NX-M8 验收记录（Phase A）：
 - 用户上传非 5 类目评论（户外/食品/玩具）也能跑，行为完全相同 —— **5 类目和非 5 类目当前差异为 0**
 - 1060 行 taxonomy 数据处于"预留状态"
 
-**目标：** 把 V4-T1 Step 3 产出的 taxonomy 接入 prod 分析链路，实现"通用维度 + 品类专属维度"（Shulex 模式）。
+**目标：** 把 6.1 Step 3 产出的 taxonomy 接入 prod 分析链路，实现"通用维度 + 品类专属维度"（Shulex 模式）。
 
 **Files:**
 - Modify: `workers/jobs.py`（按 sub_category 查 taxonomy 表）
@@ -1574,17 +1651,17 @@ NX-M8 验收记录（Phase A）：
 - 5 类目外评论：仍能跑、走通用模板、UI 有提示
 - token 成本上升 ≤ 30%（v2.3 baseline）
 
-**关联任务：** 完成后 V4-T1 Step 6「Taxonomy 覆盖至少 5 个核心品类」从"已入库"升级为"已生效"，bad_cases 库可借此识别"品类专属错例"补到 50 条门槛。
+**关联任务：** 完成后 6.1 Step 6「Taxonomy 覆盖至少 5 个核心品类」从"已入库"升级为"已生效"，bad_cases 库可借此识别"品类专属错例"补到 50 条门槛。
 
 ---
 
-### V4-T1.6: Golden Set 多品类演进 + 时效性防护（持续，随新品类上线触发）
+### 6.3 Golden Set 多品类演进 + 时效性防护
 
 **背景（2026-06-17 识别的风险）：** 当前 Golden Set v1.0 仅覆盖家具家居 6 子品类（499 条评测集），CI 回归也只验证这一个品类。如果产品新增品类（3C、宠物、母婴等），或已有品类出现新功能关键词（如"快充"），Golden Set 对这些维度是"盲测"——准确率指标无法反映真实表现。Shulex 用 20000+ tag + 运营团队持续维护解决此问题，ClueAI 需要低成本替代方案。
 
 **目标：** 让 Golden Set 评测覆盖范围随 Taxonomy 扩展同步增长，消除"新品类准确率盲区"。
 
-**前置依赖：** V4-T1 Step 3（Taxonomy 入库）✅ + V4-T1.5（Taxonomy 接入链路）✅
+**前置依赖：** 6.1 Step 3（Taxonomy 入库）✅ + 6.2（Taxonomy 接入链路）✅
 
 **Files:**
 - Create: `scripts/build_golden_set_generic.py`（按品类生成 mini golden set）
@@ -1643,7 +1720,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### V4-T2: 商业化基建（Week 1-3，与 T1 并行）
+### 6.4 商业化基建
 
 **目标：** 让产品具备承接前 50 个付费用户的能力。
 
@@ -1654,7 +1731,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 - Modify: `review_analyzer/paddle_billing.py`（套餐档位）
 - Create: `legal/privacy.md`、`legal/terms.md`
 
-- ~~**Step 1: 部署迁移**~~ *已由 NX-M8 ECS 方案替代*
+- ~~**Step 1: 部署迁移**~~ *已由 5.8 ECS 方案替代*
   - 早期考虑过 Render / Railway / 自建 VPS，后决定使用阿里云 ECS + docker-compose 部署
   - 当前 prod 已运行于 ECS：nginx + Next.js + FastAPI + RQ worker + Redis，域名 `app.clueai-reviewlens.com`（HTTPS）
   - 本条不再作为待办任务
@@ -1719,12 +1796,12 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
   #### Step 2.0d: Streamlit 退场（执行计划）
 
-  > **背景**：Next.js + FastAPI 已完全接管 prod 流量（NX-M2~M8 全部完成）。Streamlit 仅作为 legacy 残留，当前 docker-compose 中 `profiles: legacy` 不启动。本计划正式移除 Streamlit 相关代码和配置。
+  > **背景**：Next.js + FastAPI 已完全接管 prod 流量（5.2~M8 全部完成）。Streamlit 仅作为 legacy 残留，当前 docker-compose 中 `profiles: legacy` 不启动。本计划正式移除 Streamlit 相关代码和配置。
 
   **前置条件确认**（2026-06-16 评估）：
 
-  - [x] **数据迁移核对**：NX-M3~M7 全部完成，用户/产品/评论/行动/复盘在 Next.js 端完整可用
-  - [x] **会话切换**：FastAPI HttpOnly Cookie 已接管（NX-M2 完成）
+  - [x] **数据迁移核对**：5.3~M7 全部完成，用户/产品/评论/行动/复盘在 Next.js 端完整可用
+  - [x] **会话切换**：FastAPI HttpOnly Cookie 已接管（5.2 完成）
   - [x] **Streamlit Cloud 下线**：✅ 2026-06-16 Erika 确认已关停、secrets 已清除
   - [x] **域名收口**：Next.js 已接管 `app.clueai-reviewlens.com`
   - [x] **`review_analyzer/.env` 处置**：当前指向 dev 库，被 backend_api 通过 `os.environ` 加载（非 Streamlit secrets），保留
@@ -1964,7 +2041,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### V4-T3: LLM 输出加固（Week 3-4）
+### 6.5 LLM 输出加固
 
 **目标：** 用最低成本把当前 LLM 输出的稳定性和准确率拉满，作为引入小模型前的过渡方案。
 
@@ -1995,13 +2072,13 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - **实际产物**：`analyzer.py` 中 `classify_sentiment_by_rating()` + `filter_neutral_unrecognizable()` + v2.4 prompt 完整 rating-priority 三级规则（1.1/1.2/1.3）
 
 - [x] **Step 4: Few-shot 注入 Bad Case** ✅ 2026-06-10
-  - 从 V4-T1 的 Bad Case 库中挑选 5-10 个高频错例
+  - 从 6.1 的 Bad Case 库中挑选 5-10 个高频错例
   - 注入 Prompt 末尾作为 few-shot 示例
   - 在 Golden Set 上 A/B 测试新旧 Prompt
   - **实际产物**：v2.3/v2.4 prompt 含 12 个 few-shot 示例，覆盖 3 星边界（mediocre/just OK/worth the buy/otherwise solid）、文本-评分冲突、比较句式、family-love 等高频错例；A/B 测试结果见 `data/golden_set/v1.0/ab_test_report.md`
 
 - [x] **Step 5: 验收标准** ✅ 2026-06-11
-  - 跑 V4-T1 Golden Set 500 条测试集
+  - 跑 6.1 Golden Set 500 条测试集
   - 情感准确率 ≥ 92%
   - 痛点分类准确率 ≥ 88%
   - JSON 解析失败率 < 1%
@@ -2010,7 +2087,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### V4-T4: 成本优化（Week 4-6，与 T3 并行）
+### 6.6 成本优化
 
 **目标：** 用 Embedding 聚类前置层 + 多级缓存 + Fallback 链路，把单条评论成本降 85%。
 
@@ -2043,7 +2120,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - Docker 镜像膨胀 +2.5GB，建议独立为 embedding-worker 容器
   - 切换方式：改 `generate_embedding()` 调用为本地 ONNX 推理，或部署为 sidecar HTTP 服务 + 改 `EMBEDDING_API_BASE_URL=http://localhost:8080/v1`
   
-  **备注**：~~当前 RAG 模块（V2-M3）embedding 功能因 OpenAI key 过期处于不可用状态。T4 Step 1 完成后 embedding 管道恢复，RAG 同时修复。~~ ✅ 2026-06-12 OpenAI key 已更新，embedding + RAG 均恢复正常。
+  **备注**：~~当前 RAG 模块（2.3）embedding 功能因 OpenAI key 过期处于不可用状态。T4 Step 1 完成后 embedding 管道恢复，RAG 同时修复。~~ ✅ 2026-06-12 OpenAI key 已更新，embedding + RAG 均恢复正常。
 
 - [x] **Step 2: HDBSCAN 聚类前置层** ✅ 2026-06-12
   - 100 条评论先 Embedding → HDBSCAN 聚类（min_cluster_size=3）
@@ -2093,9 +2170,9 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - 单条评论平均成本：¥0.000062（接近目标 ¥0.00003，缓存池积累后持续下降）
   - LLM 调用量：2%（目标 <15% ✓，远超预期）
   - 缓存命中率：98%（L1=80 + L2=18，100 条仅 2 条需走 LLM）
-  - 准确率：保持 V4-T3 基线（缓存复用已验证结果，无质量损失）
+  - 准确率：保持 6.3 基线（缓存复用已验证结果，无质量损失）
 
-- [x] **Step 7: 跨用户 LLM 分析结果复用（V4-T4 增强）** ✅ 2026-07-07
+- [x] **Step 7: 跨用户 LLM 分析结果复用（6.4 增强）** ✅ 2026-07-07
   - **背景**：原 L1 缓存 `get_analyzed_by_content_hash` 只查用户自己历史，用户 A/B/C 上传重叠评论时仍会重复调用 DeepSeek。migration 038 建的全局 `review_pool` 已具备跨用户复用条件但未接通。
   - **改动**：
     - `migrations/043_review_pool_global_analysis_cache.sql`：给 `review_pool.content_hash` 加部分索引 + `comments` 新增 `cache_hit_source` 列（'user' | 'global' | NULL）
@@ -2112,11 +2189,11 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### V4-T5: ABSA 小模型 fine-tune（Week 6-8，可选）
+### 6.7 ABSA 小模型 fine-tune
 
 **目标：** 把 ABSA（情感 + Aspect 抽取）这种结构化任务从 LLM 收回到 fine-tuned 小模型，是准确率天花板的真正解药。
 
-**注意：** 这是高 ROI 但高投入的任务，建议在 V4-T1/T2/T3/T4 完成且拿到至少 5 个付费用户后再启动。如果 PMF 验证不通过，跳过此任务。
+**注意：** 这是高 ROI 但高投入的任务，建议在 6.1/T2/T3/T4 完成且拿到至少 5 个付费用户后再启动。如果 PMF 验证不通过，跳过此任务。
 
 **Files:**
 - Create: `ml/absa/` 目录（训练脚本、数据集、模型 checkpoint）
@@ -2153,7 +2230,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### V4-T6: 用户反馈回路（Week 5-7）
+### 6.8 用户反馈回路
 
 **目标：** 让用户纠错沉淀为产品改进的弹药，形成数据飞轮。
 
@@ -2190,7 +2267,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### V4-T7: Niche 商业化启动（Week 4-8，与技术任务并行）
+### 6.9 Niche 商业化启动
 
 **目标：** 选定一个垂直品类，找到前 5 个付费用户，验证 PMF。
 
@@ -2226,12 +2303,12 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 - [ ] **Step 5: 1 对 1 跟进**
   - 每个试用用户主动建联（电话 / 微信）
   - 录用户反馈视频（后续作为案例）
-  - 收集 bad case 反哺 V4-T3 / V4-T6
+  - 收集 bad case 反哺 6.3 / 6.6
 
 - [ ] **Step 6: SEO 内容种子**
   - 写 5 篇知乎 / 小红书种草文（"我用 ClueAI 复盘了一个亚马逊 [品类] 的 SKU 改版"）
   - 录制 3 分钟产品 demo 视频
-  - 为 V3.1.5 营销站积累内容资产
+  - 为 3.1.5 营销站积累内容资产
 
 - [ ] **Step 7: 验收标准**
   - 8 周内拿到 20 个免费试用用户
@@ -2244,12 +2321,12 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 ### V4 任务依赖关系
 
 ```
-V4-T1 (数据资产化) ──┬──► V4-T3 (LLM 输出加固) ──┬──► V4-T5 (ABSA 小模型)
-                     ├──► V4-T4 (成本优化)       │
-                     ├──► V4-T6 (反馈回路) ◄─────┘
-                     └──► V4-T1.5 (Taxonomy 接入) ──► V4-T1.6 (Golden Set 多品类演进)
+6.1 (数据资产化) ──┬──► 6.3 (LLM 输出加固) ──┬──► 6.5 (ABSA 小模型)
+                     ├──► 6.4 (成本优化)       │
+                     ├──► 6.6 (反馈回路) ◄─────┘
+                     └──► 6.2 (Taxonomy 接入) ──► 6.3 (Golden Set 多品类演进)
                                                           ↑ 新品类上线时触发
-V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
+6.2 (商业化基建) ──► 6.7 (Niche 商业化)
                        └──► (依赖 T3 + T4 完成)
 ```
 
@@ -2262,9 +2339,9 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ### V4 优先级精简版（如果只能做 3 件事）
 
-1. **V4-T1 数据资产化（Week 1-2）** — 不做这个，后面所有优化都没法度量。零技术风险，纯运营投入。
-2. **V4-T7 Niche 商业化（Week 4-8）** — 不做这个，技术优化全是沉没成本。商业化决定产品方向。
-3. **V4-T4 成本优化（Week 4-6）** — 单点技改成本最低、降本最猛，让前 50 个用户的毛利可控。
+1. **6.1 数据资产化（Week 1-2）** — 不做这个，后面所有优化都没法度量。零技术风险，纯运营投入。
+2. **6.7 Niche 商业化（Week 4-8）** — 不做这个，技术优化全是沉没成本。商业化决定产品方向。
+3. **6.4 成本优化（Week 4-6）** — 单点技改成本最低、降本最猛，让前 50 个用户的毛利可控。
 
 ### V4 阶段验收标准（商业化角度）
 
@@ -2278,12 +2355,12 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-## V5 上线后增值功能路线图（2026-06-09 新增）
+## 9. V5 增值功能
 
 > **目标**：上线后根据用户反馈分阶段引入新能力，避免一次开发太多导致 V4 延期。
 > 详细成本与定价配套见 `COST_PROFIT.md`。
 
-### V5-T1: 评论自动获取 — 批量 ASIN + 定时拉取 + Chrome 插件（P0）
+### 9.1 评论自动获取
 
 **痛点**：当前用户必须手动准备评论 Excel，门槛高，导致 Free 用户上手率低。
 
@@ -2389,7 +2466,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - 添加时自动调用 `fetch_product_info` 获取产品名称/品类（已实现于 `rainforest.py`）
 
 - [x] **Step 3: 定时拉取调度**
-  - 基于 `rq-scheduler`（已在 V5-T3 引入）
+  - 基于 `rq-scheduler`（已在 9.3 引入）
   - 每天凌晨 2:00 UTC 扫描所有 `status=active` 且 `fetch_frequency=daily` 的记录
   - 每周一凌晨扫描 `fetch_frequency=weekly` 的记录
   - 对每个 ASIN 入队一个 `process_asin_fetch_job`（复用现有 worker）
@@ -2473,7 +2550,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - 新增 ASIN 自动加入监控、下架 ASIN 自动暂停
   - 配合 Phase 1 定时拉取，实现全自动闭环
 
-### V5-T2: API 调用（P1，Team 档启用后开放）
+### 9.2 API 调用
 
 **目标**：服务代运营 Agency 与中型卖家的自动化需求。
 
@@ -2497,7 +2574,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - mkdocs / Mintlify 搭建 docs.clueai.com
   - OpenAPI Spec 自动生成 + Postman Collection
 
-### V5-T3: 智能推送 + 分责路由 + 升级行动闭环（P1，付费用户里程碑达 10 后启动）
+### 9.3 智能推送 + 分责路由 + 升级行动闭环
 
 **目标**：定期推送产品 TOP 10 问题/亮点到飞书群，按责任部门分板块 @负责人；连续多期 TOP 问题自动升级，LLM 生成行动建议并写入行动中心，形成"发现→通知→行动→复盘"完整闭环。
 
@@ -2614,7 +2691,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 - Pro：即时推送 + 周期推送（每周），升级机制（3 次连续），单产品
 - Team：全部能力，多产品多部门，自定义周期
 
-### V5-T4: 邀请返佣增长系统（P1，付费用户达 20+ 且月留存稳定后启动）
+### 9.4 邀请返佣增长
 
 **目标**：通过现有付费用户口碑推荐获取新用户，CAC 远低于广告投放，同时不侵蚀利润。
 
@@ -2714,7 +2791,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - 提现申请正常创建，管理后台可见
   - 防刷规则：同 IP 重复注册不计入有效推荐
 
-### V5-T5: 自研评论标注模型 — 知识蒸馏摆脱 LLM API 实时依赖（P2，月活跃用户 ≥50 或日均分析量 ≥5000 条后启动）
+### 9.5 自研评论标注模型
 
 > **背景**：当前架构每条评论都需实时调用 DeepSeek API（~1-3 秒/条），432 条评论需 Worker 运行数分钟。
 > 竞品 Shulex 采用「自研 tagging model + 预标注入库」模式，用户请求时只做聚合统计，10 秒出结果。
@@ -2722,7 +2799,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 #### 阶段一：数据积累与标注质量监控（2-4 周，无额外开发成本）
 
-**前提**：Worker 增量写入已部署（V4.5-T11 bug fix），系统正常积累分析数据。
+**前提**：Worker 增量写入已部署（7.11 bug fix），系统正常积累分析数据。
 
 - [ ] 确认 `comments` 表中已有字段满足训练需求：`content`, `sentiment`, `aspects_json`, `issue_tag`, `highlight_tag`, `is_processed`
 - [ ] 编写数据导出脚本 `scripts/export_training_data.py`：从生产 DB 导出 `is_processed=1` 的评论为 JSONL 格式
@@ -2784,7 +2861,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 #### 阶段五：预标注模式（长期方向）
 
-**启动条件**：阶段四成功，且有 V5-T1 评论自动获取功能
+**启动条件**：阶段四成功，且有 9.1 评论自动获取功能
 
 - [ ] 评论入库时自动触发本地模型标注（类 Shulex 模式）
 - [ ] 用户点击「分析」时只做聚合统计 + LLM 摘要（10 秒内出结果）
@@ -2832,7 +2909,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ### 新品类接入 SOP（Taxonomy 扩展流程，2026-06-12 定稿）
 
-> **背景**：V4-T1 建立了 5 个核心品类（家居/3C/服饰/母婴/宠物）的 Taxonomy + 评测体系。
+> **背景**：6.1 建立了 5 个核心品类（家居/3C/服饰/母婴/宠物）的 Taxonomy + 评测体系。
 > 后续新增品类时，按以下分级流程操作，避免重复探索。
 
 #### 一、轻量接入（大多数新品类，半天工作量）
@@ -2864,7 +2941,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 | 6. 采样标注 | 从该品类评论中分层采样 50 条（rating × sentiment 交叉），人工标注 gold_sentiment + gold_aspects | `data/golden_set/v1.0/{category}_50.csv` | 3-4h |
 | 7. 评测跑分 | `python3 scripts/eval_v23_vs_v24.py`（改造支持多品类）或独立评测脚本 | 准确率 / 召回率 / F1 指标 | 30min |
 | 8. Bad Case 补充 | 把误判样本加入 `bad_cases` 表，作为后续 few-shot 种子 | `bad_cases` 表新增行 | 30min |
-| 9. 品类专属 few-shot | 在 prompt 末尾注入 2-3 条该品类的 few-shot 示例（V4-T3 Step 4 框架） | `prompts/annotate_v2.5.md`（若需要） | 1h |
+| 9. 品类专属 few-shot | 在 prompt 末尾注入 2-3 条该品类的 few-shot 示例（6.3 Step 4 框架） | `prompts/annotate_v2.5.md`（若需要） | 1h |
 
 **验收标准（深度）：**
 - 情感准确率 ≥ 92%（对齐家居品类基线）
@@ -2896,11 +2973,11 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-## V4.5 运维基建（CI/CD/测试环境）2026-06-11 新增
+## 7. V4.5 运维基建
 
 > **目标**：建立自动化发布流水线，降低人工部署风险，为付费用户提供稳定交付保障。
 
-### V4.5-T1: CI 持续集成（现在启动）✅ 2026-06-11
+### 7.1 CI 持续集成 ✅
 
 **启动条件**：无，基础设施，随时可搭。
 
@@ -2918,7 +2995,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T2: CD 持续部署（≥1 付费用户后启动）
+### 7.2 CD 持续部署
 
 **启动条件**：至少 1 个付费用户（手动部署的风险成本开始大于搭建成本）。
 
@@ -2937,7 +3014,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T3: 独立测试环境（≥10 付费用户或第二个开发者加入后启动）
+### 7.3 独立测试环境
 
 **启动条件**：团队扩展或付费用户规模需要 staging 验证。
 
@@ -2951,7 +3028,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T4: 预览环境 + 协作审查升级路径（2026-06-12 新增）
+### 7.4 预览环境 + 协作审查升级路径
 
 > **当前模式**：AI 写 + AI 审 + Erika 大模块验收。详见 CLAUDE.md「协作审查流程」。
 
@@ -2997,7 +3074,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T5: 数据埋点与用户行为分析体系（上线前启动）
+### 7.5 数据埋点与用户行为分析
 
 > **目标**：建立完整的用户行为追踪体系，支撑转化漏斗优化、AI 质量监控、产品迭代决策。
 > **启动条件**：上线前 P0 部分必须就位；P1/P2 按付费用户里程碑触发。
@@ -3078,7 +3155,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - 事件：
     - `thumbs_up` / `thumbs_down`（分析结果满意度打分）
     - `result_edit`（用户修改 AI 输出 = AI 判错信号，记录字段 + 修改前后值）
-    - `feedback_submit`（主动纠错提交，关联 V4-T6 反馈回路）
+    - `feedback_submit`（主动纠错提交，关联 6.6 反馈回路）
   - 核心指标：
     - 结果编辑率 = edit_count / total_viewed_results（越低 = AI 越准）
     - 用户满意度 = thumbs_up / (thumbs_up + thumbs_down)
@@ -3144,9 +3221,9 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 | 现有模块 | 埋点联动 |
 |---------|---------|
-| V4-T4 成本优化 | `cluster_efficiency` 事件监控聚类效果 |
-| V4-T6 反馈回路 | `thumbs_up/down` + `result_edit` 是反馈回路的数据源 |
-| V4-T2 配额系统 | `quota_check` 事件追踪配额墙转化效果 |
+| 6.4 成本优化 | `cluster_efficiency` 事件监控聚类效果 |
+| 6.6 反馈回路 | `thumbs_up/down` + `result_edit` 是反馈回路的数据源 |
+| 6.2 配额系统 | `quota_check` 事件追踪配额墙转化效果 |
 | COST_PROFIT.md | 后端 `llm_call` 事件数据验证成本模型准确性 |
 
 #### PostHog 第三方数据源连接清单
@@ -3166,13 +3243,13 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T6: 用户反馈浮窗组件（种子用户上线前启动）
+### 7.6 用户反馈浮窗
 
 **目标：** 在所有已登录页面左下角提供极低摩擦的反馈入口，让种子用户随时反馈 bug、提需求或表达感受。最少 3 次点击完成反馈，无需打字。数据存自有 Supabase，不依赖第三方 SaaS。
 
 **设计依据：** Hotjar（情绪选择极简）+ Linear（自动采集上下文）+ Vercel（不弹模态框，底角浮窗）
 
-**触发条件：** 部署上线前（与 NX-M8 Phase B 冒烟测试同步完成）
+**触发条件：** 部署上线前（与 5.8 Phase B 冒烟测试同步完成）
 
 **Files:**
 - Create: `migrations/016_user_feedback.sql`
@@ -3238,11 +3315,11 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 **Phase 2（收集到 ≥10 条反馈后启动）：**
 - 截图功能：引入 `html2canvas`（动态 import），一键截取当前页面
 - 反馈管理后台：管理员查看/标记状态/回复
-- 与 V4-T6（分析结果纠错）合并数据源
+- 与 6.6（分析结果纠错）合并数据源
 
 ---
 
-### V4.5-T7: 中国大陆访问优化（2026-06-14 新增）
+### 7.7 中国大陆访问优化
 
 **背景：** 当前服务器 `8.210.51.242` 位于阿里云香港区（Alibaba Cloud HK），域名 `clueai-reviewlens.com` 无 ICP 备案。中国大陆用户可访问但体验不稳定（跨境延迟 50-200ms、部分运营商/时段丢包、无合规保障）。目标用户为中国跨境电商卖家，大陆访问稳定性直接影响留存和付费转化。
 
@@ -3474,7 +3551,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T8: 设计组件系统 — shadcn/ui 统一 UI 基建（2026-06-15 新增）
+### 7.8 shadcn/ui 设计组件系统
 
 **背景：** 当前前端 UI 全部手写 Tailwind className，没有统一的组件原语层（Button / Card / Dialog / Badge 等）。每次新增页面都从零搭样式，导致：1）样式不一致；2）交互细节（focus ring、disabled state、loading skeleton）遗漏；3）改主题需逐页修改。引入 shadcn/ui 作为组件基建层，统一视觉语言，提升开发效率和用户感知品质。
 
@@ -3539,7 +3616,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T9: 首页改造 — 数据可视化卡片 + 闭环文案（版本1）（2026-06-16 完成）
+### 7.9 首页改造
 
 **背景：** 原首页为英文通用 SaaS 风格，缺乏产品差异化表达。需重新设计为中文闭环概念首页，突出"评论分析 → 行动推送 → 复盘验证"的产品核心价值，并以数据可视化卡片直观展示产品能力。
 
@@ -3598,7 +3675,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T10: 登录/注册独立页面改造 + 全站文案中文化（2026-06-16 完成）
+### 7.10 登录/注册改造 + 全站文案中文化
 
 **背景：** 原登录/注册页面复用首页 MarketingShell 组件，视觉上不够独立，且所有文案均为英文。需改为独立全屏双栏布局（左侧产品展示 + 右侧表单），同时完成全站营销页面文案中文化。
 
@@ -3658,11 +3735,11 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T11: AI 分析链路优化（2026-06-17 新增）
+### 7.11 AI 分析链路优化
 
-**背景：** V4-T4 成本优化已完成（缓存命中率 98%，100 条仅 2 条走 LLM）。本任务在此基础上进一步提升分析质量、降低延迟、增强可观测性。不破坏现有稳定性。
+**背景：** 6.4 成本优化已完成（缓存命中率 98%，100 条仅 2 条走 LLM）。本任务在此基础上进一步提升分析质量、降低延迟、增强可观测性。不破坏现有稳定性。
 
-**前置条件：** V4-T4 全部完成 ✅
+**前置条件：** 6.4 全部完成 ✅
 
 **详细方案文档：** [`AI_PIPELINE_OPTIMIZATION.md`](AI_PIPELINE_OPTIMIZATION.md)
 
@@ -3722,7 +3799,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - 现状：Golden Set 499 条，手动跑
   - 方案：CI 集成（prompt 变更触发回归）+ 线上抽样（GPT-4o 二次评判）+ 月度报告
   - 改动：`backend_api/app/services/quality_sampler.py` + migration 020
-  - 与 V4-T3/T6 关系：T3 的质量保障自动化延伸，与 T6（用户反馈）互补
+  - 与 6.3/T6 关系：T3 的质量保障自动化延伸，与 T6（用户反馈）互补
   - **实现备注：**
     - CI 部分已有 `.github/workflows/golden-set-regression.yml`（prompt 变更自动触发，准确率门槛 93%）
     - 线上抽样：`quality_sampler.py` — 每 200 条抽 1 条，`judge_annotation()` 用 LLM 二次评判，结果写入 `annotation_quality_log` 表
@@ -3752,7 +3829,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
   - 触发条件：≥10 付费用户反馈需要开放式分析能力
 
 - [ ] **OPT-8: Self-Consistency + 主动学习**
-  - 适用：V4-T6（反馈回路）完成后
+  - 适用：6.6（反馈回路）完成后
   - 方案：歧义评论多次投票 + evidence_level=low 样本自动标记 → 扩大 bad case 发现面
 
 ---
@@ -3764,7 +3841,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 | Multi-Agent 架构 | 当前无适用场景，任务步骤确定 |
 | Batch Prompt（多条合一次 LLM） | 缓存 98% 命中率下剩余量太小，收益 < 准确率风险 |
 | RQ → Celery 迁移 | 当前无并发瓶颈，等月活 > 50 |
-| ABSA fine-tune 小模型 | 已规划为 V4-T5，等 5 付费用户 |
+| ABSA fine-tune 小模型 | 已规划为 6.5，等 5 付费用户 |
 
 #### Worker 可靠性补丁（2026-06-17 追加）
 
@@ -3778,11 +3855,11 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T12: 分析链路可观测性体系（方向 C）（2026-06-17 新增）
+### 7.12 可观测性体系
 
 **来源：** 《Agent工程师核心能力学习与实践指南》方向 C
-**前置条件：** V4.5-T11 OPT-1~6 完成 ✅ + NX-M8 部署 smoke test 通过
-**启动时间节点：** NX-M8 完成后立即启动（预计 2026-06-18~19 可开始）
+**前置条件：** 7.11 OPT-1~6 完成 ✅ + 5.8 部署 smoke test 通过
+**启动时间节点：** 5.8 完成后立即启动（预计 2026-06-18~19 可开始）
 **总工期：** ~7 天
 
 **业务意义：**
@@ -3849,17 +3926,17 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T13: Agent 智能工作流升级（方向 A）（2026-06-17 新增）
+### 7.13 Agent 智能工作流
 
 **来源：** 《Agent工程师核心能力学习与实践指南》方向 A
-**前置条件：** V4.5-T12 的 C1-C2 完成（需要 trace 数据支撑决策可观测）
-**启动时间节点：** V4.5-T12 C1-C2 完成后（预计 2026-06-20~21）
+**前置条件：** 7.12 的 C1-C2 完成（需要 trace 数据支撑决策可观测）
+**启动时间节点：** 7.12 C1-C2 完成后（预计 2026-06-20~21）
 **总工期：** ~6 天
 
 **业务意义：**
 - 智能路由：消除 `jobs.py` 中 `if len >= 10` 等硬编码，让系统根据数据特征自主决策分析策略
 - 异常自适应：差评突增时无需人工发起深度分析，系统自动检测并触发（从"被动工具"到"主动助手"）
-- Action Loop 闭环：V5-T3 已建立升级推送，但缺少"验证效果→自动关闭"，当前 action_items 只能手动关闭
+- Action Loop 闭环：9.3 已建立升级推送，但缺少"验证效果→自动关闭"，当前 action_items 只能手动关闭
 - 面试展示：维度一"能判断该用什么级别方案"+ 维度四"可暂停可恢复可审计"
 
 **负面影响评估：**
@@ -3869,9 +3946,9 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 - 整体：所有新逻辑以"增量插入"方式加入 worker 管道，不改动核心分析调用链
 
 **与现有系统的关系：**
-- A1 是 V4-T1.5 动态 taxonomy 路由的扩展（从"品类选 prompt"到"多维度选策略"）
-- A2 依赖 V4.5-T12 的 trace 数据来记录检测结果
-- A3 直接扩展 V5-T3 的 `escalation.py` + `action_store.py`（已有 80% 基础设施）
+- A1 是 6.2 动态 taxonomy 路由的扩展（从"品类选 prompt"到"多维度选策略"）
+- A2 依赖 7.12 的 trace 数据来记录检测结果
+- A3 直接扩展 9.3 的 `escalation.py` + `action_store.py`（已有 80% 基础设施）
 
 ---
 
@@ -3907,7 +3984,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 | Phase | 预计工期 | 启动条件 | 可独立部署 |
 |-------|---------|---------|-----------|
-| C1 接通追踪 | 1天 | NX-M8 smoke test 通过 | ✅ |
+| C1 接通追踪 | 1天 | 5.8 smoke test 通过 | ✅ |
 | C2 结构化 Trace | 1天 | C1 完成 | ✅ |
 | C3 Dashboard API | 2天 | C2 完成 | ✅ |
 | C4 前端看板 | 2天 | C3 完成 | ✅ |
@@ -3928,10 +4005,10 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T14: 国际化（i18n）— 全站中英文双语 + 分析结果翻译（2026-06-18 新增）
+### 7.14 i18n 国际化
 
 **来源：** 产品需求 — 服务中国跨境电商团队，需同时支持中文 UI 和英文用户
-**前置条件：** NX-M8 前端页面基本稳定
+**前置条件：** 5.8 前端页面基本稳定
 **启动时间节点：** 2026-06-18
 **总工期：** ~5-7 天（Phase 1: 3-4 天，Phase 2: 2-3 天）
 
@@ -4088,7 +4165,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V4.5-T15: 全面测试方案执行计划（2026-06-18 新增）
+### 7.15 全面测试方案
 
 > **目标**：建立覆盖核心链路的测试体系，保障上线质量与迭代安全。
 > **完整方案文档**：[ClueAI_ReviewLens_测试方案.md](../ClueAI_ReviewLens_测试方案.md)
@@ -4179,7 +4256,7 @@ V4-T2 (商业化基建) ──► V4-T7 (Niche 商业化)
 
 ---
 
-### V5-T1: 团队管理（多租户）可行性方案
+### 9.6 团队管理（多租户）
 
 **启动条件：** 获得 1 个付费用户后启动  
 **状态：** 📋 规划中（方案已确认，待启动条件满足）  
@@ -4369,7 +4446,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-## V4-出海: 面向海外用户的合规改造模块（2026-07-03 立项）
+## 8. 出海合规
 
 > **完整合规文档**：[`OVERSEAS_COMPLIANCE_PLAN.md`](OVERSEAS_COMPLIANCE_PLAN.md)（含所有决策依据、法规解释、合规 review 结论）
 >
@@ -4440,7 +4517,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-### V4-出海-M1: Erika 手动执行（Week 1，无代码改动）
+### 8.1 Erika 手动执行
 
 - 状态: 🔄 部分完成（AWS Bedrock 分支已实测证伪；SG 迁移任务待启动） | 分支: N/A（Erika 独立操作，不阻塞开发）
 - 依赖: 无
@@ -4491,7 +4568,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-### V4-出海-M2: i18n 框架 + 双语文案 + 法律页面（Week 2，约 9 天）
+### 8.2 i18n 框架 + 双语文案 + 法律页面
 
 - 状态: ⏳ 待启动 | 分支: `feature/v4-i18n-framework`
 - 依赖: M1（Erika 完成 Cloudflare 接入 + 法律文档生成）
@@ -4528,13 +4605,13 @@ CREATE TABLE workspace_invitations (
 - [ ] users 表新增 `locale VARCHAR(10) DEFAULT 'en-US'` 字段（合并到 migration 041）
 
 **2.4 7 个法律页面（双语）**
-- [x] `frontend/src/app/privacy/page.tsx` — Privacy Policy（已存在，M2.4 需按 OVERSEAS_COMPLIANCE_PLAN 补 10 项条款）✅ 2026-07-06 改造为中英双语
-- [x] `frontend/src/app/terms/page.tsx` — Terms of Service（已存在，M2.4 需按 OVERSEAS_COMPLIANCE_PLAN 补 6 项条款）✅ 2026-07-06 改造为中英双语
+- [x] `frontend/src/app/privacy/page.tsx` — Privacy Policy（已存在，8.2.4 需按 OVERSEAS_COMPLIANCE_PLAN 补 10 项条款）✅ 2026-07-06 改造为中英双语
+- [x] `frontend/src/app/terms/page.tsx` — Terms of Service（已存在，8.2.4 需按 OVERSEAS_COMPLIANCE_PLAN 补 6 项条款）✅ 2026-07-06 改造为中英双语
 - [x] `frontend/src/app/refund/page.tsx` — Refund Policy（✅ 2026-07-06 新建，中英双语，覆盖月付不退/年付按比例/取消说明/退款流程）
-- [ ] `frontend/src/app/cookies/page.tsx` — Cookie Policy（M3.4 已创建占位空壳，需补正文）
-- [ ] `frontend/src/app/dpa/page.tsx` — Data Processing Agreement（M3.4 已创建占位空壳，需补正文）
-- [x] `frontend/src/app/sub-processors/page.tsx` — Sub-processor 清单（M3.4 完成，双语 + 8 家清单 + DPA 外链）
-- [x] `frontend/src/app/contact/page.tsx` — Contact 页面（M3.4 完成，双语 + 3 邮箱）
+- [ ] `frontend/src/app/cookies/page.tsx` — Cookie Policy（8.3.4 已创建占位空壳，需补正文）
+- [ ] `frontend/src/app/dpa/page.tsx` — Data Processing Agreement（8.3.4 已创建占位空壳，需补正文）
+- [x] `frontend/src/app/sub-processors/page.tsx` — Sub-processor 清单（8.3.4 完成，双语 + 8 家清单 + DPA 外链）
+- [x] `frontend/src/app/contact/page.tsx` — Contact 页面（8.3.4 完成，双语 + 3 邮箱）
 - [ ] Privacy Policy 必须包含 10 项合规条款（见 OVERSEAS_COMPLIANCE_PLAN.md 第 2.4 节）
 - [ ] Terms of Service 必须包含 6 项合规条款（见 OVERSEAS_COMPLIANCE_PLAN.md 第 2.4 节）
 
@@ -4550,7 +4627,7 @@ CREATE TABLE workspace_invitations (
 - [ ] 新建 backend `POST /api/auth/accept-terms` 端点([backend_api/app/routes/auth.py](backend_api/app/routes/auth.py))
 - [ ] `GET /api/user/me` 响应体补充 `terms_version` 字段
 - [ ] 新增 `frontend/src/components/CookieBanner.tsx`（顶部通知栏 + localStorage）
-- [x] 全站 Footer 强制展示：6 个法律链接 + Amazon disclaimer（M3.4 完成，挂在 `marketing-shell.tsx`）
+- [x] 全站 Footer 强制展示：6 个法律链接 + Amazon disclaimer（8.3.4 完成，挂在 `marketing-shell.tsx`）
 - [ ] 上传页 [frontend/src/app/upload/page.tsx](frontend/src/app/upload/page.tsx) 加数据告知小字(注册已同意,无需再次 checkbox):
   ```tsx
   {t("uploadDataNotice")}<Link href="/privacy">{t("privacyLink")}</Link>
@@ -4560,14 +4637,14 @@ CREATE TABLE workspace_invitations (
 - [x] **决策**：Prompt 保持英文单一版本，LLM 分析结果只存英文（title / description / tags 等业务字段）
   - 原因：一份分析结果服务所有语言用户，成本 ~50%↓；英文 prompt LLM 质量更稳定；未来加日/西/德语只需扩展"翻译层"，不用重跑分析
 - [x] **不做**：原计划的"按 user locale 切换 prompt 中/英两套"（避免同产品分析结果双份存储）
-- [ ] 中国用户看中文体验的实现路径 —— 待展示层翻译方案设计（见新增 M2.7）
+- [ ] 中国用户看中文体验的实现路径 —— 待展示层翻译方案设计（见新增 8.2.7）
 
 **2.7 展示层翻译（中国用户看英文分析结果） 🆕**
 - [ ] 决策：DeepSeek 翻译 API（复用现有）vs 前端 i18n key 化 vs 缓存表
 - [ ] 落地：analyses / issues / highlights 等表新增 `title_zh` / `description_zh` 字段 或 独立 `translations` 缓存表
 - [ ] 触发：分析完成后异步生成 zh 翻译（不阻塞主流程）
 - [ ] 展示：locale=zh 时读中文字段，为空则 fallback 英文原文
-- [ ] 与 M2.6 的关系：M2.6 上游保持英文，M2.7 是展示层增强，可独立迭代
+- [ ] 与 8.2.6 的关系：8.2.6 上游保持英文，8.2.7 是展示层增强，可独立迭代
 
 **验收标准**
 - 使用 US IP 访问 `app.clueai-reviewlens.com` → 全英文
@@ -4577,7 +4654,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-### V4-出海-M3: 后端合规能力（Week 3，约 5 天）
+### 8.3 后端合规能力
 
 - 状态: 🔄 进行中（80%） | 分支: `develop`
 - 依赖: M2（migration 041 已上线）
@@ -4614,7 +4691,7 @@ CREATE TABLE workspace_invitations (
 - [x] 新建 `send_marketing_email(to, subject, html, locale, user_id)`：
   - 调用前校验 users 表 `marketing_opt_in=TRUE`
   - 自动追加双语 unsubscribe footer
-  - ⚠️ `marketing_opt_in` 字段依赖 migration 041（M2.5 未上线），fail-close：字段缺失时视作未 opt-in
+  - ⚠️ `marketing_opt_in` 字段依赖 migration 041（8.2.5 未上线），fail-close：字段缺失时视作未 opt-in
 - [x] 新建 `backend_api/app/routes/unsubscribe.py`：
   - `GET /api/unsubscribe?uid=<id>&token=<hmac>` — 一键退订，无需登录
   - HMAC token：`hmac.new(API_SESSION_SECRET, str(user_id), sha256).hexdigest()[:16]`
@@ -4622,14 +4699,14 @@ CREATE TABLE workspace_invitations (
 - [x] 新建 `frontend/src/app/unsubscribed/page.tsx` — 双语退订成功页（success/pending/error 三态，用 next-intl `useTranslations`）
 - [x] PATCH /me 改邮箱成功后 fire-and-forget 发变更通知邮件；DELETE /me 匿名化完成后发确认邮件
 - [x] 单测 `backend_api/tests/test_mailer.py` 19 个用例：locale 归一化、双语渲染、Transactional/Marketing 路由、opt-in fail-close、HMAC token 生成+校验+防篡改
-- 🔜 依赖 M2.5 上线：migration 041 落地 `marketing_opt_in` 字段后，本模块自动生效（当前 send_marketing_email 会 fail-close，unsubscribe 会 302 pending）
+- 🔜 依赖 8.2.5 上线：migration 041 落地 `marketing_opt_in` 字段后，本模块自动生效（当前 send_marketing_email 会 fail-close，unsubscribe 会 302 pending）
 
 **3.4 Contact + Sub-processor 清单页填充** ✅（2026-07-05 完成）
 - [x] `frontend/src/app/contact/page.tsx` — 3 邮箱卡片双语（privacy@ / support@ / hello@，next-intl + MarketingShell）
 - [x] `frontend/src/app/sub-processors/page.tsx` — 8 家清单表格（Supabase / Cloudflare / Anthropic / DataForSEO / Rainforest / Paddle / Resend / CF Analytics），Desktop 表格 + Mobile 卡片双布局，含 DPA 外链
 - [x] 新增 `frontend/src/components/marketing/site-footer.tsx`：6 个法律链接（/privacy /terms /cookies /dpa /sub-processors /contact）+ Amazon disclaimer，挂到 `marketing-shell.tsx`
 - [x] 新增 `frontend/messages/{zh,en}.json` 三个命名空间：`footer.*` / `contact.*` / `subProcessors.*`
-- [x] cookies + dpa 页面创建为占位空壳（TODO(M2.4)，避免 footer 链接 404，M2.4 独立任务补齐正文）
+- [x] cookies + dpa 页面创建为占位空壳（TODO(8.2.4)，避免 footer 链接 404，8.2.4 独立任务补齐正文）
 
 **3.5 数据保留策略自动清理** ✅（2026-07-07 完成）
 - [x] `migrations/042_add_inactivity_tracking.sql` — `users` 表加 `last_login_at` + `inactivity_notified_at` + 2 个部分索引，兼容老用户（fallback `last_login_at = created_at`）
@@ -4639,7 +4716,7 @@ CREATE TABLE workspace_invitations (
 - [x] `backend_api/app/routes/auth.py` login() 成功分支调 `mark_user_login()`（DB 写失败不阻塞登录）
 - [x] 新建 `workers/retention_cleanup.py` — 6 块清理串行执行，每块独立 try/except + 单独 commit：
   1. inactive 6m + 未通知 → 发预告 + 打时间戳（单次 500 条上限）
-  2. 已通知 90d + 仍未登录 → 复用 M3.2 `anonymize_user()`（500 条上限）
+  2. 已通知 90d + 仍未登录 → 复用 8.3.2 `anonymize_user()`（500 条上限）
   3. `deleted_at < NOW() - 60d` → 硬删 6 张业务表（不动 `review_pool`，200 用户/天上限）
   4. `analytics_events > 90d` → 硬删
   5. `llm_usage_log > 6y` → 硬删（对齐 Shulex）
@@ -4655,7 +4732,7 @@ CREATE TABLE workspace_invitations (
 - **冷热分层缓冲方案**（未来备用，2026-07-07 追加决策）：
   - 触发条件：单表 > 5000 万行 / 关键查询 p95 劣化 > 200ms / 存储成本超预算 30%
   - 预案方向：老数据（>2y）dump 到 S3 / OSS 冷存储，主库只留热数据（<2y）
-  - 本次 M3.5 不实施，先按 6y 硬保留跑一段时间观察增长曲线
+  - 本次 8.3.5 不实施，先按 6y 硬保留跑一段时间观察增长曲线
 
 **功能说明：不活跃用户告警 + 数据清理全流程**
 
@@ -4687,7 +4764,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-### V4-出海-M4-pre: LLM 路由 locale 切换（2026-07-07 完成 · 无外部服务依赖，可先落地）
+### 8.4 LLM 路由 locale 切换（前置准备）
 
 - 状态: ✅ 完成 | 分支: `develop`
 - 依赖: 无（不阻塞 M4 决策；不接触 Bedrock/OpenRouter，仅在现有 DeepSeek/OpenAI/Qwen 三家里按 locale 换 fallback 优先级）
@@ -4718,7 +4795,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-### V4-出海-M4: LLM Bedrock 集成 + 数据源改造（Week 4，约 5 天）
+### 8.5 LLM 集成 + 数据源改造
 
 - 状态: ⏸️ 冻结（等 Erika 拍板 A vs C，见上方"📌 2026-07-03 决策定型"块）| 分支: `feature/v4-bedrock-dataforseo`
 - 依赖: **M1（ECS 迁移到 SG 完成）+ M3（合规基础）**  ← 2026-07-03 依赖变更：M1 前置条件由"AWS Bedrock 申请 + AK/SK 到位"改为"ECS 迁移到 SG/US 完成"（两次实测证明 HK IP 被 Anthropic/OpenAI 双双 403）
@@ -4729,7 +4806,7 @@ CREATE TABLE workspace_invitations (
 > - 选 C（OpenRouter 中转）→ M4 改为"OpenRouter 集成"，新增 `provider="openrouter"` 分支代替 `provider="bedrock"`
 > - 拍板前**不启动 M4 任何编码任务**
 
-> **技术背景**:项目已有 `backend_api/app/services/llm_router.py`(V4-T4 三级 fallback: DeepSeek/OpenAI/Qwen + 熔断)。本 Milestone **扩展现有 router 支持 Bedrock provider**,不新建 llm_client 抽象层。
+> **技术背景**:项目已有 `backend_api/app/services/llm_router.py`(6.4 三级 fallback: DeepSeek/OpenAI/Qwen + 熔断)。本 Milestone **扩展现有 router 支持 Bedrock provider**,不新建 llm_client 抽象层。
 
 **4.1 LLMRouter 扩展 Bedrock 支持(1.5 天)**
 - [ ] `backend_api/app/services/llm_router.py` — `ModelConfig` 新增 `provider: str = "openai_compat"` + `aws_region: str = "ap-southeast-1"` 字段
@@ -4796,7 +4873,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-### V4-出海-M5: Beta 发布准备（Week 5，约 5 天）
+### 8.6 Beta 发布准备
 
 - 状态: ⏳ 待启动 | 分支: `feature/v4-beta-launch`
 - 依赖: M4（技术改造全部完成）
@@ -4844,7 +4921,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-### V4-出海-M6: Credit 定价体系改造（海外 4 档套餐 · 统一 credit 池）
+### 8.7 Credit 定价体系改造
 
 - 状态: ✅ 基建完成（6.1-6.9 已部署验证） | 分支: `develop`
 - 依赖: M3（用户注册/locale 已区分海外流量）
@@ -5065,7 +5142,7 @@ CREATE TABLE workspace_invitations (
 
 ---
 
-### V4-出海模块进度总览
+### 8.x 出海模块进度总览
 
 | Milestone | 内容 | 状态 | 进度 |
 |-----------|------|------|------|
