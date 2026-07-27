@@ -22,6 +22,7 @@ import { aspectLabel } from "@/lib/aspect-labels";
 import {
   customerLabelOccurrences,
   customerTagText,
+  isVerifiedSourceReviewOccurrence,
   rowImpactReviewShare,
   rowMentionCount,
   rowMentionShare,
@@ -105,7 +106,7 @@ function joinIssueField(comment: Record<string, unknown>, field: string, locale:
       if (field === "specific_issue") return occurrence.label;
       if (field === "canonical_issue_key") return occurrence.canonicalLabelKey;
       if (field === "key" || field === "aspect_key") return occurrence.aspectKey;
-      if (field === "evidence_span") return occurrence.evidenceSpan;
+      if (field === "evidence_span") return isVerifiedSourceReviewOccurrence(occurrence) ? occurrence.evidenceSpan : "";
       if (field === "issue_confidence") return occurrence.confidence;
       return "";
     })
@@ -115,7 +116,7 @@ function joinIssueField(comment: Record<string, unknown>, field: string, locale:
 
 function joinIssueEvidenceVerified(comment: Record<string, unknown>, locale: string): string {
   return customerLabelOccurrences(comment, "issue", locale)
-    .map((occurrence) => (occurrence.evidenceVerified ? "true" : "false"))
+    .map((occurrence) => (isVerifiedSourceReviewOccurrence(occurrence) ? "true" : "false"))
     .join(", ");
 }
 

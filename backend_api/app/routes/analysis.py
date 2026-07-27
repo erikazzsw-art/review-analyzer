@@ -23,6 +23,7 @@ from backend_api.app.schemas.analysis import (
 )
 from backend_api.app.services.locale import get_analysis_locale
 from backend_api.app.services.specific_issue import (
+    CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
     CUSTOMER_LABEL_RULESET_VERSION,
     decorate_comment_customer_labels,
 )
@@ -60,7 +61,10 @@ def _cache_key(
     end: str,
     comment_ids: tuple[int, ...],
 ) -> str:
-    raw = f"{user_id}|{product_id}|{start}|{end}|{len(comment_ids)}|{hash(comment_ids)}|{CUSTOMER_LABEL_RULESET_VERSION}"
+    raw = (
+        f"{user_id}|{product_id}|{start}|{end}|{len(comment_ids)}|{hash(comment_ids)}|"
+        f"{CUSTOMER_LABEL_RULESET_VERSION}|{CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION}"
+    )
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
 

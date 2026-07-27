@@ -15,7 +15,7 @@ CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION = "1.0"
 ISSUE_RULESET_VERSION = "2026-07-24-customer-label-system"
 HIGHLIGHT_RULESET_VERSION = "2026-07-24-customer-label-system"
 CUSTOMER_LABEL_RULESET_VERSION = f"{ISSUE_RULESET_VERSION}+{HIGHLIGHT_RULESET_VERSION}"
-CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION = "2026-07-24-customer-label-occurrence-v1"
+CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION = "2026-07-27-phase7-legacy-evidence-v2"
 
 _OCCURRENCE_SOURCES = {"llm", "rule", "human", "legacy"}
 
@@ -443,6 +443,117 @@ def _locate_evidence_span(content: str, evidence: str) -> dict[str, Any]:
         "evidence_end": end,
         "evidence_verified": True,
     }
+
+
+_VALUE_POSITIVE_EVIDENCE_PATTERNS = [
+    r"\bvalue\s+for\s+(?:the\s+)?money\b",
+    r"\bgood\s+value\b",
+    r"\bgreat\s+value\b",
+    r"\bbest\s+value\b",
+    r"\bexcellent\s+value\b",
+    r"\bworth\s+(?:every\s+)?(?:the\s+)?(?:penny|money|price)\b",
+    r"\bmoney['’]?s\s+worth\b",
+    r"\bfor\s+the\s+(?:money|price)\b",
+    r"\bprice\s+(?:is|was|seems|feels)?\s*(?:right|fair|good|great|reasonable|cheap|affordable)\b",
+    r"\b(?:cheap|affordable|reasonable|fair|great|good)\s+price\b",
+    r"\bbargain\b",
+    r"\bsteal\b",
+]
+
+_VALUE_NEGATIVE_EVIDENCE_PATTERNS = [
+    r"\bnot\s+(?:a\s+)?(?:good\s+)?value\s+for\s+(?:the\s+)?money\b",
+    r"\b(?:poor|bad|low)\s+value\b",
+    r"\bnot\s+worth\s+(?:it|the\s+money|the\s+price)\b",
+    r"\btoo\s+expensive\b",
+    r"\boverpriced\b",
+    r"\bprice\s+(?:is|was|seems|feels)?\s*(?:high|steep|expensive)\b",
+    r"\bprice\s+is\s+too\s+high\b",
+    r"\b(?:high|steep|expensive)\s+price\b",
+    r"\bpricey\b",
+    r"\bfor\s+what\s+you\s+get\b",
+]
+
+
+def _evidence_from_label_text(content: str, label: str, canonical: str, *, label_type: str) -> str:
+    if not content:
+        return ""
+    if canonical == "value_for_money" or _norm_text(label) == "value for money":
+        patterns = _VALUE_NEGATIVE_EVIDENCE_PATTERNS if label_type == "issue" else _VALUE_POSITIVE_EVIDENCE_PATTERNS
+        for pattern in patterns:
+            match = re.search(pattern, content, re.IGNORECASE)
+            if match:
+                return content[match.start() : match.end()].strip()
+    candidates = [label, canonical.replace("_", " ")]
+    for candidate in candidates:
+        cleaned = str(candidate or "").strip()
+        if not cleaned:
+            continue
+        located = _locate_evidence_span(content, cleaned)
+        if located["evidence_verified"]:
+            return str(located["evidence_span"])
+    return ""
+
+
+def _legacy_evidence_from_aspects(
+    comment: dict[str, Any],
+    *,
+    canonical: str,
+    label: str,
+    label_type: str,
+) -> tuple[str, str, str]:
+    aj = coerce_aspects_json(comment.get("aspects_json"))
+    if not aj or bool(aj.get("cluster_propagated")):
+        return ("", "", "")
+    aspects = [aspect for aspect in (aj.get("aspects") or []) if isinstance(aspect, dict)]
+    expected_polarity = "negative" if label_type == "issue" else "positive"
+    fallback: tuple[str, str, str] | None = None
+    content = str(comment.get("content") or "").strip()
+    for aspect in aspects:
+        if bool(aspect.get("cluster_propagated")):
+            continue
+        polarity = str(aspect.get("polarity") or "").strip().lower()
+        if polarity and polarity != expected_polarity:
+            continue
+        stored = str(aspect.get("evidence_span") or aspect.get("evidence") or "").strip()
+        located = _locate_evidence_span(content, stored)
+        if not located["evidence_verified"]:
+            continue
+        aspect_key = str(aspect.get("key") or aspect.get("aspect_key") or "").strip()
+        matched_canonical = str(
+            (aspect.get("canonical_issue_key") if label_type == "issue" else aspect.get("canonical_highlight_key"))
+            or ""
+        ).strip()
+        if matched_canonical == canonical:
+            return (str(located["evidence_span"]), aspect_key, "legacy_aspect_canonical_evidence")
+        if aspect_key == canonical:
+            return (str(located["evidence_span"]), aspect_key, "legacy_aspect_key_evidence")
+        if _norm_text(aspect_key) == _norm_text(canonical.replace("_", " ")):
+            return (str(located["evidence_span"]), aspect_key, "legacy_aspect_key_evidence")
+        if fallback is None and _norm_text(label) in {_norm_text(aspect_key), _norm_text(str(aspect.get("aspect_label") or ""))}:
+            fallback = (str(located["evidence_span"]), aspect_key, "legacy_aspect_label_evidence")
+    return fallback or ("", "", "")
+
+
+def _legacy_evidence_for_label(
+    comment: dict[str, Any],
+    *,
+    canonical: str,
+    label: str,
+    label_type: str,
+) -> tuple[str, str, str]:
+    content = str(comment.get("content") or "").strip()
+    evidence, aspect_key, source = _legacy_evidence_from_aspects(
+        comment,
+        canonical=canonical,
+        label=label,
+        label_type=label_type,
+    )
+    if evidence:
+        return (evidence, aspect_key, source)
+    evidence = _evidence_from_label_text(content, label, canonical, label_type=label_type)
+    if evidence:
+        return (evidence, "", "legacy_review_text_evidence")
+    return ("", "", "")
 
 
 def _occurrence_source(source_detail: str) -> str:
@@ -1526,6 +1637,8 @@ def enrich_aspects_json(
 def _legacy_issue_occurrences(comment: dict[str, Any], locale: str) -> list[dict[str, Any]]:
     occurrences: list[dict[str, Any]] = []
     content = str(comment.get("content") or "").strip()
+    aj = coerce_aspects_json(comment.get("aspects_json"))
+    cluster_propagated = bool(aj.get("cluster_propagated")) if aj else False
     for raw_tag in str(comment.get("issue_tag") or "").split(","):
         issue = raw_tag.strip()
         if not issue:
@@ -1533,6 +1646,16 @@ def _legacy_issue_occurrences(comment: dict[str, Any], locale: str) -> list[dict
         if not _is_customer_label_allowed(issue, locale=locale):
             continue
         canonical = _slug(issue)
+        evidence_span, aspect_key, evidence_source = _legacy_evidence_for_label(
+            comment,
+            canonical=canonical,
+            label=issue,
+            label_type="issue",
+        )
+        evidence = _locate_evidence_span(content, evidence_span)
+        evidence_verified = bool(evidence["evidence_verified"] and not cluster_propagated)
+        dimension_en, dimension_zh = _aspect_dimension_labels({}, aspect_key)
+        source_detail = evidence_source or "legacy_issue_tag"
         occurrences.append(
             {
                 "comment_id": comment.get("id"),
@@ -1549,23 +1672,24 @@ def _legacy_issue_occurrences(comment: dict[str, Any], locale: str) -> list[dict
                 "confidence": "low",
                 "issue_confidence": "low",
                 "source": "legacy",
-                "source_detail": "legacy_issue_tag",
-                "issue_source": "legacy_issue_tag",
+                "source_detail": source_detail,
+                "issue_source": source_detail,
                 "specific_issue_raw": issue,
                 "display_allowed": True,
-                "aspect_key": "",
-                "dimension": "",
-                "dimension_en": "",
-                "dimension_zh": "",
+                "aspect_key": aspect_key,
+                "dimension": _display_label_for_locale(dimension_en, dimension_zh, locale),
+                "dimension_en": dimension_en,
+                "dimension_zh": dimension_zh,
                 "sub_category": str(comment.get("sub_category") or comment.get("category") or ""),
-                "evidence_span": "",
-                "evidence_start": -1,
-                "evidence_end": -1,
-                "evidence_verified": False,
-                "verified_evidence": False,
-                "cluster_propagated": False,
+                "evidence_span": evidence["evidence_span"],
+                "evidence_start": evidence["evidence_start"],
+                "evidence_end": evidence["evidence_end"],
+                "evidence_verified": bool(evidence["evidence_verified"]),
+                "verified_evidence": evidence_verified,
+                "cluster_propagated": cluster_propagated,
                 "schema_version": "",
                 "ruleset_version": "",
+                "source_review_allowed": bool(content and evidence_verified),
                 "legacy_fallback": True,
             }
         )
@@ -1814,7 +1938,7 @@ def _build_customer_label_rows(
                 "evidence_verified": bool(evidence_spans),
                 "cluster_propagated": False,
                 "has_cluster_propagated_occurrences": (propagated_occurrence_counter[key] > 0),
-                "reason": examples[0] if examples else "No representative comment found.",
+                "reason": examples[0] if examples else "",
             }
         )
 
@@ -1838,6 +1962,8 @@ def build_specific_issue_rows(
 def _legacy_highlight_occurrences(comment: dict[str, Any], locale: str) -> list[dict[str, Any]]:
     occurrences: list[dict[str, Any]] = []
     content = str(comment.get("content") or "").strip()
+    aj = coerce_aspects_json(comment.get("aspects_json"))
+    cluster_propagated = bool(aj.get("cluster_propagated")) if aj else False
     for raw_tag in str(comment.get("highlight_tag") or "").split(","):
         highlight = raw_tag.strip()
         if not highlight:
@@ -1845,6 +1971,16 @@ def _legacy_highlight_occurrences(comment: dict[str, Any], locale: str) -> list[
         if not _is_customer_label_allowed(highlight, locale=locale):
             continue
         canonical = _slug(highlight)
+        evidence_span, aspect_key, evidence_source = _legacy_evidence_for_label(
+            comment,
+            canonical=canonical,
+            label=highlight,
+            label_type="highlight",
+        )
+        evidence = _locate_evidence_span(content, evidence_span)
+        evidence_verified = bool(evidence["evidence_verified"] and not cluster_propagated)
+        dimension_en, dimension_zh = _aspect_dimension_labels({}, aspect_key)
+        source_detail = evidence_source or "legacy_highlight_tag"
         occurrences.append(
             {
                 "comment_id": comment.get("id"),
@@ -1861,24 +1997,24 @@ def _legacy_highlight_occurrences(comment: dict[str, Any], locale: str) -> list[
                 "confidence": "low",
                 "highlight_confidence": "low",
                 "source": "legacy",
-                "source_detail": "legacy_highlight_tag",
-                "highlight_source": "legacy_highlight_tag",
+                "source_detail": source_detail,
+                "highlight_source": source_detail,
                 "customer_highlight_raw": highlight,
                 "highlight_display_allowed": True,
-                "aspect_key": "",
-                "dimension": "",
-                "dimension_en": "",
-                "dimension_zh": "",
+                "aspect_key": aspect_key,
+                "dimension": _display_label_for_locale(dimension_en, dimension_zh, locale),
+                "dimension_en": dimension_en,
+                "dimension_zh": dimension_zh,
                 "sub_category": str(comment.get("sub_category") or comment.get("category") or ""),
-                "evidence_span": "",
-                "evidence_start": -1,
-                "evidence_end": -1,
-                "evidence_verified": False,
-                "verified_evidence": False,
-                "cluster_propagated": False,
+                "evidence_span": evidence["evidence_span"],
+                "evidence_start": evidence["evidence_start"],
+                "evidence_end": evidence["evidence_end"],
+                "evidence_verified": bool(evidence["evidence_verified"]),
+                "verified_evidence": evidence_verified,
+                "cluster_propagated": cluster_propagated,
                 "schema_version": "",
                 "ruleset_version": "",
-                "source_review_allowed": bool(content),
+                "source_review_allowed": bool(content and evidence_verified),
                 "legacy_fallback": True,
             }
         )

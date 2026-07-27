@@ -12,6 +12,8 @@ import { InlineActionButton } from "@/components/analysis/inline-action-button";
 import { DownloadTagButton } from "@/components/analysis/download-tag-button";
 import {
   customerLabelOccurrences,
+  isFrontstageCustomerLabelOccurrence,
+  isVerifiedSourceReviewOccurrence,
   rowImpactReviewShare,
   rowMentionShare,
   rowRepresentativeEvidence,
@@ -239,6 +241,7 @@ function buildClientXlsx(
       const commentId = comment.id ?? `row-${index}`;
       const counted = new Set<string>();
       for (const occurrence of customerLabelOccurrences(comment, labelType, locale)) {
+        if (!isFrontstageCustomerLabelOccurrence(occurrence)) continue;
         if (!occurrence.canonicalLabelKey) continue;
         const key = `${occurrence.subCategory}::${occurrence.canonicalLabelKey}`;
         const group = groups.get(key) || {
@@ -262,12 +265,9 @@ function buildClientXlsx(
         if (occurrence.dimension && !group.dimensions.includes(occurrence.dimension)) {
           group.dimensions.push(occurrence.dimension);
         }
-        if (occurrence.evidenceVerified && occurrence.evidenceSpan && group.evidenceSpans.length < 20) {
+        if (isVerifiedSourceReviewOccurrence(occurrence) && group.evidenceSpans.length < 20) {
           group.evidenceSpans.push(occurrence.evidenceSpan);
           group.evidenceVerified = true;
-        }
-        if (occurrence.clusterPropagated) {
-          group.clusterPropagated = true;
         }
         if (occurrence.confidence === "high") {
           group.confidence = "high";

@@ -5,6 +5,8 @@ import * as XLSX from "xlsx";
 
 import {
   customerLabelOccurrences,
+  isFrontstageCustomerLabelOccurrence,
+  isVerifiedSourceReviewOccurrence,
   type CustomerLabelOccurrence,
 } from "@/lib/customer-labels";
 
@@ -92,6 +94,7 @@ function getMatchedOccurrences(
   const matched: MatchedOccurrence[] = [];
   for (const comment of comments) {
     for (const occurrence of customerLabelOccurrences(comment, labelType, locale)) {
+      if (!isFrontstageCustomerLabelOccurrence(occurrence)) continue;
       if (occurrenceMatches(occurrence, meta, tag, labelType)) {
         matched.push({ comment, occurrence });
       }
@@ -126,7 +129,7 @@ function occurrenceRows(
   tag: string,
 ): (string | number)[][] {
   return matches.map(({ comment, occurrence }) => {
-    const recordScope = occurrence.evidenceVerified && occurrence.evidenceSpan
+    const recordScope = isVerifiedSourceReviewOccurrence(occurrence)
       ? "Verified Evidence"
       : "Related Review";
     return [
@@ -137,8 +140,8 @@ function occurrenceRows(
       formatShare(meta.impactReviewShare),
       occurrence.rawLabel,
       occurrence.dimension || meta.dimension || "",
-      occurrence.evidenceSpan,
-      occurrence.evidenceVerified ? "true" : "false",
+      isVerifiedSourceReviewOccurrence(occurrence) ? occurrence.evidenceSpan : "",
+      isVerifiedSourceReviewOccurrence(occurrence) ? "true" : "false",
       occurrence.clusterPropagated ? "true" : "false",
       String(comment.content || ""),
       comment.rating != null ? Number(comment.rating) : "",
@@ -247,7 +250,7 @@ export function DownloadTagButton({
   }
 
   const evidenceCount = matches.filter(
-    ({ occurrence }) => occurrence.evidenceVerified && Boolean(occurrence.evidenceSpan),
+    ({ occurrence }) => isVerifiedSourceReviewOccurrence(occurrence),
   ).length;
   const relatedReviewCount = uniqueReviewCount(matches);
 

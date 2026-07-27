@@ -1703,3 +1703,147 @@ def test_comfort_negative_heat_context_still_recovers_not_breathable() -> None:
     )
     assert rows[0]["canonical_issue_key"] == "not_breathable"
     assert rows[0]["evidence_spans"] == ["too hot"]
+
+
+def test_phase7_session96_legacy_value_for_money_rows_get_verified_source_review_evidence() -> None:
+    comments = [
+        {
+            "id": 96_001,
+            "content": "The fabric feels thin and is not worth the price.",
+            "sentiment": "negative",
+            "sub_category": "apparel",
+            "issue_tag": "Value for Money",
+            "aspects_json": {
+                "sub_category": "apparel",
+                "aspects": [
+                    {
+                        "key": "value_for_money",
+                        "polarity": "negative",
+                        "evidence_span": "not worth the price",
+                    }
+                ],
+            },
+        },
+        {
+            "id": 96_002,
+            "content": "These are a good value for the money and fit well.",
+            "sentiment": "positive",
+            "sub_category": "apparel",
+            "highlight_tag": "Value for Money",
+            "aspects_json": {
+                "sub_category": "apparel",
+                "aspects": [
+                    {
+                        "key": "value_for_money",
+                        "polarity": "positive",
+                        "evidence_span": "good value for the money",
+                    }
+                ],
+            },
+        },
+    ]
+
+    issue = build_specific_issue_rows(comments, locale="en", limit=10)[0]
+    highlight = build_customer_highlight_rows(comments, locale="en", limit=10)[0]
+
+    assert issue["specific_issue"] == "Value for Money"
+    assert issue["mention_count"] == 1
+    assert issue["evidence_verified"] is True
+    assert issue["evidence_spans"] == ["not worth the price"]
+    assert issue["representative_comments"] == ["The fabric feels thin and is not worth the price."]
+    assert issue["cluster_propagated"] is False
+
+    assert highlight["customer_highlight"] == "Value for Money"
+    assert highlight["mention_count"] == 1
+    assert highlight["evidence_verified"] is True
+    assert highlight["evidence_spans"] == ["good value for the money"]
+    assert highlight["representative_comments"] == ["These are a good value for the money and fit well."]
+    assert highlight["cluster_propagated"] is False
+
+
+def test_phase7_legacy_value_for_money_without_source_span_stays_visible_without_representative_evidence() -> None:
+    rows = build_specific_issue_rows(
+        [
+            {
+                "id": 96_003,
+                "content": "The fabric is thin and the sizing is off.",
+                "sentiment": "negative",
+                "sub_category": "apparel",
+                "issue_tag": "Value for Money",
+            }
+        ],
+        locale="en",
+        limit=10,
+    )
+
+    assert rows[0]["specific_issue"] == "Value for Money"
+    assert rows[0]["mention_count"] == 1
+    assert rows[0]["evidence_verified"] is False
+    assert rows[0]["evidence_spans"] == []
+    assert rows[0]["representative_comments"] == []
+    assert rows[0]["reason"] == ""
+
+
+def test_phase7_session114_water_leaks_through_keeps_three_verified_source_review_evidence() -> None:
+    comments = [
+        _comment_with_occurrences(
+            comment_id=114_001,
+            content="Both feet are leaking around where the boot connects to the wader.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="issue",
+                    canonical="water_leaks_through",
+                    display="Water Leaks Through",
+                    aspect_key="waterproof",
+                    evidence="Both feet are leaking around where the boot connects to the wader",
+                    comment_id=114_001,
+                )
+            ],
+            sentiment="negative",
+            sub_category="outdoor",
+        ),
+        _comment_with_occurrences(
+            comment_id=114_002,
+            content="After one trip I had water leaking in through the seams.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="issue",
+                    canonical="water_leaks_through",
+                    display="Water Leaks Through",
+                    aspect_key="waterproof",
+                    evidence="water leaking in",
+                    comment_id=114_002,
+                )
+            ],
+            sentiment="negative",
+            sub_category="outdoor",
+        ),
+        _comment_with_occurrences(
+            comment_id=114_003,
+            content="There was a leak at the seams within minutes.",
+            occurrences=[
+                _label_occurrence(
+                    label_type="issue",
+                    canonical="water_leaks_through",
+                    display="Water Leaks Through",
+                    aspect_key="waterproof",
+                    evidence="leak at the seams",
+                    comment_id=114_003,
+                )
+            ],
+            sentiment="negative",
+            sub_category="outdoor",
+        ),
+    ]
+
+    row = build_specific_issue_rows(comments, locale="en", limit=10)[0]
+
+    assert row["canonical_issue_key"] == "water_leaks_through"
+    assert row["mention_count"] == 3
+    assert row["evidence_verified"] is True
+    assert row["evidence_spans"] == [
+        "Both feet are leaking around where the boot connects to the wader",
+        "water leaking in",
+        "leak at the seams",
+    ]
+    assert len(row["representative_comments"]) == 3

@@ -444,7 +444,18 @@ function evidenceStrings(value: unknown): string[] {
   return single && single !== "No representative comment found." ? [single] : [];
 }
 
+export function isFrontstageCustomerLabelOccurrence(occurrence: CustomerLabelOccurrence): boolean {
+  return !occurrence.clusterPropagated;
+}
+
+export function isVerifiedSourceReviewOccurrence(occurrence: CustomerLabelOccurrence): boolean {
+  return isFrontstageCustomerLabelOccurrence(occurrence) && occurrence.evidenceVerified && Boolean(occurrence.evidenceSpan);
+}
+
 export function rowRepresentativeEvidence(row: RecordValue): CustomerLabelEvidence[] {
+  if (boolValue(row.cluster_propagated) || !boolValue(row.evidence_verified)) {
+    return [];
+  }
   const result: CustomerLabelEvidence[] = [];
   const seen = new Set<string>();
   const comments = evidenceStrings(row.representative_comments);

@@ -226,20 +226,8 @@ def _pct_text(value: float) -> str:
 
 
 def _representative_evidence(row: dict[str, Any]) -> str:
-    evidence = row.get("representative_evidence")
-    if isinstance(evidence, list):
-        values: list[str] = []
-        for item in evidence:
-            if isinstance(item, dict):
-                span = str(item.get("evidence_span") or item.get("evidenceSpan") or item.get("text") or "").strip()
-            else:
-                span = str(item or "").strip()
-            if span:
-                values.append(span)
-        if values:
-            return " | ".join(values)
-    elif evidence:
-        return str(evidence)
+    if row.get("cluster_propagated") or not row.get("evidence_verified"):
+        return ""
     return " | ".join(str(item) for item in (row.get("evidence_spans") or []) if item)
 
 

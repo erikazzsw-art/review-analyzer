@@ -25,6 +25,7 @@ def _occurrence(
     aspect_key: str,
     evidence: str,
     comment_id: int,
+    cluster_propagated: bool = False,
 ) -> dict[str, object]:
     return {
         "comment_id": comment_id,
@@ -41,7 +42,7 @@ def _occurrence(
         "source": "rule",
         "source_detail": "test_occurrence",
         "evidence_verified": True,
-        "cluster_propagated": False,
+        "cluster_propagated": cluster_propagated,
         "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
         "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
         "display_allowed": True,
@@ -167,3 +168,65 @@ def test_full_export_generates_valid_xlsx_with_ai_notice_sheet(monkeypatch) -> N
     assert filename.endswith(".xlsx")
     assert "AI Notice" in workbook.sheetnames
     assert "AI Notice / AI 标注" not in workbook.sheetnames
+
+
+def test_phase7_exports_do_not_recount_or_export_cluster_propagated_representative_evidence() -> None:
+    comments = [
+        {
+            "id": 1,
+            "content": "The zipper broke on day one.",
+            "sentiment": "negative",
+            "aspects_json": {
+                "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                "sub_category": "outdoor",
+                "customer_label_occurrences": [
+                    _occurrence(
+                        label_type="issue",
+                        canonical="zipper_fails",
+                        display_en="Zipper Fails",
+                        display_zh="拉链故障",
+                        aspect_key="zipper_quality",
+                        evidence="zipper broke",
+                        comment_id=1,
+                    )
+                ],
+            },
+        },
+        {
+            "id": 2,
+            "content": "Cluster copied text says zipper broke, but this review should not count.",
+            "sentiment": "negative",
+            "aspects_json": {
+                "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                "sub_category": "outdoor",
+                "customer_label_occurrences": [
+                    _occurrence(
+                        label_type="issue",
+                        canonical="zipper_fails",
+                        display_en="Zipper Fails",
+                        display_zh="拉链故障",
+                        aspect_key="zipper_quality",
+                        evidence="zipper broke",
+                        comment_id=2,
+                        cluster_propagated=True,
+                    )
+                ],
+            },
+        },
+    ]
+
+    issue_headers, issue_rows = _build_specific_issue_top10_data(comments)
+    evidence_index = issue_headers.index("Representative Evidence")
+
+    assert issue_rows[0][1] == "拉链故障"
+    assert issue_rows[0][2] == "1"
+    assert issue_rows[0][evidence_index] == "zipper broke"
+    assert "Cluster copied text" not in issue_rows[0][evidence_index]
+
+    output = _build_module_xlsx("user_experience", comments, "en")
+    workbook = load_workbook(output)
+    negative = workbook["Negative Feedback TOP10"]
+
+    assert negative.cell(row=2, column=2).value == "Zipper Fails"
+    assert negative.cell(row=2, column=3).value == 1
+    assert negative.cell(row=2, column=7).value == "zipper broke"

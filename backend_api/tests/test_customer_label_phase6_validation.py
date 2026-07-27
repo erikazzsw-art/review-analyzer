@@ -95,7 +95,8 @@ def test_phase6_fixed_validation_set_top_metrics_and_samples() -> None:
 
     legacy = next(row for row in issue_rows if row["canonical_issue_key"] == "zipper_quality")
     assert legacy["legacy_fallback"] is True
-    assert legacy["representative_comments"] == []
+    assert legacy["evidence_spans"] == ["zipper broke"]
+    assert legacy["representative_comments"] == ["Legacy old session: the zipper broke after one use."]
 
     assert any(row["canonical_issue_key"] == "missing_parts" for row in issue_rows)
     assert any(row["canonical_issue_key"] == "mascara_clumps" for row in issue_rows)
