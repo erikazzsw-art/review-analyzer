@@ -10,6 +10,8 @@ from collections import Counter
 from datetime import date, datetime
 from typing import Any, TypedDict
 
+from review_analyzer.review_dates import parse_comment_review_date
+
 
 class TagStat(TypedDict):
     tag: str
@@ -59,6 +61,9 @@ def _to_date_safe(value: Any) -> date | None:
     text = str(value).strip()
     if not text:
         return None
+    parsed = parse_comment_review_date(text)
+    if parsed:
+        return parsed
     for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
         try:
             return datetime.strptime(text[: len(fmt)], fmt).date()
@@ -92,7 +97,7 @@ def pick_representative_reviews(
         tag_hit = 1 if any(tag in raw_tags for tag in preferred_tags) else 0
         return (
             tag_hit,
-            _to_date_safe(comment.get("date")) or date.min,
+            _to_date_safe(comment.get("review_date") or comment.get("date")) or date.min,
             int(comment.get("id") or 0),
         )
 
@@ -146,7 +151,7 @@ def pick_citations_by_tags(
 
         matches.sort(
             key=lambda c: (
-                _to_date_safe(c.get("date")) or date.min,
+                _to_date_safe(c.get("review_date") or c.get("date")) or date.min,
                 len(str(c.get("content") or "")),
             ),
             reverse=True,

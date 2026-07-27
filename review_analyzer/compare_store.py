@@ -16,6 +16,7 @@ from review_analyzer.aggregations import (
 )
 from review_analyzer.database import get_comments, get_connection, get_sessions
 from review_analyzer.insight_engine import build_results_insights
+from review_analyzer.review_dates import parse_comment_review_date
 
 COMPARE_TYPE_LABELS = {
     "same_product_time": "同产品时间对比",
@@ -404,7 +405,7 @@ def _filter_comments(
                 continue
 
         if date_start or date_end:
-            comment_date = _to_date(comment.get("date"))
+            comment_date = _to_date(comment.get("review_date") or comment.get("date"))
             if comment_date is None:
                 continue
             if date_start and comment_date < date_start:
@@ -468,7 +469,7 @@ def _dedupe_comments(comments: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(
         deduped.values(),
         key=lambda comment: (
-            _to_date(comment.get("date")) or date.min,
+            _to_date(comment.get("review_date") or comment.get("date")) or date.min,
             int(comment.get("id") or 0),
         ),
         reverse=True,
@@ -779,6 +780,10 @@ def _to_date(value: Any) -> date | None:
     text = str(value).strip()
     if not text:
         return None
+
+    parsed = parse_comment_review_date(text)
+    if parsed:
+        return parsed
 
     for fmt in (
         "%Y-%m-%d",

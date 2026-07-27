@@ -13,6 +13,8 @@ import psycopg2.extras
 import psycopg2.pool
 from dotenv import load_dotenv
 
+from review_analyzer.review_dates import review_date_for_comment
+
 logger = logging.getLogger(__name__)
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
@@ -52,6 +54,7 @@ _COMMENT_READ_COLUMNS = (
     "content",
     "rating",
     "date",
+    "review_date",
     "reviewer",
     "source",
     "content_hash",
@@ -76,6 +79,9 @@ _COMMENT_READ_COLUMNS = (
     "source_channel",
     "cluster_id",
     "cluster_representative_id",
+)
+_COMMENT_READ_COLUMNS_LEGACY = tuple(
+    column for column in _COMMENT_READ_COLUMNS if column != "review_date"
 )
 _COMMENT_EMBEDDING_COLUMN = "embedding"
 _COMMENT_READ_RETRY_ERRORS = (psycopg2.OperationalError, psycopg2.InterfaceError)
@@ -424,51 +430,84 @@ def delete_user(user_id: int) -> None:
 # Comments CRUD
 # ============================================================
 
-_COMMENT_FIELDS = (
-    "user_id, product_id, version, content, rating, date, "
-    "reviewer, source, source_channel, source_variant_asin, "
-    "content_hash, sentiment, content_sentiment, category, "
-    "priority, reason, improvement, issue_tag, highlight_tag, "
-    "is_processed, session_id"
+_COMMENT_INSERT_FIELDS = (
+    "user_id",
+    "product_id",
+    "version",
+    "content",
+    "rating",
+    "date",
+    "review_date",
+    "reviewer",
+    "source",
+    "source_channel",
+    "source_variant_asin",
+    "content_hash",
+    "sentiment",
+    "content_sentiment",
+    "category",
+    "priority",
+    "reason",
+    "improvement",
+    "issue_tag",
+    "highlight_tag",
+    "is_processed",
+    "session_id",
 )
-_COMMENT_PLACEHOLDERS = ", ".join(["%s"] * 21)
+_COMMENT_INSERT_FIELDS_LEGACY = tuple(
+    field for field in _COMMENT_INSERT_FIELDS if field != "review_date"
+)
 
 
-def _comment_values(user_id: int, comment: dict) -> list:
-    return [
-        user_id,
-        comment.get("product_id"),
-        comment.get("version", "V1"),
-        comment.get("content"),
-        comment.get("rating"),
-        comment.get("date"),
-        comment.get("reviewer"),
-        comment.get("source"),
-        comment.get("source_channel") or "manual",
-        comment.get("source_variant_asin"),
-        comment.get("content_hash"),
-        comment.get("sentiment"),
-        comment.get("content_sentiment", comment.get("sentiment")),
-        comment.get("category"),
-        comment.get("priority"),
-        comment.get("reason"),
-        comment.get("improvement"),
-        comment.get("issue_tag", ""),
-        comment.get("highlight_tag", ""),
-        comment.get("is_processed", 0),
-        comment.get("session_id"),
-    ]
+def _comment_insert_sql(fields: tuple[str, ...]) -> str:
+    placeholders = ", ".join(["%s"] * len(fields))
+    return f"INSERT INTO comments ({', '.join(fields)}) VALUES ({placeholders})"
+
+
+def _comment_values(user_id: int, comment: dict, fields: tuple[str, ...] = _COMMENT_INSERT_FIELDS) -> list:
+    values = {
+        "user_id": user_id,
+        "product_id": comment.get("product_id"),
+        "version": comment.get("version", "V1"),
+        "content": comment.get("content"),
+        "rating": comment.get("rating"),
+        "date": comment.get("date"),
+        "review_date": review_date_for_comment(comment),
+        "reviewer": comment.get("reviewer"),
+        "source": comment.get("source"),
+        "source_channel": comment.get("source_channel") or "manual",
+        "source_variant_asin": comment.get("source_variant_asin"),
+        "content_hash": comment.get("content_hash"),
+        "sentiment": comment.get("sentiment"),
+        "content_sentiment": comment.get("content_sentiment", comment.get("sentiment")),
+        "category": comment.get("category"),
+        "priority": comment.get("priority"),
+        "reason": comment.get("reason"),
+        "improvement": comment.get("improvement"),
+        "issue_tag": comment.get("issue_tag", ""),
+        "highlight_tag": comment.get("highlight_tag", ""),
+        "is_processed": comment.get("is_processed", 0),
+        "session_id": comment.get("session_id"),
+    }
+    return [values[field] for field in fields]
 
 
 def add_comment(user_id: int, comment: dict) -> int:
-    values = _comment_values(user_id, comment)
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                f"INSERT INTO comments ({_COMMENT_FIELDS}) VALUES ({_COMMENT_PLACEHOLDERS}) RETURNING id",
-                values,
-            )
+            try:
+                cur.execute(
+                    f"{_comment_insert_sql(_COMMENT_INSERT_FIELDS)} RETURNING id",
+                    _comment_values(user_id, comment),
+                )
+            except psycopg2.errors.UndefinedColumn:
+                conn.rollback()
+                logger.warning("comments.review_date column unavailable; inserting comment without normalized date")
+                cur.execute(
+                    f"{_comment_insert_sql(_COMMENT_INSERT_FIELDS_LEGACY)} RETURNING id",
+                    _comment_values(user_id, comment, _COMMENT_INSERT_FIELDS_LEGACY),
+                )
             comment_id = cur.fetchone()[0]
             conn.commit()
             return comment_id
@@ -481,11 +520,24 @@ def add_comments_batch(user_id: int, comments: list[dict]) -> int:
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            psycopg2.extras.execute_batch(
-                cur,
-                f"INSERT INTO comments ({_COMMENT_FIELDS}) VALUES ({_COMMENT_PLACEHOLDERS})",
-                rows,
-            )
+            try:
+                psycopg2.extras.execute_batch(
+                    cur,
+                    _comment_insert_sql(_COMMENT_INSERT_FIELDS),
+                    rows,
+                )
+            except psycopg2.errors.UndefinedColumn:
+                conn.rollback()
+                logger.warning("comments.review_date column unavailable; inserting batch without normalized dates")
+                legacy_rows = [
+                    _comment_values(user_id, c, _COMMENT_INSERT_FIELDS_LEGACY)
+                    for c in comments
+                ]
+                psycopg2.extras.execute_batch(
+                    cur,
+                    _comment_insert_sql(_COMMENT_INSERT_FIELDS_LEGACY),
+                    legacy_rows,
+                )
             conn.commit()
             _clear_cache(get_comments)
             _clear_cache(get_existing_hashes)
@@ -790,14 +842,71 @@ def get_comments(
     include_embedding: bool = False,
     compact_aspects_json: bool = True,
 ) -> list[dict]:
-    columns = list(_COMMENT_READ_COLUMNS)
+    try:
+        query, params = _build_get_comments_query(
+            user_id,
+            product_id=product_id,
+            session_id=session_id,
+            version=version,
+            date_start=date_start,
+            date_end=date_end,
+            source_variant_asin=source_variant_asin,
+            include_embedding=include_embedding,
+            compact_aspects_json=compact_aspects_json,
+            use_review_date=True,
+        )
+        return _execute_comment_read_query(
+            query,
+            params,
+            user_id=user_id,
+            session_id=session_id,
+            product_id=product_id,
+            include_embedding=include_embedding,
+        )
+    except psycopg2.errors.UndefinedColumn:
+        logger.warning("comments.review_date column unavailable; falling back to legacy date text reads")
+        query, params = _build_get_comments_query(
+            user_id,
+            product_id=product_id,
+            session_id=session_id,
+            version=version,
+            date_start=date_start,
+            date_end=date_end,
+            source_variant_asin=source_variant_asin,
+            include_embedding=include_embedding,
+            compact_aspects_json=compact_aspects_json,
+            use_review_date=False,
+        )
+        return _execute_comment_read_query(
+            query,
+            params,
+            user_id=user_id,
+            session_id=session_id,
+            product_id=product_id,
+            include_embedding=include_embedding,
+        )
+
+
+def _build_get_comments_query(
+    user_id: int,
+    *,
+    product_id: str | None = None,
+    session_id: int | None = None,
+    version: str | None = None,
+    date_start: str | None = None,
+    date_end: str | None = None,
+    source_variant_asin: str | None = None,
+    include_embedding: bool = False,
+    compact_aspects_json: bool = True,
+    use_review_date: bool = True,
+) -> tuple[str, list[Any]]:
+    columns = list(_COMMENT_READ_COLUMNS if use_review_date else _COMMENT_READ_COLUMNS_LEGACY)
     if compact_aspects_json:
         columns.append(_COMPACT_ASPECTS_JSON_SQL)
     else:
         columns.append("aspects_json")
     if include_embedding:
         columns.append(_COMMENT_EMBEDDING_COLUMN)
-    query = f"SELECT {', '.join(columns)} FROM comments"
     where, params = _build_comments_where_clause(
         user_id,
         product_id=product_id,
@@ -806,9 +915,21 @@ def get_comments(
         date_start=date_start,
         date_end=date_end,
         source_variant_asin=source_variant_asin,
+        use_review_date=use_review_date,
     )
-    query += f" WHERE {where} ORDER BY id DESC"
+    query = f"SELECT {', '.join(columns)} FROM comments WHERE {where} ORDER BY id DESC"
+    return query, params
 
+
+def _execute_comment_read_query(
+    query: str,
+    params: list[Any],
+    *,
+    user_id: int,
+    session_id: int | None,
+    product_id: str | None,
+    include_embedding: bool,
+) -> list[dict]:
     last_error: Exception | None = None
     for attempt in range(2):
         conn = get_connection()
@@ -845,6 +966,7 @@ def _build_comments_where_clause(
     date_start: str | None = None,
     date_end: str | None = None,
     source_variant_asin: str | None = None,
+    use_review_date: bool = True,
 ) -> tuple[str, list[Any]]:
     clauses = ["user_id = %s"]
     params: list[Any] = [user_id]
@@ -858,10 +980,10 @@ def _build_comments_where_clause(
         clauses.append("version = %s")
         params.append(version)
     if date_start is not None:
-        clauses.append("date >= %s")
+        clauses.append("review_date >= %s::date" if use_review_date else "date >= %s")
         params.append(date_start)
     if date_end is not None:
-        clauses.append("date <= %s")
+        clauses.append("review_date <= %s::date" if use_review_date else "date <= %s")
         params.append(date_end)
     if source_variant_asin is not None:
         clauses.append("LOWER(source_variant_asin) = LOWER(%s)")
@@ -876,20 +998,64 @@ def get_comments_date_span(
     source_variant_asin: str | None = None,
 ) -> tuple[str, str]:
     """Return min/max ISO-like review dates without loading comment payloads."""
+    try:
+        query, params = _build_comments_date_span_query(
+            user_id,
+            product_id=product_id,
+            session_id=session_id,
+            source_variant_asin=source_variant_asin,
+            use_review_date=True,
+        )
+        return _execute_comments_date_span_query(query, params)
+    except psycopg2.errors.UndefinedColumn:
+        logger.warning("comments.review_date column unavailable; falling back to legacy date span")
+        query, params = _build_comments_date_span_query(
+            user_id,
+            product_id=product_id,
+            session_id=session_id,
+            source_variant_asin=source_variant_asin,
+            use_review_date=False,
+        )
+        return _execute_comments_date_span_query(query, params)
+
+
+def _build_comments_date_span_query(
+    user_id: int,
+    *,
+    product_id: str | None = None,
+    session_id: int | None = None,
+    source_variant_asin: str | None = None,
+    use_review_date: bool = True,
+) -> tuple[str, list[Any]]:
     where, params = _build_comments_where_clause(
         user_id,
         product_id=product_id,
         session_id=session_id,
         source_variant_asin=source_variant_asin,
+        use_review_date=use_review_date,
     )
-    query = f"""
-        SELECT
-            MIN(SUBSTRING(date FROM 1 FOR 10)) AS min_date,
-            MAX(SUBSTRING(date FROM 1 FOR 10)) AS max_date
-        FROM comments
-        WHERE {where}
-          AND date ~ '^[0-9]{{4}}'
-    """
+    if use_review_date:
+        query = f"""
+            SELECT
+                MIN(review_date)::text AS min_date,
+                MAX(review_date)::text AS max_date
+            FROM comments
+            WHERE {where}
+              AND review_date IS NOT NULL
+        """
+    else:
+        query = f"""
+            SELECT
+                MIN(SUBSTRING(date FROM 1 FOR 10)) AS min_date,
+                MAX(SUBSTRING(date FROM 1 FOR 10)) AS max_date
+            FROM comments
+            WHERE {where}
+              AND date ~ '^[0-9]{{4}}'
+        """
+    return query, params
+
+
+def _execute_comments_date_span_query(query: str, params: list[Any]) -> tuple[str, str]:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:

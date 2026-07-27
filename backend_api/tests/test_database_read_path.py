@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 import psycopg2
 
 from review_analyzer import database
@@ -77,6 +79,21 @@ def _selected_columns(query: str) -> str:
     return query.split(" FROM comments", 1)[0]
 
 
+def test_comment_values_normalizes_review_date_from_date_iso() -> None:
+    values = database._comment_values(
+        7,
+        {
+            "product_id": "Parent",
+            "content": "ok",
+            "date": "Reviewed in the United States on July 1, 2026",
+            "date_iso": "2026-07-02",
+        },
+    )
+
+    review_date_index = database._COMMENT_INSERT_FIELDS.index("review_date")
+    assert values[review_date_index] == date(2026, 7, 2)
+
+
 def test_get_comments_uses_slim_columns_by_default(monkeypatch) -> None:
     queries: list[tuple[str, list[object] | tuple[object, ...]]] = []
     conn = _FakeConnection(queries, fetchall_rows=[{"id": 1, "content": "ok"}])
@@ -90,6 +107,7 @@ def test_get_comments_uses_slim_columns_by_default(monkeypatch) -> None:
     assert "embedding" not in _selected_columns(query)
     assert "jsonb_build_object" in _selected_columns(query)
     assert "customer_label_occurrences" in _selected_columns(query)
+    assert "review_date" in _selected_columns(query)
     assert "WHERE user_id = %s AND session_id = %s ORDER BY id DESC" in query
     assert params == [7, 3]
     assert conn.closed is True
@@ -126,6 +144,24 @@ def test_get_comments_can_disable_compact_aspects_json(monkeypatch) -> None:
     assert "aspects_json" in selected
 
 
+def test_get_comments_date_range_uses_normalized_review_date(monkeypatch) -> None:
+    queries: list[tuple[str, list[object] | tuple[object, ...]]] = []
+    monkeypatch.setattr(
+        database,
+        "get_connection",
+        lambda: _FakeConnection(queries, fetchall_rows=[]),
+    )
+
+    database.get_comments(7, product_id="Parent", date_start="2025-01-01", date_end="2025-01-31")
+
+    query, params = queries[0]
+    assert "review_date >= %s::date" in query
+    assert "review_date <= %s::date" in query
+    assert " AND date >= %s" not in query
+    assert " AND date <= %s" not in query
+    assert params == [7, "Parent", "2025-01-01", "2025-01-31"]
+
+
 def test_get_comments_date_span_uses_sql_aggregation(monkeypatch) -> None:
     queries: list[tuple[str, list[object] | tuple[object, ...]]] = []
     monkeypatch.setattr(
@@ -141,9 +177,9 @@ def test_get_comments_date_span_uses_sql_aggregation(monkeypatch) -> None:
 
     query, params = queries[0]
     assert span == ("2025-04-27", "2026-05-25")
-    assert "MIN(SUBSTRING(date FROM 1 FOR 10))" in query
-    assert "MAX(SUBSTRING(date FROM 1 FOR 10))" in query
-    assert "date ~ '^[0-9]{4}'" in query
+    assert "MIN(review_date)::text" in query
+    assert "MAX(review_date)::text" in query
+    assert "review_date IS NOT NULL" in query
     assert "LOWER(source_variant_asin) = LOWER(%s)" in query
     assert params == [4, 5, "B0ASIN"]
 

@@ -16,6 +16,7 @@ from review_analyzer.database import (
     get_session_by_id,
     get_sessions,
 )
+from review_analyzer.review_dates import normalize_comment_review_date
 
 LIFECYCLE_OPTIONS = ["research", "launch", "growth", "mature", "decline"]
 VARIANT_STATUS_OPTIONS = ["active", "paused", "clearance", "retired"]
@@ -812,32 +813,61 @@ def get_variants_with_review_counts(user_id: int, product_id: int) -> list[dict[
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(
-                """SELECT
-                       v.*,
-                       COALESCE(vc.review_count, 0) AS review_count,
-                       vc.latest_review_date
-                   FROM product_variants v
-                   LEFT JOIN products p
-                     ON p.id = v.product_id AND p.user_id = v.user_id
-                   LEFT JOIN (
-                       SELECT source_variant_asin,
-                              COUNT(*) AS review_count,
-                              MAX(date) AS latest_review_date
-                       FROM comments
-                       WHERE user_id = %s
-                         AND product_id = (
-                             SELECT parent_product_id
-                             FROM products
-                             WHERE user_id = %s AND id = %s
-                         )
-                         AND source_variant_asin IS NOT NULL
-                       GROUP BY source_variant_asin
-                   ) vc ON vc.source_variant_asin = v.child_asin
-                   WHERE v.user_id = %s AND v.product_id = %s
-                   ORDER BY v.created_at DESC, v.id DESC""",
-                (user_id, user_id, product_id, user_id, product_id),
-            )
+            try:
+                cur.execute(
+                    """SELECT
+                           v.*,
+                           COALESCE(vc.review_count, 0) AS review_count,
+                           vc.latest_review_date
+                       FROM product_variants v
+                       LEFT JOIN products p
+                         ON p.id = v.product_id AND p.user_id = v.user_id
+                       LEFT JOIN (
+                           SELECT source_variant_asin,
+                                  COUNT(*) AS review_count,
+                                  COALESCE(MAX(review_date)::text, MAX(date)) AS latest_review_date
+                           FROM comments
+                           WHERE user_id = %s
+                             AND product_id = (
+                                 SELECT parent_product_id
+                                 FROM products
+                                 WHERE user_id = %s AND id = %s
+                             )
+                             AND source_variant_asin IS NOT NULL
+                           GROUP BY source_variant_asin
+                       ) vc ON vc.source_variant_asin = v.child_asin
+                       WHERE v.user_id = %s AND v.product_id = %s
+                       ORDER BY v.created_at DESC, v.id DESC""",
+                    (user_id, user_id, product_id, user_id, product_id),
+                )
+            except psycopg2.errors.UndefinedColumn:
+                conn.rollback()
+                cur.execute(
+                    """SELECT
+                           v.*,
+                           COALESCE(vc.review_count, 0) AS review_count,
+                           vc.latest_review_date
+                       FROM product_variants v
+                       LEFT JOIN products p
+                         ON p.id = v.product_id AND p.user_id = v.user_id
+                       LEFT JOIN (
+                           SELECT source_variant_asin,
+                                  COUNT(*) AS review_count,
+                                  MAX(date) AS latest_review_date
+                           FROM comments
+                           WHERE user_id = %s
+                             AND product_id = (
+                                 SELECT parent_product_id
+                                 FROM products
+                                 WHERE user_id = %s AND id = %s
+                             )
+                             AND source_variant_asin IS NOT NULL
+                           GROUP BY source_variant_asin
+                       ) vc ON vc.source_variant_asin = v.child_asin
+                       WHERE v.user_id = %s AND v.product_id = %s
+                       ORDER BY v.created_at DESC, v.id DESC""",
+                    (user_id, user_id, product_id, user_id, product_id),
+                )
             return [dict(row) for row in cur.fetchall()]
     except psycopg2.errors.UndefinedTable:
         conn.rollback()
@@ -1225,7 +1255,7 @@ def _build_version_date_ranges(comments: list[dict[str, Any]]) -> dict[str, dict
         version = str(comment.get("version") or "").strip()
         if not version:
             continue
-        date_str = str(comment.get("date") or "").strip()
+        date_str = _comment_review_date_str(comment)
         if date_str:
             version_dates.setdefault(version, []).append(date_str)
     result: dict[str, dict[str, str | None]] = {}
@@ -1245,7 +1275,11 @@ def _build_comment_stats(comments: list[dict[str, Any]]) -> dict[str, Any]:
     negative_count = sum(1 for comment in comments if comment.get("sentiment") == "negative")
     top_issue = _get_top_tag(comments, "issue_tag")
     top_highlight = _get_top_tag(comments, "highlight_tag")
-    valid_dates = [str(comment.get("date") or "") for comment in comments if comment.get("date")]
+    valid_dates = [
+        date_str
+        for comment in comments
+        if (date_str := _comment_review_date_str(comment))
+    ]
     latest_date = max(valid_dates, default="") or None
     earliest_date = min(valid_dates, default="") or None
     return {
@@ -1257,6 +1291,14 @@ def _build_comment_stats(comments: list[dict[str, Any]]) -> dict[str, Any]:
         "latest_review_date": latest_date,
         "earliest_review_date": earliest_date,
     }
+
+
+def _comment_review_date_str(comment: dict[str, Any]) -> str:
+    return (
+        normalize_comment_review_date(comment.get("review_date"))
+        or normalize_comment_review_date(comment.get("date"))
+        or ""
+    )
 
 
 def _get_top_tag(comments: list[dict[str, Any]], field_name: str) -> str | None:
@@ -2163,20 +2205,37 @@ def get_parent_variant_analysis(
             variants = [dict(r) for r in cur.fetchall()]
 
             # 聚合该产品所有 session 的分析数据
-            cur.execute(
-                """SELECT
-                    COUNT(*) as total_reviews,
-                    COUNT(CASE WHEN sentiment = 'positive' THEN 1 END) as positive_count,
-                    COUNT(CASE WHEN sentiment = 'negative' THEN 1 END) as negative_count,
-                    COUNT(CASE WHEN sentiment = 'unrecognizable' THEN 1 END) as unrecognizable_count,
-                    MAX(date) as latest_date,
-                    MIN(date) as earliest_date
-                   FROM comments
-                   WHERE user_id = %s AND product_id = (
-                       SELECT parent_product_id FROM products WHERE id = %s AND user_id = %s
-                   )""",
-                (user_id, product_id, user_id),
-            )
+            try:
+                cur.execute(
+                    """SELECT
+                        COUNT(*) as total_reviews,
+                        COUNT(CASE WHEN sentiment = 'positive' THEN 1 END) as positive_count,
+                        COUNT(CASE WHEN sentiment = 'negative' THEN 1 END) as negative_count,
+                        COUNT(CASE WHEN sentiment = 'unrecognizable' THEN 1 END) as unrecognizable_count,
+                        COALESCE(MAX(review_date)::text, MAX(date)) as latest_date,
+                        COALESCE(MIN(review_date)::text, MIN(date)) as earliest_date
+                       FROM comments
+                       WHERE user_id = %s AND product_id = (
+                           SELECT parent_product_id FROM products WHERE id = %s AND user_id = %s
+                       )""",
+                    (user_id, product_id, user_id),
+                )
+            except psycopg2.errors.UndefinedColumn:
+                conn.rollback()
+                cur.execute(
+                    """SELECT
+                        COUNT(*) as total_reviews,
+                        COUNT(CASE WHEN sentiment = 'positive' THEN 1 END) as positive_count,
+                        COUNT(CASE WHEN sentiment = 'negative' THEN 1 END) as negative_count,
+                        COUNT(CASE WHEN sentiment = 'unrecognizable' THEN 1 END) as unrecognizable_count,
+                        MAX(date) as latest_date,
+                        MIN(date) as earliest_date
+                       FROM comments
+                       WHERE user_id = %s AND product_id = (
+                           SELECT parent_product_id FROM products WHERE id = %s AND user_id = %s
+                       )""",
+                    (user_id, product_id, user_id),
+                )
             stats = dict(cur.fetchone() or {})
 
             # 获取分析中的 ASIN 数量

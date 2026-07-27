@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 import psycopg2
@@ -135,6 +135,26 @@ def test_delete_product_hard_deletes_user_review_data_without_touching_global_po
         (7, [201]),
     ) in cursor.queries
     assert not any("review_pool" in sql for sql, _params in cursor.queries)
+
+
+def test_build_comment_stats_uses_normalized_review_date() -> None:
+    stats = product_store._build_comment_stats(
+        [
+            {
+                "sentiment": "positive",
+                "date": "Reviewed in the United States on July 1, 2026",
+                "review_date": date(2026, 7, 1),
+            },
+            {
+                "sentiment": "negative",
+                "date": "2026-06-30",
+                "review_date": date(2026, 6, 30),
+            },
+        ]
+    )
+
+    assert stats["earliest_review_date"] == "2026-06-30"
+    assert stats["latest_review_date"] == "2026-07-01"
 
 
 def test_delete_variant_clears_version_and_session_refs(monkeypatch):

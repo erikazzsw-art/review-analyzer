@@ -54,6 +54,8 @@
 | ... | *(012-043 待补全文档)* | 各功能模块迭代 | V4-V5 |
 | 044 | `044_create_user_credits.sql` | Credit 定价体系基建（user_credits + credit_ledger） | V4-出海-M6 |
 | 045 | `045_add_starter_plan.sql` | users.plan 约束添加 starter | V4-出海-M6 |
+| 058 | `058_customer_label_catalog_alias_candidates.sql` | Customer Issue / Customer Label 统一数据层 | V5-T3 Phase 7 |
+| 059 | `059_add_comments_review_date.sql` | comments normalized review_date + date range indexes | Phase 7 P2 |
 
 ## 新增 Migration 流程
 
