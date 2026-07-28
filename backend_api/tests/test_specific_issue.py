@@ -775,28 +775,23 @@ def test_iter_specific_issue_occurrences_uses_legacy_issue_tag_for_old_session()
 
 
 def test_legacy_issue_rows_are_marked_as_legacy_not_specific_issue_schema() -> None:
+    comment = {
+        "id": 1,
+        "content": "The battery does not last long.",
+        "issue_tag": "Battery Life",
+        "aspects_json": None,
+    }
+    occurrences = iter_specific_issue_occurrences(comment, locale="en")
     rows = build_specific_issue_rows(
-        [
-            {
-                "id": 1,
-                "content": "The battery does not last long.",
-                "issue_tag": "Battery Life",
-                "aspects_json": None,
-            }
-        ],
+        [comment],
         locale="en",
     )
 
-    assert len(rows) == 1
-    assert rows[0]["specific_issue"] == "Battery Life"
-    assert rows[0]["legacy_fallback"] is True
-    assert rows[0]["is_specific_issue"] is False
-    assert rows[0]["specific_issue_schema_version"] == ""
-    assert rows[0]["mention_count"] == 1
-    assert rows[0]["review_count"] == 1
-    assert rows[0]["mention_share"] == 100.0
-    assert rows[0]["impact_review_share"] == 100.0
-    assert rows[0]["representative_comments"] == []
+    assert len(occurrences) == 1
+    assert occurrences[0]["specific_issue"] == "Battery Life"
+    assert occurrences[0]["legacy_fallback"] is True
+    assert occurrences[0]["source_review_allowed"] is False
+    assert rows == []
 
 
 def test_specific_issue_dimension_uses_requested_locale_for_known_aspect_key() -> None:
@@ -828,27 +823,34 @@ def test_specific_issue_dimension_uses_requested_locale_for_known_aspect_key() -
 
 
 def test_legacy_issue_tags_keep_non_ascii_labels_distinct() -> None:
+    comments = [
+        {
+            "id": 1,
+            "content": "Water leaked through.",
+            "issue_tag": "\u6f0f\u6c34",
+            "aspects_json": None,
+        },
+        {
+            "id": 2,
+            "content": "The size was too small.",
+            "issue_tag": "\u5c3a\u5bf8\u592a\u5c0f",
+            "aspects_json": None,
+        },
+    ]
+    occurrences = [
+        occurrence
+        for comment in comments
+        for occurrence in iter_specific_issue_occurrences(comment, locale="zh")
+    ]
     rows = build_specific_issue_rows(
-        [
-            {
-                "id": 1,
-                "content": "Water leaked through.",
-                "issue_tag": "\u6f0f\u6c34",
-                "aspects_json": None,
-            },
-            {
-                "id": 2,
-                "content": "The size was too small.",
-                "issue_tag": "\u5c3a\u5bf8\u592a\u5c0f",
-                "aspects_json": None,
-            },
-        ],
+        comments,
         locale="zh",
         limit=10,
     )
 
-    assert {row["specific_issue"] for row in rows} == {"\u6f0f\u6c34", "\u5c3a\u5bf8\u592a\u5c0f"}
-    assert {row["canonical_issue_key"] for row in rows} == {"\u6f0f\u6c34", "\u5c3a\u5bf8\u592a\u5c0f"}
+    assert {occurrence["specific_issue"] for occurrence in occurrences} == {"\u6f0f\u6c34", "\u5c3a\u5bf8\u592a\u5c0f"}
+    assert {occurrence["canonical_issue_key"] for occurrence in occurrences} == {"\u6f0f\u6c34", "\u5c3a\u5bf8\u592a\u5c0f"}
+    assert rows == []
 
 
 def test_specific_issue_payload_without_schema_does_not_legacy_fallback_broad_issue() -> None:
@@ -984,11 +986,11 @@ def test_customer_highlight_legacy_fallback_is_locale_safe_and_conservative() ->
     assert customer_highlight_tags_for_comment(
         {"content": "很好", "highlight_tag": "防水可靠", "aspects_json": None},
         locale="zh",
-    ) == ["防水可靠"]
+    ) == []
     assert customer_highlight_tags_for_comment(
         {"content": "Great", "highlight_tag": "Build Quality,Good Value for the Price", "aspects_json": None},
         locale="en",
-    ) == ["Good Value for the Price"]
+    ) == []
 
 
 def test_iter_customer_highlight_occurrences_derives_for_specific_issue_schema_session() -> None:
@@ -1823,7 +1825,7 @@ def test_comfort_negative_heat_context_still_recovers_not_breathable() -> None:
     assert rows[0]["evidence_spans"] == ["too hot"]
 
 
-def test_phase7_session96_legacy_value_for_money_rows_get_verified_source_review_evidence() -> None:
+def test_phase7_session96_legacy_value_for_money_occurrences_stay_audit_only() -> None:
     comments = [
         {
             "id": 96_001,
@@ -1861,45 +1863,43 @@ def test_phase7_session96_legacy_value_for_money_rows_get_verified_source_review
         },
     ]
 
-    issue = build_specific_issue_rows(comments, locale="en", limit=10)[0]
-    highlight = build_customer_highlight_rows(comments, locale="en", limit=10)[0]
+    issue_occurrences = iter_specific_issue_occurrences(comments[0], locale="en")
+    highlight_occurrences = iter_customer_highlight_occurrences(comments[1], locale="en")
 
-    assert issue["specific_issue"] == "Value for Money"
-    assert issue["mention_count"] == 1
-    assert issue["evidence_verified"] is True
-    assert issue["evidence_spans"] == ["not worth the price"]
-    assert issue["representative_comments"] == ["The fabric feels thin and is not worth the price."]
-    assert issue["cluster_propagated"] is False
+    assert issue_occurrences[0]["specific_issue"] == "Value for Money"
+    assert issue_occurrences[0]["evidence_span"] == "not worth the price"
+    assert issue_occurrences[0]["legacy_fallback"] is True
+    assert issue_occurrences[0]["source_review_allowed"] is False
 
-    assert highlight["customer_highlight"] == "Value for Money"
-    assert highlight["mention_count"] == 1
-    assert highlight["evidence_verified"] is True
-    assert highlight["evidence_spans"] == ["good value for the money"]
-    assert highlight["representative_comments"] == ["These are a good value for the money and fit well."]
-    assert highlight["cluster_propagated"] is False
+    assert highlight_occurrences[0]["customer_highlight"] == "Value for Money"
+    assert highlight_occurrences[0]["evidence_span"] == "good value for the money"
+    assert highlight_occurrences[0]["legacy_fallback"] is True
+    assert highlight_occurrences[0]["source_review_allowed"] is False
+
+    assert build_specific_issue_rows(comments, locale="en", limit=10) == []
+    assert build_customer_highlight_rows(comments, locale="en", limit=10) == []
 
 
-def test_phase7_legacy_value_for_money_without_source_span_stays_visible_without_representative_evidence() -> None:
+def test_phase7_legacy_value_for_money_without_source_span_stays_audit_only() -> None:
+    comment = {
+        "id": 96_003,
+        "content": "The fabric is thin and the sizing is off.",
+        "sentiment": "negative",
+        "sub_category": "apparel",
+        "issue_tag": "Value for Money",
+    }
+    occurrences = iter_specific_issue_occurrences(comment, locale="en")
     rows = build_specific_issue_rows(
-        [
-            {
-                "id": 96_003,
-                "content": "The fabric is thin and the sizing is off.",
-                "sentiment": "negative",
-                "sub_category": "apparel",
-                "issue_tag": "Value for Money",
-            }
-        ],
+        [comment],
         locale="en",
         limit=10,
     )
 
-    assert rows[0]["specific_issue"] == "Value for Money"
-    assert rows[0]["mention_count"] == 1
-    assert rows[0]["evidence_verified"] is False
-    assert rows[0]["evidence_spans"] == []
-    assert rows[0]["representative_comments"] == []
-    assert rows[0]["reason"] == ""
+    assert occurrences[0]["specific_issue"] == "Value for Money"
+    assert occurrences[0]["evidence_verified"] is False
+    assert occurrences[0]["legacy_fallback"] is True
+    assert occurrences[0]["source_review_allowed"] is False
+    assert rows == []
 
 
 def test_phase7_session114_water_leaks_through_keeps_three_verified_source_review_evidence() -> None:

@@ -21,6 +21,58 @@ _OCCURRENCE_SOURCES = {"llm", "rule", "human", "legacy"}
 
 _LABELS_CACHE: dict[str, dict[str, str]] | None = None
 
+_ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
+    "highlight": {
+        "fits_as_expected": {"size_fit", "boot_fit"},
+        "keeps_water_out": {"waterproof", "waterproof_performance"},
+        "good_value_for_the_price": {"value_for_money", "price_value"},
+        "holds_up_well": {"durability", "build_quality", "seam_integrity", "material"},
+        "lightweight_waders": {"weight", "material"},
+        "useful_storage_space": {"accessory_storage", "organization", "capacity"},
+        "useful_accessories": {"accessory_storage"},
+        "good_traction": {"grip"},
+        "comfortable_to_wear": {"comfort", "mobility", "boot_fit"},
+        "breathes_well": {"breathability", "comfort"},
+        "no_strong_odor": {"material", "smell", "scent"},
+        "feels_well_made": {"build_quality", "material", "durability", "stability"},
+        "good_material_quality": {"material", "build_quality"},
+        "arrives_on_time_and_intact": {"shipping_damage", "packaging"},
+        "fast_shipping": {"shipping_damage", "packaging"},
+        "petite_friendly": {"size_fit"},
+        "plus_size_friendly": {"size_fit"},
+    },
+    "issue": {
+        "water_leaks_through": {"waterproof", "waterproof_performance", "seam_integrity"},
+        "seam_leaks": {"seam_integrity"},
+        "pocket_not_waterproof": {"accessory_storage", "organization", "capacity"},
+        "pocket_too_small": {"accessory_storage", "organization", "capacity"},
+        "missing_accessories": {"accessory_storage", "shipping_damage", "packaging"},
+        "missing_wader_hanger": {"accessory_storage"},
+        "accessories_not_as_advertised": {"accessory_storage"},
+        "breaks_easily": {"durability", "build_quality", "seam_integrity", "material", "stability"},
+        "feels_thin_and_flimsy": {"material", "durability", "build_quality"},
+        "strong_chemical_smell": {"material", "smell", "scent"},
+        "not_breathable": {"breathability", "comfort", "mobility"},
+        "runs_too_small": {"size_fit", "boot_fit"},
+        "runs_too_large": {"size_fit", "boot_fit"},
+        "inaccurate_size_chart": {"size_fit", "boot_fit"},
+        "not_petite_friendly": {"size_fit"},
+        "not_plus_size_friendly": {"size_fit"},
+        "calf_area_too_tight": {"boot_fit"},
+        "pants_too_long": {"size_fit"},
+        "boots_too_stiff": {"comfort", "material", "boot_fit"},
+        "not_for_long_walks": {"comfort", "boot_fit", "mobility"},
+        "poor_traction": {"grip"},
+        "soft_soles": {"grip", "durability", "material"},
+        "not_worth_the_price": {"value_for_money", "price_value"},
+        "poor_value_for_money": {"value_for_money", "price_value"},
+        "arrived_damaged": {"shipping_damage", "packaging"},
+        "poor_customer_service": {"customer_service"},
+        "zipper_fails": {"zipper_quality"},
+        "missing_parts": {"assembly", "packaging", "shipping_damage", "accessory_storage"},
+    },
+}
+
 
 def _load_aspect_labels() -> dict[str, dict[str, str]]:
     global _LABELS_CACHE
@@ -196,6 +248,15 @@ def _is_customer_label_allowed(
     return not _is_broad_issue(cleaned, aspect_key, aspect_label)
 
 
+def _is_label_aspect_allowed(label_type: str, canonical_label_key: str, aspect_key: str) -> bool:
+    canonical = str(canonical_label_key or "").strip()
+    aspect = str(aspect_key or "").strip()
+    if not canonical or not aspect:
+        return True
+    allowed = _ALLOWED_ASPECT_KEYS_BY_LABEL.get(label_type, {}).get(canonical)
+    return True if allowed is None else aspect in allowed
+
+
 def _customer_title(value: str) -> str:
     cleaned = value.strip()
     if not cleaned:
@@ -274,6 +335,7 @@ def _should_suppress_apparel_breathability_cluster_issue(
 
 
 _NEGATED_WATER_LEAK_PATTERNS = [
+    r"\bleak[- ]?proof\b",
     r"\bno\s+leaks?\b",
     r"\bno\s+(?:water\s+)?leakage\b",
     r"\bno\s+water\s+intrusion\b",
@@ -433,6 +495,30 @@ def _current_product_water_leak_evidence(content: str) -> str:
             continue
         return evidence
     return ""
+
+
+def _evidence_context_sentence(content: str, evidence: str) -> str:
+    evidence = str(evidence or "").strip()
+    if not evidence:
+        return content[:400]
+    evidence_lower = evidence.lower()
+    for _start, sentence in _sentence_spans(content):
+        if evidence_lower in sentence.lower():
+            return sentence
+    return f"{evidence} {content[:400]}".strip()
+
+
+def _is_blocked_water_leak_issue_context(content: str, evidence: str) -> bool:
+    context = _evidence_context_sentence(content, evidence)
+    evidence_text = str(evidence or "").strip()
+    return (
+        _is_positive_waterproof_evidence_for_issue(context)
+        or _is_positive_waterproof_evidence_for_issue(evidence_text)
+        or _is_non_current_product_leak_context(context)
+        or _is_non_current_product_leak_context(evidence_text)
+        or _is_accessory_only_leak_context(context)
+        or _is_accessory_only_leak_context(evidence_text)
+    )
 
 
 def _evidence_verified(content: str, evidence: str, *, cluster_propagated: bool = False) -> bool:
@@ -835,6 +921,9 @@ def _project_customer_label_occurrence(
         {"type": label_type, "canonical_label_key": canonical, "evidence_span": stored_evidence}
     ):
         return None
+    context_allowed = True
+    if label_type == "issue" and canonical == "water_leaks_through":
+        context_allowed = not _is_blocked_water_leak_issue_context(content, stored_evidence)
 
     display_en = str(occurrence.get("display_label_en") or "").strip()
     display_zh = str(occurrence.get("display_label_zh") or "").strip()
@@ -884,6 +973,15 @@ def _project_customer_label_occurrence(
         evidence_verified=evidence_verified,
     ):
         return None
+    aspect_allowed = _is_label_aspect_allowed(label_type, canonical, aspect_key)
+    source_review_allowed = bool(
+        content
+        and stored_evidence
+        and representative_verified
+        and aspect_allowed
+        and context_allowed
+        and source != "legacy"
+    )
     common = {
         "comment_id": comment.get("id") if comment.get("id") is not None else occurrence.get("comment_id"),
         "content": content,
@@ -909,7 +1007,9 @@ def _project_customer_label_occurrence(
         "schema_version": str(occurrence.get("schema_version") or CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION),
         "ruleset_version": str(occurrence.get("ruleset_version") or CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION),
         "display_allowed": True,
-        "source_review_allowed": bool(content and representative_verified),
+        "aspect_allowed": aspect_allowed,
+        "context_allowed": context_allowed,
+        "source_review_allowed": source_review_allowed,
         "legacy_fallback": False,
     }
     if label_type == "issue":
@@ -1215,6 +1315,7 @@ def _highlight_label(en: str, zh: str, canonical: str, source: str) -> tuple[str
 
 
 def _is_negative_phrase(text: str) -> bool:
+    text = re.sub(r"\bleak[- ]?proof\b", " ", text)
     text = re.sub(r"\b(no|without)\s+leaks?\b", " ", text)
     text = re.sub(r"\b(no|without)\s+(?:water\s+)?leakage\b", " ", text)
     text = re.sub(r"\bnever\s+get\s+wet\b", " ", text)
@@ -1246,6 +1347,7 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
                 r"\bnever get wet\b",
                 r"\bno leaks?\b",
                 r"\bno\s+(?:water\s+)?leakage\b",
+                r"\bleak[- ]?proof\b",
             ],
             text,
         ):
@@ -1724,7 +1826,8 @@ def _legacy_issue_occurrences(comment: dict[str, Any], locale: str) -> list[dict
                 "cluster_propagated": cluster_propagated,
                 "schema_version": "",
                 "ruleset_version": "",
-                "source_review_allowed": bool(content and evidence_verified),
+                "aspect_allowed": _is_label_aspect_allowed("issue", canonical, aspect_key),
+                "source_review_allowed": False,
                 "legacy_fallback": True,
             }
         )
@@ -1738,11 +1841,16 @@ def _append_unique_snippet(target: list[str], content: str, limit: int = 240) ->
 
 
 def _is_frontstage_countable_occurrence(occurrence: dict[str, Any]) -> bool:
-    if occurrence.get("cluster_propagated"):
-        return False
-    if occurrence.get("legacy_fallback"):
-        return True
-    return bool(occurrence.get("source_review_allowed"))
+    return bool(
+        occurrence.get("display_allowed") is not False
+        and occurrence.get("source_review_allowed")
+        and occurrence.get("verified_evidence")
+        and occurrence.get("evidence_span")
+        and not occurrence.get("cluster_propagated")
+        and not occurrence.get("legacy_fallback")
+        and occurrence.get("aspect_allowed") is not False
+        and occurrence.get("context_allowed") is not False
+    )
 
 
 def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en") -> list[dict[str, Any]]:
@@ -2049,7 +2157,8 @@ def _legacy_highlight_occurrences(comment: dict[str, Any], locale: str) -> list[
                 "cluster_propagated": cluster_propagated,
                 "schema_version": "",
                 "ruleset_version": "",
-                "source_review_allowed": bool(content and evidence_verified),
+                "aspect_allowed": _is_label_aspect_allowed("highlight", canonical, aspect_key),
+                "source_review_allowed": False,
                 "legacy_fallback": True,
             }
         )
@@ -2144,6 +2253,8 @@ def customer_issue_tags_for_comment(comment: dict[str, Any], locale: str = "en")
     seen: set[str] = set()
     labels: list[str] = []
     for occurrence in iter_specific_issue_occurrences(comment, locale=locale):
+        if not _is_frontstage_countable_occurrence(occurrence):
+            continue
         label = str(occurrence.get("specific_issue") or "").strip()
         if label and label not in seen:
             seen.add(label)
@@ -2155,6 +2266,8 @@ def customer_highlight_tags_for_comment(comment: dict[str, Any], locale: str = "
     seen: set[str] = set()
     labels: list[str] = []
     for occurrence in iter_customer_highlight_occurrences(comment, locale=locale):
+        if not _is_frontstage_countable_occurrence(occurrence):
+            continue
         label = str(occurrence.get("customer_highlight") or "").strip()
         if label and label not in seen:
             seen.add(label)

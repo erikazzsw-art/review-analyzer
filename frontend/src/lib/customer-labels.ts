@@ -18,6 +18,8 @@ export type CustomerLabelOccurrence = {
   source: string;
   subCategory: string;
   legacyFallback: boolean;
+  aspectAllowed: boolean;
+  contextAllowed: boolean;
 };
 
 export type CustomerLabelEvidence = {
@@ -70,6 +72,41 @@ const BROAD_LABELS_ZH = new Set([
   "收纳分区",
 ]);
 
+const ALLOWED_ASPECT_KEYS_BY_LABEL: Record<CustomerLabelType, Record<string, Set<string>>> = {
+  highlight: {
+    fits_as_expected: new Set(["size_fit", "boot_fit"]),
+    keeps_water_out: new Set(["waterproof", "waterproof_performance"]),
+    good_value_for_the_price: new Set(["value_for_money", "price_value"]),
+    holds_up_well: new Set(["durability", "build_quality", "seam_integrity", "material"]),
+    useful_storage_space: new Set(["accessory_storage", "organization", "capacity"]),
+    useful_accessories: new Set(["accessory_storage"]),
+    good_traction: new Set(["grip"]),
+    comfortable_to_wear: new Set(["comfort", "mobility", "boot_fit"]),
+    feels_well_made: new Set(["build_quality", "material", "durability", "stability"]),
+  },
+  issue: {
+    water_leaks_through: new Set(["waterproof", "waterproof_performance", "seam_integrity"]),
+    pocket_not_waterproof: new Set(["accessory_storage", "organization", "capacity"]),
+    pocket_too_small: new Set(["accessory_storage", "organization", "capacity"]),
+    missing_accessories: new Set(["accessory_storage", "shipping_damage", "packaging"]),
+    missing_wader_hanger: new Set(["accessory_storage"]),
+    breaks_easily: new Set(["durability", "build_quality", "seam_integrity", "material", "stability"]),
+    feels_thin_and_flimsy: new Set(["material", "durability", "build_quality"]),
+    strong_chemical_smell: new Set(["material", "smell", "scent"]),
+    not_breathable: new Set(["breathability", "comfort", "mobility"]),
+    runs_too_small: new Set(["size_fit", "boot_fit"]),
+    runs_too_large: new Set(["size_fit", "boot_fit"]),
+    inaccurate_size_chart: new Set(["size_fit", "boot_fit"]),
+    not_petite_friendly: new Set(["size_fit"]),
+    not_plus_size_friendly: new Set(["size_fit"]),
+    poor_traction: new Set(["grip"]),
+    soft_soles: new Set(["grip", "durability", "material"]),
+    not_worth_the_price: new Set(["value_for_money", "price_value"]),
+    zipper_fails: new Set(["zipper_quality"]),
+    missing_parts: new Set(["assembly", "packaging", "shipping_damage", "accessory_storage"]),
+  },
+};
+
 function normText(value: string): string {
   return value
     .replace(/&/g, " and ")
@@ -77,6 +114,56 @@ function normText(value: string): string {
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isLabelAspectAllowed(type: CustomerLabelType, canonicalLabelKey: string, aspectKey: string): boolean {
+  if (!canonicalLabelKey || !aspectKey) return true;
+  const allowed = ALLOWED_ASPECT_KEYS_BY_LABEL[type]?.[canonicalLabelKey];
+  return allowed ? allowed.has(aspectKey) : true;
+}
+
+function firstRegex(patterns: RegExp[], text: string): boolean {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function sentenceForEvidence(content: string, evidence: string): string {
+  if (!evidence) return content.slice(0, 400);
+  const escaped = evidence.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const sentencePattern = new RegExp(`[^.!?\\n]*${escaped}[^.!?\\n]*(?:[.!?]+|$)`, "i");
+  const match = content.match(sentencePattern);
+  return (match?.[0] || `${evidence} ${content.slice(0, 400)}`).trim();
+}
+
+function isBlockedWaterLeakIssueContext(content: string, evidence: string): boolean {
+  const text = sentenceForEvidence(content, evidence).toLowerCase();
+  const evidenceText = evidence.toLowerCase();
+  const basis = `${evidenceText}\n${text}`;
+  const negated = firstRegex([
+    /\bleak[- ]?proof\b/,
+    /\bno\s+leaks?\b/,
+    /\bno\s+(?:water\s+)?leakage\b/,
+    /\bwithout\s+(?:any\s+)?leaks?\b/,
+    /\bnever\s+(?:had\s+)?leaks?\b/,
+    /\bnot\s+leaking\b/,
+  ], basis);
+  const positiveDry = firstRegex([
+    /\b(?:remained|stayed|kept|keep|keeps)\s+(?:(?:me|you|us|him|her|them|my\s+\w+|your\s+\w+|his\s+\w+|her\s+\w+|their\s+\w+)\s+)?(?:\w+ly\s+)?dry\b/,
+  ], basis) && !firstRegex([/\bnot waterproof\b/, /\bleak/, /\bwater (?:gets|got|came|comes|coming|enters|entered) (?:in|through)/], basis);
+  const oldProduct = firstRegex([
+    /\b(?:old|previous|last|other)\s+(?:pair|one|ones|waders?)\b[^.!?\n]{0,80}\bleak/,
+    /\b(?:ones?|waders?)\s+(?:he|she|they|i|we)\s+had\b[^.!?\n]{0,80}\bleak/,
+    /\b(?:pair|one|ones|waders?)\s+from\s+another\s+(?:company|brand)\b[^.!?\n]{0,100}\bleak/,
+  ], basis);
+  const accessoryLeak = firstRegex([
+    /\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b[^.!?\n]{0,80}\b(?:leak|water gets in|wet|soak)/,
+    /\b(?:leak(?:ing|ed|s)?|water gets in|wet|soak)[^.!?\n]{0,80}\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b/,
+  ], basis);
+  const currentProduct = firstRegex([/\b(?:waders?|boot|boots|feet|foot|material|seam|neoprene)\b/, /\bnot\s+(?:100%\s+)?waterproof\b/], text);
+  const evidenceAccessoryLeak = firstRegex([
+    /\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b[^.!?\n]{0,80}\b(?:leak|water gets in|wet|soak)/,
+    /\b(?:leak(?:ing|ed|s)?|water gets in|wet|soak)[^.!?\n]{0,80}\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b/,
+  ], evidenceText);
+  return negated || positiveDry || oldProduct || evidenceAccessoryLeak || (accessoryLeak && !currentProduct);
 }
 
 function hasCjk(value: string): boolean {
@@ -190,12 +277,8 @@ function getPayloadAspects(payload: RecordValue): RecordValue[] {
 }
 
 export function customerIssueTags(comment: RecordValue, locale: string): string[] {
-  const decorated = splitTagText(comment.customer_issue_tags);
-  if (decorated.length > 0) {
-    return uniqueStrings(decorated.filter((label) => isCustomerLabelAllowed(label, locale)));
-  }
-
   const occurrences = customerLabelOccurrences(comment, "issue", locale)
+    .filter((occurrence) => isVerifiedSourceReviewOccurrence(occurrence))
     .map((occurrence) => occurrence.label)
     .filter(Boolean);
   if (occurrences.length > 0) {
@@ -208,10 +291,18 @@ export function customerIssueTags(comment: RecordValue, locale: string): string[
     .filter((aspect) => {
       const hasSpecificIssuePayload = Boolean(aspect.specific_issue || aspect.specific_issue_zh) &&
         Boolean(aspect.canonical_issue_key);
+      const evidenceSpan = String(aspect.evidence_span || aspect.evidence || "").trim();
+      const aspectKey = String(aspect.key || aspect.aspect_key || "").trim();
+      const canonicalKey = String(aspect.canonical_issue_key || "").trim();
+      const aspectClusterPropagated =
+        "cluster_propagated" in aspect ? boolValue(aspect.cluster_propagated) : boolValue(payload?.cluster_propagated);
       return (
         (String(aspect.polarity || "").toLowerCase() === "negative" || hasSpecificIssuePayload) &&
         aspect.display_allowed !== false &&
-        hasSpecificIssuePayload
+        hasSpecificIssuePayload &&
+        isLabelAspectAllowed("issue", canonicalKey, aspectKey) &&
+        !(canonicalKey === "water_leaks_through" && isBlockedWaterLeakIssueContext(reviewBody(comment), evidenceSpan)) &&
+        evidenceVerified(comment, evidenceSpan, aspectClusterPropagated)
       );
     })
     .map((aspect) => {
@@ -228,16 +319,12 @@ export function customerIssueTags(comment: RecordValue, locale: string): string[
   if (labels.length > 0 || hasCustomerPayload(payload, ["specific_issue", "canonical_issue_key", "display_allowed"])) {
     return uniqueStrings(labels);
   }
-  return uniqueStrings(splitTagText(comment.issue_tag).filter((label) => isCustomerLabelAllowed(label, locale)));
+  return [];
 }
 
 export function customerHighlightTags(comment: RecordValue, locale: string): string[] {
-  const decorated = splitTagText(comment.customer_highlight_tags);
-  if (decorated.length > 0) {
-    return uniqueStrings(decorated.filter((label) => isCustomerLabelAllowed(label, locale)));
-  }
-
   const occurrences = customerLabelOccurrences(comment, "highlight", locale)
+    .filter((occurrence) => isVerifiedSourceReviewOccurrence(occurrence))
     .map((occurrence) => occurrence.label)
     .filter(Boolean);
   if (occurrences.length > 0) {
@@ -247,11 +334,18 @@ export function customerHighlightTags(comment: RecordValue, locale: string): str
   const payload = parseAspectsPayload(comment);
   const labels = getAspects(comment)
     .filter((aspect) => {
+      const evidenceSpan = String(aspect.evidence_span || aspect.evidence || "").trim();
+      const aspectKey = String(aspect.key || aspect.aspect_key || "").trim();
+      const canonicalKey = String(aspect.canonical_highlight_key || "").trim();
+      const aspectClusterPropagated =
+        "cluster_propagated" in aspect ? boolValue(aspect.cluster_propagated) : boolValue(payload?.cluster_propagated);
       return (
         String(aspect.polarity || "").toLowerCase() === "positive" &&
         aspect.highlight_display_allowed !== false &&
         Boolean(aspect.customer_highlight || aspect.customer_highlight_zh) &&
-        Boolean(aspect.canonical_highlight_key)
+        Boolean(aspect.canonical_highlight_key) &&
+        isLabelAspectAllowed("highlight", canonicalKey, aspectKey) &&
+        evidenceVerified(comment, evidenceSpan, aspectClusterPropagated)
       );
     })
     .map((aspect) => {
@@ -271,7 +365,7 @@ export function customerHighlightTags(comment: RecordValue, locale: string): str
   ) {
     return uniqueStrings(labels);
   }
-  return uniqueStrings(splitTagText(comment.highlight_tag).filter((label) => isCustomerLabelAllowed(label, locale)));
+  return [];
 }
 
 export function customerTagText(
@@ -294,25 +388,36 @@ export function customerLabelOccurrences(
   const projected = payloadOccurrences(payload)
     .filter((occurrence) => String(occurrence.type || "").toLowerCase() === type)
     .map((occurrence) => {
+      const occurrenceClusterPropagated =
+        "cluster_propagated" in occurrence ? boolValue(occurrence.cluster_propagated) : clusterPropagated;
       const aspectKey = String(occurrence.aspect_key || "").trim();
       const label = localeLabel(occurrence.display_label_en, occurrence.display_label_zh, locale);
       const dimension = localeLabel(occurrence.dimension_en, occurrence.dimension_zh, locale) ||
         (aspectKey ? aspectLabel(aspectKey, locale) : "");
       const evidenceSpan = String(occurrence.evidence_span || "").trim();
+      const canonicalLabelKey = String(occurrence.canonical_label_key || "").trim();
+      const content = reviewBody(comment);
+      const aspectAllowed = boolValue(occurrence.aspect_allowed ?? true) &&
+        isLabelAspectAllowed(type, canonicalLabelKey, aspectKey);
+      const contextAllowed = boolValue(occurrence.context_allowed ?? true) &&
+        !(type === "issue" && canonicalLabelKey === "water_leaks_through" &&
+          isBlockedWaterLeakIssueContext(content, evidenceSpan));
       return {
         type,
         label,
         rawLabel: String(occurrence.raw_label || label).trim(),
-        canonicalLabelKey: String(occurrence.canonical_label_key || "").trim(),
+        canonicalLabelKey,
         aspectKey,
         dimension,
         evidenceSpan,
-        evidenceVerified: evidenceVerified(comment, evidenceSpan, clusterPropagated || boolValue(occurrence.cluster_propagated)),
-        clusterPropagated: clusterPropagated || boolValue(occurrence.cluster_propagated),
+        evidenceVerified: evidenceVerified(comment, evidenceSpan, occurrenceClusterPropagated),
+        clusterPropagated: occurrenceClusterPropagated,
         confidence: String(occurrence.confidence || "").trim(),
         source: String(occurrence.source_detail || occurrence.source || "").trim(),
         subCategory: String(occurrence.sub_category || subCategory).trim(),
         legacyFallback: boolValue(occurrence.legacy_fallback) || String(occurrence.source || "") === "legacy",
+        aspectAllowed,
+        contextAllowed,
       };
     })
     .filter((occurrence) => {
@@ -341,6 +446,8 @@ export function customerLabelOccurrences(
       );
     })
     .map((aspect) => {
+      const aspectClusterPropagated =
+        "cluster_propagated" in aspect ? boolValue(aspect.cluster_propagated) : clusterPropagated;
       const aspectKey = String(aspect.key || aspect.aspect_key || "").trim();
       const label = type === "issue"
         ? localeLabel(aspect.specific_issue, aspect.specific_issue_zh, locale)
@@ -350,6 +457,10 @@ export function customerLabelOccurrences(
         : String(aspect.canonical_highlight_key || "").trim();
       const evidenceSpan = String(aspect.evidence_span || aspect.evidence || "").trim();
       const dimension = aspectKey ? aspectLabel(aspectKey, locale) : String(aspect.dimension || aspect.aspect_label || "").trim();
+      const aspectAllowed = isLabelAspectAllowed(type, canonicalLabelKey, aspectKey);
+      const content = reviewBody(comment);
+      const contextAllowed = !(type === "issue" && canonicalLabelKey === "water_leaks_through" &&
+        isBlockedWaterLeakIssueContext(content, evidenceSpan));
       return {
         type,
         label,
@@ -362,12 +473,14 @@ export function customerLabelOccurrences(
         aspectKey,
         dimension,
         evidenceSpan,
-        evidenceVerified: evidenceVerified(comment, evidenceSpan, clusterPropagated || boolValue(aspect.cluster_propagated)),
-        clusterPropagated: clusterPropagated || boolValue(aspect.cluster_propagated),
+        evidenceVerified: evidenceVerified(comment, evidenceSpan, aspectClusterPropagated),
+        clusterPropagated: aspectClusterPropagated,
         confidence: String(type === "issue" ? aspect.issue_confidence || "" : aspect.highlight_confidence || "").trim(),
         source: String(type === "issue" ? aspect.issue_source || "" : aspect.highlight_source || "").trim(),
         subCategory,
         legacyFallback: false,
+        aspectAllowed,
+        contextAllowed,
       };
     })
     .filter((occurrence) => {
@@ -401,6 +514,8 @@ export function customerLabelOccurrences(
       source: type === "issue" ? "legacy_issue_tag" : "legacy_highlight_tag",
       subCategory: String(comment.sub_category || comment.category || "").trim(),
       legacyFallback: true,
+      aspectAllowed: true,
+      contextAllowed: true,
     }));
 }
 
@@ -445,7 +560,12 @@ function evidenceStrings(value: unknown): string[] {
 }
 
 export function isFrontstageCustomerLabelOccurrence(occurrence: CustomerLabelOccurrence): boolean {
-  return !occurrence.clusterPropagated;
+  return !occurrence.clusterPropagated &&
+    !occurrence.legacyFallback &&
+    occurrence.aspectAllowed &&
+    occurrence.contextAllowed &&
+    occurrence.evidenceVerified &&
+    Boolean(occurrence.evidenceSpan);
 }
 
 export function isVerifiedSourceReviewOccurrence(occurrence: CustomerLabelOccurrence): boolean {

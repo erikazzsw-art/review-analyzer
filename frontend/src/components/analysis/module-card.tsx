@@ -12,7 +12,6 @@ import { InlineActionButton } from "@/components/analysis/inline-action-button";
 import { DownloadTagButton } from "@/components/analysis/download-tag-button";
 import {
   customerLabelOccurrences,
-  isFrontstageCustomerLabelOccurrence,
   isVerifiedSourceReviewOccurrence,
   rowImpactReviewShare,
   rowMentionShare,
@@ -241,7 +240,7 @@ function buildClientXlsx(
       const commentId = comment.id ?? `row-${index}`;
       const counted = new Set<string>();
       for (const occurrence of customerLabelOccurrences(comment, labelType, locale)) {
-        if (!isFrontstageCustomerLabelOccurrence(occurrence)) continue;
+        if (!isVerifiedSourceReviewOccurrence(occurrence)) continue;
         if (!occurrence.canonicalLabelKey) continue;
         const key = `${occurrence.subCategory}::${occurrence.canonicalLabelKey}`;
         const group = groups.get(key) || {

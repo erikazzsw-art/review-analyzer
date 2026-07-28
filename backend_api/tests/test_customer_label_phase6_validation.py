@@ -93,10 +93,12 @@ def test_phase6_fixed_validation_set_top_metrics_and_samples() -> None:
     assert mixed_highlight["customer_highlight"] == "Satisfactory Appearance / Workmanship"
     assert mixed_highlight["evidence_spans"] == ["seem to be decent"]
 
-    legacy = next(row for row in issue_rows if row["canonical_issue_key"] == "zipper_quality")
-    assert legacy["legacy_fallback"] is True
-    assert legacy["evidence_spans"] == ["zipper broke"]
-    assert legacy["representative_comments"] == ["Legacy old session: the zipper broke after one use."]
+    legacy_comment = _comment(comments, "legacy-old-aspects-json")
+    legacy_occurrences = iter_specific_issue_occurrences(legacy_comment, locale="en")
+    assert legacy_occurrences[0]["canonical_issue_key"] == "zipper_quality"
+    assert legacy_occurrences[0]["legacy_fallback"] is True
+    assert legacy_occurrences[0]["source_review_allowed"] is False
+    assert all(row["canonical_issue_key"] != "zipper_quality" for row in issue_rows)
 
     assert any(row["canonical_issue_key"] == "missing_parts" for row in issue_rows)
     assert any(row["canonical_issue_key"] == "mascara_clumps" for row in issue_rows)

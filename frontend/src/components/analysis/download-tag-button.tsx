@@ -5,7 +5,6 @@ import * as XLSX from "xlsx";
 
 import {
   customerLabelOccurrences,
-  isFrontstageCustomerLabelOccurrence,
   isVerifiedSourceReviewOccurrence,
   type CustomerLabelOccurrence,
 } from "@/lib/customer-labels";
@@ -94,7 +93,7 @@ function getMatchedOccurrences(
   const matched: MatchedOccurrence[] = [];
   for (const comment of comments) {
     for (const occurrence of customerLabelOccurrences(comment, labelType, locale)) {
-      if (!isFrontstageCustomerLabelOccurrence(occurrence)) continue;
+      if (!isVerifiedSourceReviewOccurrence(occurrence)) continue;
       if (occurrenceMatches(occurrence, meta, tag, labelType)) {
         matched.push({ comment, occurrence });
       }
@@ -129,9 +128,7 @@ function occurrenceRows(
   tag: string,
 ): (string | number)[][] {
   return matches.map(({ comment, occurrence }) => {
-    const recordScope = isVerifiedSourceReviewOccurrence(occurrence)
-      ? "Verified Evidence"
-      : "Related Review";
+    const recordScope = "Verified Evidence";
     return [
       occurrence.type === "issue" ? "Issue" : "Highlight",
       metaLabel(meta, tag, occurrence.type),
@@ -140,8 +137,8 @@ function occurrenceRows(
       formatShare(meta.impactReviewShare),
       occurrence.rawLabel,
       occurrence.dimension || meta.dimension || "",
-      isVerifiedSourceReviewOccurrence(occurrence) ? occurrence.evidenceSpan : "",
-      isVerifiedSourceReviewOccurrence(occurrence) ? "true" : "false",
+      occurrence.evidenceSpan,
+      "true",
       occurrence.clusterPropagated ? "true" : "false",
       String(comment.content || ""),
       comment.rating != null ? Number(comment.rating) : "",

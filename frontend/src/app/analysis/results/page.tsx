@@ -22,7 +22,11 @@ import {
   getAnalysisSessionResults,
 } from "@/lib/api/server";
 import { isApiError } from "@/lib/api/server";
-import { rowMentionShare } from "@/lib/customer-labels";
+import {
+  customerLabelOccurrences,
+  isVerifiedSourceReviewOccurrence,
+  rowMentionShare,
+} from "@/lib/customer-labels";
 import { buildNoIndexMetadata } from "@/lib/seo";
 
 export const metadata = buildNoIndexMetadata({
@@ -196,9 +200,36 @@ function hasCustomerHighlightEvidence(
   );
 }
 
+function hasCustomerLabelOccurrenceEvidence(
+  comment: Record<string, unknown>,
+  row: Record<string, unknown>,
+  locale: string,
+): boolean | null {
+  const canonicalIssueKey = String(row.canonical_issue_key || "").trim();
+  const canonicalHighlightKey = String(row.canonical_highlight_key || "").trim();
+  const labelType = canonicalIssueKey ? "issue" : canonicalHighlightKey ? "highlight" : null;
+  const canonicalKey = canonicalIssueKey || canonicalHighlightKey;
+  if (!labelType || !canonicalKey) return null;
+
+  const aspectKeys = stringValues(row.aspect_keys);
+  const primaryAspectKey = String(row.aspect_key || "").trim();
+  if (primaryAspectKey && !aspectKeys.includes(primaryAspectKey)) {
+    aspectKeys.unshift(primaryAspectKey);
+  }
+  const subCategory = String(row.sub_category || "").trim();
+  return customerLabelOccurrences(comment, labelType, locale).some((occurrence) => {
+    if (!isVerifiedSourceReviewOccurrence(occurrence)) return false;
+    if (occurrence.canonicalLabelKey !== canonicalKey) return false;
+    if (subCategory && occurrence.subCategory && occurrence.subCategory !== subCategory) return false;
+    if (aspectKeys.length > 0 && occurrence.aspectKey && !aspectKeys.includes(occurrence.aspectKey)) return false;
+    return true;
+  });
+}
+
 function enrichRowsWithQuotes(
   rows: Array<Record<string, unknown>>,
   comments: Array<Record<string, unknown>>,
+  locale: string,
   perRow = 5,
 ): Array<Record<string, unknown>> {
   if (rows.length === 0 || comments.length === 0) return rows;
@@ -217,8 +248,11 @@ function enrichRowsWithQuotes(
     // Pass 1: comments with direct LLM evidence for this customer label occurrence
     for (const c of comments) {
       if (quotes.length >= perRow) break;
+      const occurrenceEvidence = hasCustomerLabelOccurrenceEvidence(c, row, locale);
       if (
-        hasSpecificIdentity
+        occurrenceEvidence !== null
+          ? !occurrenceEvidence
+          : hasSpecificIdentity
           ? !hasSpecificIssueEvidence(c, row)
           : hasHighlightIdentity
             ? !hasCustomerHighlightEvidence(c, row)
@@ -379,14 +413,14 @@ export default async function AnalysisResultsPage({
   const userExperienceRaw = normalizeModule(payload.modules?.user_experience);
   const userExperience = {
     ...userExperienceRaw,
-    positive: enrichRowsWithQuotes(userExperienceRaw.positive, payload.comments, 5),
-    negative: enrichRowsWithQuotes(userExperienceRaw.negative, payload.comments, 5),
+    positive: enrichRowsWithQuotes(userExperienceRaw.positive, payload.comments, locale, 5),
+    negative: enrichRowsWithQuotes(userExperienceRaw.negative, payload.comments, locale, 5),
   };
   const purchaseMotives = normalizeModule(payload.modules?.purchase_motives);
   const unmetNeedsRaw = normalizeModule(payload.modules?.unmet_needs);
   const unmetNeeds = {
     ...unmetNeedsRaw,
-    rows: enrichRowsWithQuotes(unmetNeedsRaw.rows, payload.comments, 5),
+    rows: enrichRowsWithQuotes(unmetNeedsRaw.rows, payload.comments, locale, 5),
   };
   const recommendations = normalizeModule(payload.modules?.recommendations);
 

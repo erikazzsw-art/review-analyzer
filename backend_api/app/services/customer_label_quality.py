@@ -97,12 +97,16 @@ def _occurrence_stats(
             if occurrence.get("cluster_propagated"):
                 item["propagated_occurrence_count"] += 1
             is_frontstage = bool(
-                not occurrence.get("cluster_propagated")
-                and (occurrence.get("legacy_fallback") or occurrence.get("source_review_allowed"))
+                occurrence.get("display_allowed") is not False
+                and not occurrence.get("cluster_propagated")
+                and not occurrence.get("legacy_fallback")
+                and occurrence.get("aspect_allowed") is not False
+                and occurrence.get("context_allowed") is not False
+                and occurrence.get("evidence_span")
             )
             if is_frontstage:
                 item["frontstage_occurrence_count"] += 1
-                if occurrence.get("verified_evidence"):
+                if occurrence.get("verified_evidence") and occurrence.get("source_review_allowed"):
                     item["verified_representative_occurrence_count"] += 1
     return stats
 

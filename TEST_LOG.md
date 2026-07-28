@@ -488,6 +488,16 @@ File "database.py", line 13, in get_connection
 
 ---
 
+### 2026-07-28 5.9.8 Step 2 TIDEWE waders Customer Issue / Customer Label display gating
+
+| 日期 | 范围 | 命令 | 结果 | 结论 |
+|------|------|------|------|------|
+| 2026-07-28 | 后端 focused + 相关回归 | `python3 -m pytest backend_api/tests/test_customer_label_waders_step2_gating.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_customer_label_50u_readiness.py -q` | PASS，65 passed in 1.58s | verified source-review gating 生效：无 evidence / cluster propagated / legacy fallback 不进入单条明细标签和 Top occurrence；no leaks / leak proof 不触发 `water_leaks_through`；phone case/pocket 漏水不归整体 waterproof；raw/full export 与 Top export 审计列一致。 |
+| 2026-07-28 | 前端类型检查 | `npm run typecheck`（cwd=`frontend`） | PASS，`tsc --noEmit` | 前端 Customer Label parser、raw review XLSX、单标签下载、客户端 Top 聚合类型通过。 |
+| 2026-07-28 | 安全边界 | 本地 pytest / typecheck only | PASS | 未调用生产业务 API，未上传生产数据，未触发生产重分析、credit 消耗或 LLM 成本。 |
+
+---
+
 ### 2026-06-26 对比分析版本下拉框 + 产品列表同步修复
 
 | 日期 | 变更类型 | 描述 | 验证结果 |

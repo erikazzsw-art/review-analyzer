@@ -100,34 +100,51 @@ function reviewBody(comment: Record<string, unknown>): string {
   return rv(comment.content || comment.body || comment.comment, "");
 }
 
-function joinIssueField(comment: Record<string, unknown>, field: string, locale: string): string {
-  return customerLabelOccurrences(comment, "issue", locale)
+function joinCustomerLabelField(
+  comment: Record<string, unknown>,
+  type: "issue" | "highlight",
+  field: string,
+  locale: string,
+): string {
+  return customerLabelOccurrences(comment, type, locale)
     .map((occurrence) => {
-      if (field === "specific_issue") return occurrence.label;
-      if (field === "canonical_issue_key") return occurrence.canonicalLabelKey;
+      if (field === "label") return occurrence.label;
+      if (field === "canonical_label_key") return occurrence.canonicalLabelKey;
       if (field === "key" || field === "aspect_key") return occurrence.aspectKey;
-      if (field === "evidence_span") return isVerifiedSourceReviewOccurrence(occurrence) ? occurrence.evidenceSpan : "";
-      if (field === "issue_confidence") return occurrence.confidence;
+      if (field === "evidence_span") return occurrence.evidenceSpan;
+      if (field === "confidence") return occurrence.confidence;
       return "";
     })
     .filter(Boolean)
     .join(", ");
 }
 
-function joinIssueEvidenceVerified(comment: Record<string, unknown>, locale: string): string {
-  return customerLabelOccurrences(comment, "issue", locale)
+function joinCustomerLabelEvidenceVerified(
+  comment: Record<string, unknown>,
+  type: "issue" | "highlight",
+  locale: string,
+): string {
+  return customerLabelOccurrences(comment, type, locale)
     .map((occurrence) => (isVerifiedSourceReviewOccurrence(occurrence) ? "true" : "false"))
     .join(", ");
 }
 
-function joinIssueClusterPropagated(comment: Record<string, unknown>, locale: string): string {
-  return customerLabelOccurrences(comment, "issue", locale)
+function joinCustomerLabelClusterPropagated(
+  comment: Record<string, unknown>,
+  type: "issue" | "highlight",
+  locale: string,
+): string {
+  return customerLabelOccurrences(comment, type, locale)
     .map((occurrence) => (occurrence.clusterPropagated ? "true" : "false"))
     .join(", ");
 }
 
-function joinIssueDimension(comment: Record<string, unknown>, locale: string): string {
-  return customerLabelOccurrences(comment, "issue", locale)
+function joinCustomerLabelDimension(
+  comment: Record<string, unknown>,
+  type: "issue" | "highlight",
+  locale: string,
+): string {
+  return customerLabelOccurrences(comment, type, locale)
     .map((occurrence) => occurrence.dimension || (occurrence.aspectKey ? aspectLabel(occurrence.aspectKey, locale) : ""))
     .filter(Boolean)
     .join(", ");
@@ -145,8 +162,8 @@ function buildRawReviewsXlsx(
   const wb = XLSX.utils.book_new();
   const headers =
     locale === "zh"
-      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户痛点", "Canonical Issue Key", "内部维度", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified", "Cluster Propagated"]
-      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Issue", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified", "Cluster Propagated"];
+      ? ["序号", "评论内容", "评分", "日期", "评论者", "来源", "情感", "分类", "优先级", "分析理由", "改进建议", "问题标签", "亮点标签", "客户痛点", "Canonical Issue Key", "内部维度", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified", "Cluster Propagated", "客户亮点", "Canonical Highlight Key", "Highlight 内部维度", "Highlight Aspect Key", "Highlight Evidence Span", "Highlight Confidence", "Highlight Evidence Verified", "Highlight Cluster Propagated"]
+      : ["No.", "Review", "Rating", "Date", "Reviewer", "Source", "Sentiment", "Category", "Priority", "Reason", "Improvement", "Issue Tags", "Highlight Tags", "Customer Issue", "Canonical Issue Key", "Internal Aspect", "Aspect Key", "Evidence Span", "Issue Confidence", "Evidence Verified", "Cluster Propagated", "Customer Label", "Canonical Highlight Key", "Highlight Internal Aspect", "Highlight Aspect Key", "Highlight Evidence Span", "Highlight Confidence", "Highlight Evidence Verified", "Highlight Cluster Propagated"];
   const rows = comments.map((comment, index) => [
     index + 1,
     reviewBody(comment),
@@ -161,14 +178,22 @@ function buildRawReviewsXlsx(
     rv(comment.improvement, ""),
     customerTagText(comment, "issue", locale),
     customerTagText(comment, "highlight", locale),
-    joinIssueField(comment, "specific_issue", locale),
-    joinIssueField(comment, "canonical_issue_key", locale),
-    joinIssueDimension(comment, locale),
-    joinIssueField(comment, "key", locale) || joinIssueField(comment, "aspect_key", locale),
-    joinIssueField(comment, "evidence_span", locale),
-    joinIssueField(comment, "issue_confidence", locale),
-    joinIssueEvidenceVerified(comment, locale),
-    joinIssueClusterPropagated(comment, locale),
+    joinCustomerLabelField(comment, "issue", "label", locale),
+    joinCustomerLabelField(comment, "issue", "canonical_label_key", locale),
+    joinCustomerLabelDimension(comment, "issue", locale),
+    joinCustomerLabelField(comment, "issue", "key", locale) || joinCustomerLabelField(comment, "issue", "aspect_key", locale),
+    joinCustomerLabelField(comment, "issue", "evidence_span", locale),
+    joinCustomerLabelField(comment, "issue", "confidence", locale),
+    joinCustomerLabelEvidenceVerified(comment, "issue", locale),
+    joinCustomerLabelClusterPropagated(comment, "issue", locale),
+    joinCustomerLabelField(comment, "highlight", "label", locale),
+    joinCustomerLabelField(comment, "highlight", "canonical_label_key", locale),
+    joinCustomerLabelDimension(comment, "highlight", locale),
+    joinCustomerLabelField(comment, "highlight", "key", locale) || joinCustomerLabelField(comment, "highlight", "aspect_key", locale),
+    joinCustomerLabelField(comment, "highlight", "evidence_span", locale),
+    joinCustomerLabelField(comment, "highlight", "confidence", locale),
+    joinCustomerLabelEvidenceVerified(comment, "highlight", locale),
+    joinCustomerLabelClusterPropagated(comment, "highlight", locale),
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -194,6 +219,14 @@ function buildRawReviewsXlsx(
     { wch: 18 },
     { wch: 18 },
     { wch: 18 },
+    { wch: 26 },
+    { wch: 28 },
+    { wch: 24 },
+    { wch: 22 },
+    { wch: 34 },
+    { wch: 18 },
+    { wch: 22 },
+    { wch: 22 },
   ];
   XLSX.utils.book_append_sheet(wb, ws, locale === "zh" ? "评论原文" : "Raw Reviews");
 

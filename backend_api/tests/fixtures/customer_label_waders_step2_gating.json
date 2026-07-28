@@ -1,0 +1,324 @@
+{
+  "name": "5.9.8 Step 2 TIDEWE waders display gating focused fixture",
+  "product_id": "TIDEWE-WD001-local-fixture",
+  "coverage": [
+    "bad four-pack highlight diffusion",
+    "missing evidence",
+    "cluster propagated audit only",
+    "no leaks / leak proof positive waterproof boundary",
+    "phone case and pocket leakage accessory boundary",
+    "not actually used",
+    "generic praise",
+    "mixed review with issue and highlight",
+    "label/aspect conflict"
+  ],
+  "samples": [
+    {
+      "id": "row-2-use-case-only",
+      "step1_row": 2,
+      "content": "They worked well while clearing brush in the marsh.",
+      "bad_highlights": ["fits_as_expected", "good_value_for_the_price", "holds_up_well", "keeps_water_out"],
+      "labels": [{"type": "highlight", "key": "works_well_for_use_case", "aspect_key": "other", "evidence": "clearing brush in the marsh"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["works_well_for_use_case"]
+    },
+    {
+      "id": "row-4-pocket-mixed",
+      "step1_row": 4,
+      "content": "The outside pocket gets wet in rain and the boots are very stiff, but the price is good.",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "outside pocket gets wet"},
+        {"type": "issue", "key": "pocket_not_waterproof", "aspect_key": "accessory_storage", "evidence": "outside pocket gets wet"},
+        {"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "price is good"}
+      ],
+      "expected_issue_keys": ["pocket_not_waterproof"],
+      "expected_highlight_keys": ["good_value_for_the_price"]
+    },
+    {
+      "id": "row-5-old-product-boundary",
+      "step1_row": 5,
+      "content": "My old waders leaked every trip; this pair has a chemical smell and the size runs small.",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "old waders leaked"},
+        {"type": "issue", "key": "strong_chemical_smell", "aspect_key": "material", "evidence": "chemical smell"},
+        {"type": "issue", "key": "runs_too_small", "aspect_key": "size_fit", "evidence": "size runs small"}
+      ],
+      "expected_issue_keys": ["strong_chemical_smell", "runs_too_small"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "row-7-duplicate-size",
+      "step1_row": 7,
+      "content": "The boot runs too small and the chest fit is tight.",
+      "labels": [
+        {"type": "issue", "key": "runs_too_small", "aspect_key": "boot_fit", "evidence": "boot runs too small"},
+        {"type": "issue", "key": "runs_too_small", "aspect_key": "size_fit", "evidence": "chest fit is tight"}
+      ],
+      "expected_issue_keys": ["runs_too_small"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "row-8-negative-no-durability",
+      "step1_row": 8,
+      "content": "No durability at all; the seam tore after one use.",
+      "bad_highlights": ["fits_as_expected", "good_value_for_the_price", "holds_up_well", "keeps_water_out"],
+      "labels": [{"type": "issue", "key": "breaks_easily", "aspect_key": "durability", "evidence": "seam tore"}],
+      "expected_issue_keys": ["breaks_easily"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "row-12-not-waders-fault",
+      "step1_row": 12,
+      "content": "They felt tight because I ordered the wrong size, not the waders fault; great price.",
+      "bad_issues": ["runs_too_small"],
+      "labels": [{"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "great price"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["good_value_for_the_price"]
+    },
+    {
+      "id": "row-13-positive-material-conflict",
+      "step1_row": 13,
+      "content": "The material quality is as good as my friend's expensive waders.",
+      "bad_issues": ["feels_thin_and_flimsy"],
+      "labels": [{"type": "highlight", "key": "good_material_quality", "aspect_key": "material", "evidence": "material quality is as good"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["good_material_quality"]
+    },
+    {
+      "id": "row-15-not-used",
+      "step1_row": 15,
+      "content": "I have not used them in water yet, but they look good out of the box.",
+      "bad_highlights": ["fits_as_expected", "good_value_for_the_price", "holds_up_well", "keeps_water_out"],
+      "labels": [
+        {"type": "highlight", "key": "not_used_yet", "aspect_key": "other", "evidence": "not used them in water yet"},
+        {"type": "highlight", "key": "first_impression_positive", "aspect_key": "other", "evidence": "look good out of the box"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["not_used_yet", "first_impression_positive"]
+    },
+    {
+      "id": "row-18-mixed-fly-fishing",
+      "step1_row": 18,
+      "content": "Great for light fly fishing, but the soles slipped on rocks after two miles.",
+      "labels": [
+        {"type": "highlight", "key": "works_well_for_use_case", "aspect_key": "other", "evidence": "light fly fishing"},
+        {"type": "issue", "key": "poor_traction", "aspect_key": "grip", "evidence": "soles slipped on rocks"},
+        {"type": "issue", "key": "not_for_long_walks", "aspect_key": "comfort", "evidence": "after two miles"}
+      ],
+      "expected_issue_keys": ["poor_traction", "not_for_long_walks"],
+      "expected_highlight_keys": ["works_well_for_use_case"]
+    },
+    {
+      "id": "row-19-durable-missing-hanger",
+      "step1_row": 19,
+      "content": "They are still going strong, but the hanger was missing.",
+      "labels": [
+        {"type": "highlight", "key": "holds_up_well", "aspect_key": "durability", "evidence": "still going strong"},
+        {"type": "issue", "key": "missing_wader_hanger", "aspect_key": "accessory_storage", "evidence": "hanger was missing"}
+      ],
+      "expected_issue_keys": ["missing_wader_hanger"],
+      "expected_highlight_keys": ["holds_up_well"]
+    },
+    {
+      "id": "row-21-real-leak",
+      "step1_row": 21,
+      "content": "After a year, both feet are leaking around the boot seam.",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "aspect_key": "seam_integrity", "evidence": "both feet are leaking around the boot seam"}],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "row-23-not-used-missing-accessories",
+      "step1_row": 23,
+      "content": "The phone protector and hanger were missing; I look forward to trying the waders.",
+      "bad_highlights": ["fits_as_expected", "good_value_for_the_price", "holds_up_well", "keeps_water_out"],
+      "labels": [
+        {"type": "issue", "key": "missing_accessories", "aspect_key": "accessory_storage", "evidence": "phone protector and hanger were missing"},
+        {"type": "highlight", "key": "not_used_yet", "aspect_key": "other", "evidence": "look forward to trying"}
+      ],
+      "expected_issue_keys": ["missing_accessories"],
+      "expected_highlight_keys": ["not_used_yet"]
+    },
+    {
+      "id": "row-27-mixed-good-and-size",
+      "step1_row": 27,
+      "content": "Nice pocket storage, good price, and stayed dry, but the size runs small.",
+      "labels": [
+        {"type": "highlight", "key": "useful_storage_space", "aspect_key": "accessory_storage", "evidence": "Nice pocket storage"},
+        {"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "good price"},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "stayed dry"},
+        {"type": "issue", "key": "runs_too_small", "aspect_key": "size_fit", "evidence": "size runs small"}
+      ],
+      "expected_issue_keys": ["runs_too_small"],
+      "expected_highlight_keys": ["useful_storage_space", "good_value_for_the_price", "keeps_water_out"]
+    },
+    {
+      "id": "row-31-no-leaks-soft-soles",
+      "step1_row": 31,
+      "content": "No leaks after fishing, but the soles are a bit soft.",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "No leaks"},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "No leaks"},
+        {"type": "issue", "key": "soft_soles", "aspect_key": "grip", "evidence": "soles are a bit soft"}
+      ],
+      "expected_issue_keys": ["soft_soles"],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "row-36-petite-negative",
+      "step1_row": 36,
+      "content": "Too long for a short woman and the straps never tighten enough.",
+      "bad_highlights": ["fits_as_expected", "good_value_for_the_price", "holds_up_well", "keeps_water_out"],
+      "labels": [{"type": "issue", "key": "not_petite_friendly", "aspect_key": "size_fit", "evidence": "Too long for a short woman"}],
+      "expected_issue_keys": ["not_petite_friendly"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "row-42-mixed-sweaty",
+      "step1_row": 42,
+      "content": "Short guy fit well and the waders stayed dry, but they get sweaty in summer.",
+      "labels": [
+        {"type": "highlight", "key": "petite_friendly", "aspect_key": "size_fit", "evidence": "Short guy fit well"},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "stayed dry"},
+        {"type": "issue", "key": "not_breathable", "aspect_key": "breathability", "evidence": "get sweaty"}
+      ],
+      "expected_issue_keys": ["not_breathable"],
+      "expected_highlight_keys": ["petite_friendly", "keeps_water_out"]
+    },
+    {
+      "id": "row-46-phone-case",
+      "step1_row": 46,
+      "content": "The phone case leaked, but the waders stayed dry.",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "phone case leaked"},
+        {"type": "issue", "key": "pocket_not_waterproof", "aspect_key": "accessory_storage", "evidence": "phone case leaked"},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "waders stayed dry"}
+      ],
+      "expected_issue_keys": ["pocket_not_waterproof"],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "row-48-price-but-leak-tear",
+      "step1_row": 48,
+      "content": "Cheap price, but water entered through the knee and the knee tore.",
+      "labels": [
+        {"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "Cheap price"},
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "water entered through the knee"},
+        {"type": "issue", "key": "breaks_easily", "aspect_key": "durability", "evidence": "knee tore"}
+      ],
+      "expected_issue_keys": ["water_leaks_through", "breaks_easily"],
+      "expected_highlight_keys": ["good_value_for_the_price"]
+    },
+    {
+      "id": "row-52-old-products-leaked",
+      "step1_row": 52,
+      "content": "Every old pair leaked; these are a great value and I am happy.",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "old pair leaked"},
+        {"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "great value"},
+        {"type": "highlight", "key": "overall_satisfied", "aspect_key": "other", "evidence": "I am happy"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["good_value_for_the_price", "overall_satisfied"]
+    },
+    {
+      "id": "row-55-cluster-plus-real-leak",
+      "step1_row": 55,
+      "content": "Water leaked through the seam during the first trip.",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "Water leaked through", "cluster_propagated": true},
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "seam_integrity", "evidence": "Water leaked through the seam"}
+      ],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "row-62-no-leaks-missing-hanger",
+      "step1_row": 62,
+      "content": "No leaks yet, but the hanger was missing.",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "No leaks"},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "No leaks"},
+        {"type": "issue", "key": "missing_wader_hanger", "aspect_key": "accessory_storage", "evidence": "hanger was missing"}
+      ],
+      "expected_issue_keys": ["missing_wader_hanger"],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "row-66-small-leaks",
+      "step1_row": 66,
+      "content": "I have had small leaks ever since the first trip.",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "small leaks"}],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "row-70-fit-not-used",
+      "step1_row": 70,
+      "content": "They fit well in the living room, but I have not used them in water.",
+      "bad_highlights": ["good_value_for_the_price", "holds_up_well", "keeps_water_out"],
+      "labels": [
+        {"type": "highlight", "key": "fits_as_expected", "aspect_key": "size_fit", "evidence": "fit well"},
+        {"type": "highlight", "key": "not_used_yet", "aspect_key": "other", "evidence": "not used them in water"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["fits_as_expected", "not_used_yet"]
+    },
+    {
+      "id": "row-76-lightweight-durable",
+      "step1_row": 76,
+      "content": "Lightweight and still going strong, though they warm up quick in summer.",
+      "labels": [
+        {"type": "highlight", "key": "lightweight_waders", "aspect_key": "weight", "evidence": "Lightweight"},
+        {"type": "highlight", "key": "holds_up_well", "aspect_key": "durability", "evidence": "still going strong"},
+        {"type": "issue", "key": "gets_hot_quickly", "aspect_key": "temperature_rating", "evidence": "warm up quick"}
+      ],
+      "expected_issue_keys": ["gets_hot_quickly"],
+      "expected_highlight_keys": ["lightweight_waders", "holds_up_well"]
+    },
+    {
+      "id": "row-81-not-tested-aspect-conflict",
+      "step1_row": 81,
+      "content": "The legs are too long and the chest is loose; I have not tested waterproof or grip.",
+      "labels": [
+        {"type": "issue", "key": "runs_too_large", "aspect_key": "size_fit", "evidence": "chest is loose"},
+        {"type": "issue", "key": "pants_too_long", "aspect_key": "size_fit", "evidence": "legs are too long"},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "accessory_storage", "evidence": "tested waterproof"},
+        {"type": "highlight", "key": "not_used_yet", "aspect_key": "other", "evidence": "not tested waterproof"}
+      ],
+      "expected_issue_keys": ["runs_too_large", "pants_too_long"],
+      "expected_highlight_keys": ["not_used_yet"]
+    },
+    {
+      "id": "row-86-smell-size-accessory",
+      "step1_row": 86,
+      "content": "Chemical smell, the size chart was off, and the phone case was not as advertised.",
+      "labels": [
+        {"type": "issue", "key": "strong_chemical_smell", "aspect_key": "material", "evidence": "Chemical smell"},
+        {"type": "issue", "key": "inaccurate_size_chart", "aspect_key": "size_fit", "evidence": "size chart was off"},
+        {"type": "issue", "key": "missing_accessories", "aspect_key": "accessory_storage", "evidence": "phone case was not as advertised"}
+      ],
+      "expected_issue_keys": ["strong_chemical_smell", "inaccurate_size_chart", "missing_accessories"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "row-91-leak-proof",
+      "step1_row": 91,
+      "content": "They are leak proof and stayed dry all day.",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "leak proof"},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "leak proof"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "row-100-generic-negative",
+      "step1_row": 100,
+      "content": "Trash product, would not recommend.",
+      "bad_highlights": ["fits_as_expected", "good_value_for_the_price", "holds_up_well", "keeps_water_out"],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    }
+  ]
+}

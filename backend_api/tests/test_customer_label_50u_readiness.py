@@ -285,12 +285,40 @@ def test_customer_label_quality_warnings_detect_known_bad_shapes() -> None:
     ]
     evidence_gap_comments = [
         {
-            "id": f"evidence-gap-{index}",
-            "content": "The product feels flimsy but does not mention the copied value text.",
+            "id": "evidence-gap-source",
+            "content": "The fabric is hot and not breathable.",
             "sentiment": "negative",
             "sub_category": "apparel",
-            "issue_tag": "Value for Money",
-            "aspects_json": None,
+            "aspects_json": {
+                "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                "sub_category": "apparel",
+                "customer_label_occurrences": [
+                    _occurrence(
+                        {"id": "evidence-gap-source", "content": "The fabric is hot and not breathable."},
+                        {"type": "issue", "key": "not_breathable", "evidence": "not breathable"},
+                    )
+                ],
+            },
+        },
+    ] + [
+        {
+            "id": f"evidence-gap-{index}",
+            "content": "The product feels flimsy but does not mention the copied breathability text.",
+            "sentiment": "negative",
+            "sub_category": "apparel",
+            "aspects_json": {
+                "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                "sub_category": "apparel",
+                "customer_label_occurrences": [
+                    _occurrence(
+                        {
+                            "id": f"evidence-gap-{index}",
+                            "content": "The product feels flimsy but does not mention the copied breathability text.",
+                        },
+                        {"type": "issue", "key": "not_breathable", "evidence": "not breathable"},
+                    )
+                ],
+            },
         }
         for index in range(3)
     ]
@@ -344,8 +372,32 @@ def test_customer_label_quality_warnings_detect_known_bad_shapes() -> None:
             "content": f"Unique label {index} appeared in this source review.",
             "sentiment": "negative",
             "sub_category": "demo",
-            "issue_tag": f"Unique Label {index}",
-            "aspects_json": None,
+            "aspects_json": {
+                "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                "sub_category": "demo",
+                "customer_label_occurrences": [
+                    {
+                        "comment_id": f"long-tail-{index}",
+                        "type": "issue",
+                        "raw_label": f"Unique Label {index}",
+                        "canonical_label_key": f"unique_label_{index}",
+                        "display_label_en": f"Unique Label {index}",
+                        "display_label_zh": f"Unique Label {index}",
+                        "aspect_key": "other",
+                        "evidence_span": f"Unique label {index}",
+                        "evidence_start": 0,
+                        "evidence_end": len(f"Unique label {index}"),
+                        "confidence": "high",
+                        "source": "human",
+                        "source_detail": "long_tail_quality_fixture",
+                        "evidence_verified": True,
+                        "cluster_propagated": False,
+                        "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+                        "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+                        "display_allowed": True,
+                    }
+                ],
+            },
         }
         for index in range(20)
     ]

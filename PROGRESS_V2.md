@@ -8,6 +8,18 @@
 
 ---
 
+### 2026-07-28 5.9.8 Step 2 TIDEWE waders Customer Issue / Customer Label 展示 gating
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-28 | fix | Customer Issue / Customer Label 前台展示与 Top occurrence 统一改为 verified source-review occurrence：必须 display_allowed=true、evidence 可在当前评论原文定位、evidence_verified=true、cluster_propagated=false、非 legacy fallback，且通过 label/aspect allow-list 与 water leak context 边界。legacy、无 evidence、cluster propagated 仅保留 audit/candidate，不再进入单条评论明细标签或 Top 计数。 | `python3 -m pytest backend_api/tests/test_customer_label_waders_step2_gating.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_customer_label_50u_readiness.py -q` PASS；`npm run typecheck` PASS |
+| 2026-07-28 | fix | 补齐 no leaks / leak proof / stayed dry / kept dry 正向防水边界：只允许触发 `keeps_water_out` highlight，不触发 `water_leaks_through` issue；旧产品/他牌漏水、phone case/pocket 漏水不再作为整体 waterproof issue 的 source-review occurrence。 | focused waders fixture 覆盖 row 31/46/52/62/91 等边界，PASS |
+| 2026-07-28 | feat | Raw review full export 与前端 raw review XLSX 增加 Customer Label occurrence 审计列：Canonical Highlight Key、内部维度/aspect、Evidence Span、Highlight Confidence、Highlight Evidence Verified、Highlight Cluster Propagated；单标签下载与客户端 Top 聚合只导出 verified source-review occurrence。 | export 回归与前端 typecheck PASS |
+| 2026-07-28 | test | 新增 `backend_api/tests/fixtures/customer_label_waders_step2_gating.json` 与 focused pytest，覆盖四件套扩散、无 evidence、cluster propagated、phone case/pocket、未实际使用、泛泛好评、mixed review、aspect 冲突等 5.9.8 Step 1 代表样例。 | 4 条 focused pytest PASS |
+| 2026-07-28 | safety | 本步骤仅修改本地业务代码、前端代码、fixture 和测试；未请求生产写路径，未触发生产上传、重分析、credit 或 LLM 成本。 | 本地验证完成 |
+
+---
+
 ## 总体进度
 
 > 最后更新：2026-07-27 | 基于代码实际状态 + 文档 checkbox 统计

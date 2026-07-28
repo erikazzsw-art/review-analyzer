@@ -14,6 +14,7 @@ from backend_api.app.services.specific_issue import (
     build_specific_issue_rows,
     customer_highlight_tags_for_comment,
     customer_issue_tags_for_comment,
+    iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
 )
 
@@ -81,18 +82,35 @@ SPECIFIC_ISSUE_EXPORT_HEADERS = [
     "Cluster Propagated",
 ]
 
+CUSTOMER_HIGHLIGHT_EXPORT_HEADERS = [
+    "客户亮点",
+    "Canonical Highlight Key",
+    "内部维度",
+    "Aspect Key",
+    "Evidence Span",
+    "Highlight Confidence",
+    "Highlight Evidence Verified",
+    "Highlight Cluster Propagated",
+]
 
-def _join_specific_issue_field(comment: dict, field: str) -> str:
+
+def _join_customer_label_field(comment: dict, field: str, *, label_type: str) -> str:
+    iterator = iter_specific_issue_occurrences if label_type == "issue" else iter_customer_highlight_occurrences
     values = []
-    for occurrence in iter_specific_issue_occurrences(comment, locale="zh"):
+    for occurrence in iterator(comment, locale="zh"):
         if field in {"verified_evidence", "cluster_propagated"}:
             values.append("true" if occurrence.get(field) else "false")
             continue
-        if field == "evidence_span" and not occurrence.get("verified_evidence"):
-            values.append("")
-            continue
         values.append(str(occurrence.get(field) or "").strip())
     return ", ".join(value for value in values if value)
+
+
+def _join_specific_issue_field(comment: dict, field: str) -> str:
+    return _join_customer_label_field(comment, field, label_type="issue")
+
+
+def _join_customer_highlight_field(comment: dict, field: str) -> str:
+    return _join_customer_label_field(comment, field, label_type="highlight")
 
 
 def _customer_issue_tag_text(comment: dict) -> str:
@@ -156,6 +174,7 @@ def _build_comments_data(
     ]
     if include_specific_issue:
         headers.extend(SPECIFIC_ISSUE_EXPORT_HEADERS)
+        headers.extend(CUSTOMER_HIGHLIGHT_EXPORT_HEADERS)
     rows = []
     for i, c in enumerate(comments, 1):
         row = [
@@ -184,6 +203,14 @@ def _build_comments_data(
                     _join_specific_issue_field(c, "issue_confidence"),
                     _join_specific_issue_field(c, "verified_evidence"),
                     _join_specific_issue_field(c, "cluster_propagated"),
+                    _join_customer_highlight_field(c, "customer_highlight"),
+                    _join_customer_highlight_field(c, "canonical_highlight_key"),
+                    _join_customer_highlight_field(c, "dimension"),
+                    _join_customer_highlight_field(c, "aspect_key"),
+                    _join_customer_highlight_field(c, "evidence_span"),
+                    _join_customer_highlight_field(c, "highlight_confidence"),
+                    _join_customer_highlight_field(c, "verified_evidence"),
+                    _join_customer_highlight_field(c, "cluster_propagated"),
                 ]
             )
         rows.append(row)
