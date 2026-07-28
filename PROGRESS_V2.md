@@ -222,7 +222,7 @@
 | `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
 | `5.7` 文案/设置/计费迁移 | 已完成 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
 | `5.8` 部署与 Streamlit 下线路径 | 已完成（ECS 生产环境运行中） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
-| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | 已通过只读灰度；`50U-T2` 本地质量基线已完成（`50U-T1/T3` 待授权/未启动） | 标签口径冻结、occurrence 抽取、聚合算法、前端下载、性能优化、灰度验证 | 仅回滚标签/分析结果相关链路 |
+| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | 已通过只读灰度；`50U-T2` 本地质量基线与 `50U-T3` 运营 runbook / 上线门禁已完成（`50U-T1` 待授权） | 标签口径冻结、occurrence 抽取、聚合算法、前端下载、性能优化、灰度验证 | 仅回滚标签/分析结果相关链路 |
 
 ### 执行顺序
 
@@ -627,7 +627,8 @@
 - Phase 7 第四轮 session 111 专项结论：`Water Leaks Through` Top Issue count=8，Representative Evidence 为 `Leaked the first time out`、`leak appeared to be coming from a seam`、`boots started filling with water` 等可定位负向漏水证据；`no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 未进入 `Water Leaks Through` issue；comment 26388 / 26302 均为 5-star positive、`issue_tag=""`，未作为 `Water Leaks Through` Representative Evidence；正向防水 evidence 进入 `Keeps Water Out` highlight。
 - `50U-T2` 质量保障与回归基线已完成本地/代码侧门禁：新增 40 条正式 gold sample fixture，覆盖 `Water Leaks Through`、`Keeps Water Out`、`Value for Money`、`Not Breathable`、missing evidence、cluster-propagated evidence、broad/internal label、Amazon 文本日期，以及正向防水 evidence 不得进入漏水 issue；新增 deterministic pytest gate 与纯本地 label quality warning helper。
 - `50U-T2` 本地验证通过：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py backend_api/tests/test_customer_label_50u_readiness.py -q`：63 passed、4 warnings（既有 Starlette/httpx 与 `datetime.utcnow()` deprecation）；未请求生产、未 push。
-- **规则**：Phase 7 只读灰度门禁可按通过收口；`50U-T2` 仅完成低风险本地质量基线。未获 Erika 新授权前仍不得执行生产上传、重分析、QA、aggregate/export smoke、modern compare 或生产业务 API；`50U-T1/T3` 不自动启动。
+- `50U-T3` 运营 runbook 与上线门禁已完成文档侧收口：新增 `docs/50u-readiness-runbook.md`，覆盖上传失败、worker stuck、LLM 成本异常、credit 补偿、analytics/ledger/LLM usage 对账、`review_date`/date filter、`Not Breathable`/Representative Evidence/`cluster_propagated` 异常记录、50 用户前 checklist 与每日/每周观察项；新增 `docs/50u-production-write-smoke-authorization.md`，明确生产写路径 smoke 的样本/session/credit/LLM 成本/停止条件/回滚补偿/API allow/deny 授权模板。
+- **规则**：Phase 7 只读灰度门禁可按通过收口；`50U-T2` 仅完成低风险本地质量基线，`50U-T3` 仅完成文档/SOP/门禁梳理。未获 Erika 新授权前仍不得执行生产上传、重分析、QA、aggregate/export smoke、modern compare 或生产业务 API；`50U-T1` 不自动启动。
 
 #### 5.9.1 核心口径定义
 
@@ -972,7 +973,7 @@ Phase 7 guardrail（约束，不作为单独待办）：
 
 #### 5.9.7 50 付费用户 readiness（Phase 7 收口后）
 
-目标：Phase 7 修复和第四轮只读灰度已通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 只读门禁已通过，`50U-T2` 本地质量保障与回归基线已完成；`50U-T1` / `50U-T3` 尚未启动，生产真实上传 smoke 必须另行获得 Erika 授权后才能执行。
+目标：Phase 7 修复和第四轮只读灰度已通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 只读门禁已通过，`50U-T2` 本地质量保障与回归基线已完成，`50U-T3` 运营 runbook 与上线门禁已完成；`50U-T1` 生产真实上传 smoke 必须另行获得 Erika 授权后才能执行。
 
 术语说明：`50U-T2` 指“50 users readiness Task 2”，即质量保障与回归基线任务；它把正式 gold sample、Representative Evidence 回归、label stats / 告警集中处理，用来防止 Top Issue / Top Label 质量在承接 50 个付费用户时静默回退。
 
@@ -980,7 +981,7 @@ Phase 7 guardrail（约束，不作为单独待办）：
 |------|--------|------------|------|----------|--------------|
 | 50U-T1 生产写路径 smoke 闭环 | P0 | 0.5 天（约 2-4 小时，取决于 worker / LLM 响应） | 用受控小样本证明真实新用户上传链路可跑通 | 1. 小样本真实上传成功；2. worker 完整处理完成；3. `upload_jobs` 状态正确；4. comments / analysis / cluster / embedding 写入正常；5. LLM usage 记录正常；6. credit ledger 扣减正确；7. analytics event 正常；8. results 只读展示正常；9. 异常时停止并记录，不扩大 | 授权样本、session 数量、预计 credit / LLM 成本；确认是否允许生产真实上传 |
 | 50U-T2 质量保障与回归基线 | P1 | 1 天 | 防止 Top Issue / Top Label / Representative Evidence 质量静默回退 | 1. 建立 30-50 条正式 gold sample；2. 覆盖 `Not Breathable`、`Water Leaks Through`、`Value for Money`、Amazon 文本日期、missing evidence、cluster-propagated evidence、broad/internal label；3. 接入 pytest 或可重复脚本；4. 增加最小 label stats 检查：单标签 100% 异常、evidence_verified 比例过低、broad/internal label 进入 Top、cluster_propagated 占比异常、long-tail label 异常膨胀 | 审核 gold sample 中的高价值真实样本与期望标签；确认异常阈值是否符合业务直觉 |
-| 50U-T3 运营 runbook 与上线门禁 | P1 | 0.5-1 天 | 让 50 用户期间的问题可定位、可回滚、可补偿、可沟通 | 1. 上传失败排查 SOP；2. worker 卡住排查 SOP；3. LLM 成本异常核对 SOP；4. credit 扣错补偿 SOP；5. analytics / ledger / LLM usage 对账 SOP；6. `review_date` / date filter 异常定位 SOP；7. `Not Breathable` / evidence 异常记录规则；8. 50 用户前最终 checklist；9. 50 用户期间每日/每周观察项 | 确认补偿口径、人工响应时限、50 用户期间观察频率与升级联系人 |
+| 50U-T3 运营 runbook 与上线门禁 | P1 | 已完成（文档/SOP） | 让 50 用户期间的问题可定位、可回滚、可补偿、可沟通 | 1. `docs/50u-readiness-runbook.md` 覆盖上传失败、worker stuck、LLM 成本、credit 补偿、analytics/ledger/LLM usage 对账、date filter、label/evidence 异常记录、50 用户前 checklist、每日/每周观察；2. `docs/50u-production-write-smoke-authorization.md` 明确生产写路径 smoke 授权模板、允许/禁止 API、停止条件与补偿口径；3. 未请求生产业务 API，未触发写入或成本 | 确认补偿口径、人工响应时限、50 用户期间观察频率与升级联系人 |
 
 readiness 节奏：
 - Phase 7 第四轮只读灰度观察与结论门禁已完成，结论为 PASS；Phase 7 可按只读灰度通过收口。
@@ -990,7 +991,8 @@ readiness 节奏：
 - [x] session 111 修复提交/部署并通过第四轮只读灰度：`Water Leaks Through` issue 不再接收正向防水 evidence，26388/26302 未作为 issue Representative Evidence，114/96/110/95 回归通过。
 - [x] `50U-T2` 本地质量基线完成：`backend_api/tests/fixtures/customer_label_50u_gold_samples.json` 建立 40 条正式 gold sample；`backend_api/tests/test_customer_label_50u_readiness.py` 接入 pytest 门禁，覆盖 Top Issue / Top Label propagated 不放大、Representative Evidence 可定位、cluster/unverified 不进代表证据、正向防水 evidence guard、Amazon 文本日期、broad/internal label 过滤；`backend_api/app/services/customer_label_quality.py` 提供纯本地 label stats warning helper。
 - [x] `50U-T2` focused 回归通过：新增门禁单跑 6 passed；Phase 7 相关 focused pytest 合计 63 passed、4 warnings（既有 deprecation）。本轮未执行生产上传、重分析、QA、aggregate/export smoke、modern compare，未请求生产业务 API，未 push。
-- **规则**：`50U-T1`、`50U-T3` 尚未启动。其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须另行申请授权并明确样本、预计 credit / LLM 成本、停止条件与回滚口径；`50U-T2` 后续若要把 warning helper 接入生产 session warnings，也需另行确认阈值与上线边界。
+- [x] `50U-T3` 运营 runbook 与上线门禁完成：`docs/50u-readiness-runbook.md` 与 `docs/50u-production-write-smoke-authorization.md` 已建立；覆盖 SOP、对账 SQL、异常记录、50 用户前 checklist、每日/每周观察、生产写路径 smoke 授权字段、停止条件、回滚/补偿与 API allow/deny；本轮只改文档/进度记录，未请求生产业务 API，未触发写入或成本。
+- **规则**：`50U-T1` 尚未启动。生产真实上传 / 重分析 smoke 必须另行申请授权并明确样本、预计 credit / LLM 成本、停止条件与回滚口径；`50U-T2` 后续若要把 warning helper 接入生产 session warnings，也需另行确认阈值与上线边界。
 - **规则**：如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
 
 
