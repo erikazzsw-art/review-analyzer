@@ -222,7 +222,7 @@
 | `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
 | `5.7` 文案/设置/计费迁移 | 已完成 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
 | `5.8` 部署与 Streamlit 下线路径 | 已完成（ECS 生产环境运行中） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
-| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | 阻塞（Phase 7 session 111 本地修复完成 / 待部署复验） | 标签口径冻结、occurrence 抽取、聚合算法、前端下载、性能优化、灰度验证 | 仅回滚标签/分析结果相关链路 |
+| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | 已通过只读灰度（Phase 7 第四轮生产观察通过 / 待 50U readiness 授权） | 标签口径冻结、occurrence 抽取、聚合算法、前端下载、性能优化、灰度验证 | 仅回滚标签/分析结果相关链路 |
 
 ### 执行顺序
 
@@ -622,7 +622,10 @@
 - Phase 7 第三轮生产只读灰度已获 Erika 授权并执行：仅调用 `GET /analysis/sessions/{id}/results` 与生产数据库 SELECT；114/96 通过，111 命中 FAIL / STOP，原因是正向 `no leakage` 代表证据进入 `Water Leaks Through` Top Issue；credit / analytics / LLM / upload_jobs delta 全部为 0。110/95 已在同一授权批次脚本中采集，但因人工语义审查后确认 111 应停止，不作为继续放量通过依据。
 - Phase 7 第三轮阻塞本地修复已完成：`no leakage / no leaks / without leakage / remained dry / kept dry / stayed dry / keep you dry` 等正向防水/否定漏水 evidence 不再生成、投影或保留 `Water Leaks Through` issue；`no leakage` 可进入 `Keeps Water Out` highlight；occurrence ruleset version 已 bump 到 `2026-07-28-phase7-waterproof-positive-guard`，避免 aggregate cache 复用旧规则结果。
 - Phase 7 第三轮阻塞本地验证通过：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py -q`：57 passed；`frontend/ npm run typecheck`：passed；`git diff --check`：passed；未请求生产、未 push。
-- **规则**：Phase 7 当前仍不得直接收口为通过；不进入 5.9.7 50 付费用户 readiness。下一步是提交/部署 session 111 修复，并在 deploy success 后再申请下一轮生产只读观察授权；未获新授权前不得请求生产 API 或执行生产上传、重分析、QA、aggregate/export smoke。
+- Phase 7 session 111 修复已部署确认：GitHub Actions `Deploy to Production` run `30319680758` / `#133` completed/success for `9625a87c73dd6d2c716a358e65ba785f94e26851`；production `/opt/clueai` HEAD 同步为 `9625a87c73dd6d2c716a358e65ba785f94e26851`；production api 容器内 `RESULTS_AI_ENHANCEMENT_ENABLED_ENV=None`，运行时 effective=`False`。
+- Phase 7 第四轮生产只读灰度已获 Erika 授权并执行：仅调用 `GET /analysis/sessions/{id}/results` 与生产数据库 SELECT；按 114 -> 96 -> 111 -> 110 -> 95 顺序全部通过，payload 均无 `embedding`、无 SSL/connection error，credit / analytics / LLM / upload_jobs delta 全部为 0。
+- Phase 7 第四轮 session 111 专项结论：`Water Leaks Through` Top Issue count=8，Representative Evidence 为 `Leaked the first time out`、`leak appeared to be coming from a seam`、`boots started filling with water` 等可定位负向漏水证据；`no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 未进入 `Water Leaks Through` issue；comment 26388 / 26302 均为 5-star positive、`issue_tag=""`，未作为 `Water Leaks Through` Representative Evidence；正向防水 evidence 进入 `Keeps Water Out` highlight。
+- **规则**：Phase 7 只读灰度门禁可按通过收口，但未获 Erika 新授权前仍不得执行生产上传、重分析、QA、aggregate/export smoke 或 modern compare；5.9.7 50U readiness 可作为下一阶段启动讨论，不自动开始生产写路径 smoke。
 
 #### 5.9.1 核心口径定义
 
@@ -656,7 +659,8 @@
 | Phase 7 修复后第二轮生产只读灰度观察 | ❌ FAIL / STOP at session 96 | P0 Evidence/Propagation 修复部署 run `30249258312` success；Erika 授权 A 后仅请求 session-level results，顺序执行 114 -> 96 后停止；114 的 Top Issue `Water Leaks Through` 与 Top Label `Comfortable to Wear` 代表证据可定位且 API Top 统计未被 propagated 放大；96 的 `Value for Money` Top Issue / Top Label 均无 Representative Evidence，触发停止条件；111/110/95 未请求；delta 全部为 0 |
 | Phase 7 第二轮阻塞本地修复 | ✅ 本地完成 / 待部署复验 | 修复 session 96 `Value for Money` legacy/top row Representative Evidence 缺口：legacy label 可从同条评论 verified aspect span 或价格相关原文短语补 span；无 verified span 时前台/导出不展示 Representative Evidence；前端 `customerLabelOccurrences()` recount/export 过滤 propagated occurrence；模块/完整导出不再信旧 `representative_evidence` 字段；本地 focused pytest 53 passed、frontend typecheck passed；未请求生产 |
 | Phase 7 第三轮生产只读灰度观察 | FAIL / STOP at session 111 | deploy run `30254814989` / `#132` success for `ff7e67e`；production HEAD 与 results AI effective=false 均确认；Erika 授权后仅请求 session-level results 与 DB SELECT；114/96 通过，111 的 `Water Leaks Through` Top Issue 第一条 evidence 为正向 `no leakage`（comment 26388，5-star，highlight `Waterproofing`，issue_tag 为空），触发停止；110/95 已在同一授权批次脚本中采集但不改变 stop 结论；delta 全部为 0 |
-| Phase 7 第三轮阻塞本地修复 | ✅ 本地完成 / 待部署复验 | 修复 session 111 正向防水 evidence 污染：`Water Leaks Through` issue 入口新增正向防水/否定漏水 guard，覆盖旧 aspect hint、已成型 occurrence payload、legacy fallback 与 enrich 合并；`no leakage` 可进入 `Keeps Water Out` highlight；新增 comment 26388/26302 风格回归；focused pytest 57 passed、frontend typecheck passed、`git diff --check` passed；未请求生产 |
+| Phase 7 第三轮阻塞本地修复 | ✅ 已部署 / 第四轮复验通过 | 修复 session 111 正向防水 evidence 污染：`Water Leaks Through` issue 入口新增正向防水/否定漏水 guard，覆盖旧 aspect hint、已成型 occurrence payload、legacy fallback 与 enrich 合并；`no leakage` 可进入 `Keeps Water Out` highlight；新增 comment 26388/26302 风格回归；focused pytest 57 passed、frontend typecheck passed、`git diff --check` passed；已由 deploy run `30319680758` 部署 `9625a87` 并通过第四轮只读灰度 |
+| Phase 7 第四轮生产只读灰度观察 | ✅ PASS | deploy run `30319680758` / `#133` success for `9625a87`；production HEAD 与 results AI effective=false 均确认；Erika 授权后仅请求 session-level results 与 DB SELECT；114/96/111/110/95 全部 200、payload 无 `embedding`、无 SSL/connection error、Representative Evidence 可定位；111 正向防水短语不再进入 `Water Leaks Through` issue，26388/26302 未作为 issue evidence；delta 全部为 0 |
 
 #### 5.9.3 验证记录
 
@@ -922,7 +926,9 @@ Phase 7 P0 / P1 验证记录：
 - Phase 7 第二轮阻塞本地修复已完成并验证：legacy `Value for Money` 可从同条评论 verified span 补 Representative Evidence，missing evidence 行明确为空证据；`cluster_propagated=true` occurrence 不进入前端 Top recount 或 tag download，模块/完整导出不导出 propagated / unverified representative evidence。
 - Phase 7 第三轮生产只读观察已执行并按 session 111 异常停止：114/96 修复项通过；111 的 `Water Leaks Through` Top Issue 出现正向 `no leakage` evidence 污染，已记录 comment 26388/26302；110/95 虽已在同一授权批次脚本中采集，但不改变 111 stop 结论；未产生 credit / analytics / LLM / upload_jobs delta。
 - Phase 7 第三轮阻塞本地修复已完成并验证：`Water Leaks Through` issue 入口新增正向防水/否定漏水 guard，覆盖旧 aspect hint、已成型 occurrence payload、legacy fallback 与 enrich 合并；`no leakage` 可进入 `Keeps Water Out` highlight；focused pytest 57 passed、frontend typecheck passed、`git diff --check` passed；未请求生产。
-- **规则**：Phase 7 后续小流量灰度仍暂停扩大。先提交/部署 session 111 修复，再申请下一轮生产只读观察授权；不执行生产上传、重分析、QA、aggregate/export smoke，避免触发 credit/quota/analytics/LLM 成本路径。
+- Phase 7 第四轮生产只读观察已执行并通过：`9625a87` deploy / production HEAD / results AI effective=false 均已确认；Erika 授权后仅请求 114/96/111/110/95 的 session-level results 与 DB SELECT；全部 200，payload 无 `embedding`、无 SSL/connection error，Representative Evidence 可定位，credit / analytics / LLM / upload_jobs delta 均为 0。
+- Phase 7 第四轮 session 111 修复项通过：`Water Leaks Through` Top Issue 不再包含 `no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 等正向防水 evidence；comment 26388 / 26302 仍为 5-star positive 且 `issue_tag=""`，未作为 issue Representative Evidence；`Keeps Water Out` Top Label 保留 `Stayed perfectly dry`、`Keep you dry`、`keeps me dry in water` 等正向防水 evidence。
+- **规则**：Phase 7 只读灰度门禁已通过；未获 Erika 新授权前仍不执行生产上传、重分析、QA、aggregate/export smoke 或 modern compare，避免触发 credit/quota/analytics/LLM 成本路径。
 
 Phase 7 guardrail（约束，不作为单独待办）：
 - 口径冻结：不得修改 `Not Breathable` 标签逻辑，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法；发现异常先记录 session、label、evidence、筛选条件和候选修正规则，再决定是否进入后续修复任务。
@@ -951,19 +957,20 @@ Phase 7 guardrail（约束，不作为单独待办）：
 | Phase 7 P0 Evidence/Propagation 修复/验证 | 已完成 / 第二轮 114 通过 | 1. 修复已推送 `5d1ae58` 并由 deploy run `30249258312` 部署成功；2. 第二轮 114 返回 200、92 comments、无 embedding、无 SSL error、date/Amazon 正常、delta=0；3. 114 Top Issue `Water Leaks Through` count=5，Representative Evidence 3/3 verified；4. API Top 统计未被 propagated occurrence 放大；5. 但第二轮继续到 96 后因 Representative Evidence 缺失停止 | 审核第二轮记录；下一步聚焦 session 96 和前端 recount/export 风险 |
 | Phase 7 第二轮灰度观察 | 已执行 / FAIL / STOP at session 96 | 1. Erika 授权 A 后仅请求 session-level results；2. 114 通过核心修复观察；3. 96 返回 200、661 comments、无 embedding、无 SSL error、date 正常、delta=0；4. 96 Top Issue / Top Label 均为 `Value for Money`，但无 `evidence_spans` 且 `evidence_verified=false`；5. 已停止 111/110/95，不进入 50U readiness | 修复 session 96 Representative Evidence 缺口后，再确认是否授权下一轮只读生产观察 |
 | Phase 7 第三轮灰度观察 | 已执行 / FAIL / STOP at session 111 | 1. `ff7e67e` deploy run `30254814989` success，production HEAD 同步且 results AI effective=false；2. Erika 授权后仅请求 session-level results 与 DB SELECT；3. 114/96 通过，payload 无 embedding、无 SSL error、delta=0；4. 111 返回 200、100 comments、delta=0，但 `Water Leaks Through` Top Issue 第一条 evidence 为正向 `no leakage`，comment 26388/26302 均为 5-star positive，root cluster_propagated=false，旧 aspect 同时带 issue 与 waterproofing highlight；5. 110/95 同批已采集但不改变 111 stop 结论；6. 本地已完成正向防水 evidence guard 修复与 focused regression | 修复提交/部署后，再申请下一轮只读生产观察 |
+| Phase 7 第四轮灰度观察 | 已执行 / PASS | 1. `9625a87` deploy run `30319680758` / `#133` success，production HEAD 同步且 results AI effective=false；2. Erika 授权后仅请求 session-level results 与 DB SELECT；3. 114/96/111/110/95 全部 200，payload 无 embedding、无 SSL error、delta=0；4. 111 `Water Leaks Through` Top Issue count=8，代表证据均为负向漏水 span，26388/26302 未作为 issue evidence；5. `Keeps Water Out` 保留正向防水 evidence；6. 未请求 `/analysis/results`、export、QA、upload、analysis job、reanalyze、modern compare | Phase 7 只读门禁通过；下一步进入 5.9.7 readiness 前需另行授权生产写路径 smoke |
 
 后续 Erika 参与点：
 
 | 什么时候 | 需要做什么 | 预计人力 |
 |----------|------------|----------|
 | P2 production DDL 前 | 已确认备份/PITR、维护窗口、回滚方案与验收样本；production `059`/backfill/只读验收完成 | 已完成 |
-| Phase 7 session 111 修复部署后 | 查看 fixture/gold sample 与 deploy 结果；确认 `no leakage / no leaks / remained dry / kept dry` 等正向防水证据不再进入 `Water Leaks Through` issue，且 114/96 回归仍通过后，再决定是否授权下一轮生产只读观察；当前不请求生产 results，不做上传、重分析、QA 或 export/aggregate smoke | 15-30 分钟 |
+| 5.9.7 readiness 启动前 | Phase 7 第四轮只读灰度已通过；下一步若进入生产写路径 smoke，需确认样本、session 数量、预计 credit / LLM 成本、停止条件与回滚口径 | 15-30 分钟 |
 | 新品类首次接入 | 审核该类目高频候选标签：保留 / 合并 / 改名 / 禁用 | 每个类目 30-60 分钟 |
 | 稳定运行后 | 看异常告警和候选池，只处理高频、前台可见、低置信度或跨品类边界 case | 每周 10-20 分钟 |
 
 #### 5.9.7 50 付费用户 readiness（Phase 7 收口后）
 
-目标：Phase 7 修复和下一轮只读灰度通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 第三轮结论为 FAIL / STOP at session 111，因此 `50U-T1` / `50U-T2` / `50U-T3` 暂不启动；生产真实上传 smoke 不应在正向防水 evidence 污染 `Water Leaks Through` issue 的阻塞解除前执行。
+目标：Phase 7 修复和第四轮只读灰度已通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 只读门禁已通过，但 `50U-T1` / `50U-T2` / `50U-T3` 尚未启动；生产真实上传 smoke 必须另行获得 Erika 授权后才能执行。
 
 术语说明：`50U-T2` 指“50 users readiness Task 2”，即质量保障与回归基线任务；它把正式 gold sample、Representative Evidence 回归、label stats / 告警集中处理，用来防止 Top Issue / Top Label 质量在承接 50 个付费用户时静默回退。
 
@@ -974,13 +981,13 @@ Phase 7 guardrail（约束，不作为单独待办）：
 | 50U-T3 运营 runbook 与上线门禁 | P1 | 0.5-1 天 | 让 50 用户期间的问题可定位、可回滚、可补偿、可沟通 | 1. 上传失败排查 SOP；2. worker 卡住排查 SOP；3. LLM 成本异常核对 SOP；4. credit 扣错补偿 SOP；5. analytics / ledger / LLM usage 对账 SOP；6. `review_date` / date filter 异常定位 SOP；7. `Not Breathable` / evidence 异常记录规则；8. 50 用户前最终 checklist；9. 50 用户期间每日/每周观察项 | 确认补偿口径、人工响应时限、50 用户期间观察频率与升级联系人 |
 
 readiness 节奏：
-- Phase 7 第三轮只读灰度观察与结论门禁已完成，结论为 FAIL / STOP at session 111；Phase 7 不可按通过收口。
+- Phase 7 第四轮只读灰度观察与结论门禁已完成，结论为 PASS；Phase 7 可按只读灰度通过收口。
 - [x] Phase 7 P0 Evidence/Propagation 修复已通过 session 114 只读观察：Representative Evidence 与 API Top 统计门禁恢复，且冻结 `Not Breathable` 与 Phase 1-6 核心算法。
 - [x] session 96 Representative Evidence 缺口已通过第三轮生产只读复验：`Value for Money` Top Issue / Top Label 均有可定位 verified/source-review evidence，且 propagated recount/export 修复已部署。
 - [x] session 111 正向防水 evidence 污染本地修复/验证已完成：`no leakage / no leaks / remained dry / kept dry` 等不得进入 `Water Leaks Through` issue；已补 comment 26388/26302 fixture/gold sample。
-- [ ] session 111 修复提交/部署并在下一轮只读灰度通过后，再进入 50U readiness。
-- **规则**：`50U-T1`、`50U-T2`、`50U-T3` 暂不启动。其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须等待 Phase 7 第三轮阻塞解除和下一轮只读灰度通过后再申请授权。
-- **规则**：生产真实上传 smoke 不应在当前阻塞未解决前执行；如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
+- [x] session 111 修复提交/部署并通过第四轮只读灰度：`Water Leaks Through` issue 不再接收正向防水 evidence，26388/26302 未作为 issue Representative Evidence，114/96/110/95 回归通过。
+- **规则**：`50U-T1`、`50U-T2`、`50U-T3` 尚未启动。其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须另行申请授权并明确样本、预计 credit / LLM 成本、停止条件与回滚口径。
+- **规则**：如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
 
 
 ## Git 分支策略
