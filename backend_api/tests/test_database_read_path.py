@@ -28,7 +28,7 @@ class _FakeCursor:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         return None
 
-    def execute(self, query: str, params: list[object] | tuple[object, ...]) -> None:
+    def execute(self, query: str, params: list[object] | tuple[object, ...] = ()) -> None:
         self._queries.append((query, params))
         if self._execute_error:
             raise self._execute_error
@@ -75,8 +75,89 @@ class _FakeConnection:
         self.rollbacks += 1
 
 
+class _PoolCursor:
+    def __init__(self, conn: _PoolConnection) -> None:
+        self._conn = conn
+
+    def __enter__(self) -> _PoolCursor:
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        return None
+
+    def execute(self, query: str, params: tuple[object, ...] = ()) -> None:
+        self._conn.queries.append((query, params))
+        if self._conn.execute_error:
+            raise self._conn.execute_error
+
+
+class _PoolConnection:
+    def __init__(self, *, execute_error: Exception | None = None) -> None:
+        self.closed = False
+        self.autocommit = False
+        self.execute_error = execute_error
+        self.queries: list[tuple[str, tuple[object, ...]]] = []
+        self.rollbacks = 0
+        self.set_session_calls: list[dict[str, object]] = []
+
+    def cursor(self) -> _PoolCursor:
+        return _PoolCursor(self)
+
+    def rollback(self) -> None:
+        self.rollbacks += 1
+
+    def set_session(self, **kwargs: object) -> None:
+        self.set_session_calls.append(kwargs)
+        if "autocommit" in kwargs:
+            self.autocommit = bool(kwargs["autocommit"])
+
+
+class _Pool:
+    def __init__(self, conns: list[_PoolConnection]) -> None:
+        self.conns = conns
+        self.put_calls: list[tuple[_PoolConnection, bool]] = []
+
+    def getconn(self) -> _PoolConnection:
+        return self.conns.pop(0)
+
+    def putconn(self, conn: _PoolConnection, close: bool = False) -> None:
+        self.put_calls.append((conn, close))
+
+
 def _selected_columns(query: str) -> str:
     return query.split(" FROM comments", 1)[0]
+
+
+def test_get_connection_forces_read_write_session(monkeypatch) -> None:
+    raw_conn = _PoolConnection()
+    pool = _Pool([raw_conn])
+    monkeypatch.setattr(database, "_get_database_url", lambda: "postgresql://example")
+    monkeypatch.setattr(database, "_get_connection_pool", lambda: pool)
+
+    conn = database.get_connection()
+
+    assert conn._conn is raw_conn
+    assert raw_conn.rollbacks == 1
+    assert raw_conn.set_session_calls == [{"readonly": False, "autocommit": True}]
+    assert raw_conn.autocommit is False
+    assert raw_conn.queries == [("SELECT 1", ())]
+
+
+def test_get_connection_reprepares_replacement_connection(monkeypatch) -> None:
+    bad_conn = _PoolConnection(execute_error=psycopg2.InterfaceError("closed"))
+    good_conn = _PoolConnection()
+    pool = _Pool([bad_conn, good_conn])
+    monkeypatch.setattr(database, "_get_database_url", lambda: "postgresql://example")
+    monkeypatch.setattr(database, "_get_connection_pool", lambda: pool)
+
+    conn = database.get_connection()
+
+    assert conn._conn is good_conn
+    assert pool.put_calls == [(bad_conn, True)]
+    assert bad_conn.set_session_calls == [{"readonly": False, "autocommit": True}]
+    assert good_conn.set_session_calls == [{"readonly": False, "autocommit": True}]
+    assert good_conn.autocommit is False
+    assert good_conn.queries == [("SELECT 1", ())]
 
 
 def test_comment_values_normalizes_review_date_from_date_iso() -> None:

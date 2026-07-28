@@ -154,6 +154,13 @@ def _get_connection_pool():
         return None
 
 
+def _prepare_connection_for_use(conn) -> None:
+    """Reset pooled connection state and force subsequent transactions read/write."""
+    conn.rollback()
+    conn.set_session(readonly=False, autocommit=True)
+    conn.autocommit = False
+
+
 class _PooledConnection:
     """轻量包装：将 close() 改为归还到连接池，其他属性透传给真实连接。"""
 
@@ -226,6 +233,7 @@ def get_connection():
         conn = pool.getconn()
 
     try:
+        _prepare_connection_for_use(conn)
         with conn.cursor() as cur:
             cur.execute("SELECT 1")
     except Exception:
@@ -233,6 +241,13 @@ def get_connection():
         try:
             conn = pool.getconn()
         except (psycopg2.OperationalError, psycopg2.pool.PoolError) as e:
+            raise DatabaseConnectionUnavailable("Database connection failed.") from e
+        try:
+            _prepare_connection_for_use(conn)
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1")
+        except Exception as e:
+            pool.putconn(conn, close=True)
             raise DatabaseConnectionUnavailable("Database connection failed.") from e
 
     return _PooledConnection(conn, pool)
