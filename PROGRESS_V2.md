@@ -222,7 +222,7 @@
 | `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
 | `5.7` 文案/设置/计费迁移 | 已完成 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
 | `5.8` 部署与 Streamlit 下线路径 | 已完成（ECS 生产环境运行中） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
-| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | 已通过只读灰度；`50U-T1` 生产写路径 smoke PASS；`50U-T2` 本地质量基线与 `50U-T3` 运营 runbook / 上线门禁已完成 | 标签口径冻结、occurrence 抽取、聚合算法、前端下载、性能优化、灰度验证 | 仅回滚标签/分析结果相关链路 |
+| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | MVP 准确性优先二次重构进行中；历史 Phase 7 / 50U readiness 记录保留 | 展示准确性、aspect 归类准确性、人工在环闭环、真实上传抽查、边界 case 门禁 | 仅回滚标签/分析结果相关链路 |
 
 ### 执行顺序
 
@@ -1062,6 +1062,126 @@ readiness 节奏：
 - 继续调查/治理 Supabase pooler/session 默认 read-only 根因。
 
 **Erika 试运行动作说明：** Erika 接下来会实际上传评论并使用产品；观察点按上述每日/每周清单记录。若试运行中的真实用户操作暴露 worker / credit / LLM / analytics / label evidence 问题，优先记录 incident 与样本，再单独开修复任务，不混入 readiness 正常收口。
+
+#### 5.9.8 MVP 准确性优先二次重构（TIDEWE / waders 基线）
+
+> 触发时间：2026-07-28
+> 触发样本：`/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-人工纠正标签.xlsx`，production 对照链接 `https://www.clueai-reviewlens.com/analysis/results?product_id=TIDEWE-%E4%B8%8B%E6%B0%B4%E6%9C%8D-WD001&range=default&session_id=117`。
+> 结论调整：此前 Phase 7 / 50U readiness 证明了链路、导出、证据审计和生产写路径可运行；TIDEWE 人工标注暴露的是 MVP 核心准确性问题。5.9 在 MVP 前重新进入“准确性优先”状态，展示准确性和 aspect 归类准确性不过门禁，不进入真实用户 MVP。
+
+**人工对照初步发现（100 条 waders）：**
+- Customer Label exact set match `25/100`；人工非空 `74` 条，AI 非空 `58` 条；人工标签总数 `137`，AI 标签总数 `193`。
+- Customer Label 主要问题：AI 对 `36` 条评论批量输出 `尺码合适 / 性价比高 / 耐用可靠 / 防水可靠` 四件套，其中包含负面评分评论和未实际使用评论；人工标注中大量细粒度亮点未覆盖，如场景适用、未实际使用、大码友好、配件实用、轻便、整体满意。
+- Customer Issue exact set match `51/100`；人工非空 `45` 条，AI 非空 `25` 条；漏标标签总数 `60`，误标标签总数 `26`。
+- Customer Issue 主要问题：AI 漏标 `耐用性差 / 防水性差 / 尺码不准 / 气味大 / 小个子不友好` 等；`25` 条 AI issue 非空中 `21` 条无 evidence span，`16` 条为 cluster propagated。
+- 具体 P0 风险：正向或否定漏水表达、旧产品/他牌漏水、配件漏水、未实际使用、泛泛好评、mixed 评论中的一侧标签，都可能影响前台展示、Top10 排序和改进建议。
+
+**MVP 前目标口径：**
+- 展示准确性第一：单条评论明细只展示这条评论原文可验证的 Customer Issue / Customer Label。
+- 归类准确性第二：每个展示标签必须归到正确 aspect；标签对但 aspect 错，也视为影响业务判断的错误。
+- 学习方式：人工标注不是让系统黑箱自学，而是沉淀为 gold set、catalog、alias、边界规则、prompt 示例和自动回归。
+- 泛化方式：通用标签全局复用，大类目标签大类内复用，sub_category 细粒度标签仅在确认范围启用；未确认标签先进入候选池。
+- Erika 前期可提高参与度，优先把展示准确性和 aspect 归类打准；稳定后逐步降到每周 1-2 小时。
+
+**阶段拆解与执行计划：**
+
+执行粒度原则：每次提示词安排一个 `3-5` 个工作日的中型阶段，目标完整、交付物明确、验收门禁清楚；允许在同一对话中分小节推进。如果上下文变长或中途需要换对话，由 Erika 自行开启新对话，并要求加载 `PROGRESS_V2.md` 或上一轮阶段产物继续。每个提示词仍保持单一主目标，避免把无关生产 smoke、人工标注、代码修复和上线授权混在一起。
+
+| 阶段 | 状态 | 目标 | 交付物 | Erika 参与点 |
+|------|------|------|--------|--------------|
+| Step 1 waders 差异基线与口径方案 | 待启动 | 固化 TIDEWE 100 条人工对照，完成错误 taxonomy、首批标签候选、同义合并、aspect 映射和边界 case 方案 | 差异报告、错误类型统计、Top 错误样例、waders 标签候选、label -> allowed_aspect_keys 建议、Step 2 实施清单 | 确认错误分类、标签命名、合并/拆分、aspect 归类是否符合业务判断 |
+| Step 2 明细展示 gating 与回归实现 | 待启动 | 排除单条明细中的 cluster propagated / 无 evidence / source 不可验证标签，并让导出/前端下载一致 | 后端 occurrence 过滤、导出/前端下载一致、focused tests、waders 回放报告 | 上传一次真实评论做快速抽查，只标明显错误 |
+| Step 3 waders catalog / aspect map / 边界 guard | 待启动 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表 | 审核标签命名、边界规则和归类修正 |
+| Step 4 waders 盲测与真实上传验收 | 待启动 | 验证不是“背答案”，用盲测和真实上传判断 waders 是否达到用户可用 | 30-50 条 waders 盲测表、AI vs 人工对比、真实上传抽查表、验收结论 | 完整标注 30-50 条，另做一次真实上传抽查 |
+| Step 5 MVP 关键 sub_category 轮换 | 待启动 | 扩展到 3-5 个 MVP 关键 sub_category，不要求覆盖全部 | 每类 30-50 条 gold set、10-20 条轻量风险抽检、迁移边界记录 | 前期每周约 3-6 小时，后期降到 1-2 小时 |
+| Step 6 50 用户 readiness 回归与上线门禁 | 待启动 | 把标签准确性、生产上传稳定性、未覆盖类目降级和异常闭环合并验收 | readiness 回归报告、生产/准生产 smoke 记录、降级策略验证、回滚与观察清单 | 授权真实上传 smoke，确认是否达到 50 付费用户试运行门槛 |
+
+**验收门禁（MVP 前硬标准）：**
+- 单条明细 Customer Issue / Customer Label 误报率 `<= 10%`。
+- 核心高频标签漏标率 `<= 15-20%`。
+- 单条明细无 evidence 展示率 `= 0`。
+- 单条明细 cluster propagated 展示率 `= 0`。
+- aspect 归类准确率 `>= 85-90%`。
+- Top10 中明显错误标签 `<= 1` 个。
+- 每个已验收 sub_category 至少通过一轮 `30-50` 条盲测。
+- 每个阶段完成后，Erika 真实上传抽查不得出现 P0 错误；如出现，停止进入下一阶段。
+
+**50 付费用户 readiness 最终门禁：**
+- 准确性覆盖：至少 `3-5` 个 MVP 重点 sub_category 通过上述展示准确性、标签准确性、aspect 归类准确性和 Top10 门禁。
+- 未覆盖类目降级：未验收 sub_category 不启用未经确认的细粒度标签；只展示通用层/大类目层高置信标签，新标签进入候选池或低置信提示。
+- 生产稳定性：真实上传 smoke 通过，覆盖上传、worker、results、export/download、credit ledger、LLM usage、analytics event、review_pool/cache 对账；不得出现重复扣费、结果空白、worker stuck 或未授权写入。
+- 口径一致性：结果页 Top10、单条评论明细、XLSX 导出、前端标签下载使用同一套 occurrence / evidence / cluster gating 口径。
+- 异常可发现：无 evidence、cluster propagated、低置信、候选标签、Top10 异常、aspect 冲突、LLM fallback、failed/stuck job 都有 warning/log/人工抽查入口。
+- 异常可回滚：label catalog、alias rules、prompt/ruleset version、前端展示 gating、导出字段和 cache key 均有独立回滚边界；任何 P0 标签错误可暂停放量。
+- 可持续修正：用户反馈/Erika 抽查错误能进入待审核样本池，确认后沉淀为 gold set、alias、边界规则或候选标签决策。
+- 试运行结论：达到“50 个付费用户可以放心上传评论，看到的标签大体可信，明显错误可控，异常可发现、可回滚、可持续修正”后，才允许进入 50 用户试运行。
+
+**异常 / 边界 case 处理矩阵：**
+
+| 边界 case | 处理原则 |
+| --- | --- |
+| 无 evidence 标签 | 不进入单条明细展示，不进 Top10；只作为候选/审计 |
+| cluster propagated 标签 | 不当作该评论自己的标签展示；只保留审计字段 |
+| 好评里有真实问题 | 允许展示 Customer Issue，但必须有原文证据 |
+| 差评里有真实亮点 | 允许展示 Customer Label，但必须有原文证据 |
+| 评分和文本矛盾 | sentiment 可按评分；Issue/Label 必须按文本证据 |
+| mixed review | 同一条评论可同时有 Issue 和 Label，不按整体 sentiment 强制单边 |
+| 否定表达 | `no leaks / leak proof / haven’t had leaks` 不得标“防水性差” |
+| 非当前产品问题 | 旧产品、他牌、历史对比中的问题不得算当前产品痛点 |
+| 配件 vs 主产品 | `phone case / pocket` 漏水归配件/收纳，不归整体防水 |
+| aspect 冲突 | label 与 aspect 不匹配时按 evidence 纠正；无法判断则低置信/待人工 |
+| 泛泛好评 | `Great product / Excellent purchase` 可标整体满意，不自动扩展成四件套 |
+| 未实际使用 | 只能标未实际使用/初步印象，不推断耐用、防水、尺码 |
+| 场景适用 | 飞钓、Alaska、pressure washing 等进入场景标签，不误当功能标签 |
+| 尺码细分 | 靴码归 `boot_fit`，裤长/胸围/肩带归 `size_fit`，小个子/大码适配单独映射 |
+| 同义/近义标签 | 合并 canonical，保留稳定展示名，防止长尾乱分裂 |
+| 过细长尾标签 | 先进入候选池，达到频次或人工确认后正式启用 |
+| 多语言/拼写错误 | alias/normalization 处理，但仍要求 evidence 可定位 |
+| 反讽/语义含混 | 低置信，进入人工抽检优先队列 |
+| 礼物/代他人使用 | 明确描述使用体验才标；纯购买目的不标产品表现 |
+| 物流/售后/包装 | 不归产品本体 aspect，分别归 shipping / customer_service / packaging |
+
+**人工工作量安排：**
+- MVP 前集中期：每周约 `3-6` 小时，优先完成 waders 和 3-5 个关键 sub_category。
+- 每个重点 sub_category：30-50 条完整标注，若同时标 aspect，预计 `1-2.5` 小时。
+- 普通未覆盖 sub_category：先做 10-20 条风险抽检，只有跑偏或业务高价值时升级深度标注。
+- 稳定后维护期：每周 `1-2` 小时，审核候选标签、异常 Top10 和真实上传抽查结果。
+
+**预计工期（到“用户可用”状态）：**
+- 每个任务模块按 `3-5` 个工作日安排，不包含 Erika 人工审核 / 人工标注 / 真实上传抽查等待时间；走到人工确认点时任务自动暂停。
+- `waders` 单一 sub_category 可用：Step 1-4 合计约 `12-20` 个工作日。范围包括差异基线与口径方案、明细展示 gating、首批 waders catalog/aspect map、关键边界 case、一次 Erika 真实上传抽查。
+- 每新增 `1` 个重点 sub_category：约 `3-5` 个工作日，通常包括 30-50 条 gold set 对照、10-20 条风险抽检、迁移边界记录和 focused regression。
+- 最小 50 用户可用版本：`waders + 另外 2 个重点 sub_category + Step 6 readiness`，约 `21-35` 个工作日，即约 `4-7` 周。
+- 更稳的 50 用户版本：`waders + 另外 4 个重点 sub_category + Step 6 readiness`，约 `27-45` 个工作日，即约 `5.5-9` 周。
+- 进入低人工维护状态：约 `6-10` 周。届时通用层、大类目层、候选池、回归测试和阶段抽查机制稳定后，Erika 工作量可逐步降到每周 `1-2` 小时。
+- 不承诺“所有 sub_category 都高准确”：MVP 前只承诺已验收 sub_category 和通用标签层可用；未验收 sub_category 先走通用层 + 风险提示 + 候选标签池。
+
+**第一步执行提示词（3-5 个工作日工作量）：**
+
+```text
+请执行 5.9.8 Step 1：TIDEWE / waders Customer Issue / Customer Label 差异基线与口径方案。
+
+输入：
+- 人工标注表：/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-人工纠正标签.xlsx
+- 线上对照：product_id=TIDEWE-下水服-WD001，session_id=117
+- 目标列：亮点标签-人工标注、客户痛点-人工标注、亮点标签、客户痛点、Canonical Issue Key、内部维度、Aspect Key、Evidence Span、Issue Confidence、Evidence Verified、Cluster Propagated
+
+要求：
+1. 不修改业务代码，不请求生产写路径；只做本地只读分析、文档草案和 fixture/配置草案，不触发 credit 或 LLM 成本。
+2. 按 Customer Issue / Customer Label 分别统计 exact match、AI 误报、AI 漏标、AI 非空但人工为空、人工非空但 AI 为空、无 evidence 标签、cluster propagated 标签。
+3. 输出 Top 误报标签、Top 漏标标签、重复扩散标签组合、最常见人工标签、AI 未覆盖的细粒度标签。
+4. 从 100 条中挑出 20-30 条最有代表性的错误样例，按错误类型分桶：误报、漏标、标签粒度错、aspect 疑似错、evidence 不支持、不应展示、mixed review、否定/旧产品/配件/未使用边界。
+5. 基于人工标签输出 waders 首批正式标签候选，给出保留/合并/改名/禁用建议；同义标签要合并到稳定 canonical key。
+6. 输出 `label -> allowed_aspect_keys` 映射建议，重点区分 waterproof、seam_integrity、accessory_storage、boot_fit、size_fit、durability、material、grip、temperature_rating、breathability、value_for_money、shipping_damage、customer_service。
+7. 输出首批边界 case 处理建议：无 evidence、cluster propagated、no leaks/leak proof、旧产品/他牌、phone case/pocket 漏水、未实际使用、泛泛好评、场景适用、好评含问题、差评含亮点。
+8. 输出 Step 2 的实施清单：哪些代码路径要改、哪些测试要补、哪些导出/前端下载要核验；只给计划，不在本步骤实施代码。
+
+验收：
+- 产出一份可供 Erika 审核的差异基线与口径方案。
+- 方案能说明当前最大问题来自哪里：展示污染、标签粒度、漏标、误报、aspect 归类或 evidence。
+- 方案包含首批 waders 标签候选、同义合并建议、aspect 映射建议、边界 case 建议和 Step 2 可执行清单。
+- 不产生生产写入、credit 消耗或 LLM 成本。
+```
 
 
 ## Git 分支策略
