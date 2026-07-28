@@ -222,7 +222,7 @@
 | `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
 | `5.7` 文案/设置/计费迁移 | 已完成 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
 | `5.8` 部署与 Streamlit 下线路径 | 已完成（ECS 生产环境运行中） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
-| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | 已通过只读灰度（Phase 7 第四轮生产观察通过 / 待 50U readiness 授权） | 标签口径冻结、occurrence 抽取、聚合算法、前端下载、性能优化、灰度验证 | 仅回滚标签/分析结果相关链路 |
+| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | 已通过只读灰度；`50U-T2` 本地质量基线已完成（`50U-T1/T3` 待授权/未启动） | 标签口径冻结、occurrence 抽取、聚合算法、前端下载、性能优化、灰度验证 | 仅回滚标签/分析结果相关链路 |
 
 ### 执行顺序
 
@@ -625,7 +625,9 @@
 - Phase 7 session 111 修复已部署确认：GitHub Actions `Deploy to Production` run `30319680758` / `#133` completed/success for `9625a87c73dd6d2c716a358e65ba785f94e26851`；production `/opt/clueai` HEAD 同步为 `9625a87c73dd6d2c716a358e65ba785f94e26851`；production api 容器内 `RESULTS_AI_ENHANCEMENT_ENABLED_ENV=None`，运行时 effective=`False`。
 - Phase 7 第四轮生产只读灰度已获 Erika 授权并执行：仅调用 `GET /analysis/sessions/{id}/results` 与生产数据库 SELECT；按 114 -> 96 -> 111 -> 110 -> 95 顺序全部通过，payload 均无 `embedding`、无 SSL/connection error，credit / analytics / LLM / upload_jobs delta 全部为 0。
 - Phase 7 第四轮 session 111 专项结论：`Water Leaks Through` Top Issue count=8，Representative Evidence 为 `Leaked the first time out`、`leak appeared to be coming from a seam`、`boots started filling with water` 等可定位负向漏水证据；`no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 未进入 `Water Leaks Through` issue；comment 26388 / 26302 均为 5-star positive、`issue_tag=""`，未作为 `Water Leaks Through` Representative Evidence；正向防水 evidence 进入 `Keeps Water Out` highlight。
-- **规则**：Phase 7 只读灰度门禁可按通过收口，但未获 Erika 新授权前仍不得执行生产上传、重分析、QA、aggregate/export smoke 或 modern compare；5.9.7 50U readiness 可作为下一阶段启动讨论，不自动开始生产写路径 smoke。
+- `50U-T2` 质量保障与回归基线已完成本地/代码侧门禁：新增 40 条正式 gold sample fixture，覆盖 `Water Leaks Through`、`Keeps Water Out`、`Value for Money`、`Not Breathable`、missing evidence、cluster-propagated evidence、broad/internal label、Amazon 文本日期，以及正向防水 evidence 不得进入漏水 issue；新增 deterministic pytest gate 与纯本地 label quality warning helper。
+- `50U-T2` 本地验证通过：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py backend_api/tests/test_customer_label_50u_readiness.py -q`：63 passed、4 warnings（既有 Starlette/httpx 与 `datetime.utcnow()` deprecation）；未请求生产、未 push。
+- **规则**：Phase 7 只读灰度门禁可按通过收口；`50U-T2` 仅完成低风险本地质量基线。未获 Erika 新授权前仍不得执行生产上传、重分析、QA、aggregate/export smoke、modern compare 或生产业务 API；`50U-T1/T3` 不自动启动。
 
 #### 5.9.1 核心口径定义
 
@@ -942,7 +944,7 @@ Phase 7 guardrail（约束，不作为单独待办）：
 - [x] 保持 `Not Breathable` 标签逻辑冻结；本 P0 只处理 Top 统计、Representative Evidence 与前端 recount/export 进入条件，未重构 Phase 1-6 Customer Issue / Customer Label 核心算法。
 - [x] 第三轮生产只读复验确认：session 114 `Water Leaks Through` 3/3 verified，session 96 `Value for Money` issue/label 均恢复 verified/source-review evidence，且 114/96 delta=0。
 - [x] 修复 session 111 正向防水短语污染 `Water Leaks Through`：legacy/aspect projection 中，`no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 不得进入 issue，只能进入正向防水 highlight；已补 comment 26388/26302 fixture/gold sample；本地 focused pytest 57 passed、frontend typecheck passed。
-- [ ] P0 修复提交/部署后，再申请下一轮生产只读灰度观察授权；未获授权前不请求生产 session-level results，不执行上传、重分析、QA、aggregate/export smoke。
+- [x] P0 修复已提交/部署并完成下一轮生产只读灰度观察授权与执行：`9625a87` deploy / production HEAD / results AI effective=false 已确认；Erika 授权后仅请求 114/96/111/110/95 session-level results 与 DB SELECT，全部通过、delta=0；未执行上传、重分析、QA、aggregate/export smoke。后续生产写路径 smoke 另需新授权。
 
 #### 5.9.6 后续任务拆解与 Erika 参与点
 
@@ -970,7 +972,7 @@ Phase 7 guardrail（约束，不作为单独待办）：
 
 #### 5.9.7 50 付费用户 readiness（Phase 7 收口后）
 
-目标：Phase 7 修复和第四轮只读灰度已通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 只读门禁已通过，但 `50U-T1` / `50U-T2` / `50U-T3` 尚未启动；生产真实上传 smoke 必须另行获得 Erika 授权后才能执行。
+目标：Phase 7 修复和第四轮只读灰度已通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 只读门禁已通过，`50U-T2` 本地质量保障与回归基线已完成；`50U-T1` / `50U-T3` 尚未启动，生产真实上传 smoke 必须另行获得 Erika 授权后才能执行。
 
 术语说明：`50U-T2` 指“50 users readiness Task 2”，即质量保障与回归基线任务；它把正式 gold sample、Representative Evidence 回归、label stats / 告警集中处理，用来防止 Top Issue / Top Label 质量在承接 50 个付费用户时静默回退。
 
@@ -986,7 +988,9 @@ readiness 节奏：
 - [x] session 96 Representative Evidence 缺口已通过第三轮生产只读复验：`Value for Money` Top Issue / Top Label 均有可定位 verified/source-review evidence，且 propagated recount/export 修复已部署。
 - [x] session 111 正向防水 evidence 污染本地修复/验证已完成：`no leakage / no leaks / remained dry / kept dry` 等不得进入 `Water Leaks Through` issue；已补 comment 26388/26302 fixture/gold sample。
 - [x] session 111 修复提交/部署并通过第四轮只读灰度：`Water Leaks Through` issue 不再接收正向防水 evidence，26388/26302 未作为 issue Representative Evidence，114/96/110/95 回归通过。
-- **规则**：`50U-T1`、`50U-T2`、`50U-T3` 尚未启动。其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须另行申请授权并明确样本、预计 credit / LLM 成本、停止条件与回滚口径。
+- [x] `50U-T2` 本地质量基线完成：`backend_api/tests/fixtures/customer_label_50u_gold_samples.json` 建立 40 条正式 gold sample；`backend_api/tests/test_customer_label_50u_readiness.py` 接入 pytest 门禁，覆盖 Top Issue / Top Label propagated 不放大、Representative Evidence 可定位、cluster/unverified 不进代表证据、正向防水 evidence guard、Amazon 文本日期、broad/internal label 过滤；`backend_api/app/services/customer_label_quality.py` 提供纯本地 label stats warning helper。
+- [x] `50U-T2` focused 回归通过：新增门禁单跑 6 passed；Phase 7 相关 focused pytest 合计 63 passed、4 warnings（既有 deprecation）。本轮未执行生产上传、重分析、QA、aggregate/export smoke、modern compare，未请求生产业务 API，未 push。
+- **规则**：`50U-T1`、`50U-T3` 尚未启动。其中 `50U-T1` 的生产真实上传 / 重分析 smoke 必须另行申请授权并明确样本、预计 credit / LLM 成本、停止条件与回滚口径；`50U-T2` 后续若要把 warning helper 接入生产 session warnings，也需另行确认阈值与上线边界。
 - **规则**：如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
 
 

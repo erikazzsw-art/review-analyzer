@@ -1,0 +1,443 @@
+{
+  "name": "Customer Issue / Customer Label 50U readiness gold samples",
+  "created_for": "2026-07-28 50U-T2 quality baseline",
+  "sample_count_target": "30-50",
+  "coverage": [
+    "Water Leaks Through",
+    "Keeps Water Out",
+    "Value for Money",
+    "Not Breathable",
+    "missing evidence",
+    "cluster-propagated evidence",
+    "broad/internal label",
+    "Amazon text date",
+    "positive waterproof evidence excluded from Water Leaks Through"
+  ],
+  "samples": [
+    {
+      "id": "50u-water-leak-01",
+      "date": "Reviewed in the United States on July 1, 2026",
+      "expected_review_date": "2026-07-01",
+      "content": "Water leaked through the boot seam on the first trip.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "evidence": "Water leaked through the boot seam"}],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-water-leak-02",
+      "date": "2026-07-02",
+      "content": "After ten minutes I had water leaking in around the boot seam.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "evidence": "water leaking in"}],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-water-leak-03",
+      "date": "2026-07-03",
+      "content": "The boots started filling with water during the creek crossing.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "evidence": "boots started filling with water"}],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-water-leak-04",
+      "date": "2026-07-04",
+      "content": "A leak appeared to be coming from a seam.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "evidence": "leak appeared to be coming from a seam"}],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-water-leak-05",
+      "date": "2026-07-05",
+      "content": "Moisture coming through the knee area soaked my socks.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "evidence": "Moisture coming through"}],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-positive-dry-01",
+      "date": "Reviewed in the United States on July 6, 2026",
+      "expected_review_date": "2026-07-06",
+      "content": "Worked great with no leakage even at waist height.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "evidence": "no leakage"},
+        {"type": "highlight", "key": "keeps_water_out", "evidence": "no leakage"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "50u-positive-dry-02",
+      "date": "2026-07-07",
+      "content": "The waders stayed dry all morning with no leaks at all.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "evidence": "no leaks"},
+        {"type": "highlight", "key": "keeps_water_out", "evidence": "no leaks"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "50u-positive-dry-03",
+      "date": "2026-07-08",
+      "content": "They remained dry after two hours in the river.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "evidence": "remained dry"},
+        {"type": "highlight", "key": "keeps_water_out", "evidence": "remained dry"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "50u-positive-dry-04",
+      "date": "2026-07-09",
+      "content": "My feet kept dry in steady rain.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "evidence": "kept dry"},
+        {"type": "highlight", "key": "keeps_water_out", "evidence": "kept dry"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "50u-positive-dry-05",
+      "date": "2026-07-10",
+      "content": "The inside stayed dry during the storm.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "evidence": "stayed dry"},
+        {"type": "highlight", "key": "keeps_water_out", "evidence": "stayed dry"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "50u-positive-dry-06",
+      "date": "2026-07-11",
+      "content": "These boots keep you dry when the grass is soaked.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [
+        {"type": "issue", "key": "water_leaks_through", "evidence": "keep you dry"},
+        {"type": "highlight", "key": "keeps_water_out", "evidence": "keep you dry"}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "50u-value-issue-01",
+      "date": "Reviewed in Canada on February 29, 2024",
+      "expected_review_date": "2024-02-29",
+      "content": "The fabric feels thin and is not worth the price.",
+      "sentiment": "negative",
+      "sub_category": "apparel",
+      "labels": [{"type": "issue", "key": "value_for_money", "evidence": "not worth the price"}],
+      "expected_issue_keys": ["value_for_money"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-value-issue-02",
+      "date": "2026-07-12",
+      "content": "At this price it feels overpriced for what you get.",
+      "sentiment": "negative",
+      "sub_category": "apparel",
+      "labels": [{"type": "issue", "key": "value_for_money", "evidence": "overpriced"}],
+      "expected_issue_keys": ["value_for_money"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-value-issue-03",
+      "date": "2026-07-13",
+      "content": "The quality is too cheap for the money.",
+      "sentiment": "negative",
+      "sub_category": "apparel",
+      "labels": [{"type": "issue", "key": "value_for_money", "evidence": "too cheap for the money"}],
+      "expected_issue_keys": ["value_for_money"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-value-issue-04",
+      "date": "2026-07-14",
+      "content": "Not a good value for the money because the seams frayed.",
+      "sentiment": "negative",
+      "sub_category": "apparel",
+      "labels": [{"type": "issue", "key": "value_for_money", "evidence": "Not a good value for the money"}],
+      "expected_issue_keys": ["value_for_money"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-value-highlight-01",
+      "date": "Reviewed in the United States on July 15, 2026",
+      "expected_review_date": "2026-07-15",
+      "content": "Great value for the price and the material held up.",
+      "sentiment": "positive",
+      "sub_category": "apparel",
+      "labels": [{"type": "highlight", "key": "value_for_money", "evidence": "Great value for the price"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["value_for_money"]
+    },
+    {
+      "id": "50u-value-highlight-02",
+      "date": "2026-07-16",
+      "content": "Good value for the money for a starter pair.",
+      "sentiment": "positive",
+      "sub_category": "apparel",
+      "labels": [{"type": "highlight", "key": "value_for_money", "evidence": "Good value for the money"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["value_for_money"]
+    },
+    {
+      "id": "50u-value-highlight-03",
+      "date": "2026-07-17",
+      "content": "For the price, these are worth every penny.",
+      "sentiment": "positive",
+      "sub_category": "apparel",
+      "labels": [{"type": "highlight", "key": "value_for_money", "evidence": "worth every penny"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["value_for_money"]
+    },
+    {
+      "id": "50u-value-highlight-04",
+      "date": "2026-07-18",
+      "content": "Affordable and solid, a bargain for weekend fishing.",
+      "sentiment": "positive",
+      "sub_category": "apparel",
+      "labels": [{"type": "highlight", "key": "value_for_money", "evidence": "bargain"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["value_for_money"]
+    },
+    {
+      "id": "50u-not-breathable-01",
+      "date": "Reviewed in the United States on July 19, 2026",
+      "expected_review_date": "2026-07-19",
+      "content": "The fabric is too hot during long walks.",
+      "sentiment": "negative",
+      "sub_category": "apparel",
+      "labels": [{"type": "issue", "key": "not_breathable", "evidence": "too hot"}],
+      "expected_issue_keys": ["not_breathable"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-not-breathable-02",
+      "date": "2026-07-20",
+      "content": "It is not breathable once the weather warms up.",
+      "sentiment": "negative",
+      "sub_category": "apparel",
+      "labels": [{"type": "issue", "key": "not_breathable", "evidence": "not breathable"}],
+      "expected_issue_keys": ["not_breathable"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-not-breathable-03",
+      "date": "2026-07-21",
+      "content": "The suit made me sweat within minutes.",
+      "sentiment": "negative",
+      "sub_category": "apparel",
+      "labels": [{"type": "issue", "key": "not_breathable", "evidence": "made me sweat"}],
+      "expected_issue_keys": ["not_breathable"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-not-breathable-04",
+      "date": "2026-07-22",
+      "content": "Hot and sweaty after only a short hike.",
+      "sentiment": "negative",
+      "sub_category": "apparel",
+      "labels": [{"type": "issue", "key": "not_breathable", "evidence": "Hot and sweaty"}],
+      "expected_issue_keys": ["not_breathable"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-missing-evidence-01",
+      "date": "2026-07-23",
+      "content": "I wore the waders for hours and my knees felt fine.",
+      "sentiment": "positive",
+      "sub_category": "apparel",
+      "labels": [{"type": "highlight", "key": "comfortable_to_wear", "evidence": "comfortable all day", "verified": false}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-missing-evidence-02",
+      "date": "2026-07-24",
+      "content": "The pocket got wet but the copied snippet is from another review.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "pocket_not_waterproof", "evidence": "copied pocket leak", "verified": false}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-cluster-issue-01",
+      "date": "2026-07-25",
+      "content": "Cluster copy says water leaked through the seam.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "evidence": "water leaked through", "cluster_propagated": true}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-cluster-issue-02",
+      "date": "2026-07-26",
+      "content": "Cluster copy repeats water leaking in from another review.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "evidence": "water leaking in", "cluster_propagated": true}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-cluster-issue-03",
+      "date": "2026-07-27",
+      "content": "Cluster copy: a leak at the seam was copied here.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "water_leaks_through", "evidence": "leak at the seam", "cluster_propagated": true}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-cluster-highlight-01",
+      "date": "2026-07-28",
+      "content": "Cluster copy says the waders kept me dry.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [{"type": "highlight", "key": "keeps_water_out", "evidence": "kept me dry", "cluster_propagated": true}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-cluster-highlight-02",
+      "date": "2026-07-29",
+      "content": "Cluster copy says stayed dry all day.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [{"type": "highlight", "key": "keeps_water_out", "evidence": "stayed dry", "cluster_propagated": true}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-cluster-highlight-03",
+      "date": "2026-07-30",
+      "content": "Cluster copy says no leaks at all.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [{"type": "highlight", "key": "keeps_water_out", "evidence": "no leaks", "cluster_propagated": true}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-broad-internal-01",
+      "date": "Reviewed in the United States on July 31, 2026",
+      "expected_review_date": "2026-07-31",
+      "content": "The fabric is waterproof.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [{"type": "highlight", "key": "waterproof", "evidence": "waterproof"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-broad-internal-02",
+      "date": "2026-08-01",
+      "content": "Overall quality is good.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [{"type": "highlight", "key": "quality", "evidence": "quality"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-broad-internal-03",
+      "date": "2026-08-02",
+      "content": "Other comments were fine.",
+      "sentiment": "neutral",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "other", "evidence": "Other"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-broad-internal-04",
+      "date": "2026-08-03",
+      "content": "Waterproofing is listed on the box.",
+      "sentiment": "neutral",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "waterproofing", "evidence": "Waterproofing"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-zipper-01",
+      "date": "2026-08-04",
+      "content": "The zipper broke on day one.",
+      "sentiment": "negative",
+      "sub_category": "outdoor",
+      "labels": [{"type": "issue", "key": "zipper_fails", "evidence": "zipper broke"}],
+      "expected_issue_keys": ["zipper_fails"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-storage-highlight-01",
+      "date": "2026-08-05",
+      "content": "The chest pocket has plenty of storage room.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [{"type": "highlight", "key": "useful_storage_space", "evidence": "plenty of storage room"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["useful_storage_space"]
+    },
+    {
+      "id": "50u-missing-parts-01",
+      "date": "2026-08-06",
+      "content": "The bed frame was missing screws from the box.",
+      "sentiment": "negative",
+      "sub_category": "bed_frame",
+      "labels": [{"type": "issue", "key": "missing_parts", "evidence": "missing screws"}],
+      "expected_issue_keys": ["missing_parts"],
+      "expected_highlight_keys": []
+    },
+    {
+      "id": "50u-traction-highlight-01",
+      "date": "2026-08-07",
+      "content": "The soles had great grip on muddy banks.",
+      "sentiment": "positive",
+      "sub_category": "outdoor",
+      "labels": [{"type": "highlight", "key": "good_traction", "evidence": "great grip"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["good_traction"]
+    },
+    {
+      "id": "50u-amazon-date-highlight-01",
+      "date": "Reviewed in the United States on August 8, 2026",
+      "expected_review_date": "2026-08-08",
+      "content": "Arrived on time and intact with no box damage.",
+      "sentiment": "positive",
+      "sub_category": "home",
+      "labels": [{"type": "highlight", "key": "arrives_on_time_and_intact", "evidence": "Arrived on time and intact"}],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["arrives_on_time_and_intact"]
+    }
+  ]
+}
