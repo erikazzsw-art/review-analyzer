@@ -27,7 +27,15 @@ from backend_api.app.services.review_pool import (
     pool_lookup,
     pool_write,
 )
-from backend_api.app.services.specific_issue import enrich_aspects_json
+from backend_api.app.services.specific_issue import (
+    CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+    CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+    CUSTOMER_LABEL_SCHEMA_VERSION,
+    HIGHLIGHT_RULESET_VERSION,
+    ISSUE_RULESET_VERSION,
+    SPECIFIC_ISSUE_SCHEMA_VERSION,
+    enrich_aspects_json,
+)
 from backend_api.app.services.sub_category_inference import infer_sub_category_from_payload
 from backend_api.app.services.taxonomy_coverage_monitor import (
     build_coverage_warning,
@@ -75,6 +83,34 @@ ANALYZER_VERSION = "v4_deep"
 COMMENT_ANALYSIS_WRITE_BATCH_SIZE = 50
 
 logger = logging.getLogger(__name__)
+
+
+def _fallback_aspects_json_for_error(
+    v4_result: dict[str, Any],
+    *,
+    sub_category: str,
+    prompt_version: str,
+) -> dict[str, Any]:
+    """Build a structured, non-cacheable fallback for exhausted LLM analysis."""
+    return {
+        "sentiment": "unrecognizable",
+        "aspects": [],
+        "pain_points": [],
+        "highlights": [],
+        "evidence_level_overall": "low",
+        "prompt_version": v4_result.get("prompt_version") or prompt_version,
+        "cluster_propagated": False,
+        "analysis_error": str(v4_result.get("error") or "analysis_failed")[:200],
+        "analysis_fallback": True,
+        "sub_category": sub_category,
+        "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
+        "customer_label_schema_version": CUSTOMER_LABEL_SCHEMA_VERSION,
+        "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+        "customer_label_occurrence_ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+        "customer_label_occurrences": [],
+        "issue_ruleset_version": ISSUE_RULESET_VERSION,
+        "highlight_ruleset_version": HIGHLIGHT_RULESET_VERSION,
+    }
 
 
 def _resolve_job_taxonomy(
@@ -596,7 +632,11 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "improvement": "",
                     "issue_tag": "",
                     "highlight_tag": "",
-                    "aspects_json": None,
+                    "aspects_json": _fallback_aspects_json_for_error(
+                        v4,
+                        sub_category=sub_category,
+                        prompt_version=PROMPT_VERSION,
+                    ),
                     "analyzer_version": ANALYZER_VERSION,
                     "cache_hit_level": v4.get("cache_hit_level"),
                     "cache_source_id": v4.get("cache_source_id"),
@@ -806,10 +846,13 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 # pool_backfill_analysis 需要 content_hash + sentiment + aspects_json 才能回填
                 backfill_data = []
                 for comment, result in zip(unprocessed, results):
+                    aspects_json = result.get("aspects_json")
+                    if isinstance(aspects_json, dict) and aspects_json.get("analysis_error"):
+                        continue
                     backfill_data.append({
                         "content_hash": comment.get("content_hash"),
                         "sentiment": result.get("sentiment"),
-                        "aspects_json": result.get("aspects_json"),
+                        "aspects_json": aspects_json,
                     })
                 pool_backfill_analysis(
                     _backfill_platform, _backfill_key, _backfill_market,

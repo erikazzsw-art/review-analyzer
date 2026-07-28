@@ -326,6 +326,24 @@ def test_update_comment_embeddings_batch_uses_one_values_update(monkeypatch) -> 
     assert conn.closed is True
 
 
+def test_content_hash_cache_excludes_error_fallback_aspects(monkeypatch) -> None:
+    queries: list[tuple[str, list[object] | tuple[object, ...]]] = []
+    conn = _FakeConnection(queries, fetchall_rows=[])
+    monkeypatch.setattr(database, "get_connection", lambda: conn)
+
+    database.get_analyzed_by_content_hash(
+        7,
+        ["hash-1"],
+        include_global=True,
+        analyzer_version="v4_deep",
+    )
+
+    combined = "\n".join(query for query, _params in queries)
+    assert "NOT (aspects_json ? 'analysis_error')" in combined
+    assert combined.count("NOT (aspects_json ? 'analysis_error')") == 2
+    assert conn.closed is True
+
+
 def test_update_comment_clusters_batch_uses_one_values_update(monkeypatch) -> None:
     queries: list[tuple[str, list[object] | tuple[object, ...]]] = []
     conn = _FakeConnection(queries)

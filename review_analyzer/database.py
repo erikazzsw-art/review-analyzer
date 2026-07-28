@@ -1470,6 +1470,7 @@ def get_analyzed_by_content_hash(
                      AND content_hash = ANY(%s)
                      AND is_processed = 1
                      AND aspects_json IS NOT NULL
+                     AND NOT (aspects_json ? 'analysis_error')
                    ORDER BY id DESC""",
                 (user_id, content_hashes),
             )
@@ -1497,6 +1498,7 @@ def get_analyzed_by_content_hash(
                                WHERE content_hash = ANY(%s)
                                  AND analyzed_at IS NOT NULL
                                  AND aspects_json IS NOT NULL
+                                 AND NOT (aspects_json ? 'analysis_error')
                                  AND analyzer_version = %s
                                ORDER BY analyzed_at DESC""",
                             (missing, analyzer_version),
@@ -1508,6 +1510,7 @@ def get_analyzed_by_content_hash(
                                WHERE content_hash = ANY(%s)
                                  AND analyzed_at IS NOT NULL
                                  AND aspects_json IS NOT NULL
+                                 AND NOT (aspects_json ? 'analysis_error')
                                ORDER BY analyzed_at DESC""",
                             (missing,),
                         )

@@ -218,7 +218,7 @@ class LLMRouter:
             max_model_attempts: 本次调用最多实际请求多少个 provider；None 表示完整 fallback 链。
 
         Returns:
-            (response, model_name) — OpenAI 兼容 response 对象 + 实际使用的模型名
+            (response, model_id) — OpenAI 兼容 response 对象 + 实际使用的模型 ID
         Raises:
             RuntimeError: 所有模型均不可用
         """
@@ -266,7 +266,7 @@ class LLMRouter:
                     resp = client.chat.completions.create(**kwargs)
                     self._record_success(model)
                     self._log_cache_stats(model, resp)
-                    return resp, model.name
+                    return resp, model.model_id
                 except RateLimitError as e:
                     last_exc = e
                     if attempt == OPENAI_MAX_RETRIES - 1:
