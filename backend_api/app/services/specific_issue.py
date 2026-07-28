@@ -15,7 +15,7 @@ CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION = "1.0"
 ISSUE_RULESET_VERSION = "2026-07-24-customer-label-system"
 HIGHLIGHT_RULESET_VERSION = "2026-07-24-customer-label-system"
 CUSTOMER_LABEL_RULESET_VERSION = f"{ISSUE_RULESET_VERSION}+{HIGHLIGHT_RULESET_VERSION}"
-CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION = "2026-07-27-phase7-legacy-evidence-v2"
+CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION = "2026-07-28-phase7-waterproof-positive-guard"
 
 _OCCURRENCE_SOURCES = {"llm", "rule", "human", "legacy"}
 
@@ -275,9 +275,12 @@ def _should_suppress_apparel_breathability_cluster_issue(
 
 _NEGATED_WATER_LEAK_PATTERNS = [
     r"\bno\s+leaks?\b",
+    r"\bno\s+(?:water\s+)?leakage\b",
     r"\bno\s+water\s+intrusion\b",
     r"\bwithout\s+(any\s+)?leaks?\b",
+    r"\bwithout\s+(any\s+)?(?:water\s+)?leakage\b",
     r"\bnever\s+(had\s+)?leaks?\b",
+    r"\bnever\s+(had\s+)?(?:a\s+)?(?:water\s+)?leakage\b",
     r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+(?:experience|experienced|had|have|see|seen)\s+(?:any\s+)?leak(?:ing|s)?\b",
     r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak(?:ed|ing|s)?\b",
     r"\b(?:do|does|did)(?:n['’]?t| not)\s+see[^.!?\n]{0,80}\bleak\b",
@@ -286,7 +289,7 @@ _NEGATED_WATER_LEAK_PATTERNS = [
 ]
 
 _POSITIVE_DRY_PATTERNS = [
-    r"\b(remained|stayed|kept|keep|keeps)\s+(?:me\s+|my\s+\w+\s+)?dry\b",
+    r"\b(remained|stayed|kept|keep|keeps)\s+(?:(?:me|you|us|him|her|them|my\s+\w+|your\s+\w+|his\s+\w+|her\s+\w+|their\s+\w+)\s+)?(?:\w+ly\s+)?dry\b",
 ]
 
 _WATER_LEAK_HIT_PATTERNS = [
@@ -344,15 +347,36 @@ def _is_positive_dry_statement(text: str) -> bool:
     )
 
 
+def _is_positive_waterproof_evidence_for_issue(evidence: str) -> bool:
+    basis = str(evidence or "").strip()
+    if not basis:
+        return False
+    return _is_negated_water_leak_statement(basis) or _is_positive_dry_statement(basis)
+
+
+def _is_suppressed_water_leak_issue_occurrence(occurrence: dict[str, Any]) -> bool:
+    if str(occurrence.get("type") or "").strip().lower() != "issue":
+        return False
+    canonical = str(
+        occurrence.get("canonical_issue_key") or occurrence.get("canonical_label_key") or ""
+    ).strip()
+    if canonical != "water_leaks_through":
+        return False
+    return _is_positive_waterproof_evidence_for_issue(str(occurrence.get("evidence_span") or ""))
+
+
 def _water_leak_issue_hit(evidence: str, content: str) -> bool:
     basis = evidence.strip() or content[:400]
     if _is_negated_water_leak_statement(basis) or _is_positive_dry_statement(basis):
         return False
     text = f"{evidence} {content[:400]}".lower()
     text = re.sub(r"\bno\s+leaks?\b", " ", text)
+    text = re.sub(r"\bno\s+(?:water\s+)?leakage\b", " ", text)
     text = re.sub(r"\bno\s+water\s+intrusion\b", " ", text)
     text = re.sub(r"\bwithout\s+(any\s+)?leaks?\b", " ", text)
+    text = re.sub(r"\bwithout\s+(any\s+)?(?:water\s+)?leakage\b", " ", text)
     text = re.sub(r"\bnever\s+(had\s+)?leaks?\b", " ", text)
+    text = re.sub(r"\bnever\s+(had\s+)?(?:a\s+)?(?:water\s+)?leakage\b", " ", text)
     text = re.sub(
         r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+(?:experience|experienced|had|have|see|seen)\s+(?:any\s+)?leak(?:ing|s)?\b",
         " ",
@@ -729,6 +753,7 @@ def _append_content_rule_issue_occurrences(
     locale: str,
     aspects_json: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
+    occurrences = [item for item in occurrences if not _is_suppressed_water_leak_issue_occurrence(item)]
     if any(
         str(item.get("canonical_issue_key") or item.get("canonical_label_key") or "") == "water_leaks_through"
         for item in occurrences
@@ -805,6 +830,12 @@ def _project_customer_label_occurrence(
     if not canonical:
         return None
 
+    stored_evidence = str(occurrence.get("evidence_span") or "").strip()
+    if label_type == "issue" and _is_suppressed_water_leak_issue_occurrence(
+        {"type": label_type, "canonical_label_key": canonical, "evidence_span": stored_evidence}
+    ):
+        return None
+
     display_en = str(occurrence.get("display_label_en") or "").strip()
     display_zh = str(occurrence.get("display_label_zh") or "").strip()
     display_label = _display_label_for_locale(display_en, display_zh, locale)
@@ -824,7 +855,6 @@ def _project_customer_label_occurrence(
     ):
         return None
 
-    stored_evidence = str(occurrence.get("evidence_span") or "").strip()
     evidence = _locate_evidence_span(content, stored_evidence)
     if not content:
         evidence = {
@@ -1110,6 +1140,8 @@ def _normalize_aspect_issue(
         if not recovered_rule_hit:
             return None
     existing = None if recovered_rule_hit else _issue_from_existing(aspect, aspect_key, label, locale)
+    if existing and existing[2] == "water_leaks_through" and _is_positive_waterproof_evidence_for_issue(evidence):
+        return None
 
     confidence = str(aspect.get("issue_confidence") or "").lower()
     if confidence not in {"high", "medium", "low"}:
@@ -1184,6 +1216,7 @@ def _highlight_label(en: str, zh: str, canonical: str, source: str) -> tuple[str
 
 def _is_negative_phrase(text: str) -> bool:
     text = re.sub(r"\b(no|without)\s+leaks?\b", " ", text)
+    text = re.sub(r"\b(no|without)\s+(?:water\s+)?leakage\b", " ", text)
     text = re.sub(r"\bnever\s+get\s+wet\b", " ", text)
     return _first_regex(
         [
@@ -1212,6 +1245,7 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
                 r"\b(waterproof|kept|keep|keeps|stayed|stay)\b.*\b(dry|water out)\b",
                 r"\bnever get wet\b",
                 r"\bno leaks?\b",
+                r"\bno\s+(?:water\s+)?leakage\b",
             ],
             text,
         ):
@@ -1527,6 +1561,8 @@ def enrich_aspects_json(
         )
 
     def _append_occurrence(item: dict[str, Any]) -> None:
+        if _is_suppressed_water_leak_issue_occurrence(item):
+            return
         _remember_occurrence(item)
         occurrences.append(item)
 
@@ -1623,10 +1659,7 @@ def enrich_aspects_json(
     enriched["customer_label_schema_version"] = CUSTOMER_LABEL_SCHEMA_VERSION
     enriched["customer_label_occurrence_schema_version"] = CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
     enriched["customer_label_occurrence_ruleset_version"] = CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
-    if occurrences or aspects or not isinstance(existing_occurrences, list):
-        enriched["customer_label_occurrences"] = occurrences
-    else:
-        enriched["customer_label_occurrences"] = existing_occurrences
+    enriched["customer_label_occurrences"] = occurrences
     enriched["issue_ruleset_version"] = ISSUE_RULESET_VERSION
     enriched["highlight_ruleset_version"] = HIGHLIGHT_RULESET_VERSION
     if normalized_sub_category:
@@ -1652,6 +1685,8 @@ def _legacy_issue_occurrences(comment: dict[str, Any], locale: str) -> list[dict
             label=issue,
             label_type="issue",
         )
+        if canonical == "water_leaks_through" and _is_positive_waterproof_evidence_for_issue(evidence_span):
+            continue
         evidence = _locate_evidence_span(content, evidence_span)
         evidence_verified = bool(evidence["evidence_verified"] and not cluster_propagated)
         dimension_en, dimension_zh = _aspect_dimension_labels({}, aspect_key)

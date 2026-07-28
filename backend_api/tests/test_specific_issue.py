@@ -433,6 +433,124 @@ def test_positive_dry_phrases_do_not_create_water_leaks_issue() -> None:
         assert occurrences == []
 
 
+def test_legacy_aspect_water_leak_hint_with_no_leakage_is_suppressed() -> None:
+    content = "Worked great no leakage even at waist height. Great price."
+    comment = {
+        "id": 26302,
+        "content": content,
+        "sentiment": "positive",
+        "issue_tag": "",
+        "highlight_tag": "Waterproofing,Size & Fit",
+        "aspects_json": {
+            "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
+            "customer_label_schema_version": CUSTOMER_LABEL_SCHEMA_VERSION,
+            "sub_category": "outdoor",
+            "aspects": [
+                {
+                    "key": "waterproof",
+                    "polarity": "negative",
+                    "specific_issue": "Water Leaks Through",
+                    "canonical_issue_key": "water_leaks_through",
+                    "specific_issue_raw": "Water Leaks Through",
+                    "issue_confidence": "high",
+                    "display_allowed": True,
+                    "customer_highlight": "Keeps Water Out",
+                    "canonical_highlight_key": "keeps_water_out",
+                    "evidence_span": "no leakage",
+                }
+            ],
+        },
+    }
+
+    assert iter_specific_issue_occurrences(comment, locale="en") == []
+    assert build_specific_issue_rows([comment], locale="en", limit=10) == []
+
+
+def test_occurrence_payload_water_leak_issue_with_no_leakage_is_suppressed_but_highlight_kept() -> None:
+    content = "Got for my son and he loves them. No leakage and the fit is great."
+    comment = _comment_with_occurrences(
+        comment_id=26388,
+        content=content,
+        sentiment="positive",
+        occurrences=[
+            _label_occurrence(
+                label_type="issue",
+                canonical="water_leaks_through",
+                display="Water Leaks Through",
+                aspect_key="waterproof",
+                evidence="No leakage",
+                comment_id=26388,
+            ),
+            _label_occurrence(
+                label_type="highlight",
+                canonical="keeps_water_out",
+                display="Keeps Water Out",
+                aspect_key="waterproof",
+                evidence="No leakage",
+                comment_id=26388,
+            ),
+        ],
+    )
+
+    assert iter_specific_issue_occurrences(comment, locale="en") == []
+    highlights = iter_customer_highlight_occurrences(comment, locale="en")
+    assert len(highlights) == 1
+    assert highlights[0]["canonical_highlight_key"] == "keeps_water_out"
+    assert build_specific_issue_rows([comment], locale="en", limit=10) == []
+
+
+def test_enrich_filters_existing_no_leakage_water_issue_occurrence() -> None:
+    content = "Worked great no leakage even at waist height."
+    enriched = enrich_aspects_json(
+        {
+            "aspects": [],
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrences": [
+                _label_occurrence(
+                    label_type="issue",
+                    canonical="water_leaks_through",
+                    display="Water Leaks Through",
+                    aspect_key="waterproof",
+                    evidence="no leakage",
+                    comment_id=26302,
+                )
+            ],
+        },
+        sub_category="outdoor",
+        content=content,
+        locale="en",
+        comment_id=26302,
+    )
+
+    assert enriched is not None
+    assert enriched["customer_label_occurrences"] == []
+
+
+def test_no_leakage_enriches_keeps_water_out_highlight_not_water_issue() -> None:
+    content = "The waders had no leakage after standing waist deep in the creek."
+    enriched = enrich_aspects_json(
+        {
+            "aspects": [
+                {
+                    "key": "waterproof",
+                    "polarity": "positive",
+                    "evidence_span": "no leakage",
+                }
+            ]
+        },
+        sub_category="outdoor",
+        content=content,
+        locale="en",
+    )
+
+    assert enriched is not None
+    occurrences = enriched["customer_label_occurrences"]
+    assert [item for item in occurrences if item["type"] == "issue"] == []
+    highlight = next(item for item in occurrences if item["type"] == "highlight")
+    assert highlight["canonical_label_key"] == "keeps_water_out"
+    assert highlight["display_label_en"] == "Keeps Water Out"
+
+
 def test_current_product_leak_text_recovers_water_issue_from_cluster_payload() -> None:
     content = (
         "I have had them for about 1 year now. Both feet are leaking around where "
