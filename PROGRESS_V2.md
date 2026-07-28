@@ -1072,9 +1072,15 @@ readiness 节奏：
 **人工对照初步发现（100 条 waders）：**
 - Customer Label exact set match `25/100`；人工非空 `74` 条，AI 非空 `58` 条；人工标签总数 `137`，AI 标签总数 `193`。
 - Customer Label 主要问题：AI 对 `36` 条评论批量输出 `尺码合适 / 性价比高 / 耐用可靠 / 防水可靠` 四件套，其中包含负面评分评论和未实际使用评论；人工标注中大量细粒度亮点未覆盖，如场景适用、未实际使用、大码友好、配件实用、轻便、整体满意。
-- Customer Issue exact set match `51/100`；人工非空 `45` 条，AI 非空 `25` 条；漏标标签总数 `60`，误标标签总数 `26`。
-- Customer Issue 主要问题：AI 漏标 `耐用性差 / 防水性差 / 尺码不准 / 气味大 / 小个子不友好` 等；`25` 条 AI issue 非空中 `21` 条无 evidence span，`16` 条为 cluster propagated。
+- Customer Issue exact set match `51/100`；人工非空 `45` 条，AI 非空 `25` 条；漏标标签总数 `59`，误标标签总数 `26`。
+- Customer Issue 主要问题：AI 漏标 `耐用性差 / 防水性差 / 尺码不准 / 气味大 / 小个子不友好` 等；`33` 个 AI issue occurrence 中 `28` 个无 verified evidence，`27` 个为 cluster propagated；`25` 条 AI issue 非空评论中 `22` 条至少有一个无 evidence issue、`21` 条全部无 verified evidence、`21` 条有 propagated issue。
 - 具体 P0 风险：正向或否定漏水表达、旧产品/他牌漏水、配件漏水、未实际使用、泛泛好评、mixed 评论中的一侧标签，都可能影响前台展示、Top10 排序和改进建议。
+
+**Step 1 执行结果（2026-07-28）：**
+- 已完成 TIDEWE / waders 差异基线与口径方案：`docs/5.9.8-step1-tidewe-waders-baseline.md`。
+- 本轮只读取本地 Excel 与仓库内 taxonomy / export 代码；未请求生产写路径，未调用生产业务 API，未触发 credit、LLM 或重分析成本。
+- Step 1 结论：当前最大问题来自 Customer Label 展示污染、Customer Issue evidence/cluster 门禁失效，以及人工细粒度标签漏标；aspect 归类问题主要集中在 phone case/pocket 漏水、boot_fit vs size_fit、material vs grip/comfort/durability。
+- Step 1 已产出：Customer Issue / Customer Label exact match、AI 误报/漏标、空/非空、无 evidence、cluster propagated 基线；Top 误报/漏标；重复扩散组合；28 条代表性错误样例；waders 首批正式标签候选；同义合并建议；`label -> allowed_aspect_keys` 映射草案；边界 case 处理建议；Step 2 实施清单。
 
 **MVP 前目标口径：**
 - 展示准确性第一：单条评论明细只展示这条评论原文可验证的 Customer Issue / Customer Label。
@@ -1089,7 +1095,7 @@ readiness 节奏：
 
 | 阶段 | 状态 | 目标 | 交付物 | Erika 参与点 |
 |------|------|------|--------|--------------|
-| Step 1 waders 差异基线与口径方案 | 待启动 | 固化 TIDEWE 100 条人工对照，完成错误 taxonomy、首批标签候选、同义合并、aspect 映射和边界 case 方案 | 差异报告、错误类型统计、Top 错误样例、waders 标签候选、label -> allowed_aspect_keys 建议、Step 2 实施清单 | 确认错误分类、标签命名、合并/拆分、aspect 归类是否符合业务判断 |
+| Step 1 waders 差异基线与口径方案 | ✅ 完成 | 固化 TIDEWE 100 条人工对照，完成错误 taxonomy、首批标签候选、同义合并、aspect 映射和边界 case 方案 | `docs/5.9.8-step1-tidewe-waders-baseline.md` | 确认错误分类、标签命名、合并/拆分、aspect 归类是否符合业务判断 |
 | Step 2 明细展示 gating 与回归实现 | 待启动 | 排除单条明细中的 cluster propagated / 无 evidence / source 不可验证标签，并让导出/前端下载一致 | 后端 occurrence 过滤、导出/前端下载一致、focused tests、waders 回放报告 | 上传一次真实评论做快速抽查，只标明显错误 |
 | Step 3 waders catalog / aspect map / 边界 guard | 待启动 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表 | 审核标签命名、边界规则和归类修正 |
 | Step 4 waders 盲测与真实上传验收 | 待启动 | 验证不是“背答案”，用盲测和真实上传判断 waders 是否达到用户可用 | 30-50 条 waders 盲测表、AI vs 人工对比、真实上传抽查表、验收结论 | 完整标注 30-50 条，另做一次真实上传抽查 |
@@ -1155,33 +1161,6 @@ readiness 节奏：
 - 更稳的 50 用户版本：`waders + 另外 4 个重点 sub_category + Step 6 readiness`，约 `27-45` 个工作日，即约 `5.5-9` 周。
 - 进入低人工维护状态：约 `6-10` 周。届时通用层、大类目层、候选池、回归测试和阶段抽查机制稳定后，Erika 工作量可逐步降到每周 `1-2` 小时。
 - 不承诺“所有 sub_category 都高准确”：MVP 前只承诺已验收 sub_category 和通用标签层可用；未验收 sub_category 先走通用层 + 风险提示 + 候选标签池。
-
-**第一步执行提示词（3-5 个工作日工作量）：**
-
-```text
-请执行 5.9.8 Step 1：TIDEWE / waders Customer Issue / Customer Label 差异基线与口径方案。
-
-输入：
-- 人工标注表：/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-人工纠正标签.xlsx
-- 线上对照：product_id=TIDEWE-下水服-WD001，session_id=117
-- 目标列：亮点标签-人工标注、客户痛点-人工标注、亮点标签、客户痛点、Canonical Issue Key、内部维度、Aspect Key、Evidence Span、Issue Confidence、Evidence Verified、Cluster Propagated
-
-要求：
-1. 不修改业务代码，不请求生产写路径；只做本地只读分析、文档草案和 fixture/配置草案，不触发 credit 或 LLM 成本。
-2. 按 Customer Issue / Customer Label 分别统计 exact match、AI 误报、AI 漏标、AI 非空但人工为空、人工非空但 AI 为空、无 evidence 标签、cluster propagated 标签。
-3. 输出 Top 误报标签、Top 漏标标签、重复扩散标签组合、最常见人工标签、AI 未覆盖的细粒度标签。
-4. 从 100 条中挑出 20-30 条最有代表性的错误样例，按错误类型分桶：误报、漏标、标签粒度错、aspect 疑似错、evidence 不支持、不应展示、mixed review、否定/旧产品/配件/未使用边界。
-5. 基于人工标签输出 waders 首批正式标签候选，给出保留/合并/改名/禁用建议；同义标签要合并到稳定 canonical key。
-6. 输出 `label -> allowed_aspect_keys` 映射建议，重点区分 waterproof、seam_integrity、accessory_storage、boot_fit、size_fit、durability、material、grip、temperature_rating、breathability、value_for_money、shipping_damage、customer_service。
-7. 输出首批边界 case 处理建议：无 evidence、cluster propagated、no leaks/leak proof、旧产品/他牌、phone case/pocket 漏水、未实际使用、泛泛好评、场景适用、好评含问题、差评含亮点。
-8. 输出 Step 2 的实施清单：哪些代码路径要改、哪些测试要补、哪些导出/前端下载要核验；只给计划，不在本步骤实施代码。
-
-验收：
-- 产出一份可供 Erika 审核的差异基线与口径方案。
-- 方案能说明当前最大问题来自哪里：展示污染、标签粒度、漏标、误报、aspect 归类或 evidence。
-- 方案包含首批 waders 标签候选、同义合并建议、aspect 映射建议、边界 case 建议和 Step 2 可执行清单。
-- 不产生生产写入、credit 消耗或 LLM 成本。
-```
 
 
 ## Git 分支策略
