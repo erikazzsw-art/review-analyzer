@@ -1017,6 +1017,52 @@ readiness 节奏：
 - **规则**：`50U-T1` 生产真实上传 smoke 已 PASS；后续若要新增生产写路径验证 / 重分析 smoke，仍必须另行申请授权并明确样本、预计 credit / LLM 成本、停止条件与回滚口径；`50U-T2` 后续若要把 warning helper 接入生产 session warnings，也需另行确认阈值与上线边界。
 - **规则**：如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
 
+#### 2026-07-28 补充：50 用户试运行启动前低风险收口
+
+**结论：** 可以进入 50 用户试运行的启动前低风险收口，并具备受控试运行条件。Phase 7 只读灰度已 PASS，`50U-T1` production write-path smoke 已最终 PASS，`50U-T2` 本地质量基线已完成，`50U-T3` runbook / 上线门禁已完成。生产 DB 默认 read-only / Supabase pooler/session 默认值治理已单列为后续问题，当前不阻塞本轮 readiness。
+
+**试运行前 checklist：**
+- [x] Phase 7 第四轮生产只读灰度记录为 PASS。
+- [x] `50U-T1` 最终 PASS 已记录：`job_id=97` / `session_id=116`，15/15 processed/analyzed/review_date normalized，credit `-15`，LLM 15 non-cache，model_name=`gpt-4o-mini`，cost_yuan=`0.084751`。
+- [x] `50U-T2` focused regression / 本地质量基线已完成。
+- [x] `50U-T3` runbook、授权模板、停止条件、补偿规则已完成。
+- [ ] 启动试运行前确认生产服务健康：`api` / `worker` / `scheduler` / `redis` / `frontend` / `nginx`。
+- [ ] 确认 ops alert 渠道是否启用；如暂不启用，明确本轮由人工每日观察替代。
+- [ ] 确认 budget guard 阈值是已配置，或有意禁用并记录。
+- [ ] 确认 credit refund 政策、响应 owner、用户事故沟通时限。
+- [ ] 确认 readiness prep 后未再执行未授权生产上传、重分析、QA、aggregate/export smoke、modern compare 或其他生产业务 API。
+
+**试运行期间每日观察：**
+- 过去 24h `upload_jobs` 状态分布：`queued` / `processing` / `done` / `failed`。
+- stuck job：`queued > 5 分钟`、`processing > 15 分钟无进展`。
+- failed jobs 是否已有 owner、原因、用户影响面和下一步。
+- LLM 日成本、单用户成本集中度、cache hit 情况。
+- `credit_ledger` delta 是否只来自授权/用户真实动作，是否出现异常 `ask` / `export` / `insight` / `translate` / `copywriter` / `competitor`。
+- `analysis_job_complete` 是否缺失，或与 job / LLM / credit 对账不一致。
+- `warnings_json`、Representative Evidence、`cluster_propagated`、`review_date` 是否出现重复异常模式。
+
+**试运行期间每周观察：**
+- 当前分支 / release candidate 跑一次 `50U-T2` focused regression。
+- 复盘 Top failed/stale jobs 与 `trace_json` 阶段耗时。
+- 复盘 LLM cost per analyzed review、cache hit 趋势。
+- 复盘 credit refunds；每笔 refund 必须关联 incident 或 support case。
+- 抽查近期 `warnings_json` 与人工记录的 label/evidence 异常。
+- 抽查 Amazon 文本日期与 `review_date` 归一化 NULL。
+- 汇总用户对 credit、上传状态、标签解释的困惑。
+- 决定异常进入 gold sample、catalog alias 治理，还是单独 fix task。
+
+**必须 Erika 单独授权后才能执行：**
+- 任何新的生产上传、生产写路径 smoke、重分析 smoke。
+- QA / Ask reviews、aggregate results、export smoke、modern compare。
+- 会消耗 credit 或 LLM 成本的生产业务 API。
+- 手动生产 SQL 写入，包括 refund、cleanup、backfill、修数据。
+- 删除或清理 smoke session/job。
+- 把 `50U-T2` warning helper 接入生产 `warnings_json`。
+- 修改 Phase 1-6 核心 label 算法或 `Not Breathable` 语义。
+- 继续调查/治理 Supabase pooler/session 默认 read-only 根因。
+
+**Erika 试运行动作说明：** Erika 接下来会实际上传评论并使用产品；观察点按上述每日/每周清单记录。若试运行中的真实用户操作暴露 worker / credit / LLM / analytics / label evidence 问题，优先记录 incident 与样本，再单独开修复任务，不混入 readiness 正常收口。
+
 
 ## Git 分支策略
 
@@ -2013,7 +2059,8 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 #### P1: 上线后 2 周启动（付费用户 ≥5 触发）
 
-- [ ] **Step 5: AI 输出质量监控面板**
+- [ ] **Step 5: AI 输出质量监控面板（边界调整：并入 7.12 可观测性）**
+  - **归并决策（2026-07-28）：** 本 Step 与 7.12 的 LLM 成本、延迟、失败率、Job Trace、告警、Agent 行为监控高度重叠；后续 AI 输出质量监控统一放入 7.12 执行。7.5 继续保留“用户行为/转化漏斗/PostHog/用户反馈事件源”主线，避免同一监控能力在两个模块重复建设。
   - 看板维度：
     - LLM 平均延迟趋势（按 model / prompt_version 分组）
     - Token 消耗日/周聚合（成本可视化，对照 COST_PROFIT.md 预算）
@@ -2793,11 +2840,104 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 #### Step 5: C5 Feishu 告警（1天）
 
 - [ ] 新建 `workers/alert_checker.py` — scheduler 每 10 分钟调用
-- [ ] 告警条件：日成本 > ¥10 / 错误率 > 20%（1h 窗口）/ 熔断器 open
+- [ ] 告警条件：日成本 > ¥100 / 错误率 > 20%（1h 窗口）/ 熔断器 open
 - [ ] Redis 去重：`alert:{type}:{user_id}` + 1h TTL
 - [ ] 复用 `notifier.py:send_feishu_notification()`
 - [ ] `GET/PUT /analytics/alert-config` 端点
 - [ ] 验证：手动触发超限 → 飞书收到 → 1h 内不重复
+
+#### 2026-07-28 补充：可观测性页面产品化优化执行计划
+
+**定位：** 7.12 底座已能“记录和展示”成本、延迟、失败率、Job Trace、缓存、模型状态；下一阶段目标是让管理员能“一眼判断是否异常、异常在哪里、下一步查什么”。该计划同时承接 7.5 Step 5 的 AI 输出质量监控内容，7.5 只保留用户行为与转化分析主线。
+
+**页面阅读模型：**
+- 第一层：系统健康结论（正常 / 注意 / 异常 / 严重）
+- 第二层：异常原因归类（模型不可用、LLM 延迟高、失败率高、成本突增、缓存失效、任务卡住）
+- 第三层：定位入口（失败任务、trace timeline、模型 fallback/retry、成本排行、缓存 miss 原因）
+
+**默认阈值与异常值口径：**
+
+| 指标 | Warning 阈值 | Critical 阈值 | 异常值判断 |
+|------|--------------|---------------|------------|
+| LLM 错误率 | 1h > 5% | 1h > 20% | 与最近 7 日同小时均值相比 > 3 倍也标记异常 |
+| LLM P95 延迟 | > 15s | > 30s | 与最近 7 日 P95 中位数相比 > 2 倍也标记异常 |
+| 单用户日成本 | > ¥5 | > ¥20 | 上传量未明显增加但成本 > 7 日均值 3 倍 |
+| 系统日成本 | > ¥100 | > ¥200 | 作为运维预算保护线 |
+| 缓存节省率 | < 50% | < 20% | 新品类/首次上传豁免；同品类重复上传才触发 |
+| 模型熔断 | 任一 provider circuit open | 主 provider + 备用 provider 同时 open | 立即进入告警 |
+| 单次 token | > 2000 | > 4000 | 不记录正文，只记录 token、hash、job_id |
+| 任务耗时 | processing > 15min | processing > 30min | 结合 trace 判断卡在哪一阶段 |
+
+**P0：让页面“看得懂”（优先执行，0.5-1 天）**
+- [ ] 新增指标解释层：每个 StatCard 增加 tooltip/说明，解释“这个指标是什么、正常范围是什么、异常后看哪里”
+- [ ] 新增状态标签：错误率、P95、成本、缓存节省率显示 `正常 / 注意 / 异常 / 严重`
+- [ ] 修正时间范围：`1h/6h/24h` 后端按小时窗口查询，不再统一折算成 1 day
+- [ ] 增加空数据说明：无 trace / 无 llm_usage_log / 无 analytics_events 时说明原因和下一步
+- [ ] 验收：非工程背景用户能按页面提示判断“现在是否异常”和“下一步点哪个 Tab”
+
+**P1：把告警 Tab 做实 + 失败任务可排障（1-2 天）**
+- [ ] 完成 `workers/alert_checker.py`：每 10 分钟扫描错误率、P95、成本、缓存、熔断、卡死任务
+- [ ] 新增/完善 `GET/PUT /analytics/alert-config`：支持阈值配置、开关、Webhook 目标、Redis TTL 去重
+- [ ] Alerts Tab 从占位改为可用：展示当前触发中的告警、历史告警、阈值配置、最近发送时间
+- [ ] 任务列表增加失败阶段、错误类型、可复制 Job ID、关联 session_id/product_id、是否扣费/是否部分完成
+- [ ] 验收：模拟错误率/成本/熔断/卡死任务，页面与飞书均可见，1h 内不重复刷屏
+
+**P2：从“阶段耗时”升级为“决策可观测”（2-3 天）**
+- [ ] 扩展 `JobTrace`：新增 `decisions/events/warnings`，不只记录 stages
+- [ ] Trace 记录聚类决策：是否启用聚类、跳过原因、cluster_count、representatives_count、needs_llm_count
+- [ ] Trace 记录缓存来源：本人历史、全局 review_pool、语义相似、聚类传播、miss 原因
+- [ ] Trace 记录 LLM 路由：provider attempt/success/failure/fallback/circuit/429 retry
+- [ ] Trace 记录 Prompt 与质量：prompt_version、locale、json_decode、schema_invalid、retry_count、final_success
+- [ ] 验收：点开任意任务，能回答“为什么贵/慢/失败/走了哪个模型/为什么没有缓存命中”
+
+**P3：成本归因、缓存分层、健康评分（2-4 天）**
+- [ ] 成本页增加单任务成本排行、单评论成本、模型切换导致的成本变化、token 异常排行
+- [ ] 缓存页拆分命中来源：L1 精确 hash、全局 pool、语义相似、聚类节省、miss 原因
+- [ ] 概览页新增系统健康评分：综合错误率、P95、熔断、成本、缓存、失败任务，输出 `健康 / 注意 / 异常 / 严重`
+- [ ] 新增 `/analytics/observability-summary`：给前端一次性返回健康结论、异常原因、建议排查入口
+- [ ] 验收：管理员无需理解每个原始指标，也能先看健康结论，再按建议进入对应 Tab
+
+#### 2026-07-28 补充：Agent 行为监控补强计划
+
+**定位：** 7.12 已完成“系统可观测性”底座（成本、延迟、失败率、Job Trace、缓存、模型状态），下一步补“Agent 行为可观测性”。目标不是再做一个漂亮面板，而是能回答：模型为什么失败、是否在无效 retry、Router 是否频繁 fallback、聚类传播是否带来质量风险。
+
+**落地前置条件：**
+- [ ] C1-C4 已稳定写入 `analytics_events`、`llm_usage_log`、`upload_jobs.trace_json`
+- [ ] 所有新增埋点继续 fire-and-forget，失败只记 log，不阻塞上传/分析主流程
+- [ ] 告警先只发运维 Webhook，不直接自动停服；硬熔断仍以 `BUDGET_DAILY_TOTAL_YUAN=100` 等预算阈值为准
+- [ ] 仅记录错误类型、计数、hash/trace id，不记录完整评论正文到告警文本，避免泄露用户数据
+
+**新增指标与落地条件：**
+
+| 指标 | 要解决的问题 | 数据来源/实现点 | 落地条件 | 建议告警阈值 |
+|------|--------------|-----------------|----------|--------------|
+| JSON 失败率 | 模型没按 JSON 输出，导致解析失败 | `deep_analyzer.analyze_one()` 在 `json.JSONDecodeError` 时写 `error_type=json_decode`，聚合到 `/analytics/llm-quality` | 可按 model / prompt_version / sub_category 统计 1h、24h 失败率 | 1h > 5% warning |
+| `schema_invalid` 失败率 | JSON 形状对，但字段/枚举/aspect key 不合规 | `_validate_annotation()` 返回的 `err` 写入 `schema_error`，`track_llm_call()` 扩展 properties | 可定位到具体错误，如 `aspect.key_invalid`、`evidence_level_invalid` | 1h > 10% warning |
+| retry 次数和 retry 成功率 | 发现“同样错误反复调用”的无效循环 | `analyze_one()` 记录 `attempt`、`retry_count`、`retry_final_success`、`retry_stopped_reason` | 相同 `content_hash + prompt_version + model + error_type/schema_error` 连续失败时短路 | retry_rate > 15% warning |
+| router fallback 次数 | 判断主模型是否不稳定、fallback 链是否异常 | `llm_router.py` 写 `llm_router_attempt` / `llm_router_fallback` / `llm_router_failure` 事件 | Dashboard 能看 fallback_rate、失败原因、provider 分布 | 1h fallback_rate > 30% warning |
+| circuit open 次数 | 发现模型熔断和半开探测失败 | 复用 `/analytics/model-status`，同时把 open/half-open/close 写入事件 | 任一 provider circuit open 可被 Alerts tab 和飞书看到 | circuit open 立即 warning |
+| `needs_llm=True` 聚类低质量评论数量 | 避免低质量簇被静默传播成差结果 | `propagate_cluster_results()` 输出 low-quality cluster 摘要，`workers/jobs.py` 写入 trace decisions/events | trace 中可见 `low_quality_clusters`、`needs_llm_count`、`needs_llm_reanalyzed` | needs_llm_rate > 5% warning |
+| 单次 token 异常 | 发现异常长输入、prompt 膨胀或潜在 prompt injection | `track_llm_call()` 记录 `input_tokens + output_tokens`，超阈值写 warning event | 可按用户/job/comment_hash 追踪，但告警不带正文 | 单次 tokens > 2000 warning |
+| QA Intent 真实命中率 | 验证纯正则 `classify_intent()` 是否真的能覆盖线上问法 | 从 `qa_messages` 抽真实 user 问题，人工标注意图后离线跑 `classify_intent()` 对比 | 样本 >=100，目标 200；固定使用现有 intent 标签集，不临时新增标签 | overall accuracy < 80% 或关键意图漏判 > 20% warning |
+
+**执行步骤：**
+- [ ] P1 扩展 `JobTrace`：增加 `decisions/events`，记录 taxonomy 命中、cache 分布、聚类使用/跳过原因、prompt_version、locale、low-quality cluster
+- [ ] P2 扩展 LLM 调用埋点：`track_llm_call()` properties 增加 attempt、error_detail、schema_error、content_hash、sub_category、locale
+- [ ] P3 增加 retry 指纹短路：相同错误连续出现时停止重试，写入 `retry_stopped_reason=repeated_error`
+- [ ] P4 扩展 Router 历史 metrics：记录 model attempt/success/failure/fallback/circuit/429 retry
+- [ ] P5 新增 `/analytics/llm-quality`：输出 JSON 失败率、schema 失败率、retry 成功率、fallback 率、token 异常数
+- [ ] P6 完成 Alerts tab：把上述指标接入告警配置，Redis TTL 去重后推送飞书
+- [ ] P7 聚类质量闭环：`needs_llm=True` 评论必须二次走 LLM 或明确记录为未重分析，不能静默落成空结果
+- [ ] P8 QA Intent 真实命中率评估：从线上 `qa_messages` 抽 100-200 条真实问题，人工标注 gold intent，离线跑 `classify_intent()` 输出 accuracy / precision / recall / fallback 率；2026-07-28 检查测试账号仅 11 条 user 问题，样本不足，等累计满 200 条再跟进正式评估
+
+**验收标准：**
+- [ ] 上传一批测试评论后，`trace_json` 能看到 decisions/events，不只看到 stages
+- [ ] 构造非法 JSON / 非法 schema mock 后，`/analytics/llm-quality` 能按错误类型统计
+- [ ] 构造同一 schema 错误连续失败，第二次后能短路并记录 `repeated_error`
+- [ ] 模拟 Router 主模型失败，能看到 fallback event 与 fallback_rate
+- [ ] 构造低质量聚类，trace 显示 `needs_llm_count` 且后续有 reanalyze 记录
+- [ ] 模拟 token 超 2000，Alerts tab 与飞书告警可见且不带评论正文
+- [ ] QA Intent 抽样评估产出 CSV/表格：包含 question、current_intent、gold_intent、match、error_type、notes；若样本不足 100，明确记录数据不足而不是硬算结论
 
 ---
 
@@ -3788,7 +3928,7 @@ CREATE TABLE workspace_invitations (
 - [ ] 邀请海外朋友测试 3 个套餐转化
 
 **验收标准**
-- 使用测试账号（惜_clueai / test123456）登录 `app.clueai-reviewlens.com` 全流程无异常
+- 使用测试账号（惜_clueai / 密码已省略）登录 `app.clueai-reviewlens.com` 全流程无异常
 - Footer 6 个法律链接 + Amazon disclaimer 全部展示
 - 用海外 IP 注册 + 订阅完整流程跑通
 - ASIN 抓取走 DataForSEO 通道（后端日志确认）
