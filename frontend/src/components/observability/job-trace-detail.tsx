@@ -58,7 +58,13 @@ export function JobTraceDetail({ trace }: Props) {
           </div>
         </>
       ) : (
-        <div className="text-xs text-soft">无阶段追踪数据</div>
+        <div className="space-y-1 text-xs text-soft">
+          <div className="font-medium text-ink">无阶段追踪数据</div>
+          <p>
+            这个任务没有写入 stages，可能是旧版本任务、任务尚未进入处理阶段，或 worker 没有成功持久化 trace。
+            下一步可查看任务状态和错误信息，必要时重新上传一次以生成新版 trace。
+          </p>
+        </div>
       )}
 
       {trace.error && (

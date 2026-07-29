@@ -15,12 +15,29 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
+def _analytics_window_sql(window_hours: int | None, days: int) -> tuple[str, str, list[int]]:
+    """Return bucket expression, created_at filter, and params for hour/day windows."""
+    if window_hours is not None:
+        return (
+            "DATE_TRUNC('hour', created_at)",
+            "created_at >= NOW() - (%s * INTERVAL '1 hour')",
+            [window_hours],
+        )
+
+    return (
+        "DATE(created_at)",
+        "created_at >= NOW() - (%s * INTERVAL '1 day')",
+        [days],
+    )
+
+
 @router.get("/llm-costs")
 def get_llm_costs(
     days: int = Query(default=30, ge=1, le=365),
+    window_hours: int | None = Query(default=None, ge=1, le=72),
     user: dict = Depends(get_current_user),
 ) -> dict:
-    rows = get_llm_usage_stats(user_id=user["id"], days=days)
+    rows = get_llm_usage_stats(user_id=user["id"], days=days, window_hours=window_hours)
     total_cost = sum(float(r.get("total_cost_yuan") or 0) for r in rows)
     total_calls = sum(int(r.get("call_count") or 0) for r in rows)
     cache_hits = sum(int(r.get("cache_hits") or 0) for r in rows)
@@ -51,14 +68,16 @@ def get_llm_costs(
 @router.get("/pipeline-health")
 def get_pipeline_health(
     days: int = Query(default=7, ge=1, le=90),
+    window_hours: int | None = Query(default=None, ge=1, le=72),
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Pipeline latency percentiles, error rate, and throughput."""
+    bucket_expr, range_filter, range_params = _analytics_window_sql(window_hours, days)
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     COUNT(*) AS total,
                     COUNT(*) FILTER (WHERE (properties->>'success')::boolean = false) AS errors,
@@ -75,26 +94,26 @@ def get_pipeline_health(
                 FROM analytics_events
                 WHERE event_name = 'llm_call'
                   AND user_id = %s
-                  AND created_at >= NOW() - INTERVAL '%s days'
+                  AND {range_filter}
                 """,
-                [user["id"], days],
+                [user["id"], *range_params],
             )
             row = cur.fetchone()
 
             cur.execute(
-                """
-                SELECT DATE(created_at) AS date,
+                f"""
+                SELECT {bucket_expr} AS date,
                        COUNT(*) AS calls,
                        COUNT(*) FILTER (WHERE (properties->>'success')::boolean = false) AS errors,
                        AVG((properties->>'latency_ms')::int) AS avg_latency
                 FROM analytics_events
                 WHERE event_name = 'llm_call'
                   AND user_id = %s
-                  AND created_at >= NOW() - INTERVAL '%s days'
-                GROUP BY DATE(created_at)
+                  AND {range_filter}
+                GROUP BY {bucket_expr}
                 ORDER BY date DESC
                 """,
-                [user["id"], days],
+                [user["id"], *range_params],
             )
             daily = [dict(r) for r in cur.fetchall()]
     finally:
@@ -127,14 +146,16 @@ def get_pipeline_health(
 @router.get("/cache-effectiveness")
 def get_cache_effectiveness(
     days: int = Query(default=7, ge=1, le=90),
+    window_hours: int | None = Query(default=None, ge=1, le=72),
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Cache hit rates from analysis_job_complete events."""
+    bucket_expr, range_filter, range_params = _analytics_window_sql(window_hours, days)
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     SUM((properties->>'review_count')::int) AS total_reviews,
                     SUM((properties->>'llm_calls')::int) AS total_llm_calls,
@@ -144,15 +165,15 @@ def get_cache_effectiveness(
                 FROM analytics_events
                 WHERE event_name = 'analysis_job_complete'
                   AND user_id = %s
-                  AND created_at >= NOW() - INTERVAL '%s days'
+                  AND {range_filter}
                 """,
-                [user["id"], days],
+                [user["id"], *range_params],
             )
             summary = cur.fetchone()
 
             cur.execute(
-                """
-                SELECT DATE(created_at) AS date,
+                f"""
+                SELECT {bucket_expr} AS date,
                        SUM((properties->>'review_count')::int) AS reviews,
                        SUM((properties->>'llm_calls')::int) AS llm_calls,
                        SUM((properties->>'llm_calls_saved')::int) AS saved,
@@ -160,11 +181,11 @@ def get_cache_effectiveness(
                 FROM analytics_events
                 WHERE event_name = 'analysis_job_complete'
                   AND user_id = %s
-                  AND created_at >= NOW() - INTERVAL '%s days'
-                GROUP BY DATE(created_at)
+                  AND {range_filter}
+                GROUP BY {bucket_expr}
                 ORDER BY date DESC
                 """,
-                [user["id"], days],
+                [user["id"], *range_params],
             )
             daily = [dict(r) for r in cur.fetchall()]
     finally:

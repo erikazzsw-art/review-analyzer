@@ -41,6 +41,8 @@ export function JobsTab() {
   const filtered = statusFilter === "all"
     ? traces
     : traces.filter((t) => t.status === statusFilter);
+  const rangeStart = total === 0 ? 0 : offset + 1;
+  const rangeEnd = Math.min(offset + PAGE_SIZE, total);
 
   if (loading) {
     return (
@@ -138,7 +140,20 @@ export function JobsTab() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-sm text-soft">
-                  暂无数据
+                  {total === 0 ? (
+                    <div className="mx-auto max-w-lg space-y-1 text-left">
+                      <div className="font-medium text-ink">暂无 trace 数据</div>
+                      <p className="text-xs leading-5">
+                        任务 trace 来自 upload_jobs.trace_json，只会记录启用结构化追踪后的上传任务。
+                        旧任务、还未进入处理阶段的任务，或 trace 写入失败的任务不会出现在这里。
+                      </p>
+                      <p className="text-xs font-medium">
+                        下一步：完成一次新的 CSV 上传并等待任务结束，再刷新本页；若仍为空，检查 worker 是否持久化 trace_json。
+                      </p>
+                    </div>
+                  ) : (
+                    "当前筛选暂无记录"
+                  )}
                 </td>
               </tr>
             )}
@@ -155,7 +170,7 @@ export function JobsTab() {
           上一页
         </button>
         <span className="text-xs text-soft">
-          第 {offset + 1}-{Math.min(offset + PAGE_SIZE, total)} 条
+          第 {rangeStart}-{rangeEnd} 条
         </span>
         <button
           onClick={() => setOffset(offset + PAGE_SIZE)}

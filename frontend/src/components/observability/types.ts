@@ -91,16 +91,60 @@ export type JobTracesResponse = {
   traces: JobTrace[];
 };
 
-export function timeRangeToDays(range: TimeRange): number {
+export function timeRangeToWindowHours(range: TimeRange): number {
   switch (range) {
     case "1h":
-    case "6h":
-    case "24h":
       return 1;
+    case "6h":
+      return 6;
+    case "24h":
+      return 24;
     case "7d":
-      return 7;
+      return 7 * 24;
     case "30d":
-      return 30;
+      return 30 * 24;
+  }
+}
+
+export function timeRangeUsesHourlyBuckets(range: TimeRange): boolean {
+  return range === "1h" || range === "6h" || range === "24h";
+}
+
+export function timeRangeToAnalyticsQuery(range: TimeRange): string {
+  if (timeRangeUsesHourlyBuckets(range)) {
+    return `window_hours=${timeRangeToWindowHours(range)}`;
+  }
+
+  return `days=${range === "7d" ? 7 : 30}`;
+}
+
+export function formatBucketLabel(value: string, range: TimeRange): string {
+  if (timeRangeUsesHourlyBuckets(range)) {
+    const parsed = new Date(value.replace(" ", "T"));
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+    return value.length >= 16 ? value.slice(11, 16) : value;
+  }
+
+  return value.length >= 10 ? value.slice(5, 10) : value;
+}
+
+export function formatTimeRangeLabel(range: TimeRange): string {
+  switch (range) {
+    case "1h":
+      return "最近 1 小时";
+    case "6h":
+      return "最近 6 小时";
+    case "24h":
+      return "最近 24 小时";
+    case "7d":
+      return "最近 7 天";
+    case "30d":
+      return "最近 30 天";
   }
 }
 

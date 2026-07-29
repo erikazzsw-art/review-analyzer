@@ -2980,11 +2980,16 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 | 任务耗时 | processing > 15min | processing > 30min | 结合 trace 判断卡在哪一阶段 |
 
 **P0：让页面“看得懂”（优先执行，0.5-1 天）**
-- [ ] 新增指标解释层：每个 StatCard 增加 tooltip/说明，解释“这个指标是什么、正常范围是什么、异常后看哪里”
-- [ ] 新增状态标签：错误率、P95、成本、缓存节省率显示 `正常 / 注意 / 异常 / 严重`
-- [ ] 修正时间范围：`1h/6h/24h` 后端按小时窗口查询，不再统一折算成 1 day
-- [ ] 增加空数据说明：无 trace / 无 llm_usage_log / 无 analytics_events 时说明原因和下一步
-- [ ] 验收：非工程背景用户能按页面提示判断“现在是否异常”和“下一步点哪个 Tab”
+- [x] 新增指标解释层：每个 StatCard 增加 tooltip/说明，解释“这个指标是什么、正常范围是什么、异常后看哪里”
+- [x] 新增状态标签：错误率、P95、成本、缓存节省率显示 `正常 / 注意 / 异常 / 严重`
+- [x] 修正时间范围：`1h/6h/24h` 后端按小时窗口查询，不再统一折算成 1 day
+- [x] 增加空数据说明：无 trace / 无 llm_usage_log / 无 analytics_events 时说明原因和下一步
+- [x] 验收：非工程背景用户能按页面提示判断“现在是否异常”和“下一步点哪个 Tab”
+
+**2026-07-29 完成记录：**
+- 前端：复用现有 5-Tab 结构，在 `StatCard` 增加说明 tooltip / 状态徽标；概览、成本、缓存、任务页增加解释层与空数据下一步指引。
+- 后端：`/analytics/llm-costs`、`/analytics/pipeline-health`、`/analytics/cache-effectiveness` 支持 `window_hours`，`1h/6h/24h` 按小时窗口与小时 bucket 查询；`7d/30d` 保持按天查询。
+- 验证：`python3 -m compileall backend_api/app/routes/analytics.py review_analyzer/database.py` PASS；`npm run typecheck` PASS。
 
 **P1：把告警 Tab 做实 + 失败任务可排障（1-2 天）**
 - [ ] 完成 `workers/alert_checker.py`：每 10 分钟扫描错误率、P95、成本、缓存、熔断、卡死任务

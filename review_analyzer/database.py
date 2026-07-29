@@ -2346,18 +2346,25 @@ def log_llm_usage_batch(
 def get_llm_usage_stats(
     user_id: int | None = None,
     days: int = 30,
+    window_hours: int | None = None,
 ) -> list[dict]:
-    """聚合 LLM 用量统计（按用户 + 模型 + 日期）."""
+    """聚合 LLM 用量统计（按用户 + 模型 + 日期/小时）."""
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            where = "WHERE created_at >= NOW() - INTERVAL '%s days'"
-            params: list = [days]
+            if window_hours is not None:
+                bucket_expr = "DATE_TRUNC('hour', created_at)"
+                where = "WHERE created_at >= NOW() - (%s * INTERVAL '1 hour')"
+                params: list = [window_hours]
+            else:
+                bucket_expr = "DATE(created_at)"
+                where = "WHERE created_at >= NOW() - (%s * INTERVAL '1 day')"
+                params = [days]
             if user_id is not None:
                 where += " AND user_id = %s"
                 params.append(user_id)
             cur.execute(
-                f"""SELECT user_id, model_name, DATE(created_at) as date,
+                f"""SELECT user_id, model_name, {bucket_expr} as date,
                            COUNT(*) as call_count,
                            SUM(tokens_in) as total_tokens_in,
                            SUM(tokens_out) as total_tokens_out,
@@ -2365,7 +2372,7 @@ def get_llm_usage_stats(
                            SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END) as cache_hits
                     FROM llm_usage_log
                     {where}
-                    GROUP BY user_id, model_name, DATE(created_at)
+                    GROUP BY user_id, model_name, {bucket_expr}
                     ORDER BY date DESC, total_cost_yuan DESC""",
                 params,
             )
