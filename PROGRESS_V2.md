@@ -8,12 +8,15 @@
 
 ---
 
-### 2026-07-29 ABSA fine-tune 与 5.9 标签口径计划衔接
+### 2026-07-29 5.9.9 路线调整：从 ABSA readiness 转为 Customer Label System v2
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
 |------|---------|------|---------|
-| 2026-07-29 | plan | 将原 `6.7 ABSA 小模型 fine-tune` 从技术优化模块迁入 5.9 Customer Issue / Customer Label 准确性计划之后，拆为 `5.9.9 ABSA fine-tune 数据集 readiness` 与 `5.9.10 ABSA 小模型 fine-tune POC`。 | ABSA 不再只以 PMF/付费用户数触发，而是以 5.9 口径稳定、evidence 可追溯、gold dataset 规模达标为前置门槛 |
-| 2026-07-29 | plan | 在 5.9.8 阶段表补充 `Step 4.5 waders ABSA 数据集 v0` 与 `Step 5.5 ABSA fine-tune 启动评审`，让标签口径治理自然沉淀为可训练数据资产。 | 本次仅更新计划文档；未改业务代码、未触发生产 API、credit 或 LLM 成本 |
+| 2026-07-29 | plan-previous | 旧计划曾将原 `6.7 ABSA 小模型 fine-tune` 从技术优化模块迁入 5.9 Customer Issue / Customer Label 准确性计划之后，拆为 `5.9.9 ABSA fine-tune 数据集 readiness` 与 `5.9.10 ABSA 小模型 fine-tune POC`。 | 现已被下方 `strategy-adjustment` 覆盖；保留为决策过程记录。 |
+| 2026-07-29 | plan-previous | 旧计划曾在 5.9.8 阶段表补充 `Step 4.5 waders ABSA 数据集 v0` 与 `Step 5.5 ABSA fine-tune 启动评审`，让标签口径治理自然沉淀为可训练数据资产。 | 现调整为先做 Customer Label System v2；ABSA 数据资产自然沉淀但不作为近期主线。 |
+| 2026-07-29 | strategy-adjustment | Erika 指出：一人公司当前没有稳定流量、没有跨多个核心类目的足量人工标注，也很难只围绕少数类目定向获客；因此近期继续把 ABSA 数据集 readiness 作为主线，会导致产品上线被训练数据门槛卡住。 | 5.9.9 主线调整为 `Customer Label System v2`：LLM 输出规范标签与 evidence candidate，规则只做 evidence 定位/验证/安全拦截，新增候选标签审核与类目成熟度分级；ABSA fine-tune 延后为数据自然积累后的条件触发项。 |
+| 2026-07-29 | scope-control | 明确 5.9.8 已完成的 waders 规则、gold fixture、catalog、taxonomy、raw/frontstage/audit 分离和 evidence gating 不推翻，改作为 v2 verifier、安全门禁和回归基线；停止把“每新增 sub_category 手写 3-5 天规则”作为未来复制模板。 | 本轮仅更新计划文档；未改业务代码、未触发生产 API、credit 或 LLM 成本。 |
+| 2026-07-29 | scope-refinement | 明确 5.9.9 采用 `增强版 MVP` 路线：50 用户前优先完成 LLM evidence-first、verifier、display/candidate/audit 分流、轻量 candidate pool 审核入口、类目成熟度和 10 个大类 L1/L2 灰度；当前 taxonomy 约 89 个 sub_category 不要求全部达到 waders 级 L3。 | `vector bad case memory` 作为减少重复人工审核、辅助候选排序和 bad case retrieval 的增强项，可轻量 shadow/试运行期接入，但不作为 50 用户试运行硬门禁；ABSA fine-tune 仍延后。 |
 
 ---
 
@@ -29,6 +32,8 @@
 | 2026-07-29 | session120-retest | Erika 上传 50 条样本并提供结果页 `session_id=120` 与下载文件；Codex 只做生产 DB 只读验收和本地最新规则回放。生产当前结果仍 `REVIEW_NEEDED`：真实下载文件无 `Audit ...` 分列，raw 前台字段混入 issue evidence false 90 / issue cluster true 90 / highlight evidence false 24 / highlight cluster true 24；DB 还有 `Good`、`Perfect!`、`Good quality` 3 条短文本 cache。 | 本地追加修复 row 3/27/28/31 后，session120 最新规则回放 `validation.status=PASS`；新增报告 `docs/5.9.8-step4-tidewe-waders-session120-acceptance-report.md`。 |
 | 2026-07-29 | session120-human-gold | Erika 在 session120 下载文件追加人工标注后，Codex 对 `download_raw_all`、`download_verified_only`、`local_latest_replay` 三组口径做本地只读对比。当前生产下载文件仍 FAIL；本地最新规则 both exact `10/50`、issue exact `37/50`、highlight exact `18/50`，issue FP 从 82 降到 3，highlight FP 从 22 降到 10。 | P0 `water_leaks_through` 本地已达到人工 3 / 命中 3 / FP 0；整体仍 `REVIEW_NEEDED`，剩余重点是 size/fit、气味、耐用、泛泛满意、性价比、外观、适用场景和储物亮点召回。报告：`docs/5.9.8-step4-tidewe-waders-session120-human-label-comparison.md`。 |
 | 2026-07-29 | step4.1-recall-fix | 基于 session120 人工 gold 新增 50 条稳定 fixture，补齐 waders `size_fit_problem`、气味、耐用、品控/质量、鞋底偏软、透气差，以及整体满意、性价比、外观、耐用、防水、尺码、场景适用、储物等 Customer Label 召回；同步收紧 `good_material_quality`、`works_well_for_use_case`、`not_used_yet`、cluster propagated 与 raw/frontstage 口径。 | 本地 session120 human gold 达到 both exact set `50/50`、issue exact `50/50`、highlight exact `50/50`，issue TP/FP/FN `22/0/0`，highlight TP/FP/FN `49/0/0`；后端目标回归 `80 passed in 11.52s`，前端 `npm run typecheck` PASS，`git diff --check` PASS；未执行生产上传、生产 reanalysis、credit 或 LLM。报告：`docs/5.9.8-step4.1-tidewe-waders-session120-recall-fix.md`。 |
+| 2026-07-29 | blind-sample-gate | 本轮未收到 Erika 明确提供的全新 waders 样本或新 `session_id`，因此不能把 session120 human gold 的本地 `50/50` 判为最终盲测 PASS；已重新梳理前台/audit 口径和人工上传验收清单。 | 本地相关后端回归 `80 passed in 8.91s`，前端 `npm run typecheck` PASS，`git diff --check` PASS；未执行生产上传、生产重分析、credit 或 LLM；等待 Erika 手动上传从未上传过的 50 条 waders 样本。报告：`docs/5.9.8-step4-tidewe-waders-new-blind-sample-acceptance-checklist.md`。 |
+| 2026-07-29 | session121-blind | Erika 提供全新 50 条 waders 样本结果页 `session_id=121` 与下载文件；Codex 只做生产 DB 只读验收、读取下载 XLSX、本地最新规则回放和小范围回归修复。生产下载仍 `REVIEW_NEEDED`：raw 文件为旧 29 列，无 `Audit ...` 分列，issue `evidence=false` 16 / issue `cluster=true` 16，16 条 evidence 不在当前 review 中；DB 另有 4 条 cache rows。 | 本地修复 negative dry、current leak、历史/泛化 leak、size/fit、西语 size、not_breathable 与 pocket evidence 后，session121 最新规则回放 `validation.status=PASS`，Top/单条/evidence/cluster P0 均为 0；后端目标回归 `82 passed in 9.33s`，前端 `npm run typecheck` PASS，`git diff --check` PASS。报告：`docs/5.9.8-step4-tidewe-waders-session121-blind-acceptance-report.md`。 |
 
 ---
 
@@ -71,8 +76,8 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 9 | 1 | 2 | 75% | 5.1-5.9 基础迁移完成；5.9.8 标签口径重构/灰度验证进行中；5.9.9/5.9.10 作为 ABSA 衔接计划 |
-| 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已迁入 5.9.9/5.9.10；6.8-6.9 待 PMF 验证后启动 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 9 | 1 | 2 | 75% | 5.1-5.9 基础迁移完成；5.9.8 标签口径重构/灰度验证进行中；5.9.9 调整为 Customer Label System v2，ABSA 延后为条件触发 |
+| 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
 | 9. 增值功能 | 6 | 1 | 2 | 3 | ~33% | 9.3 完成；9.1/9.2 部分完成；9.4/9.5/9.6 待启动 |
@@ -119,7 +124,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | Step 4 waders 标签漏标/错标本地修复完成；等待 50 条从未上传样本手动验收 | 用全新 waders 样本验证生成层标签语义、evidence 可追溯、raw/frontstage/single-tag 口径一致；完成 Step 5/6 验收 |
+| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | session121 全新 50 条盲样本地规则 PASS；生产下载仍 REVIEW_NEEDED | 部署本地最新规则与 raw/audit 分列导出口径；复测 Top10、单条明细、raw review、single-tag 下载均只用 verified occurrence；P0 为 0 后再进入 5.9.9 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -134,8 +139,8 @@
 
 | 编号 | 名称 | 启动条件 |
 |------|------|---------|
-| 5.9.9 | ABSA fine-tune 数据集 readiness | 5.9.8 Step 4/5 达标；至少 3-5 个 MVP sub_category 口径稳定 |
-| 5.9.10 | ABSA 小模型 fine-tune POC | 5.9.9 POC 数据门槛通过（≥3k-5k 人工确认评论或 ≥5k-10k occurrence） |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | 5.9.8 waders 安全门禁和 gold 回归可复用；不再要求先凑齐 3-5 个类目或 3k+ 人工样本 |
+| 5.9.10 | ABSA 小模型 fine-tune POC（延后/条件触发） | 真实用户数据和候选审核自然累计到训练门槛，且 ROI 明确；目标仍为 ≥3k-5k 人工确认评论或 ≥5k-10k occurrence |
 | 6.8 | 用户反馈回路 | PMF验证通过 |
 | 6.9 | Niche商业化启动 | PMF验证通过 |
 | 7.3 | 独立测试环境 | 团队扩展或付费用户需staging |
@@ -1139,9 +1144,10 @@ readiness 节奏：
 **MVP 前目标口径：**
 - 展示准确性第一：单条评论明细只展示这条评论原文可验证的 Customer Issue / Customer Label。
 - 归类准确性第二：每个展示标签必须归到正确 aspect；标签对但 aspect 错，也视为影响业务判断的错误。
-- 学习方式：人工标注不是让系统黑箱自学，而是沉淀为 gold set、catalog、alias、边界规则、prompt 示例和自动回归。
-- 泛化方式：通用标签全局复用，大类目标签大类内复用，sub_category 细粒度标签仅在确认范围启用；未确认标签先进入候选池。
-- Erika 前期可提高参与度，优先把展示准确性和 aspect 归类打准；稳定后逐步降到每周 1-2 小时。
+- 学习方式：人工标注不再主要沉淀为每个 sub_category 的生成规则，而是沉淀为 gold set、catalog 定义、边界 guard、LLM few-shot/prompt 示例、候选标签审核记录和自动回归。
+- 泛化方式：通用标签全局复用，大类目标签大类内复用，sub_category 细粒度标签仅在确认范围启用；未确认标签先进入 candidate/audit，不进入前台强展示。
+- 架构方向：LLM 负责语义理解和规范标签选择，输出 `canonical_label + evidence_candidate + confidence`；规则引擎负责 evidence 定位/验证、否定语境、旧产品/他牌/配件边界、aspect 冲突和展示降级。
+- Erika 参与方式：从“逐类目完整标注”调整为“审核高影响候选、Top 异常和边界样本”；不把 3-5 个固定类目的数据积累作为近期上线前提。
 
 **阶段拆解与执行计划：**
 
@@ -1152,10 +1158,10 @@ readiness 节奏：
 | Step 1 waders 差异基线与口径方案 | ✅ 完成 | 固化 TIDEWE 100 条人工对照，完成错误 taxonomy、首批标签候选、同义合并、aspect 映射和边界 case 方案 | `docs/5.9.8-step1-tidewe-waders-baseline.md` | 确认错误分类、标签命名、合并/拆分、aspect 归类是否符合业务判断 |
 | Step 2 明细展示 gating 与回归实现 | ✅ 完成 | 排除单条明细中的 cluster propagated / 无 evidence / source 不可验证标签，并让导出/前端下载一致 | 后端 occurrence 过滤、导出/前端下载一致、focused tests、waders 回放报告 | 已完成本地回归；真实上传抽查进入 Step 3/4 |
 | Step 3 waders catalog / aspect map / 边界 guard | ✅ 本地修复完成 / 待线上复测 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则；session 119 干净重传确认 L1 cache 风险已解除，Step 4 已修复 `water_leaks_through` 正负语境、旧产品、phone case/pocket 污染、`pocket_not_waterproof` 召回与 raw 导出 propagated/unverified 口径 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表、session 119 acceptance report、Step 4 修复报告 | 审核标签命名、边界规则和归类修正；下一轮由 Erika 手动上传全新样本验收 |
-| Step 4 waders 盲测与真实上传验收 | 本地修复完成 / 待 Erika 上传验收 | 验证不是“背答案”，用 50 条从未上传过的 waders 样本和真实上传判断标签是否达到用户可用 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`、focused gold fixture、AI vs 人工对比、真实上传抽查表、验收结论 | 上传从未上传过的 50 条样本；按 Top10、单条明细、单标签下载、raw review 下载清单验收 |
-| Step 4.5 waders ABSA 数据集 v0 | 待启动 | 把 TIDEWE 100 条、Step 4 盲测、错误样例与边界样例整理成 ABSA 训练格式；本阶段只做数据规格和样本，不训练模型 | `data/absa/` 或 `docs/5.9.9-absa-dataset-schema.md`、sample schema、split 草案、QA checklist | 审核字段、样例和 evidence span 是否符合人工理解 |
-| Step 5 MVP 关键 sub_category 轮换 | 待启动 | 扩展到 3-5 个 MVP 关键 sub_category，不要求覆盖全部；每类同时沉淀“口径盲测 gold set”和“ABSA 训练候选样本”两层数据 | 每类 30-50 条 gold set、10-20 条轻量风险抽检、迁移边界记录、每类 500-1000 条训练候选/人工确认样本 | 前期每周约 3-6 小时，后期降到 1-2 小时 |
-| Step 5.5 ABSA fine-tune 启动评审 | 待启动 | 判断 5.9.9 的数据规模、质量、标签稳定性和固定测试集是否达到 5.9.10 POC 启动条件 | `docs/5.9.9-absa-readiness-report.md`、数据统计、label coverage、QA fail list、go/no-go 结论 | 确认是否进入小模型 POC，而不是继续补数据/修口径 |
+| Step 4 waders 盲测与真实上传验收 | session121 本地规则 PASS / 生产下载 REVIEW_NEEDED | 验证不是“背答案”，用 50 条从未上传过的 waders 样本和真实上传判断标签是否达到用户可用；session121 本地最新规则已无 Top/单条/evidence/cluster P0，但线上 raw 下载仍是旧 29 列且混入 propagated/evidence false 前台字段 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`、`docs/5.9.8-step4.1-tidewe-waders-session120-recall-fix.md`、`docs/5.9.8-step4-tidewe-waders-session121-blind-acceptance-report.md`、focused gold fixture、AI vs 人工对比、真实上传抽查表、验收结论 | 先部署本地最新规则与 raw/audit 分列导出口径；再重新下载或干净复测，确认生产 Top10、单条明细、raw review 下载、single-tag 下载全部只用 verified occurrence；P0 为 0 后才进入 5.9.9 实现 |
+| Step 4.5 waders v2 shadow baseline | 待启动 | 用已完成的 waders gold set 定义新链路 schema：LLM 输出规范标签、`evidence_candidate` 与置信度；规则 verifier 只负责定位/验证/拦截；本阶段 shadow run，不替换前台 | `docs/5.9.9-customer-label-v2-contract.md`、waders shadow 对比、schema/version、回退策略 | 审核新 schema 是否符合业务理解，确认哪些字段进入前台/候选/audit |
+| Step 5 Customer Label System v2 实现 | 待启动 | 将生成责任从“逐类目手写规则”迁回 LLM，把规则改成安全 verifier；新增 candidate pool、低置信降级、未覆盖类目成熟度分级 | LLM 输出 schema、verifier、candidate/audit 字段、maturity level、focused regression | 只审核高影响候选标签、Top 异常和边界样本，不逐类目写完整规则 |
+| Step 5.5 类目轻接入与降级策略 | 待启动 | 新增 sub_category 时优先复用通用/大类目标签；只配置轻量 taxonomy/catalog/边界说明；未验证细粒度标签先不强展示 | 类目成熟度规则、通用标签白名单、候选池审核 SOP、10-20 条风险抽检模板 | 判断类目是否值得升级为高精度支持，而不是一开始就深度标注 |
 | Step 6 50 用户 readiness 回归与上线门禁 | 待启动 | 把标签准确性、生产上传稳定性、未覆盖类目降级和异常闭环合并验收 | readiness 回归报告、生产/准生产 smoke 记录、降级策略验证、回滚与观察清单 | 授权真实上传 smoke，确认是否达到 50 付费用户试运行门槛 |
 
 **验收门禁（MVP 前硬标准）：**
@@ -1169,7 +1175,7 @@ readiness 节奏：
 - 每个阶段完成后，Erika 真实上传抽查不得出现 P0 错误；如出现，停止进入下一阶段。
 
 **50 付费用户 readiness 最终门禁：**
-- 准确性覆盖：至少 `3-5` 个 MVP 重点 sub_category 通过上述展示准确性、标签准确性、aspect 归类准确性和 Top10 门禁。
+- 准确性覆盖：已验收 sub_category 达到高精度门禁；未验收 sub_category 只承诺通用/大类目高置信标签和候选/audit，不承诺细粒度全覆盖。
 - 未覆盖类目降级：未验收 sub_category 不启用未经确认的细粒度标签；只展示通用层/大类目层高置信标签，新标签进入候选池或低置信提示。
 - 生产稳定性：真实上传 smoke 通过，覆盖上传、worker、results、export/download、credit ledger、LLM usage、analytics event、review_pool/cache 对账；不得出现重复扣费、结果空白、worker stuck 或未授权写入。
 - 口径一致性：结果页 Top10、单条评论明细、XLSX 导出、前端标签下载使用同一套 occurrence / evidence / cluster gating 口径。
@@ -1204,115 +1210,119 @@ readiness 节奏：
 | 物流/售后/包装 | 不归产品本体 aspect，分别归 shipping / customer_service / packaging |
 
 **人工工作量安排：**
-- MVP 前集中期：每周约 `3-6` 小时，优先完成 waders 和 3-5 个关键 sub_category。
-- 每个重点 sub_category：30-50 条完整标注，若同时标 aspect，预计 `1-2.5` 小时。
-- 普通未覆盖 sub_category：先做 10-20 条风险抽检，只有跑偏或业务高价值时升级深度标注。
-- 稳定后维护期：每周 `1-2` 小时，审核候选标签、异常 Top10 和真实上传抽查结果。
+- MVP 前集中期：每周约 `1-3` 小时，优先审核 waders 回归、新链路 shadow 差异、Top 异常和高影响候选标签。
+- 新增 sub_category 默认不做 30-50 条完整标注；先用通用标签层 + LLM candidate + evidence verifier 运行，抽检 10-20 条风险样本。
+- 只有付费意向强、上传量高、或 Top 结果明显跑偏的 sub_category，才升级为 30-50 条 gold set 深度验收。
+- 稳定后维护期：每周 `1-2` 小时，审核候选标签、异常 Top10、真实上传抽查结果和用户反馈样本。
 
 **预计工期（到“用户可用”状态）：**
 - 每个任务模块按 `3-5` 个工作日安排，不包含 Erika 人工审核 / 人工标注 / 真实上传抽查等待时间；走到人工确认点时任务自动暂停。
 - `waders` 单一 sub_category 可用：Step 1-4 合计约 `12-20` 个工作日。范围包括差异基线与口径方案、明细展示 gating、首批 waders catalog/aspect map、关键边界 case、一次 Erika 真实上传抽查。
-- 每新增 `1` 个重点 sub_category：约 `3-5` 个工作日，通常包括 30-50 条 gold set 对照、10-20 条风险抽检、迁移边界记录和 focused regression。
-- 最小 50 用户可用版本：`waders + 另外 2 个重点 sub_category + Step 6 readiness`，约 `21-35` 个工作日，即约 `4-7` 周。
-- 更稳的 50 用户版本：`waders + 另外 4 个重点 sub_category + Step 6 readiness`，约 `27-45` 个工作日，即约 `5.5-9` 周。
-- 进入低人工维护状态：约 `6-10` 周。届时通用层、大类目层、候选池、回归测试和阶段抽查机制稳定后，Erika 工作量可逐步降到每周 `1-2` 小时。
+- 新增普通 sub_category：不再默认排 `3-5` 个工作日深度规则工程；轻接入目标为 `0.5-1` 个工作日，范围是 taxonomy/catalog 检查、通用标签复用、候选池观察和 10-20 条风险抽检。
+- 新增高价值 sub_category：只有确认值得高精度支持时，才进入 `2-4` 个工作日深度验收；重点是 gold set、边界 guard 和 verifier 回归，不再复制 waders 的大规模手写生成规则。
+- 最小 50 用户可用版本：`waders 高精度 + 通用/大类目标签层 + Customer Label System v2 + 未覆盖类目降级 + Step 6 readiness`，不再要求提前锁定另外 2-4 个固定 sub_category。
+- 进入低人工维护状态：以 candidate pool、maturity level、回归测试和阶段抽查机制稳定为准；Erika 工作量目标仍为每周 `1-2` 小时。
 - 不承诺“所有 sub_category 都高准确”：MVP 前只承诺已验收 sub_category 和通用标签层可用；未验收 sub_category 先走通用层 + 风险提示 + 候选标签池。
 
-#### 5.9.9 ABSA fine-tune 数据集 readiness（衔接 Customer Issue / Customer Label）
+#### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 待启动（5.9.8 Step 4/5 达标后进入）
+**状态：** 待启动（5.9.8 waders 安全门禁和 gold 回归稳定后进入）
 
-**定位：** 这是 Customer Issue / Customer Label 口径重构与 ABSA 小模型 fine-tune 之间的衔接任务。本阶段不训练模型，只判断 5.9 的人工标注、灰度验证错误、gold set、候选标签、catalog 决策和边界规则，是否已经变成可以训练、可以评估、可以复现的数据资产。
+**调整原因：**
+- 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
+- 只做几个核心 sub_category 再定向寻找这些类目的客户，获客难度高，不符合一人公司当前资源约束。
+- 5.9.8 waders 证明了“高精度规则工程”可以救单一类目，但也证明每新增 sub_category 手写 `3-5` 天规则不可持续。
+- MVP 更需要的是：没有训练数据时也能安全可用；已验证类目高精度，未验证类目明确降级，不把候选标签伪装成确定结论。
 
-**目标：**
-- 把 5.9.8 产出的人工对照、盲测样本、真实上传错误、边界 case 和标签决策统一整理成 ABSA dataset。
-- 明确哪些标签可以作为正样本训练，哪些只能作为 candidate/audit，不进入训练正例。
-- 建立固定 train/dev/test split，避免模型训练后用同一批样本自证准确。
-- 输出 ABSA fine-tune readiness report，作为 5.9.10 是否启动的 go/no-go 门禁。
+**定位：** 本阶段不训练 ABSA 小模型。目标是把 Customer Issue / Customer Label 从“规则主生成”升级为“LLM 语义生成 + verifier 安全拦截 + candidate pool 人工审核 + maturity level 展示分级”。
 
-**建议数据格式：**
+**增强版 MVP 边界：**
+- 当前 taxonomy 已覆盖 10 个大类、约 89 个 sub_category；5.9.9 的覆盖目标不是把每个 sub_category 都做成 waders 级 L3，而是让大部分类目先进入“安全可用”的 L1/L2 状态。
+- 50 用户前硬门禁：LLM evidence-first schema、通用 verifier、display/candidate/audit 分流、轻量候选审核入口、类目成熟度、10 个大类 L1/L2 灰度抽检。
+- 50 用户前不硬性要求：复杂审核后台、所有 sub_category 30-50 条 gold、自动标签发布系统、全量主动学习平台、ABSA fine-tune。
+- `vector bad case memory` 可以作为轻量增强加入 shadow 或试运行期，用于检索相似历史错例、候选聚类和审核排序；它不能替代 evidence 门禁，也不作为 50 用户试运行的阻塞项。
 
-| 字段 | 含义 |
-|------|------|
-| `review_id` / `product_id` / `sub_category` | 评论、产品和子类目来源 |
-| `review_text` / `rating` | 原始评论文本与评分 |
-| `aspect_key` / `aspect_polarity` | aspect 与该 aspect 下的正/负/中性判断 |
-| `customer_issue_key` / `customer_label_key` | 标准化后的 Customer Issue / Customer Label canonical key |
-| `evidence_span` / `evidence_start` / `evidence_end` | 可在原文定位的证据片段和字符位置 |
-| `display_allowed` / `boundary_case` | 是否允许前台展示、是否为边界样本 |
-| `annotation_source` / `annotator` / `reviewed_status` | 标注来源、标注人、审核状态 |
-| `ruleset_version` / `split` | 标签口径版本与 train/dev/test 划分 |
+**核心方案：**
+- LLM 输出规范结构：`label_type`、`canonical_label_key`、`aspect_key`、`polarity`、`evidence_candidate`、`confidence`、`reason`。
+- Verifier 在当前评论原文中定位 `evidence_candidate`，支持精确匹配、规范化匹配和短窗口模糊匹配；定位失败则降级为 candidate/audit，不进前台。
+- Verifier 继续复用 5.9.8 的安全门禁：无 evidence、cluster propagated、legacy fallback、aspect 冲突、否定语境、旧产品/他牌/配件边界、未实际使用等不进前台。
+- A' 的“规则反向定位 label alias”保留为 fallback，仅用于高频通用标签和少数强边界标签；不再要求每个 label 都维护完整关键词库。
+- 旧 waders content rules 不删除，先作为高置信 fallback、regression baseline 和 safety guard；后续新类目不复制 waders 的规则规模。
+- Candidate pool MVP 先做轻量后台或审核表，支持按 sub_category、label、风险原因、Top 影响、confidence、降级原因筛选；不做复杂权限流和全量人工标注工作台。
+- 10 个大类灰度优先复用通用标签和 category-level aspect/taxonomy；未验证细粒度标签一律进入 candidate/audit，不进入前台确定结论。
+- Vector memory 若进入本阶段，只作为 bad case retrieval / candidate clustering / 审核排序辅助信号；最终是否展示仍由 verifier 的 evidence、上下文和 maturity gate 决定。
 
-**启动数据门槛：**
-- v0 schema 阶段：单一 sub_category 有 `300-500` 条人工确认评论即可启动，用来验证标注格式、任务定义和 QA 规则。
-- POC 训练阶段：覆盖 `3-5` 个 MVP sub_category，至少 `3,000-5,000` 条人工确认评论，或 `5,000-10,000` 个 aspect/issue/label occurrence。
-- 生产候选阶段：累计 `10,000-20,000+` 条评论或 `20,000+` 个 occurrence，并配合 active learning 补长尾。
-- 核心标签门槛：每个进入 POC 的核心 label 至少 `100-200` 个正例；稳定标签建议 `300-500` 个正例。
+**类目成熟度分级：**
 
-**质量门槛：**
-- 固定 `15-20%` locked test set，后续训练不能再修改测试集。
-- evidence 可定位率 `>=95%`；找不到原文证据的 occurrence 不进入正例训练。
-- 人工一致率 `>80%`，或有清晰 adjudication 记录。
-- `cluster_propagated`、无 evidence、legacy fallback、未确认 candidate 不作为正训练样本。
-- 边界样本必须单独标记，包括 no leaks、旧产品/他牌、phone case/pocket、未实际使用、泛泛好评、mixed review、aspect 冲突等。
+| 等级 | 适用范围 | 前台展示策略 | 进入条件 |
+|------|----------|--------------|----------|
+| `L0_unknown` | 未接入/低样本 sub_category | 只展示通用高置信标签；细粒度 label 进入 candidate/audit | 有 taxonomy 或 sub_category 推断即可 |
+| `L1_generic` | 已确认通用标签有效的类目 | 展示质量、尺码、耐用、气味、物流、性价比、整体满意等通用标签 | 10-20 条抽检无明显系统性错误 |
+| `L2_category` | 大类目边界较稳定 | 展示大类目标签，细粒度标签仍需候选审核 | category 级 taxonomy/catalog 通过回归 |
+| `L3_sub_category` | 高价值/高上传量/已验收类目 | 展示细粒度 Customer Issue / Customer Label | 30-50 条 blind gold 或等价真实上传抽查通过 |
 
 **任务拆解：**
-- [ ] **Step 1: ABSA dataset schema 与 export contract**
-  - 定义字段、label source、ruleset version、split、QA fail reason。
-  - 输出 `docs/5.9.9-absa-dataset-schema.md`。
-- [ ] **Step 2: `gold_absa_v0`**
-  - 将 5.9.8 Step 1-4 的 TIDEWE / waders 样本转成 ABSA 训练格式。
-  - 输出 `data/absa/gold_absa_v0.*` 或等价文档样本。
-- [ ] **Step 3: MVP sub_category 标注扩展**
-  - 对 `3-5` 个 MVP 关键 sub_category 扩展人工确认样本。
-  - 每类保留 30-50 条口径盲测 gold set，同时沉淀 500-1000 条训练候选/人工确认样本。
-- [ ] **Step 4: QA 与数据统计**
-  - 统计 label coverage、正负例比例、evidence 可定位率、reviewed_status、split 分布、边界样本覆盖。
-  - 阻断无证据、未审核、label/aspect 冲突样本进入训练正例。
-- [ ] **Step 5: ABSA fine-tune readiness report**
-  - 输出 `docs/5.9.9-absa-readiness-report.md`。
-  - 结论只能是 `GO POC`、`补数据`、`修口径` 或 `暂缓训练`。
+- [ ] **Step 1: v2 输出契约与回退策略**
+  - 定义 LLM JSON schema、verifier 输入输出、display/candidate/audit 判定字段、schema/ruleset version。
+  - 输出 `docs/5.9.9-customer-label-v2-contract.md`。
+- [ ] **Step 2: LLM evidence-first shadow run**
+  - 在不影响前台的情况下，让 LLM 生成 `canonical_label_key + evidence_candidate`。
+  - 用 waders session120 gold set 对比旧链路，记录 TP/FP/FN、evidence locate rate、candidate 降级原因。
+- [ ] **Step 3: Verifier 与 safety gate**
+  - 抽出通用 verifier：evidence 定位、source-review 验证、aspect allow-list、context guard、confidence 降级。
+  - 旧规则只作为 fallback / guard，不再作为未来类目的主生成模板。
+- [ ] **Step 4: Candidate pool 与人工审核**
+  - 将低置信、未定位 evidence、新 label、LLM/rule 冲突、Top 异常写入候选池。
+  - 审核结果可沉淀为 catalog、alias、boundary note、few-shot 示例或 gold regression。
+- [ ] **Step 4.5: 轻量 candidate pool 审核入口**
+  - MVP 形态可以是 DB 表 + CSV/XLSX 导出，也可以是最小后台页；必须能看到原评论、AI label、evidence、降级原因、Top 影响和相似 bad case。
+  - 审核动作先限制为 `accept`、`reject`、`correct_label`、`correct_evidence`、`needs_new_label`、`ignore`，避免一开始做重型审核系统。
+- [ ] **Step 5: 类目成熟度、前台降级与 10 个大类灰度**
+  - 前端、Top10、single-tag、raw/full export 根据 maturity level 决定展示粒度。
+  - 未验证细粒度标签只进 audit/candidate，避免用户误以为系统已经高精度支持该类目。
+  - 以当前 taxonomy 的 10 个大类为灰度范围，每个大类抽检 10-20 条风险样本；目标是证明 L1/L2 通用/大类标签安全可用，不要求所有 sub_category 达到 L3。
+- [ ] **Step 6: waders 切换验收与 50 用户前置判断**
+  - 先用 waders shadow 对比证明 v2 不低于 5.9.8 本地 gold；通过后再 feature flag 切换。
+  - 若 v2 召回下降或 FP 上升，回退到 5.9.8 旧链路，保留 v2 继续 shadow。
+- [ ] **Step 7: Vector bad case memory 轻量版（增强项，不阻塞 50 用户）**
+  - 将已审核 bad case、gold regression、candidate 审核结果向量化，用于检索相似历史错误、候选聚类和审核优先级排序。
+  - 明确 vector 结果不能直接决定前台展示；找不到 evidence 或 verifier 冲突时仍降级到 candidate/audit。
 
-#### 5.9.10 ABSA 小模型 fine-tune POC（5.9.9 达标后）
+**验收标准：**
+- 前台无 evidence 展示率 `= 0`，cluster propagated 前台展示率 `= 0`。
+- waders gold set 不发生 P0 回退；`water_leaks_through`、`keeps_water_out`、phone case/pocket、旧产品/他牌、未实际使用等边界继续通过。
+- 未验证 sub_category 不展示未经确认的细粒度标签；candidate/audit 字段必须能追溯原始 LLM 输出和降级原因。
+- 10 个大类至少完成 L1/L2 灰度抽检；每个大类 10-20 条风险样本中不得出现系统性 P0 错误。
+- 50 用户前可不完成 vector bad case memory，但必须保留 candidate/audit 数据结构，确保后续可接入 bad case retrieval。
+- 新增普通 sub_category 不再默认进入 `3-5` 天深度规则工程；优先轻接入、抽检、候选观察。
+- Erika 人工参与集中在候选池、Top 异常和高价值类目升级决策，目标维持每周 `1-2` 小时维护量。
 
-**状态：** 待启动（从原 6.7 迁入）
+#### 5.9.10 ABSA 小模型 fine-tune POC（延后/条件触发）
 
-**定位：** 5.9.10 才是真正的 ABSA 小模型 fine-tune。它不是替代 5.9 标签口径治理，而是在 5.9.8/5.9.9 已经证明“标签定义稳定、evidence 可追溯、数据规模达标”之后，把结构化 ABSA 任务从 LLM/rules 逐步迁到小模型或小模型辅助链路。
+**状态：** 延后，不阻塞 50 用户试运行。
+
+**调整原因：** ABSA fine-tune 仍有长期价值，但当前缺少训练所需的数据规模、类目覆盖、稳定标签定义和人工标注产能。近期强行训练会产生两类风险：一是为了凑数据消耗大量人工时间，二是用不稳定或带规则偏见的标签训练出“更稳定的错误”。
+
+**重新定位：** 5.9.10 只在真实用户数据、candidate pool 审核记录和 gold regression 自然积累到门槛后启动。它不是 5.9.9 的必然下一步，也不是 MVP 上线前置条件。
 
 **启动条件：**
-- 5.9.8 Step 4/5 对关键 sub_category 通过盲测与真实上传验收。
-- 5.9.9 达到 POC 数据门槛：`3,000-5,000` 条人工确认评论，或 `5,000-10,000` 个 occurrence。
-- locked test set 已固定，且包含正例、负例、边界 case、未覆盖类目降级样本。
-- PMF/付费用户信号仍作为 ROI 判断，但不能单独触发 ABSA 训练；数据 readiness 才是训练门槛。
+- 真实上传和候选审核自然累计达到 `3,000-5,000` 条人工确认评论，或 `5,000-10,000` 个高质量 occurrence。
+- 至少有多个高价值类目达到 `L2_category` 或 `L3_sub_category`，且 label 定义稳定。
+- locked test set 已固定，包含正例、负例、边界 case、未覆盖类目降级样本。
+- evidence 可定位率 `>=95%`，且无 evidence、cluster propagated、legacy fallback、未确认 candidate 不进入训练正例。
+- PMF/付费用户信号证明训练能带来明确 ROI，例如降低 LLM 成本、提升召回、缩短延迟或支持高价值客户。
 
-**技术产物沿用原 6.7 规划：**
+**保留的技术方向：**
 - Create: `ml/absa/`（训练脚本、数据集、模型 checkpoint）
 - Create: `ml/absa/train.py`、`ml/absa/infer.py`
 - Create: `review_analyzer/absa_service.py`（推理服务）
-- Modify: `review_analyzer/analyzer.py` 或 `review_analyzer/deep_analyzer.py`（ABSA 走小模型/模型辅助，洞察生成保留 LLM）
+- Modify: `review_analyzer/analyzer.py` 或 `backend_api/app/services/deep_analyzer.py`（ABSA 走小模型/模型辅助，洞察生成保留 LLM）
 
-**POC 执行步骤：**
-- [ ] **Step 1: Baseline**
-  - 用 locked test set 评估当前 LLM + rules + gating 链路，建立小模型必须超过或至少持平的基线。
-- [ ] **Step 2: 模型选型**
-  - 英文评论优先从 `microsoft/deberta-v3-base` 或同级模型启动；当前 waders/TIDEWE 样本以英文 Amazon review 为主。
-  - 中文评论可后置评估 `hfl/chinese-roberta-wwm-ext-large`；LoRA 作为显存与迭代成本优化选项。
-- [ ] **Step 3: 训练与评估**
-  - 先做 aspect classification、aspect polarity、Customer Issue / Label classification、evidence span/overlap 评估。
-  - 不把无 evidence、cluster propagated、legacy fallback 当正例。
-- [ ] **Step 4: Shadow inference**
-  - 先只做影子推理，与线上 LLM/rules 输出对比，不直接替换用户可见结果。
-- [ ] **Step 5: 灰度 / A-B**
-  - 离线评估通过后，再用 feature flag 小流量灰度。
-  - 灰度失败时回退到当前 LLM/rules/gating 链路。
-
-**验收标准：**
-- 情感 / polarity 准确率 `>=95%`。
-- aspect 分类准确率 `>=90%`。
-- 核心 Customer Issue / Label F1 初始目标 `>=85%`，稳定后逐步提高。
-- evidence span 使用 exact match + overlap 两类指标，必须能解释预测来源。
-- false positive `<=10%`；无 evidence 展示率继续保持 `0`。
-- 延迟、成本、可回滚能力均优于或不弱于当前 LLM/rules 链路。
+**执行原则：**
+- 先用 locked test set 评估 5.9.9 v2 链路，作为小模型必须超过或至少持平的 baseline。
+- 先 shadow inference，再灰度/A-B，不直接替换用户可见结果。
+- 小模型只替代结构化 ABSA 任务；解释、总结、行动建议等生成式任务继续交给 LLM。
+- 灰度失败时回退到 5.9.9 LLM evidence-first + verifier 链路。
 
 
 ## Git 分支策略
@@ -1335,11 +1345,11 @@ readiness 节奏：
 >
 > 总投入：8 周，与 2.5-3.1 业务功能并行推进。
 >
-> 2026-07-29 口径调整：ABSA 小模型具体执行已迁移到 5.9.9/5.9.10，6.x 只保留技术路线背景与数据/成本/反馈能力建设。
+> 2026-07-29 口径调整：ABSA 小模型不再作为近期硬目标；5.9.9 先做 Customer Label System v2，5.9.10 仅在数据与 ROI 达标后触发，6.x 保留技术路线背景与数据/成本/反馈能力建设。
 
 ### 核心思路（一句话）
 
-把 Shulex 用 18 个月走完的路压缩到 8 周：先用 10 万条数据立起「评测基准 + 品类 Taxonomy + Bad Case 库」，再分阶段把 ABSA 任务从 LLM 收回到小模型，把 LLM 留给生成式任务，配合 Embedding 聚类做成本优化；同时完成商业化基建（收款、多租户、部署），让前 50 个付费用户可承接。
+近期不再把“ABSA 任务收回到小模型”作为 8 周硬目标；先用 LLM evidence-first、verifier、安全门禁、候选池和类目成熟度分级，让没有足量训练数据的阶段也能安全可用，同时继续沉淀未来可训练的数据资产。
 
 ### 与 Shulex 的差距地图
 
@@ -1348,7 +1358,7 @@ readiness 节奏：
 | 分析单元 | 逐条 LLM | Embedding 聚类 + LLM 打标签 | 同 | P0 |
 | 输出格式 | Prompt 约束自由文本 | 强制 JSON Schema | 同 | P0 |
 | Prompt 版本 | 无版本管理 | Git + DB 双层追踪 | LangSmith | P0 |
-| ABSA 任务 | 纯 LLM | 5.9.10 fine-tuned 小模型（5.9.9 readiness 后） | 同 | P1 |
+| ABSA / 标签任务 | 纯 LLM | 5.9.9 LLM evidence-first + verifier；5.9.10 小模型延后为条件触发 | Shulex 已有模型化能力 | P1 |
 | 反馈回路 | 无 | 用户纠错 → bad case 库 → few-shot | 同 | P1 |
 | 成本模型 | 线性增长 | 聚类后近似固定 | 同 | P0 |
 | Fallback | 单 DeepSeek | 三级链路 | 多模型 | P1 |
@@ -1981,16 +1991,16 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### 6.7 ABSA 小模型 fine-tune（已迁移）
+### 6.7 ABSA 小模型 fine-tune（已延后）
 
-原 `6.7 ABSA 小模型 fine-tune` 已迁移到 `5.9.9 ABSA fine-tune 数据集 readiness` 与 `5.9.10 ABSA 小模型 fine-tune POC`。
+原 `6.7 ABSA 小模型 fine-tune` 曾迁移到 5.9 标签准确性计划中；2026-07-29 再次调整后，近期主线改为 `5.9.9 Customer Label System v2`，ABSA 小模型 POC 延后为 `5.9.10` 的条件触发项。
 
-**迁移原因：** ABSA fine-tune 的真实前置条件不是单独的 PMF/付费用户数，而是 Customer Issue / Customer Label 口径稳定、evidence 可追溯、人工确认数据集规模达标、固定测试集可评估。PMF/付费用户信号仍用于判断 ROI，但不能代替数据 readiness。
+**调整原因：** ABSA fine-tune 的真实前置条件不是单独的 PMF/付费用户数，而是 Customer Issue / Customer Label 口径稳定、evidence 可追溯、人工确认数据集规模达标、固定测试集可评估。当前一人公司没有稳定流量和足量跨类目标注，强行推进训练会拖慢 MVP，并可能用不稳定标签训练出更稳定的错误。
 
 **后续执行原则：**
-- 不再从 6.x 单独启动 ABSA 训练。
-- 先完成 5.9.8 口径重构与灰度验证，再进入 5.9.9 数据集 readiness。
-- 只有 5.9.9 输出 `GO POC` 后，才启动 5.9.10 小模型 fine-tune。
+- 不再从 6.x 单独启动 ABSA 训练，也不把 ABSA 作为 50 用户试运行前置条件。
+- 先完成 5.9.8 安全门禁与 waders 回归，再进入 5.9.9 Customer Label System v2。
+- 只有真实上传、candidate pool 审核和 gold regression 自然累计到训练门槛且 ROI 明确后，才评审是否启动 5.9.10 小模型 fine-tune。
 
 ---
 
@@ -2090,26 +2100,27 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
                      └──► 6.6 (成本优化)
 
 5.9.8 (Customer Issue / Label 口径重构与灰度验证)
-        └──► 5.9.9 (ABSA fine-tune 数据集 readiness)
-                 └──► 5.9.10 (ABSA 小模型 fine-tune POC)
+        └──► 5.9.9 (Customer Label System v2: LLM evidence-first + verifier + candidate pool + maturity + 10 大类灰度)
+                 └──► 5.9.10 (ABSA 小模型 fine-tune POC，数据与 ROI 达标后才触发)
 
-6.8 (用户反馈回路) ──► 5.9.9/5.9.10 数据闭环补样
-6.9 (Niche 商业化) ──► 决定是否扩大 ABSA fine-tune ROI 投入
+6.8 (用户反馈回路) ──► 5.9.9 candidate pool / gold regression 持续补样
+5.9.9 candidate pool / gold regression ──► vector bad case memory（增强项，不阻塞 50 用户）
+6.9 (Niche 商业化) ──► 决定哪些类目升级到 L2/L3，以及是否值得投入 5.9.10 ABSA
 ```
 
 执行顺序建议：
 1. **Week 1-2:** 6.1（数据资产化）+ 6.4（商业化基建）并行启动 — 这是所有后续工作的地基
 2. **Week 3-4:** 6.5（LLM 输出加固）+ 6.9 启动品类选定与白皮书
 3. **Week 4-6:** 6.6（成本优化）+ 5.9.8 标签口径重构/灰度验证
-4. **Week 5-8:** 6.8（反馈回路）+ 6.9 1对1 跟进 + 5.9.9 数据集 readiness
-5. **5.9.9 达标后:** 5.9.10 ABSA 小模型 POC（先 shadow inference，再灰度/A-B）
+4. **Week 5-8:** 6.8（反馈回路）+ 6.9 1对1 跟进 + 5.9.9 Customer Label System v2 增强版 MVP（轻量候选审核 + 10 大类 L1/L2 灰度；vector 可选增强，不作为 50 用户硬门禁）
+5. **数据与 ROI 达标后:** 5.9.10 ABSA 小模型 POC（先 shadow inference，再灰度/A-B）
 
 ### 6 优先级精简版
 
 1. **6.1 数据资产化（Week 1-2）** — 不做这个，后面所有优化都没法度量。零技术风险，纯运营投入。
 2. **6.9 Niche 商业化（Week 4-8）** — 不做这个，技术优化全是沉没成本。商业化决定产品方向。
 3. **6.4 成本优化（Week 4-6）** — 单点技改成本最低、降本最猛，让前 50 个用户的毛利可控。
-4. **5.9.9/5.9.10 ABSA 衔接** — 只有口径稳定且数据达标后才训练小模型，避免用脏标签训练出更稳定的错误。
+4. **5.9.9 Customer Label System v2** — 先解决无足量训练数据时的安全可用、候选审核、类目降级和 10 大类灰度覆盖；vector bad case memory 只作为增强项，5.9.10 ABSA 只有数据与 ROI 达标后才触发。
 
 ### 6 阶段验收标准
 
@@ -2992,7 +3003,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 | Multi-Agent 架构 | 当前无适用场景，任务步骤确定 |
 | Batch Prompt（多条合一次 LLM） | 缓存 98% 命中率下剩余量太小，收益 < 准确率风险 |
 | RQ → Celery 迁移 | 当前无并发瓶颈，等月活 > 50 |
-| ABSA fine-tune 小模型 | 已迁移至 5.9.9/5.9.10；当前 7.11 不单独启动训练 |
+| ABSA fine-tune 小模型 | 已延后为 5.9.10 条件触发；当前 7.11 不单独启动训练，5.9.9 先做 Customer Label System v2 |
 
 #### Worker 可靠性补丁（2026-06-17 追加）
 
