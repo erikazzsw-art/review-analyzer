@@ -1,10 +1,35 @@
 # ClueAI V2 项目进度追踪
 
-> 最后更新：2026-07-28
+> 最后更新：2026-07-29
 > V2 目标：商业化升级，4 项核心功能跑通可运营  
 > 时间窗口：2026-05-26 ~ 2026-06-20（4 周）  
 > 每日投入：7 小时  
 > 分工：技术实现由 AI 完成，Erika 负责产品需求定义、PRD、技术选型理解、验收、面试准备
+
+---
+
+### 2026-07-29 ABSA fine-tune 与 5.9 标签口径计划衔接
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-29 | plan | 将原 `6.7 ABSA 小模型 fine-tune` 从技术优化模块迁入 5.9 Customer Issue / Customer Label 准确性计划之后，拆为 `5.9.9 ABSA fine-tune 数据集 readiness` 与 `5.9.10 ABSA 小模型 fine-tune POC`。 | ABSA 不再只以 PMF/付费用户数触发，而是以 5.9 口径稳定、evidence 可追溯、gold dataset 规模达标为前置门槛 |
+| 2026-07-29 | plan | 在 5.9.8 阶段表补充 `Step 4.5 waders ABSA 数据集 v0` 与 `Step 5.5 ABSA fine-tune 启动评审`，让标签口径治理自然沉淀为可训练数据资产。 | 本次仅更新计划文档；未改业务代码、未触发生产 API、credit 或 LLM 成本 |
+
+---
+
+### 2026-07-29 5.9.8 Step 3 TIDEWE waders 人工上传验收预检
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-29 | docs | 基于人工标注表与 Step 1 重点行号，生成 29 条 TIDEWE waders Customer Issue / Customer Label 人工验收矩阵，覆盖四件套扩散、无 evidence、cluster propagated、no leaks / leak proof / kept dry / stayed dry、phone case / pocket 漏水、未实际使用、泛泛好评、mixed review、aspect 冲突。 | 产出 `docs/5.9.8-step3-tidewe-waders-human-acceptance-matrix.md` |
+| 2026-07-29 | safety | 完成只读预检：读取仓库文档、Step 2 fixture/test、人工 Excel sheet 结构与重点行内容；未调用生产上传、生产重分析、credit 或 LLM。 | PASS；当前等待 Erika 确认 `GO` |
+| 2026-07-29 | gate | 明确 GO 后真实上传验收边界：若进入生产上传，执行前必须再次提醒会触发真实分析并消耗 credit/LLM，且等待 Erika 明确授权；上传后再补充结果页 Top10、单条明细、raw review XLSX、后端完整导出、单标签下载、异常样例和结论。 | 待 GO / 待生产授权 |
+| 2026-07-29 | stop | Erika 已回复 `GO` 并授权生产上传/credit/LLM；执行生产 preflight 时 `/health` PASS，已生成上传用 100 行清洗样本 `tmp/5.9.8-step3-tidewe-waders-prod-20260729/TIDEWE-下水服-WD001-step3-upload-100rows.xlsx`，但生产登录对 `[REDACTED_PROD_EMAIL]` 与 `[REDACTED_PROD_USERNAME]` 均返回 401。 | STOP at auth preflight；未上传、未创建 job/session、未触发 credit/LLM/export；等待有效生产登录凭证或已认证 session/cookie |
+| 2026-07-29 | acceptance | Erika 手动上传同批 TIDEWE waders 评论并提供 `session_id=118` 结果页；Codex 仅做生产 DB 只读校验和本地等价导出，生成 `docs/5.9.8-step3-tidewe-waders-session118-acceptance-report.md`、`acceptance-summary.json`、raw review 等价 XLSX、backend full export 等价 XLSX、6 个单标签 XLSX。 | `REVIEW_NEEDED`：单条明细无 evidence 展示率=0、cluster propagated 展示率=0、Top occurrence gating PASS；但 `water_leaks_through` 仍被 row 46 phone case、row 52 旧产品、row 62 no leaks 正向语境污染，`pocket_not_waterproof` 单标签 rows=0。 |
+| 2026-07-29 | cache-risk | Erika 指出同批评论此前上传过，session 118 可能命中缓存。只读证据确认：`llm_usage_log` 有 51 rows `cache_hit=true`，comments 有 49 rows `cache_hit_level=L1`；content hash 由 `content + rating + category` 计算，不含 ASIN，换 ASIN 不能绕过缓存。 | session 118 不可作为干净新分析验收，只能验证当前线上结果页/导出口径 gating；干净复测需清用户历史和 `review_pool` 同批 hash。 |
+| 2026-07-29 | cleanup-audit | Erika 已从测试账号删除 `session_id=118` 产品及评论；Codex 随后执行生产 DB 只读清理审计，输出 `tmp/5.9.8-step3-tidewe-waders-prod-20260729/cleanup-audit-after-session118-delete.json`。 | 用户侧 L1 已清：`session_118=0`、`comments_118=0`、`product_sessions=[]`、`product_comments=0`、`matching_hash_comments=0`、`products=[]`；但全局 `review_pool` 仍有 49 条同批 hash 已分析缓存，`status=CACHE_RISK_REMAINS`。下一步需 Erika 明确授权是否清 `review_pool` 后再重传。 |
+| 2026-07-29 | preclear-audit | 执行 `python3 tmp/production_tidewe_waders_step3_runner.py --audit-review-pool-cache` 做生产 DB 只读预检，输出 `tmp/5.9.8-step3-tidewe-waders-prod-20260729/review-pool-cache-preclear-audit.json`。 | 确认 `review_pool` 目标缓存仍存在：`rows=49`、`distinct_hashes=49`、`analyzed_rows=49`、`aspects_rows=49`、`target_rows=49`，均为 `analyzer_version=v4_deep`，`analyzed_at=2026-07-28 08:59:12.401966+00:00`；清理目标限定为同批 content_hash 且已分析的 49 行，仅待 Erika 明确授权后置空分析缓存字段。 |
+| 2026-07-29 | cache-clear | Erika 明确授权 `GO_DELETE_TIDEWE_WD001_CLEAN_RETEST` 后，执行 `python3 tmp/production_tidewe_waders_step3_runner.py --clear-review-pool-cache --authorization GO_DELETE_TIDEWE_WD001_CLEAN_RETEST`。 | `CLEARED`：生产 `review_pool` 同批 49 行仅置空 `sentiment/aspects_json/analyzed_at/analyzer_version`，未删除评论源；结果写入 `review-pool-cache-clear-result.json`，只读复核 `review-pool-cache-postclear-audit.json` 显示 `target_rows=0`、`analyzed_rows=0`、`aspects_rows=0`；最终 `cleanup-audit-after-session118-delete.json` 为 `status=CLEAN_FOR_RETEST`，`clean_for_user_l1=true`、`clean_for_global_l1=true`。未上传、未触发 credit/LLM；下一次由 Erika 前端手动重传会消耗真实 `review_analyze` credit 与 LLM 成本。 |
 
 ---
 
@@ -31,12 +56,12 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 | 9 | 9 | 0 | 0 | 100% | 5.1-5.9 全部完成，ECS 生产环境运行中 |
-| 6. 技术优化 | 9 | 6 | 0 | 3 | 67% | 6.1-6.6 完成（数据资产化→成本优化）；6.7-6.9 待 PMF 验证后启动 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 9 | 1 | 2 | 75% | 5.1-5.9 基础迁移完成；5.9.8 标签口径重构/灰度验证进行中；5.9.9/5.9.10 作为 ABSA 衔接计划 |
+| 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已迁入 5.9.9/5.9.10；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
 | 9. 增值功能 | 6 | 1 | 2 | 3 | ~33% | 9.3 完成；9.1/9.2 部分完成；9.4/9.5/9.6 待启动 |
-| **总计** | **51** | **30** | **9** | **12** | **~70%** | |
+| **总计** | **53** | **30** | **10** | **13** | **~69%** | |
 
 ### 按状态明细
 
@@ -75,10 +100,11 @@
 | 8.7 | Credit定价体系 | 海外4档套餐+统一credit池，已部署上线 |
 | 9.3 | 智能推送 | 设置页拆分为3子页+推送内容增强(B1-B6)+飞书Webhook推送 |
 
-**🔄 进行中（9 个子模块）**
+**🔄 进行中（10 个子模块）**
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
+| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | Step 1/2 完成；Step 3 REVIEW_NEEDED | 修复 waders 边界污染与 cache 风险；完成 Step 4/5/6 验收 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -89,11 +115,12 @@
 | 9.1 | 评论自动获取 | Rainforest单次拉取已实现 | 定时拉取+多数据源+ASIN监听列表 |
 | 9.2 | API调用 | 基础路由存在 | v1公开API+认证+限流+文档 |
 
-**⏳ 待启动（12 个子模块）**
+**⏳ 待启动（13 个子模块）**
 
 | 编号 | 名称 | 启动条件 |
 |------|------|---------|
-| 6.7 | ABSA小模型fine-tune | PMF验证通过+≥5付费用户 |
+| 5.9.9 | ABSA fine-tune 数据集 readiness | 5.9.8 Step 4/5 达标；至少 3-5 个 MVP sub_category 口径稳定 |
+| 5.9.10 | ABSA 小模型 fine-tune POC | 5.9.9 POC 数据门槛通过（≥3k-5k 人工确认评论或 ≥5k-10k occurrence） |
 | 6.8 | 用户反馈回路 | PMF验证通过 |
 | 6.9 | Niche商业化启动 | PMF验证通过 |
 | 7.3 | 独立测试环境 | 团队扩展或付费用户需staging |
@@ -107,7 +134,7 @@
 | 9.6 | 团队管理(多租户) | ≥1付费用户 |
 
 ```
-[███████████████░░░░░░░] ~70%  (30 完成 / 9 进行中 / 12 待启动)
+[███████████████░░░░░░░] ~69%  (30 完成 / 10 进行中 / 13 待启动)
 ```
 
 ---
@@ -641,13 +668,13 @@
 - `50U-T2` 本地验证通过：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py backend_api/tests/test_customer_label_50u_readiness.py -q`：63 passed、4 warnings（既有 Starlette/httpx 与 `datetime.utcnow()` deprecation）；未请求生产、未 push。
 - `50U-T3` 运营 runbook 与上线门禁已完成文档侧收口：新增 `docs/50u-readiness-runbook.md`，覆盖上传失败、worker stuck、LLM 成本异常、credit 补偿、analytics/ledger/LLM usage 对账、`review_date`/date filter、`Not Breathable`/Representative Evidence/`cluster_propagated` 异常记录、50 用户前 checklist 与每日/每周观察项；新增 `docs/50u-production-write-smoke-authorization.md`，明确生产写路径 smoke 的样本/session/credit/LLM 成本/停止条件/回滚补偿/API allow/deny 授权模板。
 - `50U-T1` 授权前准备包已完成文档侧补强：基于本地文档与路由/credit/LLM 代码阅读，补充生产写路径 smoke 审批前必须确认项，包括 smoke 用户、样本来源/去重风险、产品/variant 副作用、session 数量、预计/上限 credit、预计/上限 LLM non-cache calls 与 RMB 成本、允许/禁止 API、停止条件、回滚/补偿 owner 与观测指标。本轮只是授权前准备，未启动生产 smoke。
-- `50U-T1` 后续授权信息部分补齐：Erika 已确认未来 smoke 使用 production 环境、账号 `erikazz@foxmail.com` / 用户名 `惜_clueai`，auth/session method 为浏览器登录后使用正常 HttpOnly session cookie；密码仅用于登录方式确认，不写入仓库文档。`50U-T1` 仍未启动，仍缺生产 base URL / deploy run、样本文件与来源、product/variant 副作用、credit/LLM 成本 cap、API allowlist、停止/补偿/cleanup acceptance 等执行前授权项。
+- `50U-T1` 后续授权信息部分补齐：Erika 已确认未来 smoke 使用 production 环境、账号 `[REDACTED_PROD_EMAIL]` / 用户名 `[REDACTED_PROD_USERNAME]`，auth/session method 为浏览器登录后使用正常 HttpOnly session cookie；密码仅用于登录方式确认，不写入仓库文档。`50U-T1` 仍未启动，仍缺生产 base URL / deploy run、样本文件与来源、product/variant 副作用、credit/LLM 成本 cap、API allowlist、停止/补偿/cleanup acceptance 等执行前授权项。
 - `50U-T1` 样本策略已补充为建议口径：首轮使用新 CSV/XLSX 文件与未上传过的新评论内容，优先选择已被 taxonomy / 本地回归覆盖的已知支持类目；不建议把全新类目作为首轮 T1 smoke，以免把生产写路径验证与类目扩展风险混在一起。若 Erika 要测新类目，建议在首轮写路径通过后单独开第二个授权块。
 - `50U-T1` 样本与成本字段已进一步补齐：Erika 已在测试账号产品管理中新建 `MAILESI-充电头-XHD-PD25W`；本地找到原始样本 `/Users/zhangxi/Desktop/评论分析项目/MAILESI-充电头-XHD-PD25W-100条.xlsx`（100 行），并派生上传用 `/Users/zhangxi/Desktop/评论分析项目/MAILESI-充电头-XHD-PD25W-15条-smoke.xlsx`（15 行，`content/rating/date/reviewer/source`，本地 parser 15/15 通过）。建议 category 明确填 `USB C Charger Block`，session count=1，expected/max credit=`-15 review_analyze`，LLM non-cache calls `<=15`，max LLM cost `<= ¥10.00`，locale/provider chain=`en: gpt-4o-mini -> deepseek-chat -> qwen-plus`。本轮未登录生产、未上传、未触发 credit/quota/analytics/LLM 成本。
 - `50U-T1` Erika 审批项 1-4 已记录：样本允许用于 production smoke；确认不含不应进入生产的私密数据（本地正文扫描无 email/phone/order-like，reviewer 按公开评论名处理）；确认 smoke 用户 + 产品 + `USB C Charger Block` 下未上传过这批评论；接受 API allowlist、停止条件、补偿与 cleanup 规则。第 5 项按推荐值记录为 app=`https://app.clueai-reviewlens.com`、api=`https://api.clueai-reviewlens.com`、executor=Codex with Erika final GO、window=最终 GO 后 30 分钟；production deploy run / production HEAD 仍需执行前确认 `1e93e38`。
 - `50U-T1` GO 后执行前 preflight 发现：正常 upload worker 在分析完成后会将本批评论 content hash 回填到全局 `review_pool` / `review_pool_meta`，用于跨用户 LLM 缓存复用；这不是额外 API、不会额外扣 credit，但属于 production 内部写入。已补充到 `docs/50u-production-write-smoke-authorization.md` 与 `docs/50u-readiness-runbook.md`，并将其限定为 approved 15-row smoke content hashes。当前仍停在上传前，尚未执行生产上传、未触发 credit/quota/analytics/LLM 成本；需 Erika 明确接受该 `review_pool` side effect 后继续。
 - `50U-T1` GO 后 auth preflight STOP：Erika 已明确接受 `review_pool` / `review_pool_meta` 仅限 15 条 approved content hashes 的 worker 回填并要求继续执行；生产 `/health` 200，样本本地解析 15/15、batch hash 已计算；但 `POST /auth/login` 使用 approved email 与 username 均返回 401。只读 DB lookup 确认 smoke user 存在、plan=`pro`、未软删、有 bcrypt password hash。已停止在上传前；未创建 upload job、未执行生产上传、未 poll results、未触发 credit/quota/analytics/LLM 成本。继续需要有效生产登录凭证或 Erika 提供的 authenticated browser session/cookie。
-- `50U-T1` updated credential preflight 已通过但 upload STOP：生产 `/health` 200；`POST /auth/login` 使用 smoke email 成功，`/me` 校验 user_id=9 / username=`惜_clueai` / plan=`pro`；`/credits/balance=14967`；`/products` 命中 `MAILESI-充电头-XHD-PD25W`，`product_ref_id=77`（DB parent_product_id=`B088D4CNHV`）；生产 DB taxonomy `USB C Charger Block` 命中 17 rows / 17 aspect_keys；同 user + product/category/batch_hash 无重复 session；before counters 为 user_credits=14967、credit_ledger rows=295/max_id=304、llm_usage_log rows=2603/max_id=2653/cost_yuan=15.89495、analytics_events rows=4166/max_id=4726、upload_jobs rows=69/max_id=95、sessions rows=30/max_id=114、comments rows=2024/max_id=26501、products rows=18、product_variants rows=186、approved review_pool hashes=0。随后唯一写路径 `POST /uploads?locale=en` 上传 15-row xlsx 返回 500 `Internal Server Error`，按停止条件立即 STOP；未返回 job_id，未 poll，未调用 session results。事后只读 DB 对账确认所有 counters delta=0：未创建 upload_jobs/sessions/comments，未扣 credit，未写 credit_ledger/llm_usage_log/analytics_events/review_pool/review_pool_meta，products/product_variants count unchanged。后续需要生产 API 日志中 2026-07-28 14:22:54 Asia/Shanghai 左右 `POST /uploads` 的 500 stack trace；不得自动重试上传。
+- `50U-T1` updated credential preflight 已通过但 upload STOP：生产 `/health` 200；`POST /auth/login` 使用 smoke email 成功，`/me` 校验 user_id=9 / username=`[REDACTED_PROD_USERNAME]` / plan=`pro`；`/credits/balance=14967`；`/products` 命中 `MAILESI-充电头-XHD-PD25W`，`product_ref_id=77`（DB parent_product_id=`B088D4CNHV`）；生产 DB taxonomy `USB C Charger Block` 命中 17 rows / 17 aspect_keys；同 user + product/category/batch_hash 无重复 session；before counters 为 user_credits=14967、credit_ledger rows=295/max_id=304、llm_usage_log rows=2603/max_id=2653/cost_yuan=15.89495、analytics_events rows=4166/max_id=4726、upload_jobs rows=69/max_id=95、sessions rows=30/max_id=114、comments rows=2024/max_id=26501、products rows=18、product_variants rows=186、approved review_pool hashes=0。随后唯一写路径 `POST /uploads?locale=en` 上传 15-row xlsx 返回 500 `Internal Server Error`，按停止条件立即 STOP；未返回 job_id，未 poll，未调用 session results。事后只读 DB 对账确认所有 counters delta=0：未创建 upload_jobs/sessions/comments，未扣 credit，未写 credit_ledger/llm_usage_log/analytics_events/review_pool/review_pool_meta，products/product_variants count unchanged。后续需要生产 API 日志中 2026-07-28 14:22:54 Asia/Shanghai 左右 `POST /uploads` 的 500 stack trace；不得自动重试上传。
 - `50U-T1` upload 500 根因已定位并修复生产容器环境：生产 API traceback 显示 `psycopg2.errors.ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction`，发生在 `review_analyzer/database.py:create_upload_job()` 第一条 `INSERT upload_jobs`；诊断确认 `PGOPTIONS` 未设置、DSN query 为空、`pg_is_in_recovery=False`，但 API 容器新连接 `transaction_read_only=on` / `default_transaction_read_only=on`，`pg_settings.source=session`。手动 `SET default_transaction_read_only=off` 可恢复。Erika 在 production `deploy/.env` 加入 `PGOPTIONS=-c default_transaction_read_only=off` 并 `docker compose up -d --force-recreate api worker scheduler`；复查 API 容器内 `PGOPTIONS=-c default_transaction_read_only=off`、`default_transaction_read_only=off`、`transaction_read_only=off`。本轮仅修复环境并记录，不重试上传；继续 50U-T1 需要 Erika 重新明确 GO。
 - `50U-T1` PGOPTIONS 修复后重试已执行并 STOP：重新只读 preflight 全通过（`/health`、login、`/me`、credit=14967、product_ref_id=77、taxonomy 命中、duplicate session=0、DB read-only flags=off/off、before counters 已记录）；为避免非必要外部 side effect，上传前临时关闭 smoke 用户 webhook 推送配置，worker 完成后已恢复且未记录 webhook URL/secret。`POST /uploads?locale=en` 返回 `job_id=96`，poll 在约 31s 后 `done`，`session_id=115`；session results 可读，comments=15，无 embedding 泄漏，Representative Evidence 可定位，Top negative 仅 `No clear friction` fallback row，无 `cluster_propagated=true` top row / waterproof 正向漏水误证据。DB after 对账：credit balance 14967→14952，`credit_ledger` 新增唯一 `review_analyze` delta=-15 / ref_id=96；`llm_usage_log` 新增 14 non-cache rows，cost_yuan=0.089850；`analysis_job_complete` 存在；products/product_variants count unchanged；`review_pool` 影响限定为 approved 15 hashes；push_snapshots/action_items 无新增。最终按停止条件 STOP：comments=15 / processed=15 / review_date_normalized=15，但 analyzed=14/15，未分析项来自 LLM schema_invalid exhausted 后 worker 以 `aspects_json=NULL` 写 legacy fallback 并将 job 标记 done；同时 `llm_usage_log.model_name` 记录为 provider `openai`，不满足允许模型名 `gpt-4o-mini/deepseek-chat/qwen-plus` 口径。本轮未执行 QA、reanalysis、aggregate/export、modern compare、手动 production SQL 写入或 push。
 - `50U-T1` STOP 后本地修复已完成但未部署/未 push：`workers/jobs.py` 将 exhausted LLM error fallback 改为结构化非空 `aspects_json` 并用 `analysis_error/analysis_fallback` 标记，同时禁止该 degraded fallback 回填 `review_pool`；`review_analyzer/database.py` 的 user/global content_hash cache 读取排除 `analysis_error` fallback；`backend_api/app/services/llm_router.py` 成功返回值改为真实 `model_id`，避免 `llm_usage_log.model_name=openai`。新增/补充 focused tests，`python3 -m py_compile ...` 通过，`python3 -m pytest backend_api/tests/test_worker_error_fallback.py backend_api/tests/test_database_read_path.py -q`：14 passed。后续需代码 review、部署，再经 Erika 新授权决定是否做新的生产写路径验证；不得复用本次 session 做 reanalysis。
@@ -1019,7 +1046,7 @@ readiness 节奏：
 - [x] `50U-T2` focused 回归通过：新增门禁单跑 6 passed；Phase 7 相关 focused pytest 合计 63 passed、4 warnings（既有 deprecation）。本轮未执行生产上传、重分析、QA、aggregate/export smoke、modern compare，未请求生产业务 API，未 push。
 - [x] `50U-T3` 运营 runbook 与上线门禁完成：`docs/50u-readiness-runbook.md` 与 `docs/50u-production-write-smoke-authorization.md` 已建立；覆盖 SOP、对账 SQL、异常记录、50 用户前 checklist、每日/每周观察、生产写路径 smoke 授权字段、停止条件、回滚/补偿与 API allow/deny；本轮只改文档/进度记录，未请求生产业务 API，未触发写入或成本。
 - [x] `50U-T1` 授权前准备完成：已补强 `docs/50u-production-write-smoke-authorization.md` 的审批前必须确认项，明确 smoke 用户、样本来源/敏感性/去重、product/variant 写入副作用、预计与上限 credit、预计与上限 LLM non-cache calls / RMB 成本、允许 provider 链、API allow/deny、观测指标、停止权与补偿 owner；同步更新 `docs/50u-readiness-runbook.md` 的 50 用户前 checklist。本轮未启动生产 smoke，未请求生产业务 API，未触发 credit/quota/analytics/LLM 成本路径，未 push。
-- [x] `50U-T1` 部分授权字段已确认并记录：环境为 production，smoke 账号为 `erikazz@foxmail.com` / 用户名 `惜_clueai`，登录方式为浏览器登录后使用正常 HttpOnly session cookie；密码不写入仓库。当前仍只是授权信息补齐，未启动生产 smoke。
+- [x] `50U-T1` 部分授权字段已确认并记录：环境为 production，smoke 账号为 `[REDACTED_PROD_EMAIL]` / 用户名 `[REDACTED_PROD_USERNAME]`，登录方式为浏览器登录后使用正常 HttpOnly session cookie；密码不写入仓库。当前仍只是授权信息补齐，未启动生产 smoke。
 - [x] `50U-T1` 样本要求已记录：首轮建议新 CSV/XLSX 文件、新评论内容、10-20 行、必含 content/date，推荐 rating/reviewer/source；优先用已知支持类目，不把全新类目混入首轮生产写路径 smoke。当前仍未选择具体样本文件，未启动生产 smoke。
 - [x] `50U-T1` 15 条 smoke 样本已本地派生并验证：原始 100 条文件的正文列为 `body`，直接上传会因 parser 不识别正文列而失败；已派生 15 条 upload-ready xlsx，列为 `content/rating/date/reviewer/source`，本地 `parse_file()` 验证通过。产品为 `MAILESI-充电头-XHD-PD25W`，建议 category=`USB C Charger Block`，credit/LLM/API 建议值已补入授权模板。当前仍未启动生产 smoke。
 - [x] `50U-T1` 审批项 1-4 与第 5 项推荐值已补齐：样本权限/敏感性/未重复上传/API allowlist/停止/补偿/cleanup 已由 Erika 确认；base URL、executor、30 分钟 smoke window 采用推荐口径；deploy run / production HEAD 需在最终 GO 后、执行前只读确认。当前仍未启动生产 smoke。
@@ -1108,10 +1135,12 @@ readiness 节奏：
 | 阶段 | 状态 | 目标 | 交付物 | Erika 参与点 |
 |------|------|------|--------|--------------|
 | Step 1 waders 差异基线与口径方案 | ✅ 完成 | 固化 TIDEWE 100 条人工对照，完成错误 taxonomy、首批标签候选、同义合并、aspect 映射和边界 case 方案 | `docs/5.9.8-step1-tidewe-waders-baseline.md` | 确认错误分类、标签命名、合并/拆分、aspect 归类是否符合业务判断 |
-| Step 2 明细展示 gating 与回归实现 | 待启动 | 排除单条明细中的 cluster propagated / 无 evidence / source 不可验证标签，并让导出/前端下载一致 | 后端 occurrence 过滤、导出/前端下载一致、focused tests、waders 回放报告 | 上传一次真实评论做快速抽查，只标明显错误 |
-| Step 3 waders catalog / aspect map / 边界 guard | 待启动 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表 | 审核标签命名、边界规则和归类修正 |
+| Step 2 明细展示 gating 与回归实现 | ✅ 完成 | 排除单条明细中的 cluster propagated / 无 evidence / source 不可验证标签，并让导出/前端下载一致 | 后端 occurrence 过滤、导出/前端下载一致、focused tests、waders 回放报告 | 已完成本地回归；真实上传抽查进入 Step 3/4 |
+| Step 3 waders catalog / aspect map / 边界 guard | REVIEW_NEEDED / 进行中 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则；修复 session 118 暴露的 `water_leaks_through` 正负语境、旧产品、phone case/pocket 污染与 cache 风险 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表、session 118 acceptance report、干净复测记录 | 审核标签命名、边界规则和归类修正；确认是否授权清 `review_pool` 后干净重传 |
 | Step 4 waders 盲测与真实上传验收 | 待启动 | 验证不是“背答案”，用盲测和真实上传判断 waders 是否达到用户可用 | 30-50 条 waders 盲测表、AI vs 人工对比、真实上传抽查表、验收结论 | 完整标注 30-50 条，另做一次真实上传抽查 |
-| Step 5 MVP 关键 sub_category 轮换 | 待启动 | 扩展到 3-5 个 MVP 关键 sub_category，不要求覆盖全部 | 每类 30-50 条 gold set、10-20 条轻量风险抽检、迁移边界记录 | 前期每周约 3-6 小时，后期降到 1-2 小时 |
+| Step 4.5 waders ABSA 数据集 v0 | 待启动 | 把 TIDEWE 100 条、Step 4 盲测、错误样例与边界样例整理成 ABSA 训练格式；本阶段只做数据规格和样本，不训练模型 | `data/absa/` 或 `docs/5.9.9-absa-dataset-schema.md`、sample schema、split 草案、QA checklist | 审核字段、样例和 evidence span 是否符合人工理解 |
+| Step 5 MVP 关键 sub_category 轮换 | 待启动 | 扩展到 3-5 个 MVP 关键 sub_category，不要求覆盖全部；每类同时沉淀“口径盲测 gold set”和“ABSA 训练候选样本”两层数据 | 每类 30-50 条 gold set、10-20 条轻量风险抽检、迁移边界记录、每类 500-1000 条训练候选/人工确认样本 | 前期每周约 3-6 小时，后期降到 1-2 小时 |
+| Step 5.5 ABSA fine-tune 启动评审 | 待启动 | 判断 5.9.9 的数据规模、质量、标签稳定性和固定测试集是否达到 5.9.10 POC 启动条件 | `docs/5.9.9-absa-readiness-report.md`、数据统计、label coverage、QA fail list、go/no-go 结论 | 确认是否进入小模型 POC，而不是继续补数据/修口径 |
 | Step 6 50 用户 readiness 回归与上线门禁 | 待启动 | 把标签准确性、生产上传稳定性、未覆盖类目降级和异常闭环合并验收 | readiness 回归报告、生产/准生产 smoke 记录、降级策略验证、回滚与观察清单 | 授权真实上传 smoke，确认是否达到 50 付费用户试运行门槛 |
 
 **验收门禁（MVP 前硬标准）：**
@@ -1174,6 +1203,102 @@ readiness 节奏：
 - 进入低人工维护状态：约 `6-10` 周。届时通用层、大类目层、候选池、回归测试和阶段抽查机制稳定后，Erika 工作量可逐步降到每周 `1-2` 小时。
 - 不承诺“所有 sub_category 都高准确”：MVP 前只承诺已验收 sub_category 和通用标签层可用；未验收 sub_category 先走通用层 + 风险提示 + 候选标签池。
 
+#### 5.9.9 ABSA fine-tune 数据集 readiness（衔接 Customer Issue / Customer Label）
+
+**状态：** 待启动（5.9.8 Step 4/5 达标后进入）
+
+**定位：** 这是 Customer Issue / Customer Label 口径重构与 ABSA 小模型 fine-tune 之间的衔接任务。本阶段不训练模型，只判断 5.9 的人工标注、灰度验证错误、gold set、候选标签、catalog 决策和边界规则，是否已经变成可以训练、可以评估、可以复现的数据资产。
+
+**目标：**
+- 把 5.9.8 产出的人工对照、盲测样本、真实上传错误、边界 case 和标签决策统一整理成 ABSA dataset。
+- 明确哪些标签可以作为正样本训练，哪些只能作为 candidate/audit，不进入训练正例。
+- 建立固定 train/dev/test split，避免模型训练后用同一批样本自证准确。
+- 输出 ABSA fine-tune readiness report，作为 5.9.10 是否启动的 go/no-go 门禁。
+
+**建议数据格式：**
+
+| 字段 | 含义 |
+|------|------|
+| `review_id` / `product_id` / `sub_category` | 评论、产品和子类目来源 |
+| `review_text` / `rating` | 原始评论文本与评分 |
+| `aspect_key` / `aspect_polarity` | aspect 与该 aspect 下的正/负/中性判断 |
+| `customer_issue_key` / `customer_label_key` | 标准化后的 Customer Issue / Customer Label canonical key |
+| `evidence_span` / `evidence_start` / `evidence_end` | 可在原文定位的证据片段和字符位置 |
+| `display_allowed` / `boundary_case` | 是否允许前台展示、是否为边界样本 |
+| `annotation_source` / `annotator` / `reviewed_status` | 标注来源、标注人、审核状态 |
+| `ruleset_version` / `split` | 标签口径版本与 train/dev/test 划分 |
+
+**启动数据门槛：**
+- v0 schema 阶段：单一 sub_category 有 `300-500` 条人工确认评论即可启动，用来验证标注格式、任务定义和 QA 规则。
+- POC 训练阶段：覆盖 `3-5` 个 MVP sub_category，至少 `3,000-5,000` 条人工确认评论，或 `5,000-10,000` 个 aspect/issue/label occurrence。
+- 生产候选阶段：累计 `10,000-20,000+` 条评论或 `20,000+` 个 occurrence，并配合 active learning 补长尾。
+- 核心标签门槛：每个进入 POC 的核心 label 至少 `100-200` 个正例；稳定标签建议 `300-500` 个正例。
+
+**质量门槛：**
+- 固定 `15-20%` locked test set，后续训练不能再修改测试集。
+- evidence 可定位率 `>=95%`；找不到原文证据的 occurrence 不进入正例训练。
+- 人工一致率 `>80%`，或有清晰 adjudication 记录。
+- `cluster_propagated`、无 evidence、legacy fallback、未确认 candidate 不作为正训练样本。
+- 边界样本必须单独标记，包括 no leaks、旧产品/他牌、phone case/pocket、未实际使用、泛泛好评、mixed review、aspect 冲突等。
+
+**任务拆解：**
+- [ ] **Step 1: ABSA dataset schema 与 export contract**
+  - 定义字段、label source、ruleset version、split、QA fail reason。
+  - 输出 `docs/5.9.9-absa-dataset-schema.md`。
+- [ ] **Step 2: `gold_absa_v0`**
+  - 将 5.9.8 Step 1-4 的 TIDEWE / waders 样本转成 ABSA 训练格式。
+  - 输出 `data/absa/gold_absa_v0.*` 或等价文档样本。
+- [ ] **Step 3: MVP sub_category 标注扩展**
+  - 对 `3-5` 个 MVP 关键 sub_category 扩展人工确认样本。
+  - 每类保留 30-50 条口径盲测 gold set，同时沉淀 500-1000 条训练候选/人工确认样本。
+- [ ] **Step 4: QA 与数据统计**
+  - 统计 label coverage、正负例比例、evidence 可定位率、reviewed_status、split 分布、边界样本覆盖。
+  - 阻断无证据、未审核、label/aspect 冲突样本进入训练正例。
+- [ ] **Step 5: ABSA fine-tune readiness report**
+  - 输出 `docs/5.9.9-absa-readiness-report.md`。
+  - 结论只能是 `GO POC`、`补数据`、`修口径` 或 `暂缓训练`。
+
+#### 5.9.10 ABSA 小模型 fine-tune POC（5.9.9 达标后）
+
+**状态：** 待启动（从原 6.7 迁入）
+
+**定位：** 5.9.10 才是真正的 ABSA 小模型 fine-tune。它不是替代 5.9 标签口径治理，而是在 5.9.8/5.9.9 已经证明“标签定义稳定、evidence 可追溯、数据规模达标”之后，把结构化 ABSA 任务从 LLM/rules 逐步迁到小模型或小模型辅助链路。
+
+**启动条件：**
+- 5.9.8 Step 4/5 对关键 sub_category 通过盲测与真实上传验收。
+- 5.9.9 达到 POC 数据门槛：`3,000-5,000` 条人工确认评论，或 `5,000-10,000` 个 occurrence。
+- locked test set 已固定，且包含正例、负例、边界 case、未覆盖类目降级样本。
+- PMF/付费用户信号仍作为 ROI 判断，但不能单独触发 ABSA 训练；数据 readiness 才是训练门槛。
+
+**技术产物沿用原 6.7 规划：**
+- Create: `ml/absa/`（训练脚本、数据集、模型 checkpoint）
+- Create: `ml/absa/train.py`、`ml/absa/infer.py`
+- Create: `review_analyzer/absa_service.py`（推理服务）
+- Modify: `review_analyzer/analyzer.py` 或 `review_analyzer/deep_analyzer.py`（ABSA 走小模型/模型辅助，洞察生成保留 LLM）
+
+**POC 执行步骤：**
+- [ ] **Step 1: Baseline**
+  - 用 locked test set 评估当前 LLM + rules + gating 链路，建立小模型必须超过或至少持平的基线。
+- [ ] **Step 2: 模型选型**
+  - 英文评论优先从 `microsoft/deberta-v3-base` 或同级模型启动；当前 waders/TIDEWE 样本以英文 Amazon review 为主。
+  - 中文评论可后置评估 `hfl/chinese-roberta-wwm-ext-large`；LoRA 作为显存与迭代成本优化选项。
+- [ ] **Step 3: 训练与评估**
+  - 先做 aspect classification、aspect polarity、Customer Issue / Label classification、evidence span/overlap 评估。
+  - 不把无 evidence、cluster propagated、legacy fallback 当正例。
+- [ ] **Step 4: Shadow inference**
+  - 先只做影子推理，与线上 LLM/rules 输出对比，不直接替换用户可见结果。
+- [ ] **Step 5: 灰度 / A-B**
+  - 离线评估通过后，再用 feature flag 小流量灰度。
+  - 灰度失败时回退到当前 LLM/rules/gating 链路。
+
+**验收标准：**
+- 情感 / polarity 准确率 `>=95%`。
+- aspect 分类准确率 `>=90%`。
+- 核心 Customer Issue / Label F1 初始目标 `>=85%`，稳定后逐步提高。
+- evidence span 使用 exact match + overlap 两类指标，必须能解释预测来源。
+- false positive `<=10%`；无 evidence 展示率继续保持 `0`。
+- 延迟、成本、可回滚能力均优于或不弱于当前 LLM/rules 链路。
+
 
 ## Git 分支策略
 
@@ -1194,6 +1319,8 @@ readiness 节奏：
 > 优化函数：商业化盈利（不是面试展示），目标按 ROI 排序。
 >
 > 总投入：8 周，与 2.5-3.1 业务功能并行推进。
+>
+> 2026-07-29 口径调整：ABSA 小模型具体执行已迁移到 5.9.9/5.9.10，6.x 只保留技术路线背景与数据/成本/反馈能力建设。
 
 ### 核心思路（一句话）
 
@@ -1206,7 +1333,7 @@ readiness 节奏：
 | 分析单元 | 逐条 LLM | Embedding 聚类 + LLM 打标签 | 同 | P0 |
 | 输出格式 | Prompt 约束自由文本 | 强制 JSON Schema | 同 | P0 |
 | Prompt 版本 | 无版本管理 | Git + DB 双层追踪 | LangSmith | P0 |
-| ABSA 任务 | 纯 LLM | fine-tuned 小模型 | 同 | P1 |
+| ABSA 任务 | 纯 LLM | 5.9.10 fine-tuned 小模型（5.9.9 readiness 后） | 同 | P1 |
 | 反馈回路 | 无 | 用户纠错 → bad case 库 → few-shot | 同 | P1 |
 | 成本模型 | 线性增长 | 聚类后近似固定 | 同 | P0 |
 | Fallback | 单 DeepSeek | 三级链路 | 多模型 | P1 |
@@ -1839,44 +1966,16 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ---
 
-### 6.7 ABSA 小模型 fine-tune
+### 6.7 ABSA 小模型 fine-tune（已迁移）
 
-**目标：** 把 ABSA（情感 + Aspect 抽取）这种结构化任务从 LLM 收回到 fine-tuned 小模型，是准确率天花板的真正解药。
+原 `6.7 ABSA 小模型 fine-tune` 已迁移到 `5.9.9 ABSA fine-tune 数据集 readiness` 与 `5.9.10 ABSA 小模型 fine-tune POC`。
 
-**注意：** 这是高 ROI 但高投入的任务，建议在 6.1/6.4/6.5/6.6 完成且拿到至少 5 个付费用户后再启动。如果 PMF 验证不通过，跳过此任务。
+**迁移原因：** ABSA fine-tune 的真实前置条件不是单独的 PMF/付费用户数，而是 Customer Issue / Customer Label 口径稳定、evidence 可追溯、人工确认数据集规模达标、固定测试集可评估。PMF/付费用户信号仍用于判断 ROI，但不能代替数据 readiness。
 
-**Files:**
-- Create: `ml/absa/` 目录（训练脚本、数据集、模型 checkpoint）
-- Create: `ml/absa/train.py`、`ml/absa/infer.py`
-- Create: `review_analyzer/absa_service.py`（FastAPI 推理服务）
-- Modify: `review_analyzer/analyzer.py`（ABSA 走小模型，洞察生成留 LLM）
-
-- [ ] **Step 1: 训练数据准备**
-  - 标注数据 1.5 万条来源：Golden Set 1.5k + LLM 标注 1万 + 评分覆写 5k
-  - 拆分：12k 训练 / 1.5k 验证 / 1.5k 测试
-  - 多标签格式：情感 3 类 × Aspect N 类
-
-- [ ] **Step 2: 模型选型**
-  - 中文：`hfl/chinese-roberta-wwm-ext-large`
-  - 英文：`microsoft/deberta-v3-base`
-  - 微调方式：LoRA（节省显存，单卡 4090 可训）
-  - 训练时长：单语言 4-6 小时
-
-- [ ] **Step 3: 模型部署**
-  - 转 ONNX 格式（CPU 推理，单条 50ms）
-  - FastAPI 包装，部署到 Render / 自建 VPS
-  - 与 Streamlit 主应用解耦，独立扩缩容
-
-- [ ] **Step 4: A/B 切换**
-  - 配置开关：`USE_ABSA_MODEL=true/false`
-  - 灰度：先 10% 流量走小模型，监控准确率
-  - 全量切换前 Golden Set 必须达标
-
-- [ ] **Step 5: 验收标准**
-  - 情感准确率 ≥ 95%
-  - Aspect 分类准确率 ≥ 90%
-  - 推理成本降至 ¥0.00001/条（降 95%）
-  - 不再依赖 DeepSeek 可用性（情感 + Aspect 部分）
+**后续执行原则：**
+- 不再从 6.x 单独启动 ABSA 训练。
+- 先完成 5.9.8 口径重构与灰度验证，再进入 5.9.9 数据集 readiness。
+- 只有 5.9.9 输出 `GO POC` 后，才启动 5.9.10 小模型 fine-tune。
 
 ---
 
@@ -1971,27 +2070,31 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 ### 6 任务依赖关系
 
 ```
-6.1 (数据资产化) ──┬──► 6.3 (LLM 输出加固) ──┬──► 6.5 (ABSA 小模型)
-                     ├──► 6.4 (成本优化)       │
-                     ├──► 6.6 (反馈回路) ◄─────┘
-                     └──► 6.2 (Taxonomy 接入) ──► 6.3 (Golden Set 多品类演进)
-                                                          ↑ 新品类上线时触发
-6.2 (商业化基建) ──► 6.7 (Niche 商业化)
-                       └──► (依赖 6.5 + 6.6 完成)
+6.1 (数据资产化) ──┬──► 6.2 (Taxonomy 接入) ──► 6.3 (Golden Set 多品类演进)
+                     ├──► 6.5 (LLM 输出加固)
+                     └──► 6.6 (成本优化)
+
+5.9.8 (Customer Issue / Label 口径重构与灰度验证)
+        └──► 5.9.9 (ABSA fine-tune 数据集 readiness)
+                 └──► 5.9.10 (ABSA 小模型 fine-tune POC)
+
+6.8 (用户反馈回路) ──► 5.9.9/5.9.10 数据闭环补样
+6.9 (Niche 商业化) ──► 决定是否扩大 ABSA fine-tune ROI 投入
 ```
 
 执行顺序建议：
 1. **Week 1-2:** 6.1（数据资产化）+ 6.4（商业化基建）并行启动 — 这是所有后续工作的地基
 2. **Week 3-4:** 6.5（LLM 输出加固）+ 6.9 启动品类选定与白皮书
-3. **Week 4-6:** 6.6（成本优化）+ 6.9 种子用户招募
-4. **Week 5-7:** 6.8（反馈回路）+ 6.9 1对1 跟进
-5. **Week 6-8:** 6.7（ABSA 小模型，可选）+ 6.9 转化付费
+3. **Week 4-6:** 6.6（成本优化）+ 5.9.8 标签口径重构/灰度验证
+4. **Week 5-8:** 6.8（反馈回路）+ 6.9 1对1 跟进 + 5.9.9 数据集 readiness
+5. **5.9.9 达标后:** 5.9.10 ABSA 小模型 POC（先 shadow inference，再灰度/A-B）
 
 ### 6 优先级精简版
 
 1. **6.1 数据资产化（Week 1-2）** — 不做这个，后面所有优化都没法度量。零技术风险，纯运营投入。
-2. **6.7 Niche 商业化（Week 4-8）** — 不做这个，技术优化全是沉没成本。商业化决定产品方向。
+2. **6.9 Niche 商业化（Week 4-8）** — 不做这个，技术优化全是沉没成本。商业化决定产品方向。
 3. **6.4 成本优化（Week 4-6）** — 单点技改成本最低、降本最猛，让前 50 个用户的毛利可控。
+4. **5.9.9/5.9.10 ABSA 衔接** — 只有口径稳定且数据达标后才训练小模型，避免用脏标签训练出更稳定的错误。
 
 ### 6 阶段验收标准
 
@@ -2874,7 +2977,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 | Multi-Agent 架构 | 当前无适用场景，任务步骤确定 |
 | Batch Prompt（多条合一次 LLM） | 缓存 98% 命中率下剩余量太小，收益 < 准确率风险 |
 | RQ → Celery 迁移 | 当前无并发瓶颈，等月活 > 50 |
-| ABSA fine-tune 小模型 | 已规划为 6.5，等 5 付费用户 |
+| ABSA fine-tune 小模型 | 已迁移至 5.9.9/5.9.10；当前 7.11 不单独启动训练 |
 
 #### Worker 可靠性补丁（2026-06-17 追加）
 
@@ -4044,7 +4147,7 @@ CREATE TABLE workspace_invitations (
 - [ ] 邀请海外朋友测试 3 个套餐转化
 
 **验收标准**
-- 使用测试账号（惜_clueai / 密码已省略）登录 `app.clueai-reviewlens.com` 全流程无异常
+- 使用测试账号（[REDACTED_PROD_USERNAME] / 密码已省略）登录 `app.clueai-reviewlens.com` 全流程无异常
 - Footer 6 个法律链接 + Amazon disclaimer 全部展示
 - 用海外 IP 注册 + 订阅完整流程跑通
 - ASIN 抓取走 DataForSEO 通道（后端日志确认）
