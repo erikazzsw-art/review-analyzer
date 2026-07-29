@@ -527,6 +527,8 @@ File "database.py", line 13, in get_connection
 | 2026-07-29 | 前端 raw XLSX / parser 类型检查 | `npm run typecheck`（cwd=`frontend`） | PASS，`tsc --noEmit` | 前端 raw review XLSX display/audit 分列、Customer Label parser、下载口径类型通过。 |
 | 2026-07-29 | diff whitespace 检查 | `git diff --check` | PASS | 本轮代码/文档 diff 无 whitespace error。 |
 | 2026-07-29 | 安全边界 | 本地文件读取、pytest、typecheck only | PASS | 未执行生产上传，未删除生产数据，未清理 production review_pool，未触发 production LLM、credit 或 reanalysis。 |
+| 2026-07-29 | session120 50 条盲测只读验收 | `python3 tmp/production_tidewe_waders_session120_readonly.py`；读取 Erika 下载 `/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-session_id=120.xlsx` | `REVIEW_NEEDED`；生产 DB 50/50 processed+analyzed，47 无缓存、2 L1 global、1 L2；真实下载文件无 `Audit ...` 分列，issue evidence false 90 / issue cluster true 90 / highlight evidence false 24 / highlight cluster true 24 | 生产当前结果不能 PASS；本地追加修复 row 3/27/28/31 后重新只读回放 `validation.status=PASS`，但整体仍因 session120 cache 与线上下载旧口径保持 REVIEW_NEEDED。报告：`docs/5.9.8-step4-tidewe-waders-session120-acceptance-report.md`。 |
+| 2026-07-29 | session120 追加 hard cases 回归 | `python3 -m pytest backend_api/tests/test_customer_label_waders_step4_gold.py backend_api/tests/test_customer_label_waders_step2_gating.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_customer_label_50u_readiness.py backend_api/tests/test_outdoor_waders_taxonomy.py -q` | PASS，73 passed in 3.16s | 覆盖 `not yet tested...leakproof` 不触发 `keeps_water_out`、`boots got filled with water` 召回 `water_leaks_through`、`can't say whether or not they leak` 不触发 `water_leaks_through`、`Cheap and durable` 不触发 `feels_thin_and_flimsy`。 |
 
 ---
 

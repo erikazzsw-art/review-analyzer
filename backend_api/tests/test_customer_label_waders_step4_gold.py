@@ -169,7 +169,7 @@ def test_waders_step4_top_rows_and_raw_export_are_frontstage_only() -> None:
     assert "water_leaks_through" in issue_by_key
     assert issue_by_key["water_leaks_through"]["propagated_occurrence_count"] == 0
     assert "fits_as_expected" in highlight_by_key
-    assert highlight_by_key["fits_as_expected"]["source_review_occurrence_count"] == 4
+    assert highlight_by_key["fits_as_expected"]["source_review_occurrence_count"] == 5
 
     headers, rows = _build_comments_data(comments, include_specific_issue=True)
     by_id = {comment["id"]: row for comment, row in zip(comments, rows)}

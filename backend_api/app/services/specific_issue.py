@@ -422,6 +422,7 @@ _POSITIVE_DRY_PATTERNS = [
 
 _WATER_LEAK_HIT_PATTERNS = [
     r"\bnot waterproof\b",
+    r"\bnot\s+water\s+proof\b",
     r"\bnot\s+100%\s+waterproof\b",
     r"\bleak",
     r"\bseep(?:ing|ed|s)?\b",
@@ -429,6 +430,19 @@ _WATER_LEAK_HIT_PATTERNS = [
     r"\bmoisture\s+inside\b",
     r"\bdamp\b",
     r"\bwater (gets|got|came|comes|coming|enters|entered) (in|through)",
+    r"\bboots?\s+(?:got|gets|filled|fill)\s+(?:filled\s+)?with\s+water\b",
+    r"\b(?:left|right|both)?\s*boots?\s+(?:got|gets|filled|fill)\s+(?:filled\s+)?with\s+water\b",
+]
+
+_UNCERTAIN_OR_UNTESTED_WATER_LEAK_PATTERNS = [
+    r"\bnot\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water\b[^.!?\n]{0,120}\b(?:leak|leakproof|water\s*proof|waterproof)\b",
+    r"\b(?:have|has)\s+not\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water\b",
+    r"\bhave(?:n['’]?t| not)\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water\b",
+    r"\bnever\s+wore\s+(?:them|it|these)?\s*(?:in\s+)?(?:the\s+)?water\b[^.!?\n]{0,160}\b(?:leak|leaks|leaking)\b",
+    r"\bcan(?:not|['’]?t)\s+(?:say|comment)\b[^.!?\n]{0,160}\b(?:whether\s+or\s+not\s+)?(?:they\s+)?(?:leak|leaks|leakproof|water\s*proof|waterproof)\b",
+    r"\bcan(?:not|['’]?t)\s+say\s+whether\s+or\s+not\s+(?:they\s+)?leak\b",
+    r"\bcan(?:not|['’]?t)\s+comment\s+on\s+(?:its|their|the)?\s*(?:leakproof|waterproof|water\s*proof)\s+quality\b",
+    r"\bnot\s+sure\s+(?:whether|if)\s+(?:they|it|these)\s+(?:leak|leaks|are\s+waterproof|is\s+waterproof)\b",
 ]
 
 _NON_CURRENT_PRODUCT_LEAK_PATTERNS = [
@@ -457,9 +471,12 @@ _CURRENT_PRODUCT_LEAK_CONTEXT_PATTERNS = [
 
 _WATER_LEAK_EVIDENCE_PATTERNS = [
     r"\bnot\s+(?:100%\s+)?waterproof(?:\s+material)?\b",
+    r"\bnot\s+(?:100%\s+)?water\s+proof\b",
     r"\bsmall\s+leaks?\b[^,.!?\n]{0,80}",
     r"\bwater\s+leaking\s+(?:in|through)\b",
     r"\bwater\s+(?:gets|got|came|comes|coming|enters|entered)\s+(?:in|through)\b",
+    r"\bboots?\s+(?:got|gets|filled|fill)\s+(?:filled\s+)?with\s+water\b",
+    r"\bwater\b[^.!?\n]{0,80}\bboots?\s+(?:got|gets|filled|fill)\s+(?:filled\s+)?with\s+water\b",
     r"\bwater\s+will\s+seep\s+through\b[^,.!?\n]{0,80}",
     r"\bslowly\s+seep\s+in\s+water\b",
     r"\bloads?\s+of\s+water\s+seep(?:ing|ed|s)?\s+in\b",
@@ -473,6 +490,16 @@ _WATER_LEAK_EVIDENCE_PATTERNS = [
     r"\b(?:are|is|was|were|started|began)\s+leaking\b[^.!?\n]{0,80}",
     r"\bleaked\s+through\b",
     r"\bleak(?:ing|ed|s)?\b",
+]
+
+_FLIMSY_ISSUE_EVIDENCE_PATTERNS = [
+    r"\bthin\b",
+    r"\bflimsy\b",
+    r"\bnot\s+sturdy\b",
+    r"\bdoes\s+not\s+appear\s+sturdy\b",
+    r"\bcheap\s+(?:material|plastic|quality)\b",
+    r"\bplastic\b[^.!?\n]{0,80}\b(?:thin|flimsy|cheap|not\s+sturdy)\b",
+    r"\b(?:thin|flimsy|cheap)\b[^.!?\n]{0,80}\bplastic\b",
 ]
 
 
@@ -494,6 +521,20 @@ def _is_positive_waterproof_evidence_for_issue(evidence: str) -> bool:
     return _is_negated_water_leak_statement(basis) or _is_positive_dry_statement(basis)
 
 
+def _is_uncertain_or_untested_water_leak_context(text: str) -> bool:
+    return _first_regex(_UNCERTAIN_OR_UNTESTED_WATER_LEAK_PATTERNS, text)
+
+
+def _is_valid_flimsy_issue_evidence(evidence: str, content: str) -> bool:
+    basis = str(evidence or "").strip()
+    if not basis:
+        return False
+    if _first_regex(_FLIMSY_ISSUE_EVIDENCE_PATTERNS, basis):
+        return True
+    context = _evidence_context_sentence(content, basis)
+    return _first_regex(_FLIMSY_ISSUE_EVIDENCE_PATTERNS, context)
+
+
 def _is_suppressed_water_leak_issue_occurrence(occurrence: dict[str, Any]) -> bool:
     if str(occurrence.get("type") or "").strip().lower() != "issue":
         return False
@@ -507,6 +548,8 @@ def _is_suppressed_water_leak_issue_occurrence(occurrence: dict[str, Any]) -> bo
 
 def _water_leak_issue_hit(evidence: str, content: str) -> bool:
     basis = evidence.strip() or content[:400]
+    if _is_uncertain_or_untested_water_leak_context(basis):
+        return False
     if _is_negated_water_leak_statement(basis) or _is_positive_dry_statement(basis):
         return False
     text = f"{evidence} {content[:400]}".lower()
@@ -526,6 +569,8 @@ def _water_leak_issue_hit(evidence: str, content: str) -> bool:
     text = re.sub(r"\b(?:do|does|did)(?:n['’]?t| not)\s+see[^.!?\n]{0,80}\bleak\b", " ", text)
     text = re.sub(r"\bnot\s+a\s+leak\b", " ", text)
     text = re.sub(r"\bnot\s+leaking\b", " ", text)
+    if _is_uncertain_or_untested_water_leak_context(text):
+        return False
     return _first_regex(_WATER_LEAK_HIT_PATTERNS, text)
 
 
@@ -640,6 +685,9 @@ def _is_blocked_water_leak_issue_context(content: str, evidence: str) -> bool:
     return (
         _is_positive_waterproof_evidence_for_issue(context)
         or _is_positive_waterproof_evidence_for_issue(evidence_text)
+        or _is_uncertain_or_untested_water_leak_context(context)
+        or _is_uncertain_or_untested_water_leak_context(evidence_text)
+        or _is_uncertain_or_untested_water_leak_context(window)
         or _is_non_current_product_leak_context(context)
         or _is_non_current_product_leak_context(evidence_text)
         or _is_non_current_product_leak_context(window)
@@ -999,6 +1047,10 @@ def _not_used_context(content: str) -> bool:
             r"\bhaven['’]?t\s+(?:gotten\s+to\s+)?use(?:d)?\b",
             r"\bnot\s+used\s+(?:them|it|these)\b",
             r"\bnot\s+tested\b",
+            r"\bnot\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water\b",
+            r"\bhave(?:n['’]?t| not)\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water\b",
+            r"\bnever\s+wore\s+(?:them|it|these)?\s*(?:in\s+)?(?:the\s+)?water\b",
+            r"\bcan(?:not|['’]?t)\s+(?:say|comment)\b[^.!?\n]{0,120}\b(?:leak|leakproof|water\s*proof|waterproof)\b",
             r"\blook\s+forward\s+to\s+trying\b",
             r"\bwill\s+(?:use|test|try)\b",
             r"\btomorrow\s+I\s+will\s+give\b",
@@ -1318,6 +1370,7 @@ def _waders_highlight_rule_occurrences(
                     r"\bfit\s+is\s+great\b",
                     r"\bperfect\s+fit\b",
                     r"\btrue\s+to\s+size\b",
+                    r"\bfitted\s+me\s+perfectly\b",
                     r"\bboots?\s+fit\s+(?:perfect|well|good|like\s+a\s+glove)\b",
                     r"\bmeasurements?\s+(?:are\s+)?very\s+accurate\b",
                     r"\bfoot\s+measurements?/fit\b[^.!?\n]{0,80}\btrue\s+to\s+size\b",
@@ -1351,6 +1404,11 @@ def _waders_highlight_rule_occurrences(
                     r"\bphone\s+case\b",
                     r"\bphone\s+sleeve\b",
                     r"\bnot\s+(?:100%\s+)?waterproof\b",
+                    r"\bnot\s+(?:100%\s+)?water\s+proof\b",
+                    r"\bnot\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water\b",
+                    r"\bhave(?:n['’]?t| not)\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water\b",
+                    r"\bnever\s+wore\s+(?:them|it|these)?\s*(?:in\s+)?(?:the\s+)?water\b",
+                    r"\bcan(?:not|['’]?t)\s+(?:say|comment)\b[^.!?\n]{0,120}\b(?:leak|leakproof|water\s*proof|waterproof)\b",
                     r"\b90%\s+waterproof\b",
                     r"\bleak(?:ed|ing|s)?\b[^.!?\n]{0,80}\b(?:crazy|through|in|around|from)\b",
                 ],
@@ -1443,7 +1501,7 @@ def _waders_highlight_rule_occurrences(
         )
     add("easy_to_clean", "Easy to Clean", "ease_of_use", _first_content_span(content, [r"\bclean\s+super\s+easy\b", r"\beasy\s+to\s+clean\b"]))
     if not_used and not negative_outcome:
-        add("not_used_yet", "Not Used Yet", "other", _first_content_span(content, [r"\bhave\s+not\s+used[^.!?\n]{0,80}", r"\bhaven['’]?t\s+gotten\s+to\s+use[^.!?\n]{0,80}", r"\bnot\s+tested\s+waterproof[^.!?\n]{0,80}", r"\blook\s+forward\s+to\s+trying\b"]), source_detail="waders_context_rule")
+        add("not_used_yet", "Not Used Yet", "other", _first_content_span(content, [r"\bhave\s+not\s+used[^.!?\n]{0,80}", r"\bhaven['’]?t\s+gotten\s+to\s+use[^.!?\n]{0,80}", r"\bhave(?:n['’]?t| not)\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bnot\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bnever\s+wore\s+(?:them|it|these)?\s*(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bcan(?:not|['’]?t)\s+(?:say|comment)\b[^.!?\n]{0,120}\b(?:leak|leakproof|water\s*proof|waterproof)\b", r"\bnot\s+tested\s+waterproof[^.!?\n]{0,80}", r"\blook\s+forward\s+to\s+trying\b"]), source_detail="waders_context_rule")
         add("first_impression_positive", "First Impression Positive", "other", _first_content_span(content, [r"\bseem\s+to\s+be\s+good\s+quality\b", r"\blook\s+good\s+out\s+of\s+the\s+box\b", r"\bseem\s+to\s+be\s+decent\b", r"\bso\s+far\s+so\s+good\b", r"\bmaterials?\s+however\s+look\s+pretty\s+good\b"]), source_detail="waders_context_rule")
     add(
         "works_well_for_use_case",
@@ -1664,6 +1722,12 @@ def _project_customer_label_occurrence(
     context_allowed = True
     if label_type == "issue" and canonical == "water_leaks_through":
         context_allowed = not _is_blocked_water_leak_issue_context(content, stored_evidence)
+    if label_type == "issue" and canonical == "feels_thin_and_flimsy":
+        context_allowed = _is_valid_flimsy_issue_evidence(stored_evidence, content)
+    if label_type == "highlight" and canonical == "keeps_water_out":
+        context_allowed = not _is_uncertain_or_untested_water_leak_context(
+            _evidence_context_window(content, stored_evidence)
+        )
 
     display_en = str(occurrence.get("display_label_en") or "").strip()
     display_zh = str(occurrence.get("display_label_zh") or "").strip()
@@ -1843,7 +1907,9 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Missing Wader Hanger", "missing_wader_hanger", "regex_alias_rule")
 
     if aspect_key in {"waterproof", "waterproof_performance", "seam_integrity"}:
-        if _water_leak_issue_hit(evidence, content):
+        if _water_leak_issue_hit(evidence, content) and not _is_uncertain_or_untested_water_leak_context(
+            f"{evidence} {content[:400]}"
+        ):
             return ("Water Leaks Through", "water_leaks_through", "regex_alias_rule")
 
     if aspect_key in {"zipper_quality"}:
@@ -1894,7 +1960,7 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
                 r"\bcheap\s+(?:material|plastic|quality)\b",
             ],
             text,
-        ):
+        ) and _is_valid_flimsy_issue_evidence(evidence, content):
             return ("Feels Thin and Flimsy", "feels_thin_and_flimsy", "regex_alias_rule")
 
     if aspect_key in {"size_fit", "boot_fit"}:
@@ -2136,8 +2202,10 @@ def _is_negative_phrase(text: str) -> bool:
     return _first_regex(
         [
             r"\bnot waterproof\b",
+            r"\bnot\s+water\s+proof\b",
             r"\bleak",
             r"\bwater (gets|got|came|comes|coming|enters|entered) (in|through)",
+            r"\bboots?\s+(?:got|gets|filled|fill)\s+(?:filled\s+)?with\s+water\b",
             r"\b(broke|broken|breaks|fell apart|falls apart)\b",
             r"\btoo (small|large|tight|loose|expensive)\b",
             r"\bruns (small|large)\b",

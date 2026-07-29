@@ -152,6 +152,56 @@
       "expected_highlight_keys": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": ["fits_as_expected", "holds_up_well", "keeps_water_out", "good_value_for_the_price"]
+    },
+    {
+      "id": "session120-row-3-untested-leakproof",
+      "excel_row": null,
+      "review_no": 3,
+      "content": "I am 6'3\" with size 13-wide feet, but I am quite slim. Getting anything to fit is difficult. I ordered the size 14 and was pleasantly surprised that my feet slid easily into the flexible bots and the inside leg length fitted me perfectly. I have not yet tested in water so cannot comment on its leakproof quality, but at this point I am pleased with the purchase.",
+      "current_occurrences": [
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "leakproof", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["fits_as_expected", "not_used_yet"],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "session120-row-27-boots-filled-water",
+      "excel_row": null,
+      "review_no": 27,
+      "content": "I am not sure why this is called water proof. Each time I walked into the water, my boots got filled with water. I can’t find any holes but I am suspecting it might be the seal around the soles. In Any case, this is NOT water proof",
+      "current_occurrences": [],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["keeps_water_out", "holds_up_well"]
+    },
+    {
+      "id": "session120-row-31-uncertain-leak",
+      "excel_row": null,
+      "review_no": 31,
+      "content": "At first glance the material seems good and well made but never wore them in the water so i can't say whether or not they leak. Thr fit is terrible and trying to get in and out of them is like pulling on socks with wet feet. The thin and flexible material along with really narrow boots causes everything to bunch up and move around a lot while trying to get my feet in. I'm not a big man yet the belt at the midsection is at least six inches short. There's also a serious lack of mobility I could only walk at a snails pace.",
+      "current_occurrences": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "leak", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["good_material_quality", "not_used_yet"],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "session120-row-28-cheap-durable",
+      "excel_row": null,
+      "review_no": 28,
+      "content": "Cheap and durable",
+      "current_occurrences": [
+        {"type": "issue", "key": "feels_thin_and_flimsy", "aspect_key": "material", "evidence": "durable", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["holds_up_well"],
+      "blocked_issue_keys": ["feels_thin_and_flimsy"],
+      "blocked_highlight_keys": []
     }
   ]
 }
