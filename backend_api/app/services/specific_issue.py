@@ -50,6 +50,7 @@ _ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
         "looks_good": {"aesthetics"},
     },
     "issue": {
+        "size_fit_problem": {"size_fit", "boot_fit", "mobility"},
         "water_leaks_through": {"waterproof", "waterproof_performance", "seam_integrity"},
         "seam_leaks": {"seam_integrity"},
         "pocket_not_waterproof": {"accessory_storage", "organization", "capacity"},
@@ -74,6 +75,8 @@ _ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
         "soft_soles": {"grip", "durability", "material"},
         "not_worth_the_price": {"value_for_money", "price_value"},
         "poor_value_for_money": {"value_for_money", "price_value"},
+        "quality_control_storage_issue": {"shipping_damage", "packaging", "material", "build_quality"},
+        "quality_problem": {"shipping_damage", "packaging", "build_quality", "durability", "material"},
         "arrived_damaged": {"shipping_damage", "packaging"},
         "poor_customer_service": {"customer_service"},
         "zipper_fails": {"zipper_quality"},
@@ -235,8 +238,11 @@ _SPECIFIC_ISSUE_ZH_BY_KEY = {
     "pocket_too_small": "口袋太小",
     "poor_traction": "防滑性不足",
     "poor_customer_service": "客服体验差",
+    "quality_control_storage_issue": "品控/仓储问题",
+    "quality_problem": "质量问题",
     "runs_too_large": "尺码偏大",
     "runs_too_small": "尺码偏小",
+    "size_fit_problem": "尺码/版型问题",
     "smudges_easily": "容易晕染",
     "soft_soles": "鞋底偏软",
     "strong_chemical_smell": "化学气味重",
@@ -502,6 +508,31 @@ _FLIMSY_ISSUE_EVIDENCE_PATTERNS = [
     r"\b(?:thin|flimsy|cheap)\b[^.!?\n]{0,80}\bplastic\b",
 ]
 
+_SIZE_FIT_PROBLEM_EVIDENCE_PATTERNS = [
+    r"\binseam\b[^.!?\n]{0,80}\b(?:tight|restrictive)\b",
+    r"\bwrong\s+size\b[^.!?\n]{0,100}",
+    r"\bsame\s+size\s+as\s+before\b",
+    r"\b(?:bought|ordered)\s+one\s+size\s+up\b[^.!?\n]{0,120}\b(?:didn['’]?t|did\s+not)\s+seem\s+any\s+bigger\b",
+    r"\bshoe\s+size\s+was\s+for\s+a\s+size\s+\d+\b[^.!?\n]{0,120}\bcould\s+not\s+get\s+my\s+foot\s+in\b",
+    r"\bcould\s+not\s+get\s+my\s+foot\s+in\b",
+    r"\bfit\s+was\s+huge\b[^.!?\n]{0,80}",
+    r"\bfit\s+is\s+terrible\b[^.!?\n]{0,120}",
+    r"\btrying\s+to\s+get\s+in\s+and\s+out\b[^.!?\n]{0,120}",
+    r"\breally\s+narrow\s+boots\b[^.!?\n]{0,120}",
+    r"\bbelt\b[^.!?\n]{0,120}\b(?:short|too\s+short)\b",
+    r"\bpants\s+were\s+huge\b",
+    r"\bdefinitely\s+size\s+up\b",
+    r"\bsize\s+runs\s+small\b[^.!?\n]{0,80}",
+    r"\bwould(?:['’]?ve| have)\s+liked\s+them\s+a\s+little\s+bit\s+bigger\b",
+]
+
+_SIZE_FIT_PROBLEM_BLOCKED_PATTERNS = [
+    r"\bfit\s+(?:great|well|good|perfect|perfectly|right)\b",
+    r"\btrue\s+to\s+size\b",
+    r"\bfitted\s+me\s+perfectly\b",
+    r"\bwrong\s+size\b[^.!?\n]{0,80}\bnot\s+the\s+waders?\s+fault\b",
+]
+
 
 def _is_negated_water_leak_statement(text: str) -> bool:
     return _first_regex(_NEGATED_WATER_LEAK_PATTERNS, text)
@@ -529,9 +560,17 @@ def _is_valid_flimsy_issue_evidence(evidence: str, content: str) -> bool:
     basis = str(evidence or "").strip()
     if not basis:
         return False
+    context = _evidence_context_sentence(content, basis)
+    if _first_regex(
+        [
+            r"\bthin\b[^.!?\n]{0,80}\b(?:but|however|though)\b[^.!?\n]{0,80}\b(?:seems?|does\s+seem|is|are)\s+durable\b",
+            r"\bthin\b[^.!?\n]{0,80}\bdoes\s+seem\s+durable\b",
+        ],
+        context,
+    ):
+        return False
     if _first_regex(_FLIMSY_ISSUE_EVIDENCE_PATTERNS, basis):
         return True
-    context = _evidence_context_sentence(content, basis)
     return _first_regex(_FLIMSY_ISSUE_EVIDENCE_PATTERNS, context)
 
 
@@ -1041,6 +1080,14 @@ def _first_content_span(
 
 
 def _not_used_context(content: str) -> bool:
+    if _first_regex(
+        [
+            r"\bhave(?:n['’]?t| not)\s+used\s+many\s+times\b",
+            r"\bhave(?:n['’]?t| not)\s+used\s+(?:them|it|these)?\s*(?:much|a\s+lot)\b",
+        ],
+        content,
+    ):
+        return False
     return _first_regex(
         [
             r"\bhave\s+not\s+used\b",
@@ -1150,6 +1197,16 @@ def _waders_issue_rule_occurrences(
         if item:
             items.append(item)
 
+    add(
+        "size_fit_problem",
+        "Size/Fit Problem",
+        "size_fit",
+        _first_content_span(
+            content,
+            _SIZE_FIT_PROBLEM_EVIDENCE_PATTERNS,
+            blocked_patterns=_SIZE_FIT_PROBLEM_BLOCKED_PATTERNS,
+        ),
+    )
     add("water_leaks_through", "Water Leaks Through", "waterproof", _current_product_water_leak_evidence(content))
     add(
         "pocket_not_waterproof",
@@ -1164,6 +1221,31 @@ def _waders_issue_rule_occurrences(
         ),
     )
     add(
+        "quality_control_storage_issue",
+        "Quality Control / Storage Issue",
+        "shipping_damage",
+        _first_content_span(
+            content,
+            [
+                r"\bwaders?\s+came\s+covered\s+in\s+mold\b",
+                r"\bcame\s+covered\s+in\s+mold\b",
+                r"\bcovered\s+in\s+mold\b",
+            ],
+        ),
+    )
+    add(
+        "quality_problem",
+        "Quality Problem",
+        "build_quality",
+        _first_content_span(
+            content,
+            [
+                r"\balready\s+damaged\b[^.!?\n]{0,120}\b(?:repaired|sent\s+out\s+as\s+new)\b",
+                r"\bclearly\s+repaired\s+and\s+sent\s+out\s+as\s+new\b",
+            ],
+        ),
+    )
+    add(
         "breaks_easily",
         "Breaks Easily",
         "durability",
@@ -1171,6 +1253,7 @@ def _waders_issue_rule_occurrences(
             content,
             [
                 r"\bno\s+durability\b",
+                r"\bgot\s+a\s+hole\b[^.!?\n]{0,80}",
                 r"\b(?:rip|ripped|tear|tears|tore|torn)\b[^.!?\n]{0,80}",
                 r"\bstitching\s+broke\b[^.!?\n]{0,80}",
                 r"\bbroke\b[^.!?\n]{0,80}",
@@ -1188,7 +1271,10 @@ def _waders_issue_rule_occurrences(
             [
                 r"\bstrong\s+chemical[^.!?\n]{0,60}\bsmell\b",
                 r"\bchemical[^.!?\n]{0,60}\bsmell\b",
+                r"\bchemical\s+odor\b[^.!?\n]{0,120}\b(?:awful|headache|stayed)\b",
                 r"\bplastic\s+smell\b",
+                r"\bproduct\s+smelled\b[^.!?\n]{0,120}\bnasty\s+plastic\b",
+                r"\bsmell(?:ed|s)?\b[^.!?\n]{0,120}\bnasty\s+plastic\b",
                 r"\bout\s+gasing\s+of\s+the\s+PVC\s+material\b",
             ],
         ),
@@ -1257,7 +1343,14 @@ def _waders_issue_rule_occurrences(
         "breathability",
         _first_content_span(
             content,
-            [r"\bdon['’]?t\s+breathe\b", r"\bnot\s+breathable\b", r"\b(?:sweat|sweaty|sweating)\b[^.!?\n]{0,80}"],
+            [
+                r"\bdon['’]?t\s+breathe\b",
+                r"\bnot\s+breathable\b",
+                r"\b(?:sweat|sweaty|sweating)\b[^.!?\n]{0,80}",
+                r"\bse\s+transpira\b[^.!?\n]{0,80}",
+                r"\bsuda\s+mucho\s+adentro\b",
+                r"\bclothing\s+was\s+seemingly\s+damp\b[^.!?\n]{0,80}",
+            ],
         ),
     )
     add(
@@ -1287,7 +1380,18 @@ def _waders_issue_rule_occurrences(
         "boot_fit",
         _first_content_span(content, [r"\bboots?\b[^.!?\n]{0,60}\bvery\s+stiff\b", r"\brigidity\s+of\s+the\s+boots\b[^.!?\n]{0,80}"]),
     )
-    add("soft_soles", "Soft Soles", "grip", _first_content_span(content, [r"\bsoles\s+are\s+a\s+bit\s+soft\b"]))
+    add(
+        "soft_soles",
+        "Soft Soles",
+        "grip",
+        _first_content_span(
+            content,
+            [
+                r"\bsoles\s+are\s+a\s+bit\s+soft\b",
+                r"\breal\s+soft\s+flexible\b[^.!?\n]{0,120}\bcrush(?:es)?\s+your\s+foot\b",
+            ],
+        ),
+    )
     add(
         "missing_wader_hanger",
         "Missing Wader Hanger",
@@ -1317,7 +1421,7 @@ def _waders_issue_rule_occurrences(
         "overall_dissatisfied",
         "Overall Dissatisfied",
         "other",
-        _first_content_span(content, [r"\btrash\b", r"\byou\s+get\s+what\s+you\s+pay\s+for\b", r"\bdon['’]?t\s+buy\s+these\b"]),
+        _first_content_span(content, [r"\btrash\b", r"\bdon['’]?t\s+buy\s+these\b"]),
         source_detail="waders_low_priority_context_rule",
     )
     add(
@@ -1372,6 +1476,9 @@ def _waders_highlight_rule_occurrences(
                     r"\btrue\s+to\s+size\b",
                     r"\bfitted\s+me\s+perfectly\b",
                     r"\bboots?\s+fit\s+(?:perfect|well|good|like\s+a\s+glove)\b",
+                    r"\bboot\s+part\s+fits\s+good\b",
+                    r"\bfit\s+was\s+good\b",
+                    r"\bfit\s+as\s+expected\b",
                     r"\bmeasurements?\s+(?:are\s+)?very\s+accurate\b",
                     r"\bfoot\s+measurements?/fit\b[^.!?\n]{0,80}\btrue\s+to\s+size\b",
                 ],
@@ -1397,6 +1504,8 @@ def _waders_highlight_rule_occurrences(
                     r"\bhaven['’]?t\s+had\s+any\s+issues?\s+with\s+leaks?\s+yet\b",
                     r"\b(?:stayed|kept|keep|keeps|remain(?:ed)?)\s+(?:(?:me|you|us|him|her|them|my\s+\w+|your\s+\w+|his\s+\w+|her\s+\w+|their\s+\w+)\s+)?(?:\w+ly\s+)?dry\b",
                     r"\bdidn['’]?t\s+get\s+wet\b",
+                    r"\bnot\s+leaking\b",
+                    r"\beverything\s+held\s+perfectly\b",
                     r"\bare\s+waterproof\b",
                     r"\bwaterproofing\b[^.!?\n]{0,80}\bsolid\b",
                 ],
@@ -1423,12 +1532,22 @@ def _waders_highlight_rule_occurrences(
                 [
                     r"\b(?:held|holds?|hold)\s+up\b[^.!?\n]{0,80}",
                     r"\bstill\s+going\s+strong\b",
+                    r"\bsturdy\b",
+                    r"\bheavy\s+duty\b[^.!?\n]{0,80}\b(?:reliable|relaible)?\b",
+                    r"\bspent\s+many\s+hours\b[^.!?\n]{0,120}",
+                    r"\bsecure\b",
                     r"\bpretty\s+durable\b",
                     r"\bdurable\b",
                     r"\btough\b",
                     r"\bdouble\s+stitch\b[^.!?\n]{0,80}",
                 ],
-                blocked_patterns=[r"\bdidn['’]?t\s+hold\s+up\b", r"\bnot\s+durable\b", r"\bno\s+durability\b"],
+                blocked_patterns=[
+                    r"\bdidn['’]?t\s+hold\s+up\b",
+                    r"\bnot\s+durable\b",
+                    r"\bno\s+durability\b",
+                    r"\bdoes\s+not\s+appear\s+sturdy\b",
+                    r"\bnot\s+sturdy\b",
+                ],
             ),
         )
         add("keeps_warm", "Keeps Warm", "temperature_rating", _first_content_span(content, [r"\bkeeps?\s+me\s+warm\b", r"\bthey['’]?re\s+warm\b"]))
@@ -1441,9 +1560,16 @@ def _waders_highlight_rule_occurrences(
             [
                 r"\bgood\s+value\b",
                 r"\bgreat\s+value\b",
+                r"\bgreat\s+deal\s+for\s+the\s+price\b",
                 r"\bfor\s+the\s+price\b",
                 r"\bprice\s+point\b",
                 r"\baffordable\b",
+                r"\bpriced\s+fairly\b",
+                r"\bnot\s+that\s+expensive\b",
+                r"\bdon['’]?t\s+have\s+the\s+money\b[^.!?\n]{0,120}\bgive\s+them\s+a\s+try\b",
+                r"\bgreat\s+cheap\s+option\b",
+                r"\bbargain\b",
+                r"\bcheap\b",
                 r"\breasonable\s+cost\b",
                 r"\bcost\s+way\s+less\b",
                 r"\bcheap\s+price\b",
@@ -1453,6 +1579,10 @@ def _waders_highlight_rule_occurrences(
             blocked_patterns=[
                 r"\bnot\s+worth\b",
                 r"\btoo\s+expensive\b",
+                r"\bcheap\s+(?:material|plastic|quality)\b",
+                r"\bproduct\s+smelled\b",
+                r"\bnasty\s+plastic\b",
+                r"\bproduct\s+smelled\b[^.!?\n]{0,120}\bnasty\s+plastic\b",
                 r"\breducing\s+the\s+rating\b",
                 r"\bnot\s+what\s+I\s+had\s+in\s+mind\b",
             ],
@@ -1462,7 +1592,15 @@ def _waders_highlight_rule_occurrences(
         "lightweight_waders",
         "Lightweight Waders",
         "weight",
-        _first_content_span(content, [r"\blight\s*weight\b", r"\blightweight\b", r"\bnot\s+heavy\b"]),
+        _first_content_span(
+            content,
+            [
+                r"\blightweight\b[^.!?\n]{0,80}\b(?:sturdy|still\s+going\s+strong|durable|tough)\b",
+                r"\bnice\s+and\s+light\b",
+                r"\blight[-\s]+weight\b",
+                r"\bnot\s+heavy\b",
+            ],
+        ),
     )
     add(
         "good_material_quality",
@@ -1477,9 +1615,8 @@ def _waders_highlight_rule_occurrences(
                 r"\bmaterials?\s+(?:look|looks)\s+pretty\s+good\b",
                 r"\bthick\s+and\s+durable\b",
                 r"\bquality\s+product\b",
-                r"\bwell\s+made\b",
             ],
-            blocked_patterns=[r"\bdoes\s+not\s+appear\s+sturdy\b", r"\bthin\s+plastic\b"],
+            blocked_patterns=[r"\bdoes\s+not\s+appear\s+sturdy\b", r"\bthin\s+plastic\b", r"\blooks?\s+good\b"],
         ),
     )
     add("no_strong_odor", "No Strong Odor", "material", _first_content_span(content, [r"\bdid\s+not\s+notice\s+anything\s+extreme\b", r"\bdon['’]?t\s+have\s+any\s+smell\b", r"\bno\s+smell\b"]))
@@ -1491,7 +1628,15 @@ def _waders_highlight_rule_occurrences(
             "useful_storage_space",
             "Useful Storage Space",
             "accessory_storage",
-            _first_content_span(content, [r"\bplenty\s+of\s+pockets?\s+and\s+storage\b", r"\bgreat\s+pocket\b", r"\bnice\s+pocket\s+storage\b"]),
+            _first_content_span(
+                content,
+                [
+                    r"\bplenty\s+of\s+pockets?\s+and\s+storage\b",
+                    r"\bgreat\s+pocket\b",
+                    r"\bnice\s+pocket\s+storage\b",
+                    r"\bphone\s+protector\s+is\s+a\s+great\s+idea\b",
+                ],
+            ),
         )
         add(
             "useful_accessories",
@@ -1501,7 +1646,7 @@ def _waders_highlight_rule_occurrences(
         )
     add("easy_to_clean", "Easy to Clean", "ease_of_use", _first_content_span(content, [r"\bclean\s+super\s+easy\b", r"\beasy\s+to\s+clean\b"]))
     if not_used and not negative_outcome:
-        add("not_used_yet", "Not Used Yet", "other", _first_content_span(content, [r"\bhave\s+not\s+used[^.!?\n]{0,80}", r"\bhaven['’]?t\s+gotten\s+to\s+use[^.!?\n]{0,80}", r"\bhave(?:n['’]?t| not)\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bnot\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bnever\s+wore\s+(?:them|it|these)?\s*(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bcan(?:not|['’]?t)\s+(?:say|comment)\b[^.!?\n]{0,120}\b(?:leak|leakproof|water\s*proof|waterproof)\b", r"\bnot\s+tested\s+waterproof[^.!?\n]{0,80}", r"\blook\s+forward\s+to\s+trying\b"]), source_detail="waders_context_rule")
+        add("not_used_yet", "Not Used Yet", "other", _first_content_span(content, [r"\bhave\s+not\s+used[^.!?\n]{0,80}", r"\bhaven['’]?t\s+(?:gotten\s+to\s+)?use(?:d)?[^.!?\n]{0,80}", r"\bhave(?:n['’]?t| not)\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bnot\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bnever\s+wore\s+(?:them|it|these)?\s*(?:in\s+)?(?:the\s+)?water[^.!?\n]{0,120}", r"\bcan(?:not|['’]?t)\s+(?:say|comment)\b[^.!?\n]{0,120}\b(?:leak|leakproof|water\s*proof|waterproof)\b", r"\bnot\s+tested\s+waterproof[^.!?\n]{0,80}", r"\blook\s+forward\s+to\s+trying\b"]), source_detail="waders_context_rule")
         add("first_impression_positive", "First Impression Positive", "other", _first_content_span(content, [r"\bseem\s+to\s+be\s+good\s+quality\b", r"\blook\s+good\s+out\s+of\s+the\s+box\b", r"\bseem\s+to\s+be\s+decent\b", r"\bso\s+far\s+so\s+good\b", r"\bmaterials?\s+however\s+look\s+pretty\s+good\b"]), source_detail="waders_context_rule")
     add(
         "works_well_for_use_case",
@@ -1511,12 +1656,13 @@ def _waders_highlight_rule_occurrences(
             content,
             [
                 r"\bfly\s+fishing\s+in\s+Montana\b",
-                r"\bSurf\s+Fishing\b",
+                r"\bgreat\s+for\s+(?:light\s+)?fly\s+fishing\b",
                 r"\bbrush,\s*mud,\s*and\s*creeks\b",
-                r"\bAlaska\b",
                 r"\bwork(?:ed)?\s+on\s+my\s+dock\s+piers\b",
                 r"\bpreformed\s+flawless\b",
-                r"\bworked\s+great\b",
+                r"\bworked\s+well\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush|marsh)\b",
+                r"\bworked\s+great\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush)\b",
+                r"\bgreat\s+for\s+wade\s+fishing\b",
                 r"\bgot\s+the\s+job\s+done\b",
                 r"\bversatility\s+for\s+fishing\s+or\s+other\s+projects\b",
             ],
@@ -1533,9 +1679,51 @@ def _waders_highlight_rule_occurrences(
         ),
     )
     if not negative_outcome:
-        add("overall_satisfied", "Overall Satisfied", "other", _first_content_span(content, [r"\bhighly\s+recommend\b", r"\bexcellent\s+purchase\b", r"\bmy\s+husband\s+loves\s+it\b", r"\bI\s+am\s+happy\b", r"\bspot\s+on\b"]))
-    if not not_used and not negative_outcome:
-        add("looks_good", "Looks Good", "aesthetics", _first_content_span(content, [r"\blooked\s+so\s+nice\b", r"\blooks?\s+good\b"]))
+        add(
+            "overall_satisfied",
+            "Overall Satisfied",
+            "other",
+            _first_content_span(
+                content,
+                [
+                    r"\bexcellent\b[^.!?\n]{0,80}\bworked\s+perfectly\b",
+                    r"\bworked\s+perfectly\b",
+                    r"\bhighly\s+recommend\b",
+                    r"\bworks?\s+without\s+coming\s+apart\b",
+                    r"\bvery\s+good\s+product\b",
+                    r"^\s*great\s+product\.?\s*$",
+                    r"\bgreat\s+pair\b",
+                    r"\bthese\s+are\s+great\b",
+                    r"\bas\s+described\b",
+                    r"\bitem\s+as\s+described\b",
+                    r"^\s*perfect!?\s*$",
+                    r"\bI['’]?m\s+very\s+happy\b",
+                    r"\bI\s+am\s+happy\b",
+                    r"\bmy\s+husband\s+loves\s+it\b",
+                    r"\bspot\s+on\b",
+                    r"^\s*good\s*$",
+                ],
+            ),
+        )
+    if not negative_outcome:
+        add(
+            "looks_good",
+            "Looks Good",
+            "aesthetics",
+            _first_content_span(
+                content,
+                [
+                    r"\blooked\s+so\s+nice\b",
+                    r"\blooks?\s+good\b[^.!?\n]{0,80}",
+                    r"\bappear(?:ed|s)?\s+well\s+made\b",
+                    r"\bseem(?:ed|s)?\s+to\s+be\s+made\s+well\b",
+                    r"\bseem\s+well\s+made\b",
+                    r"\bnice\s+affordable\s+waders\b",
+                    r"\breally\s+look\s+and\s+appear\s+to\s+be\s+a\s+great\s+product\b",
+                ],
+                blocked_patterns=[r"\bfit\s+is\s+terrible\b", r"\btrying\s+to\s+get\s+in\s+and\s+out\b"],
+            ),
+        )
     return items
 
 
@@ -1713,6 +1901,23 @@ def _project_customer_label_occurrence(
     canonical = str(occurrence.get("canonical_label_key") or "").strip()
     if not canonical:
         return None
+    comment_aspects_json = coerce_aspects_json(comment.get("aspects_json")) or {}
+    occurrence_sub_category = str(
+        occurrence.get("sub_category")
+        or comment_aspects_json.get("sub_category")
+        or comment.get("sub_category")
+        or comment.get("category")
+        or ""
+    )
+    if label_type == "highlight" and canonical == "feels_well_made" and _is_waders_context(
+        occurrence_sub_category,
+        content,
+    ):
+        canonical = "good_material_quality"
+        occurrence = {**occurrence}
+        occurrence["canonical_label_key"] = canonical
+        occurrence["display_label_en"] = "Good Material Quality"
+        occurrence["display_label_zh"] = _customer_highlight_zh_label(canonical, "Good Material Quality")
 
     stored_evidence = str(occurrence.get("evidence_span") or "").strip()
     if label_type == "issue" and _is_suppressed_water_leak_issue_occurrence(
@@ -1728,6 +1933,91 @@ def _project_customer_label_occurrence(
         context_allowed = not _is_uncertain_or_untested_water_leak_context(
             _evidence_context_window(content, stored_evidence)
         )
+    if label_type == "highlight" and canonical == "not_used_yet":
+        context_allowed = False
+    if (
+        label_type == "highlight"
+        and canonical == "good_material_quality"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        good_material_context = _evidence_context_sentence(content, stored_evidence)
+        context_allowed = not (
+            _first_regex([r"\bwell\s+made\b"], stored_evidence)
+            or _first_regex([r"\bpriced\s+fairly\b"], good_material_context)
+        )
+    if (
+        label_type == "highlight"
+        and canonical == "good_value_for_the_price"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        value_window = _evidence_context_window(content, stored_evidence)
+        context_allowed = not _first_regex([r"\bproduct\s+smelled\b", r"\bnasty\s+plastic\b"], value_window)
+    if (
+        label_type == "highlight"
+        and canonical == "works_well_for_use_case"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        use_case_context = _evidence_context_sentence(content, stored_evidence)
+        context_allowed = bool(
+            _first_regex(
+                [
+                    r"\bgreat\s+for\s+wade\s+fishing\b",
+                    r"\bgreat\s+for\s+(?:light\s+)?fly\s+fishing\b",
+                    r"\bworked\s+well\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush|marsh)\b",
+                    r"\bworked\s+great\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush)\b",
+                    r"\bpreformed\s+flawless\b",
+                    r"\bgot\s+the\s+job\s+done\b",
+                    r"\bversatility\s+for\s+fishing\s+or\s+other\s+projects\b",
+                ],
+                use_case_context,
+            )
+        )
+    if (
+        label_type == "highlight"
+        and canonical == "lightweight_waders"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        light_context = _evidence_context_sentence(content, stored_evidence)
+        context_allowed = bool(
+            _first_regex(
+                [
+                    r"\blightweight\b[^.!?\n]{0,80}\b(?:sturdy|still\s+going\s+strong|durable|tough)\b",
+                    r"\bnice\s+and\s+light\b",
+                    r"\blight[-\s]+weight\b",
+                ],
+                light_context,
+            )
+        )
+    if (
+        label_type == "issue"
+        and canonical == "quality_problem"
+        and _is_waders_context(occurrence_sub_category, content)
+        and _first_regex([r"\bvery\s+disappointed\s+with\s+quality\b"], stored_evidence)
+    ):
+        context_allowed = False
+    if (
+        label_type == "issue"
+        and canonical == "overall_dissatisfied"
+        and _is_waders_context(occurrence_sub_category, content)
+        and _first_regex([r"\byou\s+get\s+what\s+you\s+pay\s+for\b"], stored_evidence)
+    ):
+        context_allowed = False
+    if label_type == "issue" and canonical in {"runs_too_small", "runs_too_large", "inaccurate_size_chart"}:
+        context_allowed = not bool(
+            _is_waders_context(occurrence_sub_category, content)
+            and _first_content_span(
+                content,
+                _SIZE_FIT_PROBLEM_EVIDENCE_PATTERNS,
+                blocked_patterns=_SIZE_FIT_PROBLEM_BLOCKED_PATTERNS,
+            )
+        )
+    if (
+        label_type == "issue"
+        and canonical == "runs_too_large"
+        and _first_regex([r"\bshoulder\s+straps?\b[^.!?\n]{0,80}\bloose\b"], stored_evidence)
+        and _first_regex([r"\bnot\s+too\s+bad\b"], _evidence_context_window(content, stored_evidence))
+    ):
+        context_allowed = False
 
     display_en = str(occurrence.get("display_label_en") or "").strip()
     display_zh = str(occurrence.get("display_label_zh") or "").strip()
@@ -1765,9 +2055,6 @@ def _project_customer_label_occurrence(
     confidence = _clean_confidence(occurrence.get("confidence"), default="low")
     source_detail = str(occurrence.get("source_detail") or "").strip()
     source = _clean_occurrence_source(str(occurrence.get("source") or ""), source_detail)
-    occurrence_sub_category = str(
-        occurrence.get("sub_category") or comment.get("sub_category") or comment.get("category") or ""
-    )
     if label_type == "issue" and _should_suppress_apparel_breathability_cluster_issue(
         canonical=canonical,
         aspect_key=aspect_key,
@@ -1939,14 +2226,26 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Arrived Damaged", "arrived_damaged", "regex_alias_rule")
 
     if aspect_key in {"durability", "build_quality", "stability", "material", "strength"}:
+        if _first_regex(
+            [
+                r"\balready\s+damaged\b.*\b(?:repaired|sent\s+out\s+as\s+new)\b",
+                r"\bclearly\s+repaired\s+and\s+sent\s+out\s+as\s+new\b",
+            ],
+            text,
+        ):
+            return ("Quality Problem", "quality_problem", "regex_alias_rule")
+        if _first_regex([r"\bcovered\s+in\s+mold\b"], text):
+            return ("Quality Control / Storage Issue", "quality_control_storage_issue", "regex_alias_rule")
         if _first_regex([r"\b(fell apart|falls apart)\b"], text):
             return ("Falls Apart", "falls_apart", "regex_alias_rule")
-        if _first_regex([r"\b(broke|breaks|broken|cracked|snapped|ripped|rip|tear|tore|torn|no durability|destroyed)\b"], text):
+        if _first_regex([r"\b(got a hole|broke|breaks|broken|cracked|snapped|ripped|rip|tear|tore|torn|no durability|destroyed)\b"], text):
             return ("Breaks Easily", "breaks_easily", "regex_alias_rule")
         if aspect_key in {"material", "build_quality"} and _first_regex(
             [
                 r"\b(strong|bad|chemical|plastic|awful)\b.*\b(smell|odor|scent)\b",
                 r"\b(smell|odor|scent)\b.*\b(strong|bad|chemical|plastic|awful)\b",
+                r"\bchemical\s+odor\b.*\b(awful|headache|stayed)\b",
+                r"\bproduct\s+smelled\b.*\bnasty\s+plastic\b",
                 r"\bout\s+gasing\b",
             ],
             text,
@@ -1964,6 +2263,12 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Feels Thin and Flimsy", "feels_thin_and_flimsy", "regex_alias_rule")
 
     if aspect_key in {"size_fit", "boot_fit"}:
+        if _first_content_span(
+            content,
+            _SIZE_FIT_PROBLEM_EVIDENCE_PATTERNS,
+            blocked_patterns=_SIZE_FIT_PROBLEM_BLOCKED_PATTERNS,
+        ):
+            return ("Size/Fit Problem", "size_fit_problem", "regex_alias_rule")
         if aspect_key == "size_fit" and _first_regex([r"\bpants\s+are\s+long\b", r"\blegs\s+are\s+too\s+long\b"], text):
             return ("Pants Too Long", "pants_too_long", "regex_alias_rule")
         if aspect_key == "size_fit" and _first_regex(
@@ -1994,13 +2299,19 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Runs Too Large", "runs_too_large", "regex_alias_rule")
 
     if aspect_key in {"comfort", "breathability", "mobility"}:
+        if _first_content_span(
+            content,
+            _SIZE_FIT_PROBLEM_EVIDENCE_PATTERNS,
+            blocked_patterns=_SIZE_FIT_PROBLEM_BLOCKED_PATTERNS,
+        ):
+            return ("Size/Fit Problem", "size_fit_problem", "regex_alias_rule")
         if _first_regex([r"\bnot\s+walking\s+far\b", r"\bfeet\s+were\s+in\s+pain\b", r"\bboots?\s+hurt\s+after\s+awhile\b"], text):
             return ("Not for Long Walks", "not_for_long_walks", "regex_alias_rule")
         if _first_regex([r"\bboots?\b.*\bvery\s+stiff\b", r"\brigidity\s+of\s+the\s+boots\b"], text):
             return ("Boots Too Stiff", "boots_too_stiff", "regex_alias_rule")
         if _first_regex([r"\buncomfortable\b", r"\bhurts?\b", r"\bblister"], text):
             return ("Uncomfortable Fit", "uncomfortable_fit", "regex_alias_rule")
-        if _not_breathable_issue_hit(text):
+        if _not_breathable_issue_hit(text) or _first_regex([r"\bse\s+transpira\b", r"\bsuda\s+mucho\s+adentro\b"], text):
             return ("Not Breathable", "not_breathable", "regex_alias_rule")
 
     if aspect_key in {"temperature_rating"}:
@@ -2012,7 +2323,7 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
     if aspect_key in {"grip"}:
         if _first_regex([r"\bslick\s+or\s+slipper\s+rocks\b", r"\bslippery\s+rocks\b", r"\bsoles?\s+slipped\b"], text):
             return ("Poor Traction", "poor_traction", "regex_alias_rule")
-        if _first_regex([r"\bsoles\s+are\s+a\s+bit\s+soft\b"], text):
+        if _first_regex([r"\bsoles\s+are\s+a\s+bit\s+soft\b", r"\breal\s+soft\s+flexible\b.*\bcrush(?:es)?\s+your\s+foot\b"], text):
             return ("Soft Soles", "soft_soles", "regex_alias_rule")
 
     if aspect_key in {"smell", "scent"}:
@@ -2244,6 +2555,9 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
                 r"\bperfect\s+fit\b",
                 r"\btrue to size\b",
                 r"\bboots? fit",
+                r"\bboot\s+part\s+fits\s+good\b",
+                r"\bfit\s+was\s+good\b",
+                r"\bfit\s+as\s+expected\b",
                 r"\bmeasurements?\s+(?:are\s+)?very\s+accurate\b",
             ],
             text,
@@ -2259,7 +2573,19 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
             return _highlight_label("Breathes Well", "透气性好", "breathes_well", "regex_alias_rule")
 
     if aspect_key in {"build_quality", "durability", "material", "strength", "stability"}:
-        if _first_regex([r"\b(held|holds?) up\b", r"\bstill going strong\b", r"\bdurable\b", r"\btough\b"], text):
+        if _first_regex(
+            [
+                r"\b(held|holds?) up\b",
+                r"\bstill going strong\b",
+                r"\bdurable\b",
+                r"\btough\b",
+                r"\bsturdy\b",
+                r"\bheavy\s+duty\b",
+                r"\bspent\s+many\s+hours\b",
+                r"\bsecure\b",
+            ],
+            text,
+        ) and not _first_regex([r"\bdoes\s+not\s+appear\s+sturdy\b", r"\bnot\s+sturdy\b"], text):
             return _highlight_label("Holds Up Well", "耐用可靠", "holds_up_well", "regex_alias_rule")
         if _first_regex(
             [
@@ -2267,8 +2593,6 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
                 r"\bmaterial\s+quality\s+is\s+up\s+there\b",
                 r"\bmaterials?\s+(?:look|looks)\s+pretty\s+good\b",
                 r"\bquality product\b",
-                r"\bwell made\b",
-                r"\bsturdy\b",
                 r"\bsolid\b",
             ],
             text,
@@ -2280,10 +2604,16 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
             [
                 r"\bgood value\b",
                 r"\bgreat value\b",
+                r"\bgreat deal for the price\b",
                 r"\bfor the price\b",
                 r"\bprice point\b",
                 r"\bworth\b",
                 r"\baffordable\b",
+                r"\bpriced fairly\b",
+                r"\bnot that expensive\b",
+                r"\bgreat cheap option\b",
+                r"\bbargain\b",
+                r"\bcheap\b",
                 r"\bcost way less\b",
                 r"\breasonable cost\b",
                 r"\bdidn['’]?t\s+have\s+to\s+spend\s+a\s+lot\s+of\s+money\b",
@@ -2302,7 +2632,12 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
 
     if aspect_key in {"accessory_storage", "organization", "capacity"}:
         if _first_regex(
-            [r"\b(plenty|enough|great|good)\b.*\b(pockets?|storage|room|space)\b", r"\bconvenient storage\b"], text
+            [
+                r"\b(plenty|enough|great|good)\b.*\b(pockets?|storage|room|space)\b",
+                r"\bconvenient storage\b",
+                r"\bphone\s+protector\s+is\s+a\s+great\s+idea\b",
+            ],
+            text,
         ):
             return _highlight_label("Useful Storage Space", "收纳空间实用", "useful_storage_space", "regex_alias_rule")
         if _first_regex(
@@ -2341,7 +2676,17 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
             )
 
     if aspect_key in {"aesthetics", "color_accuracy"}:
-        if _first_regex([r"\b(look|looks|looked)\b.*\b(great|good|nice|beautiful)\b", r"\bnice looking\b"], text):
+        if _first_regex(
+            [
+                r"\b(look|looks|looked)\b.*\b(great|good|nice|beautiful)\b",
+                r"\bnice looking\b",
+                r"\bappear(?:ed|s)?\s+well\s+made\b",
+                r"\bseem(?:ed|s)?\s+to\s+be\s+made\s+well\b",
+                r"\bseem\s+well\s+made\b",
+                r"\bnice\s+affordable\s+waders\b",
+            ],
+            text,
+        ):
             return _highlight_label("Looks Good", "外观好看", "looks_good", "regex_alias_rule")
 
     if aspect_key in {"smell", "scent"}:
@@ -2349,7 +2694,15 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
             return _highlight_label("No Strong Odor", "没有明显异味", "no_strong_odor", "regex_alias_rule")
 
     if aspect_key in {"weight"}:
-        if _first_regex([r"\blight\s*weight\b", r"\blightweight\b", r"\bnot\s+heavy\b"], text):
+        if _first_regex(
+            [
+                r"\blightweight\b[^.!?\n]{0,80}\b(?:sturdy|still\s+going\s+strong|durable|tough)\b",
+                r"\bnice\s+and\s+light\b",
+                r"\blight[-\s]+weight\b",
+                r"\bnot\s+heavy\b",
+            ],
+            text,
+        ):
             return _highlight_label("Lightweight Waders", "轻便", "lightweight_waders", "regex_alias_rule")
 
     if aspect_key in {"temperature_rating"}:

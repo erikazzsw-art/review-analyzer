@@ -42,8 +42,10 @@ LABEL_META: dict[tuple[str, str], tuple[str, str, str]] = {
     ("highlight", "petite_friendly"): ("Petite Friendly", "小个子友好", "size_fit"),
     ("highlight", "overall_satisfied"): ("Overall Satisfied", "整体满意", "other"),
     ("highlight", "lightweight_waders"): ("Lightweight Waders", "轻便", "weight"),
+    ("highlight", "looks_good"): ("Looks Good", "外观好看", "aesthetics"),
     ("issue", "water_leaks_through"): ("Water Leaks Through", "容易进水", "waterproof"),
     ("issue", "pocket_not_waterproof"): ("Pocket Not Waterproof", "口袋不防水", "accessory_storage"),
+    ("issue", "size_fit_problem"): ("Size/Fit Problem", "尺码/版型问题", "size_fit"),
     ("issue", "strong_chemical_smell"): ("Strong Chemical Smell", "气味大", "material"),
     ("issue", "runs_too_small"): ("Runs Too Small", "尺码偏小", "size_fit"),
     ("issue", "breaks_easily"): ("Breaks Easily", "耐用性差", "durability"),
@@ -214,11 +216,14 @@ def test_waders_step2_top_rows_drop_no_evidence_cluster_legacy_and_context_confl
 def test_waders_step2_duplicate_occurrences_count_once_per_review_but_audit_raw_count() -> None:
     rows = build_specific_issue_rows(_comments(), locale="en", limit=50)
     runs_small = next(row for row in rows if row["canonical_issue_key"] == "runs_too_small")
+    size_fit = next(row for row in rows if row["canonical_issue_key"] == "size_fit_problem")
 
-    assert runs_small["mention_count"] == 3
-    assert runs_small["raw_occurrence_count"] == 4
+    assert runs_small["mention_count"] == 1
+    assert runs_small["raw_occurrence_count"] == 2
     assert "boot_fit" in runs_small["aspect_keys"]
     assert "size_fit" in runs_small["aspect_keys"]
+    assert size_fit["mention_count"] == 2
+    assert size_fit["raw_occurrence_count"] == 2
 
 
 def test_waders_step2_raw_and_top_export_include_highlight_occurrence_audit_fields() -> None:
@@ -238,9 +243,12 @@ def test_waders_step2_raw_and_top_export_include_highlight_occurrence_audit_fiel
     row_15 = by_id["row-15-not-used"]
     assert "keeps_water_out" not in row_15[headers.index("Canonical Highlight Key")]
     assert "false" not in row_15[headers.index("Highlight Evidence Verified")]
+    assert "not_used_yet" not in row_15[headers.index("Canonical Highlight Key")]
     assert "keeps_water_out" in row_15[headers.index("Audit Canonical Highlight Key")]
+    assert "not_used_yet" in row_15[headers.index("Audit Canonical Highlight Key")]
     assert "false" in row_15[headers.index("Audit Highlight Evidence Verified")]
-    assert "未实际使用" in row_15[headers.index("亮点标签")]
+    assert "未实际使用" not in row_15[headers.index("亮点标签")]
+    assert "未实际使用" in row_15[headers.index("Audit Customer Label")]
 
     issue_headers, issue_rows = _build_specific_issue_top10_data(comments)
     highlight_headers, highlight_rows = _build_customer_highlight_top10_data(comments)

@@ -43,7 +43,7 @@
         {"type": "issue", "key": "strong_chemical_smell", "aspect_key": "material", "evidence": "chemical smell"},
         {"type": "issue", "key": "runs_too_small", "aspect_key": "size_fit", "evidence": "size runs small"}
       ],
-      "expected_issue_keys": ["strong_chemical_smell", "runs_too_small"],
+      "expected_issue_keys": ["strong_chemical_smell", "size_fit_problem"],
       "expected_highlight_keys": []
     },
     {
@@ -94,7 +94,7 @@
         {"type": "highlight", "key": "first_impression_positive", "aspect_key": "other", "evidence": "look good out of the box"}
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": ["not_used_yet", "first_impression_positive"]
+      "expected_highlight_keys": ["first_impression_positive", "looks_good"]
     },
     {
       "id": "row-18-mixed-fly-fishing",
@@ -137,7 +137,7 @@
         {"type": "highlight", "key": "not_used_yet", "aspect_key": "other", "evidence": "look forward to trying"}
       ],
       "expected_issue_keys": ["missing_accessories"],
-      "expected_highlight_keys": ["not_used_yet"]
+      "expected_highlight_keys": []
     },
     {
       "id": "row-27-mixed-good-and-size",
@@ -149,7 +149,7 @@
         {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "stayed dry"},
         {"type": "issue", "key": "runs_too_small", "aspect_key": "size_fit", "evidence": "size runs small"}
       ],
-      "expected_issue_keys": ["runs_too_small"],
+      "expected_issue_keys": ["size_fit_problem"],
       "expected_highlight_keys": ["useful_storage_space", "good_value_for_the_price", "keeps_water_out"]
     },
     {
@@ -262,7 +262,7 @@
         {"type": "highlight", "key": "not_used_yet", "aspect_key": "other", "evidence": "not used them in water"}
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": ["fits_as_expected", "not_used_yet"]
+      "expected_highlight_keys": ["fits_as_expected"]
     },
     {
       "id": "row-76-lightweight-durable",
@@ -287,7 +287,7 @@
         {"type": "highlight", "key": "not_used_yet", "aspect_key": "other", "evidence": "not tested waterproof"}
       ],
       "expected_issue_keys": ["runs_too_large", "pants_too_long"],
-      "expected_highlight_keys": ["not_used_yet"]
+      "expected_highlight_keys": []
     },
     {
       "id": "row-86-smell-size-accessory",

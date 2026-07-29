@@ -128,8 +128,17 @@ ANNOTATION RULES:
        - If a review says the item has not been used or water-tested yet, do not infer waterproof,
          durability, traction, or warmth. Only annotate tried-on fit or first-impression material
          if explicitly stated.
+       - "Not used yet" / "not water-tested yet" is context/audit evidence only; do not turn it
+         into a customer-facing product highlight.
        - Generic praise ("great product", "excellent purchase") should stay generic; do not expand
          it into fit/value/durability/waterproof aspects without exact evidence for each.
+       - Size/fit complaints such as tight inseam, wrong size, same size resent, ordered one size up
+         but not bigger, could not get foot in, terrible fit, narrow boots, short belt, or poor mobility
+         should be captured as size_fit/boot_fit/mobility negative evidence.
+       - "Appear/seem well made" or "looks good" without use evidence is a visual or first-impression
+         signal; reserve material/build-quality praise for explicit quality/material wording.
+       - Use-case success requires explicit product performance in that use case. Location/activity
+         mentions alone (for example Alaska or surf fishing) are not enough to infer success.
        - In a review where the user returned all units, switched brands, says "don't buy", or gives
          an overall failed-use outcome, do not create positive highlights from earlier incidental
          phrases unless the user clearly preserves that benefit as a current-product advantage.

@@ -32,7 +32,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "胸围、腰围、裤长、裆部、儿童身高体重等整体尺码是否准确；仅鞋靴尺码归 boot_fit"
+  boundary_note: "胸围、腰围、裤长、裆部、儿童身高体重等整体尺码是否准确；tight/restrictive inseam、wrong size、same size resent、ordered one size up but not bigger、pants huge、short belt、size runs small 等召回为尺码/版型问题；仅鞋靴尺码归 boot_fit"
   top_phrases: []
   sample_reviews: []
 
@@ -43,7 +43,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "一体靴的鞋码、脚趾空间、脚踝/小腿松紧、是否需要大一码，不含鞋底抓地（归 grip）"
+  boundary_note: "一体靴的鞋码、脚趾空间、脚踝/小腿松紧、是否需要大一码；could not get foot in、narrow boots 等召回为尺码/版型问题；不含鞋底抓地（归 grip）"
   top_phrases: []
   sample_reviews: []
 
@@ -65,7 +65,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "穿着时走路、弯腰、下蹲、爬坡、儿童玩耍是否受限，不含单纯舒适脚感（归 comfort）"
+  boundary_note: "穿着时走路、弯腰、下蹲、爬坡、儿童玩耍是否受限；由 terrible fit、bunch up、short belt 导致行动困难时可与 size_fit/boot_fit 一起支持尺码/版型问题；不含单纯舒适脚感（归 comfort）"
   top_phrases: []
   sample_reviews: []
 
@@ -120,7 +120,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "PVC/橡胶/尼龙/氯丁橡胶等材料厚薄、柔软度、气味和质感；实际破损寿命归 durability"
+  boundary_note: "PVC/橡胶/尼龙/氯丁橡胶等材料厚薄、柔软度、气味和质感；实际破损寿命归 durability；仅 appear/seem well made、looks good 且未实际使用时按外观/初印象处理，不泛化为材质质量好"
   top_phrases: []
   sample_reviews: []
 
@@ -131,7 +131,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "肩带、腰带、扣具、车线、口袋等制造工艺细节；接缝漏水归 seam_integrity"
+  boundary_note: "肩带、腰带、扣具、车线、口袋等制造工艺细节；到货已损坏、明显修补后当新品发出、发霉等归质量/品控问题；接缝漏水归 seam_integrity"
   top_phrases: []
   sample_reviews: []
 
@@ -164,7 +164,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "胸前口袋、手机防水袋、修补贴、挂架、收纳和晾干配件是否好用、缺失、与描述不符或进水；配件漏水不得归整体 waterproof"
+  boundary_note: "胸前口袋、手机防水袋、修补贴、挂架、收纳和晾干配件是否好用、缺失、与描述不符或进水；phone protector is a great idea 可归储物设计好；配件漏水不得归整体 waterproof"
   top_phrases: []
   sample_reviews: []
 
@@ -208,7 +208,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "价格与防水、耐用、配件和整体品质之间的匹配感"
+  boundary_note: "价格与防水、耐用、配件和整体品质之间的匹配感；cheap、bargain、great deal for the price、priced fairly 可作为性价比证据；若同一句/邻近上下文是 chemical/plastic smell、nasty plastic 等负面材料问题，不得误当正向性价比"
   top_phrases: []
   sample_reviews: []
 
@@ -230,6 +230,6 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "不属于以上任何维度的评论内容（兜底）"
+  boundary_note: "不属于以上任何维度的评论内容（兜底）；use-case success 需要明确产品在该场景 worked great/got the job done/great for wade fishing，单独出现地点或活动名不得推断场景适用；not used yet 仅作 context/audit，不进入前台亮点"
   top_phrases: []
   sample_reviews: []

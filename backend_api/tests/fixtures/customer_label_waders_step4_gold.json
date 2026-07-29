@@ -94,7 +94,7 @@
         {"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "good value", "verified": false, "cluster_propagated": true}
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": ["fits_as_expected", "good_material_quality", "not_used_yet", "first_impression_positive"],
+      "expected_highlight_keys": ["fits_as_expected", "good_material_quality", "first_impression_positive"],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": ["holds_up_well", "keeps_water_out", "good_value_for_the_price"]
     },
@@ -162,7 +162,7 @@
         {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "leakproof", "verified": true, "cluster_propagated": false}
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": ["fits_as_expected", "not_used_yet"],
+      "expected_highlight_keys": ["fits_as_expected"],
       "blocked_issue_keys": ["water_leaks_through"],
       "blocked_highlight_keys": ["keeps_water_out"]
     },
@@ -185,10 +185,10 @@
       "current_occurrences": [
         {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "leak", "verified": true, "cluster_propagated": false}
       ],
-      "expected_issue_keys": [],
-      "expected_highlight_keys": ["good_material_quality", "not_used_yet"],
+      "expected_issue_keys": ["size_fit_problem"],
+      "expected_highlight_keys": [],
       "blocked_issue_keys": ["water_leaks_through"],
-      "blocked_highlight_keys": ["keeps_water_out"]
+      "blocked_highlight_keys": ["good_material_quality", "keeps_water_out", "not_used_yet"]
     },
     {
       "id": "session120-row-28-cheap-durable",
@@ -199,7 +199,7 @@
         {"type": "issue", "key": "feels_thin_and_flimsy", "aspect_key": "material", "evidence": "durable", "verified": true, "cluster_propagated": false}
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": ["holds_up_well"],
+      "expected_highlight_keys": ["holds_up_well", "good_value_for_the_price"],
       "blocked_issue_keys": ["feels_thin_and_flimsy"],
       "blocked_highlight_keys": []
     }

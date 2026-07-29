@@ -100,6 +100,7 @@ const ALLOWED_ASPECT_KEYS_BY_LABEL: Record<CustomerLabelType, Record<string, Set
     looks_good: new Set(["aesthetics"]),
   },
   issue: {
+    size_fit_problem: new Set(["size_fit", "boot_fit", "mobility"]),
     water_leaks_through: new Set(["waterproof", "waterproof_performance", "seam_integrity"]),
     pocket_not_waterproof: new Set(["accessory_storage", "organization", "capacity"]),
     pocket_too_small: new Set(["accessory_storage", "organization", "capacity"]),
@@ -126,6 +127,8 @@ const ALLOWED_ASPECT_KEYS_BY_LABEL: Record<CustomerLabelType, Record<string, Set
     overall_dissatisfied: new Set(["other"]),
     not_for_heavy_brush: new Set(["durability", "other"]),
     not_worth_the_price: new Set(["value_for_money", "price_value"]),
+    quality_control_storage_issue: new Set(["shipping_damage", "packaging", "material", "build_quality"]),
+    quality_problem: new Set(["shipping_damage", "packaging", "build_quality", "durability", "material"]),
     zipper_fails: new Set(["zipper_quality"]),
     missing_parts: new Set(["assembly", "packaging", "shipping_damage", "accessory_storage"]),
   },
@@ -144,6 +147,11 @@ function isLabelAspectAllowed(type: CustomerLabelType, canonicalLabelKey: string
   if (!canonicalLabelKey || !aspectKey) return true;
   const allowed = ALLOWED_ASPECT_KEYS_BY_LABEL[type]?.[canonicalLabelKey];
   return allowed ? allowed.has(aspectKey) : true;
+}
+
+function isWadersContext(subCategory: string): boolean {
+  const normalized = normText(subCategory);
+  return ["waders", "wader", "chest waders", "bootfoot waders"].includes(normalized);
 }
 
 function firstRegex(patterns: RegExp[], text: string): boolean {
@@ -200,6 +208,54 @@ function isBlockedWaterLeakIssueContext(content: string, evidence: string): bool
     /\b(?:leak(?:ing|ed|s)?|water gets in|wet|soak)[^.!?\n]{0,80}\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b/,
   ], evidenceText);
   return negated || positiveDry || oldProduct || evidenceAccessoryLeak || accessoryLeak;
+}
+
+function isWadersLabelContextAllowed(
+  type: CustomerLabelType,
+  canonicalLabelKey: string,
+  content: string,
+  evidence: string,
+  subCategory: string,
+): boolean {
+  if (!isWadersContext(subCategory)) return true;
+
+  if (type === "highlight" && canonicalLabelKey === "not_used_yet") {
+    return false;
+  }
+  if (type === "highlight" && canonicalLabelKey === "good_material_quality") {
+    const context = sentenceForEvidence(content, evidence).toLowerCase();
+    return !firstRegex([/\bwell\s+made\b/], evidence.toLowerCase()) &&
+      !firstRegex([/\bpriced\s+fairly\b/], context);
+  }
+  if (type === "highlight" && canonicalLabelKey === "good_value_for_the_price") {
+    const context = windowForEvidence(content, evidence).toLowerCase();
+    return !firstRegex([/\bproduct\s+smelled\b/, /\bnasty\s+plastic\b/], context);
+  }
+  if (type === "highlight" && canonicalLabelKey === "holds_up_well") {
+    const context = sentenceForEvidence(content, evidence).toLowerCase();
+    return !firstRegex([/\bdoes\s+not\s+appear\s+sturdy\b/, /\bnot\s+sturdy\b/], context);
+  }
+  if (type === "highlight" && canonicalLabelKey === "works_well_for_use_case") {
+    const context = sentenceForEvidence(content, evidence).toLowerCase();
+    return firstRegex([
+      /\bgreat\s+for\s+wade\s+fishing\b/,
+      /\bgreat\s+for\s+(?:light\s+)?fly\s+fishing\b/,
+      /\bworked\s+well\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush|marsh)\b/,
+      /\bworked\s+great\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush)\b/,
+      /\bpreformed\s+flawless\b/,
+      /\bgot\s+the\s+job\s+done\b/,
+      /\bversatility\s+for\s+fishing\s+or\s+other\s+projects\b/,
+    ], context);
+  }
+  if (type === "highlight" && canonicalLabelKey === "lightweight_waders") {
+    const context = sentenceForEvidence(content, evidence).toLowerCase();
+    return firstRegex([
+      /\blightweight\b[^.!?\n]{0,80}\b(?:sturdy|still\s+going\s+strong|durable|tough)\b/,
+      /\bnice\s+and\s+light\b/,
+      /\blight[-\s]+weight\b/,
+    ], context);
+  }
+  return true;
 }
 
 function hasCjk(value: string): boolean {
@@ -313,11 +369,12 @@ function getPayloadAspects(payload: RecordValue): RecordValue[] {
 }
 
 export function customerIssueTags(comment: RecordValue, locale: string): string[] {
-  const occurrences = customerLabelOccurrences(comment, "issue", locale)
+  const allOccurrences = customerLabelOccurrences(comment, "issue", locale);
+  const occurrences = allOccurrences
     .filter((occurrence) => isVerifiedSourceReviewOccurrence(occurrence))
     .map((occurrence) => occurrence.label)
     .filter(Boolean);
-  if (occurrences.length > 0) {
+  if (occurrences.length > 0 || allOccurrences.length > 0) {
     return uniqueStrings(occurrences);
   }
 
@@ -359,11 +416,12 @@ export function customerIssueTags(comment: RecordValue, locale: string): string[
 }
 
 export function customerHighlightTags(comment: RecordValue, locale: string): string[] {
-  const occurrences = customerLabelOccurrences(comment, "highlight", locale)
+  const allOccurrences = customerLabelOccurrences(comment, "highlight", locale);
+  const occurrences = allOccurrences
     .filter((occurrence) => isVerifiedSourceReviewOccurrence(occurrence))
     .map((occurrence) => occurrence.label)
     .filter(Boolean);
-  if (occurrences.length > 0) {
+  if (occurrences.length > 0 || allOccurrences.length > 0) {
     return uniqueStrings(occurrences);
   }
 
@@ -427,17 +485,23 @@ export function customerLabelOccurrences(
       const occurrenceClusterPropagated =
         "cluster_propagated" in occurrence ? boolValue(occurrence.cluster_propagated) : clusterPropagated;
       const aspectKey = String(occurrence.aspect_key || "").trim();
-      const label = localeLabel(occurrence.display_label_en, occurrence.display_label_zh, locale);
+      let label = localeLabel(occurrence.display_label_en, occurrence.display_label_zh, locale);
       const dimension = localeLabel(occurrence.dimension_en, occurrence.dimension_zh, locale) ||
         (aspectKey ? aspectLabel(aspectKey, locale) : "");
       const evidenceSpan = String(occurrence.evidence_span || "").trim();
-      const canonicalLabelKey = String(occurrence.canonical_label_key || "").trim();
+      let canonicalLabelKey = String(occurrence.canonical_label_key || "").trim();
       const content = reviewBody(comment);
+      const occurrenceSubCategory = String(occurrence.sub_category || subCategory).trim();
+      if (type === "highlight" && canonicalLabelKey === "feels_well_made" && isWadersContext(occurrenceSubCategory)) {
+        canonicalLabelKey = "good_material_quality";
+        label = locale.startsWith("zh") ? "材质质量好" : "Good Material Quality";
+      }
       const aspectAllowed = boolValue(occurrence.aspect_allowed ?? true) &&
         isLabelAspectAllowed(type, canonicalLabelKey, aspectKey);
       const contextAllowed = boolValue(occurrence.context_allowed ?? true) &&
         !(type === "issue" && canonicalLabelKey === "water_leaks_through" &&
-          isBlockedWaterLeakIssueContext(content, evidenceSpan));
+          isBlockedWaterLeakIssueContext(content, evidenceSpan)) &&
+        isWadersLabelContextAllowed(type, canonicalLabelKey, content, evidenceSpan, occurrenceSubCategory);
       return {
         type,
         label,
@@ -450,7 +514,7 @@ export function customerLabelOccurrences(
         clusterPropagated: occurrenceClusterPropagated,
         confidence: String(occurrence.confidence || "").trim(),
         source: String(occurrence.source_detail || occurrence.source || "").trim(),
-        subCategory: String(occurrence.sub_category || subCategory).trim(),
+        subCategory: occurrenceSubCategory,
         legacyFallback: boolValue(occurrence.legacy_fallback) || String(occurrence.source || "") === "legacy",
         aspectAllowed,
         contextAllowed,
@@ -485,18 +549,23 @@ export function customerLabelOccurrences(
       const aspectClusterPropagated =
         "cluster_propagated" in aspect ? boolValue(aspect.cluster_propagated) : clusterPropagated;
       const aspectKey = String(aspect.key || aspect.aspect_key || "").trim();
-      const label = type === "issue"
+      let label = type === "issue"
         ? localeLabel(aspect.specific_issue, aspect.specific_issue_zh, locale)
         : localeLabel(aspect.customer_highlight, aspect.customer_highlight_zh, locale);
-      const canonicalLabelKey = type === "issue"
+      let canonicalLabelKey = type === "issue"
         ? String(aspect.canonical_issue_key || "").trim()
         : String(aspect.canonical_highlight_key || "").trim();
+      if (type === "highlight" && canonicalLabelKey === "feels_well_made" && isWadersContext(subCategory)) {
+        canonicalLabelKey = "good_material_quality";
+        label = locale.startsWith("zh") ? "材质质量好" : "Good Material Quality";
+      }
       const evidenceSpan = String(aspect.evidence_span || aspect.evidence || "").trim();
       const dimension = aspectKey ? aspectLabel(aspectKey, locale) : String(aspect.dimension || aspect.aspect_label || "").trim();
       const aspectAllowed = isLabelAspectAllowed(type, canonicalLabelKey, aspectKey);
       const content = reviewBody(comment);
       const contextAllowed = !(type === "issue" && canonicalLabelKey === "water_leaks_through" &&
-        isBlockedWaterLeakIssueContext(content, evidenceSpan));
+        isBlockedWaterLeakIssueContext(content, evidenceSpan)) &&
+        isWadersLabelContextAllowed(type, canonicalLabelKey, content, evidenceSpan, subCategory);
       return {
         type,
         label,
