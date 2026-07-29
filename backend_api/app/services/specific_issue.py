@@ -81,7 +81,6 @@ _ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
         "poor_customer_service": {"customer_service"},
         "zipper_fails": {"zipper_quality"},
         "missing_parts": {"assembly", "packaging", "shipping_damage", "accessory_storage"},
-        "accessories_not_as_advertised": {"accessory_storage"},
         "gets_hot_quickly": {"temperature_rating", "breathability"},
         "insufficient_warmth": {"temperature_rating"},
         "overall_dissatisfied": {"other"},
