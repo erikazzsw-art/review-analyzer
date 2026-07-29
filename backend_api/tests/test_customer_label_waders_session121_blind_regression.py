@@ -95,8 +95,8 @@ def test_session121_blind_regression_top_and_raw_scope() -> None:
     headers, rows = _build_comments_data(comments, include_specific_issue=True)
     by_id = {comment["id"]: row for comment, row in zip(comments, rows)}
     negative_dry = by_id["session121-did-not-keep-dry"]
-    assert "water_leaks_through" in negative_dry[headers.index("Canonical Issue Key")]
-    assert "keeps_water_out" not in negative_dry[headers.index("Canonical Highlight Key")]
+    assert "容易进水" in negative_dry[headers.index("客户痛点")]
+    assert "防水可靠" not in negative_dry[headers.index("客户亮点")]
     pocket = by_id["session121-pocket-not-waterproof"]
-    assert "pocket_not_waterproof" in pocket[headers.index("Canonical Issue Key")]
-    assert "water_leaks_through" not in pocket[headers.index("Canonical Issue Key")]
+    assert "口袋不防水" in pocket[headers.index("客户痛点")]
+    assert "容易进水" not in pocket[headers.index("客户痛点")]

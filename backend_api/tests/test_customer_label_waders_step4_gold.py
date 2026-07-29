@@ -18,7 +18,7 @@ from backend_api.app.services.specific_issue import (
     iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
 )
-from review_analyzer.exporter import _build_comments_data
+from review_analyzer.exporter import _build_comments_data, _build_label_audit_data
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "customer_label_waders_step4_gold.json"
 
@@ -172,9 +172,13 @@ def test_waders_step4_top_rows_and_raw_export_are_frontstage_only() -> None:
     assert highlight_by_key["fits_as_expected"]["source_review_occurrence_count"] == 5
 
     headers, rows = _build_comments_data(comments, include_specific_issue=True)
+    audit_headers, audit_rows = _build_label_audit_data(comments)
     by_id = {comment["id"]: row for comment, row in zip(comments, rows)}
+    audit_by_id = {comment["id"]: row for comment, row in zip(comments, audit_rows)}
     generic_negative = by_id["row-100-generic-negative"]
-    assert generic_negative[headers.index("Canonical Highlight Key")] == ""
-    assert "fits_as_expected" in generic_negative[headers.index("Audit Canonical Highlight Key")]
-    assert "true" not in generic_negative[headers.index("Highlight Evidence Verified")]
-    assert "true" in generic_negative[headers.index("Audit Highlight Cluster Propagated")]
+    generic_negative_audit = audit_by_id["row-100-generic-negative"]
+    assert generic_negative[headers.index("客户亮点")] == ""
+    assert "Canonical Highlight Key" not in headers
+    assert "fits_as_expected" in generic_negative_audit[audit_headers.index("Audit Canonical Highlight Key")]
+    assert "Highlight Evidence Verified" not in headers
+    assert "true" in generic_negative_audit[audit_headers.index("Audit Highlight Cluster Propagated")]

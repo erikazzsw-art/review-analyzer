@@ -17,7 +17,7 @@ from backend_api.app.services.specific_issue import (
     iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
 )
-from review_analyzer.exporter import _build_comments_data
+from review_analyzer.exporter import _build_comments_data, _build_label_audit_data
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "customer_label_waders_session120_human_gold.json"
 
@@ -300,11 +300,13 @@ def test_session120_evidence_spans_are_locatable_and_cluster_is_audit_only() -> 
     assert all(occurrence.get("source_review_allowed") is False for occurrence in propagated)
 
     headers, rows = _build_comments_data([comment], include_specific_issue=True)
+    audit_headers, audit_rows = _build_label_audit_data([comment])
     row = rows[0]
-    assert "keeps_water_out" not in row[headers.index("Canonical Highlight Key")]
-    assert "keeps_water_out" in row[headers.index("Audit Canonical Highlight Key")]
-    assert "true" not in row[headers.index("Highlight Cluster Propagated")]
-    assert "true" in row[headers.index("Audit Highlight Cluster Propagated")]
+    audit_row = audit_rows[0]
+    assert "防水可靠" not in row[headers.index("客户亮点")]
+    assert "keeps_water_out" in audit_row[audit_headers.index("Audit Canonical Highlight Key")]
+    assert "Highlight Cluster Propagated" not in headers
+    assert "true" in audit_row[audit_headers.index("Audit Highlight Cluster Propagated")]
 
 
 def test_session120_raw_top_and_single_tag_download_scope_are_consistent() -> None:
@@ -322,11 +324,15 @@ def test_session120_raw_top_and_single_tag_download_scope_are_consistent() -> No
     by_id = {comment["id"]: row for comment, row in zip(comments, rows)}
     for comment in comments:
         row = by_id[comment["id"]]
-        assert _split_export_keys(row[headers.index("Canonical Issue Key")]) == {
-            key for key, ids in issue_by_key.items() if str(comment["id"]) in ids
+        assert _split_export_keys(row[headers.index("客户痛点")]) == {
+            str(occurrence.get("specific_issue_zh") or occurrence["specific_issue"])
+            for occurrence in _frontstage_occurrences(comment, "issue")
+            if str(occurrence["canonical_issue_key"]) in issue_by_key
         }
-        assert _split_export_keys(row[headers.index("Canonical Highlight Key")]) == {
-            key for key, ids in highlight_by_key.items() if str(comment["id"]) in ids
+        assert _split_export_keys(row[headers.index("客户亮点")]) == {
+            str(occurrence.get("customer_highlight_zh") or occurrence["customer_highlight"])
+            for occurrence in _frontstage_occurrences(comment, "highlight")
+            if str(occurrence["canonical_highlight_key"]) in highlight_by_key
         }
 
     issue_rows = build_specific_issue_rows(comments, locale="en", limit=100)

@@ -71,26 +71,11 @@ def _build_summary_data(session: dict) -> list[list[str]]:
     return rows
 
 
-SPECIFIC_ISSUE_EXPORT_HEADERS = [
+CUSTOMER_LABEL_RAW_EXPORT_HEADERS = [
     "客户痛点",
-    "Canonical Issue Key",
-    "内部维度",
-    "Aspect Key",
-    "Evidence Span",
-    "Issue Confidence",
-    "Evidence Verified",
-    "Cluster Propagated",
-]
-
-CUSTOMER_HIGHLIGHT_EXPORT_HEADERS = [
+    "痛点证据",
     "客户亮点",
-    "Canonical Highlight Key",
-    "内部维度",
-    "Aspect Key",
-    "Evidence Span",
-    "Highlight Confidence",
-    "Highlight Evidence Verified",
-    "Highlight Cluster Propagated",
+    "亮点证据",
 ]
 
 SPECIFIC_ISSUE_AUDIT_EXPORT_HEADERS = [
@@ -102,6 +87,10 @@ SPECIFIC_ISSUE_AUDIT_EXPORT_HEADERS = [
     "Audit Issue Confidence",
     "Audit Evidence Verified",
     "Audit Cluster Propagated",
+    "Audit Legacy Fallback",
+    "Audit Source Review Allowed",
+    "Audit Aspect Allowed",
+    "Audit Context Allowed",
 ]
 
 CUSTOMER_HIGHLIGHT_AUDIT_EXPORT_HEADERS = [
@@ -113,6 +102,10 @@ CUSTOMER_HIGHLIGHT_AUDIT_EXPORT_HEADERS = [
     "Audit Highlight Confidence",
     "Audit Highlight Evidence Verified",
     "Audit Highlight Cluster Propagated",
+    "Audit Highlight Legacy Fallback",
+    "Audit Highlight Source Review Allowed",
+    "Audit Highlight Aspect Allowed",
+    "Audit Highlight Context Allowed",
 ]
 
 
@@ -141,7 +134,15 @@ def _join_customer_label_field(
     for occurrence in iterator(comment, locale="zh"):
         if display_only and not _is_export_frontstage_occurrence(occurrence):
             continue
-        if field in {"verified_evidence", "cluster_propagated"}:
+        if field in {
+            "verified_evidence",
+            "cluster_propagated",
+            "legacy_fallback",
+            "source_review_allowed",
+            "aspect_allowed",
+            "context_allowed",
+            "display_allowed",
+        }:
             values.append("true" if occurrence.get(field) else "false")
             continue
         values.append(str(occurrence.get(field) or "").strip())
@@ -213,13 +214,11 @@ def _build_comments_data(
     headers = [
         "序号", "评论内容", "评分", "日期", "评论者", "来源",
         "情感", "分类", "优先级", "分析理由", "改进建议",
-        "问题标签", "亮点标签",
     ]
     if include_specific_issue:
-        headers.extend(SPECIFIC_ISSUE_EXPORT_HEADERS)
-        headers.extend(CUSTOMER_HIGHLIGHT_EXPORT_HEADERS)
-        headers.extend(SPECIFIC_ISSUE_AUDIT_EXPORT_HEADERS)
-        headers.extend(CUSTOMER_HIGHLIGHT_AUDIT_EXPORT_HEADERS)
+        headers.extend(CUSTOMER_LABEL_RAW_EXPORT_HEADERS)
+    else:
+        headers.extend(["问题标签", "亮点标签"])
     rows = []
     for i, c in enumerate(comments, 1):
         row = [
@@ -234,46 +233,69 @@ def _build_comments_data(
             c.get("priority", ""),
             c.get("reason", ""),
             c.get("improvement", ""),
-            _customer_issue_tag_text(c),
-            _customer_highlight_tag_text(c),
         ]
         if include_specific_issue:
             row.extend(
                 [
                     _join_specific_issue_field(c, "specific_issue"),
-                    _join_specific_issue_field(c, "canonical_issue_key"),
-                    _join_specific_issue_field(c, "dimension"),
-                    _join_specific_issue_field(c, "aspect_key"),
                     _join_specific_issue_field(c, "evidence_span"),
-                    _join_specific_issue_field(c, "issue_confidence"),
-                    _join_specific_issue_field(c, "verified_evidence"),
-                    _join_specific_issue_field(c, "cluster_propagated"),
                     _join_customer_highlight_field(c, "customer_highlight"),
-                    _join_customer_highlight_field(c, "canonical_highlight_key"),
-                    _join_customer_highlight_field(c, "dimension"),
-                    _join_customer_highlight_field(c, "aspect_key"),
                     _join_customer_highlight_field(c, "evidence_span"),
-                    _join_customer_highlight_field(c, "highlight_confidence"),
-                    _join_customer_highlight_field(c, "verified_evidence"),
-                    _join_customer_highlight_field(c, "cluster_propagated"),
-                    _join_specific_issue_field(c, "specific_issue", display_only=False),
-                    _join_specific_issue_field(c, "canonical_issue_key", display_only=False),
-                    _join_specific_issue_field(c, "dimension", display_only=False),
-                    _join_specific_issue_field(c, "aspect_key", display_only=False),
-                    _join_specific_issue_field(c, "evidence_span", display_only=False),
-                    _join_specific_issue_field(c, "issue_confidence", display_only=False),
-                    _join_specific_issue_field(c, "verified_evidence", display_only=False),
-                    _join_specific_issue_field(c, "cluster_propagated", display_only=False),
-                    _join_customer_highlight_field(c, "customer_highlight", display_only=False),
-                    _join_customer_highlight_field(c, "canonical_highlight_key", display_only=False),
-                    _join_customer_highlight_field(c, "dimension", display_only=False),
-                    _join_customer_highlight_field(c, "aspect_key", display_only=False),
-                    _join_customer_highlight_field(c, "evidence_span", display_only=False),
-                    _join_customer_highlight_field(c, "highlight_confidence", display_only=False),
-                    _join_customer_highlight_field(c, "verified_evidence", display_only=False),
-                    _join_customer_highlight_field(c, "cluster_propagated", display_only=False),
                 ]
             )
+        else:
+            row.extend([_customer_issue_tag_text(c), _customer_highlight_tag_text(c)])
+        rows.append(row)
+    return headers, rows
+
+
+def _build_label_audit_data(comments: list[dict]) -> tuple[list[str], list[list[str]]]:
+    """构建独立审计 Sheet，避免内部字段混入用户默认 Raw Reviews."""
+    headers = [
+        "序号",
+        "评论内容",
+        "Frontstage Customer Issue",
+        "Frontstage Canonical Issue Key",
+        "Frontstage Customer Label",
+        "Frontstage Canonical Highlight Key",
+    ]
+    headers.extend(SPECIFIC_ISSUE_AUDIT_EXPORT_HEADERS)
+    headers.extend(CUSTOMER_HIGHLIGHT_AUDIT_EXPORT_HEADERS)
+
+    rows = []
+    for i, c in enumerate(comments, 1):
+        row = [
+            str(i),
+            c.get("content", ""),
+            _join_specific_issue_field(c, "specific_issue"),
+            _join_specific_issue_field(c, "canonical_issue_key"),
+            _join_customer_highlight_field(c, "customer_highlight"),
+            _join_customer_highlight_field(c, "canonical_highlight_key"),
+            _join_specific_issue_field(c, "specific_issue", display_only=False),
+            _join_specific_issue_field(c, "canonical_issue_key", display_only=False),
+            _join_specific_issue_field(c, "dimension", display_only=False),
+            _join_specific_issue_field(c, "aspect_key", display_only=False),
+            _join_specific_issue_field(c, "evidence_span", display_only=False),
+            _join_specific_issue_field(c, "issue_confidence", display_only=False),
+            _join_specific_issue_field(c, "verified_evidence", display_only=False),
+            _join_specific_issue_field(c, "cluster_propagated", display_only=False),
+            _join_specific_issue_field(c, "legacy_fallback", display_only=False),
+            _join_specific_issue_field(c, "source_review_allowed", display_only=False),
+            _join_specific_issue_field(c, "aspect_allowed", display_only=False),
+            _join_specific_issue_field(c, "context_allowed", display_only=False),
+            _join_customer_highlight_field(c, "customer_highlight", display_only=False),
+            _join_customer_highlight_field(c, "canonical_highlight_key", display_only=False),
+            _join_customer_highlight_field(c, "dimension", display_only=False),
+            _join_customer_highlight_field(c, "aspect_key", display_only=False),
+            _join_customer_highlight_field(c, "evidence_span", display_only=False),
+            _join_customer_highlight_field(c, "highlight_confidence", display_only=False),
+            _join_customer_highlight_field(c, "verified_evidence", display_only=False),
+            _join_customer_highlight_field(c, "cluster_propagated", display_only=False),
+            _join_customer_highlight_field(c, "legacy_fallback", display_only=False),
+            _join_customer_highlight_field(c, "source_review_allowed", display_only=False),
+            _join_customer_highlight_field(c, "aspect_allowed", display_only=False),
+            _join_customer_highlight_field(c, "context_allowed", display_only=False),
+        ]
         rows.append(row)
     return headers, rows
 
@@ -466,7 +488,7 @@ def export_to_xlsx(
     ws2 = workbook.add_worksheet("源评论分析明细")
     headers, rows = _build_comments_data(comments, include_specific_issue=True)
 
-    col_widths = [6, 50, 6, 12, 12, 10, 8, 10, 8, 30, 30, 15, 15, 24, 26, 20, 18, 34, 16, 18]
+    col_widths = [6, 50, 6, 12, 12, 10, 8, 10, 8, 30, 30, 24, 34, 24, 34]
     for i, w in enumerate(col_widths):
         ws2.set_column(i, i, w)
 
@@ -476,6 +498,17 @@ def export_to_xlsx(
     for row_idx, row_data in enumerate(rows, 1):
         for col_idx, val in enumerate(row_data):
             ws2.write(row_idx, col_idx, val, cell_fmt)
+
+    ws_audit = workbook.add_worksheet("Label Audit")
+    audit_headers, audit_rows = _build_label_audit_data(comments)
+    audit_widths = [6, 50, 26, 30, 26, 32] + [26, 30, 24, 22, 34, 18, 18, 18, 18, 22, 18, 18] * 2
+    for i, w in enumerate(audit_widths[: len(audit_headers)]):
+        ws_audit.set_column(i, i, w)
+    for col_idx, h in enumerate(audit_headers):
+        ws_audit.write(0, col_idx, h, header_fmt)
+    for row_idx, row_data in enumerate(audit_rows, 1):
+        for col_idx, val in enumerate(row_data):
+            ws_audit.write(row_idx, col_idx, val, cell_fmt)
 
     # Sheet3: TOP10 核心问题点
     ws3 = workbook.add_worksheet("TOP10 核心问题点")
@@ -558,7 +591,7 @@ def export_to_csv(
     comments = get_comments(user_id, session_id=session_id)
     filename = _build_filename(session, "csv")
 
-    headers, rows = _build_comments_data(comments)
+    headers, rows = _build_comments_data(comments, include_specific_issue=True)
 
     output = io.StringIO()
     writer = csv.writer(output)

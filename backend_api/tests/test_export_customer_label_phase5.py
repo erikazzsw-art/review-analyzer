@@ -168,6 +168,37 @@ def test_full_export_generates_valid_xlsx_with_ai_notice_sheet(monkeypatch) -> N
     assert filename.endswith(".xlsx")
     assert "AI Notice" in workbook.sheetnames
     assert "AI Notice / AI 标注" not in workbook.sheetnames
+    assert "Label Audit" in workbook.sheetnames
+
+    detail = workbook["源评论分析明细"]
+    detail_headers = [cell.value for cell in detail[1]]
+    assert detail_headers == [
+        "序号",
+        "评论内容",
+        "评分",
+        "日期",
+        "评论者",
+        "来源",
+        "情感",
+        "分类",
+        "优先级",
+        "分析理由",
+        "改进建议",
+        "客户痛点",
+        "痛点证据",
+        "客户亮点",
+        "亮点证据",
+    ]
+    assert "Canonical Issue Key" not in detail_headers
+    assert "Evidence Verified" not in detail_headers
+    assert "Cluster Propagated" not in detail_headers
+
+    audit = workbook["Label Audit"]
+    audit_headers = [cell.value for cell in audit[1]]
+    assert "Audit Canonical Issue Key" in audit_headers
+    assert "Audit Evidence Verified" in audit_headers
+    assert "Audit Cluster Propagated" in audit_headers
+    assert "Audit Source Review Allowed" in audit_headers
 
 
 def test_phase7_exports_do_not_recount_or_export_cluster_propagated_representative_evidence() -> None:
