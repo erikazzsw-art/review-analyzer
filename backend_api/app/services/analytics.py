@@ -51,8 +51,16 @@ def track_llm_call(
     cost_yuan: float,
     success: bool,
     error_type: str | None = None,
+    attempt: int | None = None,
+    error_detail: str | None = None,
+    schema_error: str | None = None,
+    content_hash: str | None = None,
+    sub_category: str | None = None,
+    locale: str | None = None,
+    retry_count: int | None = None,
+    final_success: bool | None = None,
 ) -> None:
-    track_event(user_id, "llm_call", {
+    properties = {
         "model": model,
         "prompt_version": prompt_version,
         "input_tokens": input_tokens,
@@ -61,7 +69,19 @@ def track_llm_call(
         "cost_yuan": cost_yuan,
         "success": success,
         "error_type": error_type,
-    })
+    }
+    optional = {
+        "attempt": attempt,
+        "error_detail": error_detail,
+        "schema_error": schema_error,
+        "content_hash": content_hash,
+        "sub_category": sub_category,
+        "locale": locale,
+        "retry_count": retry_count,
+        "final_success": final_success,
+    }
+    properties.update({key: value for key, value in optional.items() if value is not None})
+    track_event(user_id, "llm_call", properties)
 
 
 def track_analysis_complete(

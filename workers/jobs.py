@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections import Counter
 from datetime import datetime
 from typing import Any
 
@@ -15,6 +16,7 @@ from backend_api.app.services.analytics import track_analysis_complete
 from backend_api.app.services.calibration_injector import build_calibration_block
 from backend_api.app.services.category_grouper import aspects_to_legacy_schema
 from backend_api.app.services.clustering import (
+    MIN_BATCH_FOR_CLUSTERING,
     cluster_reviews,
     propagate_cluster_results,
 )
@@ -83,6 +85,137 @@ ANALYZER_VERSION = "v4_deep"
 COMMENT_ANALYSIS_WRITE_BATCH_SIZE = 50
 
 logger = logging.getLogger(__name__)
+
+
+def _trace_callback_for(trace: JobTrace):
+    def _record(kind: str, name: str, details: dict[str, Any]) -> None:
+        if kind == "decision":
+            trace.record_decision(name, details)
+        elif kind == "warning":
+            trace.record_warning(name, details)
+        else:
+            trace.record_event(name, details)
+
+    return _record
+
+
+def _cache_observability_summary(
+    cache_result: CacheResult,
+    cache_input: list[dict[str, Any]],
+    existing_analyses: dict[str, dict[str, Any]],
+    reference_embeddings: list[list[float]] | None,
+    reference_ids: list[int] | None,
+    reference_results: dict[int, dict] | None,
+) -> dict[str, Any]:
+    source_counts: Counter[str] = Counter()
+    level_counts: Counter[str] = Counter()
+    miss_reasons: Counter[str] = Counter()
+    miss_examples: dict[str, list[int]] = {}
+    input_by_id = {int(c["id"]): c for c in cache_input if c.get("id") is not None}
+    semantic_cache_available = bool(reference_embeddings and reference_ids and reference_results)
+
+    for hit in cache_result.hits.values():
+        level_counts[hit.level] += 1
+        if hit.level == "L1":
+            raw_source = str(hit.result.get("cache_hit_source") or "").lower()
+            if raw_source == "user":
+                source = "user_history"
+            elif raw_source == "global":
+                source = "global_review_pool"
+            else:
+                source = "exact_hash"
+        elif hit.level == "L2":
+            source = "short_text_rating_rule"
+        elif hit.level == "L3":
+            source = "semantic_similar"
+        else:
+            source = f"unknown_{hit.level}"
+        source_counts[source] += 1
+
+    for cid in cache_result.misses:
+        comment = input_by_id.get(int(cid), {})
+        if not comment.get("embedding"):
+            reason = "embedding_missing"
+        elif not semantic_cache_available:
+            reason = "semantic_reference_unavailable"
+        else:
+            reason = "semantic_similarity_below_threshold"
+        miss_reasons[reason] += 1
+        examples = miss_examples.setdefault(reason, [])
+        if len(examples) < 5:
+            examples.append(int(cid))
+
+    return {
+        "checked_count": len(cache_input),
+        "hit_count": cache_result.hit_count,
+        "miss_count": cache_result.miss_count,
+        "hit_levels": dict(level_counts),
+        "hit_sources": dict(source_counts),
+        "miss_reasons": dict(miss_reasons),
+        "miss_examples": miss_examples,
+        "l1_existing_analysis_count": len(existing_analyses),
+        "global_review_pool_enabled": True,
+        "semantic_cache_available": semantic_cache_available,
+        "semantic_reference_count": len(reference_ids or []),
+    }
+
+
+def _llm_observability_summary(
+    results: list[dict[str, Any]],
+    *,
+    prompt_version: str,
+    locale: str,
+    sub_category: str,
+) -> dict[str, Any]:
+    route_counts: Counter[str] = Counter()
+    model_counts: Counter[str] = Counter()
+    retry_distribution: Counter[str] = Counter()
+    quality_counts: Counter[str] = Counter()
+    direct_llm_count = 0
+
+    for result in results:
+        if result.get("cache_hit_level") or result.get("cluster_propagated"):
+            continue
+        if result.get("model_used") or result.get("error"):
+            direct_llm_count += 1
+        if result.get("model_used"):
+            model_counts[str(result["model_used"])] += 1
+        retry_count = result.get("retry_count")
+        if retry_count is not None:
+            try:
+                retry_distribution[str(int(retry_count))] += 1
+            except (TypeError, ValueError):
+                retry_distribution[str(retry_count)] += 1
+        quality_counts["json_decode"] += int(result.get("json_decode_count") or 0)
+        quality_counts["schema_invalid"] += int(result.get("schema_invalid_count") or 0)
+        quality_counts["exception"] += int(result.get("exception_count") or 0)
+        if result.get("final_success") is True:
+            quality_counts["final_success"] += 1
+        elif result.get("error"):
+            quality_counts["final_failure"] += 1
+        route_counter = result.get("llm_route_counts")
+        if isinstance(route_counter, dict):
+            for name, count in route_counter.items():
+                try:
+                    route_counts[str(name)] += int(count)
+                except (TypeError, ValueError):
+                    route_counts[str(name)] += 1
+
+    return {
+        "prompt_version": prompt_version,
+        "locale": locale,
+        "sub_category": sub_category,
+        "direct_llm_count": direct_llm_count,
+        "model_counts": dict(model_counts),
+        "route_events": dict(route_counts),
+        "quality": dict(quality_counts),
+        "retry_distribution": dict(retry_distribution),
+        "retry_count_total": sum(
+            int(bucket) * count
+            for bucket, count in retry_distribution.items()
+            if bucket.isdigit()
+        ),
+    }
 
 
 def _fallback_aspects_json_for_error(
@@ -205,10 +338,13 @@ def _merge_pool_source_comments(
 
 def process_upload_job(user_id: int, job_id: int) -> None:
     trace = JobTrace(job_id=job_id, user_id=user_id)
+    trace_callback = _trace_callback_for(trace)
     try:
         trace.begin_stage("init")
         job = get_upload_job(user_id, job_id)
         if not job:
+            trace.record_warning("job_missing", job_id=job_id, user_id=user_id)
+            trace.finalize(error="job_not_found")
             return
 
         payload = job.get("payload_json") or {}
@@ -225,6 +361,21 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             sub_category
             if taxonomy_hit
             else (str(payload.get("category") or "").strip() or None)
+        )
+        trace.record_decision(
+            "job_context",
+            product_id=product_id,
+            version=version,
+            locale=locale,
+            payload_review_count=len(comments_payload),
+            workflow_purpose=workflow_purpose,
+        )
+        trace.record_decision(
+            "taxonomy",
+            sub_category=sub_category,
+            taxonomy_hit=taxonomy_hit,
+            aspect_count=len(aspects),
+            storage_category=category_for_storage,
         )
 
         update_upload_job(user_id, job_id, {"status": "processing"})
@@ -245,12 +396,21 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 if dup_session:
                     session_id = int(dup_session["id"])
                     logger.info("upload_job %s: batch_hash duplicate, reusing session %d", job_id, session_id)
+                    trace.record_decision(
+                        "batch_dedupe",
+                        duplicate=True,
+                        reused_session_id=session_id,
+                        batch_hash_present=True,
+                    )
+                    trace.end_stage(meta={"duplicate_session_id": session_id})
+                    trace.finalize()
                     update_upload_job(user_id, job_id, {
                         "status": "done",
                         "session_id": session_id,
                         "total_rows": dup_session.get("total_reviews") or len(comments_payload),
                         "positive_count": dup_session.get("positive_count") or 0,
                         "negative_count": dup_session.get("negative_count") or 0,
+                        "trace_json": trace.to_dict(),
                     })
                     return
 
@@ -315,6 +475,12 @@ def process_upload_job(user_id: int, job_id: int) -> None:
         unprocessed = get_unprocessed_comments(user_id, session_id)
         cluster_count = 0
         trace.end_stage(meta={"review_count": len(unprocessed)})
+        trace.record_decision(
+            "analysis_scope",
+            session_id=session_id,
+            unprocessed_count=len(unprocessed),
+            resume=bool(existing_session_id),
+        )
 
         if unprocessed:
             trace.begin_stage("embed")
@@ -344,6 +510,14 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             if calibration_block:
                 aspects_block += "\n\n" + calibration_block
             allowed_aspects = [a["key"] for a in aspects]
+            trace.record_decision(
+                "prompt_config",
+                prompt_version=PROMPT_VERSION,
+                locale=locale,
+                sub_category=sub_category,
+                allowed_aspects_count=len(allowed_aspects),
+                calibration_enabled=bool(calibration_block),
+            )
 
             # --- V4-T4 Step 3: 多级缓存 ---
             trace.begin_stage("cache")
@@ -401,6 +575,15 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 reference_ids=reference_ids,
                 reference_results=reference_results,
             )
+            cache_summary = _cache_observability_summary(
+                cache_result,
+                cache_input,
+                existing_analyses,
+                reference_embeddings,
+                reference_ids,
+                reference_results,
+            )
+            trace.record_decision("cache_lookup", cache_summary)
 
             # 分离：缓存命中 vs 需要 LLM 的评论
             need_llm = [c for c in unprocessed if c["id"] in cache_result.misses]
@@ -434,6 +617,8 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 "hit": cache_result.hit_count,
                 "miss": cache_result.miss_count,
                 "stats": cache_result.stats(),
+                "hit_sources": cache_summary.get("hit_sources"),
+                "miss_reasons": cache_summary.get("miss_reasons"),
             })
 
             # --- 对需要 LLM 的评论走聚类+LLM 管道 ---
@@ -480,7 +665,13 @@ def process_upload_job(user_id: int, job_id: int) -> None:
 
                     v4_llm_results = deep_analyze_batch(
                         comments=[
-                            {"content": c.get("content", ""), "rating": c.get("rating"), "title": c.get("title", "")}
+                            {
+                                "id": c.get("id"),
+                                "content_hash": c.get("content_hash"),
+                                "content": c.get("content", ""),
+                                "rating": c.get("rating"),
+                                "title": c.get("title", ""),
+                            }
                             for c in llm_comments
                         ],
                         sub_category=sub_category,
@@ -490,11 +681,40 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         progress_callback=llm_progress,
                         user_id=user_id,
                         locale=locale,
+                        trace_callback=trace_callback,
                     )
 
                     v4_results = propagate_cluster_results(
                         cluster_result, llm_comments, v4_llm_results, llm_emb_comments,
                     )
+                    propagated_count = sum(1 for r in v4_results if r.get("cluster_propagated"))
+                    cluster_needs_llm_count = sum(1 for r in v4_results if r.get("needs_llm"))
+                    trace.record_decision(
+                        "clustering",
+                        enabled=True,
+                        skipped_reason=None,
+                        input_count=len(llm_emb_comments),
+                        cluster_count=cluster_count,
+                        representatives_count=len(cluster_result.representatives),
+                        noise_count=len(cluster_result.noise_ids),
+                        llm_target_count=len(llm_comments),
+                        saved_llm_calls=max(0, len(llm_emb_comments) - len(llm_comments)),
+                        propagated_count=propagated_count,
+                        needs_llm_count=cluster_needs_llm_count,
+                    )
+                    trace.record_event(
+                        "cluster_propagation",
+                        propagated_count=propagated_count,
+                        needs_llm_count=cluster_needs_llm_count,
+                        representative_ids=cluster_result.representatives[:10],
+                        noise_count=len(cluster_result.noise_ids),
+                    )
+                    if cluster_needs_llm_count:
+                        trace.record_warning(
+                            "cluster_needs_llm",
+                            needs_llm_count=cluster_needs_llm_count,
+                            reason="low_cluster_similarity",
+                        )
 
                     # 写入聚类元数据
                     id_to_cluster = {}
@@ -546,10 +766,21 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     emb_id_set = {c["id"] for c in llm_emb_comments}
                     non_emb_comments = [c for c in need_llm if c["id"] not in emb_id_set]
                     if non_emb_comments:
+                        trace.record_event(
+                            "llm_non_embedding_batch",
+                            count=len(non_emb_comments),
+                            reason="embedding_missing_after_clustering",
+                        )
                         llm_progress = _make_llm_progress(len(v4_llm_results))
                         non_emb_results = deep_analyze_batch(
                             comments=[
-                                {"content": c.get("content", ""), "rating": c.get("rating"), "title": c.get("title", "")}
+                                {
+                                    "id": c.get("id"),
+                                    "content_hash": c.get("content_hash"),
+                                    "content": c.get("content", ""),
+                                    "rating": c.get("rating"),
+                                    "title": c.get("title", ""),
+                                }
                                 for c in non_emb_comments
                             ],
                             sub_category=sub_category,
@@ -559,18 +790,43 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                             progress_callback=llm_progress,
                             user_id=user_id,
                             locale=locale,
+                            trace_callback=trace_callback,
                         )
                         for c, r in zip(non_emb_comments, non_emb_results):
                             id_to_v4[c["id"]] = r
                 else:
                     # Fallback: 全量走 LLM
+                    if not llm_emb_available:
+                        cluster_skip_reason = "embeddings_unavailable"
+                    elif len(llm_emb_comments) < MIN_BATCH_FOR_CLUSTERING:
+                        cluster_skip_reason = "batch_too_small"
+                    else:
+                        cluster_skip_reason = "unknown"
+                    trace.record_decision(
+                        "clustering",
+                        enabled=False,
+                        skipped_reason=cluster_skip_reason,
+                        input_count=len(need_llm),
+                        embedding_candidate_count=len(llm_emb_comments),
+                        embeddings_available=bool(llm_emb_available),
+                        min_batch_for_clustering=MIN_BATCH_FOR_CLUSTERING,
+                        cluster_count=0,
+                        representatives_count=0,
+                        needs_llm_count=len(need_llm),
+                    )
                     logger.info(
                         "upload_job %s: clustering skipped for LLM batch (emb=%s, n=%d), full LLM",
                         job_id, bool(llm_emb_available), len(need_llm),
                     )
                     llm_results = deep_analyze_batch(
                         comments=[
-                            {"content": c.get("content", ""), "rating": c.get("rating"), "title": c.get("title", "")}
+                            {
+                                "id": c.get("id"),
+                                "content_hash": c.get("content_hash"),
+                                "content": c.get("content", ""),
+                                "rating": c.get("rating"),
+                                "title": c.get("title", ""),
+                            }
                             for c in need_llm
                         ],
                         sub_category=sub_category,
@@ -580,20 +836,71 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         progress_callback=_make_llm_progress(0),
                         user_id=user_id,
                         locale=locale,
+                        trace_callback=trace_callback,
                     )
                     for c, r in zip(need_llm, llm_results):
                         id_to_v4[c["id"]] = r
+            else:
+                trace.record_decision(
+                    "clustering",
+                    enabled=False,
+                    skipped_reason="no_cache_misses",
+                    input_count=0,
+                    cluster_count=0,
+                    representatives_count=0,
+                    needs_llm_count=0,
+                )
 
             # 按 unprocessed 顺序组装最终结果
-            llm_count = sum(1 for v in id_to_v4.values() if not v.get("cache_hit_level"))
-            trace.end_stage(meta={"llm_calls": llm_count, "need_llm": len(need_llm) if need_llm else 0})
+            ordered_v4_results = [id_to_v4.get(c["id"], {"error": "no_result"}) for c in unprocessed]
+            llm_summary = _llm_observability_summary(
+                ordered_v4_results,
+                prompt_version=PROMPT_VERSION,
+                locale=locale,
+                sub_category=sub_category,
+            )
+            cluster_propagated_count = sum(1 for v in ordered_v4_results if v.get("cluster_propagated"))
+            trace.record_decision("llm_prompt_quality", llm_summary)
+            trace.record_decision(
+                "result_sources",
+                cache_hit_count=cache_result.hit_count,
+                cache_hit_sources=cache_summary.get("hit_sources"),
+                cache_miss_count=cache_result.miss_count,
+                cluster_propagated_count=cluster_propagated_count,
+                direct_llm_count=llm_summary.get("direct_llm_count", 0),
+                no_result_count=sum(1 for v in ordered_v4_results if v.get("error") == "no_result"),
+            )
+            quality = llm_summary.get("quality", {})
+            if any(int(quality.get(key) or 0) for key in ("json_decode", "schema_invalid", "exception", "final_failure")):
+                trace.record_warning(
+                    "llm_quality",
+                    json_decode=quality.get("json_decode", 0),
+                    schema_invalid=quality.get("schema_invalid", 0),
+                    exception=quality.get("exception", 0),
+                    final_failure=quality.get("final_failure", 0),
+                )
+            trace.end_stage(meta={
+                "llm_calls": llm_summary.get("direct_llm_count", 0),
+                "need_llm": len(need_llm) if need_llm else 0,
+                "model_counts": llm_summary.get("model_counts"),
+                "route_events": llm_summary.get("route_events"),
+                "quality": quality,
+            })
 
             trace.begin_stage("post_process")
-            ordered_v4_results = [id_to_v4.get(c["id"], {"error": "no_result"}) for c in unprocessed]
 
             _progress_callback(len(unprocessed), len(unprocessed))
         else:
             ordered_v4_results = []
+            trace.record_decision(
+                "result_sources",
+                cache_hit_count=0,
+                cache_miss_count=0,
+                cluster_propagated_count=0,
+                direct_llm_count=0,
+                no_result_count=0,
+                skipped_reason="no_unprocessed_comments",
+            )
 
         # 小批量增量写入：降低连接/commit 压力，同时避免回到全量末尾才保存。
         def _flush_analysis_updates(updates: list[tuple[int, dict]]) -> None:
@@ -640,6 +947,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "analyzer_version": ANALYZER_VERSION,
                     "cache_hit_level": v4.get("cache_hit_level"),
                     "cache_source_id": v4.get("cache_source_id"),
+                    "cache_hit_source": v4.get("cache_hit_source"),
                 }
             else:
                 result = aspects_to_legacy_schema(
@@ -669,6 +977,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 result["analyzer_version"] = ANALYZER_VERSION
                 result["cache_hit_level"] = v4.get("cache_hit_level")
                 result["cache_source_id"] = v4.get("cache_source_id")
+                result["cache_hit_source"] = v4.get("cache_hit_source")
 
             rating = comment.get("rating")
             if rating is not None:
@@ -771,6 +1080,7 @@ def process_upload_job(user_id: int, job_id: int) -> None:
             warning = build_coverage_warning(coverage)
             if warning:
                 taxonomy_warnings.append(warning)
+                trace.record_warning("taxonomy_coverage", warning)
                 logger.warning(
                     "upload_job %s: taxonomy coverage low — other ratio %.1f%% for '%s'",
                     job_id, coverage["other_ratio"] * 100, sub_category,
@@ -802,8 +1112,6 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 logger.warning("upload_job %s: update_session_warnings failed (non-fatal)", job_id, exc_info=True)
 
         trace_dict = trace.to_dict()
-        if taxonomy_warnings:
-            trace_dict["warnings"] = taxonomy_warnings
 
         update_upload_job(
             user_id,

@@ -93,6 +93,16 @@ export type JobTrace = {
     meta: Record<string, unknown>;
     error: string | null;
   }[];
+  decisions: TraceEntry[];
+  events: TraceEntry[];
+  warnings: TraceEntry[];
+  dropped_counts: Record<string, number>;
+};
+
+export type TraceEntry = {
+  name: string;
+  at?: number;
+  details?: Record<string, unknown>;
 };
 
 export type JobTracesResponse = {

@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -27,6 +27,8 @@ from typing import Any
 from openai import OpenAI, RateLimitError
 
 logger = logging.getLogger(__name__)
+
+TraceCallback = Callable[[str, str, dict[str, Any]], None]
 
 CIRCUIT_BREAK_THRESHOLD = 3
 COOLDOWN_SECONDS = 60.0
@@ -51,6 +53,20 @@ def _parse_retry_after(exc: Exception) -> float:
             return max(0.0, wait)
     except Exception:
         return 1.0
+
+
+def _emit_trace(
+    trace_callback: TraceCallback | None,
+    kind: str,
+    name: str,
+    **details: Any,
+) -> None:
+    if trace_callback is None:
+        return
+    try:
+        trace_callback(kind, name, details)
+    except Exception as exc:
+        logger.debug("llm_router trace callback failed (non-fatal): %s", exc)
 
 
 @dataclass
@@ -165,7 +181,7 @@ class LLMRouter:
             return True
         return False
 
-    def _record_success(self, model: ModelConfig) -> None:
+    def _record_success(self, model: ModelConfig) -> dict[str, Any] | None:
         with self._lock:
             state = self._states[model.name]
             was_half_open = state.is_half_open
@@ -174,8 +190,15 @@ class LLMRouter:
             state.is_half_open = False
             if was_half_open:
                 logger.info("llm_router: %s half-open probe SUCCESS, circuit closed", model.name)
+                return {
+                    "provider": model.name,
+                    "model": model.model_id,
+                    "state": "closed",
+                    "reason": "half_open_probe_success",
+                }
+        return None
 
-    def _record_failure(self, model: ModelConfig) -> None:
+    def _record_failure(self, model: ModelConfig) -> dict[str, Any] | None:
         with self._lock:
             state = self._states[model.name]
             state.consecutive_failures += 1
@@ -190,6 +213,14 @@ class LLMRouter:
                     "llm_router: %s half-open probe FAILED, circuit re-opened for %.0fs",
                     model.name, cooldown,
                 )
+                return {
+                    "provider": model.name,
+                    "model": model.model_id,
+                    "state": "open",
+                    "reason": "half_open_probe_failed",
+                    "cooldown_seconds": cooldown,
+                    "consecutive_failures": state.consecutive_failures,
+                }
             elif state.consecutive_failures >= threshold:
                 state.is_open = True
                 state.tripped_at = time.time()
@@ -197,6 +228,16 @@ class LLMRouter:
                     "llm_router: %s circuit OPEN after %d consecutive failures (threshold=%d)",
                     model.name, state.consecutive_failures, threshold,
                 )
+                return {
+                    "provider": model.name,
+                    "model": model.model_id,
+                    "state": "open",
+                    "reason": "failure_threshold_reached",
+                    "threshold": threshold,
+                    "cooldown_seconds": cooldown,
+                    "consecutive_failures": state.consecutive_failures,
+                }
+        return None
 
     def completion(
         self,
@@ -208,6 +249,7 @@ class LLMRouter:
         disabled_providers: Iterable[str] | None = None,
         request_timeout: float | None = None,
         max_model_attempts: int | None = None,
+        trace_callback: TraceCallback | None = None,
     ) -> tuple[Any, str]:
         """调用 LLM，自动 fallback.
 
@@ -230,21 +272,81 @@ class LLMRouter:
             if str(provider).strip()
         }
         attempted_models = 0
+        _emit_trace(
+            trace_callback,
+            "event",
+            "llm_router_chain",
+            locale=locale,
+            provider_chain=[model.name for model in chain],
+            disabled_providers=sorted(disabled),
+            max_model_attempts=max_model_attempts,
+        )
 
-        for model in chain:
+        for model_index, model in enumerate(chain):
             if model.name.lower() in disabled:
                 logger.info("llm_router: %s skipped by per-call disabled_providers", model.name)
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_provider_skipped",
+                    provider=model.name,
+                    model=model.model_id,
+                    reason="disabled_provider",
+                )
                 continue
             if model.name not in self._states:
                 # 兜底：动态加入未见过的 model（自定义 router 场景）
                 self._states[model.name] = _CircuitState()
+            state = self._states[model.name]
+            was_open = state.is_open
             if not self._is_available(model):
+                cooldown = getattr(model, "circuit_cooldown", self.cooldown)
+                cooldown_remaining = max(0.0, cooldown - (time.time() - state.tripped_at))
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_provider_circuit",
+                    provider=model.name,
+                    model=model.model_id,
+                    state="open",
+                    action="skip",
+                    cooldown_remaining_seconds=round(cooldown_remaining, 2),
+                    consecutive_failures=state.consecutive_failures,
+                )
                 continue
+            if was_open and state.is_half_open:
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_provider_circuit",
+                    provider=model.name,
+                    model=model.model_id,
+                    state="half_open",
+                    action="probe",
+                    consecutive_failures=state.consecutive_failures,
+                )
 
             client = self._get_client(model)
             if client is None:
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_provider_skipped",
+                    provider=model.name,
+                    model=model.model_id,
+                    reason="missing_api_key",
+                )
                 continue
             if max_model_attempts is not None and attempted_models >= max_model_attempts:
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_provider_skipped",
+                    provider=model.name,
+                    model=model.model_id,
+                    reason="max_model_attempts_reached",
+                    max_model_attempts=max_model_attempts,
+                )
                 break
             attempted_models += 1
 
@@ -261,11 +363,37 @@ class LLMRouter:
 
             # 429 指数退避重试（最多 3 次），仅针对 RateLimitError
             last_exc: Exception | None = None
+            last_retry_attempt = 0
             for attempt in range(OPENAI_MAX_RETRIES):
+                last_retry_attempt = attempt + 1
+                attempt_t0 = time.perf_counter()
                 try:
+                    _emit_trace(
+                        trace_callback,
+                        "event",
+                        "llm_provider_attempt",
+                        provider=model.name,
+                        model=model.model_id,
+                        provider_attempt=attempted_models,
+                        retry_attempt=attempt + 1,
+                        max_retries=OPENAI_MAX_RETRIES,
+                    )
                     resp = client.chat.completions.create(**kwargs)
-                    self._record_success(model)
+                    latency_ms = int((time.perf_counter() - attempt_t0) * 1000)
+                    circuit_event = self._record_success(model)
                     self._log_cache_stats(model, resp)
+                    _emit_trace(
+                        trace_callback,
+                        "event",
+                        "llm_provider_success",
+                        provider=model.name,
+                        model=model.model_id,
+                        provider_attempt=attempted_models,
+                        retry_attempt=attempt + 1,
+                        latency_ms=latency_ms,
+                    )
+                    if circuit_event:
+                        _emit_trace(trace_callback, "event", "llm_provider_circuit", **circuit_event)
                     return resp, model.model_id
                 except RateLimitError as e:
                     last_exc = e
@@ -277,6 +405,17 @@ class LLMRouter:
                         "llm_router: %s 429 rate limited, retry %d/%d in %.1fs (Retry-After: %.0fs)",
                         model.name, attempt + 1, OPENAI_MAX_RETRIES, wait, retry_after,
                     )
+                    _emit_trace(
+                        trace_callback,
+                        "event",
+                        "llm_provider_429_retry",
+                        provider=model.name,
+                        model=model.model_id,
+                        retry_attempt=attempt + 1,
+                        next_retry_attempt=attempt + 2,
+                        wait_seconds=round(wait, 2),
+                        retry_after_seconds=round(retry_after, 2),
+                    )
                     time.sleep(wait)
                 except Exception as e:
                     last_exc = e
@@ -286,7 +425,37 @@ class LLMRouter:
             err_msg = f"{model.name}: {str(last_exc)[:150]}" if last_exc else f"{model.name}: unknown error"
             errors.append(err_msg)
             logger.warning("llm_router: %s failed: %s", model.name, str(last_exc)[:200] if last_exc else "unknown")
-            self._record_failure(model)
+            error_type = "rate_limit" if isinstance(last_exc, RateLimitError) else type(last_exc).__name__
+            _emit_trace(
+                trace_callback,
+                "event",
+                "llm_provider_failure",
+                provider=model.name,
+                model=model.model_id,
+                provider_attempt=attempted_models,
+                retry_attempts=last_retry_attempt,
+                error_type=error_type,
+                error_detail=str(last_exc)[:200] if last_exc else "unknown",
+                will_fallback=any(m.name.lower() not in disabled for m in chain[model_index + 1 :]),
+            )
+            circuit_event = self._record_failure(model)
+            if circuit_event:
+                _emit_trace(trace_callback, "warning", "llm_provider_circuit", **circuit_event)
+            fallback_chain = [
+                candidate.name
+                for candidate in chain[model_index + 1 :]
+                if candidate.name.lower() not in disabled
+            ]
+            if fallback_chain:
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_provider_fallback",
+                    from_provider=model.name,
+                    from_model=model.model_id,
+                    remaining_providers=fallback_chain,
+                    reason=error_type,
+                )
 
         raise RuntimeError(
             f"All LLM models exhausted. Errors: {'; '.join(errors)}"
@@ -349,6 +518,7 @@ def router_completion(
     disabled_providers: Iterable[str] | None = None,
     request_timeout: float | None = None,
     max_model_attempts: int | None = None,
+    trace_callback: TraceCallback | None = None,
 ) -> tuple[Any, str]:
     """便捷函数：调用全局路由器的 completion.
 
@@ -364,4 +534,5 @@ def router_completion(
         disabled_providers=disabled_providers,
         request_timeout=request_timeout,
         max_model_attempts=max_model_attempts,
+        trace_callback=trace_callback,
     )

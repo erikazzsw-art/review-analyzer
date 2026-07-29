@@ -3107,12 +3107,19 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 - 验证：`python3 -m compileall backend_api/app/routes/analytics.py backend_api/app/services/observability_alerts.py workers/alert_checker.py workers/scheduler.py` PASS；`python3 -m pytest workers/tests/test_alert_checker.py` PASS；`python3 -m ruff check backend_api/app/routes/analytics.py backend_api/app/services/observability_alerts.py workers/alert_checker.py workers/scheduler.py workers/tests/test_alert_checker.py` PASS；`npm run typecheck` PASS。
 
 **P2：从“阶段耗时”升级为“决策可观测”（2-3 天）**
-- [ ] 扩展 `JobTrace`：新增 `decisions/events/warnings`，不只记录 stages
-- [ ] Trace 记录聚类决策：是否启用聚类、跳过原因、cluster_count、representatives_count、needs_llm_count
-- [ ] Trace 记录缓存来源：本人历史、全局 review_pool、语义相似、聚类传播、miss 原因
-- [ ] Trace 记录 LLM 路由：provider attempt/success/failure/fallback/circuit/429 retry
-- [ ] Trace 记录 Prompt 与质量：prompt_version、locale、json_decode、schema_invalid、retry_count、final_success
-- [ ] 验收：点开任意任务，能回答“为什么贵/慢/失败/走了哪个模型/为什么没有缓存命中”
+- [x] 扩展 `JobTrace`：新增 `decisions/events/warnings`，不只记录 stages
+- [x] Trace 记录聚类决策：是否启用聚类、跳过原因、cluster_count、representatives_count、needs_llm_count
+- [x] Trace 记录缓存来源：本人历史、全局 review_pool、语义相似、聚类传播、miss 原因
+- [x] Trace 记录 LLM 路由：provider attempt/success/failure/fallback/circuit/429 retry
+- [x] Trace 记录 Prompt 与质量：prompt_version、locale、json_decode、schema_invalid、retry_count、final_success
+- [x] 验收：点开任意任务，能回答“为什么贵/慢/失败/走了哪个模型/为什么没有缓存命中”
+
+**2026-07-29 P2 完成记录：**
+- 后端：`JobTrace` 新增线程安全的 `decisions/events/warnings/dropped_counts`，所有记录 helper 均 best-effort 且 JSON 安全；继续复用 `upload_jobs.trace_json`，无迁移。
+- Worker：记录 job/taxonomy/prompt/cache/cluster/result source/LLM quality 决策；缓存来源覆盖本人历史、全局 `review_pool`、短文本规则、语义相似、miss 原因；聚类记录启用/跳过原因、簇数、代表数、传播数、`needs_llm_count`；LLM 结果汇总模型分布、route event、JSON/schema/exception/retry/final success。
+- Router/Analyzer：`llm_router` 可选 trace callback 记录 provider chain、attempt/success/failure/fallback/circuit/429 retry；`deep_analyzer` 记录 prompt_version、locale、content_hash、sub_category、attempt/error_detail/schema_error/retry_count/final_success，并扩展 `track_llm_call()` 可选 properties。
+- 前端：`JobTraceDetail` 保持 Jobs Tab 展开结构，新增关键决策、路由与质量事件、警告三栏，并展示 trace 截断计数。
+- 验证：`python3 -m ruff check backend_api/app/services/job_trace.py backend_api/app/services/llm_router.py backend_api/app/services/deep_analyzer.py backend_api/app/services/analytics.py backend_api/app/routes/analytics.py workers/jobs.py backend_api/tests/test_worker_error_fallback.py` PASS；`python3 -m pytest backend_api/tests/test_worker_error_fallback.py backend_api/tests/test_global_cache.py backend_api/tests/test_deep_analyzer.py -q` PASS（10 passed）；`npm run typecheck` PASS。
 
 **P3：成本归因、缓存分层、健康评分（2-4 天）**
 - [ ] 成本页增加单任务成本排行、单评论成本、模型切换导致的成本变化、token 异常排行

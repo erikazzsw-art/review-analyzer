@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
@@ -61,6 +62,15 @@ def _track_call(
     latency_ms: int,
     success: bool,
     error_type: str | None,
+    *,
+    attempt: int | None = None,
+    error_detail: str | None = None,
+    schema_error: str | None = None,
+    content_hash: str | None = None,
+    sub_category: str | None = None,
+    locale: str | None = None,
+    retry_count: int | None = None,
+    final_success: bool | None = None,
 ) -> None:
     if user_id is None:
         return
@@ -78,9 +88,31 @@ def _track_call(
             cost_yuan=_estimate_cost(model, tokens_in, tokens_out),
             success=success,
             error_type=error_type,
+            attempt=attempt,
+            error_detail=error_detail,
+            schema_error=schema_error,
+            content_hash=content_hash,
+            sub_category=sub_category,
+            locale=locale,
+            retry_count=retry_count,
+            final_success=final_success,
         )
     except Exception as e:
         logger.debug("_track_call failed (non-fatal): %s", e)
+
+
+def _emit_trace(
+    trace_callback: Any,
+    kind: str,
+    name: str,
+    **details: Any,
+) -> None:
+    if trace_callback is None:
+        return
+    try:
+        trace_callback(kind, name, details)
+    except Exception as exc:
+        logger.debug("deep_analyzer trace callback failed (non-fatal): %s", exc)
 
 
 def _validate_annotation(obj: Any, allowed_aspects: set[str] | None = None) -> tuple[bool, str]:
@@ -145,6 +177,9 @@ def analyze_one(
     client: Any = None,
     user_id: int | None = None,
     locale: str = "en",
+    comment_id: int | None = None,
+    content_hash: str | None = None,
+    trace_callback: Any = None,
 ) -> dict[str, Any]:
     """对单条评论做 V4-T3 深度分析（通过 llm_router 自动 fallback）.
 
@@ -177,10 +212,41 @@ def analyze_one(
     ]
 
     last_error = ""
+    quality_counts: Counter[str] = Counter()
+    route_counts: Counter[str] = Counter()
+
+    def _trace_details(**extra: Any) -> dict[str, Any]:
+        base = {
+            "comment_id": comment_id,
+            "content_hash": content_hash,
+            "prompt_version": prompt_version,
+            "locale": locale,
+            "sub_category": sub_category,
+        }
+        base.update(extra)
+        return {key: value for key, value in base.items() if value is not None}
+
+    def _route_trace(kind: str, name: str, details: dict[str, Any]) -> None:
+        route_counts[name] += 1
+        _emit_trace(trace_callback, kind, name, **_trace_details(**details))
+
     for _attempt in range(max_retries + 1):
         t0 = time.perf_counter()
         try:
             if client is not None:
+                route_counts["llm_provider_attempt"] += 1
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_provider_attempt",
+                    **_trace_details(
+                        provider="test",
+                        model="test",
+                        provider_attempt=1,
+                        retry_attempt=_attempt + 1,
+                        max_retries=max_retries + 1,
+                    ),
+                )
                 resp = client.chat.completions.create(
                     model="test",
                     messages=messages,
@@ -196,6 +262,7 @@ def analyze_one(
                     temperature=0,
                     max_tokens=800,
                     locale=locale,
+                    trace_callback=_route_trace,
                 )
             latency_ms = int((time.perf_counter() - t0) * 1000)
             raw = resp.choices[0].message.content
@@ -203,14 +270,107 @@ def analyze_one(
                 obj = json.loads(raw)
             except json.JSONDecodeError as je:
                 last_error = f"json_decode_failed: {je}"
-                _track_call(user_id, model_name, prompt_version, resp, latency_ms, False, "json_decode")
+                quality_counts["json_decode"] += 1
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_quality",
+                    **_trace_details(
+                        model=model_name,
+                        attempt=_attempt + 1,
+                        retry_count=_attempt,
+                        error_type="json_decode",
+                        error_detail=str(je)[:200],
+                        json_decode=True,
+                        schema_invalid=False,
+                        final_success=False,
+                    ),
+                )
+                _track_call(
+                    user_id,
+                    model_name,
+                    prompt_version,
+                    resp,
+                    latency_ms,
+                    False,
+                    "json_decode",
+                    attempt=_attempt + 1,
+                    error_detail=str(je)[:200],
+                    content_hash=content_hash,
+                    sub_category=sub_category,
+                    locale=locale,
+                    retry_count=_attempt,
+                    final_success=False,
+                )
                 continue
             ok, err = _validate_annotation(obj, allowed_aspects=allowed_set)
             if not ok:
                 last_error = f"schema_invalid: {err}"
-                _track_call(user_id, model_name, prompt_version, resp, latency_ms, False, "schema_invalid")
+                quality_counts["schema_invalid"] += 1
+                _emit_trace(
+                    trace_callback,
+                    "event",
+                    "llm_quality",
+                    **_trace_details(
+                        model=model_name,
+                        attempt=_attempt + 1,
+                        retry_count=_attempt,
+                        error_type="schema_invalid",
+                        schema_error=err,
+                        json_decode=False,
+                        schema_invalid=True,
+                        final_success=False,
+                    ),
+                )
+                _track_call(
+                    user_id,
+                    model_name,
+                    prompt_version,
+                    resp,
+                    latency_ms,
+                    False,
+                    "schema_invalid",
+                    attempt=_attempt + 1,
+                    schema_error=err,
+                    content_hash=content_hash,
+                    sub_category=sub_category,
+                    locale=locale,
+                    retry_count=_attempt,
+                    final_success=False,
+                )
                 continue
-            _track_call(user_id, model_name, prompt_version, resp, latency_ms, True, None)
+            route_counts["llm_provider_success"] += 1 if client is not None else 0
+            _emit_trace(
+                trace_callback,
+                "event",
+                "llm_quality",
+                **_trace_details(
+                    model=model_name,
+                    attempt=_attempt + 1,
+                    retry_count=_attempt,
+                    json_decode=False,
+                    schema_invalid=False,
+                    final_success=True,
+                    latency_ms=latency_ms,
+                    tokens_in=resp.usage.prompt_tokens,
+                    tokens_out=resp.usage.completion_tokens,
+                ),
+            )
+            _track_call(
+                user_id,
+                model_name,
+                prompt_version,
+                resp,
+                latency_ms,
+                True,
+                None,
+                attempt=_attempt + 1,
+                content_hash=content_hash,
+                sub_category=sub_category,
+                locale=locale,
+                retry_count=_attempt,
+                final_success=True,
+            )
             return {
                 **obj,
                 "tokens_in": resp.usage.prompt_tokens,
@@ -218,13 +378,66 @@ def analyze_one(
                 "prompt_version": prompt_version,
                 "model_used": model_name,
                 "latency_ms": latency_ms,
+                "retry_count": _attempt,
+                "final_success": True,
+                "json_decode_count": quality_counts["json_decode"],
+                "schema_invalid_count": quality_counts["schema_invalid"],
+                "exception_count": quality_counts["exception"],
+                "llm_route_counts": dict(route_counts),
             }
         except Exception as e:
             latency_ms = int((time.perf_counter() - t0) * 1000)
             last_error = str(e)[:200]
-            _track_call(user_id, "unknown", prompt_version, None, latency_ms, False, "exception")
+            quality_counts["exception"] += 1
+            _emit_trace(
+                trace_callback,
+                "event",
+                "llm_quality",
+                **_trace_details(
+                    attempt=_attempt + 1,
+                    retry_count=_attempt,
+                    error_type="exception",
+                    error_detail=last_error,
+                    json_decode=False,
+                    schema_invalid=False,
+                    final_success=False,
+                    latency_ms=latency_ms,
+                ),
+            )
+            _track_call(
+                user_id,
+                "unknown",
+                prompt_version,
+                None,
+                latency_ms,
+                False,
+                "exception",
+                attempt=_attempt + 1,
+                error_detail=last_error,
+                content_hash=content_hash,
+                sub_category=sub_category,
+                locale=locale,
+                retry_count=_attempt,
+                final_success=False,
+            )
     logger.warning("deep_analyzer.analyze_one failed: %s", last_error)
-    return {"error": last_error, "prompt_version": prompt_version}
+    if last_error.startswith("json_decode"):
+        final_error_type = "json_decode"
+    elif last_error.startswith("schema_invalid"):
+        final_error_type = "schema_invalid"
+    else:
+        final_error_type = "exception"
+    return {
+        "error": last_error,
+        "prompt_version": prompt_version,
+        "retry_count": max_retries,
+        "final_success": False,
+        "json_decode_count": quality_counts["json_decode"],
+        "schema_invalid_count": quality_counts["schema_invalid"],
+        "exception_count": quality_counts["exception"],
+        "error_type": final_error_type,
+        "llm_route_counts": dict(route_counts),
+    }
 
 
 def analyze_batch(
@@ -237,6 +450,7 @@ def analyze_batch(
     progress_callback: Any = None,
     user_id: int | None = None,
     locale: str = "en",
+    trace_callback: Any = None,
 ) -> list[dict[str, Any]]:
     """批量分析评论（通过 llm_router 自动 fallback）.
 
@@ -255,6 +469,9 @@ def analyze_batch(
             allowed_aspects=allowed_aspects,
             user_id=user_id,
             locale=locale,
+            comment_id=c.get("id"),
+            content_hash=c.get("content_hash"),
+            trace_callback=trace_callback,
         )
 
     with ThreadPoolExecutor(max_workers=max_workers) as ex:

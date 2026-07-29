@@ -391,6 +391,10 @@ def get_job_traces(
             "total_cost_yuan": trace.get("total_cost_yuan"),
             "error": error_message,
             "stages": trace.get("stages", []),
+            "decisions": trace.get("decisions", []),
+            "events": trace.get("events", []),
+            "warnings": trace.get("warnings", []),
+            "dropped_counts": trace.get("dropped_counts", {}),
         })
 
     return {"total": total, "traces": traces}
