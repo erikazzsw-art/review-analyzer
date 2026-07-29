@@ -1,0 +1,78 @@
+{
+  "name": "5.9.8 Step 4 TIDEWE WD001 waders session121 blind regression cases",
+  "source_session_id": 121,
+  "samples": [
+    {
+      "id": "session121-did-not-keep-dry",
+      "content": "First the sizing is not great. We ordered by boot size and the boots fit but the rest of it was way too big. And more importantly it did not keep him dry. The insides on the legs were wet.",
+      "required_issue_keys": ["size_fit_problem", "water_leaks_through"],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "session121-green-ones-not-waterproof",
+      "content": "bought 2, the brown ones were water proof, but the green ones weren't. My partner used a trash bag that was more water proof than these.",
+      "required_issue_keys": ["water_leaks_through"],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "session121-got-soaked-holes",
+      "content": "The first time I wore them, I got soaked. There are definitely holes in both sides of the legs and boots. They didn’t last a minute. They do NOT breath, which is understandable but noteworthy.",
+      "required_issue_keys": ["water_leaks_through", "not_breathable"],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "session121-water-sinks-in",
+      "content": "I tried to try twice in 2 different occasions. Water sinks in the twice. I've done it Not happy with this product",
+      "required_issue_keys": ["water_leaks_through"],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "session121-all-waders-leak-eventually",
+      "content": "You can pay $1000 for a pair of waders. Or you can pay $65.00 for 10 pairs of waders. Pro tip: ALL WADERS LEAK EVENTUALLY. I have owned 3 pairs of TidWe waders over the past 5 years. 1 pair finally leaked, the second pair I am still wearing, the third pair is still in the box.",
+      "required_issue_keys": [],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": []
+    },
+    {
+      "id": "session121-pocket-not-waterproof",
+      "content": "I’m an avid surf fisherman and these have become my go to waders over the more expensive brands. No matter how much you spend on waders, they will eventually leak. I bought these as a replacement for TIDEWE waders that lasted 3 seasons. You’ll definitely get your money’s worth. My gripe is that the pocket isn’t waterproof. It’s just a flap over with Velcro.",
+      "required_issue_keys": ["pocket_not_waterproof"],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": []
+    },
+    {
+      "id": "session121-shoe-size-wrong",
+      "content": "I’m a 10.5 shoe. I ordered the 11 and they fit like they are a 10. It said to order try to size which is wrong.",
+      "required_issue_keys": ["size_fit_problem"],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["fits_as_expected"]
+    },
+    {
+      "id": "session121-spanish-boot-too-small",
+      "content": "Buen producto, pero es difícil encontrar la talla adecuada con las indicaciones de la publicación. En mi caso el traje quedó bien pero la talla de botas fue muy pequeña.",
+      "required_issue_keys": ["size_fit_problem"],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": []
+    },
+    {
+      "id": "session121-fit-daughter-wonderfully",
+      "content": "Fit my daughter wonderfully!! She is 5.2 and 120 lbs with size 6 shoe.",
+      "required_issue_keys": [],
+      "required_highlight_keys": ["fits_as_expected"],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": []
+    }
+  ]
+}
