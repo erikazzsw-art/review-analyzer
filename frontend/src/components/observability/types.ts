@@ -69,10 +69,19 @@ export type LlmCosts = {
 export type JobTrace = {
   job_id: number;
   status: string;
+  raw_status: string;
   created_at: string;
   completed_at: string | null;
   total_rows: number;
   processed_rows: number;
+  session_id: number | null;
+  product_id: string | null;
+  product_ref_id: number | null;
+  variant_ref_id: number | null;
+  credit_charged: boolean;
+  partial_completed: boolean;
+  failure_stage: string | null;
+  error_type: string | null;
   total_duration_ms: number | null;
   llm_calls: number | null;
   cache_hits: number | null;
@@ -89,6 +98,65 @@ export type JobTrace = {
 export type JobTracesResponse = {
   total: number;
   traces: JobTrace[];
+};
+
+export type AlertSeverity = "warning" | "critical";
+
+export type AlertThresholds = {
+  llm_error_rate_warning_pct: number;
+  llm_error_rate_critical_pct: number;
+  llm_p95_warning_ms: number;
+  llm_p95_critical_ms: number;
+  user_daily_cost_warning_yuan: number;
+  user_daily_cost_critical_yuan: number;
+  system_daily_cost_warning_yuan: number;
+  system_daily_cost_critical_yuan: number;
+  cache_savings_warning_pct: number;
+  cache_savings_critical_pct: number;
+  cache_min_reviews: number;
+  stuck_job_warning_minutes: number;
+  stuck_job_critical_minutes: number;
+};
+
+export type AlertConfig = {
+  enabled: boolean;
+  webhook_enabled: boolean;
+  webhook_platform: "feishu" | "dingtalk" | "wechat";
+  webhook_url: string;
+  webhook_secret: string;
+  webhook_group_name: string;
+  dedupe_ttl_seconds: number;
+  thresholds: AlertThresholds;
+};
+
+export type AlertItem = {
+  id: string;
+  type: string;
+  severity: AlertSeverity;
+  title: string;
+  message: string;
+  metric_value: number | string | null;
+  threshold: number | string | null;
+  unit: string;
+  scope: "user" | "system";
+  details: Record<string, unknown>;
+  triggered_at: string;
+  dedupe_key: string;
+  last_sent_at: string | null;
+};
+
+export type AlertHistoryItem = Omit<AlertItem, "triggered_at" | "dedupe_key" | "last_sent_at"> & {
+  event_id: number;
+  notification_status: "sent" | "failed" | "no_webhook" | string;
+  notification_message: string;
+  created_at: string;
+};
+
+export type AlertConfigResponse = {
+  config: AlertConfig;
+  current_alerts: AlertItem[];
+  history: AlertHistoryItem[];
+  last_sent_at: Record<string, string>;
 };
 
 export function timeRangeToWindowHours(range: TimeRange): number {
@@ -148,10 +216,17 @@ export function formatTimeRangeLabel(range: TimeRange): string {
   }
 }
 
-export async function fetchAnalytics<T>(path: string): Promise<T> {
+export async function fetchAnalytics<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const res = await fetch(`/api/analytics/${path}`, {
+    ...init,
     credentials: "include",
     cache: "no-store",
+    headers,
   });
   if (!res.ok) throw new Error(`API error ${res.status}`);
   return res.json() as Promise<T>;

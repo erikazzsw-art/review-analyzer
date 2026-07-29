@@ -11,6 +11,7 @@ import logging
 import time
 from datetime import datetime
 
+from workers.alert_checker import enqueue_alert_check
 from workers.periodic_jobs import (
     enqueue_daily_cost_digest,
     enqueue_expire_trials,
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 SCAN_INTERVAL_SECONDS = 60
 STALE_SCAN_INTERVAL_SECONDS = 300
+ALERT_SCAN_INTERVAL_SECONDS = 600
 DAILY_DIGEST_HOUR = 9
 DAILY_DIGEST_MINUTE = 7
 # V4-出海-M3.5: 数据保留清理,业务低峰(UTC+8 03:23),避开 09:07 成本日报
@@ -138,13 +140,19 @@ def _acquire_lock(redis_conn, user_id: int) -> bool:
 
 
 def run_scheduler() -> None:
-    """主循环：每分钟扫描一次到期用户，入队推送任务；每 5 分钟扫描卡死任务；每天 09:07 UTC+8 推送成本日报。
+    """主循环：每分钟扫描周期推送；每 5 分钟扫卡死任务；每 10 分钟扫可观测性告警。
 
     每个调度点独立 try/except，一个失败不影响其他。
     """
-    logger.info("scheduler: started, scan interval=%ds, stale scan interval=%ds", SCAN_INTERVAL_SECONDS, STALE_SCAN_INTERVAL_SECONDS)
+    logger.info(
+        "scheduler: started, scan interval=%ds, stale scan interval=%ds, alert scan interval=%ds",
+        SCAN_INTERVAL_SECONDS,
+        STALE_SCAN_INTERVAL_SECONDS,
+        ALERT_SCAN_INTERVAL_SECONDS,
+    )
     redis_conn = get_redis_connection()
     last_stale_scan = 0.0
+    last_alert_scan = 0.0
 
     while True:
         # --- 周期推送扫描 ---
@@ -174,6 +182,17 @@ def run_scheduler() -> None:
                 last_stale_scan = now
         except Exception:
             logger.exception("scheduler: failed to enqueue stale job scan")
+
+        # --- 可观测性综合告警扫描 ---
+        try:
+            import time as _time
+            now = _time.time()
+            if now - last_alert_scan >= ALERT_SCAN_INTERVAL_SECONDS:
+                enqueue_alert_check()
+                logger.info("scheduler: enqueued observability alert scan")
+                last_alert_scan = now
+        except Exception:
+            logger.exception("scheduler: failed to enqueue observability alert scan")
 
         # --- 每日成本日报（09:07 UTC+8，redis lock 去重）---
         try:

@@ -1,18 +1,37 @@
 """V4.5-T12 C3: Observability Dashboard API."""
 from __future__ import annotations
 
+import json
 import logging
+from typing import Any
 
 import psycopg2.extras
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.services.llm_router import get_router
+from backend_api.app.services.observability_alerts import (
+    DEFAULT_ALERT_CONFIG,
+    get_alert_dashboard,
+    save_alert_config,
+)
 from review_analyzer.database import get_connection, get_llm_usage_stats
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
+
+
+class AlertConfigPayload(BaseModel):
+    enabled: bool = True
+    webhook_enabled: bool = False
+    webhook_platform: str = "feishu"
+    webhook_url: str = ""
+    webhook_secret: str = ""
+    webhook_group_name: str = ""
+    dedupe_ttl_seconds: int = Field(default=3600, ge=60, le=86400)
+    thresholds: dict[str, Any] = Field(default_factory=lambda: dict(DEFAULT_ALERT_CONFIG["thresholds"]))
 
 
 def _analytics_window_sql(window_hours: int | None, days: int) -> tuple[str, str, list[int]]:
@@ -29,6 +48,24 @@ def _analytics_window_sql(window_hours: int | None, days: int) -> tuple[str, str
         "created_at >= NOW() - (%s * INTERVAL '1 day')",
         [days],
     )
+
+
+@router.get("/alert-config")
+def get_alert_config(
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Alert config, active alerts, recent history, and last sent timestamps."""
+    return get_alert_dashboard(user["id"])
+
+
+@router.put("/alert-config")
+def put_alert_config(
+    payload: AlertConfigPayload,
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Update alert thresholds, switches, webhook target, and Redis dedupe TTL."""
+    config = save_alert_config(user["id"], payload.model_dump())
+    return get_alert_dashboard(user["id"], config)
 
 
 @router.get("/llm-costs")
@@ -224,32 +261,102 @@ def get_model_status(
     return {"models": get_router().status()}
 
 
+def _parse_trace_json(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+    return {}
+
+
+def _display_job_status(raw_status: str) -> str:
+    if raw_status in {"done", "completed"}:
+        return "completed"
+    return raw_status
+
+
+def _failure_stage(status_value: str, trace: dict[str, Any]) -> str | None:
+    stages = trace.get("stages") if isinstance(trace.get("stages"), list) else []
+    for stage in stages:
+        if isinstance(stage, dict) and stage.get("error"):
+            return str(stage.get("name") or "")
+    if status_value in {"failed", "error"} and stages:
+        last_stage = stages[-1]
+        if isinstance(last_stage, dict):
+            return str(last_stage.get("name") or "") or None
+    return None
+
+
+def _classify_error(error_message: str | None) -> str | None:
+    if not error_message:
+        return None
+    text = error_message.lower()
+    if "insufficient" in text or "credit" in text or "quota" in text:
+        return "insufficient_credits"
+    if "timeout" in text or "stuck" in text or "卡死" in text:
+        return "timeout"
+    if "circuit" in text or "breaker" in text or "熔断" in text:
+        return "model_circuit"
+    if "429" in text or "rate limit" in text or "too many" in text:
+        return "rate_limit"
+    if "json" in text or "decode" in text or "schema" in text:
+        return "model_output_invalid"
+    if "connection" in text or "network" in text or "requests" in text:
+        return "network"
+    if "database" in text or "psycopg" in text or "sql" in text:
+        return "database"
+    return "unknown"
+
+
 @router.get("/job-traces")
 def get_job_traces(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    status_filter: str | None = Query(default=None, alias="status"),
     user: dict = Depends(get_current_user),
 ) -> dict:
     """Paginated job traces with timing and error info."""
+    where = ["user_id = %s"]
+    params: list[Any] = [user["id"]]
+    if status_filter and status_filter != "all":
+        if status_filter == "completed":
+            where.append("status IN ('done', 'completed')")
+        else:
+            where.append("status = %s")
+            params.append(status_filter)
+    where_sql = " AND ".join(where)
+
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                """
+                f"""
                 SELECT id, status, created_at, completed_at, trace_json,
-                       total_rows, processed_rows, error_message
+                       total_rows, processed_rows, error_message, session_id,
+                       product_id, product_ref_id, variant_ref_id,
+                       EXISTS (
+                           SELECT 1
+                           FROM credit_ledger cl
+                           WHERE cl.user_id = upload_jobs.user_id
+                             AND cl.reason = 'review_analyze'
+                             AND cl.ref_id = upload_jobs.id::text
+                       ) AS credit_charged
                 FROM upload_jobs
-                WHERE user_id = %s AND trace_json IS NOT NULL
+                WHERE {where_sql}
                 ORDER BY created_at DESC
                 LIMIT %s OFFSET %s
                 """,
-                [user["id"], limit, offset],
+                [*params, limit, offset],
             )
             rows = cur.fetchall()
 
             cur.execute(
-                "SELECT COUNT(*) FROM upload_jobs WHERE user_id = %s AND trace_json IS NOT NULL",
-                [user["id"]],
+                f"SELECT COUNT(*) FROM upload_jobs WHERE {where_sql}",
+                params,
             )
             total = cur.fetchone()["count"]
     finally:
@@ -257,19 +364,32 @@ def get_job_traces(
 
     traces = []
     for r in rows:
-        trace = r["trace_json"] if isinstance(r["trace_json"], dict) else {}
+        trace = _parse_trace_json(r["trace_json"])
+        raw_status = str(r["status"])
+        error_message = trace.get("error") or r["error_message"]
+        total_rows = int(r["total_rows"] or 0)
+        processed_rows = int(r["processed_rows"] or 0)
         traces.append({
             "job_id": r["id"],
-            "status": r["status"],
+            "status": _display_job_status(raw_status),
+            "raw_status": raw_status,
             "created_at": str(r["created_at"]),
             "completed_at": str(r["completed_at"]) if r["completed_at"] else None,
-            "total_rows": r["total_rows"],
-            "processed_rows": r["processed_rows"],
+            "total_rows": total_rows,
+            "processed_rows": processed_rows,
+            "session_id": r["session_id"],
+            "product_id": r["product_id"],
+            "product_ref_id": r["product_ref_id"],
+            "variant_ref_id": r["variant_ref_id"],
+            "credit_charged": bool(r["credit_charged"]),
+            "partial_completed": raw_status not in {"done", "completed"} and processed_rows > 0,
+            "failure_stage": _failure_stage(raw_status, trace),
+            "error_type": _classify_error(str(error_message) if error_message else None),
             "total_duration_ms": trace.get("total_duration_ms"),
             "llm_calls": trace.get("llm_calls"),
             "cache_hits": trace.get("cache_hits"),
             "total_cost_yuan": trace.get("total_cost_yuan"),
-            "error": trace.get("error") or r["error_message"],
+            "error": error_message,
             "stages": trace.get("stages", []),
         })
 
