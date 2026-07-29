@@ -33,6 +33,27 @@ function getModelColor(model: string): string {
   return MODEL_COLORS[model] || "#94a3b8";
 }
 
+function formatJobDate(value: string | null): string {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value.slice(0, 10);
+  return parsed.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
+}
+
+function formatModelCounts(modelCounts: Record<string, number>): string {
+  const entries = Object.entries(modelCounts);
+  if (entries.length === 0) return "-";
+  return entries
+    .map(([model, count]) => `${model}×${count}`)
+    .join(" / ");
+}
+
+const TOKEN_SEVERITY_STYLES: Record<string, string> = {
+  normal: "text-soft",
+  warning: "text-amber-600",
+  critical: "text-red-600",
+};
+
 type Props = { timeRange: TimeRange };
 
 export function CostTab({ timeRange }: Props) {
@@ -109,12 +130,13 @@ export function CostTab({ timeRange }: Props) {
 
   const costStatus = getCostStatus(data.summary.total_cost_yuan, timeRange);
   const hasUsageLog = data.summary.total_calls > 0 || data.daily.length > 0;
+  const hasCostAttribution = data.job_rankings.length > 0 || data.token_anomalies.length > 0;
   const bucketLabel = timeRangeUsesHourlyBuckets(timeRange) ? "小时" : "每日";
   const rangeLabel = formatTimeRangeLabel(timeRange);
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard
           label="总费用"
           value={`¥${data.summary.total_cost_yuan.toFixed(2)}`}
@@ -123,6 +145,14 @@ export function CostTab({ timeRange }: Props) {
           description={`${rangeLabel}内记录到 llm_usage_log 的模型费用。状态按当前窗口折算为日花费判断。`}
           normalRange="折算日花费 < ¥5；¥5-10 注意，¥10-20 异常，≥ ¥20 严重。"
           actionHint="看下方模型汇总，优先检查费用最高的模型和异常 token 增长。"
+        />
+        <StatCard
+          label="单评论成本"
+          value={`¥${data.summary.avg_cost_per_review.toFixed(4)}`}
+          sub={`${data.summary.trace_review_count.toLocaleString()} 条 trace 评论`}
+          description="按任务 trace 汇总的平均每条评论成本，用来判断单批上传是否变贵。"
+          normalRange="应随模型和 prompt 保持相对稳定；突然升高通常来自模型切换、token 变长或缓存下降。"
+          actionHint="看单任务成本排行和 token 异常排行，优先定位最贵 job。"
         />
         <StatCard
           label="总调用"
@@ -157,6 +187,14 @@ export function CostTab({ timeRange }: Props) {
         />
       )}
 
+      {hasUsageLog && !hasCostAttribution && (
+        <EmptyDataNotice
+          title="暂无任务级成本归因"
+          description="任务成本排行依赖新版 upload_jobs.trace_json；老任务或尚未完成 trace 持久化的任务可能只有 llm_usage_log 汇总。"
+          action="完成一次新上传后刷新，或切到任务 Tab 查看 trace 是否包含 total_cost_yuan。"
+        />
+      )}
+
       {chartData.length > 0 && (
         <div className="rounded-xl border border-line bg-white p-4">
           <h3 className="mb-3 text-sm font-medium text-soft">{bucketLabel}成本 (按模型)</h3>
@@ -187,6 +225,128 @@ export function CostTab({ timeRange }: Props) {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      )}
+
+      {(data.job_rankings.length > 0 || data.token_anomalies.length > 0) && (
+        <div className="grid gap-4 xl:grid-cols-2">
+          <div className="overflow-x-auto rounded-xl border border-line bg-white">
+            <div className="border-b border-line px-4 py-3">
+              <h3 className="text-sm font-medium text-soft">单任务成本排行</h3>
+            </div>
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-line bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 font-medium text-soft">Job</th>
+                  <th className="px-4 py-2 font-medium text-soft">评论</th>
+                  <th className="px-4 py-2 font-medium text-soft">LLM / 缓存</th>
+                  <th className="px-4 py-2 font-medium text-soft">模型</th>
+                  <th className="px-4 py-2 font-medium text-soft">费用</th>
+                  <th className="px-4 py-2 font-medium text-soft">单评论</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.job_rankings.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-center text-soft">
+                      暂无任务成本排行
+                    </td>
+                  </tr>
+                ) : (
+                  data.job_rankings.slice(0, 8).map((job) => (
+                    <tr key={job.job_id} className="border-b border-line last:border-0">
+                      <td className="px-4 py-2 font-mono text-ink">#{job.job_id}</td>
+                      <td className="px-4 py-2">{job.review_count.toLocaleString()}</td>
+                      <td className="px-4 py-2">{job.llm_calls} / {job.cache_hits}</td>
+                      <td className="max-w-[180px] truncate px-4 py-2" title={formatModelCounts(job.model_counts)}>
+                        {job.dominant_model || "-"}
+                      </td>
+                      <td className="px-4 py-2 font-medium">¥{job.total_cost_yuan.toFixed(4)}</td>
+                      <td className="px-4 py-2">¥{job.cost_per_review_yuan.toFixed(4)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-line bg-white">
+            <div className="border-b border-line px-4 py-3">
+              <h3 className="text-sm font-medium text-soft">Token 异常排行</h3>
+            </div>
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-line bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 font-medium text-soft">来源</th>
+                  <th className="px-4 py-2 font-medium text-soft">模型</th>
+                  <th className="px-4 py-2 font-medium text-soft">Tokens</th>
+                  <th className="px-4 py-2 font-medium text-soft">费用</th>
+                  <th className="px-4 py-2 font-medium text-soft">状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.token_anomalies.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-6 text-center text-soft">
+                      暂无 token 异常排行
+                    </td>
+                  </tr>
+                ) : (
+                  data.token_anomalies.slice(0, 8).map((row) => (
+                    <tr key={row.usage_id} className="border-b border-line last:border-0">
+                      <td className="px-4 py-2 font-mono text-ink">
+                        {row.job_id ? `#${row.job_id}` : `u${row.usage_id}`}
+                      </td>
+                      <td className="px-4 py-2">{row.model}</td>
+                      <td className="px-4 py-2">{row.total_tokens.toLocaleString()}</td>
+                      <td className="px-4 py-2">¥{row.cost_yuan.toFixed(4)}</td>
+                      <td className={`px-4 py-2 font-medium ${TOKEN_SEVERITY_STYLES[row.severity]}`}>
+                        {row.severity === "critical" ? "严重" : row.severity === "warning" ? "注意" : "正常"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {(data.model_switches.length > 0 || data.model_switch_jobs.length > 0) && (
+        <div className="overflow-x-auto rounded-xl border border-line bg-white">
+          <div className="border-b border-line px-4 py-3">
+            <h3 className="text-sm font-medium text-soft">模型切换导致的成本变化</h3>
+          </div>
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-line bg-gray-50">
+              <tr>
+                <th className="px-4 py-2 font-medium text-soft">时间</th>
+                <th className="px-4 py-2 font-medium text-soft">主导模型变化</th>
+                <th className="px-4 py-2 font-medium text-soft">窗口费用变化</th>
+                <th className="px-4 py-2 font-medium text-soft">新模型增量</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.model_switches.slice(0, 8).map((row) => (
+                <tr key={`${row.previous_date}-${row.date}`} className="border-b border-line last:border-0">
+                  <td className="px-4 py-2">{formatBucketLabel(row.date, timeRange)}</td>
+                  <td className="px-4 py-2">
+                    {row.previous_dominant_model} → {row.current_dominant_model}
+                  </td>
+                  <td className="px-4 py-2">¥{row.total_cost_delta_yuan.toFixed(4)}</td>
+                  <td className="px-4 py-2">¥{row.current_model_cost_delta_yuan.toFixed(4)}</td>
+                </tr>
+              ))}
+              {data.model_switches.length === 0 && data.model_switch_jobs.slice(0, 5).map((job) => (
+                <tr key={job.job_id} className="border-b border-line last:border-0">
+                  <td className="px-4 py-2">{formatJobDate(job.created_at)}</td>
+                  <td className="px-4 py-2">Job #{job.job_id} fallback × {job.fallback_count}</td>
+                  <td className="px-4 py-2">¥{job.total_cost_yuan.toFixed(4)}</td>
+                  <td className="px-4 py-2">{formatModelCounts(job.model_counts)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

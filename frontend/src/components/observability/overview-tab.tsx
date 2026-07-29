@@ -19,7 +19,15 @@ import {
   getP95LatencyStatus,
   statusToAccent,
 } from "./metric-status";
-import type { TimeRange, PipelineHealth, LlmCosts, JobTrace, JobTracesResponse } from "./types";
+import type {
+  TimeRange,
+  PipelineHealth,
+  LlmCosts,
+  JobTrace,
+  JobTracesResponse,
+  ObservabilitySummary,
+  ObservabilityHealthStatus,
+} from "./types";
 import {
   fetchAnalytics,
   formatBucketLabel,
@@ -30,9 +38,24 @@ import {
 
 type Props = { timeRange: TimeRange };
 
+const HEALTH_PANEL_STYLES: Record<ObservabilityHealthStatus, string> = {
+  normal: "border-emerald-200 bg-emerald-50",
+  attention: "border-amber-200 bg-amber-50",
+  abnormal: "border-orange-200 bg-orange-50",
+  critical: "border-red-200 bg-red-50",
+};
+
+const HEALTH_TEXT_STYLES: Record<ObservabilityHealthStatus, string> = {
+  normal: "text-emerald-700",
+  attention: "text-amber-700",
+  abnormal: "text-orange-700",
+  critical: "text-red-700",
+};
+
 export function OverviewTab({ timeRange }: Props) {
   const [health, setHealth] = useState<PipelineHealth | null>(null);
   const [costs, setCosts] = useState<LlmCosts | null>(null);
+  const [summary, setSummary] = useState<ObservabilitySummary | null>(null);
   const [failedJobs, setFailedJobs] = useState<JobTrace[]>([]);
   const [traceTotal, setTraceTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -46,10 +69,12 @@ export function OverviewTab({ timeRange }: Props) {
       fetchAnalytics<PipelineHealth>(`pipeline-health?${rangeQuery}`),
       fetchAnalytics<LlmCosts>(`llm-costs?${rangeQuery}`),
       fetchAnalytics<JobTracesResponse>("job-traces?limit=5&offset=0"),
+      fetchAnalytics<ObservabilitySummary>(`observability-summary?${rangeQuery}`),
     ])
-      .then(([h, c, j]) => {
+      .then(([h, c, j, s]) => {
         setHealth(h);
         setCosts(c);
+        setSummary(s);
         setFailedJobs(j.traces.filter((t) => t.status === "failed"));
         setTraceTotal(j.total);
       })
@@ -90,6 +115,52 @@ export function OverviewTab({ timeRange }: Props) {
 
   return (
     <div className="space-y-6">
+      {summary && (
+        <div className={`rounded-xl border p-4 ${HEALTH_PANEL_STYLES[summary.health.status]}`}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="text-xs font-medium text-soft">系统健康评分</div>
+              <div className={`mt-1 text-2xl font-bold ${HEALTH_TEXT_STYLES[summary.health.status]}`}>
+                {summary.health.label} · {summary.health.score}
+              </div>
+              <p className="mt-1 text-sm text-ink">{summary.health.summary}</p>
+            </div>
+            <div className={`rounded-full border bg-white px-3 py-1 text-xs font-medium ${HEALTH_TEXT_STYLES[summary.health.status]}`}>
+              {rangeLabel}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {summary.components.map((component) => (
+              <div key={component.key} className="rounded-lg border border-white/70 bg-white/70 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-soft">{component.label}</span>
+                  <span className={`text-xs font-medium ${HEALTH_TEXT_STYLES[component.status]}`}>
+                    {component.status_label}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm font-semibold text-ink">
+                  {component.value}{component.unit ? ` ${component.unit}` : ""}
+                </div>
+                {component.status !== "normal" && (
+                  <div className="mt-1 text-xs text-soft">{component.message}</div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {summary.suggested_entries.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              {summary.suggested_entries.map((entry) => (
+                <span key={entry.tab} className="rounded-full border border-white bg-white px-3 py-1 text-ink">
+                  {entry.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label="总调用"

@@ -65,7 +65,9 @@ export function CacheTab({ timeRange }: Props) {
   if (!data) return null;
 
   const chartData = [...data.daily].reverse();
+  const layered = data.layered;
   const hasCacheEvents = data.summary.total_reviews > 0 || data.daily.length > 0;
+  const hasLayeredCache = layered.checked_count > 0 || layered.layers.some((layer) => layer.count > 0);
   const savingsStatus = hasCacheEvents ? getCacheSavingsStatus(data.summary.savings_pct) : undefined;
   const bucketLabel = timeRangeUsesHourlyBuckets(timeRange) ? "小时" : "每日";
   const rangeLabel = formatTimeRangeLabel(timeRange);
@@ -113,6 +115,58 @@ export function CacheTab({ timeRange }: Props) {
           description="缓存页依赖 analytics_events 里的 analysis_job_complete 事件；没有数据通常是当前时间范围内没有完成的分析任务，或任务完成后未写入统计事件。"
           action="切换到 7天/30天，或完成一次新上传后检查 analytics_events 是否出现 analysis_job_complete。"
         />
+      )}
+
+      {hasCacheEvents && !hasLayeredCache && (
+        <EmptyDataNotice
+          title="暂无缓存分层 trace"
+          description="缓存来源拆分依赖新版 upload_jobs.trace_json 的 cache_lookup / clustering 决策；老任务可能只有 analysis_job_complete 汇总。"
+          action="完成一次新上传后刷新，或切到任务 Tab 展开 trace 查看是否有 cache_lookup 决策。"
+        />
+      )}
+
+      {hasLayeredCache && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border border-line bg-white p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-soft">命中来源拆分</h3>
+              <span className="text-xs text-soft">
+                checked {layered.checked_count.toLocaleString()} / miss {layered.miss_count.toLocaleString()}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {layered.layers.map((layer) => (
+                <div key={layer.key} className="flex items-center justify-between rounded-lg border border-line px-3 py-2 text-sm">
+                  <span className="text-ink">{layer.label}</span>
+                  <span className="font-semibold text-ink">{layer.count.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-line bg-white p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-soft">Miss 原因</h3>
+              <span className="text-xs text-soft">
+                聚类节省 {layered.cluster_saved_calls.toLocaleString()}
+              </span>
+            </div>
+            {layered.miss_reasons.length === 0 ? (
+              <div className="rounded-lg border border-line px-3 py-6 text-center text-sm text-soft">
+                暂无 miss 原因
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {layered.miss_reasons.map((reason) => (
+                  <div key={reason.reason} className="flex items-center justify-between rounded-lg border border-line px-3 py-2 text-sm">
+                    <span className="text-ink">{reason.label}</span>
+                    <span className="font-semibold text-ink">{reason.count.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {chartData.length > 0 && (

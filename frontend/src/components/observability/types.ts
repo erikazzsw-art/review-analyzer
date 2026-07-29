@@ -33,6 +33,26 @@ export type CacheEffectiveness = {
     saved: number;
     savings_pct: number;
   }[];
+  layered: {
+    checked_count: number;
+    hit_count: number;
+    miss_count: number;
+    hit_levels: Record<string, number>;
+    hit_sources: Record<string, number>;
+    cluster_saved_calls: number;
+    cluster_propagated_count: number;
+    layers: {
+      key: string;
+      label: string;
+      count: number;
+    }[];
+    miss_reasons: {
+      reason: string;
+      label: string;
+      count: number;
+    }[];
+  };
+  partial_errors: PartialAnalyticsError[];
 };
 
 export type ModelStatus = {
@@ -54,6 +74,9 @@ export type LlmCosts = {
     cache_hits: number;
     cache_rate: number;
     avg_cost_per_call: number;
+    avg_cost_per_review: number;
+    trace_review_count: number;
+    total_tokens: number;
   };
   daily: {
     date: string;
@@ -64,6 +87,102 @@ export type LlmCosts = {
     cost_yuan: number;
     cache_hits: number;
   }[];
+  job_rankings: CostJobRanking[];
+  cost_per_review_rankings: CostJobRanking[];
+  model_switches: ModelSwitchCostChange[];
+  model_switch_jobs: CostJobRanking[];
+  token_anomalies: TokenAnomaly[];
+  partial_errors: PartialAnalyticsError[];
+};
+
+export type PartialAnalyticsError = {
+  section: string;
+  message: string;
+};
+
+export type CostJobRanking = {
+  job_id: number;
+  session_id: number | null;
+  product_id: string | null;
+  created_at: string | null;
+  completed_at: string | null;
+  status: string;
+  review_count: number;
+  llm_calls: number;
+  cache_hits: number;
+  total_cost_yuan: number;
+  cost_per_review_yuan: number;
+  dominant_model: string | null;
+  model_counts: Record<string, number>;
+  fallback_count: number;
+  provider_failure_count: number;
+};
+
+export type ModelSwitchCostChange = {
+  date: string;
+  previous_date: string;
+  previous_dominant_model: string;
+  current_dominant_model: string;
+  previous_bucket_cost_yuan: number;
+  current_bucket_cost_yuan: number;
+  total_cost_delta_yuan: number;
+  current_model_cost_delta_yuan: number;
+};
+
+export type TokenAnomaly = {
+  usage_id: number;
+  job_id: number | null;
+  session_id: number | null;
+  comment_id: number | null;
+  model: string;
+  tokens_in: number;
+  tokens_out: number;
+  total_tokens: number;
+  cost_yuan: number;
+  severity: "normal" | "warning" | "critical";
+  created_at: string | null;
+};
+
+export type ObservabilityHealthStatus = "normal" | "attention" | "abnormal" | "critical";
+
+export type ObservabilitySummaryComponent = {
+  key: string;
+  label: string;
+  status: ObservabilityHealthStatus;
+  status_label: string;
+  value: number | string;
+  unit: string;
+  message: string;
+  suggested_tab: string;
+  suggested_entry: string;
+};
+
+export type ObservabilitySummary = {
+  health: {
+    status: ObservabilityHealthStatus;
+    label: "健康" | "注意" | "异常" | "严重";
+    score: number;
+    summary: string;
+  };
+  components: ObservabilitySummaryComponent[];
+  reasons: ObservabilitySummaryComponent[];
+  suggested_entries: {
+    tab: string;
+    label: string;
+    reason: string;
+  }[];
+  metrics: {
+    total_calls: number;
+    error_rate: number;
+    p95_ms: number;
+    total_cost_yuan: number;
+    daily_cost_pace_yuan: number;
+    cache_savings_pct: number;
+    failed_job_count: number;
+    stuck_job_count: number;
+    open_models: string[];
+  };
+  partial_errors: PartialAnalyticsError[];
 };
 
 export type JobTrace = {

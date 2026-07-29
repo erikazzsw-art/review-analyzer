@@ -3137,11 +3137,16 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 - 验证：`python3 -m ruff check backend_api/app/services/job_trace.py backend_api/app/services/llm_router.py backend_api/app/services/deep_analyzer.py backend_api/app/services/analytics.py backend_api/app/routes/analytics.py workers/jobs.py backend_api/tests/test_worker_error_fallback.py` PASS；`python3 -m pytest backend_api/tests/test_worker_error_fallback.py backend_api/tests/test_global_cache.py backend_api/tests/test_deep_analyzer.py -q` PASS（10 passed）；`npm run typecheck` PASS。
 
 **P3：成本归因、缓存分层、健康评分（2-4 天）**
-- [ ] 成本页增加单任务成本排行、单评论成本、模型切换导致的成本变化、token 异常排行
-- [ ] 缓存页拆分命中来源：L1 精确 hash、全局 pool、语义相似、聚类节省、miss 原因
-- [ ] 概览页新增系统健康评分：综合错误率、P95、熔断、成本、缓存、失败任务，输出 `健康 / 注意 / 异常 / 严重`
-- [ ] 新增 `/analytics/observability-summary`：给前端一次性返回健康结论、异常原因、建议排查入口
-- [ ] 验收：管理员无需理解每个原始指标，也能先看健康结论，再按建议进入对应 Tab
+- [x] 成本页增加单任务成本排行、单评论成本、模型切换导致的成本变化、token 异常排行
+- [x] 缓存页拆分命中来源：L1 精确 hash、本人历史、全局 review_pool、语义相似、聚类节省、miss 原因
+- [x] 概览页新增系统健康评分：综合错误率、P95、熔断、成本、缓存、失败任务，输出 `健康 / 注意 / 异常 / 严重`
+- [x] 新增 `/analytics/observability-summary`：给前端一次性返回健康结论、异常原因、建议排查入口
+- [x] 验收：管理员无需理解每个原始指标，也能先看健康结论，再按建议进入对应 Tab
+
+**2026-07-29 P3 完成记录：**
+- 后端：`/analytics/llm-costs` 增加 trace 任务成本排行、平均单评论成本、模型主导切换成本变化、fallback/多模型任务、token 异常排行；`/analytics/cache-effectiveness` 增加 trace 缓存分层来源与 miss 原因；新增 `/analytics/observability-summary` 一次性返回健康结论、异常原因、建议排查入口。全部复用 `analytics_events`、`llm_usage_log`、`upload_jobs.trace_json`，无迁移。
+- 前端：保持 `/settings/observability` 5-Tab 结构，仅增强 Overview / Cost / Cache：Overview 增加系统健康评分与六项组成项；Cost 增加单评论成本、单任务成本排行、模型切换成本变化、token 异常排行；Cache 增加命中来源拆分和 miss 原因。
+- 测试：新增 `backend_api/tests/test_observability_p3_metrics.py` 覆盖成本排行、模型切换成本变化、缓存来源/miss 聚合；`python3 -m compileall backend_api/app/routes/analytics.py` PASS；`python3 -m pytest backend_api/tests/test_observability_p3_metrics.py -q` PASS（3 passed）；`python3 -m ruff check backend_api/app/routes/analytics.py backend_api/tests/test_observability_p3_metrics.py` PASS；`cd frontend && npm run typecheck` PASS；`git diff --check` PASS。
 
 #### 2026-07-28 补充：Agent 行为监控补强计划
 
