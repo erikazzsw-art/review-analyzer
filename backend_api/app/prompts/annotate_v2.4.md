@@ -118,6 +118,22 @@ ANNOTATION RULES:
        - "Bed works great but bars break easily" (4★) → 2 aspects, overall positive
        - "Otherwise solid + legs don't fold" (3★) → 2 aspects, overall NEUTRAL (core OK)
 
+   2.3 WADERS / WATERPROOF BOUNDARIES:
+       - For waders, "no leaks", "leak proof", "stayed dry", "kept dry", "didn't get wet",
+         and "no issues with leaks" are POSITIVE waterproof evidence, not leakage complaints.
+       - A phone case, phone sleeve, pocket, bag, or accessory getting wet/leaking belongs to
+         accessory_storage, not the waders' overall waterproof aspect.
+       - Leaks from old/previous/other waders, another brand, or reviews/complaints the user read
+         are historical/background context, not a defect of the current product.
+       - If a review says the item has not been used or water-tested yet, do not infer waterproof,
+         durability, traction, or warmth. Only annotate tried-on fit or first-impression material
+         if explicitly stated.
+       - Generic praise ("great product", "excellent purchase") should stay generic; do not expand
+         it into fit/value/durability/waterproof aspects without exact evidence for each.
+       - In a review where the user returned all units, switched brands, says "don't buy", or gives
+         an overall failed-use outcome, do not create positive highlights from earlier incidental
+         phrases unless the user clearly preserves that benefit as a current-product advantage.
+
 3. PAIN_POINTS: max 3 items
    - Concrete English phrases (e.g. "screws don't align" beats "quality issue")
    - Include even when overall sentiment is "positive" if minor issues exist

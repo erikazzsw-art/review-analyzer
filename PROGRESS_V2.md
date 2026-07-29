@@ -17,6 +17,18 @@
 
 ---
 
+### 2026-07-29 5.9.8 Step 4 TIDEWE waders 标签漏标/错标主修复
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-29 | analysis | 对人工标注 Excel 与 session 119 raw 下载做本地只读对照，确认问题不是 L1 cache，而是 Customer Issue / Customer Label 生成层、aspect 归类、prompt 边界和 raw 导出口径。最高频前台 FP：Issue `water_leaks_through` 6；最高频前台 FN：Issue `breaks_easily` 9、`inaccurate_size_chart` 7、Highlight `fits_as_expected` 20、`good_value_for_the_price` 18、`keeps_water_out` 16；最高频 audit FP 为四件套 propagated/unverified。 | 未调用生产上传、生产重分析、credit 或 LLM；分析来源为本地 Excel 与 session 119 下载文件。 |
+| 2026-07-29 | fix | 在 Customer Issue / Customer Label 生成层补齐 waders content-rule occurrence、allowed aspect map、water leak 语义 guard、phone case/pocket accessory_storage 归类、未实际使用/泛泛好评/负面泛评四件套抑制；同步更新 prompt v2.4 与 outdoor/waders taxonomy 边界说明。 | 新分析链路会生成更正确的 canonical labels，而不是只在前台隐藏错误标签。 |
+| 2026-07-29 | export | raw/full review 下载口径改为 display 与 audit 分列：前台字段只保留 verified source-review occurrence；candidate、cluster propagated、evidence false 只进入 `Audit ...` 字段，避免用户误以为都是展示标签。前端 raw XLSX 同步相同口径。 | raw/frontstage/single-tag 下载口径统一；audit 字段仍可追溯候选来源。 |
+| 2026-07-29 | test | 新增 `backend_api/tests/fixtures/customer_label_waders_step4_gold.json` 与 `backend_api/tests/test_customer_label_waders_step4_gold.py`，覆盖 phone case 漏水、旧产品历史漏水、no leaks 正向、防水真实漏标、未实际使用、泛泛负评、single-tag/raw 口径等 hard cases。 | `python3 -m pytest backend_api/tests/test_customer_label_waders_step4_gold.py backend_api/tests/test_customer_label_waders_step2_gating.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_customer_label_50u_readiness.py backend_api/tests/test_outdoor_waders_taxonomy.py -q` PASS，73 passed in 3.07s；`npm run typecheck` PASS；`git diff --check` PASS。 |
+| 2026-07-29 | acceptance-ready | 产出 Step 4 修复报告与手动验收清单，等待 Erika 使用从未上传过的 50 条 waders 样本做前端上传验收，彻底排除缓存争议。 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`；Codex 未执行生产上传。 |
+
+---
+
 ### 2026-07-29 5.9.8 Step 3 TIDEWE waders 人工上传验收预检
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -29,6 +41,7 @@
 | 2026-07-29 | cache-risk | Erika 指出同批评论此前上传过，现有结果可能命中缓存。只读证据确认存在缓存复用，且 content hash 由 `content + rating + category` 计算，不含 ASIN。 | 当前结果不可作为干净新分析验收，只能验证当前线上结果页/导出口径 gating；干净复测需清用户历史和全局同批分析缓存。 |
 | 2026-07-29 | cleanup-audit | Erika 已从测试账号删除本次产品及评论；Codex 随后执行生产 DB 只读清理审计。 | 用户侧 L1 已清，但全局缓存仍存在复用风险；详细计数和对象 ID 保留在私有本地记录。 |
 | 2026-07-29 | cache-clear | Erika 明确授权后，执行限定范围的全局分析缓存清理，仅置空同批样本命中的分析缓存字段，未删除评论源。 | 清理后只读复核显示已满足干净重传前置条件；未上传、未触发 credit/LLM。下一次由 Erika 前端手动重传会消耗真实分析 credit 与 LLM 成本。 |
+| 2026-07-29 | clean-retest | Erika 手动干净重传同批 TIDEWE waders 人工样本，生成 `session_id=119`；Codex 仅做生产 DB 只读验收、本地等价导出、读取实际前端 raw 下载文件并整理异常样例。 | `REVIEW_NEEDED`：用户侧/全局 L1 缓存污染已清，`review_analyze=-100` 且 `review_pool` 回填仅限同批 49 个 hash；但 `water_leaks_through` 仍被 phone case、旧产品历史漏水、no-leaks 正向语境污染，`pocket_not_waterproof` 仍未 verified 召回，实际 raw 下载审计列仍包含大量 propagated/unverified 四件套。详见 `docs/5.9.8-step3-tidewe-waders-session119-acceptance-report.md`。 |
 
 ---
 
@@ -103,7 +116,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | Step 1/2 完成；Step 3 REVIEW_NEEDED | 修复 waders 边界污染与 cache 风险；完成 Step 4/5/6 验收 |
+| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | Step 4 waders 标签漏标/错标本地修复完成；等待 50 条从未上传样本手动验收 | 用全新 waders 样本验证生成层标签语义、evidence 可追溯、raw/frontstage/single-tag 口径一致；完成 Step 5/6 验收 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -1135,8 +1148,8 @@ readiness 节奏：
 |------|------|------|--------|--------------|
 | Step 1 waders 差异基线与口径方案 | ✅ 完成 | 固化 TIDEWE 100 条人工对照，完成错误 taxonomy、首批标签候选、同义合并、aspect 映射和边界 case 方案 | `docs/5.9.8-step1-tidewe-waders-baseline.md` | 确认错误分类、标签命名、合并/拆分、aspect 归类是否符合业务判断 |
 | Step 2 明细展示 gating 与回归实现 | ✅ 完成 | 排除单条明细中的 cluster propagated / 无 evidence / source 不可验证标签，并让导出/前端下载一致 | 后端 occurrence 过滤、导出/前端下载一致、focused tests、waders 回放报告 | 已完成本地回归；真实上传抽查进入 Step 3/4 |
-| Step 3 waders catalog / aspect map / 边界 guard | REVIEW_NEEDED / 进行中 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则；修复生产验收暴露的 `water_leaks_through` 正负语境、旧产品、phone case/pocket 污染与 cache 风险 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表、脱敏 acceptance report、干净复测记录 | 审核标签命名、边界规则和归类修正；确认是否授权清 `review_pool` 后干净重传 |
-| Step 4 waders 盲测与真实上传验收 | 待启动 | 验证不是“背答案”，用盲测和真实上传判断 waders 是否达到用户可用 | 30-50 条 waders 盲测表、AI vs 人工对比、真实上传抽查表、验收结论 | 完整标注 30-50 条，另做一次真实上传抽查 |
+| Step 3 waders catalog / aspect map / 边界 guard | ✅ 本地修复完成 / 待线上复测 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则；session 119 干净重传确认 L1 cache 风险已解除，Step 4 已修复 `water_leaks_through` 正负语境、旧产品、phone case/pocket 污染、`pocket_not_waterproof` 召回与 raw 导出 propagated/unverified 口径 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表、session 119 acceptance report、Step 4 修复报告 | 审核标签命名、边界规则和归类修正；下一轮由 Erika 手动上传全新样本验收 |
+| Step 4 waders 盲测与真实上传验收 | 本地修复完成 / 待 Erika 上传验收 | 验证不是“背答案”，用 50 条从未上传过的 waders 样本和真实上传判断标签是否达到用户可用 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`、focused gold fixture、AI vs 人工对比、真实上传抽查表、验收结论 | 上传从未上传过的 50 条样本；按 Top10、单条明细、单标签下载、raw review 下载清单验收 |
 | Step 4.5 waders ABSA 数据集 v0 | 待启动 | 把 TIDEWE 100 条、Step 4 盲测、错误样例与边界样例整理成 ABSA 训练格式；本阶段只做数据规格和样本，不训练模型 | `data/absa/` 或 `docs/5.9.9-absa-dataset-schema.md`、sample schema、split 草案、QA checklist | 审核字段、样例和 evidence span 是否符合人工理解 |
 | Step 5 MVP 关键 sub_category 轮换 | 待启动 | 扩展到 3-5 个 MVP 关键 sub_category，不要求覆盖全部；每类同时沉淀“口径盲测 gold set”和“ABSA 训练候选样本”两层数据 | 每类 30-50 条 gold set、10-20 条轻量风险抽检、迁移边界记录、每类 500-1000 条训练候选/人工确认样本 | 前期每周约 3-6 小时，后期降到 1-2 小时 |
 | Step 5.5 ABSA fine-tune 启动评审 | 待启动 | 判断 5.9.9 的数据规模、质量、标签稳定性和固定测试集是否达到 5.9.10 POC 启动条件 | `docs/5.9.9-absa-readiness-report.md`、数据统计、label coverage、QA fail list、go/no-go 结论 | 确认是否进入小模型 POC，而不是继续补数据/修口径 |

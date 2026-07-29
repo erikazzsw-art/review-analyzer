@@ -93,11 +93,54 @@ CUSTOMER_HIGHLIGHT_EXPORT_HEADERS = [
     "Highlight Cluster Propagated",
 ]
 
+SPECIFIC_ISSUE_AUDIT_EXPORT_HEADERS = [
+    "Audit Customer Issue",
+    "Audit Canonical Issue Key",
+    "Audit Internal Aspect",
+    "Audit Aspect Key",
+    "Audit Evidence Span",
+    "Audit Issue Confidence",
+    "Audit Evidence Verified",
+    "Audit Cluster Propagated",
+]
 
-def _join_customer_label_field(comment: dict, field: str, *, label_type: str) -> str:
+CUSTOMER_HIGHLIGHT_AUDIT_EXPORT_HEADERS = [
+    "Audit Customer Label",
+    "Audit Canonical Highlight Key",
+    "Audit Highlight Internal Aspect",
+    "Audit Highlight Aspect Key",
+    "Audit Highlight Evidence Span",
+    "Audit Highlight Confidence",
+    "Audit Highlight Evidence Verified",
+    "Audit Highlight Cluster Propagated",
+]
+
+
+def _is_export_frontstage_occurrence(occurrence: dict) -> bool:
+    return bool(
+        occurrence.get("display_allowed") is not False
+        and occurrence.get("source_review_allowed")
+        and occurrence.get("verified_evidence")
+        and occurrence.get("evidence_span")
+        and not occurrence.get("cluster_propagated")
+        and not occurrence.get("legacy_fallback")
+        and occurrence.get("aspect_allowed") is not False
+        and occurrence.get("context_allowed") is not False
+    )
+
+
+def _join_customer_label_field(
+    comment: dict,
+    field: str,
+    *,
+    label_type: str,
+    display_only: bool = True,
+) -> str:
     iterator = iter_specific_issue_occurrences if label_type == "issue" else iter_customer_highlight_occurrences
     values = []
     for occurrence in iterator(comment, locale="zh"):
+        if display_only and not _is_export_frontstage_occurrence(occurrence):
+            continue
         if field in {"verified_evidence", "cluster_propagated"}:
             values.append("true" if occurrence.get(field) else "false")
             continue
@@ -105,12 +148,12 @@ def _join_customer_label_field(comment: dict, field: str, *, label_type: str) ->
     return ", ".join(value for value in values if value)
 
 
-def _join_specific_issue_field(comment: dict, field: str) -> str:
-    return _join_customer_label_field(comment, field, label_type="issue")
+def _join_specific_issue_field(comment: dict, field: str, *, display_only: bool = True) -> str:
+    return _join_customer_label_field(comment, field, label_type="issue", display_only=display_only)
 
 
-def _join_customer_highlight_field(comment: dict, field: str) -> str:
-    return _join_customer_label_field(comment, field, label_type="highlight")
+def _join_customer_highlight_field(comment: dict, field: str, *, display_only: bool = True) -> str:
+    return _join_customer_label_field(comment, field, label_type="highlight", display_only=display_only)
 
 
 def _customer_issue_tag_text(comment: dict) -> str:
@@ -175,6 +218,8 @@ def _build_comments_data(
     if include_specific_issue:
         headers.extend(SPECIFIC_ISSUE_EXPORT_HEADERS)
         headers.extend(CUSTOMER_HIGHLIGHT_EXPORT_HEADERS)
+        headers.extend(SPECIFIC_ISSUE_AUDIT_EXPORT_HEADERS)
+        headers.extend(CUSTOMER_HIGHLIGHT_AUDIT_EXPORT_HEADERS)
     rows = []
     for i, c in enumerate(comments, 1):
         row = [
@@ -211,6 +256,22 @@ def _build_comments_data(
                     _join_customer_highlight_field(c, "highlight_confidence"),
                     _join_customer_highlight_field(c, "verified_evidence"),
                     _join_customer_highlight_field(c, "cluster_propagated"),
+                    _join_specific_issue_field(c, "specific_issue", display_only=False),
+                    _join_specific_issue_field(c, "canonical_issue_key", display_only=False),
+                    _join_specific_issue_field(c, "dimension", display_only=False),
+                    _join_specific_issue_field(c, "aspect_key", display_only=False),
+                    _join_specific_issue_field(c, "evidence_span", display_only=False),
+                    _join_specific_issue_field(c, "issue_confidence", display_only=False),
+                    _join_specific_issue_field(c, "verified_evidence", display_only=False),
+                    _join_specific_issue_field(c, "cluster_propagated", display_only=False),
+                    _join_customer_highlight_field(c, "customer_highlight", display_only=False),
+                    _join_customer_highlight_field(c, "canonical_highlight_key", display_only=False),
+                    _join_customer_highlight_field(c, "dimension", display_only=False),
+                    _join_customer_highlight_field(c, "aspect_key", display_only=False),
+                    _join_customer_highlight_field(c, "evidence_span", display_only=False),
+                    _join_customer_highlight_field(c, "highlight_confidence", display_only=False),
+                    _join_customer_highlight_field(c, "verified_evidence", display_only=False),
+                    _join_customer_highlight_field(c, "cluster_propagated", display_only=False),
                 ]
             )
         rows.append(row)

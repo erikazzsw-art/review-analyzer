@@ -31,7 +31,7 @@
         {"type": "issue", "key": "pocket_not_waterproof", "aspect_key": "accessory_storage", "evidence": "outside pocket gets wet"},
         {"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "price is good"}
       ],
-      "expected_issue_keys": ["pocket_not_waterproof"],
+      "expected_issue_keys": ["pocket_not_waterproof", "boots_too_stiff"],
       "expected_highlight_keys": ["good_value_for_the_price"]
     },
     {
@@ -317,7 +317,7 @@
       "step1_row": 100,
       "content": "Trash product, would not recommend.",
       "bad_highlights": ["fits_as_expected", "good_value_for_the_price", "holds_up_well", "keeps_water_out"],
-      "expected_issue_keys": [],
+      "expected_issue_keys": ["overall_dissatisfied"],
       "expected_highlight_keys": []
     }
   ]

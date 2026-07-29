@@ -236,8 +236,10 @@ def test_waders_step2_raw_and_top_export_include_highlight_occurrence_audit_fiel
 
     by_id = {comment["id"]: row for comment, row in zip(comments, rows)}
     row_15 = by_id["row-15-not-used"]
-    assert "keeps_water_out" in row_15[headers.index("Canonical Highlight Key")]
-    assert "false" in row_15[headers.index("Highlight Evidence Verified")]
+    assert "keeps_water_out" not in row_15[headers.index("Canonical Highlight Key")]
+    assert "false" not in row_15[headers.index("Highlight Evidence Verified")]
+    assert "keeps_water_out" in row_15[headers.index("Audit Canonical Highlight Key")]
+    assert "false" in row_15[headers.index("Audit Highlight Evidence Verified")]
     assert "未实际使用" in row_15[headers.index("亮点标签")]
 
     issue_headers, issue_rows = _build_specific_issue_top10_data(comments)

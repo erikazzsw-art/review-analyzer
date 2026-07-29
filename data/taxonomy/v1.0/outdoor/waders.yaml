@@ -10,7 +10,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "涉水裤整体是否进水、漏水或保持身体干燥；接缝/靴筒连接处明确漏水时归 seam_integrity"
+  boundary_note: "涉水裤整体是否进水、漏水或保持身体干燥；no leaks/leak proof/stayed dry 是正向防水；手机套/口袋/配件进水归 accessory_storage；旧产品/他牌/历史 waders 漏水不归当前产品"
   top_phrases: []
   sample_reviews: []
 
@@ -109,7 +109,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "多次使用、灌木/岩石/树枝摩擦后的抗撕裂、抗磨损和使用寿命；接缝专门问题归 seam_integrity"
+  boundary_note: "多次使用、灌木/岩石/树枝摩擦后的抗撕裂、抗磨损和使用寿命；未实际使用/仅开箱不得推断耐用；接缝专门问题归 seam_integrity"
   top_phrases: []
   sample_reviews: []
 
@@ -164,7 +164,7 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "胸前口袋、手机防水袋、修补贴、挂架、收纳和晾干配件是否好用或缺失"
+  boundary_note: "胸前口袋、手机防水袋、修补贴、挂架、收纳和晾干配件是否好用、缺失、与描述不符或进水；配件漏水不得归整体 waterproof"
   top_phrases: []
   sample_reviews: []
 

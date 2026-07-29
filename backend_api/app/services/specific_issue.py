@@ -31,15 +31,23 @@ _ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
         "useful_storage_space": {"accessory_storage", "organization", "capacity"},
         "useful_accessories": {"accessory_storage"},
         "good_traction": {"grip"},
+        "keeps_warm": {"temperature_rating"},
+        "easy_to_clean": {"ease_of_use"},
+        "no_strong_odor": {"material", "smell", "scent"},
         "comfortable_to_wear": {"comfort", "mobility", "boot_fit"},
         "breathes_well": {"breathability", "comfort"},
-        "no_strong_odor": {"material", "smell", "scent"},
         "feels_well_made": {"build_quality", "material", "durability", "stability"},
         "good_material_quality": {"material", "build_quality"},
         "arrives_on_time_and_intact": {"shipping_damage", "packaging"},
         "fast_shipping": {"shipping_damage", "packaging"},
         "petite_friendly": {"size_fit"},
         "plus_size_friendly": {"size_fit"},
+        "women_friendly_fit": {"size_fit"},
+        "works_well_for_use_case": {"other"},
+        "first_impression_positive": {"other", "material", "build_quality", "aesthetics"},
+        "not_used_yet": {"other"},
+        "overall_satisfied": {"other"},
+        "looks_good": {"aesthetics"},
     },
     "issue": {
         "water_leaks_through": {"waterproof", "waterproof_performance", "seam_integrity"},
@@ -70,6 +78,11 @@ _ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
         "poor_customer_service": {"customer_service"},
         "zipper_fails": {"zipper_quality"},
         "missing_parts": {"assembly", "packaging", "shipping_damage", "accessory_storage"},
+        "accessories_not_as_advertised": {"accessory_storage"},
+        "gets_hot_quickly": {"temperature_rating", "breathability"},
+        "insufficient_warmth": {"temperature_rating"},
+        "overall_dissatisfied": {"other"},
+        "not_for_heavy_brush": {"durability", "other"},
     },
 }
 
@@ -186,35 +199,76 @@ _BROAD_LABELS_ZH = {
 }
 
 _SPECIFIC_ISSUE_ZH_BY_KEY = {
+    "accessories_not_as_advertised": "配件与描述不符",
     "arrived_damaged": "到货破损",
     "battery_dies_quickly": "电池耗电快",
     "breaks_easily": "容易损坏",
+    "boots_too_stiff": "靴子过硬",
+    "calf_area_too_tight": "小腿位置偏小",
     "charging_fails": "充电不稳定",
     "curl_does_not_hold": "卷翘保持差",
     "falls_apart": "容易散架",
     "feels_thin_and_flimsy": "材质偏薄不结实",
+    "gets_hot_quickly": "升温快",
     "hard_to_assemble": "组装困难",
+    "inaccurate_size_chart": "尺码不准",
+    "insufficient_warmth": "保暖性差",
     "instructions_unclear": "说明不清楚",
     "irritates_eyes": "刺激眼睛",
     "makes_squeaking_noise": "有异响",
     "mascara_clumps": "睫毛膏容易结块",
     "mascara_flakes": "睫毛膏容易掉渣",
+    "missing_accessories": "配件缺失",
     "missing_parts": "缺少配件",
     "missing_wader_hanger": "缺少涉水裤挂架",
+    "not_for_heavy_brush": "不适合灌木丛",
     "not_breathable": "不够透气",
+    "not_for_long_walks": "不适合长时间步行",
     "not_enough_length": "纤长效果不足",
     "not_enough_volume": "浓密效果不足",
+    "not_petite_friendly": "小个子不友好",
+    "not_plus_size_friendly": "大码不友好",
     "not_worth_the_price": "不值这个价格",
+    "overall_dissatisfied": "整体不满意",
+    "pants_too_long": "裤长偏长",
     "pocket_not_waterproof": "口袋不防水",
     "pocket_too_small": "口袋太小",
+    "poor_traction": "防滑性不足",
     "poor_customer_service": "客服体验差",
     "runs_too_large": "尺码偏大",
     "runs_too_small": "尺码偏小",
     "smudges_easily": "容易晕染",
+    "soft_soles": "鞋底偏软",
     "strong_chemical_smell": "化学气味重",
     "uncomfortable_fit": "穿着不舒服",
     "water_leaks_through": "容易进水",
     "zipper_fails": "拉链容易故障",
+}
+
+_CUSTOMER_HIGHLIGHT_ZH_BY_KEY = {
+    "arrives_on_time_and_intact": "到货及时完好",
+    "comfortable_to_wear": "穿着舒适",
+    "easy_to_clean": "容易清洁",
+    "feels_well_made": "做工扎实",
+    "first_impression_positive": "初步印象良好",
+    "fits_as_expected": "尺码合适",
+    "good_material_quality": "材质质量好",
+    "good_traction": "抓地稳",
+    "good_value_for_the_price": "性价比高",
+    "holds_up_well": "耐用性高",
+    "keeps_warm": "保暖性好",
+    "keeps_water_out": "防水可靠",
+    "lightweight_waders": "轻便",
+    "looks_good": "外观好看",
+    "no_strong_odor": "没有明显异味",
+    "not_used_yet": "未实际使用",
+    "overall_satisfied": "整体满意",
+    "petite_friendly": "小个子友好",
+    "plus_size_friendly": "大码友好",
+    "useful_accessories": "配件实用",
+    "useful_storage_space": "收纳空间实用",
+    "women_friendly_fit": "女性友好版型",
+    "works_well_for_use_case": "场景适用",
 }
 
 
@@ -271,6 +325,13 @@ def _specific_issue_zh_label(canonical: str, issue: str) -> str:
     if mapped:
         return mapped
     return issue
+
+
+def _customer_highlight_zh_label(canonical: str, highlight: str) -> str:
+    mapped = _CUSTOMER_HIGHLIGHT_ZH_BY_KEY.get(canonical) or _CUSTOMER_HIGHLIGHT_ZH_BY_KEY.get(_slug(highlight))
+    if mapped:
+        return mapped
+    return highlight
 
 
 def _first_regex(patterns: list[str], text: str) -> bool:
@@ -343,8 +404,13 @@ _NEGATED_WATER_LEAK_PATTERNS = [
     r"\bwithout\s+(any\s+)?(?:water\s+)?leakage\b",
     r"\bnever\s+(had\s+)?leaks?\b",
     r"\bnever\s+(had\s+)?(?:a\s+)?(?:water\s+)?leakage\b",
+    r"\bhave(?:n['’]?t| not)\s+had\s+(?:any\s+)?(?:issues?\s+with\s+)?leaks?\b",
+    r"\bhas(?:n['’]?t| not)\s+had\s+(?:any\s+)?(?:issues?\s+with\s+)?leaks?\b",
+    r"\bhad\s+no\s+(?:issues?\s+with\s+)?leaks?\b",
+    r"\bno\s+issues?\s+with\s+leaks?\b",
     r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+(?:experience|experienced|had|have|see|seen)\s+(?:any\s+)?leak(?:ing|s)?\b",
     r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak(?:ed|ing|s)?\b",
+    r"\b(?:did|does|do)(?:n['’]?t| not)\s+get\s+wet\b",
     r"\b(?:do|does|did)(?:n['’]?t| not)\s+see[^.!?\n]{0,80}\bleak\b",
     r"\bnot\s+a\s+leak\b",
     r"\bnot\s+leaking\b",
@@ -358,25 +424,30 @@ _WATER_LEAK_HIT_PATTERNS = [
     r"\bnot waterproof\b",
     r"\bnot\s+100%\s+waterproof\b",
     r"\bleak",
+    r"\bseep(?:ing|ed|s)?\b",
     r"\bmoisture\s+coming\s+through\b",
+    r"\bmoisture\s+inside\b",
+    r"\bdamp\b",
     r"\bwater (gets|got|came|comes|coming|enters|entered) (in|through)",
 ]
 
 _NON_CURRENT_PRODUCT_LEAK_PATTERNS = [
     r"\bafter\s+(?:my|our|the|his|her)\s+[^.!?]{0,80}\b(?:old|previous|last|magellan|brand|ones?)\b[^.!?]{0,80}\bleak",
     r"\b(?:old|previous|last|other)\s+(?:pair|one|ones|waders?)\b[^.!?]{0,80}\bleak",
+    r"\b(?:numerous|many|several)\s+pairs?\s+of\s+waders?\s+in\s+the\s+past\b[^.!?\n]{0,120}\bleak",
+    r"\bwaders?\s+in\s+the\s+past\b[^.!?\n]{0,120}\bleak",
+    r"\b(?:old|previous|last)\s+waders?\b[^.!?\n]{0,120}\bleak",
     r"\b(?:ones?|waders?)\s+(?:he|she|they|i|we)\s+had\b[^.!?]{0,80}\bleak",
     r"\b(?:pair|one|ones|waders?)\s+from\s+another\s+(?:company|brand)\b[^.!?\n]{0,100}\bleak",
     r"\b(?:heard|reviews?\s+saying)[^.!?\n]{0,100}\bleak",
+    r"\b(?:reviews?|complaints)\b[^.!?\n]{0,120}\b(?:leaks?|leaking|leaked)\b",
     r"\bleaks?\s+on\s+some\s+pairs\b",
     r"\bunlike\s+(?:my|our|the|his|her)\s+(?:old|previous|last)\s+(?:pair|one|ones|waders?)\b",
 ]
 
 _ACCESSORY_LEAK_CONTEXT_PATTERNS = [
-    r"\b(?:pockets?|storage pocket|phone case|case|bag)\b[^.!?\n]{0,80}\bleak",
-    r"\bleak(?:ing|ed|s)?\b[^.!?\n]{0,80}\b(?:pockets?|storage pocket|phone case|case|bag)\b",
-    r"\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b[^.!?\n]{0,80}\b(?:water gets in|wet|soak)",
-    r"\b(?:water gets in|wet|soak)[^.!?\n]{0,80}\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b",
+    r"\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[^.!?\n]{0,140}\b(?:not waterproof|leak|water gets in|water leaks in|wet|soak|submerged)",
+    r"\b(?:not waterproof|leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[^.!?\n]{0,140}\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b",
 ]
 
 _CURRENT_PRODUCT_LEAK_CONTEXT_PATTERNS = [
@@ -386,9 +457,16 @@ _CURRENT_PRODUCT_LEAK_CONTEXT_PATTERNS = [
 
 _WATER_LEAK_EVIDENCE_PATTERNS = [
     r"\bnot\s+(?:100%\s+)?waterproof(?:\s+material)?\b",
+    r"\bsmall\s+leaks?\b[^,.!?\n]{0,80}",
     r"\bwater\s+leaking\s+(?:in|through)\b",
     r"\bwater\s+(?:gets|got|came|comes|coming|enters|entered)\s+(?:in|through)\b",
+    r"\bwater\s+will\s+seep\s+through\b[^,.!?\n]{0,80}",
+    r"\bslowly\s+seep\s+in\s+water\b",
+    r"\bloads?\s+of\s+water\s+seep(?:ing|ed|s)?\s+in\b",
+    r"\bseep(?:ing|ed|s)?\s+(?:in|into|through)\b[^,.!?\n]{0,80}",
     r"\bmoisture\s+coming\s+through\b",
+    r"\bmoisture\s+inside\s+both\s+legs\s+and\s+boots\b",
+    r"\bsocks\s+are\s+damp\b",
     r"\b(?:both\s+feet\s+are\s+)?leaking\s+around\s+where\s+the\s+boot\s+connects\s+to\s+the\s+wader\b",
     r"\bleak(?:ing|ed|s)?\s+(?:at|around|through|near|from)\s+(?:the\s+)?(?:seams?|boots?|waders?|material|knees?|padding)\b",
     r"\bleaks?\s+(?:around|through|at|near|from)\b[^,.!?\n]{0,80}",
@@ -474,6 +552,23 @@ def _sentence_spans(text: str) -> list[tuple[int, str]]:
     return spans or [(0, text.strip())] if text.strip() else []
 
 
+def _clause_spans(text: str) -> list[tuple[int, str]]:
+    clauses: list[tuple[int, str]] = []
+    for sentence_start, sentence in _sentence_spans(text):
+        cursor = 0
+        for match in re.finditer(r"\b(?:but|however|though|although|yet|that being said)\b|[;:]", sentence, re.I):
+            part = sentence[cursor : match.start()].strip(" ,;:")
+            if part:
+                offset = sentence[cursor : match.start()].find(part)
+                clauses.append((sentence_start + cursor + max(offset, 0), part))
+            cursor = match.end()
+        tail = sentence[cursor:].strip(" ,;:")
+        if tail:
+            offset = sentence[cursor:].find(tail)
+            clauses.append((sentence_start + cursor + max(offset, 0), tail))
+    return clauses or _sentence_spans(text)
+
+
 def _first_water_leak_evidence_span(sentence: str) -> str:
     for pattern in _WATER_LEAK_EVIDENCE_PATTERNS:
         match = re.search(pattern, sentence, re.IGNORECASE)
@@ -483,13 +578,15 @@ def _first_water_leak_evidence_span(sentence: str) -> str:
 
 
 def _current_product_water_leak_evidence(content: str) -> str:
-    for _start, sentence in _sentence_spans(content):
+    for _start, sentence in _clause_spans(content):
         if _is_negated_water_leak_statement(sentence) or _is_positive_dry_statement(sentence):
             continue
         if _is_non_current_product_leak_context(sentence) or _is_accessory_only_leak_context(sentence):
             continue
         evidence = _first_water_leak_evidence_span(sentence)
         if not evidence:
+            continue
+        if _is_blocked_water_leak_issue_context(content, evidence):
             continue
         if not _water_leak_issue_hit(evidence, sentence):
             continue
@@ -502,20 +599,51 @@ def _evidence_context_sentence(content: str, evidence: str) -> str:
     if not evidence:
         return content[:400]
     evidence_lower = evidence.lower()
+    for _start, clause in _clause_spans(content):
+        if evidence_lower in clause.lower():
+            return clause
     for _start, sentence in _sentence_spans(content):
         if evidence_lower in sentence.lower():
             return sentence
     return f"{evidence} {content[:400]}".strip()
 
 
+def _evidence_context_window(content: str, evidence: str, radius: int = 220) -> str:
+    evidence = str(evidence or "").strip()
+    if not evidence:
+        return content[:400]
+    start = content.lower().find(evidence.lower())
+    if start < 0:
+        return f"{evidence} {content[:400]}".strip()
+    return content[max(0, start - radius) : min(len(content), start + len(evidence) + radius)].strip()
+
+
+def _is_accessory_leak_window(text: str) -> bool:
+    return _first_regex(
+        [
+            r"\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[\s\S]{0,220}\b(?:not waterproof|leak|water gets in|water leaks in|wet|soak|submerged)",
+            r"\b(?:not waterproof|leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[\s\S]{0,220}\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b",
+        ],
+        text,
+    )
+
+
 def _is_blocked_water_leak_issue_context(content: str, evidence: str) -> bool:
     context = _evidence_context_sentence(content, evidence)
+    window = _evidence_context_window(content, evidence)
     evidence_text = str(evidence or "").strip()
+    accessory_context = (
+        _first_regex(_ACCESSORY_LEAK_CONTEXT_PATTERNS, context)
+        or _first_regex(_ACCESSORY_LEAK_CONTEXT_PATTERNS, evidence_text)
+        or _is_accessory_leak_window(window)
+    )
     return (
         _is_positive_waterproof_evidence_for_issue(context)
         or _is_positive_waterproof_evidence_for_issue(evidence_text)
         or _is_non_current_product_leak_context(context)
         or _is_non_current_product_leak_context(evidence_text)
+        or _is_non_current_product_leak_context(window)
+        or accessory_context
         or _is_accessory_only_leak_context(context)
         or _is_accessory_only_leak_context(evidence_text)
     )
@@ -832,6 +960,597 @@ def _water_leak_occurrence_from_content(
     )
 
 
+def _is_waders_context(sub_category: str, content: str) -> bool:
+    normalized = _norm_text(sub_category)
+    return normalized in {"waders", "wader", "chest waders", "bootfoot waders"}
+
+
+def _regex_span(patterns: list[str], text: str) -> str:
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return text[match.start() : match.end()].strip()
+    return ""
+
+
+def _first_content_span(
+    content: str,
+    patterns: list[str],
+    *,
+    blocked_patterns: list[str] | None = None,
+    clause_level: bool = True,
+) -> str:
+    spans = _clause_spans(content) if clause_level else _sentence_spans(content)
+    for _start, span in spans:
+        if blocked_patterns and _first_regex(blocked_patterns, span):
+            continue
+        evidence = _regex_span(patterns, span)
+        if evidence:
+            return evidence
+    if blocked_patterns and _first_regex(blocked_patterns, content):
+        return ""
+    return _regex_span(patterns, content)
+
+
+def _not_used_context(content: str) -> bool:
+    return _first_regex(
+        [
+            r"\bhave\s+not\s+used\b",
+            r"\bhaven['’]?t\s+(?:gotten\s+to\s+)?use(?:d)?\b",
+            r"\bnot\s+used\s+(?:them|it|these)\b",
+            r"\bnot\s+tested\b",
+            r"\blook\s+forward\s+to\s+trying\b",
+            r"\bwill\s+(?:use|test|try)\b",
+            r"\btomorrow\s+I\s+will\s+give\b",
+        ],
+        content,
+    )
+
+
+def _negative_outcome_context(content: str) -> bool:
+    return _first_regex(
+        [
+            r"\breturn(?:ed|ing)?\s+them\s+all\b",
+            r"\bhad\s+to\s+switch\s+to\s+a\s+different\s+brand\b",
+            r"\bdon['’]?t\s+buy\s+these\b",
+            r"\bwould\s+not\s+recommend\b",
+            r"\bthese\s+are\s+horrible\b",
+            r"\btrash\b",
+            r"\breducing\s+the\s+rating\b",
+            r"\bnot\s+what\s+I\s+had\s+in\s+mind\b",
+            r"\bvery\s+disappointed\b",
+        ],
+        content,
+    )
+
+
+def _content_rule_occurrence(
+    *,
+    label_type: str,
+    comment_id: Any,
+    content: str,
+    sub_category: str,
+    canonical_label_key: str,
+    display_en: str,
+    display_zh: str,
+    aspect_key: str,
+    evidence_span: str,
+    source_detail: str,
+    confidence: str = "high",
+) -> dict[str, Any] | None:
+    if not evidence_span:
+        return None
+    catalog = resolve_customer_label(
+        label_type=label_type,
+        canonical_label_key=canonical_label_key,
+        display_en=display_en,
+        display_zh=display_zh,
+        raw_label=display_en,
+        aspect_key=aspect_key,
+        sub_category_key=sub_category,
+        confidence=confidence,
+        display_allowed=True,
+    )
+    return _build_customer_label_occurrence(
+        label_type=label_type,
+        comment_id=comment_id,
+        content=content,
+        aspect={"key": aspect_key},
+        aspect_key=aspect_key,
+        raw_label=display_en,
+        canonical_label_key=catalog.canonical_label_key,
+        display_label_en=catalog.display_en or display_en,
+        display_label_zh=catalog.display_zh or display_zh,
+        evidence_span=evidence_span,
+        confidence=catalog.confidence if catalog.confidence in {"high", "medium", "low"} else confidence,
+        source_detail=source_detail,
+        sub_category=sub_category,
+        cluster_propagated=False,
+        display_allowed=catalog.display_allowed,
+        catalog_source=catalog.source,
+        catalog_ruleset_version=catalog.ruleset_version,
+    )
+
+
+def _waders_issue_rule_occurrences(
+    *,
+    comment_id: Any,
+    content: str,
+    sub_category: str,
+) -> list[dict[str, Any]]:
+    if not _is_waders_context(sub_category, content):
+        return []
+    items: list[dict[str, Any]] = []
+
+    def add(key: str, en: str, aspect: str, evidence: str, source_detail: str = "waders_content_rule") -> None:
+        item = _content_rule_occurrence(
+            label_type="issue",
+            comment_id=comment_id,
+            content=content,
+            sub_category=sub_category,
+            canonical_label_key=key,
+            display_en=en,
+            display_zh=_specific_issue_zh_label(key, en),
+            aspect_key=aspect,
+            evidence_span=evidence,
+            source_detail=source_detail,
+        )
+        if item:
+            items.append(item)
+
+    add("water_leaks_through", "Water Leaks Through", "waterproof", _current_product_water_leak_evidence(content))
+    add(
+        "pocket_not_waterproof",
+        "Pocket Not Waterproof",
+        "accessory_storage",
+        _regex_span(
+            [
+                r"\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[\s\S]{0,220}\b(?:not waterproof|leak|water gets in|water leaks in|wet|soak|submerged)",
+                r"\b(?:not waterproof|leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[\s\S]{0,220}\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b",
+            ],
+            content,
+        ),
+    )
+    add(
+        "breaks_easily",
+        "Breaks Easily",
+        "durability",
+        _first_content_span(
+            content,
+            [
+                r"\bno\s+durability\b",
+                r"\b(?:rip|ripped|tear|tears|tore|torn)\b[^.!?\n]{0,80}",
+                r"\bstitching\s+broke\b[^.!?\n]{0,80}",
+                r"\bbroke\b[^.!?\n]{0,80}",
+                r"\bdestroyed\b",
+            ],
+            blocked_patterns=[r"\bdidn['’]?t\s+(?:get\s+wet\s+or\s+)?tear\b", r"\bzipper\b"],
+        ),
+    )
+    add(
+        "strong_chemical_smell",
+        "Strong Chemical Smell",
+        "material",
+        _first_content_span(
+            content,
+            [
+                r"\bstrong\s+chemical[^.!?\n]{0,60}\bsmell\b",
+                r"\bchemical[^.!?\n]{0,60}\bsmell\b",
+                r"\bplastic\s+smell\b",
+                r"\bout\s+gasing\s+of\s+the\s+PVC\s+material\b",
+            ],
+        ),
+    )
+    add(
+        "inaccurate_size_chart",
+        "Inaccurate Size Chart",
+        "size_fit",
+        _first_content_span(
+            content,
+            [
+                r"\bsize\s+chart\b[^.!?\n]{0,100}\b(?:off|wrong|inaccurate|lists)\b",
+                r"\bsizing\s+(?:was\s+)?(?:off|very\s+off)\b",
+                r"\bsize\s+description\b[^.!?\n]{0,120}\bdidn['’]?t\s+come\s+close\b",
+                r"\bhard\s+to\s+figure\s+out\s+what\s+size\b",
+                r"\boverall\s+fit\b[^.!?\n]{0,100}\bsmaller\s+than\s+described\b",
+                r"\bruns\s+very\s+small\b",
+            ],
+        ),
+    )
+    add(
+        "runs_too_small",
+        "Runs Too Small",
+        "size_fit",
+        _first_content_span(
+            content,
+            [
+                r"\b(?:runs?|run)\s+(?:very\s+)?small\b",
+                r"\btoo\s+small\b",
+                r"\bsize\s+up\b",
+                r"\btight\s+around\b[^.!?\n]{0,80}",
+                r"\bboots?\s+are\s+snug\b",
+                r"\bcouldn['’]?t\s+even\s+get\s+my\s+foot\s+in\b",
+            ],
+        ),
+    )
+    add(
+        "not_petite_friendly",
+        "Not Petite Friendly",
+        "size_fit",
+        _first_content_span(
+            content,
+            [
+                r"\btoo\s+big\s+for\s+me\s+at\s+5['’]\s*6\b",
+                r"\bhard\s+to\s+find\s+small\s+waders?\s+for\s+women\b",
+                r"\bshort\s+(?:person|woman|women)\b[^.!?\n]{0,80}\b(?:too\s+big|long|loose)\b",
+                r"\bbeing\s+engulfed\s+in\s+them\b",
+            ],
+        ),
+    )
+    add(
+        "pants_too_long",
+        "Pants Too Long",
+        "size_fit",
+        _first_content_span(content, [r"\bpants\s+are\s+long\b", r"\blegs\s+are\s+too\s+long\b"]),
+    )
+    add(
+        "not_plus_size_friendly",
+        "Not Plus Size Friendly",
+        "size_fit",
+        _first_content_span(content, [r"\bnot\s+going\s+past\s+my\s+hips\b", r"\bnot\s+for\s+(?:big|large)\b"]),
+    )
+    add(
+        "not_breathable",
+        "Not Breathable",
+        "breathability",
+        _first_content_span(
+            content,
+            [r"\bdon['’]?t\s+breathe\b", r"\bnot\s+breathable\b", r"\b(?:sweat|sweaty|sweating)\b[^.!?\n]{0,80}"],
+        ),
+    )
+    add(
+        "gets_hot_quickly",
+        "Gets Hot Quickly",
+        "temperature_rating",
+        _first_content_span(content, [r"\bwarms?\s+up\s+quick\b", r"\btoo\s+hot\b"]),
+    )
+    add(
+        "not_for_long_walks",
+        "Not for Long Walks",
+        "comfort",
+        _first_content_span(
+            content,
+            [r"\bnot\s+walking\s+far\b", r"\bfeet\s+were\s+in\s+pain\b", r"\bboots?\s+hurt\s+after\s+awhile\b"],
+        ),
+    )
+    add(
+        "poor_traction",
+        "Poor Traction",
+        "grip",
+        _first_content_span(content, [r"\bslick\s+or\s+slipper\s+rocks\b", r"\bslippery\s+rocks\b", r"\bsoles\s+slipped\b[^.!?\n]{0,80}"]),
+    )
+    add(
+        "boots_too_stiff",
+        "Boots Too Stiff",
+        "boot_fit",
+        _first_content_span(content, [r"\bboots?\b[^.!?\n]{0,60}\bvery\s+stiff\b", r"\brigidity\s+of\s+the\s+boots\b[^.!?\n]{0,80}"]),
+    )
+    add("soft_soles", "Soft Soles", "grip", _first_content_span(content, [r"\bsoles\s+are\s+a\s+bit\s+soft\b"]))
+    add(
+        "missing_wader_hanger",
+        "Missing Wader Hanger",
+        "accessory_storage",
+        _first_content_span(
+            content,
+            [
+                r"\b(?:hanger|hook)\b[^.!?\n]{0,80}\b(?:missing|did\s+not\s+come|didn['’]?t\s+come)\b",
+                r"\bdid\s+not\s+come\s+with\s+(?:wader\s+)?hanger\b",
+            ],
+            blocked_patterns=[r"\bphone\s+protector\s+and\s+hanger\s+(?:was|were)\s+missing\b"],
+        ),
+    )
+    add(
+        "missing_accessories",
+        "Missing Accessories",
+        "accessory_storage",
+        _first_content_span(content, [r"\bphone\s+protector\s+and\s+hanger\s+(?:was|were)\s+missing\b", r"\bother\s+piece\b[^.!?\n]{0,80}\bdid\s+not\s+even\s+come\b"]),
+    )
+    add(
+        "accessories_not_as_advertised",
+        "Accessories Not as Advertised",
+        "accessory_storage",
+        _first_content_span(content, [r"\bphone\s+case\b[^.!?\n]{0,120}\bnot\s+the\s+same\s+as\s+what\s+is\s+advertised\b"]),
+    )
+    add(
+        "overall_dissatisfied",
+        "Overall Dissatisfied",
+        "other",
+        _first_content_span(content, [r"\btrash\b", r"\byou\s+get\s+what\s+you\s+pay\s+for\b", r"\bdon['’]?t\s+buy\s+these\b"]),
+        source_detail="waders_low_priority_context_rule",
+    )
+    add(
+        "not_for_heavy_brush",
+        "Not for Heavy Brush",
+        "other",
+        _first_content_span(content, [r"\baren['’]?t\s+for\s+bush\s+wacking\b", r"\bnot\s+for\s+bush\s+wacking\b"]),
+        source_detail="waders_low_priority_context_rule",
+    )
+    return items
+
+
+def _waders_highlight_rule_occurrences(
+    *,
+    comment_id: Any,
+    content: str,
+    sub_category: str,
+) -> list[dict[str, Any]]:
+    if not _is_waders_context(sub_category, content):
+        return []
+    not_used = _not_used_context(content)
+    negative_outcome = _negative_outcome_context(content)
+    items: list[dict[str, Any]] = []
+
+    def add(key: str, en: str, aspect: str, evidence: str, source_detail: str = "waders_content_rule") -> None:
+        item = _content_rule_occurrence(
+            label_type="highlight",
+            comment_id=comment_id,
+            content=content,
+            sub_category=sub_category,
+            canonical_label_key=key,
+            display_en=en,
+            display_zh=_customer_highlight_zh_label(key, en),
+            aspect_key=aspect,
+            evidence_span=evidence,
+            source_detail=source_detail,
+        )
+        if item:
+            items.append(item)
+
+    if not negative_outcome:
+        add(
+            "fits_as_expected",
+            "Fits as Expected",
+            "size_fit",
+            _first_content_span(
+                content,
+                [
+                    r"\bfit(?:s|ted)?\s+(?:great|well|perfect|right|true)\b",
+                    r"\bfit\s+is\s+great\b",
+                    r"\bperfect\s+fit\b",
+                    r"\btrue\s+to\s+size\b",
+                    r"\bboots?\s+fit\s+(?:perfect|well|good|like\s+a\s+glove)\b",
+                    r"\bmeasurements?\s+(?:are\s+)?very\s+accurate\b",
+                    r"\bfoot\s+measurements?/fit\b[^.!?\n]{0,80}\btrue\s+to\s+size\b",
+                ],
+                blocked_patterns=[
+                    r"\b(?:not|didn['’]?t|doesn['’]?t)\s+fit\b",
+                    r"\bfit\s+is\s+tight\b",
+                    r"\bshort\s+(?:guy|person|woman|women)\b",
+                    r"\bI['’]?m\s+petite\b",
+                ],
+            ),
+        )
+    if not not_used and not negative_outcome:
+        add(
+            "keeps_water_out",
+            "Keeps Water Out",
+            "waterproof",
+            _first_content_span(
+                content,
+                [
+                    r"\bleak[- ]?proof\b",
+                    r"\bno\s+leaks?\b",
+                    r"\bno\s+(?:water\s+)?leakage\b",
+                    r"\bhaven['’]?t\s+had\s+any\s+issues?\s+with\s+leaks?\s+yet\b",
+                    r"\b(?:stayed|kept|keep|keeps|remain(?:ed)?)\s+(?:(?:me|you|us|him|her|them|my\s+\w+|your\s+\w+|his\s+\w+|her\s+\w+|their\s+\w+)\s+)?(?:\w+ly\s+)?dry\b",
+                    r"\bdidn['’]?t\s+get\s+wet\b",
+                    r"\bare\s+waterproof\b",
+                    r"\bwaterproofing\b[^.!?\n]{0,80}\bsolid\b",
+                ],
+                blocked_patterns=[
+                    r"\bphone\s+case\b",
+                    r"\bphone\s+sleeve\b",
+                    r"\bnot\s+(?:100%\s+)?waterproof\b",
+                    r"\b90%\s+waterproof\b",
+                    r"\bleak(?:ed|ing|s)?\b[^.!?\n]{0,80}\b(?:crazy|through|in|around|from)\b",
+                ],
+            ),
+        )
+        add(
+            "holds_up_well",
+            "Holds Up Well",
+            "durability",
+            _first_content_span(
+                content,
+                [
+                    r"\b(?:held|holds?|hold)\s+up\b[^.!?\n]{0,80}",
+                    r"\bstill\s+going\s+strong\b",
+                    r"\bpretty\s+durable\b",
+                    r"\bdurable\b",
+                    r"\btough\b",
+                    r"\bdouble\s+stitch\b[^.!?\n]{0,80}",
+                ],
+                blocked_patterns=[r"\bdidn['’]?t\s+hold\s+up\b", r"\bnot\s+durable\b", r"\bno\s+durability\b"],
+            ),
+        )
+        add("keeps_warm", "Keeps Warm", "temperature_rating", _first_content_span(content, [r"\bkeeps?\s+me\s+warm\b", r"\bthey['’]?re\s+warm\b"]))
+    add(
+        "good_value_for_the_price",
+        "Good Value for the Price",
+        "value_for_money",
+        _first_content_span(
+            content,
+            [
+                r"\bgood\s+value\b",
+                r"\bgreat\s+value\b",
+                r"\bfor\s+the\s+price\b",
+                r"\bprice\s+point\b",
+                r"\baffordable\b",
+                r"\breasonable\s+cost\b",
+                r"\bcost\s+way\s+less\b",
+                r"\bcheap\s+price\b",
+                r"\binexpensive\b",
+                r"\bdidn['’]?t\s+have\s+to\s+spend\s+a\s+lot\s+of\s+money\b",
+            ],
+            blocked_patterns=[
+                r"\bnot\s+worth\b",
+                r"\btoo\s+expensive\b",
+                r"\breducing\s+the\s+rating\b",
+                r"\bnot\s+what\s+I\s+had\s+in\s+mind\b",
+            ],
+        ),
+    )
+    add(
+        "lightweight_waders",
+        "Lightweight Waders",
+        "weight",
+        _first_content_span(content, [r"\blight\s*weight\b", r"\blightweight\b", r"\bnot\s+heavy\b"]),
+    )
+    add(
+        "good_material_quality",
+        "Good Material Quality",
+        "material",
+        _first_content_span(
+            content,
+            [
+                r"\bgood\s+quality\b",
+                r"\bgreat\s+quality\b",
+                r"\bmaterial\s+quality\s+is\s+up\s+there\b",
+                r"\bmaterials?\s+(?:look|looks)\s+pretty\s+good\b",
+                r"\bthick\s+and\s+durable\b",
+                r"\bquality\s+product\b",
+                r"\bwell\s+made\b",
+            ],
+            blocked_patterns=[r"\bdoes\s+not\s+appear\s+sturdy\b", r"\bthin\s+plastic\b"],
+        ),
+    )
+    add("no_strong_odor", "No Strong Odor", "material", _first_content_span(content, [r"\bdid\s+not\s+notice\s+anything\s+extreme\b", r"\bdon['’]?t\s+have\s+any\s+smell\b", r"\bno\s+smell\b"]))
+    if not negative_outcome:
+        add("petite_friendly", "Petite Friendly", "size_fit", _first_content_span(content, [r"\bshort\s+person\s+and\s+these\s+still\s+fit\s+me\s+well\b", r"\bI['’]?m\s+petite\b[^.!?\n]{0,100}\bfit\s+pretty\s+well\b"]))
+        add("plus_size_friendly", "Plus Size Friendly", "size_fit", _first_content_span(content, [r"\brather\s+heavy\b[^.!?\n]{0,100}\bsizing\s+still\s+worked\s+out\s+well\b", r"\bbig\s+belly\b[^.!?\n]{0,100}\bfit\b"]))
+        add("women_friendly_fit", "Women Friendly Fit", "size_fit", _first_content_span(content, [r"\bfit\s+my\s+feet\s+and\s+my\s+female\s+figure\b"]))
+        add(
+            "useful_storage_space",
+            "Useful Storage Space",
+            "accessory_storage",
+            _first_content_span(content, [r"\bplenty\s+of\s+pockets?\s+and\s+storage\b", r"\bgreat\s+pocket\b", r"\bnice\s+pocket\s+storage\b"]),
+        )
+        add(
+            "useful_accessories",
+            "Useful Accessories",
+            "accessory_storage",
+            _first_content_span(content, [r"\brepair\s+kit\s+and\s+a\s+waterproof\s+phone\s+sleeve\b", r"\bphone\s+case,\s*hanger,\s*and\s*repair\s+kit\b", r"\bconvenient\s+hook\b", r"\bboot\s+hanger\s+included\b"]),
+        )
+    add("easy_to_clean", "Easy to Clean", "ease_of_use", _first_content_span(content, [r"\bclean\s+super\s+easy\b", r"\beasy\s+to\s+clean\b"]))
+    if not_used and not negative_outcome:
+        add("not_used_yet", "Not Used Yet", "other", _first_content_span(content, [r"\bhave\s+not\s+used[^.!?\n]{0,80}", r"\bhaven['’]?t\s+gotten\s+to\s+use[^.!?\n]{0,80}", r"\bnot\s+tested\s+waterproof[^.!?\n]{0,80}", r"\blook\s+forward\s+to\s+trying\b"]), source_detail="waders_context_rule")
+        add("first_impression_positive", "First Impression Positive", "other", _first_content_span(content, [r"\bseem\s+to\s+be\s+good\s+quality\b", r"\blook\s+good\s+out\s+of\s+the\s+box\b", r"\bseem\s+to\s+be\s+decent\b", r"\bso\s+far\s+so\s+good\b", r"\bmaterials?\s+however\s+look\s+pretty\s+good\b"]), source_detail="waders_context_rule")
+    add(
+        "works_well_for_use_case",
+        "Works Well for Use Case",
+        "other",
+        _first_content_span(
+            content,
+            [
+                r"\bfly\s+fishing\s+in\s+Montana\b",
+                r"\bSurf\s+Fishing\b",
+                r"\bbrush,\s*mud,\s*and\s*creeks\b",
+                r"\bAlaska\b",
+                r"\bwork(?:ed)?\s+on\s+my\s+dock\s+piers\b",
+                r"\bpreformed\s+flawless\b",
+                r"\bworked\s+great\b",
+                r"\bgot\s+the\s+job\s+done\b",
+                r"\bversatility\s+for\s+fishing\s+or\s+other\s+projects\b",
+            ],
+            blocked_patterns=[
+                r"\bhave\s+not\s+used\b",
+                r"\blook\s+forward\s+to\s+trying\b",
+                r"\btomorrow\s+I\s+will\s+give\b",
+                r"\breducing\s+the\s+rating\b",
+                r"\bnot\s+what\s+I\s+had\s+in\s+mind\b",
+                r"\bslowly\s+seep\b",
+                r"\bwater\s+was\s+pouring\s+in\b",
+                r"\bsudden\s+tear\b",
+            ],
+        ),
+    )
+    if not negative_outcome:
+        add("overall_satisfied", "Overall Satisfied", "other", _first_content_span(content, [r"\bhighly\s+recommend\b", r"\bexcellent\s+purchase\b", r"\bmy\s+husband\s+loves\s+it\b", r"\bI\s+am\s+happy\b", r"\bspot\s+on\b"]))
+    if not not_used and not negative_outcome:
+        add("looks_good", "Looks Good", "aesthetics", _first_content_span(content, [r"\blooked\s+so\s+nice\b", r"\blooks?\s+good\b"]))
+    return items
+
+
+def _has_frontstage_key(
+    comment: dict[str, Any],
+    occurrences: list[dict[str, Any]],
+    *,
+    label_type: str,
+    canonical_label_key: str,
+    locale: str,
+) -> bool:
+    for occurrence in occurrences:
+        item = _project_customer_label_occurrence(
+            occurrence,
+            comment=comment,
+            label_type=label_type,
+            locale=locale,
+        )
+        if not item:
+            continue
+        if str(item.get("canonical_label_key") or "") != canonical_label_key:
+            continue
+        if item.get("source_review_allowed"):
+            return True
+    return False
+
+
+def _append_waders_content_rule_occurrences(
+    comment: dict[str, Any],
+    occurrences: list[dict[str, Any]],
+    *,
+    label_type: str,
+    locale: str,
+    aspects_json: dict[str, Any] | None = None,
+    project: bool = False,
+) -> list[dict[str, Any]]:
+    content = str(comment.get("content") or "").strip()
+    sub_category = str(
+        (aspects_json or {}).get("sub_category") or comment.get("sub_category") or comment.get("category") or ""
+    )
+    if label_type == "issue":
+        candidates = _waders_issue_rule_occurrences(
+            comment_id=comment.get("id"),
+            content=content,
+            sub_category=sub_category,
+        )
+    else:
+        candidates = _waders_highlight_rule_occurrences(
+            comment_id=comment.get("id"),
+            content=content,
+            sub_category=sub_category,
+        )
+    result = list(occurrences)
+    for candidate in candidates:
+        canonical = str(candidate.get("canonical_label_key") or "")
+        if not canonical:
+            continue
+        if _has_frontstage_key(comment, result, label_type=label_type, canonical_label_key=canonical, locale=locale):
+            continue
+        if project:
+            projected = _project_customer_label_occurrence(
+                candidate,
+                comment=comment,
+                label_type=label_type,
+                locale=locale,
+            )
+            if projected:
+                result.append(projected)
+        else:
+            result.append(candidate)
+    return result
+
+
 def _append_content_rule_issue_occurrences(
     comment: dict[str, Any],
     occurrences: list[dict[str, Any]],
@@ -844,7 +1563,14 @@ def _append_content_rule_issue_occurrences(
         str(item.get("canonical_issue_key") or item.get("canonical_label_key") or "") == "water_leaks_through"
         for item in occurrences
     ):
-        return occurrences
+        return _append_waders_content_rule_occurrences(
+            comment,
+            occurrences,
+            label_type="issue",
+            locale=locale,
+            aspects_json=aspects_json,
+            project=True,
+        )
 
     content = str(comment.get("content") or "").strip()
     sub_category = str(
@@ -857,7 +1583,14 @@ def _append_content_rule_issue_occurrences(
         locale=locale,
     )
     if not occurrence:
-        return occurrences
+        return _append_waders_content_rule_occurrences(
+            comment,
+            occurrences,
+            label_type="issue",
+            locale=locale,
+            aspects_json=aspects_json,
+            project=True,
+        )
     projected = _project_customer_label_occurrence(
         occurrence,
         comment=comment,
@@ -866,7 +1599,14 @@ def _append_content_rule_issue_occurrences(
     )
     if projected:
         occurrences.append(projected)
-    return occurrences
+    return _append_waders_content_rule_occurrences(
+        comment,
+        occurrences,
+        label_type="issue",
+        locale=locale,
+        aspects_json=aspects_json,
+        project=True,
+    )
 
 
 def _highlight_occurrence_from_normalized(
@@ -1078,10 +1818,27 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
     text = f"{evidence} {content[:400]}".lower()
 
     if aspect_key in {"accessory_storage", "organization", "capacity"}:
-        if _first_regex([r"\bpockets?\b.*\b(wet|soak|water|leak)", r"\b(wet|soak|water|leak).*\bpockets?\b"], text):
+        if _first_regex(
+            [
+                r"\b(?:pockets?|phone case|phone sleeve|phone protector|case)\b.*\b(wet|soak|water|leak|not waterproof|submerged)",
+                r"\b(wet|soak|water|leak|not waterproof|submerged).*\b(?:pockets?|phone case|phone sleeve|phone protector|case)\b",
+            ],
+            text,
+        ):
             return ("Pocket Not Waterproof", "pocket_not_waterproof", "regex_alias_rule")
         if _first_regex([r"\bpockets?\b.*\b(small|tight|tiny|too small|not enough room)"], text):
             return ("Pocket Too Small", "pocket_too_small", "regex_alias_rule")
+        if _first_regex([r"\bnot\s+the\s+same\s+as\s+what\s+is\s+advertised\b"], text):
+            return ("Accessories Not as Advertised", "accessories_not_as_advertised", "regex_alias_rule")
+        if _first_regex(
+            [
+                r"\bmissing\b.*\b(phone protector|phone case)\b",
+                r"\b(phone protector|phone case)\b.*\bmissing\b",
+                r"\bphone\s+protector\s+and\s+hanger\s+(?:was|were)\s+missing\b",
+            ],
+            text,
+        ):
+            return ("Missing Accessories", "missing_accessories", "regex_alias_rule")
         if _first_regex([r"\bmissing\b.*\b(hanger|hook)", r"\bno\b.*\b(hanger|hook)"], text):
             return ("Missing Wader Hanger", "missing_wader_hanger", "regex_alias_rule")
 
@@ -1118,22 +1875,79 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
     if aspect_key in {"durability", "build_quality", "stability", "material", "strength"}:
         if _first_regex([r"\b(fell apart|falls apart)\b"], text):
             return ("Falls Apart", "falls_apart", "regex_alias_rule")
-        if _first_regex([r"\b(broke|breaks|broken|cracked|snapped)\b"], text):
+        if _first_regex([r"\b(broke|breaks|broken|cracked|snapped|ripped|rip|tear|tore|torn|no durability|destroyed)\b"], text):
             return ("Breaks Easily", "breaks_easily", "regex_alias_rule")
-        if _first_regex([r"\b(thin|flimsy|cheap)\b"], text):
+        if aspect_key in {"material", "build_quality"} and _first_regex(
+            [
+                r"\b(strong|bad|chemical|plastic|awful)\b.*\b(smell|odor|scent)\b",
+                r"\b(smell|odor|scent)\b.*\b(strong|bad|chemical|plastic|awful)\b",
+                r"\bout\s+gasing\b",
+            ],
+            text,
+        ):
+            return ("Strong Chemical Smell", "strong_chemical_smell", "regex_alias_rule")
+        if _first_regex(
+            [
+                r"\b(thin|flimsy)\b",
+                r"\bnot\s+sturdy\b",
+                r"\bdoes\s+not\s+appear\s+sturdy\b",
+                r"\bcheap\s+(?:material|plastic|quality)\b",
+            ],
+            text,
+        ):
             return ("Feels Thin and Flimsy", "feels_thin_and_flimsy", "regex_alias_rule")
 
     if aspect_key in {"size_fit", "boot_fit"}:
-        if _first_regex([r"\btoo small\b", r"\bruns small\b", r"\btight\b"], text):
+        if aspect_key == "size_fit" and _first_regex([r"\bpants\s+are\s+long\b", r"\blegs\s+are\s+too\s+long\b"], text):
+            return ("Pants Too Long", "pants_too_long", "regex_alias_rule")
+        if aspect_key == "size_fit" and _first_regex(
+            [
+                r"\bshort\s+(?:person|woman|women)\b.*\b(?:too big|long|loose)\b",
+                r"\btoo\s+big\s+for\s+me\s+at\s+5",
+                r"\bhard\s+to\s+find\s+small\s+waders?\s+for\s+women\b",
+                r"\bbeing\s+engulfed\s+in\s+them\b",
+            ],
+            text,
+        ):
+            return ("Not Petite Friendly", "not_petite_friendly", "regex_alias_rule")
+        if aspect_key == "size_fit" and _first_regex([r"\bnot\s+going\s+past\s+my\s+hips\b"], text):
+            return ("Not Plus Size Friendly", "not_plus_size_friendly", "regex_alias_rule")
+        if _first_regex(
+            [
+                r"\bsize\s+chart\b.*\b(off|wrong|inaccurate|lists)\b",
+                r"\bsizing\s+(?:was\s+)?(?:off|very\s+off)\b",
+                r"\bsize\s+description\b.*\bdidn['’]?t\s+come\s+close\b",
+                r"\bhard\s+to\s+figure\s+out\s+what\s+size\b",
+            ],
+            text,
+        ):
+            return ("Inaccurate Size Chart", "inaccurate_size_chart", "regex_alias_rule")
+        if _first_regex([r"\btoo small\b", r"\bruns (?:very\s+)?small\b", r"\btight\b", r"\bboots?\s+are\s+snug\b"], text):
             return ("Runs Too Small", "runs_too_small", "regex_alias_rule")
         if _first_regex([r"\btoo large\b", r"\bruns large\b", r"\bloose\b"], text):
             return ("Runs Too Large", "runs_too_large", "regex_alias_rule")
 
     if aspect_key in {"comfort", "breathability", "mobility"}:
+        if _first_regex([r"\bnot\s+walking\s+far\b", r"\bfeet\s+were\s+in\s+pain\b", r"\bboots?\s+hurt\s+after\s+awhile\b"], text):
+            return ("Not for Long Walks", "not_for_long_walks", "regex_alias_rule")
+        if _first_regex([r"\bboots?\b.*\bvery\s+stiff\b", r"\brigidity\s+of\s+the\s+boots\b"], text):
+            return ("Boots Too Stiff", "boots_too_stiff", "regex_alias_rule")
         if _first_regex([r"\buncomfortable\b", r"\bhurts?\b", r"\bblister"], text):
             return ("Uncomfortable Fit", "uncomfortable_fit", "regex_alias_rule")
         if _not_breathable_issue_hit(text):
             return ("Not Breathable", "not_breathable", "regex_alias_rule")
+
+    if aspect_key in {"temperature_rating"}:
+        if _first_regex([r"\bwarms?\s+up\s+quick\b", r"\btoo\s+hot\b"], text):
+            return ("Gets Hot Quickly", "gets_hot_quickly", "regex_alias_rule")
+        if _first_regex([r"\bcold\s+and\s+wet\b", r"\bnot\s+warm\b"], text):
+            return ("Insufficient Warmth", "insufficient_warmth", "regex_alias_rule")
+
+    if aspect_key in {"grip"}:
+        if _first_regex([r"\bslick\s+or\s+slipper\s+rocks\b", r"\bslippery\s+rocks\b", r"\bsoles?\s+slipped\b"], text):
+            return ("Poor Traction", "poor_traction", "regex_alias_rule")
+        if _first_regex([r"\bsoles\s+are\s+a\s+bit\s+soft\b"], text):
+            return ("Soft Soles", "soft_soles", "regex_alias_rule")
 
     if aspect_key in {"smell", "scent"}:
         if _first_regex(
@@ -1345,8 +2159,10 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
             [
                 r"\b(waterproof|kept|keep|keeps|stayed|stay)\b.*\b(dry|water out)\b",
                 r"\bnever get wet\b",
+                r"\bdidn['’]?t\s+get\s+wet\b",
                 r"\bno leaks?\b",
                 r"\bno\s+(?:water\s+)?leakage\b",
+                r"\bno\s+issues?\s+with\s+leaks?\b",
                 r"\bleak[- ]?proof\b",
             ],
             text,
@@ -1355,9 +2171,18 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
 
     if aspect_key in {"boot_fit", "size_fit"}:
         if _first_regex(
-            [r"\bfit(s|ted)?\b.*\b(perfect|great|well|right|true)\b", r"\btrue to size\b", r"\bboots? fit"], text
+            [
+                r"\bfit(s|ted)?\b.*\b(perfect|great|well|right|true)\b",
+                r"\bperfect\s+fit\b",
+                r"\btrue to size\b",
+                r"\bboots? fit",
+                r"\bmeasurements?\s+(?:are\s+)?very\s+accurate\b",
+            ],
+            text,
         ):
             return _highlight_label("Fits as Expected", "尺码合适", "fits_as_expected", "regex_alias_rule")
+        if _first_regex([r"\bshort\s+person\b.*\bfit\s+me\s+well\b", r"\bpetite\b.*\bfit\s+pretty\s+well\b"], text):
+            return _highlight_label("Petite Friendly", "小个子友好", "petite_friendly", "regex_alias_rule")
 
     if aspect_key in {"comfort", "breathability", "mobility"}:
         if _first_regex([r"\bcomfortable\b", r"\beasy\b.*\b(move|walk|bend)", r"\bflexible\b"], text):
@@ -1371,6 +2196,8 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
         if _first_regex(
             [
                 r"\b(good|great|nice|excellent)\b.*\bquality\b",
+                r"\bmaterial\s+quality\s+is\s+up\s+there\b",
+                r"\bmaterials?\s+(?:look|looks)\s+pretty\s+good\b",
                 r"\bquality product\b",
                 r"\bwell made\b",
                 r"\bsturdy\b",
@@ -1386,9 +2213,12 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
                 r"\bgood value\b",
                 r"\bgreat value\b",
                 r"\bfor the price\b",
+                r"\bprice point\b",
                 r"\bworth\b",
                 r"\baffordable\b",
                 r"\bcost way less\b",
+                r"\breasonable cost\b",
+                r"\bdidn['’]?t\s+have\s+to\s+spend\s+a\s+lot\s+of\s+money\b",
             ],
             text,
         ):
@@ -1397,6 +2227,8 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
             )
 
     if aspect_key in {"ease_of_use"}:
+        if _first_regex([r"\bclean\s+super\s+easy\b", r"\beasy\s+to\s+clean\b"], text):
+            return _highlight_label("Easy to Clean", "容易清洁", "easy_to_clean", "regex_alias_rule")
         if _first_regex([r"\beasy to use\b", r"\beasy\b.*\b(clean|put on|fit|adjust)", r"\bconvenient\b"], text):
             return _highlight_label("Easy To Use", "使用方便", "easy_to_use", "regex_alias_rule")
 
@@ -1405,6 +2237,16 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
             [r"\b(plenty|enough|great|good)\b.*\b(pockets?|storage|room|space)\b", r"\bconvenient storage\b"], text
         ):
             return _highlight_label("Useful Storage Space", "收纳空间实用", "useful_storage_space", "regex_alias_rule")
+        if _first_regex(
+            [
+                r"\brepair kit\b",
+                r"\bphone case,\s*hanger,\s*and\s*repair kit\b",
+                r"\bconvenient hook\b",
+                r"\bboot hanger included\b",
+            ],
+            text,
+        ):
+            return _highlight_label("Useful Accessories", "配件实用", "useful_accessories", "regex_alias_rule")
 
     if aspect_key in {"grip"}:
         if _first_regex(
@@ -1437,6 +2279,14 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
     if aspect_key in {"smell", "scent"}:
         if _first_regex([r"\b(no|not much|without)\b.*\b(smell|odor|scent)\b"], text):
             return _highlight_label("No Strong Odor", "没有明显异味", "no_strong_odor", "regex_alias_rule")
+
+    if aspect_key in {"weight"}:
+        if _first_regex([r"\blight\s*weight\b", r"\blightweight\b", r"\bnot\s+heavy\b"], text):
+            return _highlight_label("Lightweight Waders", "轻便", "lightweight_waders", "regex_alias_rule")
+
+    if aspect_key in {"temperature_rating"}:
+        if _first_regex([r"\bkeeps?\s+me\s+warm\b", r"\bthey['’]?re\s+warm\b"], text):
+            return _highlight_label("Keeps Warm", "保暖性好", "keeps_warm", "regex_alias_rule")
 
     if aspect_key in {"battery_life"}:
         if _first_regex([r"\bbattery\b.*\b(long|lasts?|holds?)\b", r"\blong battery\b"], text):
@@ -1744,6 +2594,30 @@ def enrich_aspects_json(
         )
         if water_leak_occurrence:
             _append_occurrence(water_leak_occurrence)
+    content_rule_comment = {
+        "id": comment_id,
+        "content": content_text,
+        "sub_category": normalized_sub_category,
+        "category": normalized_sub_category,
+    }
+    for item in _append_waders_content_rule_occurrences(
+        content_rule_comment,
+        occurrences,
+        label_type="issue",
+        locale=locale,
+        aspects_json=enriched,
+        project=False,
+    )[len(occurrences):]:
+        _append_occurrence(item)
+    for item in _append_waders_content_rule_occurrences(
+        content_rule_comment,
+        occurrences,
+        label_type="highlight",
+        locale=locale,
+        aspects_json=enriched,
+        project=False,
+    )[len(occurrences):]:
+        _append_occurrence(item)
     if isinstance(existing_occurrences, list):
         for item in existing_occurrences:
             if not isinstance(item, dict):
@@ -2178,11 +3052,19 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
         specific_schema_version = str(aj.get("specific_issue_schema_version") or "")
         occurrence_schema_version = str(aj.get("customer_label_occurrence_schema_version") or "")
         if occurrence_schema_version == CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION:
-            return _project_customer_label_occurrences(
+            projected = _project_customer_label_occurrences(
                 comment,
                 label_type="highlight",
                 locale=locale,
                 aspects_json=aj,
+            )
+            return _append_waders_content_rule_occurrences(
+                comment,
+                projected,
+                label_type="highlight",
+                locale=locale,
+                aspects_json=aj,
+                project=True,
             )
         sub_category = str(aj.get("sub_category") or comment.get("sub_category") or "")
         aspects = [aspect for aspect in aj.get("aspects") or [] if isinstance(aspect, dict)]
@@ -2231,7 +3113,14 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
             if projected:
                 occurrences.append(projected)
     if occurrences or customer_schema_version == CUSTOMER_LABEL_SCHEMA_VERSION or has_highlight_payload:
-        return occurrences
+        return _append_waders_content_rule_occurrences(
+            comment,
+            occurrences,
+            label_type="highlight",
+            locale=locale,
+            aspects_json=aj,
+            project=True,
+        )
     return _legacy_highlight_occurrences(comment, locale)
 
 

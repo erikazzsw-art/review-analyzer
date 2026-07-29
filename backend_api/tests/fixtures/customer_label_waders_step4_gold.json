@@ -1,0 +1,157 @@
+{
+  "name": "5.9.8 Step 4 TIDEWE WD001 waders label correctness gold fixture",
+  "source_files": [
+    "TIDEWE-下水服-WD001-人工纠正标签.xlsx",
+    "TIDEWE-下水服-WD001-AGGREGATED-raw-reviews -0729.xlsx"
+  ],
+  "samples": [
+    {
+      "id": "row-46-phone-case",
+      "excel_row": 57,
+      "review_no": 46,
+      "content": "The waders are fine, the measurements are very accurate. However, the waterproof phone case is not at all what it shows as. It is not waterproof; water leaks in very easily but does not come out, leaving my phone completely submerged under water.",
+      "current_occurrences": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "not waterproof", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": ["pocket_not_waterproof"],
+      "expected_highlight_keys": ["fits_as_expected"],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "row-52-old-products-leaked",
+      "excel_row": 50,
+      "review_no": 52,
+      "content": "Bought as a gift for my boyfriend who has had numerous pairs of waders in the past that have leaked. These were affordable and have not caused him any issues in the handful of times that he's used them.",
+      "current_occurrences": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "leaked", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["good_value_for_the_price"],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": ["fits_as_expected", "holds_up_well", "keeps_water_out"]
+    },
+    {
+      "id": "row-62-no-leaks-missing-hanger",
+      "excel_row": 40,
+      "review_no": 62,
+      "content": "They did not come with hanger for the boots. The waders are fine and fit well, haven't had any issues with leaks yet",
+      "current_occurrences": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "leaks", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": ["missing_wader_hanger"],
+      "expected_highlight_keys": ["fits_as_expected", "keeps_water_out"],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": ["holds_up_well", "good_value_for_the_price"]
+    },
+    {
+      "id": "row-66-small-leaks",
+      "excel_row": 35,
+      "review_no": 66,
+      "content": "These did not leak the first day but they have had small leaks ever since. So I am at the very least, a little damp every time I go out.",
+      "current_occurrences": [],
+      "expected_issue_keys": ["water_leaks_through"],
+      "expected_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["keeps_water_out", "holds_up_well"]
+    },
+    {
+      "id": "row-55-real-leak",
+      "excel_row": 47,
+      "review_no": 55,
+      "content": "Don't buy these. I used them for 1 hour and they leaked like crazy. I couldn't return them since they were destroyed. These are horrible",
+      "current_occurrences": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "leaked like crazy", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": ["water_leaks_through", "breaks_easily", "overall_dissatisfied"],
+      "expected_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["fits_as_expected", "good_value_for_the_price", "holds_up_well", "keeps_water_out"]
+    },
+    {
+      "id": "row-48-seep-tear-value",
+      "excel_row": 54,
+      "review_no": 48,
+      "content": "Took these waders fishing in Alaska and they did great overall until I got above my knee in water, then they would slowly seep in water. I also had a sudden tear in the knee and noticed water was pouring in and filling my left boot but for the price can't complain",
+      "current_occurrences": [
+        {"type": "highlight", "key": "fits_as_expected", "aspect_key": "size_fit", "evidence": "fit great", "verified": false, "cluster_propagated": true},
+        {"type": "highlight", "key": "holds_up_well", "aspect_key": "durability", "evidence": "still going strong", "verified": false, "cluster_propagated": true},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "No leaks", "verified": false, "cluster_propagated": true}
+      ],
+      "expected_issue_keys": ["water_leaks_through", "breaks_easily"],
+      "expected_highlight_keys": ["good_value_for_the_price"],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["fits_as_expected", "holds_up_well", "keeps_water_out"]
+    },
+    {
+      "id": "row-70-not-used",
+      "excel_row": 34,
+      "review_no": 70,
+      "content": "Have not used them yet but they seem to be good quality and the fit is great.",
+      "current_occurrences": [
+        {"type": "highlight", "key": "holds_up_well", "aspect_key": "durability", "evidence": "still going strong", "verified": false, "cluster_propagated": true},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "No leaks", "verified": false, "cluster_propagated": true},
+        {"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "good value", "verified": false, "cluster_propagated": true}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["fits_as_expected", "good_material_quality", "not_used_yet", "first_impression_positive"],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["holds_up_well", "keeps_water_out", "good_value_for_the_price"]
+    },
+    {
+      "id": "row-100-generic-negative",
+      "excel_row": 2,
+      "review_no": 100,
+      "content": "These waders are trash",
+      "current_occurrences": [
+        {"type": "highlight", "key": "fits_as_expected", "aspect_key": "boot_fit", "evidence": "Boots fit perfect", "verified": false, "cluster_propagated": true},
+        {"type": "highlight", "key": "holds_up_well", "aspect_key": "durability", "evidence": "really happy with durability", "verified": false, "cluster_propagated": true},
+        {"type": "highlight", "key": "keeps_water_out", "aspect_key": "waterproof", "evidence": "No leaks", "verified": false, "cluster_propagated": true},
+        {"type": "highlight", "key": "good_value_for_the_price", "aspect_key": "value_for_money", "evidence": "good value", "verified": false, "cluster_propagated": true}
+      ],
+      "expected_issue_keys": ["overall_dissatisfied"],
+      "expected_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["fits_as_expected", "holds_up_well", "keeps_water_out", "good_value_for_the_price"]
+    },
+    {
+      "id": "row-91-leak-proof",
+      "excel_row": 12,
+      "review_no": 91,
+      "content": "Bought this for my husband to look for gold in the creeks and rivers near us. Leak proof and foot measurements/fit of item were true to size. Good quality.",
+      "current_occurrences": [
+        {"type": "issue", "key": "water_leaks_through", "aspect_key": "waterproof", "evidence": "Leak proof", "verified": false, "cluster_propagated": true}
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": ["keeps_water_out", "fits_as_expected", "good_material_quality"],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": []
+    },
+    {
+      "id": "row-4-returned-pocket-mixed",
+      "excel_row": 99,
+      "review_no": 4,
+      "content": "I ordered this item a total of three times and wound up returning them all. The waders fit well and will keep you dry. My first set ripped on the leg the second night I took em out. My issue with this brand was the outer pocket. Regardless of the flap, contents got wet with the two sets I had no matter what. The other thing I didn't like was the rigidity of the boots. Very stiff. Overall not a bad product but I had to switch to a different brand.",
+      "current_occurrences": [
+        {"type": "issue", "key": "pocket_not_waterproof", "aspect_key": "accessory_storage", "evidence": "contents got wet", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": ["breaks_easily", "pocket_not_waterproof", "boots_too_stiff"],
+      "expected_highlight_keys": [],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": ["fits_as_expected", "keeps_water_out", "useful_accessories"]
+    },
+    {
+      "id": "row-86-smell-size-accessory",
+      "excel_row": 16,
+      "review_no": 86,
+      "content": "Strong chemical, plastic smell. Thin plastic, does not appear sturdy. Small, runs very small. The small phone case looking thing that comes with it is not the same as what is advertised in the picture, and the other piece the hanger looking thing did not even come with it, even though that was advertised.",
+      "current_occurrences": [
+        {"type": "issue", "key": "feels_thin_and_flimsy", "aspect_key": "material", "evidence": "Thin plastic", "verified": true, "cluster_propagated": false}
+      ],
+      "expected_issue_keys": ["strong_chemical_smell", "feels_thin_and_flimsy", "inaccurate_size_chart", "runs_too_small", "accessories_not_as_advertised", "missing_accessories"],
+      "expected_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["fits_as_expected", "holds_up_well", "keeps_water_out", "good_value_for_the_price"]
+    }
+  ]
+}

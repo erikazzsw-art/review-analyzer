@@ -78,11 +78,26 @@ const ALLOWED_ASPECT_KEYS_BY_LABEL: Record<CustomerLabelType, Record<string, Set
     keeps_water_out: new Set(["waterproof", "waterproof_performance"]),
     good_value_for_the_price: new Set(["value_for_money", "price_value"]),
     holds_up_well: new Set(["durability", "build_quality", "seam_integrity", "material"]),
+    lightweight_waders: new Set(["weight", "material"]),
     useful_storage_space: new Set(["accessory_storage", "organization", "capacity"]),
     useful_accessories: new Set(["accessory_storage"]),
     good_traction: new Set(["grip"]),
+    keeps_warm: new Set(["temperature_rating"]),
+    easy_to_clean: new Set(["ease_of_use"]),
+    no_strong_odor: new Set(["material", "smell", "scent"]),
     comfortable_to_wear: new Set(["comfort", "mobility", "boot_fit"]),
     feels_well_made: new Set(["build_quality", "material", "durability", "stability"]),
+    good_material_quality: new Set(["material", "build_quality"]),
+    arrives_on_time_and_intact: new Set(["shipping_damage", "packaging"]),
+    fast_shipping: new Set(["shipping_damage", "packaging"]),
+    petite_friendly: new Set(["size_fit"]),
+    plus_size_friendly: new Set(["size_fit"]),
+    women_friendly_fit: new Set(["size_fit"]),
+    works_well_for_use_case: new Set(["other"]),
+    first_impression_positive: new Set(["other", "material", "build_quality", "aesthetics"]),
+    not_used_yet: new Set(["other"]),
+    overall_satisfied: new Set(["other"]),
+    looks_good: new Set(["aesthetics"]),
   },
   issue: {
     water_leaks_through: new Set(["waterproof", "waterproof_performance", "seam_integrity"]),
@@ -99,8 +114,17 @@ const ALLOWED_ASPECT_KEYS_BY_LABEL: Record<CustomerLabelType, Record<string, Set
     inaccurate_size_chart: new Set(["size_fit", "boot_fit"]),
     not_petite_friendly: new Set(["size_fit"]),
     not_plus_size_friendly: new Set(["size_fit"]),
+    calf_area_too_tight: new Set(["boot_fit"]),
+    pants_too_long: new Set(["size_fit"]),
+    boots_too_stiff: new Set(["comfort", "material", "boot_fit"]),
+    not_for_long_walks: new Set(["comfort", "boot_fit", "mobility"]),
     poor_traction: new Set(["grip"]),
     soft_soles: new Set(["grip", "durability", "material"]),
+    accessories_not_as_advertised: new Set(["accessory_storage"]),
+    gets_hot_quickly: new Set(["temperature_rating", "breathability"]),
+    insufficient_warmth: new Set(["temperature_rating"]),
+    overall_dissatisfied: new Set(["other"]),
+    not_for_heavy_brush: new Set(["durability", "other"]),
     not_worth_the_price: new Set(["value_for_money", "price_value"]),
     zipper_fails: new Set(["zipper_quality"]),
     missing_parts: new Set(["assembly", "packaging", "shipping_damage", "accessory_storage"]),
@@ -129,13 +153,21 @@ function firstRegex(patterns: RegExp[], text: string): boolean {
 function sentenceForEvidence(content: string, evidence: string): string {
   if (!evidence) return content.slice(0, 400);
   const escaped = evidence.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const sentencePattern = new RegExp(`[^.!?\\n]*${escaped}[^.!?\\n]*(?:[.!?]+|$)`, "i");
+  const sentencePattern = new RegExp(`[^.!?;:\\n]*(?:\\bbut\\b|\\bhowever\\b|\\byet\\b|^)?[^.!?;:\\n]*${escaped}[^.!?;:\\n]*(?:[;:.!?]+|$)`, "i");
   const match = content.match(sentencePattern);
   return (match?.[0] || `${evidence} ${content.slice(0, 400)}`).trim();
 }
 
+function windowForEvidence(content: string, evidence: string): string {
+  if (!evidence) return content.slice(0, 400);
+  const start = content.toLowerCase().indexOf(evidence.toLowerCase());
+  if (start < 0) return `${evidence} ${content.slice(0, 400)}`.trim();
+  return content.slice(Math.max(0, start - 220), Math.min(content.length, start + evidence.length + 220));
+}
+
 function isBlockedWaterLeakIssueContext(content: string, evidence: string): boolean {
   const text = sentenceForEvidence(content, evidence).toLowerCase();
+  const windowText = windowForEvidence(content, evidence).toLowerCase();
   const evidenceText = evidence.toLowerCase();
   const basis = `${evidenceText}\n${text}`;
   const negated = firstRegex([
@@ -144,6 +176,8 @@ function isBlockedWaterLeakIssueContext(content: string, evidence: string): bool
     /\bno\s+(?:water\s+)?leakage\b/,
     /\bwithout\s+(?:any\s+)?leaks?\b/,
     /\bnever\s+(?:had\s+)?leaks?\b/,
+    /\bhave(?:n['’]?t| not)\s+had\s+(?:any\s+)?(?:issues?\s+with\s+)?leaks?\b/,
+    /\bno\s+issues?\s+with\s+leaks?\b/,
     /\bnot\s+leaking\b/,
   ], basis);
   const positiveDry = firstRegex([
@@ -151,19 +185,21 @@ function isBlockedWaterLeakIssueContext(content: string, evidence: string): bool
   ], basis) && !firstRegex([/\bnot waterproof\b/, /\bleak/, /\bwater (?:gets|got|came|comes|coming|enters|entered) (?:in|through)/], basis);
   const oldProduct = firstRegex([
     /\b(?:old|previous|last|other)\s+(?:pair|one|ones|waders?)\b[^.!?\n]{0,80}\bleak/,
+    /\b(?:numerous|many|several)\s+pairs?\s+of\s+waders?\s+in\s+the\s+past\b[^.!?\n]{0,120}\bleak/,
+    /\bwaders?\s+in\s+the\s+past\b[^.!?\n]{0,120}\bleak/,
     /\b(?:ones?|waders?)\s+(?:he|she|they|i|we)\s+had\b[^.!?\n]{0,80}\bleak/,
     /\b(?:pair|one|ones|waders?)\s+from\s+another\s+(?:company|brand)\b[^.!?\n]{0,100}\bleak/,
-  ], basis);
+    /\b(?:reviews?|complaints)\b[^.!?\n]{0,120}\b(?:leaks?|leaking|leaked)\b/,
+  ], `${basis}\n${windowText}`);
   const accessoryLeak = firstRegex([
-    /\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b[^.!?\n]{0,80}\b(?:leak|water gets in|wet|soak)/,
-    /\b(?:leak(?:ing|ed|s)?|water gets in|wet|soak)[^.!?\n]{0,80}\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b/,
-  ], basis);
-  const currentProduct = firstRegex([/\b(?:waders?|boot|boots|feet|foot|material|seam|neoprene)\b/, /\bnot\s+(?:100%\s+)?waterproof\b/], text);
+    /\b(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[\s\S]{0,220}\b(?:not waterproof|leak|water gets in|water leaks in|wet|soak|submerged)/,
+    /\b(?:not waterproof|leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[\s\S]{0,220}\b(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b/,
+  ], `${basis}\n${windowText}`);
   const evidenceAccessoryLeak = firstRegex([
     /\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b[^.!?\n]{0,80}\b(?:leak|water gets in|wet|soak)/,
     /\b(?:leak(?:ing|ed|s)?|water gets in|wet|soak)[^.!?\n]{0,80}\b(?:pockets?|storage pocket|hand warmer pocket|phone case|case|bag)\b/,
   ], evidenceText);
-  return negated || positiveDry || oldProduct || evidenceAccessoryLeak || (accessoryLeak && !currentProduct);
+  return negated || positiveDry || oldProduct || evidenceAccessoryLeak || accessoryLeak;
 }
 
 function hasCjk(value: string): boolean {

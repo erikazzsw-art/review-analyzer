@@ -513,6 +513,20 @@ File "database.py", line 13, in get_connection
 | 2026-07-29 | 删除后只读清理审计 | Erika 已手动删除本次产品及评论；Codex 做生产 DB 只读审计 | 用户侧 L1 已清干净；全局缓存仍存在复用风险 | 干净复测前需要 Erika 明确授权是否清理同批 content_hash 对应的全局已分析缓存。 |
 | 2026-07-29 | review_pool 授权清缓存 | 生产 DB 限定范围清缓存；仅置空同批全局分析缓存字段，不删除评论源 | `CLEARED`；未上传、未调用生产分析 API、未触发 credit/LLM | 清理范围限定在 TIDEWE WD001 人工样本对应 content_hash；精确行数、ID 和审计 JSON 留在私有本地记录。 |
 | 2026-07-29 | 清缓存后只读复核 | 生产 DB 只读复核 | 当前已满足干净重传前置条件 | 下一步必须由 Erika 手动在前端重传同一人工样本，并提供新结果页；该上传会真实消耗分析 credit 与 LLM 成本，Codex 不执行生产上传。 |
+| 2026-07-29 | session 119 干净重传只读验收 | `python3 tmp/production_tidewe_waders_step3_runner.py --validate-session 119 --artifact-dir tmp/5.9.8-step3-tidewe-waders-prod-20260729/session119-readonly`；读取 Erika 提供的 `/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-AGGREGATED-raw-reviews -0729.xlsx` | `REVIEW_NEEDED`；100/100 processed+analyzed；`comments.cache_hit_level/cache_hit_source/cache_source_id` 全空；`review_analyze=-100`；`review_pool` 仅回填同批 49 hash；Top/单标签无 propagated/unverified | 干净 L1 复测通过，但语义与导出一致性未过：`water_leaks_through` 仍包含 row 46 phone case、row 52 旧产品历史漏水、row 62 no-leaks 正向语境；`pocket_not_waterproof` 单标签 0 行；实际 raw 下载审计列有 issue propagated 9 行 / issue evidence false 10 行 / highlight propagated 44 行 / highlight evidence false 44 行，四件套 propagated/unverified 42 行。报告：`docs/5.9.8-step3-tidewe-waders-session119-acceptance-report.md`。 |
+
+---
+
+### 2026-07-29 5.9.8 Step 4 TIDEWE waders 标签漏标/错标主修复
+
+| 日期 | 范围 | 命令 | 结果 | 结论 |
+|------|------|------|------|------|
+| 2026-07-29 | 人工标注 vs session119 下载对照 | `python3` + `openpyxl` 只读加载 `/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-人工纠正标签.xlsx` 与 `/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-AGGREGATED-raw-reviews -0729.xlsx` | PASS；人工标签列与 session119 当前输出可比对 | 前台最高频 FP：Issue `water_leaks_through` 6；前台最高频 FN：Issue `breaks_easily` 9、`inaccurate_size_chart` 7、Highlight `fits_as_expected` 20、`good_value_for_the_price` 18、`keeps_water_out` 16；audit 最高频 FP 为四件套 propagated/unverified。 |
+| 2026-07-29 | 后端 Step 4 focused gold | `python3 -m pytest backend_api/tests/test_customer_label_waders_step4_gold.py -q` | PASS，3 passed in 0.89s | focused gold fixture 精确覆盖 phone case/pocket 漏水、旧产品历史漏水、no leaks 正向、真实小漏水召回、未实际使用、泛泛负评、cluster propagated/raw display 分离。 |
+| 2026-07-29 | 后端 Step 2 + 相关回归 | `python3 -m pytest backend_api/tests/test_customer_label_waders_step4_gold.py backend_api/tests/test_customer_label_waders_step2_gating.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_customer_label_50u_readiness.py backend_api/tests/test_outdoor_waders_taxonomy.py -q` | PASS，73 passed in 3.07s | Step 4 生成层修复未破坏 Step 2 展示 gating、通用 specific issue、Phase 5/6 export、50U readiness 与 outdoor/waders taxonomy 测试。 |
+| 2026-07-29 | 前端 raw XLSX / parser 类型检查 | `npm run typecheck`（cwd=`frontend`） | PASS，`tsc --noEmit` | 前端 raw review XLSX display/audit 分列、Customer Label parser、下载口径类型通过。 |
+| 2026-07-29 | diff whitespace 检查 | `git diff --check` | PASS | 本轮代码/文档 diff 无 whitespace error。 |
+| 2026-07-29 | 安全边界 | 本地文件读取、pytest、typecheck only | PASS | 未执行生产上传，未删除生产数据，未清理 production review_pool，未触发 production LLM、credit 或 reanalysis。 |
 
 ---
 
