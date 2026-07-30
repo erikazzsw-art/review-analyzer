@@ -9,6 +9,11 @@ from backend_api.app.services.customer_label_catalog import (
     CustomerLabelCatalogState,
     set_customer_label_catalog_state_for_tests,
 )
+from backend_api.app.services.customer_label_v2_candidate_pool import (
+    build_candidate_pool_artifact,
+    write_candidate_pool_csv,
+    write_candidate_pool_json_artifact,
+)
 from backend_api.app.services.customer_label_v2_shadow import (
     FOCUS_WADERS_LABELS,
     compare_customer_label_v2_shadow,
@@ -32,8 +37,10 @@ POSTDEPLOY_AUDIT = (
     / "session122-readonly"
     / "session122-postdeploy-readonly-acceptance-audit.json"
 )
-ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step3-verifier-safety-gate"
+ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step4-candidate-pool-mvp"
 ARTIFACT_PATH = ARTIFACT_DIR / "waders-shadow-summary.json"
+CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool.json"
+CANDIDATE_POOL_CSV_PATH = ARTIFACT_DIR / "candidate-pool.csv"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -160,7 +167,7 @@ def _candidate(
     }
 
 
-def _edge_case_runs() -> dict[str, Any]:
+def _edge_case_runs() -> tuple[dict[str, Any], list[dict[str, Any]]]:
     cases = {
         "invalid_json": run_customer_label_v2_shadow(
             {"id": "edge-invalid-json", "content": "No leaks.", "category": "outdoor", "sub_category": "waders"},
@@ -379,10 +386,15 @@ def _edge_case_runs() -> dict[str, Any]:
     }
     reason_counts: Counter[str] = Counter()
     display_violations: list[dict[str, Any]] = []
+    candidate_pool_case_names: list[str] = []
+    candidate_pool_raw_count = 0
     for name, result in cases.items():
         for audit in result["audit_occurrences"]:
             for reason in audit.get("downgrade_reasons") or []:
                 reason_counts[str(reason)] += 1
+        if result.get("candidate_pool_items"):
+            candidate_pool_case_names.append(name)
+            candidate_pool_raw_count += len(result["candidate_pool_items"])
         if name in {
             "invalid_json",
             "evidence_missing",
@@ -404,8 +416,10 @@ def _edge_case_runs() -> dict[str, Any]:
         "case_count": len(cases),
         "downgrade_reasons": dict(sorted(reason_counts.items())),
         "display_violations": display_violations,
+        "candidate_pool_case_names": sorted(candidate_pool_case_names),
+        "candidate_pool_raw_count": candidate_pool_raw_count,
         "status": "PASS" if not display_violations else "REVIEW_NEEDED",
-    }
+    }, list(cases.values())
 
 
 def _add_precision_recall(dataset: dict[str, Any]) -> dict[str, Any]:
@@ -464,7 +478,7 @@ def main() -> None:
                 blocked_keys=_blocked_from_review,
             )
         )
-        edge_cases = _edge_case_runs()
+        edge_cases, edge_case_shadow_results = _edge_case_runs()
         datasets = [session120, session121, session122]
         focus_metrics = _aggregate_focus_metrics(datasets)
         p0_violations = [
@@ -476,9 +490,27 @@ def main() -> None:
             if int(metrics.get("fp") or 0) or int(metrics.get("fn") or 0):
                 p0_violations.append({"label": key, "metrics": metrics})
         postdeploy = _load_json(POSTDEPLOY_AUDIT) if POSTDEPLOY_AUDIT.exists() else {}
+        candidate_pool_artifact = build_candidate_pool_artifact(
+            edge_case_shadow_results,
+            scope="5.9.9 Step 4 candidate pool MVP local waders shadow replay",
+            source_artifacts=[
+                str(SESSION120_GOLD.relative_to(ROOT)),
+                str(SESSION121_FIXTURE.relative_to(ROOT)),
+                str(SESSION122_RESULTS.relative_to(ROOT)),
+                str(SESSION122_ACCEPTANCE.relative_to(ROOT)),
+            ],
+        )
+        candidate_pool_json_path = write_candidate_pool_json_artifact(
+            CANDIDATE_POOL_ARTIFACT_PATH,
+            candidate_pool_artifact,
+        )
+        candidate_pool_csv_path = write_candidate_pool_csv(
+            CANDIDATE_POOL_CSV_PATH,
+            candidate_pool_artifact["candidate_pool_items"],
+        )
         artifact = {
             "status": "PASS" if not p0_violations and edge_cases["status"] == "PASS" else "REVIEW_NEEDED",
-            "scope": "5.9.9 Step 3 verifier safety gate local shadow replay",
+            "scope": "5.9.9 Step 4 candidate pool MVP local shadow replay",
             "llm_called": False,
             "production_upload": False,
             "production_write_path": False,
@@ -488,6 +520,16 @@ def main() -> None:
             "datasets": datasets,
             "session121_required_blocked_gate": _required_boundary_summary(session121_reviews),
             "edge_cases": edge_cases,
+            "candidate_pool_mvp": {
+                "schema_version": candidate_pool_artifact["schema_version"],
+                "raw_item_count": candidate_pool_artifact["raw_item_count"],
+                "item_count": candidate_pool_artifact["item_count"],
+                "dedupe_fields": candidate_pool_artifact["dedupe_fields"],
+                "sort_priority": candidate_pool_artifact["sort_priority"],
+                "review_action_contract": candidate_pool_artifact["review_action_contract"],
+                "artifact_json": str(candidate_pool_json_path.relative_to(ROOT)),
+                "artifact_csv": str(candidate_pool_csv_path.relative_to(ROOT)),
+            },
             "aggregate_focus_label_metrics": focus_metrics,
             "aggregate_downgrade_reasons": _aggregate_downgrades(datasets, edge_cases),
             "p0_count": len(p0_violations),
@@ -506,7 +548,11 @@ def main() -> None:
                 str(SESSION122_ACCEPTANCE.relative_to(ROOT)),
                 str(POSTDEPLOY_AUDIT.relative_to(ROOT)),
             ],
-            "artifact_files_written": [str(ARTIFACT_PATH.relative_to(ROOT))],
+            "artifact_files_written": [
+                str(ARTIFACT_PATH.relative_to(ROOT)),
+                str(candidate_pool_json_path.relative_to(ROOT)),
+                str(candidate_pool_csv_path.relative_to(ROOT)),
+            ],
         }
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
         ARTIFACT_PATH.write_text(json.dumps(artifact, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

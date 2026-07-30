@@ -8,6 +8,17 @@
 
 ---
 
+### 2026-07-30 5.9.9 Customer Label System v2 Step 4：Candidate Pool MVP + audit export
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | candidate-pool-helper | 新增本地 pure helper `backend_api/app/services/customer_label_v2_candidate_pool.py`，从 `run_customer_label_v2_shadow` 结果收集 `candidate_pool_items`，支持按 `canonical_label_key` / `raw_label` / `sub_category` / `downgrade_reasons` 去重，聚合 review/session/product/source candidate IDs，并按 downgrade reason priority、review count、impact score、confidence 稳定排序。 | `PASS`：focused tests 覆盖 unknown label aggregation/dedupe、maturity blocked aggregation/dedupe、mixed downgrade reason priority、required fields、display occurrence 不进 candidate pool、audit-only occurrence 不进 candidate pool 除非触发 unknown/maturity gate。 |
+| 2026-07-30 | artifact-export | `scripts/customer_label_v2_waders_shadow_replay.py` 升级为 Step 4 artifact 输出，新增候选池 JSON/CSV 本地导出：`tmp/5.9.9-step4-candidate-pool-mvp/candidate-pool.json`、`candidate-pool.csv`，主 replay artifact 为 `waders-shadow-summary.json`。 | `PASS`：candidate pool artifact schema `customer-label-v2-candidate-pool-mvp.1`；raw item `2`、deduped item `2`；包含 contract minimum fields 与安全标记；无 production upload / reanalysis / DB write / credit / LLM。 |
+| 2026-07-30 | review-action-contract | 定义本地 pure review action validation helper，支持 `accept`、`reject`、`correct_label`、`correct_evidence`、`needs_new_label`、`ignore`；仅做 schema validation，不写 DB。 | `PASS`：focused tests 覆盖 valid/invalid action、`correct_label` 条件字段、`correct_evidence` 条件字段、`needs_new_label` 条件字段。 |
+| 2026-07-30 | waders-step4-shadow-replay | Step 4 replay 继续使用 session120 human gold、session121 blind boundary fixture、session122 postdeploy acceptance summary 做 shadow 对比；frontstage 仍只消费 5.9.8 v1/current display occurrences。 | `PASS`：session120 issue/highlight TP/FP/FN `22/0/0`、`49/0/0`；session121 `11/0/0`、`2/0/0`；session122 `16/0/0`、`26/0/0`；六个重点标签 FP/FN=0；waders P0=`0`。报告：`docs/5.9.9-step4-candidate-pool-mvp.md`。 |
+
+---
+
 ### 2026-07-30 5.9.9 Customer Label System v2 Step 3：Verifier safety gate + candidate pool MVP
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -99,7 +110,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 2 shadow 已 PASS，下一步进入候选池/审核 MVP；ABSA 延后为条件触发 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 4 candidate pool MVP 已 PASS，下一步进入轻量审核入口与类目成熟度灰度；ABSA 延后为条件触发 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -148,7 +159,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 3 已完成：本地 mock/fixture shadow runner + verifier safety gate + candidate pool MVP contract + waders replay artifact PASS，P0=0 | Step 4：candidate pool 轻量审核入口/导出 MVP，继续保持 frontstage 只读 display occurrences |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 4 已完成：candidate pool collector/helper、JSON/CSV artifact export、review action validation contract、waders replay artifact PASS，P0=0 | Step 4.5/5：轻量审核入口、类目成熟度与 10 个大类 L1/L2 灰度，继续保持 frontstage 只读 display occurrences |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -1249,7 +1260,7 @@ readiness 节奏：
 
 #### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 进行中（Step 2 本地 LLM evidence-first shadow run 已 PASS；下一步进入 Step 3/4 candidate pool 与审核闭环 MVP）
+**状态：** 进行中（Step 4 candidate pool MVP + audit export 已 PASS；下一步进入 Step 4.5 轻量审核入口与 Step 5 类目成熟度灰度）
 
 **调整原因：**
 - 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
@@ -1293,12 +1304,14 @@ readiness 节奏：
   - 新增 deterministic verifier 雏形，输出 `verified_occurrences` / `display_occurrences` / `audit_occurrences` / `candidate_pool_items`，并覆盖 invalid JSON、evidence missing/not found、旧产品/他牌/配件漏水、正负防水、泛泛好评四件套抑制。
   - 用 waders session120 human gold、session121 blind boundary fixture、session122 postdeploy acceptance summary 做 shadow 对比：P0=`0`，evidence locate rate `100%`，focused label FP/FN 均为 `0`。
   - 输出 `docs/5.9.9-step2-llm-evidence-first-shadow-run.md` 与 `tmp/5.9.9-step2-customer-label-v2-shadow-run/waders-shadow-summary.json`。
-- [ ] **Step 3: Verifier 与 safety gate**
-  - 抽出通用 verifier：evidence 定位、source-review 验证、aspect allow-list、context guard、confidence 降级。
-  - 旧规则只作为 fallback / guard，不再作为未来类目的主生成模板。
-- [ ] **Step 4: Candidate pool 与人工审核**
-  - 将低置信、未定位 evidence、新 label、LLM/rule 冲突、Top 异常写入候选池。
-  - 审核结果可沉淀为 catalog、alias、boundary note、few-shot 示例或 gold regression。
+- [x] **Step 3: Verifier 与 safety gate**
+  - 已抽出 verifier context/outcome、display gate、downgrade reason 聚合和 candidate pool minimum item schema。
+  - Verifier 继续覆盖 evidence 定位、source-review 验证、aspect allow-list、context guard、confidence 降级、maturity gate；旧规则只作为 fallback / guard，不再作为未来类目的主生成模板。
+  - 输出 `docs/5.9.9-step3-verifier-safety-gate.md` 与 `tmp/5.9.9-step3-verifier-safety-gate/waders-shadow-summary.json`。
+- [x] **Step 4: Candidate pool MVP + audit export**
+  - 新增本地 collector/helper，支持从 shadow result 收集 candidate pool items、按 contract key 去重、聚合 review/session/product/source IDs、按 downgrade priority / review count / impact / confidence 稳定排序。
+  - 新增本地 JSON/CSV artifact export 与 review action validation contract；审核动作支持 `accept`、`reject`、`correct_label`、`correct_evidence`、`needs_new_label`、`ignore`，本轮仅做 pure validation，不写 DB。
+  - 输出 `docs/5.9.9-step4-candidate-pool-mvp.md`、`tmp/5.9.9-step4-candidate-pool-mvp/waders-shadow-summary.json`、`candidate-pool.json`、`candidate-pool.csv`。
 - [ ] **Step 4.5: 轻量 candidate pool 审核入口**
   - MVP 形态可以是 DB 表 + CSV/XLSX 导出，也可以是最小后台页；必须能看到原评论、AI label、evidence、降级原因、Top 影响和相似 bad case。
   - 审核动作先限制为 `accept`、`reject`、`correct_label`、`correct_evidence`、`needs_new_label`、`ignore`，避免一开始做重型审核系统。
