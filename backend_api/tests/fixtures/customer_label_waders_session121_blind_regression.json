@@ -73,6 +73,22 @@
       "required_highlight_keys": ["fits_as_expected"],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": []
+    },
+    {
+      "id": "session122-do-not-keep-you-dry",
+      "content": "They do not keep you dry.",
+      "required_issue_keys": ["water_leaks_through"],
+      "required_highlight_keys": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": ["keeps_water_out"]
+    },
+    {
+      "id": "session122-other-neoprene-waders-leak",
+      "content": "These waders are awesome. I have spent hundreds of dollars on other neoprene waders that continue to leak and lead to a less than optimal fishing experience. These waders are lightweight and keep you dry. They also dry out super quick between wears. So far, I have had them for a couple weeks and I am completely satisfied.",
+      "required_issue_keys": [],
+      "required_highlight_keys": ["keeps_water_out"],
+      "blocked_issue_keys": ["water_leaks_through"],
+      "blocked_highlight_keys": []
     }
   ]
 }

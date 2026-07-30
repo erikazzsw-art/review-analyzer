@@ -538,7 +538,8 @@ File "database.py", line 13, in get_connection
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
 |------|---------|------|---------|
-| 2026-07-30 | 勘误 | session121 对应构建后续确认未成功通过 CI/CD 部署，因此先前基于 session121 的 production download 结论作废；真正的部署后生产下载改以 session122 `/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-AGGREGATED-301-350.xlsx` 为准 | `tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/download-file-audit.json` status=PASS；`frontstage_verified_violations=[]`；`Raw Reviews` 50 行 / 15 列；`Label Audit` 50 行 / 30 列；`Audit ...` 分列已落地 |
+| 2026-07-30 | 勘误 | session121 对应构建后续确认未成功通过 CI/CD 部署，因此先前基于 session121 的 production download 结论作废；真正的部署后生产下载改以 session122 `/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-AGGREGATED-301-350.xlsx` 为准 | 下载结构 `download-file-audit.json` status=PASS，Raw Reviews 50 行 / 15 列、Label Audit 50 行 / 30 列；但完整验收 `session122-full-acceptance-audit.json` 为 `REVIEW_NEEDED`，生产 raw 前台 `water_leaks_through` P0=2：row 9 旧/他牌漏水污染，row 38 当前产品漏水漏召回。 |
+| 2026-07-30 | session122 P0 窄修复回归 | `python3 -m pytest backend_api/tests/test_customer_label_waders_session121_blind_regression.py -q`；`python3 -m pytest backend_api/tests/test_customer_label_waders_step4_gold.py -q`；waders 目标回归 9 文件；`npm run typecheck`；`git diff --check` | PASS，`2 passed in 0.50s`；PASS，`3 passed in 1.65s`；PASS，`82 passed in 6.10s`；frontend typecheck PASS；diff check PASS。本地 post-fix session122 只读回放 `validation.status=PASS`，six single-tag equivalent exports PASS；仍需部署后重新生产下载验收。 |
 
 ---
 

@@ -192,7 +192,7 @@ function isBlockedWaterLeakIssueContext(content: string, evidence: string): bool
     /\b(?:remained|stayed|kept|keep|keeps)\s+(?:(?:me|you|us|him|her|them|my\s+\w+|your\s+\w+|his\s+\w+|her\s+\w+|their\s+\w+)\s+)?(?:\w+ly\s+)?dry\b/,
   ], basis) && !firstRegex([/\bnot waterproof\b/, /\bleak/, /\bwater (?:gets|got|came|comes|coming|enters|entered) (?:in|through)/], basis);
   const oldProduct = firstRegex([
-    /\b(?:old|previous|last|other)\s+(?:pair|one|ones|waders?)\b[^.!?\n]{0,80}\bleak/,
+    /\b(?:old|previous|last|other)\s+(?:[\w'-]+\s+){0,4}(?:pair|one|ones|waders?)\b[^.!?\n]{0,120}\bleak/,
     /\b(?:numerous|many|several)\s+pairs?\s+of\s+waders?\s+in\s+the\s+past\b[^.!?\n]{0,120}\bleak/,
     /\bwaders?\s+in\s+the\s+past\b[^.!?\n]{0,120}\bleak/,
     /\b(?:ones?|waders?)\s+(?:he|she|they|i|we)\s+had\b[^.!?\n]{0,80}\bleak/,
