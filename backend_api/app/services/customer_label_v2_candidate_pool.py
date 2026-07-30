@@ -3,12 +3,15 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 CANDIDATE_POOL_MVP_SCHEMA_VERSION = "customer-label-v2-candidate-pool-mvp.1"
+REVIEWED_CANDIDATE_POOL_MVP_SCHEMA_VERSION = "customer-label-v2-candidate-pool-reviewed-mvp.1"
 CANDIDATE_POOL_PENDING_STATUS = "pending"
+DETERMINISTIC_REVIEWED_AT = "2026-07-30T00:00:00Z"
 CANDIDATE_POOL_REQUIRED_FIELDS = (
     "candidate_id",
     "review_id",
@@ -39,6 +42,14 @@ CANDIDATE_POOL_REVIEW_ACTIONS = {
     "needs_new_label",
     "ignore",
 }
+CANDIDATE_POOL_REVIEW_STATUS_BY_ACTION = {
+    "accept": "accepted",
+    "reject": "rejected",
+    "ignore": "ignored",
+    "correct_label": "corrected_label",
+    "correct_evidence": "corrected_evidence",
+    "needs_new_label": "needs_new_label",
+}
 VALID_LABEL_TYPES = {"issue", "highlight"}
 
 DOWNGRADE_REASON_PRIORITY = {
@@ -67,6 +78,19 @@ CSV_EXPORT_FIELDS = CANDIDATE_POOL_REQUIRED_FIELDS + (
     "session_ids",
     "product_ids",
     "source_candidate_ids",
+)
+REVIEWED_CSV_EXPORT_FIELDS = CSV_EXPORT_FIELDS + (
+    "source_review_status",
+    "action",
+    "action_applied",
+    "validation_errors",
+    "reviewed_at",
+    "reviewer",
+    "note",
+    "output_label_type",
+    "output_canonical_label_key",
+    "output_raw_label",
+    "output_evidence_candidate",
 )
 
 
@@ -408,3 +432,267 @@ def validate_candidate_pool_review_action(payload: dict[str, Any]) -> dict[str, 
         note=_clean_text(payload.get("note")) or None,
     ).as_dict()
     return {"valid": not errors, "errors": errors, "action": action}
+
+
+def _candidate_pool_items_from_input(candidate_pool: dict[str, Any] | Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    if isinstance(candidate_pool, dict):
+        items = candidate_pool.get("candidate_pool_items")
+        if isinstance(items, list):
+            return [item for item in items if isinstance(item, dict)]
+        if candidate_pool_required_fields_present(candidate_pool):
+            return [candidate_pool]
+        return []
+    if isinstance(candidate_pool, (str, bytes)):
+        return []
+    return [item for item in candidate_pool if isinstance(item, dict)]
+
+
+def _review_actions_from_input(review_actions: dict[str, Any] | Iterable[dict[str, Any]]) -> list[Any]:
+    if isinstance(review_actions, dict):
+        return [review_actions]
+    if isinstance(review_actions, (str, bytes)):
+        return [review_actions]
+    return list(review_actions)
+
+
+def _action_payload(action: Any) -> Any:
+    if isinstance(action, CandidatePoolReviewAction):
+        return action.as_dict()
+    return action
+
+
+def _review_output_for_action(source_item: dict[str, Any], action: dict[str, Any]) -> dict[str, Any]:
+    action_name = _clean_text(action.get("action"))
+    review_status = CANDIDATE_POOL_REVIEW_STATUS_BY_ACTION[action_name]
+    output: dict[str, Any] = {"action_result": review_status}
+    if action_name == "correct_label":
+        output.update(
+            {
+                "label_type": action.get("label_type"),
+                "canonical_label_key": action.get("canonical_label_key"),
+                "raw_label": action.get("raw_label") or source_item.get("raw_label"),
+                "evidence_candidate": action.get("evidence_candidate") or source_item.get("evidence_candidate"),
+            }
+        )
+    elif action_name == "correct_evidence":
+        output.update(
+            {
+                "label_type": source_item.get("label_type"),
+                "canonical_label_key": source_item.get("canonical_label_key"),
+                "raw_label": source_item.get("raw_label"),
+                "evidence_candidate": action.get("evidence_candidate"),
+            }
+        )
+    elif action_name == "needs_new_label":
+        output.update(
+            {
+                "label_type": action.get("label_type") or source_item.get("label_type"),
+                "canonical_label_key": action.get("canonical_label_key") or source_item.get("canonical_label_key"),
+                "raw_label": action.get("raw_label"),
+                "evidence_candidate": action.get("evidence_candidate") or source_item.get("evidence_candidate"),
+            }
+        )
+    return output
+
+
+def _reviewed_item_without_action(source_item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "candidate_id": source_item.get("candidate_id"),
+        "source_candidate_item": dict(source_item),
+        "review_status": source_item.get("review_status") or CANDIDATE_POOL_PENDING_STATUS,
+        "reviewed_at": None,
+        "action": None,
+        "action_applied": False,
+        "validation_errors": [],
+        "review_output": {},
+    }
+
+
+def _apply_review_action_to_item(
+    source_item: dict[str, Any],
+    validation: dict[str, Any] | None,
+    *,
+    reviewed_at: str,
+) -> dict[str, Any]:
+    if not validation:
+        return _reviewed_item_without_action(source_item)
+
+    action = validation.get("action") or {}
+    errors = list(validation.get("errors") or [])
+    if not validation.get("valid"):
+        reviewed = _reviewed_item_without_action(source_item)
+        reviewed.update(
+            {
+                "reviewed_at": reviewed_at,
+                "action": action,
+                "validation_errors": errors,
+            }
+        )
+        return reviewed
+
+    action_name = _clean_text(action.get("action"))
+    review_status = CANDIDATE_POOL_REVIEW_STATUS_BY_ACTION[action_name]
+    return {
+        "candidate_id": source_item.get("candidate_id"),
+        "source_candidate_item": dict(source_item),
+        "review_status": review_status,
+        "reviewed_at": reviewed_at,
+        "action": action,
+        "action_applied": True,
+        "validation_errors": [],
+        "review_output": _review_output_for_action(source_item, action),
+    }
+
+
+def build_reviewed_candidate_pool_artifact(
+    candidate_pool: dict[str, Any] | Iterable[dict[str, Any]],
+    review_actions: dict[str, Any] | Iterable[dict[str, Any]],
+    *,
+    scope: str = "5.9.9 Step 4.5 candidate pool review entry MVP local artifact",
+    reviewed_at: str = DETERMINISTIC_REVIEWED_AT,
+    source_artifacts: list[str] | None = None,
+) -> dict[str, Any]:
+    source_items = sort_candidate_pool_items(_candidate_pool_items_from_input(candidate_pool))
+    source_candidate_ids = {_clean_text(item.get("candidate_id")) for item in source_items}
+    candidate_pool_schema = candidate_pool.get("schema_version") if isinstance(candidate_pool, dict) else None
+    inherited_source_artifacts = candidate_pool.get("source_artifacts") if isinstance(candidate_pool, dict) else []
+    reviewed_at = _clean_text(reviewed_at) or DETERMINISTIC_REVIEWED_AT
+
+    validations: list[dict[str, Any]] = []
+    action_by_candidate_id: dict[str, dict[str, Any]] = {}
+    action_audit: list[dict[str, Any]] = []
+
+    for index, raw_action in enumerate(_review_actions_from_input(review_actions)):
+        validation = validate_candidate_pool_review_action(_action_payload(raw_action))
+        action = validation.get("action") or {}
+        candidate_id = _clean_text(action.get("candidate_id"))
+        validation_record = {
+            "index": index,
+            "candidate_id": candidate_id,
+            "action": _clean_text(action.get("action")),
+            "valid": bool(validation.get("valid")),
+            "errors": list(validation.get("errors") or []),
+            "action_payload": action,
+        }
+        validations.append(validation_record)
+
+        if not candidate_id or candidate_id not in source_candidate_ids:
+            errors = list(validation_record["errors"])
+            if candidate_id and candidate_id not in source_candidate_ids:
+                errors.append("candidate_not_found")
+            action_audit.append({**validation_record, "errors": errors, "reviewed_at": reviewed_at})
+            continue
+        if candidate_id in action_by_candidate_id:
+            action_audit.append(
+                {
+                    **validation_record,
+                    "errors": list(validation_record["errors"]) + ["duplicate_action_for_candidate"],
+                    "reviewed_at": reviewed_at,
+                }
+            )
+            continue
+        action_by_candidate_id[candidate_id] = validation
+        if not validation.get("valid"):
+            action_audit.append({**validation_record, "reviewed_at": reviewed_at})
+
+    reviewed_items = [
+        _apply_review_action_to_item(
+            item,
+            action_by_candidate_id.get(_clean_text(item.get("candidate_id"))),
+            reviewed_at=reviewed_at,
+        )
+        for item in source_items
+    ]
+    status_counts: dict[str, int] = {}
+    for item in reviewed_items:
+        status = _clean_text(item.get("review_status"))
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+    source_artifact_paths = list(source_artifacts or [])
+    if inherited_source_artifacts:
+        source_artifact_paths.extend(str(path) for path in inherited_source_artifacts)
+
+    return {
+        "schema_version": REVIEWED_CANDIDATE_POOL_MVP_SCHEMA_VERSION,
+        "source_schema_version": candidate_pool_schema or CANDIDATE_POOL_MVP_SCHEMA_VERSION,
+        "scope": scope,
+        "status": "PASS" if not action_audit else "REVIEW_NEEDED",
+        "reviewed_at": reviewed_at,
+        "source_item_count": len(source_items),
+        "reviewed_item_count": len(reviewed_items),
+        "reviewed_candidate_pool_items": reviewed_items,
+        "review_action_contract": candidate_pool_review_action_contract(),
+        "review_action_summary": {
+            "action_count": len(validations),
+            "valid_action_count": sum(1 for validation in validations if validation["valid"]),
+            "invalid_action_count": sum(1 for validation in validations if not validation["valid"]),
+            "applied_action_count": sum(1 for item in reviewed_items if item.get("action_applied")),
+            "audit_error_count": len(action_audit),
+            "status_counts": dict(sorted(status_counts.items())),
+        },
+        "action_audit": action_audit,
+        "source_artifacts": source_artifact_paths,
+        "safety": {
+            "production_upload": False,
+            "production_write_path": False,
+            "production_db_write": False,
+            "db_write": False,
+            "credit_consumed": False,
+            "llm_called": False,
+            "frontstage_replaced": False,
+            "frontstage_mutated": False,
+        },
+    }
+
+
+def write_reviewed_candidate_pool_json_artifact(path: Path, artifact: dict[str, Any]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
+def _reviewed_items_from_input(reviewed_artifact: dict[str, Any] | Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    if isinstance(reviewed_artifact, dict):
+        items = reviewed_artifact.get("reviewed_candidate_pool_items")
+        if isinstance(items, list):
+            return [item for item in items if isinstance(item, dict)]
+        if "source_candidate_item" in reviewed_artifact:
+            return [reviewed_artifact]
+        return []
+    if isinstance(reviewed_artifact, (str, bytes)):
+        return []
+    return [item for item in reviewed_artifact if isinstance(item, dict)]
+
+
+def write_reviewed_candidate_pool_csv(
+    path: Path,
+    reviewed_artifact: dict[str, Any] | Iterable[dict[str, Any]],
+) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=REVIEWED_CSV_EXPORT_FIELDS, extrasaction="ignore")
+        writer.writeheader()
+        for reviewed_item in _reviewed_items_from_input(reviewed_artifact):
+            source = dict(reviewed_item.get("source_candidate_item") or {})
+            action = dict(reviewed_item.get("action") or {})
+            output = dict(reviewed_item.get("review_output") or {})
+            row = dict(source)
+            row["source_review_status"] = source.get("review_status")
+            row["review_status"] = reviewed_item.get("review_status")
+            row["action"] = action.get("action") or ""
+            row["action_applied"] = reviewed_item.get("action_applied")
+            row["validation_errors"] = "|".join(
+                _clean_text(error) for error in reviewed_item.get("validation_errors") or []
+            )
+            row["reviewed_at"] = reviewed_item.get("reviewed_at") or ""
+            row["reviewer"] = action.get("reviewer") or ""
+            row["note"] = action.get("note") or ""
+            row["output_label_type"] = output.get("label_type") or ""
+            row["output_canonical_label_key"] = output.get("canonical_label_key") or ""
+            row["output_raw_label"] = output.get("raw_label") or ""
+            row["output_evidence_candidate"] = output.get("evidence_candidate") or ""
+            for list_field in ("downgrade_reasons", "review_ids", "session_ids", "product_ids", "source_candidate_ids"):
+                if list_field in row:
+                    row[list_field] = "|".join(_clean_text(value) for value in row[list_field])
+            writer.writerow(row)
+    return path

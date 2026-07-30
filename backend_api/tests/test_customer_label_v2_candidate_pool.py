@@ -14,11 +14,14 @@ from backend_api.app.services.customer_label_v2_candidate_pool import (
     CANDIDATE_POOL_REQUIRED_FIELDS,
     aggregate_candidate_pool_items,
     build_candidate_pool_artifact,
+    build_reviewed_candidate_pool_artifact,
     candidate_pool_required_fields_present,
     collect_candidate_pool_items,
     validate_candidate_pool_review_action,
     write_candidate_pool_csv,
     write_candidate_pool_json_artifact,
+    write_reviewed_candidate_pool_csv,
+    write_reviewed_candidate_pool_json_artifact,
 )
 from backend_api.app.services.customer_label_v2_shadow import (
     display_keys_from_shadow,
@@ -73,6 +76,31 @@ def _candidate(
         "evidence_candidate": evidence,
         "confidence": confidence,
         "reason": "candidate pool fixture",
+    }
+
+
+def _pool_item(
+    candidate_id: str,
+    *,
+    canonical: str = "candidate:boot_seam_leak",
+    raw_label: str = "Boot seam leak",
+    downgrade_reasons: list[str] | None = None,
+) -> dict[str, Any]:
+    return {
+        "candidate_id": candidate_id,
+        "review_id": f"review-{candidate_id}",
+        "session_id": 120,
+        "product_id": "TIDEWE-WD001",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": canonical,
+        "raw_label": raw_label,
+        "evidence_candidate": "boot seam leaked",
+        "confidence": 0.86,
+        "downgrade_reasons": downgrade_reasons or ["unknown_label"],
+        "top_impact_score": 0.86,
+        "review_status": "pending",
     }
 
 
@@ -262,3 +290,189 @@ def test_candidate_pool_json_and_csv_exports_are_local_artifacts(tmp_path: Path)
     assert loaded["item_count"] == 1
     assert loaded["safety"]["production_db_write"] is False
     assert "candidate_id,review_id,session_id,product_id" in csv_path.read_text(encoding="utf-8")
+
+
+def test_candidate_pool_review_apply_accept_reject_ignore_status_transitions() -> None:
+    items = [
+        _pool_item("pool:accept", raw_label="Accept me"),
+        _pool_item("pool:reject", raw_label="Reject me"),
+        _pool_item("pool:ignore", raw_label="Ignore me"),
+    ]
+
+    artifact = build_reviewed_candidate_pool_artifact(
+        {"candidate_pool_items": items},
+        [
+            {"candidate_id": "pool:accept", "action": "accept", "reviewer": "erika-fixture"},
+            {"candidate_id": "pool:reject", "action": "reject"},
+            {"candidate_id": "pool:ignore", "action": "ignore"},
+        ],
+    )
+
+    by_id = {item["candidate_id"]: item for item in artifact["reviewed_candidate_pool_items"]}
+    assert by_id["pool:accept"]["review_status"] == "accepted"
+    assert by_id["pool:reject"]["review_status"] == "rejected"
+    assert by_id["pool:ignore"]["review_status"] == "ignored"
+    assert all(item["source_candidate_item"]["review_status"] == "pending" for item in by_id.values())
+    assert artifact["review_action_summary"]["status_counts"] == {
+        "accepted": 1,
+        "ignored": 1,
+        "rejected": 1,
+    }
+
+
+def test_candidate_pool_review_correct_label_required_fields_and_output() -> None:
+    source = _pool_item("pool:correct-label")
+    invalid = build_reviewed_candidate_pool_artifact(
+        {"candidate_pool_items": [source]},
+        [{"candidate_id": "pool:correct-label", "action": "correct_label"}],
+    )
+    invalid_item = invalid["reviewed_candidate_pool_items"][0]
+    assert invalid_item["review_status"] == "pending"
+    assert invalid_item["action_applied"] is False
+    assert {"label_type_required", "canonical_label_key_required"} <= set(invalid_item["validation_errors"])
+
+    valid = build_reviewed_candidate_pool_artifact(
+        {"candidate_pool_items": [source]},
+        [
+            {
+                "candidate_id": "pool:correct-label",
+                "action": "correct_label",
+                "label_type": "highlight",
+                "canonical_label_key": "keeps_water_out",
+                "raw_label": "Keeps water out",
+            }
+        ],
+    )
+    reviewed = valid["reviewed_candidate_pool_items"][0]
+    assert reviewed["review_status"] == "corrected_label"
+    assert reviewed["review_output"]["label_type"] == "highlight"
+    assert reviewed["review_output"]["canonical_label_key"] == "keeps_water_out"
+    assert reviewed["review_output"]["raw_label"] == "Keeps water out"
+    assert reviewed["source_candidate_item"]["canonical_label_key"] == "candidate:boot_seam_leak"
+
+
+def test_candidate_pool_review_correct_evidence_required_fields_and_output() -> None:
+    source = _pool_item("pool:correct-evidence")
+    invalid = build_reviewed_candidate_pool_artifact(
+        {"candidate_pool_items": [source]},
+        [{"candidate_id": "pool:correct-evidence", "action": "correct_evidence"}],
+    )
+    assert invalid["reviewed_candidate_pool_items"][0]["review_status"] == "pending"
+    assert invalid["reviewed_candidate_pool_items"][0]["validation_errors"] == ["evidence_candidate_required"]
+
+    valid = build_reviewed_candidate_pool_artifact(
+        {"candidate_pool_items": [source]},
+        [
+            {
+                "candidate_id": "pool:correct-evidence",
+                "action": "correct_evidence",
+                "evidence_candidate": "leaked on the first trip",
+            }
+        ],
+    )
+    reviewed = valid["reviewed_candidate_pool_items"][0]
+    assert reviewed["review_status"] == "corrected_evidence"
+    assert reviewed["review_output"]["canonical_label_key"] == source["canonical_label_key"]
+    assert reviewed["review_output"]["evidence_candidate"] == "leaked on the first trip"
+    assert reviewed["source_candidate_item"]["evidence_candidate"] == "boot seam leaked"
+
+
+def test_candidate_pool_review_needs_new_label_required_fields_and_output() -> None:
+    source = _pool_item("pool:new-label")
+    invalid = build_reviewed_candidate_pool_artifact(
+        {"candidate_pool_items": [source]},
+        [{"candidate_id": "pool:new-label", "action": "needs_new_label"}],
+    )
+    assert invalid["reviewed_candidate_pool_items"][0]["review_status"] == "pending"
+    assert invalid["reviewed_candidate_pool_items"][0]["validation_errors"] == ["raw_label_required"]
+
+    valid = build_reviewed_candidate_pool_artifact(
+        {"candidate_pool_items": [source]},
+        [
+            {
+                "candidate_id": "pool:new-label",
+                "action": "needs_new_label",
+                "raw_label": "Boot seam leak",
+                "note": "Promote to catalog backlog only.",
+            }
+        ],
+    )
+    reviewed = valid["reviewed_candidate_pool_items"][0]
+    assert reviewed["review_status"] == "needs_new_label"
+    assert reviewed["review_output"]["raw_label"] == "Boot seam leak"
+    assert reviewed["review_output"]["evidence_candidate"] == source["evidence_candidate"]
+
+
+def test_candidate_pool_review_invalid_action_is_audit_error_only() -> None:
+    source = _pool_item("pool:invalid")
+    artifact = build_reviewed_candidate_pool_artifact(
+        {"candidate_pool_items": [source]},
+        [{"candidate_id": "pool:invalid", "action": "merge"}],
+    )
+    reviewed = artifact["reviewed_candidate_pool_items"][0]
+
+    assert artifact["status"] == "REVIEW_NEEDED"
+    assert artifact["review_action_summary"]["applied_action_count"] == 0
+    assert artifact["action_audit"][0]["errors"] == ["action_invalid"]
+    assert reviewed["review_status"] == "pending"
+    assert reviewed["action_applied"] is False
+    assert reviewed["source_candidate_item"] == source
+
+
+def test_candidate_pool_review_unknown_label_keeps_source_candidate_trace() -> None:
+    pool = build_candidate_pool_artifact([_unknown_result("trace-r1"), _unknown_result("trace-r2")])
+    source_item = pool["candidate_pool_items"][0]
+    artifact = build_reviewed_candidate_pool_artifact(
+        pool,
+        [
+            {
+                "candidate_id": source_item["candidate_id"],
+                "action": "needs_new_label",
+                "raw_label": source_item["raw_label"],
+            }
+        ],
+    )
+    reviewed = artifact["reviewed_candidate_pool_items"][0]
+    source = reviewed["source_candidate_item"]
+
+    assert reviewed["review_status"] == "needs_new_label"
+    assert source["canonical_label_key"] == "candidate:boot_seam_leak"
+    assert source["downgrade_reasons"] == ["unknown_label"]
+    assert source["review_ids"] == ["trace-r1", "trace-r2"]
+    assert all(str(candidate_id).startswith("shadow:trace-r") for candidate_id in source["source_candidate_ids"])
+
+
+def test_candidate_pool_review_maturity_blocked_keeps_downgrade_reasons() -> None:
+    pool = build_candidate_pool_artifact([_maturity_blocked_result("maturity-review")])
+    source_item = pool["candidate_pool_items"][0]
+    artifact = build_reviewed_candidate_pool_artifact(
+        pool,
+        [{"candidate_id": source_item["candidate_id"], "action": "accept"}],
+    )
+    reviewed = artifact["reviewed_candidate_pool_items"][0]
+
+    assert reviewed["review_status"] == "accepted"
+    assert reviewed["source_candidate_item"]["canonical_label_key"] == "water_leaks_through"
+    assert reviewed["source_candidate_item"]["downgrade_reasons"] == ["maturity_blocked"]
+    assert reviewed["source_candidate_item"]["review_status"] == "pending"
+
+
+def test_candidate_pool_review_artifact_and_exports_keep_safety_flags(tmp_path: Path) -> None:
+    pool = build_candidate_pool_artifact([_unknown_result("safe-review")], source_artifacts=["candidate-pool.json"])
+    source_item = pool["candidate_pool_items"][0]
+    artifact = build_reviewed_candidate_pool_artifact(
+        pool,
+        [{"candidate_id": source_item["candidate_id"], "action": "ignore"}],
+        source_artifacts=["waders-shadow-summary.json"],
+    )
+    json_path = write_reviewed_candidate_pool_json_artifact(tmp_path / "candidate-pool-reviewed.json", artifact)
+    csv_path = write_reviewed_candidate_pool_csv(tmp_path / "candidate-pool-reviewed.csv", artifact)
+
+    loaded = json.loads(json_path.read_text(encoding="utf-8"))
+    assert loaded["schema_version"] == "customer-label-v2-candidate-pool-reviewed-mvp.1"
+    assert loaded["safety"]["production_db_write"] is False
+    assert loaded["safety"]["db_write"] is False
+    assert loaded["safety"]["frontstage_mutated"] is False
+    assert loaded["safety"]["llm_called"] is False
+    assert "candidate_id,review_id,session_id,product_id" in csv_path.read_text(encoding="utf-8")
+    assert "source_review_status,action,action_applied" in csv_path.read_text(encoding="utf-8")

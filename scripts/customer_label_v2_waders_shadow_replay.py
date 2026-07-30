@@ -11,8 +11,11 @@ from backend_api.app.services.customer_label_catalog import (
 )
 from backend_api.app.services.customer_label_v2_candidate_pool import (
     build_candidate_pool_artifact,
+    build_reviewed_candidate_pool_artifact,
     write_candidate_pool_csv,
     write_candidate_pool_json_artifact,
+    write_reviewed_candidate_pool_csv,
+    write_reviewed_candidate_pool_json_artifact,
 )
 from backend_api.app.services.customer_label_v2_shadow import (
     FOCUS_WADERS_LABELS,
@@ -37,10 +40,12 @@ POSTDEPLOY_AUDIT = (
     / "session122-readonly"
     / "session122-postdeploy-readonly-acceptance-audit.json"
 )
-ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step4-candidate-pool-mvp"
+ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step4.5-candidate-pool-review-entry-mvp"
 ARTIFACT_PATH = ARTIFACT_DIR / "waders-shadow-summary.json"
 CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool.json"
 CANDIDATE_POOL_CSV_PATH = ARTIFACT_DIR / "candidate-pool.csv"
+REVIEWED_CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool-reviewed.json"
+REVIEWED_CANDIDATE_POOL_CSV_PATH = ARTIFACT_DIR / "candidate-pool-reviewed.csv"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -450,6 +455,42 @@ def _aggregate_downgrades(datasets: list[dict[str, Any]], edge_cases: dict[str, 
     return dict(sorted(merged.items()))
 
 
+def _mock_review_actions_for_candidate_pool(candidate_pool_artifact: dict[str, Any]) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    for item in candidate_pool_artifact.get("candidate_pool_items") or []:
+        candidate_id = str(item.get("candidate_id") or "")
+        reasons = set(item.get("downgrade_reasons") or [])
+        if "unknown_label" in reasons:
+            actions.append(
+                {
+                    "candidate_id": candidate_id,
+                    "action": "needs_new_label",
+                    "raw_label": str(item.get("raw_label") or ""),
+                    "reviewer": "step4.5-local-review-fixture",
+                    "note": "Keep as local catalog backlog candidate; no DB write.",
+                }
+            )
+        elif "maturity_blocked" in reasons:
+            actions.append(
+                {
+                    "candidate_id": candidate_id,
+                    "action": "accept",
+                    "reviewer": "step4.5-local-review-fixture",
+                    "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+                }
+            )
+        else:
+            actions.append(
+                {
+                    "candidate_id": candidate_id,
+                    "action": "ignore",
+                    "reviewer": "step4.5-local-review-fixture",
+                    "note": "Unhandled local candidate pool fixture reason.",
+                }
+            )
+    return actions
+
+
 def main() -> None:
     set_customer_label_catalog_state_for_tests(CustomerLabelCatalogState())
     try:
@@ -492,7 +533,7 @@ def main() -> None:
         postdeploy = _load_json(POSTDEPLOY_AUDIT) if POSTDEPLOY_AUDIT.exists() else {}
         candidate_pool_artifact = build_candidate_pool_artifact(
             edge_case_shadow_results,
-            scope="5.9.9 Step 4 candidate pool MVP local waders shadow replay",
+            scope="5.9.9 Step 4.5 candidate pool review entry MVP local waders shadow replay",
             source_artifacts=[
                 str(SESSION120_GOLD.relative_to(ROOT)),
                 str(SESSION121_FIXTURE.relative_to(ROOT)),
@@ -508,9 +549,32 @@ def main() -> None:
             CANDIDATE_POOL_CSV_PATH,
             candidate_pool_artifact["candidate_pool_items"],
         )
+        review_actions = _mock_review_actions_for_candidate_pool(candidate_pool_artifact)
+        reviewed_candidate_pool_artifact = build_reviewed_candidate_pool_artifact(
+            candidate_pool_artifact,
+            review_actions,
+            scope="5.9.9 Step 4.5 candidate pool review entry MVP local waders shadow replay",
+            source_artifacts=[str(candidate_pool_json_path.relative_to(ROOT))],
+        )
+        reviewed_candidate_pool_json_path = write_reviewed_candidate_pool_json_artifact(
+            REVIEWED_CANDIDATE_POOL_ARTIFACT_PATH,
+            reviewed_candidate_pool_artifact,
+        )
+        reviewed_candidate_pool_csv_path = write_reviewed_candidate_pool_csv(
+            REVIEWED_CANDIDATE_POOL_CSV_PATH,
+            reviewed_candidate_pool_artifact,
+        )
         artifact = {
-            "status": "PASS" if not p0_violations and edge_cases["status"] == "PASS" else "REVIEW_NEEDED",
-            "scope": "5.9.9 Step 4 candidate pool MVP local shadow replay",
+            "status": (
+                "PASS"
+                if (
+                    not p0_violations
+                    and edge_cases["status"] == "PASS"
+                    and reviewed_candidate_pool_artifact["status"] == "PASS"
+                )
+                else "REVIEW_NEEDED"
+            ),
+            "scope": "5.9.9 Step 4.5 candidate pool review entry MVP local shadow replay",
             "llm_called": False,
             "production_upload": False,
             "production_write_path": False,
@@ -529,6 +593,15 @@ def main() -> None:
                 "review_action_contract": candidate_pool_artifact["review_action_contract"],
                 "artifact_json": str(candidate_pool_json_path.relative_to(ROOT)),
                 "artifact_csv": str(candidate_pool_csv_path.relative_to(ROOT)),
+            },
+            "candidate_pool_review_entry_mvp": {
+                "schema_version": reviewed_candidate_pool_artifact["schema_version"],
+                "source_schema_version": reviewed_candidate_pool_artifact["source_schema_version"],
+                "reviewed_item_count": reviewed_candidate_pool_artifact["reviewed_item_count"],
+                "review_action_summary": reviewed_candidate_pool_artifact["review_action_summary"],
+                "artifact_json": str(reviewed_candidate_pool_json_path.relative_to(ROOT)),
+                "artifact_csv": str(reviewed_candidate_pool_csv_path.relative_to(ROOT)),
+                "safety": reviewed_candidate_pool_artifact["safety"],
             },
             "aggregate_focus_label_metrics": focus_metrics,
             "aggregate_downgrade_reasons": _aggregate_downgrades(datasets, edge_cases),
@@ -552,6 +625,8 @@ def main() -> None:
                 str(ARTIFACT_PATH.relative_to(ROOT)),
                 str(candidate_pool_json_path.relative_to(ROOT)),
                 str(candidate_pool_csv_path.relative_to(ROOT)),
+                str(reviewed_candidate_pool_json_path.relative_to(ROOT)),
+                str(reviewed_candidate_pool_csv_path.relative_to(ROOT)),
             ],
         }
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
