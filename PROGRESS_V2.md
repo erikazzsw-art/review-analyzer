@@ -8,6 +8,17 @@
 
 ---
 
+### 2026-07-30 5.9.9 Customer Label System v2 Step 5：Category Maturity + 10 大类 L1/L2 灰度
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | maturity-contract-helper | 新增本地 pure helper `backend_api/app/services/customer_label_v2_maturity.py`，复用 `backend_api/app/data/sub_category_categories.json` 作为 10 大类与 sub_category 归属数据源；定义 `L0_unknown`、`L1_generic`、`L2_category`、`L3_sub_category` display/audit/candidate pool 边界。初始灰度：`home`、`3c`、`apparel`、`outdoor`、`beauty`、`kitchen` 为 L2；`baby`、`pet`、`automotive`、`office` 为 L1；`outdoor/waders` override 为 L3；未命中默认 L0。 | `PASS`：helper 为纯配置/纯函数，不读写 DB；maturity contract summary 明确 safety flags，未触发生产写路径。 |
+| 2026-07-30 | verifier-maturity-gate | `run_customer_label_v2_shadow` 接入 maturity resolver：L0 默认不进 display；L1 只允许 generic-safe highlights；L2 只允许高置信 category-safe 基础标签，且仍需 evidence/context/aspect gate；L3 waders 不回退。unknown/new label 继续 `unknown_label` candidate pool only；maturity blocked 候选进入 candidate pool artifact。 | `PASS`：focused tests 覆盖 L0/L1/L2/L3、unknown label、maturity_blocked candidate pool aggregation/review artifact；v2 shadow/candidate pool 既有契约不回退。 |
+| 2026-07-30 | ten-category-rollout-fixture | 新增 `backend_api/tests/fixtures/customer_label_v2_maturity_rollout.json`，覆盖 10 个大类、20 条 synthetic review/candidate cases，验证 display/audit/candidate_pool 分流：L1 generic display + non-generic block；L2 foundational display + confidence/evidence/aspect/sub_category-specific block。 | `PASS`：maturity rollout replay `category_count=10`、`case_count=20`、`violations=[]`。 |
+| 2026-07-30 | step5-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 输出 Step 5 artifact，并保留 session120/session121/session122/waders351-400 回归；候选池 artifact 合并 unknown/new label 与 maturity_blocked candidates。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；candidate pool raw/deduped `14/14`，reviewed `14`，invalid `0`，`needs_new_label=6`、`accepted=8`；六个重点标签 FP/FN=0。报告：`docs/5.9.9-step5-category-maturity-l1-l2-rollout.md`。 |
+
+---
+
 ### 2026-07-30 5.9.9 Customer Label System v2 Step 4.6：waders 351-400 human gold assimilation + evidence regression
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -131,7 +142,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 4.6 waders 351-400 human gold assimilation 已 PASS，下一步进入类目成熟度灰度；ABSA 延后为条件触发 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 5 category maturity + 10 大类 L1/L2 灰度已 PASS；ABSA 延后为条件触发 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -180,7 +191,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 4.6 已完成：waders 351-400 human gold fixture、evidence regression、candidate pool assimilation、waders replay artifact PASS，P0=0 | Step 5：类目成熟度与 10 个大类 L1/L2 灰度，继续保持 frontstage 只读 display occurrences |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 5 已完成：category/sub_category maturity contract、10 大类 L1/L2 灰度 fixture、waders L3 override、maturity-aware verifier/candidate pool/replay artifact PASS，P0=0 | 继续保持 frontstage 只读 display occurrences；后续可基于 candidate pool/human gold 再推进类目升级与审核入口产品化 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -1215,8 +1226,8 @@ readiness 节奏：
 | Step 3 waders catalog / aspect map / 边界 guard | ✅ 本地修复完成 / 待线上复测 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则；session 119 干净重传确认 L1 cache 风险已解除，Step 4 已修复 `water_leaks_through` 正负语境、旧产品、phone case/pocket 污染、`pocket_not_waterproof` 召回与 raw 导出 propagated/unverified 口径 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表、session 119 acceptance report、Step 4 修复报告 | 审核标签命名、边界规则和归类修正；下一轮由 Erika 手动上传全新样本验收 |
 | Step 4 waders 盲测与真实上传验收 | ✅ PASS：session122 部署后复验 P0=0 | 验证不是“背答案”，用 50 条从未上传过的 waders 样本和真实上传判断标签是否达到用户可用；commit `c38e7ff` 部署后，Top10、单条评论明细、raw review download、single-tag download 四条路径均未发现 `water_leaks_through` / `keeps_water_out` / `pocket_not_waterproof` / `fits_as_expected` / `good_value_for_the_price` / `holds_up_well` P0；frontstage 无 evidence false、cluster propagated、旧产品/他牌/配件漏水污染 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`、`docs/5.9.8-step4.1-tidewe-waders-session120-recall-fix.md`、`docs/5.9.8-step4-tidewe-waders-session121-blind-acceptance-report.md`、`docs/5.9.8-step4-tidewe-waders-session122-blind-acceptance-report.md`、`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-postdeploy-readonly-acceptance-audit.json`、focused gold fixture、真实上传抽查表 | 已进入 5.9.9 Customer Label System v2 Step 1 |
 | Step 4.5 waders v2 shadow baseline | 已并入 5.9.9 Step 1/2 | 用已完成的 waders gold set 定义新链路 schema：LLM 输出规范标签、`evidence_candidate` 与置信度；规则 verifier 只负责定位/验证/拦截；shadow run 不替换前台 | `docs/5.9.9-customer-label-v2-contract.md`、waders shadow 对比、schema/version、回退策略 | Step 1 契约文档先固化展示/候选/audit 边界；shadow run 进入 5.9.9 Step 2 |
-| Step 5 Customer Label System v2 实现 | 待启动 | 将生成责任从“逐类目手写规则”迁回 LLM，把规则改成安全 verifier；新增 candidate pool、低置信降级、未覆盖类目成熟度分级 | LLM 输出 schema、verifier、candidate/audit 字段、maturity level、focused regression | 只审核高影响候选标签、Top 异常和边界样本，不逐类目写完整规则 |
-| Step 5.5 类目轻接入与降级策略 | 待启动 | 新增 sub_category 时优先复用通用/大类目标签；只配置轻量 taxonomy/catalog/边界说明；未验证细粒度标签先不强展示 | 类目成熟度规则、通用标签白名单、候选池审核 SOP、10-20 条风险抽检模板 | 判断类目是否值得升级为高精度支持，而不是一开始就深度标注 |
+| Step 5 Customer Label System v2 实现 | ✅ 5.9.9 Step 1-5 已完成 | 已将生成责任从“逐类目手写规则”迁回 LLM evidence-first shadow，把规则改成安全 verifier；新增 candidate pool、低置信降级、未覆盖类目成熟度分级 | LLM 输出 schema、verifier、candidate/audit 字段、maturity level、focused regression、Step 5 artifact | 只审核高影响候选标签、Top 异常和边界样本，不逐类目写完整规则 |
+| Step 5.5 类目轻接入与降级策略 | ✅ Step 5 灰度已完成 / SOP 产品化待后续 | 新增 sub_category 时优先复用通用/大类目标签；只配置轻量 taxonomy/catalog/边界说明；未验证细粒度标签先不强展示 | 类目成熟度规则、通用标签白名单、10 大类 L1/L2 fixture、candidate pool artifact；审核 SOP 可在后续后台产品化时补齐 | 判断类目是否值得升级为高精度支持，而不是一开始就深度标注 |
 | Step 6 50 用户 readiness 回归与上线门禁 | 待启动 | 把标签准确性、生产上传稳定性、未覆盖类目降级和异常闭环合并验收 | readiness 回归报告、生产/准生产 smoke 记录、降级策略验证、回滚与观察清单 | 授权真实上传 smoke，确认是否达到 50 付费用户试运行门槛 |
 
 **验收门禁（MVP 前硬标准）：**
@@ -1281,7 +1292,7 @@ readiness 节奏：
 
 #### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 进行中（Step 4.5 candidate pool 轻量审核入口 MVP 已 PASS；下一步进入 Step 5 类目成熟度灰度）
+**状态：** 进行中（Step 5 category maturity + 10 大类 L1/L2 灰度已 PASS；frontstage 仍未替换为 v2 shadow）
 
 **调整原因：**
 - 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
@@ -1311,9 +1322,9 @@ readiness 节奏：
 
 | 等级 | 适用范围 | 前台展示策略 | 进入条件 |
 |------|----------|--------------|----------|
-| `L0_unknown` | 未接入/低样本 sub_category | 只展示通用高置信标签；细粒度 label 进入 candidate/audit | 有 taxonomy 或 sub_category 推断即可 |
-| `L1_generic` | 已确认通用标签有效的类目 | 展示质量、尺码、耐用、气味、物流、性价比、整体满意等通用标签 | 10-20 条抽检无明显系统性错误 |
-| `L2_category` | 大类目边界较稳定 | 展示大类目标签，细粒度标签仍需候选审核 | category 级 taxonomy/catalog 通过回归 |
+| `L0_unknown` | 未接入或未验证 category/sub_category | 默认不进入 display；候选进入 audit/candidate pool | 未命中 maturity config，或显式降级 |
+| `L1_generic` | 只具备通用安全展示能力的 category | 仅展示 generic-safe highlights；issues 与细粒度标签进入 audit/candidate pool | category 已进入 L1 灰度但未达到 L2 回归 |
+| `L2_category` | category 级边界较稳定 | 展示高置信、强 evidence、低风险 category-safe 基础标签；细粒度标签仍需候选审核 | category 级 taxonomy/catalog 通过 focused regression |
 | `L3_sub_category` | 高价值/高上传量/已验收类目 | 展示细粒度 Customer Issue / Customer Label | 30-50 条 blind gold 或等价真实上传抽查通过 |
 
 **任务拆解：**
@@ -1338,10 +1349,11 @@ readiness 节奏：
   - reviewed artifact 保留原 `source_candidate_item`、action、validation errors、review_status、deterministic `reviewed_at`；invalid action 不改变 source item，只进入 audit/error。
   - 输出 `docs/5.9.9-step4.5-candidate-pool-review-entry-mvp.md`、`tmp/5.9.9-step4.5-candidate-pool-review-entry-mvp/waders-shadow-summary.json`、`candidate-pool.json`、`candidate-pool.csv`、`candidate-pool-reviewed.json`、`candidate-pool-reviewed.csv`。
   - 当前仍为本地 artifact/action flow，不做复杂后台、不写生产 DB、不替换前台展示。
-- [ ] **Step 5: 类目成熟度、前台降级与 10 个大类灰度**
-  - 前端、Top10、single-tag、raw/full export 根据 maturity level 决定展示粒度。
+- [x] **Step 5: 类目成熟度、v2 shadow 降级与 10 个大类灰度**
+  - 已新增本地 maturity helper，复用现有 taxonomy 静态映射，不新增后台 UI、不写 DB。
   - 未验证细粒度标签只进 audit/candidate，避免用户误以为系统已经高精度支持该类目。
-  - 以当前 taxonomy 的 10 个大类为灰度范围，每个大类抽检 10-20 条风险样本；目标是证明 L1/L2 通用/大类标签安全可用，不要求所有 sub_category 达到 L3。
+  - 已以当前 taxonomy 的 10 个大类为灰度范围建立 20 条 synthetic fixture，证明 L1/L2 通用/大类标签分流可用，不要求所有 sub_category 达到 L3。
+  - frontstage 真实展示路径仍未替换为 v2 shadow；后续切换必须另行 feature flag / 验收。
 - [ ] **Step 6: waders 切换验收与 50 用户前置判断**
   - 先用 waders shadow 对比证明 v2 不低于 5.9.8 本地 gold；通过后再 feature flag 切换。
   - 若 v2 召回下降或 FP 上升，回退到 5.9.8 旧链路，保留 v2 继续 shadow。

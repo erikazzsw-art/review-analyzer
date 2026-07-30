@@ -1,0 +1,477 @@
+{
+  "schema_version": "customer-label-v2-maturity-rollout-fixture.1",
+  "source_taxonomy_mapping": "backend_api/app/data/sub_category_categories.json",
+  "scope": "5.9.9 Step 5 category maturity L1/L2 rollout synthetic fixture",
+  "categories": [
+    {
+      "category": "home",
+      "sub_category": "床架",
+      "expected_maturity_level": "L2_category",
+      "cases": [
+        {
+          "id": "maturity-home-l2-foundational-display",
+          "content": "The bed frame cracked after a week.",
+          "rating": 2,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "quality_problem",
+            "raw_label": "Quality problem",
+            "display_label_en": "Quality Problem",
+            "display_label_zh": "质量问题",
+            "aspect_key": "build_quality",
+            "polarity": "negative",
+            "evidence_candidate": "frame cracked",
+            "confidence": 0.9,
+            "reason": "L2 foundational quality issue fixture"
+          },
+          "expected_display": {"issue": ["quality_problem"], "highlight": []},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-home-l2-aspect-blocked",
+          "content": "The bed frame cracked after a week.",
+          "rating": 2,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "quality_problem",
+            "raw_label": "Quality problem",
+            "display_label_en": "Quality Problem",
+            "display_label_zh": "质量问题",
+            "aspect_key": "waterproof",
+            "polarity": "negative",
+            "evidence_candidate": "frame cracked",
+            "confidence": 0.9,
+            "reason": "L2 aspect gate fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["aspect_blocked"],
+          "expected_candidate_pool_reasons": []
+        }
+      ]
+    },
+    {
+      "category": "3c",
+      "sub_category": "USB C Charger Block",
+      "expected_maturity_level": "L2_category",
+      "cases": [
+        {
+          "id": "maturity-3c-l2-foundational-display",
+          "content": "The charger block broke after two uses.",
+          "rating": 1,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "breaks_easily",
+            "raw_label": "Breaks easily",
+            "display_label_en": "Breaks Easily",
+            "display_label_zh": "容易损坏",
+            "aspect_key": "durability",
+            "polarity": "negative",
+            "evidence_candidate": "broke after two uses",
+            "confidence": 0.88,
+            "reason": "L2 foundational durability issue fixture"
+          },
+          "expected_display": {"issue": ["breaks_easily"], "highlight": []},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-3c-l2-specific-blocked",
+          "content": "The charger fails to charge my phone.",
+          "rating": 1,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "charging_fails",
+            "raw_label": "Charging fails",
+            "display_label_en": "Charging Fails",
+            "display_label_zh": "充电不稳定",
+            "aspect_key": "charging",
+            "polarity": "negative",
+            "evidence_candidate": "fails to charge",
+            "confidence": 0.9,
+            "reason": "L2 category blocks uncataloged category-specific issue fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["maturity_blocked"],
+          "expected_candidate_pool_reasons": ["maturity_blocked"]
+        }
+      ]
+    },
+    {
+      "category": "apparel",
+      "sub_category": "Men's Crew T-Shirts",
+      "expected_maturity_level": "L2_category",
+      "cases": [
+        {
+          "id": "maturity-apparel-l2-fit-display",
+          "content": "This shirt fits perfectly.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "fits_as_expected",
+            "raw_label": "Fits as expected",
+            "display_label_en": "Fits as Expected",
+            "display_label_zh": "尺码合适",
+            "aspect_key": "size_fit",
+            "polarity": "positive",
+            "evidence_candidate": "fits perfectly",
+            "confidence": 0.91,
+            "reason": "L2 foundational fit highlight fixture"
+          },
+          "expected_display": {"issue": [], "highlight": ["fits_as_expected"]},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-apparel-l2-low-confidence-audit",
+          "content": "This shirt fits perfectly.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "fits_as_expected",
+            "raw_label": "Fits as expected",
+            "display_label_en": "Fits as Expected",
+            "display_label_zh": "尺码合适",
+            "aspect_key": "size_fit",
+            "polarity": "positive",
+            "evidence_candidate": "fits perfectly",
+            "confidence": 0.7,
+            "reason": "L2 high-confidence threshold fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["confidence_low"],
+          "expected_candidate_pool_reasons": []
+        }
+      ]
+    },
+    {
+      "category": "baby",
+      "sub_category": "Baby Bibs",
+      "expected_maturity_level": "L1_generic",
+      "cases": [
+        {
+          "id": "maturity-baby-l1-generic-display",
+          "content": "Great product.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "overall_satisfied",
+            "raw_label": "Overall satisfied",
+            "display_label_en": "Overall Satisfied",
+            "display_label_zh": "整体满意",
+            "aspect_key": "other",
+            "polarity": "positive",
+            "evidence_candidate": "Great product",
+            "confidence": 0.92,
+            "reason": "L1 generic safe highlight fixture"
+          },
+          "expected_display": {"issue": [], "highlight": ["overall_satisfied"]},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-baby-l1-issue-blocked",
+          "content": "The bib quality is poor.",
+          "rating": 2,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "quality_problem",
+            "raw_label": "Quality problem",
+            "display_label_en": "Quality Problem",
+            "display_label_zh": "质量问题",
+            "aspect_key": "build_quality",
+            "polarity": "negative",
+            "evidence_candidate": "quality is poor",
+            "confidence": 0.9,
+            "reason": "L1 blocks non-generic issue fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["maturity_blocked"],
+          "expected_candidate_pool_reasons": ["maturity_blocked"]
+        }
+      ]
+    },
+    {
+      "category": "pet",
+      "sub_category": "Dog Treats",
+      "expected_maturity_level": "L1_generic",
+      "cases": [
+        {
+          "id": "maturity-pet-l1-generic-display",
+          "content": "The treats look good.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "looks_good",
+            "raw_label": "Looks good",
+            "display_label_en": "Looks Good",
+            "display_label_zh": "外观好看",
+            "aspect_key": "aesthetics",
+            "polarity": "positive",
+            "evidence_candidate": "look good",
+            "confidence": 0.9,
+            "reason": "L1 generic safe appearance fixture"
+          },
+          "expected_display": {"issue": [], "highlight": ["looks_good"]},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-pet-l1-value-blocked",
+          "content": "These treats are a great value for the price.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "good_value_for_the_price",
+            "raw_label": "Good value for the price",
+            "display_label_en": "Good Value for the Price",
+            "display_label_zh": "性价比高",
+            "aspect_key": "value_for_money",
+            "polarity": "positive",
+            "evidence_candidate": "great value for the price",
+            "confidence": 0.91,
+            "reason": "L1 blocks non-generic value highlight fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["maturity_blocked"],
+          "expected_candidate_pool_reasons": ["maturity_blocked"]
+        }
+      ]
+    },
+    {
+      "category": "outdoor",
+      "sub_category": "帐篷",
+      "expected_maturity_level": "L2_category",
+      "cases": [
+        {
+          "id": "maturity-outdoor-l2-durability-display",
+          "content": "The tent held up well in wind.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "holds_up_well",
+            "raw_label": "Holds up well",
+            "display_label_en": "Holds Up Well",
+            "display_label_zh": "耐用性高",
+            "aspect_key": "durability",
+            "polarity": "positive",
+            "evidence_candidate": "held up well",
+            "confidence": 0.9,
+            "reason": "L2 foundational durability highlight fixture"
+          },
+          "expected_display": {"issue": [], "highlight": ["holds_up_well"]},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-outdoor-l2-waterproof-specific-blocked",
+          "content": "Rain leaked through the tent overnight.",
+          "rating": 1,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "water_leaks_through",
+            "raw_label": "Water leaks through",
+            "display_label_en": "Water Leaks Through",
+            "display_label_zh": "防水性差",
+            "aspect_key": "waterproof",
+            "polarity": "negative",
+            "evidence_candidate": "leaked through the tent",
+            "confidence": 0.9,
+            "reason": "L2 blocks high-risk sub_category-specific waterproof issue fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["maturity_blocked"],
+          "expected_candidate_pool_reasons": ["maturity_blocked"]
+        }
+      ]
+    },
+    {
+      "category": "beauty",
+      "sub_category": "睫毛膏",
+      "expected_maturity_level": "L2_category",
+      "cases": [
+        {
+          "id": "maturity-beauty-l2-quality-display",
+          "content": "The mascara has good quality.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "good_material_quality",
+            "raw_label": "Good material quality",
+            "display_label_en": "Good Material Quality",
+            "display_label_zh": "材质质量好",
+            "aspect_key": "material",
+            "polarity": "positive",
+            "evidence_candidate": "good quality",
+            "confidence": 0.89,
+            "reason": "L2 foundational material quality fixture"
+          },
+          "expected_display": {"issue": [], "highlight": ["good_material_quality"]},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-beauty-l2-specific-blocked",
+          "content": "The mascara smudges easily.",
+          "rating": 2,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "smudges_easily",
+            "raw_label": "Smudges easily",
+            "display_label_en": "Smudges Easily",
+            "display_label_zh": "容易晕染",
+            "aspect_key": "wear",
+            "polarity": "negative",
+            "evidence_candidate": "smudges easily",
+            "confidence": 0.9,
+            "reason": "L2 blocks uncataloged beauty-specific issue fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["maturity_blocked"],
+          "expected_candidate_pool_reasons": ["maturity_blocked"]
+        }
+      ]
+    },
+    {
+      "category": "kitchen",
+      "sub_category": "不粘锅",
+      "expected_maturity_level": "L2_category",
+      "cases": [
+        {
+          "id": "maturity-kitchen-l2-value-issue-display",
+          "content": "This pan is not worth the price.",
+          "rating": 2,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "not_worth_the_price",
+            "raw_label": "Not worth the price",
+            "display_label_en": "Not Worth the Price",
+            "display_label_zh": "不值这个价格",
+            "aspect_key": "value_for_money",
+            "polarity": "negative",
+            "evidence_candidate": "not worth the price",
+            "confidence": 0.9,
+            "reason": "L2 foundational value issue fixture"
+          },
+          "expected_display": {"issue": ["not_worth_the_price"], "highlight": []},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-kitchen-l2-evidence-not-found",
+          "content": "This pan is not worth the price.",
+          "rating": 2,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "not_worth_the_price",
+            "raw_label": "Not worth the price",
+            "display_label_en": "Not Worth the Price",
+            "display_label_zh": "不值这个价格",
+            "aspect_key": "value_for_money",
+            "polarity": "negative",
+            "evidence_candidate": "too expensive for the coating",
+            "confidence": 0.9,
+            "reason": "L2 evidence gate fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["evidence_not_found"],
+          "expected_candidate_pool_reasons": []
+        }
+      ]
+    },
+    {
+      "category": "automotive",
+      "sub_category": "车载充电器",
+      "expected_maturity_level": "L1_generic",
+      "cases": [
+        {
+          "id": "maturity-automotive-l1-generic-display",
+          "content": "Looks good.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "looks_good",
+            "raw_label": "Looks good",
+            "display_label_en": "Looks Good",
+            "display_label_zh": "外观好看",
+            "aspect_key": "aesthetics",
+            "polarity": "positive",
+            "evidence_candidate": "Looks good",
+            "confidence": 0.9,
+            "reason": "L1 generic safe highlight fixture"
+          },
+          "expected_display": {"issue": [], "highlight": ["looks_good"]},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-automotive-l1-quality-blocked",
+          "content": "The charger quality is poor.",
+          "rating": 2,
+          "candidate": {
+            "label_type": "issue",
+            "canonical_label_key": "quality_problem",
+            "raw_label": "Quality problem",
+            "display_label_en": "Quality Problem",
+            "display_label_zh": "质量问题",
+            "aspect_key": "build_quality",
+            "polarity": "negative",
+            "evidence_candidate": "quality is poor",
+            "confidence": 0.91,
+            "reason": "L1 blocks foundational issue until category reaches L2"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["maturity_blocked"],
+          "expected_candidate_pool_reasons": ["maturity_blocked"]
+        }
+      ]
+    },
+    {
+      "category": "office",
+      "sub_category": "办公椅",
+      "expected_maturity_level": "L1_generic",
+      "cases": [
+        {
+          "id": "maturity-office-l1-generic-display",
+          "content": "So far so good.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "first_impression_positive",
+            "raw_label": "First impression positive",
+            "display_label_en": "First Impression Positive",
+            "display_label_zh": "初步印象良好",
+            "aspect_key": "other",
+            "polarity": "positive",
+            "evidence_candidate": "So far so good",
+            "confidence": 0.9,
+            "reason": "L1 generic safe first-impression fixture"
+          },
+          "expected_display": {"issue": [], "highlight": ["first_impression_positive"]},
+          "expected_audit_reasons": [],
+          "expected_candidate_pool_reasons": []
+        },
+        {
+          "id": "maturity-office-l1-fit-blocked",
+          "content": "The office chair fits perfectly.",
+          "rating": 5,
+          "candidate": {
+            "label_type": "highlight",
+            "canonical_label_key": "fits_as_expected",
+            "raw_label": "Fits as expected",
+            "display_label_en": "Fits as Expected",
+            "display_label_zh": "尺码合适",
+            "aspect_key": "size_fit",
+            "polarity": "positive",
+            "evidence_candidate": "fits perfectly",
+            "confidence": 0.9,
+            "reason": "L1 blocks non-generic fit highlight fixture"
+          },
+          "expected_display": {"issue": [], "highlight": []},
+          "expected_audit_reasons": ["maturity_blocked"],
+          "expected_candidate_pool_reasons": ["maturity_blocked"]
+        }
+      ]
+    }
+  ]
+}

@@ -17,6 +17,7 @@ from backend_api.app.services.customer_label_v2_candidate_pool import (
     write_reviewed_candidate_pool_csv,
     write_reviewed_candidate_pool_json_artifact,
 )
+from backend_api.app.services.customer_label_v2_maturity import maturity_contract_summary
 from backend_api.app.services.customer_label_v2_shadow import (
     FOCUS_WADERS_LABELS,
     compare_customer_label_v2_shadow,
@@ -30,6 +31,7 @@ FIXTURES_DIR = ROOT / "backend_api" / "tests" / "fixtures"
 SESSION120_GOLD = FIXTURES_DIR / "customer_label_waders_session120_human_gold.json"
 SESSION121_FIXTURE = FIXTURES_DIR / "customer_label_waders_session121_blind_regression.json"
 HUMAN_351_400_GOLD = FIXTURES_DIR / "customer_label_waders_351_400_human_gold.json"
+MATURITY_ROLLOUT_FIXTURE = FIXTURES_DIR / "customer_label_v2_maturity_rollout.json"
 SESSION122_RESULTS = ROOT / "tmp" / "5.9.8-step4-tidewe-waders-prod-20260729" / "session122-readonly" / "session-results.json"
 SESSION122_ACCEPTANCE = (
     ROOT / "tmp" / "5.9.8-step4-tidewe-waders-prod-20260729" / "session122-readonly" / "acceptance-summary.json"
@@ -41,7 +43,7 @@ POSTDEPLOY_AUDIT = (
     / "session122-readonly"
     / "session122-postdeploy-readonly-acceptance-audit.json"
 )
-ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step4.6-waders-351-400-human-gold-assimilation"
+ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step5-category-maturity-l1-l2-rollout"
 ARTIFACT_PATH = ARTIFACT_DIR / "waders-shadow-summary.json"
 CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool.json"
 CANDIDATE_POOL_CSV_PATH = ARTIFACT_DIR / "candidate-pool.csv"
@@ -215,6 +217,99 @@ def _human_351_400_candidate_shadow_results() -> list[dict[str, Any]]:
                 )
             )
     return results
+
+
+def _audit_reasons(result: dict[str, Any]) -> set[str]:
+    return {
+        str(reason)
+        for occurrence in result.get("audit_occurrences") or []
+        for reason in occurrence.get("downgrade_reasons") or []
+    }
+
+
+def _maturity_rollout_shadow_results() -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    payload = _load_json(MATURITY_ROLLOUT_FIXTURE)
+    results: list[dict[str, Any]] = []
+    violations: list[dict[str, Any]] = []
+    category_summary: dict[str, Counter[str]] = defaultdict(Counter)
+    downgrade_reasons: Counter[str] = Counter()
+    maturity_levels: dict[str, str] = {}
+
+    for group in payload["categories"]:
+        category = str(group["category"])
+        sub_category = str(group["sub_category"])
+        expected_level = str(group["expected_maturity_level"])
+        maturity_levels[category] = expected_level
+        for case in group["cases"]:
+            review = {
+                "id": str(case["id"]),
+                "session_id": "step5-maturity-rollout",
+                "product_id": f"synthetic-{category}",
+                "content": str(case["content"]),
+                "rating": int(case.get("rating") or 3),
+                "category": category,
+                "sub_category": sub_category,
+            }
+            result = run_customer_label_v2_shadow(review, label_candidates=[case["candidate"]])
+            results.append(result)
+            actual_display = display_keys_from_shadow(result)
+            reasons = _audit_reasons(result)
+            downgrade_reasons.update(reasons)
+            expected_pool_reasons = list(case["expected_candidate_pool_reasons"])
+            category_summary[category]["case_count"] += 1
+            category_summary[category]["display_count"] += len(result["display_occurrences"])
+            category_summary[category]["audit_count"] += len(result["audit_occurrences"])
+            category_summary[category]["candidate_pool_count"] += len(result["candidate_pool_items"])
+
+            case_errors: list[str] = []
+            if result["maturity_level"] != expected_level:
+                case_errors.append("maturity_level_mismatch")
+            if actual_display != case["expected_display"]:
+                case_errors.append("display_split_mismatch")
+            if not set(case["expected_audit_reasons"]) <= reasons:
+                case_errors.append("audit_reasons_mismatch")
+            if expected_pool_reasons:
+                if not result["candidate_pool_items"]:
+                    case_errors.append("candidate_pool_missing")
+                elif result["candidate_pool_items"][0]["downgrade_reasons"] != expected_pool_reasons:
+                    case_errors.append("candidate_pool_reasons_mismatch")
+            elif result["candidate_pool_items"]:
+                case_errors.append("candidate_pool_unexpected")
+            if case_errors:
+                violations.append(
+                    {
+                        "case_id": case["id"],
+                        "category": category,
+                        "sub_category": sub_category,
+                        "errors": case_errors,
+                        "actual_maturity_level": result["maturity_level"],
+                        "expected_maturity_level": expected_level,
+                        "actual_display": actual_display,
+                        "expected_display": case["expected_display"],
+                        "actual_audit_reasons": sorted(reasons),
+                        "expected_audit_reasons": case["expected_audit_reasons"],
+                    }
+                )
+
+    return {
+        "schema_version": str(payload["schema_version"]),
+        "fixture_path": str(MATURITY_ROLLOUT_FIXTURE.relative_to(ROOT)),
+        "category_count": len(payload["categories"]),
+        "case_count": len(results),
+        "maturity_levels": dict(sorted(maturity_levels.items())),
+        "downgrade_reasons": dict(sorted(downgrade_reasons.items())),
+        "category_summary": {
+            category: {
+                "case_count": int(summary["case_count"]),
+                "display_count": int(summary["display_count"]),
+                "audit_count": int(summary["audit_count"]),
+                "candidate_pool_count": int(summary["candidate_pool_count"]),
+            }
+            for category, summary in sorted(category_summary.items())
+        },
+        "violations": violations,
+        "status": "PASS" if not violations else "REVIEW_NEEDED",
+    }, results
 
 
 def _edge_case_runs() -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -518,7 +613,7 @@ def _mock_review_actions_for_candidate_pool(candidate_pool_artifact: dict[str, A
                     "candidate_id": candidate_id,
                     "action": "needs_new_label",
                     "raw_label": str(item.get("raw_label") or ""),
-                    "reviewer": "step4.6-local-review-fixture",
+                    "reviewer": "step5-local-review-fixture",
                     "note": "Keep as local catalog backlog candidate; no DB write.",
                 }
             )
@@ -527,7 +622,7 @@ def _mock_review_actions_for_candidate_pool(candidate_pool_artifact: dict[str, A
                 {
                     "candidate_id": candidate_id,
                     "action": "accept",
-                    "reviewer": "step4.6-local-review-fixture",
+                    "reviewer": "step5-local-review-fixture",
                     "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
                 }
             )
@@ -536,7 +631,7 @@ def _mock_review_actions_for_candidate_pool(candidate_pool_artifact: dict[str, A
                 {
                     "candidate_id": candidate_id,
                     "action": "ignore",
-                    "reviewer": "step4.6-local-review-fixture",
+                    "reviewer": "step5-local-review-fixture",
                     "note": "Unhandled local candidate pool fixture reason.",
                 }
             )
@@ -581,6 +676,7 @@ def main() -> None:
         )
         edge_cases, edge_case_shadow_results = _edge_case_runs()
         human_351_400_candidate_shadow_results = _human_351_400_candidate_shadow_results()
+        maturity_rollout, maturity_rollout_shadow_results = _maturity_rollout_shadow_results()
         datasets = [session120, session121, session122, human_351_400]
         focus_metrics = _aggregate_focus_metrics(datasets)
         p0_violations = [
@@ -596,12 +692,13 @@ def main() -> None:
         postdeploy = _load_json(POSTDEPLOY_AUDIT) if POSTDEPLOY_AUDIT.exists() else {}
         human_gold_payload = _load_json(HUMAN_351_400_GOLD)
         candidate_pool_artifact = build_candidate_pool_artifact(
-            edge_case_shadow_results + human_351_400_candidate_shadow_results,
-            scope="5.9.9 Step 4.6 waders 351-400 human gold assimilation local shadow replay",
+            edge_case_shadow_results + human_351_400_candidate_shadow_results + maturity_rollout_shadow_results,
+            scope="5.9.9 Step 5 category maturity L1/L2 rollout local shadow replay",
             source_artifacts=[
                 str(SESSION120_GOLD.relative_to(ROOT)),
                 str(SESSION121_FIXTURE.relative_to(ROOT)),
                 str(HUMAN_351_400_GOLD.relative_to(ROOT)),
+                str(MATURITY_ROLLOUT_FIXTURE.relative_to(ROOT)),
                 str(SESSION122_RESULTS.relative_to(ROOT)),
                 str(SESSION122_ACCEPTANCE.relative_to(ROOT)),
             ],
@@ -618,7 +715,7 @@ def main() -> None:
         reviewed_candidate_pool_artifact = build_reviewed_candidate_pool_artifact(
             candidate_pool_artifact,
             review_actions,
-            scope="5.9.9 Step 4.6 waders 351-400 human gold assimilation local shadow replay",
+            scope="5.9.9 Step 5 category maturity L1/L2 rollout local shadow replay",
             source_artifacts=[str(candidate_pool_json_path.relative_to(ROOT))],
         )
         reviewed_candidate_pool_json_path = write_reviewed_candidate_pool_json_artifact(
@@ -635,11 +732,12 @@ def main() -> None:
                 if (
                     not p0_violations
                     and edge_cases["status"] == "PASS"
+                    and maturity_rollout["status"] == "PASS"
                     and reviewed_candidate_pool_artifact["status"] == "PASS"
                 )
                 else "REVIEW_NEEDED"
             ),
-            "scope": "5.9.9 Step 4.6 waders 351-400 human gold assimilation local shadow replay",
+            "scope": "5.9.9 Step 5 category maturity L1/L2 rollout local shadow replay",
             "llm_called": False,
             "production_upload": False,
             "production_write_path": False,
@@ -658,6 +756,8 @@ def main() -> None:
             },
             "session121_required_blocked_gate": _required_boundary_summary(session121_reviews),
             "edge_cases": edge_cases,
+            "maturity_contract": maturity_contract_summary(),
+            "category_maturity_rollout": maturity_rollout,
             "candidate_pool_mvp": {
                 "schema_version": candidate_pool_artifact["schema_version"],
                 "raw_item_count": candidate_pool_artifact["raw_item_count"],
@@ -692,6 +792,7 @@ def main() -> None:
                 str(SESSION120_GOLD.relative_to(ROOT)),
                 str(SESSION121_FIXTURE.relative_to(ROOT)),
                 str(HUMAN_351_400_GOLD.relative_to(ROOT)),
+                str(MATURITY_ROLLOUT_FIXTURE.relative_to(ROOT)),
                 str(SESSION122_RESULTS.relative_to(ROOT)),
                 str(SESSION122_ACCEPTANCE.relative_to(ROOT)),
                 str(POSTDEPLOY_AUDIT.relative_to(ROOT)),

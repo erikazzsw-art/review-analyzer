@@ -4,11 +4,17 @@ import copy
 import json
 import re
 from collections import Counter, defaultdict
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from typing import Any, Callable
+from typing import Any
 
 from backend_api.app.services import specific_issue as v1_labels
 from backend_api.app.services.customer_label_catalog import resolve_customer_label
+from backend_api.app.services.customer_label_v2_maturity import (
+    CustomerLabelMaturity,
+    maturity_gate_decision,
+    resolve_customer_label_maturity,
+)
 from backend_api.app.services.specific_issue import (
     CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
     CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
@@ -48,21 +54,13 @@ GENERIC_PROOF_REQUIRED_LABELS = {
     "good_value_for_the_price",
     "holds_up_well",
 }
-GENERIC_DISPLAY_SAFE_KEYS = {
-    "overall_satisfied",
-    "good_material_quality",
-    "looks_good",
-    "first_impression_positive",
-}
-
-
 @dataclass(frozen=True)
 class VerificationContext:
     review: dict[str, Any]
     content: str
     category: str
     sub_category: str
-    maturity_level: str
+    maturity: CustomerLabelMaturity
 
 
 @dataclass(frozen=True)
@@ -169,13 +167,13 @@ def _append_reason(reasons: list[str], reason: str) -> None:
         reasons.append(reason)
 
 
-def _verification_context(review: dict[str, Any], maturity_level: str) -> VerificationContext:
+def _verification_context(review: dict[str, Any], maturity: CustomerLabelMaturity) -> VerificationContext:
     return VerificationContext(
         review=review,
         content=str(review.get("content") or ""),
         category=str(review.get("category") or "outdoor"),
         sub_category=str(review.get("sub_category") or "waders"),
-        maturity_level=maturity_level,
+        maturity=maturity,
     )
 
 
@@ -368,9 +366,9 @@ def _audit_occurrence(
         "source": "llm",
         "source_review_allowed": False,
         "evidence_verified": bool(evidence["evidence_verified"]),
-        "aspect_allowed": False if "aspect_blocked" in downgrade_reasons else True,
-        "context_allowed": False if "context_blocked" in downgrade_reasons else True,
-        "maturity_allowed": False if "maturity_blocked" in downgrade_reasons else True,
+        "aspect_allowed": "aspect_blocked" not in downgrade_reasons,
+        "context_allowed": "context_blocked" not in downgrade_reasons,
+        "maturity_allowed": "maturity_blocked" not in downgrade_reasons,
         "display_allowed": False,
         "cluster_propagated": False,
         "legacy_fallback": False,
@@ -426,6 +424,13 @@ def _schema_reasons(candidate: dict[str, Any]) -> list[str]:
     return reasons
 
 
+def _candidate_risk_flags(value: Any) -> list[str]:
+    if isinstance(value, (list, tuple, set)):
+        return [str(flag).strip() for flag in value if str(flag).strip()]
+    cleaned = str(value or "").strip()
+    return [cleaned] if cleaned else []
+
+
 def _proof_terms_for_label(canonical: str) -> tuple[str, ...]:
     return {
         "water_leaks_through": ("leak", "wet", "water", "soak", "dry", "waterproof"),
@@ -454,7 +459,18 @@ def _proof_terms_for_label(canonical: str) -> tuple[str, ...]:
             "cost",
             "deal",
         ),
-        "holds_up_well": ("durable", "sturdy", "heavy duty", "last", "season", "hold", "strong", "tough", "secure"),
+        "holds_up_well": (
+            "durable",
+            "sturdy",
+            "heavy duty",
+            "last",
+            "season",
+            "hold",
+            "held",
+            "strong",
+            "tough",
+            "secure",
+        ),
     }.get(canonical, ())
 
 
@@ -481,22 +497,6 @@ def _evidence_too_generic(canonical: str, evidence: str, content: str = "") -> b
         "worked out",
         "as described",
     }
-
-
-def _maturity_level(category: str, sub_category: str, explicit: str | None) -> str:
-    if explicit:
-        return explicit
-    if _normalize_text(category) == "outdoor" and _normalize_text(sub_category) == "waders":
-        return "L3_sub_category"
-    if _normalize_text(sub_category) == "waders":
-        return "L3_sub_category"
-    return "L0_unknown"
-
-
-def _maturity_allowed(canonical: str, maturity_level: str) -> bool:
-    if maturity_level == "L3_sub_category":
-        return True
-    return canonical in GENERIC_DISPLAY_SAFE_KEYS
 
 
 def _is_unknown_candidate(canonical: str) -> bool:
@@ -651,13 +651,23 @@ def _verify_candidate(
     if canonical and _is_unknown_candidate(canonical):
         _append_reason(reasons, "unknown_label")
     confidence = _candidate_confidence(candidate.get("confidence"))
-    if confidence < DISPLAY_CONFIDENCE_THRESHOLD:
+    maturity_decision = maturity_gate_decision(
+        label_type=label_type,
+        canonical_label_key=canonical,
+        maturity=context.maturity,
+        subcategory_specificity=str(candidate.get("subcategory_specificity") or ""),
+        risk_flags=_candidate_risk_flags(candidate.get("risk_flags")),
+    )
+    confidence_threshold = DISPLAY_CONFIDENCE_THRESHOLD
+    if maturity_decision.allowed:
+        confidence_threshold = max(confidence_threshold, maturity_decision.minimum_confidence)
+    if confidence < confidence_threshold:
         _append_reason(reasons, "confidence_low")
     content = context.content
     if label_type and canonical and _evidence_too_generic(canonical, evidence_text, content):
         _append_reason(reasons, "evidence_too_generic")
-    maturity_allowed = _maturity_allowed(canonical, context.maturity_level)
-    if canonical and not maturity_allowed:
+    maturity_allowed = bool(maturity_decision.allowed and "unknown_label" not in reasons)
+    if canonical and not maturity_allowed and "unknown_label" not in reasons:
         _append_reason(reasons, "maturity_blocked")
 
     evidence = _locate_evidence(content, evidence_text)
@@ -756,10 +766,10 @@ def run_customer_label_v2_shadow(
         source_review["id"] = review_id
     source_review.setdefault("category", category)
     source_review.setdefault("sub_category", sub_category)
-    resolved_maturity = _maturity_level(
-        str(source_review.get("category") or category),
-        str(source_review.get("sub_category") or sub_category),
-        maturity_level,
+    resolved_maturity = resolve_customer_label_maturity(
+        category=str(source_review.get("category") or category),
+        sub_category=str(source_review.get("sub_category") or sub_category),
+        explicit_level=maturity_level,
     )
     verification_context = _verification_context(source_review, resolved_maturity)
 
@@ -832,7 +842,8 @@ def run_customer_label_v2_shadow(
         "source": str((payload or {}).get("source") or "shadow"),
         "category": str(source_review.get("category") or category),
         "sub_category": str(source_review.get("sub_category") or sub_category),
-        "maturity_level": resolved_maturity,
+        "maturity_level": resolved_maturity.level,
+        "maturity": resolved_maturity.as_dict(),
         "label_candidates": candidates,
         "verified_occurrences": verified_occurrences,
         "display_occurrences": display_occurrences,
