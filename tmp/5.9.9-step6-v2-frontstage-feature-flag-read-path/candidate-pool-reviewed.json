@@ -1,0 +1,968 @@
+{
+  "action_audit": [],
+  "review_action_contract": {
+    "allowed_actions": [
+      "accept",
+      "correct_evidence",
+      "correct_label",
+      "ignore",
+      "needs_new_label",
+      "reject"
+    ],
+    "conditional_required_fields": {
+      "correct_evidence": [
+        "evidence_candidate"
+      ],
+      "correct_label": [
+        "label_type",
+        "canonical_label_key"
+      ],
+      "needs_new_label": [
+        "raw_label"
+      ]
+    },
+    "required_fields": [
+      "candidate_id",
+      "action"
+    ],
+    "schema_version": "customer-label-v2-candidate-pool-review-action.1",
+    "writes_db": false
+  },
+  "review_action_summary": {
+    "action_count": 14,
+    "applied_action_count": 14,
+    "audit_error_count": 0,
+    "invalid_action_count": 0,
+    "status_counts": {
+      "accepted": 8,
+      "needs_new_label": 6
+    },
+    "valid_action_count": 14
+  },
+  "reviewed_at": "2026-07-30T00:00:00Z",
+  "reviewed_candidate_pool_items": [
+    {
+      "action": {
+        "action": "needs_new_label",
+        "candidate_id": "pool:df3be235a1d23c9c",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Keep as local catalog backlog candidate; no DB write.",
+        "raw_label": "Boot Seam Leak",
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:df3be235a1d23c9c",
+      "review_output": {
+        "action_result": "needs_new_label",
+        "canonical_label_key": "candidate:boot_seam_leak",
+        "evidence_candidate": "boot seam leaked",
+        "label_type": "issue",
+        "raw_label": "Boot Seam Leak"
+      },
+      "review_status": "needs_new_label",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.9,
+        "candidate_count": 1,
+        "candidate_id": "pool:df3be235a1d23c9c",
+        "canonical_label_key": "candidate:boot_seam_leak",
+        "category": "outdoor",
+        "confidence": 0.9,
+        "dedupe_key": {
+          "canonical_label_key": "candidate:boot_seam_leak",
+          "downgrade_reasons": [
+            "unknown_label"
+          ],
+          "raw_label": "boot seam leak",
+          "sub_category": "waders"
+        },
+        "downgrade_reason_priority": 100,
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "evidence_candidate": "boot seam leaked",
+        "label_type": "issue",
+        "max_confidence": 0.9,
+        "product_id": null,
+        "product_ids": [],
+        "raw_label": "Boot Seam Leak",
+        "review_count": 1,
+        "review_id": "edge-unknown-label",
+        "review_ids": [
+          "edge-unknown-label"
+        ],
+        "review_status": "pending",
+        "session_id": null,
+        "session_ids": [],
+        "source_candidate_ids": [
+          "shadow:edge-unknown-label:0:candidate:boot_seam_leak"
+        ],
+        "sub_category": "waders",
+        "top_impact_score": 1.8
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "needs_new_label",
+        "candidate_id": "pool:cf6b45d6c153e154",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Keep as local catalog backlog candidate; no DB write.",
+        "raw_label": "透气性好",
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:cf6b45d6c153e154",
+      "review_output": {
+        "action_result": "needs_new_label",
+        "canonical_label_key": "candidate:breathes_well_evidence_unclear",
+        "evidence_candidate": "Keep me dryish for the most part",
+        "label_type": "highlight",
+        "raw_label": "透气性好"
+      },
+      "review_status": "needs_new_label",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.88,
+        "candidate_count": 1,
+        "candidate_id": "pool:cf6b45d6c153e154",
+        "canonical_label_key": "candidate:breathes_well_evidence_unclear",
+        "category": "outdoor",
+        "confidence": 0.88,
+        "dedupe_key": {
+          "canonical_label_key": "candidate:breathes_well_evidence_unclear",
+          "downgrade_reasons": [
+            "unknown_label"
+          ],
+          "raw_label": "透气性好",
+          "sub_category": "waders"
+        },
+        "downgrade_reason_priority": 100,
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "evidence_candidate": "Keep me dryish for the most part",
+        "label_type": "highlight",
+        "max_confidence": 0.88,
+        "product_id": "TIDEWE-下水服-WD001",
+        "product_ids": [
+          "TIDEWE-下水服-WD001"
+        ],
+        "raw_label": "透气性好",
+        "review_count": 1,
+        "review_id": "waders-351-400-row-365",
+        "review_ids": [
+          "waders-351-400-row-365"
+        ],
+        "review_status": "pending",
+        "session_id": 351,
+        "session_ids": [
+          351
+        ],
+        "source_candidate_ids": [
+          "shadow:waders-351-400-row-365:0:candidate:breathes_well_evidence_unclear"
+        ],
+        "sub_category": "waders",
+        "top_impact_score": 1.76
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "needs_new_label",
+        "candidate_id": "pool:3c5dc187d659426a",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Keep as local catalog backlog candidate; no DB write.",
+        "raw_label": "客服服务好",
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:3c5dc187d659426a",
+      "review_output": {
+        "action_result": "needs_new_label",
+        "canonical_label_key": "candidate:good_customer_service",
+        "evidence_candidate": "Excellent customer service",
+        "label_type": "highlight",
+        "raw_label": "客服服务好"
+      },
+      "review_status": "needs_new_label",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.88,
+        "candidate_count": 1,
+        "candidate_id": "pool:3c5dc187d659426a",
+        "canonical_label_key": "candidate:good_customer_service",
+        "category": "outdoor",
+        "confidence": 0.88,
+        "dedupe_key": {
+          "canonical_label_key": "candidate:good_customer_service",
+          "downgrade_reasons": [
+            "unknown_label"
+          ],
+          "raw_label": "客服服务好",
+          "sub_category": "waders"
+        },
+        "downgrade_reason_priority": 100,
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "evidence_candidate": "Excellent customer service",
+        "label_type": "highlight",
+        "max_confidence": 0.88,
+        "product_id": "TIDEWE-下水服-WD001",
+        "product_ids": [
+          "TIDEWE-下水服-WD001"
+        ],
+        "raw_label": "客服服务好",
+        "review_count": 1,
+        "review_id": "waders-351-400-row-368",
+        "review_ids": [
+          "waders-351-400-row-368"
+        ],
+        "review_status": "pending",
+        "session_id": 351,
+        "session_ids": [
+          351
+        ],
+        "source_candidate_ids": [
+          "shadow:waders-351-400-row-368:0:candidate:good_customer_service"
+        ],
+        "sub_category": "waders",
+        "top_impact_score": 1.76
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "needs_new_label",
+        "candidate_id": "pool:b1f868a8103046d5",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Keep as local catalog backlog candidate; no DB write.",
+        "raw_label": "不适合经常使用",
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:b1f868a8103046d5",
+      "review_output": {
+        "action_result": "needs_new_label",
+        "canonical_label_key": "candidate:not_for_frequent_use",
+        "evidence_candidate": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
+        "label_type": "issue",
+        "raw_label": "不适合经常使用"
+      },
+      "review_status": "needs_new_label",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.88,
+        "candidate_count": 1,
+        "candidate_id": "pool:b1f868a8103046d5",
+        "canonical_label_key": "candidate:not_for_frequent_use",
+        "category": "outdoor",
+        "confidence": 0.88,
+        "dedupe_key": {
+          "canonical_label_key": "candidate:not_for_frequent_use",
+          "downgrade_reasons": [
+            "unknown_label"
+          ],
+          "raw_label": "不适合经常使用",
+          "sub_category": "waders"
+        },
+        "downgrade_reason_priority": 100,
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "evidence_candidate": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
+        "label_type": "issue",
+        "max_confidence": 0.88,
+        "product_id": "TIDEWE-下水服-WD001",
+        "product_ids": [
+          "TIDEWE-下水服-WD001"
+        ],
+        "raw_label": "不适合经常使用",
+        "review_count": 1,
+        "review_id": "waders-351-400-row-396",
+        "review_ids": [
+          "waders-351-400-row-396"
+        ],
+        "review_status": "pending",
+        "session_id": 351,
+        "session_ids": [
+          351
+        ],
+        "source_candidate_ids": [
+          "shadow:waders-351-400-row-396:0:candidate:not_for_frequent_use"
+        ],
+        "sub_category": "waders",
+        "top_impact_score": 1.76
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "needs_new_label",
+        "candidate_id": "pool:4d6ed1c4394a62c1",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Keep as local catalog backlog candidate; no DB write.",
+        "raw_label": "不适合极端环境",
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:4d6ed1c4394a62c1",
+      "review_output": {
+        "action_result": "needs_new_label",
+        "canonical_label_key": "candidate:not_for_hardcore_conditions",
+        "evidence_candidate": "I think these waders are a good choice for light duty.",
+        "label_type": "issue",
+        "raw_label": "不适合极端环境"
+      },
+      "review_status": "needs_new_label",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.88,
+        "candidate_count": 1,
+        "candidate_id": "pool:4d6ed1c4394a62c1",
+        "canonical_label_key": "candidate:not_for_hardcore_conditions",
+        "category": "outdoor",
+        "confidence": 0.88,
+        "dedupe_key": {
+          "canonical_label_key": "candidate:not_for_hardcore_conditions",
+          "downgrade_reasons": [
+            "unknown_label"
+          ],
+          "raw_label": "不适合极端环境",
+          "sub_category": "waders"
+        },
+        "downgrade_reason_priority": 100,
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "evidence_candidate": "I think these waders are a good choice for light duty.",
+        "label_type": "issue",
+        "max_confidence": 0.88,
+        "product_id": "TIDEWE-下水服-WD001",
+        "product_ids": [
+          "TIDEWE-下水服-WD001"
+        ],
+        "raw_label": "不适合极端环境",
+        "review_count": 1,
+        "review_id": "waders-351-400-row-372",
+        "review_ids": [
+          "waders-351-400-row-372"
+        ],
+        "review_status": "pending",
+        "session_id": 351,
+        "session_ids": [
+          351
+        ],
+        "source_candidate_ids": [
+          "shadow:waders-351-400-row-372:0:candidate:not_for_hardcore_conditions"
+        ],
+        "sub_category": "waders",
+        "top_impact_score": 1.76
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "needs_new_label",
+        "candidate_id": "pool:71cd6775d1fda797",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Keep as local catalog backlog candidate; no DB write.",
+        "raw_label": "厚实度不够",
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:71cd6775d1fda797",
+      "review_output": {
+        "action_result": "needs_new_label",
+        "canonical_label_key": "candidate:thin_boot_sole",
+        "evidence_candidate": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+        "label_type": "issue",
+        "raw_label": "厚实度不够"
+      },
+      "review_status": "needs_new_label",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.88,
+        "candidate_count": 1,
+        "candidate_id": "pool:71cd6775d1fda797",
+        "canonical_label_key": "candidate:thin_boot_sole",
+        "category": "outdoor",
+        "confidence": 0.88,
+        "dedupe_key": {
+          "canonical_label_key": "candidate:thin_boot_sole",
+          "downgrade_reasons": [
+            "unknown_label"
+          ],
+          "raw_label": "厚实度不够",
+          "sub_category": "waders"
+        },
+        "downgrade_reason_priority": 100,
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "evidence_candidate": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+        "label_type": "issue",
+        "max_confidence": 0.88,
+        "product_id": "TIDEWE-下水服-WD001",
+        "product_ids": [
+          "TIDEWE-下水服-WD001"
+        ],
+        "raw_label": "厚实度不够",
+        "review_count": 1,
+        "review_id": "waders-351-400-row-374",
+        "review_ids": [
+          "waders-351-400-row-374"
+        ],
+        "review_status": "pending",
+        "session_id": 351,
+        "session_ids": [
+          351
+        ],
+        "source_candidate_ids": [
+          "shadow:waders-351-400-row-374:0:candidate:thin_boot_sole"
+        ],
+        "sub_category": "waders",
+        "top_impact_score": 1.76
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "accept",
+        "candidate_id": "pool:57e2850afc96bd0a",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+        "raw_label": null,
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:57e2850afc96bd0a",
+      "review_output": {
+        "action_result": "accepted"
+      },
+      "review_status": "accepted",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.91,
+        "candidate_count": 1,
+        "candidate_id": "pool:57e2850afc96bd0a",
+        "canonical_label_key": "good_value_for_the_price",
+        "category": "pet",
+        "confidence": 0.91,
+        "dedupe_key": {
+          "canonical_label_key": "good_value_for_the_price",
+          "downgrade_reasons": [
+            "maturity_blocked"
+          ],
+          "raw_label": "good value for the price",
+          "sub_category": "dog treats"
+        },
+        "downgrade_reason_priority": 90,
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "evidence_candidate": "great value for the price",
+        "label_type": "highlight",
+        "max_confidence": 0.91,
+        "product_id": "synthetic-pet",
+        "product_ids": [
+          "synthetic-pet"
+        ],
+        "raw_label": "Good value for the price",
+        "review_count": 1,
+        "review_id": "maturity-pet-l1-value-blocked",
+        "review_ids": [
+          "maturity-pet-l1-value-blocked"
+        ],
+        "review_status": "pending",
+        "session_id": "step5-maturity-rollout",
+        "session_ids": [
+          "step5-maturity-rollout"
+        ],
+        "source_candidate_ids": [
+          "shadow:maturity-pet-l1-value-blocked:0:good_value_for_the_price"
+        ],
+        "sub_category": "Dog Treats",
+        "top_impact_score": 1.729
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "accept",
+        "candidate_id": "pool:d36757a7abb96daf",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+        "raw_label": null,
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:d36757a7abb96daf",
+      "review_output": {
+        "action_result": "accepted"
+      },
+      "review_status": "accepted",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.91,
+        "candidate_count": 1,
+        "candidate_id": "pool:d36757a7abb96daf",
+        "canonical_label_key": "quality_problem",
+        "category": "automotive",
+        "confidence": 0.91,
+        "dedupe_key": {
+          "canonical_label_key": "quality_problem",
+          "downgrade_reasons": [
+            "maturity_blocked"
+          ],
+          "raw_label": "quality problem",
+          "sub_category": "车载充电器"
+        },
+        "downgrade_reason_priority": 90,
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "evidence_candidate": "quality is poor",
+        "label_type": "issue",
+        "max_confidence": 0.91,
+        "product_id": "synthetic-automotive",
+        "product_ids": [
+          "synthetic-automotive"
+        ],
+        "raw_label": "Quality problem",
+        "review_count": 1,
+        "review_id": "maturity-automotive-l1-quality-blocked",
+        "review_ids": [
+          "maturity-automotive-l1-quality-blocked"
+        ],
+        "review_status": "pending",
+        "session_id": "step5-maturity-rollout",
+        "session_ids": [
+          "step5-maturity-rollout"
+        ],
+        "source_candidate_ids": [
+          "shadow:maturity-automotive-l1-quality-blocked:0:quality_problem"
+        ],
+        "sub_category": "车载充电器",
+        "top_impact_score": 1.729
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "accept",
+        "candidate_id": "pool:0a3d8d1499cedbd8",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+        "raw_label": null,
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:0a3d8d1499cedbd8",
+      "review_output": {
+        "action_result": "accepted"
+      },
+      "review_status": "accepted",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.9,
+        "candidate_count": 1,
+        "candidate_id": "pool:0a3d8d1499cedbd8",
+        "canonical_label_key": "quality_problem",
+        "category": "baby",
+        "confidence": 0.9,
+        "dedupe_key": {
+          "canonical_label_key": "quality_problem",
+          "downgrade_reasons": [
+            "maturity_blocked"
+          ],
+          "raw_label": "quality problem",
+          "sub_category": "baby bibs"
+        },
+        "downgrade_reason_priority": 90,
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "evidence_candidate": "quality is poor",
+        "label_type": "issue",
+        "max_confidence": 0.9,
+        "product_id": "synthetic-baby",
+        "product_ids": [
+          "synthetic-baby"
+        ],
+        "raw_label": "Quality problem",
+        "review_count": 1,
+        "review_id": "maturity-baby-l1-issue-blocked",
+        "review_ids": [
+          "maturity-baby-l1-issue-blocked"
+        ],
+        "review_status": "pending",
+        "session_id": "step5-maturity-rollout",
+        "session_ids": [
+          "step5-maturity-rollout"
+        ],
+        "source_candidate_ids": [
+          "shadow:maturity-baby-l1-issue-blocked:0:quality_problem"
+        ],
+        "sub_category": "Baby Bibs",
+        "top_impact_score": 1.71
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "accept",
+        "candidate_id": "pool:85f61303a2f5fead",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+        "raw_label": null,
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:85f61303a2f5fead",
+      "review_output": {
+        "action_result": "accepted"
+      },
+      "review_status": "accepted",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.9,
+        "candidate_count": 1,
+        "candidate_id": "pool:85f61303a2f5fead",
+        "canonical_label_key": "charging_fails",
+        "category": "3c",
+        "confidence": 0.9,
+        "dedupe_key": {
+          "canonical_label_key": "charging_fails",
+          "downgrade_reasons": [
+            "maturity_blocked"
+          ],
+          "raw_label": "charging fails",
+          "sub_category": "usb c charger block"
+        },
+        "downgrade_reason_priority": 90,
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "evidence_candidate": "fails to charge",
+        "label_type": "issue",
+        "max_confidence": 0.9,
+        "product_id": "synthetic-3c",
+        "product_ids": [
+          "synthetic-3c"
+        ],
+        "raw_label": "Charging fails",
+        "review_count": 1,
+        "review_id": "maturity-3c-l2-specific-blocked",
+        "review_ids": [
+          "maturity-3c-l2-specific-blocked"
+        ],
+        "review_status": "pending",
+        "session_id": "step5-maturity-rollout",
+        "session_ids": [
+          "step5-maturity-rollout"
+        ],
+        "source_candidate_ids": [
+          "shadow:maturity-3c-l2-specific-blocked:0:charging_fails"
+        ],
+        "sub_category": "USB C Charger Block",
+        "top_impact_score": 1.71
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "accept",
+        "candidate_id": "pool:c2eb87dfe99ac14c",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+        "raw_label": null,
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:c2eb87dfe99ac14c",
+      "review_output": {
+        "action_result": "accepted"
+      },
+      "review_status": "accepted",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.9,
+        "candidate_count": 1,
+        "candidate_id": "pool:c2eb87dfe99ac14c",
+        "canonical_label_key": "water_leaks_through",
+        "category": "outdoor",
+        "confidence": 0.9,
+        "dedupe_key": {
+          "canonical_label_key": "water_leaks_through",
+          "downgrade_reasons": [
+            "maturity_blocked"
+          ],
+          "raw_label": "water leaks through",
+          "sub_category": "waders"
+        },
+        "downgrade_reason_priority": 90,
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "evidence_candidate": "do not keep you dry",
+        "label_type": "issue",
+        "max_confidence": 0.9,
+        "product_id": null,
+        "product_ids": [],
+        "raw_label": "Water Leaks Through",
+        "review_count": 1,
+        "review_id": "edge-maturity-blocked",
+        "review_ids": [
+          "edge-maturity-blocked"
+        ],
+        "review_status": "pending",
+        "session_id": null,
+        "session_ids": [],
+        "source_candidate_ids": [
+          "shadow:edge-maturity-blocked:0:water_leaks_through"
+        ],
+        "sub_category": "waders",
+        "top_impact_score": 1.71
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "accept",
+        "candidate_id": "pool:572238d660e14e29",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+        "raw_label": null,
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:572238d660e14e29",
+      "review_output": {
+        "action_result": "accepted"
+      },
+      "review_status": "accepted",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.9,
+        "candidate_count": 1,
+        "candidate_id": "pool:572238d660e14e29",
+        "canonical_label_key": "fits_as_expected",
+        "category": "office",
+        "confidence": 0.9,
+        "dedupe_key": {
+          "canonical_label_key": "fits_as_expected",
+          "downgrade_reasons": [
+            "maturity_blocked"
+          ],
+          "raw_label": "fits as expected",
+          "sub_category": "办公椅"
+        },
+        "downgrade_reason_priority": 90,
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "evidence_candidate": "fits perfectly",
+        "label_type": "highlight",
+        "max_confidence": 0.9,
+        "product_id": "synthetic-office",
+        "product_ids": [
+          "synthetic-office"
+        ],
+        "raw_label": "Fits as expected",
+        "review_count": 1,
+        "review_id": "maturity-office-l1-fit-blocked",
+        "review_ids": [
+          "maturity-office-l1-fit-blocked"
+        ],
+        "review_status": "pending",
+        "session_id": "step5-maturity-rollout",
+        "session_ids": [
+          "step5-maturity-rollout"
+        ],
+        "source_candidate_ids": [
+          "shadow:maturity-office-l1-fit-blocked:0:fits_as_expected"
+        ],
+        "sub_category": "办公椅",
+        "top_impact_score": 1.71
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "accept",
+        "candidate_id": "pool:4acc0c2c9ec16d51",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+        "raw_label": null,
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:4acc0c2c9ec16d51",
+      "review_output": {
+        "action_result": "accepted"
+      },
+      "review_status": "accepted",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.9,
+        "candidate_count": 1,
+        "candidate_id": "pool:4acc0c2c9ec16d51",
+        "canonical_label_key": "water_leaks_through",
+        "category": "outdoor",
+        "confidence": 0.9,
+        "dedupe_key": {
+          "canonical_label_key": "water_leaks_through",
+          "downgrade_reasons": [
+            "maturity_blocked"
+          ],
+          "raw_label": "water leaks through",
+          "sub_category": "帐篷"
+        },
+        "downgrade_reason_priority": 90,
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "evidence_candidate": "leaked through the tent",
+        "label_type": "issue",
+        "max_confidence": 0.9,
+        "product_id": "synthetic-outdoor",
+        "product_ids": [
+          "synthetic-outdoor"
+        ],
+        "raw_label": "Water leaks through",
+        "review_count": 1,
+        "review_id": "maturity-outdoor-l2-waterproof-specific-blocked",
+        "review_ids": [
+          "maturity-outdoor-l2-waterproof-specific-blocked"
+        ],
+        "review_status": "pending",
+        "session_id": "step5-maturity-rollout",
+        "session_ids": [
+          "step5-maturity-rollout"
+        ],
+        "source_candidate_ids": [
+          "shadow:maturity-outdoor-l2-waterproof-specific-blocked:0:water_leaks_through"
+        ],
+        "sub_category": "帐篷",
+        "top_impact_score": 1.71
+      },
+      "validation_errors": []
+    },
+    {
+      "action": {
+        "action": "accept",
+        "candidate_id": "pool:01df10d24340e31f",
+        "canonical_label_key": null,
+        "evidence_candidate": null,
+        "label_type": null,
+        "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
+        "raw_label": null,
+        "reviewer": "step5-local-review-fixture"
+      },
+      "action_applied": true,
+      "candidate_id": "pool:01df10d24340e31f",
+      "review_output": {
+        "action_result": "accepted"
+      },
+      "review_status": "accepted",
+      "reviewed_at": "2026-07-30T00:00:00Z",
+      "source_candidate_item": {
+        "avg_confidence": 0.9,
+        "candidate_count": 1,
+        "candidate_id": "pool:01df10d24340e31f",
+        "canonical_label_key": "smudges_easily",
+        "category": "beauty",
+        "confidence": 0.9,
+        "dedupe_key": {
+          "canonical_label_key": "smudges_easily",
+          "downgrade_reasons": [
+            "maturity_blocked"
+          ],
+          "raw_label": "smudges easily",
+          "sub_category": "睫毛膏"
+        },
+        "downgrade_reason_priority": 90,
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "evidence_candidate": "smudges easily",
+        "label_type": "issue",
+        "max_confidence": 0.9,
+        "product_id": "synthetic-beauty",
+        "product_ids": [
+          "synthetic-beauty"
+        ],
+        "raw_label": "Smudges easily",
+        "review_count": 1,
+        "review_id": "maturity-beauty-l2-specific-blocked",
+        "review_ids": [
+          "maturity-beauty-l2-specific-blocked"
+        ],
+        "review_status": "pending",
+        "session_id": "step5-maturity-rollout",
+        "session_ids": [
+          "step5-maturity-rollout"
+        ],
+        "source_candidate_ids": [
+          "shadow:maturity-beauty-l2-specific-blocked:0:smudges_easily"
+        ],
+        "sub_category": "睫毛膏",
+        "top_impact_score": 1.71
+      },
+      "validation_errors": []
+    }
+  ],
+  "reviewed_item_count": 14,
+  "safety": {
+    "credit_consumed": false,
+    "db_write": false,
+    "frontstage_mutated": false,
+    "frontstage_replaced": false,
+    "llm_called": false,
+    "production_db_write": false,
+    "production_upload": false,
+    "production_write_path": false
+  },
+  "schema_version": "customer-label-v2-candidate-pool-reviewed-mvp.1",
+  "scope": "5.9.9 Step 6 v2 frontstage feature flag read-path local contract",
+  "source_artifacts": [
+    "tmp/5.9.9-step6-v2-frontstage-feature-flag-read-path/candidate-pool.json",
+    "backend_api/tests/fixtures/customer_label_waders_session120_human_gold.json",
+    "backend_api/tests/fixtures/customer_label_waders_session121_blind_regression.json",
+    "backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json",
+    "backend_api/tests/fixtures/customer_label_v2_maturity_rollout.json",
+    "tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session-results.json",
+    "tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/acceptance-summary.json"
+  ],
+  "source_item_count": 14,
+  "source_schema_version": "customer-label-v2-candidate-pool-mvp.1",
+  "status": "PASS"
+}

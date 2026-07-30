@@ -8,6 +8,16 @@
 
 ---
 
+### 2026-07-30 5.9.9 Customer Label System v2 Step 6：v2 frontstage feature flag / read-path contract
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | frontstage-read-path-contract | 新增本地 pure helper `backend_api/app/services/customer_label_v2_frontstage.py`，定义 v2 shadow 到 frontstage 的 feature flag/read-path contract：默认 off；支持 per-session、per-category、per-sub_category、category/sub_category scope；默认需要 `shadow_fixture_gate_passed=True` 且只允许 `L3_sub_category` 进入 v2 frontstage read path；支持 global/scoped rollback 回 v1/current。 | `PASS`：focused tests 覆盖 flag off、flag on + L3 waders、fixture gate fallback、L0/L1/L2 maturity blocked、unknown/new label candidate pool only、rollback；helper 为本地纯选择/投影，不写 DB、不触发 LLM。 |
+| 2026-07-30 | consumer-contract | 梳理当前 frontstage 四条消费路径：Results page Top10、single review detail、raw review export、single-tag download；Step 6 合同把四条路径统一绑定 selected `display_occurrences`，明确 `label_candidates`、`audit_occurrences`、`candidate_pool_items` 不进入 frontstage。 | `PASS`：`frontstage-read-path-contract.json` case count `8`，selected `v1_current=6`、`v2_shadow=2`，violations `0`；live frontstage 未替换。 |
+| 2026-07-30 | step6-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 升级输出 Step 6 artifact，并保留 Step 5 category maturity、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；candidate pool raw/deduped `14/14`，reviewed `14`，invalid `0`，`needs_new_label=6`、`accepted=8`；六个重点标签 FP/FN=0。报告：`docs/5.9.9-step6-v2-frontstage-feature-flag-read-path.md`。 |
+
+---
+
 ### 2026-07-30 5.9.9 Customer Label System v2 Step 5：Category Maturity + 10 大类 L1/L2 灰度
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -191,7 +201,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 5 已完成：category/sub_category maturity contract、10 大类 L1/L2 灰度 fixture、waders L3 override、maturity-aware verifier/candidate pool/replay artifact PASS，P0=0 | 继续保持 frontstage 只读 display occurrences；后续可基于 candidate pool/human gold 再推进类目升级与审核入口产品化 |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 6 已完成：v2 shadow 到 frontstage 的 feature flag/read-path 本地 contract，默认 off，支持 session/category/sub_category scope、L3 waders 首候选、fixture gate 与 rollback；replay artifact PASS，P0=0 | 继续保持 live frontstage 不替换；后续若 Erika 授权，可把 contract 接到实际 Results/detail/export/single-tag 读路径并配置生产 kill switch/观测。 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |

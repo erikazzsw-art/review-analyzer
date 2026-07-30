@@ -17,6 +17,14 @@ from backend_api.app.services.customer_label_v2_candidate_pool import (
     write_reviewed_candidate_pool_csv,
     write_reviewed_candidate_pool_json_artifact,
 )
+from backend_api.app.services.customer_label_v2_frontstage import (
+    READ_PATH_V1_CURRENT,
+    READ_PATH_V2_SHADOW,
+    CustomerLabelV2FrontstageFlag,
+    build_customer_label_v2_frontstage_read_model,
+    build_frontstage_read_path_artifact,
+    frontstage_keys_from_read_model,
+)
 from backend_api.app.services.customer_label_v2_maturity import maturity_contract_summary
 from backend_api.app.services.customer_label_v2_shadow import (
     FOCUS_WADERS_LABELS,
@@ -24,6 +32,10 @@ from backend_api.app.services.customer_label_v2_shadow import (
     display_keys_from_shadow,
     run_customer_label_v2_shadow,
     v1_display_keys_for_review,
+)
+from backend_api.app.services.specific_issue import (
+    CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+    CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,8 +55,10 @@ POSTDEPLOY_AUDIT = (
     / "session122-readonly"
     / "session122-postdeploy-readonly-acceptance-audit.json"
 )
-ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step5-category-maturity-l1-l2-rollout"
+STEP6_SCOPE = "5.9.9 Step 6 v2 frontstage feature flag read-path local contract"
+ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step6-v2-frontstage-feature-flag-read-path"
 ARTIFACT_PATH = ARTIFACT_DIR / "waders-shadow-summary.json"
+FRONTSTAGE_READ_PATH_ARTIFACT_PATH = ARTIFACT_DIR / "frontstage-read-path-contract.json"
 CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool.json"
 CANDIDATE_POOL_CSV_PATH = ARTIFACT_DIR / "candidate-pool.csv"
 REVIEWED_CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool-reviewed.json"
@@ -188,6 +202,269 @@ def _candidate(
         "confidence": confidence,
         "reason": "shadow edge-case fixture",
     }
+
+
+def _step6_v1_occurrence(
+    *,
+    label_type: str,
+    canonical: str,
+    display_en: str,
+    display_zh: str,
+    aspect_key: str,
+    evidence: str,
+    comment_id: str,
+) -> dict[str, Any]:
+    return {
+        "comment_id": comment_id,
+        "type": label_type,
+        "raw_label": display_en,
+        "canonical_label_key": canonical,
+        "display_label_en": display_en,
+        "display_label_zh": display_zh,
+        "aspect_key": aspect_key,
+        "evidence_span": evidence,
+        "evidence_start": -1,
+        "evidence_end": -1,
+        "confidence": "high",
+        "source": "rule",
+        "source_detail": "step6_v1_fixture",
+        "evidence_verified": True,
+        "cluster_propagated": False,
+        "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+        "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+        "display_allowed": True,
+    }
+
+
+def _step6_waders_v1_review() -> dict[str, Any]:
+    return {
+        "id": "step6-readpath-waders",
+        "session_id": "step6-readpath-session",
+        "product_id": "TIDEWE-step6-readpath",
+        "content": "The zipper broke on day one. They do not keep you dry.",
+        "rating": 1,
+        "category": "outdoor",
+        "sub_category": "waders",
+        "aspects_json": {
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrence_ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+            "sub_category": "waders",
+            "customer_label_occurrences": [
+                _step6_v1_occurrence(
+                    label_type="issue",
+                    canonical="zipper_fails",
+                    display_en="Zipper Fails",
+                    display_zh="拉链容易故障",
+                    aspect_key="zipper_quality",
+                    evidence="zipper broke",
+                    comment_id="step6-readpath-waders",
+                )
+            ],
+        },
+    }
+
+
+def _step6_review(
+    *,
+    review_id: str,
+    content: str,
+    category: str,
+    sub_category: str,
+) -> dict[str, Any]:
+    return {
+        "id": review_id,
+        "session_id": "step6-readpath-session",
+        "product_id": f"synthetic-{category}",
+        "content": content,
+        "rating": 2,
+        "category": category,
+        "sub_category": sub_category,
+    }
+
+
+def _step6_frontstage_read_path_artifact() -> dict[str, Any]:
+    waders_flag = CustomerLabelV2FrontstageFlag(
+        enabled=True,
+        sub_categories=("outdoor/waders",),
+        shadow_fixture_gate_passed=True,
+    )
+    waders_v2_candidates = [
+        _candidate(
+            label_type="issue",
+            canonical="water_leaks_through",
+            evidence="do not keep you dry",
+            aspect_key="waterproof",
+        )
+    ]
+    cases = {
+        "flag_off_v1_current": {
+            "model": build_customer_label_v2_frontstage_read_model(
+                _step6_waders_v1_review(),
+                flag=CustomerLabelV2FrontstageFlag(),
+                label_candidates=waders_v2_candidates,
+            ),
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_keys": "v1_current",
+        },
+        "flag_on_l3_waders_v2_shadow": {
+            "model": build_customer_label_v2_frontstage_read_model(
+                _step6_waders_v1_review(),
+                flag=waders_flag,
+                label_candidates=waders_v2_candidates,
+            ),
+            "expected_path": READ_PATH_V2_SHADOW,
+            "expected_keys": {"issue": ["water_leaks_through"], "highlight": []},
+        },
+        "flag_on_without_fixture_gate_fallback": {
+            "model": build_customer_label_v2_frontstage_read_model(
+                _step6_waders_v1_review(),
+                flag=CustomerLabelV2FrontstageFlag(
+                    enabled=True,
+                    sub_categories=("outdoor/waders",),
+                    shadow_fixture_gate_passed=False,
+                ),
+                label_candidates=waders_v2_candidates,
+            ),
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_keys": "v1_current",
+        },
+        "l0_unknown_maturity_blocked": {
+            "model": build_customer_label_v2_frontstage_read_model(
+                _step6_review(
+                    review_id="step6-l0",
+                    content="Great product.",
+                    category="toys",
+                    sub_category="Mystery Toy",
+                ),
+                flag=CustomerLabelV2FrontstageFlag(
+                    enabled=True,
+                    categories=("toys",),
+                    shadow_fixture_gate_passed=True,
+                ),
+                label_candidates=[
+                    _candidate(
+                        label_type="highlight",
+                        canonical="overall_satisfied",
+                        evidence="Great product",
+                        aspect_key="other",
+                    )
+                ],
+            ),
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_keys": {"issue": [], "highlight": []},
+        },
+        "l1_generic_maturity_blocked": {
+            "model": build_customer_label_v2_frontstage_read_model(
+                _step6_review(
+                    review_id="step6-l1",
+                    content="The bib quality is poor.",
+                    category="baby",
+                    sub_category="Baby Bibs",
+                ),
+                flag=CustomerLabelV2FrontstageFlag(
+                    enabled=True,
+                    categories=("baby",),
+                    shadow_fixture_gate_passed=True,
+                ),
+                label_candidates=[
+                    _candidate(
+                        label_type="issue",
+                        canonical="quality_problem",
+                        evidence="quality is poor",
+                        aspect_key="build_quality",
+                    )
+                ],
+            ),
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_keys": {"issue": [], "highlight": []},
+        },
+        "l2_category_maturity_blocked": {
+            "model": build_customer_label_v2_frontstage_read_model(
+                _step6_review(
+                    review_id="step6-l2",
+                    content="The storage pocket is not waterproof.",
+                    category="home",
+                    sub_category="床架",
+                ),
+                flag=CustomerLabelV2FrontstageFlag(
+                    enabled=True,
+                    categories=("home",),
+                    shadow_fixture_gate_passed=True,
+                ),
+                label_candidates=[
+                    _candidate(
+                        label_type="issue",
+                        canonical="pocket_not_waterproof",
+                        evidence="pocket is not waterproof",
+                        aspect_key="accessory_storage",
+                    )
+                ],
+            ),
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_keys": {"issue": [], "highlight": []},
+        },
+        "unknown_label_candidate_pool_only": {
+            "model": build_customer_label_v2_frontstage_read_model(
+                _step6_review(
+                    review_id="step6-unknown",
+                    content="The boot seam leaked on the first trip.",
+                    category="outdoor",
+                    sub_category="waders",
+                ),
+                flag=waders_flag,
+                label_candidates=[
+                    _candidate(
+                        label_type="issue",
+                        canonical="candidate:boot_seam_leak",
+                        raw_label="Boot seam leak",
+                        evidence="boot seam leaked",
+                        aspect_key="seam_integrity",
+                    )
+                ],
+            ),
+            "expected_path": READ_PATH_V2_SHADOW,
+            "expected_keys": {"issue": [], "highlight": []},
+        },
+        "rollback_session_returns_v1_current": {
+            "model": build_customer_label_v2_frontstage_read_model(
+                _step6_waders_v1_review(),
+                flag=CustomerLabelV2FrontstageFlag(
+                    enabled=True,
+                    sub_categories=("outdoor/waders",),
+                    shadow_fixture_gate_passed=True,
+                    rollback_session_ids=("step6-readpath-session",),
+                ),
+                label_candidates=waders_v2_candidates,
+            ),
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_keys": "v1_current",
+        },
+    }
+
+    violations: list[dict[str, Any]] = []
+    read_models: list[dict[str, Any]] = []
+    for name, case in cases.items():
+        model = case["model"]
+        read_models.append(model)
+        actual_keys = frontstage_keys_from_read_model(model)
+        expected_keys = model["v1_current"]["keys"] if case["expected_keys"] == "v1_current" else case["expected_keys"]
+        if model["read_path"] != case["expected_path"] or actual_keys != expected_keys:
+            violations.append(
+                {
+                    "case": name,
+                    "expected_path": case["expected_path"],
+                    "actual_path": model["read_path"],
+                    "expected_keys": expected_keys,
+                    "actual_keys": actual_keys,
+                    "fallback_reason": model["fallback_reason"],
+                }
+            )
+        if any(model["frontstage_consumers"][consumer]["input_layer"] != "display_occurrences" for consumer in model["frontstage_consumers"]):
+            violations.append({"case": name, "error": "consumer_not_display_occurrences"})
+    artifact = build_frontstage_read_path_artifact(read_models, scope=STEP6_SCOPE)
+    artifact["case_expectation_violations"] = violations
+    artifact["status"] = "PASS" if artifact["status"] == "PASS" and not violations else "REVIEW_NEEDED"
+    return artifact
 
 
 def _human_351_400_candidate_shadow_results() -> list[dict[str, Any]]:
@@ -677,6 +954,12 @@ def main() -> None:
         edge_cases, edge_case_shadow_results = _edge_case_runs()
         human_351_400_candidate_shadow_results = _human_351_400_candidate_shadow_results()
         maturity_rollout, maturity_rollout_shadow_results = _maturity_rollout_shadow_results()
+        frontstage_read_path_artifact = _step6_frontstage_read_path_artifact()
+        ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        FRONTSTAGE_READ_PATH_ARTIFACT_PATH.write_text(
+            json.dumps(frontstage_read_path_artifact, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
         datasets = [session120, session121, session122, human_351_400]
         focus_metrics = _aggregate_focus_metrics(datasets)
         p0_violations = [
@@ -693,7 +976,7 @@ def main() -> None:
         human_gold_payload = _load_json(HUMAN_351_400_GOLD)
         candidate_pool_artifact = build_candidate_pool_artifact(
             edge_case_shadow_results + human_351_400_candidate_shadow_results + maturity_rollout_shadow_results,
-            scope="5.9.9 Step 5 category maturity L1/L2 rollout local shadow replay",
+            scope=STEP6_SCOPE,
             source_artifacts=[
                 str(SESSION120_GOLD.relative_to(ROOT)),
                 str(SESSION121_FIXTURE.relative_to(ROOT)),
@@ -715,7 +998,7 @@ def main() -> None:
         reviewed_candidate_pool_artifact = build_reviewed_candidate_pool_artifact(
             candidate_pool_artifact,
             review_actions,
-            scope="5.9.9 Step 5 category maturity L1/L2 rollout local shadow replay",
+            scope=STEP6_SCOPE,
             source_artifacts=[str(candidate_pool_json_path.relative_to(ROOT))],
         )
         reviewed_candidate_pool_json_path = write_reviewed_candidate_pool_json_artifact(
@@ -733,11 +1016,12 @@ def main() -> None:
                     not p0_violations
                     and edge_cases["status"] == "PASS"
                     and maturity_rollout["status"] == "PASS"
+                    and frontstage_read_path_artifact["status"] == "PASS"
                     and reviewed_candidate_pool_artifact["status"] == "PASS"
                 )
                 else "REVIEW_NEEDED"
             ),
-            "scope": "5.9.9 Step 5 category maturity L1/L2 rollout local shadow replay",
+            "scope": STEP6_SCOPE,
             "llm_called": False,
             "production_upload": False,
             "production_write_path": False,
@@ -758,6 +1042,15 @@ def main() -> None:
             "edge_cases": edge_cases,
             "maturity_contract": maturity_contract_summary(),
             "category_maturity_rollout": maturity_rollout,
+            "frontstage_read_path_contract": {
+                "schema_version": frontstage_read_path_artifact["schema_version"],
+                "status": frontstage_read_path_artifact["status"],
+                "case_count": frontstage_read_path_artifact["case_count"],
+                "selected_read_paths": frontstage_read_path_artifact["selected_read_paths"],
+                "violations": frontstage_read_path_artifact["violations"],
+                "case_expectation_violations": frontstage_read_path_artifact["case_expectation_violations"],
+                "artifact_json": str(FRONTSTAGE_READ_PATH_ARTIFACT_PATH.relative_to(ROOT)),
+            },
             "candidate_pool_mvp": {
                 "schema_version": candidate_pool_artifact["schema_version"],
                 "raw_item_count": candidate_pool_artifact["raw_item_count"],
@@ -799,6 +1092,7 @@ def main() -> None:
             ],
             "artifact_files_written": [
                 str(ARTIFACT_PATH.relative_to(ROOT)),
+                str(FRONTSTAGE_READ_PATH_ARTIFACT_PATH.relative_to(ROOT)),
                 str(candidate_pool_json_path.relative_to(ROOT)),
                 str(candidate_pool_csv_path.relative_to(ROOT)),
                 str(reviewed_candidate_pool_json_path.relative_to(ROOT)),
