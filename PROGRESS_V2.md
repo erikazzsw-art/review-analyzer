@@ -8,6 +8,17 @@
 
 ---
 
+### 2026-07-30 5.9.9 Customer Label System v2 Step 4.6：waders 351-400 human gold assimilation + evidence regression
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | human-gold-fixture | 将 Erika 人工标注的 waders 351-400 Excel 转为标准化 human gold fixture：`backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json`。每条样本包含 review/content/rating、expected issue/highlight keys、locatable evidence spans、blocked labels、needs_new_label candidates 与 notes；5 条无可定位 evidence 的人工标签进入 fixture validation errors，未静默进入 display expected。 | `PASS`：focused test 校验 50 条样本 schema、expected evidence exact span locatable、needs_new_label evidence locatable、validation errors 显式记录。 |
+| 2026-07-30 | waders-label-regression-fix | 基于 351-400 gold 做最小修复：补齐 size/fit、durability、comfort、waterproof、value、quality、arrival、accessory/use-case evidence patterns；收紧 old product / accessory / not-used-yet / price-only / fit-advice / generic quality / wrong aspect guard；同一 review 同一 label 去重展示但保留多个 verified evidence spans。 | `PASS`：351-400 current shadow vs human gold issue TP/FP/FN `20/0/2`、highlight `62/0/8`；六个重点标签在 351-400 内 FP/FN=0。 |
+| 2026-07-30 | candidate-pool-assimilation | 351-400 新标签或边界不清标签不进入 frontstage，统一进入本地 candidate pool / needs_new_label：`breathes_well_evidence_unclear`、`good_customer_service`、`not_for_hardcore_conditions`、`thin_boot_sole`、`not_for_frequent_use`。 | `PASS`：Step 4.6 replay candidate pool raw/deduped items `7/7`，reviewed actions `7`，invalid `0`，`needs_new_label=6`、`accepted=1`；全部本地 artifact，不写 DB。 |
+| 2026-07-30 | waders-step4.6-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 纳入 `waders_351_400_human_gold` dataset，并输出 Step 4.6 artifact。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；全 replay 六个重点标签 FP/FN=0：`water_leaks_through`、`keeps_water_out`、`pocket_not_waterproof`、`fits_as_expected`、`good_value_for_the_price`、`holds_up_well`。报告：`docs/5.9.9-step4.6-waders-351-400-human-gold-assimilation.md`。 |
+
+---
+
 ### 2026-07-30 5.9.9 Customer Label System v2 Step 4.5：Candidate Pool lightweight review entry MVP
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -120,7 +131,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 4.5 candidate pool 轻量审核入口已 PASS，下一步进入类目成熟度灰度；ABSA 延后为条件触发 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 4.6 waders 351-400 human gold assimilation 已 PASS，下一步进入类目成熟度灰度；ABSA 延后为条件触发 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -169,7 +180,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 4.5 已完成：candidate pool review action apply helper、reviewed JSON/CSV artifact export、waders replay artifact PASS，P0=0 | Step 5：类目成熟度与 10 个大类 L1/L2 灰度，继续保持 frontstage 只读 display occurrences |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 4.6 已完成：waders 351-400 human gold fixture、evidence regression、candidate pool assimilation、waders replay artifact PASS，P0=0 | Step 5：类目成熟度与 10 个大类 L1/L2 灰度，继续保持 frontstage 只读 display occurrences |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |

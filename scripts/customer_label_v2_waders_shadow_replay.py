@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURES_DIR = ROOT / "backend_api" / "tests" / "fixtures"
 SESSION120_GOLD = FIXTURES_DIR / "customer_label_waders_session120_human_gold.json"
 SESSION121_FIXTURE = FIXTURES_DIR / "customer_label_waders_session121_blind_regression.json"
+HUMAN_351_400_GOLD = FIXTURES_DIR / "customer_label_waders_351_400_human_gold.json"
 SESSION122_RESULTS = ROOT / "tmp" / "5.9.8-step4-tidewe-waders-prod-20260729" / "session122-readonly" / "session-results.json"
 SESSION122_ACCEPTANCE = (
     ROOT / "tmp" / "5.9.8-step4-tidewe-waders-prod-20260729" / "session122-readonly" / "acceptance-summary.json"
@@ -40,7 +41,7 @@ POSTDEPLOY_AUDIT = (
     / "session122-readonly"
     / "session122-postdeploy-readonly-acceptance-audit.json"
 )
-ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step4.5-candidate-pool-review-entry-mvp"
+ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step4.6-waders-351-400-human-gold-assimilation"
 ARTIFACT_PATH = ARTIFACT_DIR / "waders-shadow-summary.json"
 CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool.json"
 CANDIDATE_POOL_CSV_PATH = ARTIFACT_DIR / "candidate-pool.csv"
@@ -101,6 +102,21 @@ def _session121_reviews() -> list[dict[str, Any]]:
         review["_required_highlight_keys"] = sample["required_highlight_keys"]
         review["_blocked_issue_keys"] = sample["blocked_issue_keys"]
         review["_blocked_highlight_keys"] = sample["blocked_highlight_keys"]
+        reviews.append(review)
+    return reviews
+
+
+def _human_351_400_reviews() -> list[dict[str, Any]]:
+    payload = _load_json(HUMAN_351_400_GOLD)
+    reviews: list[dict[str, Any]] = []
+    for sample in payload["samples"]:
+        review = _review_from_sample(sample)
+        review["session_id"] = 351
+        review["product_id"] = "TIDEWE-下水服-WD001"
+        review["_expected_issue_keys"] = sample["expected_issue_keys"]
+        review["_expected_highlight_keys"] = sample["expected_highlight_keys"]
+        review["_blocked_issue_keys"] = sample.get("blocked_issue_keys", [])
+        review["_blocked_highlight_keys"] = sample.get("blocked_highlight_keys", [])
         reviews.append(review)
     return reviews
 
@@ -170,6 +186,35 @@ def _candidate(
         "confidence": confidence,
         "reason": "shadow edge-case fixture",
     }
+
+
+def _human_351_400_candidate_shadow_results() -> list[dict[str, Any]]:
+    payload = _load_json(HUMAN_351_400_GOLD)
+    results: list[dict[str, Any]] = []
+    for sample in payload["samples"]:
+        review = _review_from_sample(sample)
+        review["session_id"] = 351
+        review["product_id"] = "TIDEWE-下水服-WD001"
+        for item in sample.get("needs_new_label") or []:
+            evidence_spans = item.get("evidence_spans") or []
+            if not evidence_spans:
+                continue
+            results.append(
+                run_customer_label_v2_shadow(
+                    review,
+                    label_candidates=[
+                        _candidate(
+                            label_type=str(item["label_type"]),
+                            canonical=str(item["canonical_label_key"]),
+                            raw_label=str(item["raw_label_zh"]),
+                            evidence=str(evidence_spans[0]["evidence_span"]),
+                            aspect_key="other",
+                            confidence=0.88,
+                        )
+                    ],
+                )
+            )
+    return results
 
 
 def _edge_case_runs() -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -445,7 +490,14 @@ def _aggregate_focus_metrics(datasets: list[dict[str, Any]]) -> dict[str, dict[s
                 merged[key][metric] += int(value)
     for label_type, canonical in FOCUS_WADERS_LABELS:
         merged.setdefault(f"{label_type}:{canonical}", Counter())
-    return {key: dict(value) for key, value in sorted(merged.items())}
+    return {
+        key: {
+            "tp": int(value.get("tp", 0)),
+            "fp": int(value.get("fp", 0)),
+            "fn": int(value.get("fn", 0)),
+        }
+        for key, value in sorted(merged.items())
+    }
 
 
 def _aggregate_downgrades(datasets: list[dict[str, Any]], edge_cases: dict[str, Any]) -> dict[str, int]:
@@ -466,7 +518,7 @@ def _mock_review_actions_for_candidate_pool(candidate_pool_artifact: dict[str, A
                     "candidate_id": candidate_id,
                     "action": "needs_new_label",
                     "raw_label": str(item.get("raw_label") or ""),
-                    "reviewer": "step4.5-local-review-fixture",
+                    "reviewer": "step4.6-local-review-fixture",
                     "note": "Keep as local catalog backlog candidate; no DB write.",
                 }
             )
@@ -475,7 +527,7 @@ def _mock_review_actions_for_candidate_pool(candidate_pool_artifact: dict[str, A
                 {
                     "candidate_id": candidate_id,
                     "action": "accept",
-                    "reviewer": "step4.5-local-review-fixture",
+                    "reviewer": "step4.6-local-review-fixture",
                     "note": "Accepted in reviewed artifact only; frontstage remains unchanged.",
                 }
             )
@@ -484,7 +536,7 @@ def _mock_review_actions_for_candidate_pool(candidate_pool_artifact: dict[str, A
                 {
                     "candidate_id": candidate_id,
                     "action": "ignore",
-                    "reviewer": "step4.5-local-review-fixture",
+                    "reviewer": "step4.6-local-review-fixture",
                     "note": "Unhandled local candidate pool fixture reason.",
                 }
             )
@@ -519,24 +571,37 @@ def main() -> None:
                 blocked_keys=_blocked_from_review,
             )
         )
+        human_351_400 = _add_precision_recall(
+            compare_customer_label_v2_shadow(
+                _human_351_400_reviews(),
+                _expected_from_review,
+                dataset_name="waders_351_400_human_gold",
+                blocked_keys=_blocked_from_review,
+            )
+        )
         edge_cases, edge_case_shadow_results = _edge_case_runs()
-        datasets = [session120, session121, session122]
+        human_351_400_candidate_shadow_results = _human_351_400_candidate_shadow_results()
+        datasets = [session120, session121, session122, human_351_400]
         focus_metrics = _aggregate_focus_metrics(datasets)
         p0_violations = [
             violation
             for dataset in datasets
             for violation in dataset["blocked_violations"]
         ]
-        for key, metrics in focus_metrics.items():
+        for label_type, canonical in FOCUS_WADERS_LABELS:
+            key = f"{label_type}:{canonical}"
+            metrics = focus_metrics.get(key, {})
             if int(metrics.get("fp") or 0) or int(metrics.get("fn") or 0):
                 p0_violations.append({"label": key, "metrics": metrics})
         postdeploy = _load_json(POSTDEPLOY_AUDIT) if POSTDEPLOY_AUDIT.exists() else {}
+        human_gold_payload = _load_json(HUMAN_351_400_GOLD)
         candidate_pool_artifact = build_candidate_pool_artifact(
-            edge_case_shadow_results,
-            scope="5.9.9 Step 4.5 candidate pool review entry MVP local waders shadow replay",
+            edge_case_shadow_results + human_351_400_candidate_shadow_results,
+            scope="5.9.9 Step 4.6 waders 351-400 human gold assimilation local shadow replay",
             source_artifacts=[
                 str(SESSION120_GOLD.relative_to(ROOT)),
                 str(SESSION121_FIXTURE.relative_to(ROOT)),
+                str(HUMAN_351_400_GOLD.relative_to(ROOT)),
                 str(SESSION122_RESULTS.relative_to(ROOT)),
                 str(SESSION122_ACCEPTANCE.relative_to(ROOT)),
             ],
@@ -553,7 +618,7 @@ def main() -> None:
         reviewed_candidate_pool_artifact = build_reviewed_candidate_pool_artifact(
             candidate_pool_artifact,
             review_actions,
-            scope="5.9.9 Step 4.5 candidate pool review entry MVP local waders shadow replay",
+            scope="5.9.9 Step 4.6 waders 351-400 human gold assimilation local shadow replay",
             source_artifacts=[str(candidate_pool_json_path.relative_to(ROOT))],
         )
         reviewed_candidate_pool_json_path = write_reviewed_candidate_pool_json_artifact(
@@ -574,7 +639,7 @@ def main() -> None:
                 )
                 else "REVIEW_NEEDED"
             ),
-            "scope": "5.9.9 Step 4.5 candidate pool review entry MVP local shadow replay",
+            "scope": "5.9.9 Step 4.6 waders 351-400 human gold assimilation local shadow replay",
             "llm_called": False,
             "production_upload": False,
             "production_write_path": False,
@@ -582,6 +647,15 @@ def main() -> None:
             "credit_consumed": False,
             "frontstage_replaced": False,
             "datasets": datasets,
+            "waders_351_400_human_gold_fixture": {
+                "path": str(HUMAN_351_400_GOLD.relative_to(ROOT)),
+                "review_count": human_gold_payload["review_count"],
+                "needs_new_label_count": human_gold_payload["expected_summary"]["needs_new_label_count"],
+                "fixture_validation_error_count": human_gold_payload["expected_summary"][
+                    "fixture_validation_error_count"
+                ],
+                "current_shadow_after_step4_6": human_gold_payload["expected_summary"]["current_shadow_after_step4_6"],
+            },
             "session121_required_blocked_gate": _required_boundary_summary(session121_reviews),
             "edge_cases": edge_cases,
             "candidate_pool_mvp": {
@@ -617,6 +691,7 @@ def main() -> None:
             "artifact_files_read": [
                 str(SESSION120_GOLD.relative_to(ROOT)),
                 str(SESSION121_FIXTURE.relative_to(ROOT)),
+                str(HUMAN_351_400_GOLD.relative_to(ROOT)),
                 str(SESSION122_RESULTS.relative_to(ROOT)),
                 str(SESSION122_ACCEPTANCE.relative_to(ROOT)),
                 str(POSTDEPLOY_AUDIT.relative_to(ROOT)),

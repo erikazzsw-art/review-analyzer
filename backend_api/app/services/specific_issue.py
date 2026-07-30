@@ -71,6 +71,7 @@ _ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
         "pants_too_long": {"size_fit"},
         "boots_too_stiff": {"comfort", "material", "boot_fit"},
         "not_for_long_walks": {"comfort", "boot_fit", "mobility"},
+        "uncomfortable_fit": {"comfort", "boot_fit", "mobility"},
         "poor_traction": {"grip"},
         "soft_soles": {"grip", "durability", "material"},
         "not_worth_the_price": {"value_for_money", "price_value"},
@@ -456,6 +457,7 @@ _UNCERTAIN_OR_UNTESTED_WATER_LEAK_PATTERNS = [
     r"\bcan(?:not|['’]?t)\s+say\s+whether\s+or\s+not\s+(?:they\s+)?leak\b",
     r"\bcan(?:not|['’]?t)\s+comment\s+on\s+(?:its|their|the)?\s*(?:leakproof|waterproof|water\s*proof)\s+quality\b",
     r"\bnot\s+sure\s+(?:whether|if)\s+(?:they|it|these)\s+(?:leak|leaks|are\s+waterproof|is\s+waterproof)\b",
+    r"\btomorrow\b[^.!?\n]{0,80}\bsee\b[^.!?\n]{0,80}\b(?:leak|leakproof|water\s*proof|waterproof)\b",
 ]
 
 _NON_CURRENT_PRODUCT_LEAK_PATTERNS = [
@@ -545,6 +547,16 @@ _SIZE_FIT_PROBLEM_EVIDENCE_PATTERNS = [
     r"\brest\s+of\s+it\s+was\s+way\s+too\s+big\b",
     r"\bfit\s+like\s+(?:they|these|the boots?)\s+are\s+a\s+\d+\b",
     r"\b(?:said|says)\s+to\s+order\s+(?:true|try)\s+to\s+size\s+which\s+is\s+wrong\b",
+    r"\bshoe\s+size\s+is\s+maybe\s+\d+\s+size\s+smaller\b[^.!?\n]{0,80}",
+    r"\bbelt\s+loops?\s+are\s+too\s+high\b[^.!?\n]{0,120}",
+    r"\bchest\s+belt\s+tightens\b[^.!?\n]{0,120}",
+    r"\bfemale\s+body\b[^.!?\n]{0,120}\bsnug\b",
+    r"\bshould\s+have\s+got(?:ten)?\s+one\s+more\s+size\s+up\b[^.!?\n]{0,80}",
+    r"\bboots?\s+run\s+small\b[^.!?\n]{0,120}",
+    r"\bpurchase\s+a\s+larger\s+size\b[^.!?\n]{0,80}",
+    r"\btheir\s+\d+\s+is\s+at\s+best\s+a\s+\d+\b",
+    r"\bboot\s+size\s+being\s+smaller\s+than\s+sized\b",
+    r"\bruns?\s+way\s+smaller\s+than\s+listed\b[^.!?\n]{0,80}",
     r"\bnot\s+for\s+a\s+bigger\s+guy\b",
     r"\bnot\s+nearly\s+big\s+enough\b",
     r"\bdif[ií]cil\s+encontrar\s+la\s+talla\s+adecuada\b",
@@ -731,8 +743,18 @@ def _evidence_context_window(content: str, evidence: str, radius: int = 220) -> 
 def _is_accessory_leak_window(text: str) -> bool:
     return _first_regex(
         [
-            r"\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[\s\S]{0,220}\b(?:not waterproof|leak|water gets in|water leaks in|wet|soak|submerged)",
-            r"\b(?:not waterproof|leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[\s\S]{0,220}\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b",
+            r"\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[\s\S]{0,220}\b(?:not waterproof|(?<!no )leak|water gets in|water leaks in|wet|soak|submerged)",
+            r"\b(?:not waterproof|(?<!no )leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[\s\S]{0,220}\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b",
+        ],
+        text,
+    )
+
+
+def _is_durability_only_leak_context(text: str) -> bool:
+    return _first_regex(
+        [
+            r"\bsmall\s+leak\s+somewhere\b[^.!?\n]{0,160}\bnot\s+bad\s+enough\s+to\s+matter\b",
+            r"\balready\s+leaking\s+after\s+only\s+a\s+few\s+uses\b",
         ],
         text,
     )
@@ -756,6 +778,8 @@ def _is_blocked_water_leak_issue_context(content: str, evidence: str) -> bool:
         or _is_non_current_product_leak_context(context)
         or _is_non_current_product_leak_context(evidence_text)
         or _is_non_current_product_leak_context(window)
+        or _is_durability_only_leak_context(context)
+        or _is_durability_only_leak_context(window)
         or accessory_context
         or _is_accessory_only_leak_context(context)
         or _is_accessory_only_leak_context(evidence_text)
@@ -1235,14 +1259,26 @@ def _waders_issue_rule_occurrences(
     )
     add("water_leaks_through", "Water Leaks Through", "waterproof", _current_product_water_leak_evidence(content))
     add(
+        "pocket_too_small",
+        "Pocket Too Small",
+        "accessory_storage",
+        _first_content_span(
+            content,
+            [
+                r"\bfront\s+pocket\b[^.!?\n]{0,120}\b(?:bigger|larger)\b",
+                r"\bpockets?\b[^.!?\n]{0,80}\b(?:too\s+small|not\s+enough\s+room|tiny)\b",
+            ],
+        ),
+    )
+    add(
         "pocket_not_waterproof",
         "Pocket Not Waterproof",
         "accessory_storage",
         _regex_span(
             [
                 r"\bpockets?\s+(?:isn['’]?t|is not|aren['’]?t|are not)\s+(?:water\s*proof|waterproof)\b",
-                r"\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[\s\S]{0,220}\b(?:not waterproof|leak|water gets in|water leaks in|wet|soak|submerged)",
-                r"\b(?:not waterproof|leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[\s\S]{0,220}\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b",
+                r"\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[\s\S]{0,220}\b(?:not waterproof|(?<!no )leak|water gets in|water leaks in|wet|soak|submerged)",
+                r"\b(?:not waterproof|(?<!no )leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[\s\S]{0,220}\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b",
             ],
             content,
         ),
@@ -1257,6 +1293,7 @@ def _waders_issue_rule_occurrences(
                 r"\bwaders?\s+came\s+covered\s+in\s+mold\b",
                 r"\bcame\s+covered\s+in\s+mold\b",
                 r"\bcovered\s+in\s+mold\b",
+                r"\bproduct\s+came\s+used\s+with\s+mud\s+marks\b",
             ],
         ),
     )
@@ -1282,11 +1319,17 @@ def _waders_issue_rule_occurrences(
                 r"\bno\s+durability\b",
                 r"\bgot\s+a\s+hole\b[^.!?\n]{0,80}",
                 r"\b(?:rip|ripped|tear|tears|tore|torn)\b[^.!?\n]{0,80}",
+                r"\bpunctured\s+very\s+easily\b",
+                r"\balready\s+leaking\s+after\s+only\s+a\s+few\s+uses\b",
                 r"\bstitching\s+broke\b[^.!?\n]{0,80}",
                 r"\bbroke\b[^.!?\n]{0,80}",
                 r"\bdestroyed\b",
             ],
-            blocked_patterns=[r"\bdidn['’]?t\s+(?:get\s+wet\s+or\s+)?tear\b", r"\bzipper\b"],
+            blocked_patterns=[
+                r"\bdidn['’]?t\s+(?:get\s+wet\s+or\s+)?tear\b",
+                r"\bwithout\s+(?:any\s+)?(?:tears?|punctures?)\b",
+                r"\bzipper\b",
+            ],
         ),
     )
     add(
@@ -1336,6 +1379,11 @@ def _waders_issue_rule_occurrences(
                 r"\bboots?\s+are\s+snug\b",
                 r"\bcouldn['’]?t\s+even\s+get\s+my\s+foot\s+in\b",
             ],
+            blocked_patterns=[
+                r"\bread\s+all\s+the\s+reviews\s+saying\s+get\s+a\s+size\s+up\b",
+                r"\bruns?\s+way\s+smaller\s+than\s+listed\b",
+                r"\bsize\s+chart\s+was\s+accurate\b[^.!?\n]{0,80}\border\s+\+?1\s+size\s+up\b",
+            ],
         ),
     )
     add(
@@ -1379,6 +1427,25 @@ def _waders_issue_rule_occurrences(
                 r"\bsuda\s+mucho\s+adentro\b",
                 r"\bclothing\s+was\s+seemingly\s+damp\b[^.!?\n]{0,80}",
             ],
+            blocked_patterns=[
+                r"\bkitchen\b",
+                r"\bcooking\b",
+                r"\boven\b",
+                r"\bkitchen\b[^.!?\n]{0,160}\b(?:cooking|oven|already\s+hot|break\s+a\s+sweat)\b",
+                r"\b(?:cooking|oven|already\s+hot)\b[^.!?\n]{0,160}\bkitchen\b",
+            ],
+        ),
+    )
+    add(
+        "insufficient_warmth",
+        "Insufficient Warmth",
+        "temperature_rating",
+        _first_content_span(
+            content,
+            [
+                r"\bnot\s+for\s+super\s+cold\s+water\b",
+                r"\bnot\s+insulated\b",
+            ],
         ),
     )
     add(
@@ -1386,6 +1453,21 @@ def _waders_issue_rule_occurrences(
         "Gets Hot Quickly",
         "temperature_rating",
         _first_content_span(content, [r"\bwarms?\s+up\s+quick\b", r"\btoo\s+hot\b"]),
+    )
+    add(
+        "uncomfortable_fit",
+        "Uncomfortable Fit",
+        "comfort",
+        _first_content_span(
+            content,
+            [
+                r"\brubbed\s+my\s+shins\s+raw\b[^.!?\n]{0,160}",
+                r"\btoe\s+box\s+collapses\b[^.!?\n]{0,160}\buncomfortable\b",
+                r"\bfeet\s+were\s+killing\s+me\b[^.!?\n]{0,120}",
+                r"\bfeet\s+got\s+sore\b[^.!?\n]{0,120}",
+                r"\bdefinitely\s+uncomfortable\b",
+            ],
+        ),
     )
     add(
         "not_for_long_walks",
@@ -1499,9 +1581,13 @@ def _waders_highlight_rule_occurrences(
                 content,
                 [
                     r"\bfit(?:s|ted)?\s+(?:great|well|perfect|right|true)\b",
+                    r"\bfit(?:s|ted)?\s+\w+\s+(?:great|well|perfect|right)\b",
+                    r"\bfit(?:s|ted)?\s+(?:good|fine)\b",
+                    r"\bfit\s+find\b",
                     r"\bgreat\s+fit\b",
                     r"\bfit\s+is\s+great\b",
                     r"\bperfect\s+fit\b",
+                    r"\bexcellent\s+fit\b",
                     r"\bperfect\s+size\b",
                     r"\btrue\s+to\s+size\b",
                     r"\bfitted\s+me\s+perfectly\b",
@@ -1512,14 +1598,22 @@ def _waders_highlight_rule_occurrences(
                     r"\bfit\s+was\s+good\b",
                     r"\bfit\s+is\s+good\b",
                     r"\bfit\s+as\s+expected\b",
+                    r"\bfit\s+of\s+these\s+\w+\s+waders?\b",
+                    r"\bappropriately\s+sized\b",
+                    r"\bsize\s+chart\s+was\s+accurate\b",
+                    r"\bfitment\s+is\s+spot\s+on\b",
+                    r"\bboots?\s+sized\s+right\b",
                     r"\bmeasurements?\s+(?:are\s+)?very\s+accurate\b",
                     r"\bfoot\s+measurements?/fit\b[^.!?\n]{0,80}\btrue\s+to\s+size\b",
                 ],
                 blocked_patterns=[
+                    r"\bordered\s+the\s+next\s+boot\s+size\s+up\s+as\s+suggested\b[^.!?\n]{0,80}\bfit\s+fine\b",
                     r"\b(?:not|didn['’]?t|doesn['’]?t)\s+fit\b",
                     r"\bfit\s+is\s+tight\b",
                     r"\bshort\s+(?:guy|person|woman|women)\b",
                     r"\bI['’]?m\s+petite\b",
+                    r"\brun\s+at\s+least\s+\d+\s+size\s+too\s+small\b",
+                    r"\btheir\s+\d+\s+is\s+at\s+best\s+a\s+\d+\b",
                 ],
             ),
         )
@@ -1531,12 +1625,17 @@ def _waders_highlight_rule_occurrences(
             _first_content_span(
                 content,
                 [
+                    r"\bwaterproof\b",
                     r"\bleak[- ]?proof\b",
                     r"\bno\s+leaks?\b",
                     r"\bno\s+(?:water\s+)?leakage\b",
+                    r"\bhas\s+not\s+leaked\b",
+                    r"\bnot\s+leaked\b",
                     r"\bhaven['’]?t\s+had\s+any\s+issues?\s+with\s+leaks?\s+yet\b",
                     r"\b(?:stayed|kept|keep|keeps|remain(?:ed)?)\s+(?:(?:me|you|us|him|her|them|my\s+\w+|your\s+\w+|his\s+\w+|her\s+\w+|their\s+\w+)\s+)?(?:\w+ly\s+)?dry\b",
+                    r"\bkeeps?\s+ou\s+dry\b",
                     r"\bdidn['’]?t\s+get\s+wet\b",
+                    r"\bdry\s+socks?\s+&\s+pants\b",
                     r"\bnice\s+and\s+dry\b",
                     r"\bnot\s+leaking\b",
                     r"\beverything\s+held\s+perfectly\b",
@@ -1556,6 +1655,7 @@ def _waders_highlight_rule_occurrences(
                     r"\bhave(?:n['’]?t| not)\s+(?:yet\s+)?tested\s+(?:in\s+)?(?:the\s+)?water\b",
                     r"\bnever\s+wore\s+(?:them|it|these)?\s*(?:in\s+)?(?:the\s+)?water\b",
                     r"\bcan(?:not|['’]?t)\s+(?:say|comment)\b[^.!?\n]{0,120}\b(?:leak|leakproof|water\s*proof|waterproof)\b",
+                    r"\btomorrow\b[^.!?\n]{0,80}\bsee\b[^.!?\n]{0,80}\bwaterproof\b",
                     r"\b90%\s+waterproof\b",
                     r"\bleak(?:ed|ing|s)?\b[^.!?\n]{0,80}\b(?:crazy|through|in|around|from)\b",
                 ],
@@ -1576,6 +1676,8 @@ def _waders_highlight_rule_occurrences(
                     r"\bsecure\b",
                     r"\bpretty\s+durable\b",
                     r"\bdurable\b",
+                    r"\bstrong\s+waders?\b",
+                    r"\bsolid\s+boot\s+bottoms\b[^.!?\n]{0,120}\bstrong\s+waders?\b",
                     r"\btough\b",
                     r"\bdouble\s+stitch\b[^.!?\n]{0,80}",
                 ],
@@ -1585,6 +1687,8 @@ def _waders_highlight_rule_occurrences(
                     r"\bno\s+durability\b",
                     r"\bdoes\s+not\s+appear\s+sturdy\b",
                     r"\bnot\s+sturdy\b",
+                    r"\bnot\s+super\s+durable\b",
+                    r"\bcan['’]?t\s+wait\s+to\s+get\s+out\b",
                 ],
             ),
         )
@@ -1599,14 +1703,21 @@ def _waders_highlight_rule_occurrences(
                 r"\bgood\s+value\b",
                 r"\bgreat\s+value\b",
                 r"\bgreat\s+deal\s+for\s+the\s+price\b",
+                r"\bfor\s+the\s+money\b",
                 r"\bfor\s+the\s+price\b",
+                r"\bfor\s+price\b",
+                r"\bworth\s+it\s+for\s+the\s+price\b",
+                r"\bworth\s+it\b[^.!?\n]{0,80}\bprice\b",
+                r"\bhalf\s+the\s+cost\b",
                 r"\bgreat\s+price\b",
                 r"\bprice\s+point\b",
+                r"\bprice\s+paid\b",
                 r"\baffordable\b",
                 r"\bpriced\s+fairly\b",
                 r"\bnot\s+that\s+expensive\b",
                 r"\bdon['’]?t\s+have\s+the\s+money\b[^.!?\n]{0,120}\bgive\s+them\s+a\s+try\b",
                 r"\bgreat\s+cheap\s+option\b",
+                r"\blow\s+price\b",
                 r"\bbargain\b",
                 r"\bcheap\b",
                 r"\breasonable\s+cost\b",
@@ -1624,6 +1735,7 @@ def _waders_highlight_rule_occurrences(
                 r"\bproduct\s+smelled\b[^.!?\n]{0,120}\bnasty\s+plastic\b",
                 r"\breducing\s+the\s+rating\b",
                 r"\bnot\s+what\s+I\s+had\s+in\s+mind\b",
+                r"\bfor\s+the\s+money\s+these\s+are\s+the\s+best\s+to\s+get\b",
             ],
         ),
     )
@@ -1654,8 +1766,49 @@ def _waders_highlight_rule_occurrences(
                 r"\bmaterials?\s+(?:look|looks)\s+pretty\s+good\b",
                 r"\bthick\s+and\s+durable\b",
                 r"\bquality\s+product\b",
+                r"\bseem\s+to\s+be\s+made\s+well\b[^.!?\n]{0,80}\bseams?\b",
+                r"\bmade\s+well\s+even\s+at\s+the\s+seams\b",
+                r"\bsurprised\s+by\s+the\s+quality\b",
             ],
-            blocked_patterns=[r"\bdoes\s+not\s+appear\s+sturdy\b", r"\bthin\s+plastic\b", r"\blooks?\s+good\b"],
+            blocked_patterns=[
+                r"\bdoes\s+not\s+appear\s+sturdy\b",
+                r"\bthin\s+plastic\b",
+                r"\blooks?\s+good\b",
+                r"\bgood\s+quality,\s+better\s+than\s+I\s+expected\b",
+                r"\bgreat\s+quality\s+and\s+price\s+point\b",
+                r"\bquality\s+product\s+for\s+the\s+price\s+point\b",
+            ],
+        ),
+    )
+    add(
+        "comfortable_to_wear",
+        "Comfortable To Wear",
+        "comfort",
+        _first_content_span(
+            content,
+            [
+                r"\band\s+are\s+comfortable\b",
+                r"\bcomfortable\s+enough\b",
+                r"\bvery\s+comfortable\b",
+                r"\bcomfy\b",
+                r"\bcomfortable\s+to\s+wear\s+and\s+move\s+around\b",
+            ],
+            blocked_patterns=[
+                r"\buncomfortable\b",
+                r"\bnot\s+comfortable\b",
+                r"\bmore\s+comfortable\b",
+            ],
+        ),
+    )
+    add(
+        "good_traction",
+        "Good Traction",
+        "grip",
+        _first_content_span(
+            content,
+            [
+                r"\bdecent\s+footing/grip\b",
+            ],
         ),
     )
     add("no_strong_odor", "No Strong Odor", "material", _first_content_span(content, [r"\bdid\s+not\s+notice\s+anything\s+extreme\b", r"\bdon['’]?t\s+have\s+any\s+smell\b", r"\bno\s+smell\b"]))
@@ -1681,7 +1834,16 @@ def _waders_highlight_rule_occurrences(
             "useful_accessories",
             "Useful Accessories",
             "accessory_storage",
-            _first_content_span(content, [r"\brepair\s+kit\s+and\s+a\s+waterproof\s+phone\s+sleeve\b", r"\bphone\s+case,\s*hanger,\s*and\s*repair\s+kit\b", r"\bconvenient\s+hook\b", r"\bboot\s+hanger\s+included\b"]),
+            _first_content_span(
+                content,
+                [
+                    r"\brepair\s+kit\s+and\s+a\s+waterproof\s+phone\s+sleeve\b",
+                    r"\bphone\s+case,\s*hanger,\s*and\s*repair\s+kit\b",
+                    r"\bconvenient\s+hook\b",
+                    r"\bboot\s+hanger\s+included\b",
+                    r"\bawesome\s+protective\s+waterproof\s+case\b[^.!?\n]{0,120}\bfunctions\s+well\b",
+                ],
+            ),
         )
     add("easy_to_clean", "Easy to Clean", "ease_of_use", _first_content_span(content, [r"\bclean\s+super\s+easy\b", r"\beasy\s+to\s+clean\b"]))
     if not_used and not negative_outcome:
@@ -1702,6 +1864,7 @@ def _waders_highlight_rule_occurrences(
                 r"\bworked\s+well\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush|marsh)\b",
                 r"\bworked\s+great\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush)\b",
                 r"\bgreat\s+for\s+wade\s+fishing\b",
+                r"\bdecent\s+waders?\s+for\s+creeks?\s+and\s+clean\s+water\b",
                 r"\bgot\s+the\s+job\s+done\b",
                 r"\bversatility\s+for\s+fishing\s+or\s+other\s+projects\b",
             ],
@@ -1717,6 +1880,18 @@ def _waders_highlight_rule_occurrences(
             ],
         ),
     )
+    add(
+        "arrives_on_time_and_intact",
+        "Arrives On Time and Intact",
+        "shipping_damage",
+        _first_content_span(
+            content,
+            [
+                r"\bdelivered\s+overnight\b",
+                r"\barrived\s+just\s+in\s+time\b",
+            ],
+        ),
+    )
     if not negative_outcome:
         add(
             "overall_satisfied",
@@ -1726,13 +1901,25 @@ def _waders_highlight_rule_occurrences(
                 content,
                 [
                     r"\bexcellent\b[^.!?\n]{0,80}\bworked\s+perfectly\b",
+                    r"^\s*excellent\.?\s*$",
                     r"\bworked\s+perfectly\b",
+                    r"\bwork\s+great\b",
                     r"\bhighly\s+recommend\b",
                     r"\bworks?\s+without\s+coming\s+apart\b",
                     r"\bvery\s+good\s+product\b",
+                    r"\bun\s+buen\s+producto\b",
+                    r"\bgood\s+product\b",
                     r"^\s*great\s+product\.?\s*$",
+                    r"\bgreat\s+product\b[^.!?\n]{0,80}\bkeeps?\s+ou\s+dry\b",
                     r"\bgreat\s+pair\b",
                     r"\bthese\s+are\s+great\b",
+                    r"\bthey['’]?re\s+nice\s+waders?\b",
+                    r"\bwaders?\s+are\s+great\s+and\s+work\s+well\b",
+                    r"\bwader\s+is\s+good\b",
+                    r"^\s*for\s+good\.?\s*$",
+                    r"\bawesome\s+suit\b",
+                    r"\bawesome\s+for\s+cleaning\s+out\s+a\s+mucky\s+lake\b",
+                    r"\bseem\s+to\s+be\s+working\s+out\s+well\s+so\s+far\b",
                     r"\bas\s+described\b",
                     r"\bitem\s+as\s+described\b",
                     r"^\s*perfect!?\s*$",
@@ -1740,7 +1927,11 @@ def _waders_highlight_rule_occurrences(
                     r"\bI\s+am\s+happy\b",
                     r"\bmy\s+husband\s+loves\s+it\b",
                     r"\bspot\s+on\b",
+                    r"\bgood\s+for\s+work\s+or\s+fishing\s+in\s+lakes\b",
                     r"^\s*good\s*$",
+                ],
+                blocked_patterns=[
+                    r"\bbackup\s+pair\b[^.!?\n]{0,120}\bdoesn['’]?t\s+need\s+them\s+often\b",
                 ],
             ),
         )
@@ -1760,7 +1951,11 @@ def _waders_highlight_rule_occurrences(
                     r"\bnice\s+affordable\s+waders\b",
                     r"\breally\s+look\s+and\s+appear\s+to\s+be\s+a\s+great\s+product\b",
                 ],
-                blocked_patterns=[r"\bfit\s+is\s+terrible\b", r"\btrying\s+to\s+get\s+in\s+and\s+out\b"],
+                blocked_patterns=[
+                    r"\bfit\s+is\s+terrible\b",
+                    r"\btrying\s+to\s+get\s+in\s+and\s+out\b",
+                    r"\bmade\s+well\b[^.!?\n]{0,80}\bseams?\b",
+                ],
             ),
         )
     return items
@@ -1972,6 +2167,19 @@ def _project_customer_label_occurrence(
         context_allowed = not _is_uncertain_or_untested_water_leak_context(
             _evidence_context_window(content, stored_evidence)
         )
+    if (
+        label_type == "highlight"
+        and canonical == "fits_as_expected"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        fit_window = _evidence_context_window(content, stored_evidence)
+        context_allowed = not _first_regex(
+            [
+                r"\brun\s+at\s+least\s+\d+\s+size\s+too\s+small\b",
+                r"\btheir\s+\d+\s+is\s+at\s+best\s+a\s+\d+\b",
+            ],
+            fit_window,
+        )
     if label_type == "highlight" and canonical == "not_used_yet":
         context_allowed = False
     if (
@@ -1990,7 +2198,16 @@ def _project_customer_label_occurrence(
         and _is_waders_context(occurrence_sub_category, content)
     ):
         value_window = _evidence_context_window(content, stored_evidence)
-        context_allowed = not _first_regex([r"\bproduct\s+smelled\b", r"\bnasty\s+plastic\b"], value_window)
+        context_allowed = not _first_regex(
+            [
+                r"\bproduct\s+smelled\b",
+                r"\bnasty\s+plastic\b",
+                r"\brun\s+at\s+least\s+\d+\s+size\s+too\s+small\b",
+                r"\btheir\s+\d+\s+is\s+at\s+best\s+a\s+\d+\b",
+                r"\bbackup\s+pair\b[^.!?\n]{0,120}\bdoesn['’]?t\s+need\s+them\s+often\b",
+            ],
+            value_window,
+        )
     if (
         label_type == "highlight"
         and canonical == "works_well_for_use_case"
@@ -2005,10 +2222,28 @@ def _project_customer_label_occurrence(
                     r"\bworked\s+well\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush|marsh)\b",
                     r"\bworked\s+great\b[^.!?\n]{0,120}\b(?:fishing|wading|river|creek|dock|brush)\b",
                     r"\bpreformed\s+flawless\b",
+                    r"\bdecent\s+waders?\s+for\s+creeks?\s+and\s+clean\s+water\b",
                     r"\bgot\s+the\s+job\s+done\b",
                     r"\bversatility\s+for\s+fishing\s+or\s+other\s+projects\b",
                 ],
                 use_case_context,
+            )
+        )
+    if (
+        label_type == "highlight"
+        and canonical == "overall_satisfied"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        overall_context = _evidence_context_sentence(content, stored_evidence)
+        context_allowed = not (
+            _first_regex([r"\bfor\s+the\s+money\b", r"\bfor\s+the\s+price\b"], overall_context)
+            or (
+                _first_regex([r"\bleaked\b", r"\bleaking\b", r"\bsmall\s+leak\b"], content)
+                and not _is_non_current_product_leak_context(content)
+                and _first_regex(
+                    [r"\bgreat\b", r"\bamazing\b", r"\bworked\s+as\s+intended\b"],
+                    overall_context,
+                )
             )
         )
     if (

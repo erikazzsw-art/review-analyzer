@@ -1,0 +1,4362 @@
+{
+  "name": "5.9.9 Step 4.6 TIDEWE WD001 waders 351-400 human gold fixture",
+  "source_file": "/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-AGGREGATED-351-400-人工标注.xlsx",
+  "source_sheets": [
+    "Raw Reviews",
+    "Label Audit",
+    "Export Info"
+  ],
+  "product_id": "TIDEWE-下水服-WD001",
+  "source_version": "AGGREGATED",
+  "review_count": 50,
+  "review_no_range": [
+    351,
+    400
+  ],
+  "comparison_scope": "known canonical display key set is compared against current shadow; new/boundary labels remain candidate-only",
+  "policy": {
+    "evidence_gate": "Every expected/candidate evidence span must be locatable in the review content.",
+    "manual_review_column_priority": "原文片段--标签 annotations are authoritative when locatable; manual columns supplement only with locatable evidence.",
+    "synonym_merge": "尺码合适/尺寸合适 and 尺码不准/尺寸不准 are merged to canonical keys.",
+    "new_label_gate": "unknown or boundary labels are kept in needs_new_label/candidate pool and are not frontstage gold."
+  },
+  "label_mapping": {
+    "issue": {
+      "尺码不准": "size_fit_problem",
+      "尺寸不准": "size_fit_problem",
+      "耐用性差": "breaks_easily",
+      "容易被刺破": "breaks_easily",
+      "防水性差": "water_leaks_through",
+      "舒适度差": "uncomfortable_fit",
+      "舒适性差": "uncomfortable_fit",
+      "舒适度差(穿久了)": "uncomfortable_fit",
+      "透气性差": "not_breathable",
+      "收到像二手商品": "quality_control_storage_issue",
+      "口袋太小": "pocket_too_small",
+      "保暖性差": "insufficient_warmth",
+      "不适合极冷水": "insufficient_warmth"
+    },
+    "highlight": {
+      "整体满意": "overall_satisfied",
+      "尺码合适": "fits_as_expected",
+      "尺寸合适": "fits_as_expected",
+      "尺码合适(拍大一码)": "fits_as_expected",
+      "性价比高": "good_value_for_the_price",
+      "价格便宜": "good_value_for_the_price",
+      "防水可靠": "keeps_water_out",
+      "防水性好": "keeps_water_out",
+      "质量好": "good_material_quality",
+      "看起来不错": "looks_good",
+      "舒适度好": "comfortable_to_wear",
+      "舒适型好": "comfortable_to_wear",
+      "舒适性好": "comfortable_to_wear",
+      "厚实度够": "holds_up_well",
+      "耐用性好": "holds_up_well",
+      "防滑": "good_traction",
+      "赠送附件": "useful_accessories",
+      "准时送达": "arrives_on_time_and_intact",
+      "适合溪流清洁水域": "works_well_for_use_case"
+    },
+    "issue_needs_new_label": {
+      "厚实度不够": "candidate:thin_boot_sole",
+      "不适合极端环境": "candidate:not_for_hardcore_conditions",
+      "不适合经常使用": "candidate:not_for_frequent_use"
+    },
+    "highlight_needs_new_label": {
+      "客服服务好": "candidate:good_customer_service",
+      "透气性好": "candidate:breathes_well_evidence_unclear"
+    }
+  },
+  "display_meta": {
+    "issue:size_fit_problem": {
+      "display_label_en": "Size/Fit Problem",
+      "display_label_zh": "尺码/版型问题",
+      "aspect_key": "size_fit"
+    },
+    "issue:breaks_easily": {
+      "display_label_en": "Breaks Easily",
+      "display_label_zh": "容易损坏",
+      "aspect_key": "durability"
+    },
+    "issue:water_leaks_through": {
+      "display_label_en": "Water Leaks Through",
+      "display_label_zh": "容易进水",
+      "aspect_key": "waterproof"
+    },
+    "issue:uncomfortable_fit": {
+      "display_label_en": "Uncomfortable Fit",
+      "display_label_zh": "穿着不舒服",
+      "aspect_key": "comfort"
+    },
+    "issue:not_breathable": {
+      "display_label_en": "Not Breathable",
+      "display_label_zh": "不够透气",
+      "aspect_key": "breathability"
+    },
+    "issue:quality_control_storage_issue": {
+      "display_label_en": "Quality Control / Storage Issue",
+      "display_label_zh": "品控/仓储问题",
+      "aspect_key": "shipping_damage"
+    },
+    "issue:pocket_too_small": {
+      "display_label_en": "Pocket Too Small",
+      "display_label_zh": "口袋太小",
+      "aspect_key": "accessory_storage"
+    },
+    "issue:insufficient_warmth": {
+      "display_label_en": "Insufficient Warmth",
+      "display_label_zh": "保暖性差",
+      "aspect_key": "temperature_rating"
+    },
+    "highlight:overall_satisfied": {
+      "display_label_en": "Overall Satisfied",
+      "display_label_zh": "整体满意",
+      "aspect_key": "other"
+    },
+    "highlight:fits_as_expected": {
+      "display_label_en": "Fits as Expected",
+      "display_label_zh": "尺码合适",
+      "aspect_key": "size_fit"
+    },
+    "highlight:good_value_for_the_price": {
+      "display_label_en": "Good Value for the Price",
+      "display_label_zh": "性价比高",
+      "aspect_key": "value_for_money"
+    },
+    "highlight:keeps_water_out": {
+      "display_label_en": "Keeps Water Out",
+      "display_label_zh": "防水可靠",
+      "aspect_key": "waterproof"
+    },
+    "highlight:good_material_quality": {
+      "display_label_en": "Good Material Quality",
+      "display_label_zh": "材质质量好",
+      "aspect_key": "material"
+    },
+    "highlight:looks_good": {
+      "display_label_en": "Looks Good",
+      "display_label_zh": "外观好看",
+      "aspect_key": "aesthetics"
+    },
+    "highlight:comfortable_to_wear": {
+      "display_label_en": "Comfortable To Wear",
+      "display_label_zh": "穿着舒适",
+      "aspect_key": "comfort"
+    },
+    "highlight:holds_up_well": {
+      "display_label_en": "Holds Up Well",
+      "display_label_zh": "耐用性高",
+      "aspect_key": "durability"
+    },
+    "highlight:good_traction": {
+      "display_label_en": "Good Traction",
+      "display_label_zh": "抓地稳",
+      "aspect_key": "grip"
+    },
+    "highlight:useful_accessories": {
+      "display_label_en": "Useful Accessories",
+      "display_label_zh": "配件实用",
+      "aspect_key": "accessory_storage"
+    },
+    "highlight:arrives_on_time_and_intact": {
+      "display_label_en": "Arrives On Time and Intact",
+      "display_label_zh": "到货及时完好",
+      "aspect_key": "shipping_damage"
+    },
+    "highlight:works_well_for_use_case": {
+      "display_label_en": "Works Well for Use Case",
+      "display_label_zh": "场景适用",
+      "aspect_key": "other"
+    }
+  },
+  "expected_summary": {
+    "review_count": 50,
+    "issue_gold_occurrence_count": 22,
+    "highlight_gold_occurrence_count": 70,
+    "needs_new_label_count": 5,
+    "fixture_validation_error_count": 5,
+    "current_shadow_after_step4_6": {
+      "issue": {
+        "tp": 20,
+        "fp": 0,
+        "fn": 2,
+        "exact_set": 48
+      },
+      "highlight": {
+        "tp": 62,
+        "fp": 0,
+        "fn": 8,
+        "exact_set": 42
+      },
+      "focus_label_metrics": {
+        "highlight:fits_as_expected": {
+          "tp": 15,
+          "fp": 0,
+          "fn": 0
+        },
+        "highlight:good_value_for_the_price": {
+          "tp": 10,
+          "fp": 0,
+          "fn": 0
+        },
+        "highlight:holds_up_well": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0
+        },
+        "highlight:keeps_water_out": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 0
+        },
+        "issue:pocket_not_waterproof": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0
+        },
+        "issue:water_leaks_through": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0
+        }
+      }
+    }
+  },
+  "fixture_validation_errors": [
+    {
+      "review_id": "waders-351-400-row-351",
+      "source_no": 1,
+      "raw_label_zh": "透气性好",
+      "error": "manual_column_label_without_locatable_evidence_or_annotation"
+    },
+    {
+      "review_id": "waders-351-400-row-355",
+      "source_no": 5,
+      "raw_label_zh": "防水可靠",
+      "error": "manual_column_label_without_locatable_evidence_or_annotation"
+    },
+    {
+      "review_id": "waders-351-400-row-355",
+      "source_no": 5,
+      "raw_label_zh": "防滑",
+      "error": "manual_column_label_without_locatable_evidence_or_annotation"
+    },
+    {
+      "review_id": "waders-351-400-row-371",
+      "source_no": 21,
+      "raw_label_zh": "透气性好",
+      "error": "manual_column_label_without_locatable_evidence_or_annotation"
+    },
+    {
+      "review_id": "waders-351-400-row-372",
+      "source_no": 22,
+      "raw_label_zh": "舒适度好",
+      "error": "manual_column_label_without_locatable_evidence_or_annotation"
+    }
+  ],
+  "samples": [
+    {
+      "id": "waders-351-400-row-351",
+      "source_no": 1,
+      "excel_row": 2,
+      "review_no": 351,
+      "content": "Great product and keeps ou dry",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "防水性好",
+        "透气性好"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Great product",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "Great product",
+          "evidence_start": 0,
+          "evidence_end": 13,
+          "locatable": true
+        },
+        {
+          "raw_span": "and keeps ou dry",
+          "raw_label_zh": "防水性好",
+          "source_column": 3,
+          "evidence_span": "and keeps ou dry",
+          "evidence_start": 14,
+          "evidence_end": 30,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied",
+        "keeps_water_out"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Great product",
+              "evidence_start": 0,
+              "evidence_end": 13
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "keeps_water_out",
+          "raw_label_zh": "防水性好",
+          "evidence_spans": [
+            {
+              "evidence_span": "and keeps ou dry",
+              "evidence_start": 14,
+              "evidence_end": 30
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": [
+        "manual column label `透气性好` ignored because no locatable evidence was available"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-352",
+      "source_no": 2,
+      "excel_row": 3,
+      "review_no": 352,
+      "content": "I bought these for my boyfriend and he is 6’3 300lbs with a size 14 foot, and these fit him perfect! There is a lot of wiggle room in the body/waist area, and the shoes fit EXACTLY to size (a little snug so I would recommend sizing up ESPECIALLY if you wear thick socks). Very worth it for the price!",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "尺码合适",
+        "性价比高"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "I bought these for my boyfriend and he is 6’3 300lbs with a size 14 foot, and these fit him perfect! There is a lot of wiggle room in the body/waist area, and the shoes fit EXACTLY to size (a little snug so I would recommend sizing up ESPECIALLY if you wear thick socks).",
+          "raw_label_zh": "尺码合适",
+          "source_column": 3,
+          "evidence_span": "I bought these for my boyfriend and he is 6’3 300lbs with a size 14 foot, and these fit him perfect! There is a lot of wiggle room in the body/waist area, and the shoes fit EXACTLY to size (a little snug so I would recommend sizing up ESPECIALLY if you wear thick socks).",
+          "evidence_start": 0,
+          "evidence_end": 271,
+          "locatable": true
+        },
+        {
+          "raw_span": "“Very worth it for the price!",
+          "raw_label_zh": "性价比高",
+          "source_column": 3,
+          "evidence_span": "Very worth it for the price!",
+          "evidence_start": 272,
+          "evidence_end": 300,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected",
+        "good_value_for_the_price"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "I bought these for my boyfriend and he is 6’3 300lbs with a size 14 foot, and these fit him perfect! There is a lot of wiggle room in the body/waist area, and the shoes fit EXACTLY to size (a little snug so I would recommend sizing up ESPECIALLY if you wear thick socks).",
+              "evidence_start": 0,
+              "evidence_end": 271
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "Very worth it for the price!",
+              "evidence_start": 272,
+              "evidence_end": 300
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "good_value_for_the_price",
+          "fits_as_expected"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "good_value_for_the_price",
+          "fits_as_expected"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "for the price",
+          "fit him perfect! There is a lot of wiggle room in the body/waist area",
+          "shoes fit EXACTLY to size",
+          "Very worth it for the price!"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-353",
+      "source_no": 3,
+      "excel_row": 4,
+      "review_no": 353,
+      "content": "Se ve de muy buena calidad",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "看起来不错"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Se ve de muy buena calidad",
+          "raw_label_zh": "看起来不错",
+          "source_column": 3,
+          "evidence_span": "Se ve de muy buena calidad",
+          "evidence_start": 0,
+          "evidence_end": 26,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "looks_good"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "looks_good",
+          "raw_label_zh": "看起来不错",
+          "evidence_spans": [
+            {
+              "evidence_span": "Se ve de muy buena calidad",
+              "evidence_start": 0,
+              "evidence_end": 26
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-354",
+      "source_no": 4,
+      "excel_row": 5,
+      "review_no": 354,
+      "content": "Great material for price,  shoe size is maybe 1 size smaller then normal",
+      "rating": 5,
+      "human_issue_labels_zh": [
+        "尺码不准"
+      ],
+      "human_highlight_labels_zh": [
+        "性价比高"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Great material for price",
+          "raw_label_zh": "性价比高",
+          "source_column": 3,
+          "evidence_span": "Great material for price",
+          "evidence_start": 0,
+          "evidence_end": 24,
+          "locatable": true
+        },
+        {
+          "raw_span": "shoe size is maybe 1 size smaller then normal",
+          "raw_label_zh": "尺码不准",
+          "source_column": 3,
+          "evidence_span": "shoe size is maybe 1 size smaller then normal",
+          "evidence_start": 27,
+          "evidence_end": 72,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "size_fit_problem"
+      ],
+      "expected_highlight_keys": [
+        "good_value_for_the_price"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "size_fit_problem",
+          "raw_label_zh": "尺码不准",
+          "evidence_spans": [
+            {
+              "evidence_span": "shoe size is maybe 1 size smaller then normal",
+              "evidence_start": 27,
+              "evidence_end": 72
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "Great material for price",
+              "evidence_start": 0,
+              "evidence_end": 24
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-355",
+      "source_no": 5,
+      "excel_row": 6,
+      "review_no": 355,
+      "content": "Un buen producto",
+      "rating": 5,
+      "human_issue_labels_zh": [
+        "防水可靠",
+        "防滑"
+      ],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Un buen producto",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "Un buen producto",
+          "evidence_start": 0,
+          "evidence_end": 16,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Un buen producto",
+              "evidence_start": 0,
+              "evidence_end": 16
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": [
+        "manual column label `防水可靠` ignored because no locatable evidence was available",
+        "manual column label `防滑` ignored because no locatable evidence was available"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-356",
+      "source_no": 6,
+      "excel_row": 7,
+      "review_no": 356,
+      "content": "Waterproof, decent footing/grip. Not for super cold water but good for spring fly fishing.",
+      "rating": 5,
+      "human_issue_labels_zh": [
+        "不适合极冷水"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Waterproof",
+          "raw_label_zh": "防水可靠",
+          "source_column": 3,
+          "evidence_span": "Waterproof",
+          "evidence_start": 0,
+          "evidence_end": 10,
+          "locatable": true
+        },
+        {
+          "raw_span": "decent footing/grip",
+          "raw_label_zh": "防滑",
+          "source_column": 3,
+          "evidence_span": "decent footing/grip",
+          "evidence_start": 12,
+          "evidence_end": 31,
+          "locatable": true
+        },
+        {
+          "raw_span": "Not for super cold water but good for spring fly fishing.",
+          "raw_label_zh": "不适合极冷水",
+          "source_column": 3,
+          "evidence_span": "Not for super cold water but good for spring fly fishing.",
+          "evidence_start": 33,
+          "evidence_end": 90,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "insufficient_warmth"
+      ],
+      "expected_highlight_keys": [
+        "keeps_water_out",
+        "good_traction"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "insufficient_warmth",
+          "raw_label_zh": "不适合极冷水",
+          "evidence_spans": [
+            {
+              "evidence_span": "Not for super cold water but good for spring fly fishing.",
+              "evidence_start": 33,
+              "evidence_end": 90
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "keeps_water_out",
+          "raw_label_zh": "防水可靠",
+          "evidence_spans": [
+            {
+              "evidence_span": "Waterproof",
+              "evidence_start": 0,
+              "evidence_end": 10
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_traction",
+          "raw_label_zh": "防滑",
+          "evidence_spans": [
+            {
+              "evidence_span": "decent footing/grip",
+              "evidence_start": 12,
+              "evidence_end": 31
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-357",
+      "source_no": 7,
+      "excel_row": 8,
+      "review_no": 357,
+      "content": "Nice waders for the price.  Will function as desired.  Not certain of the longevity of the product.  Made from thin material.  So not certain of durability.  Used two time this far.  Worked well during thise two outings.  Everything is as described.",
+      "rating": 3,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "性价比高",
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Nice waders for the price. Will function as desired.",
+          "raw_label_zh": "性价比高",
+          "source_column": 3,
+          "evidence_span": "Nice waders for the price.  Will function as desired.",
+          "evidence_start": 0,
+          "evidence_end": 53,
+          "locatable": true
+        },
+        {
+          "raw_span": "Not certain of the longevity of the product. Made from thin material. So not certain of durability. Used two time this far. Worked well during thise two outings. Everything is as described.",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "Not certain of the longevity of the product.  Made from thin material.  So not certain of durability.  Used two time this far.  Worked well during thise two outings.  Everything is as described.",
+          "evidence_start": 55,
+          "evidence_end": 249,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "good_value_for_the_price",
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "Nice waders for the price.  Will function as desired.",
+              "evidence_start": 0,
+              "evidence_end": 53
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Not certain of the longevity of the product.  Made from thin material.  So not certain of durability.  Used two time this far.  Worked well during thise two outings.  Everything is as described.",
+              "evidence_start": 55,
+              "evidence_end": 249
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "good_value_for_the_price",
+          "overall_satisfied"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "good_value_for_the_price",
+          "overall_satisfied"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "for the price",
+          "as described"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-358",
+      "source_no": 8,
+      "excel_row": 9,
+      "review_no": 358,
+      "content": "Good quality, better than I expected.",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "quality, better than I expected.",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "quality, better than I expected.",
+          "evidence_start": 5,
+          "evidence_end": 37,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "quality, better than I expected.",
+              "evidence_start": 5,
+              "evidence_end": 37
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [
+        "good_material_quality"
+      ],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "good_material_quality"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "good_material_quality"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "Good quality"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-359",
+      "source_no": 9,
+      "excel_row": 10,
+      "review_no": 359,
+      "content": "Good product fits good",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意",
+        "尺码合适"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "product",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "product",
+          "evidence_start": 5,
+          "evidence_end": 12,
+          "locatable": true
+        },
+        {
+          "raw_span": "fits good",
+          "raw_label_zh": "尺码合适",
+          "source_column": 3,
+          "evidence_span": "fits good",
+          "evidence_start": 13,
+          "evidence_end": 22,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected",
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "fits good",
+              "evidence_start": 13,
+              "evidence_end": 22
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "product",
+              "evidence_start": 5,
+              "evidence_end": 12
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-360",
+      "source_no": 10,
+      "excel_row": 11,
+      "review_no": 360,
+      "content": "They're nice waders.",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "They're nice waders.",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "They're nice waders.",
+          "evidence_start": 0,
+          "evidence_end": 20,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "They're nice waders.",
+              "evidence_start": 0,
+              "evidence_end": 20
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-361",
+      "source_no": 11,
+      "excel_row": 12,
+      "review_no": 361,
+      "content": "The only thing I hate about these waders is the belt loops are too high and the chest belt tightens around the lower portion of the front pocket. Poor design.",
+      "rating": 4,
+      "human_issue_labels_zh": [
+        "尺寸不准"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "The only thing I hate about these waders is the belt loops are too high and the chest belt tightens around the lower portion of the front pocket. Poor design.",
+          "raw_label_zh": "尺寸不准",
+          "source_column": 3,
+          "evidence_span": "The only thing I hate about these waders is the belt loops are too high and the chest belt tightens around the lower portion of the front pocket. Poor design.",
+          "evidence_start": 0,
+          "evidence_end": 158,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "size_fit_problem"
+      ],
+      "expected_highlight_keys": [],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "size_fit_problem",
+          "raw_label_zh": "尺寸不准",
+          "evidence_spans": [
+            {
+              "evidence_span": "The only thing I hate about these waders is the belt loops are too high and the chest belt tightens around the lower portion of the front pocket. Poor design.",
+              "evidence_start": 0,
+              "evidence_end": 158
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-362",
+      "source_no": 12,
+      "excel_row": 13,
+      "review_no": 362,
+      "content": "Fit me well.  I’m about 5’ 8” and weigh about 180 lbs.  My shoe size is 9 1/2, and I bought a wader boot size of 10.  They fit fine.  I tried them out, and they worked good.",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "尺寸合适"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Fit me well. I’m about 5’ 8” and weigh about 180 lbs. My shoe size is 9 1/2, and I bought a wader boot size of 10. They fit fine. I tried them out, and they worked good.",
+          "raw_label_zh": "尺寸合适",
+          "source_column": 3,
+          "evidence_span": "Fit me well.  I’m about 5’ 8” and weigh about 180 lbs.  My shoe size is 9 1/2, and I bought a wader boot size of 10.  They fit fine.  I tried them out, and they worked good.",
+          "evidence_start": 0,
+          "evidence_end": 173,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺寸合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "Fit me well.  I’m about 5’ 8” and weigh about 180 lbs.  My shoe size is 9 1/2, and I bought a wader boot size of 10.  They fit fine.  I tried them out, and they worked good.",
+              "evidence_start": 0,
+              "evidence_end": 173
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-363",
+      "source_no": 13,
+      "excel_row": 14,
+      "review_no": 363,
+      "content": "runs way smaller than listed too small",
+      "rating": 1,
+      "human_issue_labels_zh": [
+        "尺寸不准"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "runs way smaller than listed too small",
+          "raw_label_zh": "尺寸不准",
+          "source_column": 3,
+          "evidence_span": "runs way smaller than listed too small",
+          "evidence_start": 0,
+          "evidence_end": 38,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "size_fit_problem"
+      ],
+      "expected_highlight_keys": [],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "size_fit_problem",
+          "raw_label_zh": "尺寸不准",
+          "evidence_spans": [
+            {
+              "evidence_span": "runs way smaller than listed too small",
+              "evidence_start": 0,
+              "evidence_end": 38
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [
+        "runs_too_small"
+      ],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "runs_too_small"
+        ],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [
+          "runs_too_small"
+        ],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [
+          "too small",
+          "runs way smaller than listed too small"
+        ],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-364",
+      "source_no": 14,
+      "excel_row": 15,
+      "review_no": 364,
+      "content": "Great quality. Excellent fit.",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "质量好",
+        "尺码合适"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Great quality.",
+          "raw_label_zh": "质量好",
+          "source_column": 3,
+          "evidence_span": "Great quality.",
+          "evidence_start": 0,
+          "evidence_end": 14,
+          "locatable": true
+        },
+        {
+          "raw_span": "Excellent fit.",
+          "raw_label_zh": "尺码合适",
+          "source_column": 3,
+          "evidence_span": "Excellent fit.",
+          "evidence_start": 15,
+          "evidence_end": 29,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected",
+        "good_material_quality"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "Excellent fit.",
+              "evidence_start": 15,
+              "evidence_end": 29
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_material_quality",
+          "raw_label_zh": "质量好",
+          "evidence_spans": [
+            {
+              "evidence_span": "Great quality.",
+              "evidence_start": 0,
+              "evidence_end": 14
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "good_material_quality"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "good_material_quality",
+          "fits_as_expected"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "Great quality",
+          "fits good"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-365",
+      "source_no": 15,
+      "excel_row": 16,
+      "review_no": 365,
+      "content": "Good enough fishing waders for the price.GOOD:-Keep me dryish for the most part.-Quick and easy to put on/take off.-Better soles/grip on the boots than I was expecting.-I wear size 14 shoes and these are appropriately sized with a little extra room for thick socks.NOT GOOD:-Wader material not super durable: Made it about a month before I snagged em on some thorns walking through the woods and now have a small leak somewhere between knee and hip on one side but it’s not bad enough to matter in the summer.-The seam where the boots attach to the waders is rough on the inside. Non-issue if youre wearing pants but when wearing shorts it rubbed my shins raw. Got some leggings to wear under my shorts in the summer and it’s fine.-Boot toe has no padding and toe box collapses in water. Gonna hurt if you kick a rock or catch a tree root. If you’re not standing on flat ground your toes are going to jam into the end of the boots which is uncomfortable.",
+      "rating": 3,
+      "human_issue_labels_zh": [
+        "耐用性差",
+        "舒适度差"
+      ],
+      "human_highlight_labels_zh": [
+        "性价比高",
+        "透气性好",
+        "尺码合适"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "enough fishing waders for the price.",
+          "raw_label_zh": "性价比高",
+          "source_column": 3,
+          "evidence_span": "enough fishing waders for the price.",
+          "evidence_start": 5,
+          "evidence_end": 41,
+          "locatable": true
+        },
+        {
+          "raw_span": "Keep me dryish for the most part",
+          "raw_label_zh": "透气性好",
+          "source_column": 3,
+          "evidence_span": "Keep me dryish for the most part",
+          "evidence_start": 47,
+          "evidence_end": 79,
+          "locatable": true
+        },
+        {
+          "raw_span": "Quick and easy to put on/take off.-Better soles/grip on the boots than I was expecting.-I wear size 14 shoes and these are appropriately sized with a little extra room for thick socks.",
+          "raw_label_zh": "尺码合适",
+          "source_column": 3,
+          "evidence_span": "Quick and easy to put on/take off.-Better soles/grip on the boots than I was expecting.-I wear size 14 shoes and these are appropriately sized with a little extra room for thick socks.",
+          "evidence_start": 81,
+          "evidence_end": 265,
+          "locatable": true
+        },
+        {
+          "raw_span": "Wader material not super durable: Made it about a month before I snagged em on some thorns walking through the woods and now have a small leak somewhere between knee and hip on one side but it’s not bad enough to matter in the summer.",
+          "raw_label_zh": "耐用性差",
+          "source_column": 3,
+          "evidence_span": "Wader material not super durable: Made it about a month before I snagged em on some thorns walking through the woods and now have a small leak somewhere between knee and hip on one side but it’s not bad enough to matter in the summer.",
+          "evidence_start": 275,
+          "evidence_end": 509,
+          "locatable": true
+        },
+        {
+          "raw_span": "The seam where the boots attach to the waders is rough on the inside. Non-issue if youre wearing pants but when wearing shorts it rubbed my shins raw. Got some leggings to wear under my shorts in the summer and it’s fine.-Boot toe has no padding and toe box collapses in water. Gonna hurt if you kick a rock or catch a tree root. If you’re not standing on flat ground your toes are going to jam into the end of the boots which is uncomfortable.",
+          "raw_label_zh": "舒适度差",
+          "source_column": 3,
+          "evidence_span": "The seam where the boots attach to the waders is rough on the inside. Non-issue if youre wearing pants but when wearing shorts it rubbed my shins raw. Got some leggings to wear under my shorts in the summer and it’s fine.-Boot toe has no padding and toe box collapses in water. Gonna hurt if you kick a rock or catch a tree root. If you’re not standing on flat ground your toes are going to jam into the end of the boots which is uncomfortable.",
+          "evidence_start": 510,
+          "evidence_end": 954,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "breaks_easily",
+        "uncomfortable_fit"
+      ],
+      "expected_highlight_keys": [
+        "fits_as_expected",
+        "good_value_for_the_price"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "Quick and easy to put on/take off.-Better soles/grip on the boots than I was expecting.-I wear size 14 shoes and these are appropriately sized with a little extra room for thick socks.",
+              "evidence_start": 81,
+              "evidence_end": 265
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "enough fishing waders for the price.",
+              "evidence_start": 5,
+              "evidence_end": 41
+            }
+          ]
+        },
+        {
+          "label_type": "issue",
+          "canonical_label_key": "breaks_easily",
+          "raw_label_zh": "耐用性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "Wader material not super durable: Made it about a month before I snagged em on some thorns walking through the woods and now have a small leak somewhere between knee and hip on one side but it’s not bad enough to matter in the summer.",
+              "evidence_start": 275,
+              "evidence_end": 509
+            }
+          ]
+        },
+        {
+          "label_type": "issue",
+          "canonical_label_key": "uncomfortable_fit",
+          "raw_label_zh": "舒适度差",
+          "evidence_spans": [
+            {
+              "evidence_span": "The seam where the boots attach to the waders is rough on the inside. Non-issue if youre wearing pants but when wearing shorts it rubbed my shins raw. Got some leggings to wear under my shorts in the summer and it’s fine.-Boot toe has no padding and toe box collapses in water. Gonna hurt if you kick a rock or catch a tree root. If you’re not standing on flat ground your toes are going to jam into the end of the boots which is uncomfortable.",
+              "evidence_start": 510,
+              "evidence_end": 954
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "candidate:breathes_well_evidence_unclear",
+          "raw_label_zh": "透气性好",
+          "evidence_spans": [
+            {
+              "evidence_span": "Keep me dryish for the most part",
+              "evidence_start": 47,
+              "evidence_end": 79
+            }
+          ],
+          "review_status": "needs_new_label",
+          "reason": "new_or_boundary_label_not_in_display_catalog"
+        }
+      ],
+      "blocked_issue_keys": [
+        "water_leaks_through"
+      ],
+      "blocked_highlight_keys": [
+        "holds_up_well",
+        "overall_satisfied"
+      ],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "water_leaks_through"
+        ],
+        "frontstage_highlight_keys": [
+          "holds_up_well",
+          "good_value_for_the_price",
+          "overall_satisfied"
+        ],
+        "audit_issue_keys": [
+          "water_leaks_through"
+        ],
+        "audit_highlight_keys": [
+          "holds_up_well",
+          "good_value_for_the_price",
+          "overall_satisfied"
+        ],
+        "audit_issue_evidence_spans": [
+          "small leak somewhere between knee and hip on one side"
+        ],
+        "audit_highlight_evidence_spans": [
+          "durable",
+          "for the price",
+          "GOOD"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-366",
+      "source_no": 16,
+      "excel_row": 17,
+      "review_no": 366,
+      "content": "So far so good. Wish it got a female body a little more snug, but, overall perfect for the pond cleaning I have to do. I should have got one more size up for shoes, but it is good enough.",
+      "rating": 5,
+      "human_issue_labels_zh": [
+        "尺码不准"
+      ],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "So far so good.",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "So far so good.",
+          "evidence_start": 0,
+          "evidence_end": 15,
+          "locatable": true
+        },
+        {
+          "raw_span": "Wish it got a female body a little more snug, but, overall perfect for the pond cleaning I have to do.“ I should have got one more size up for shoes,",
+          "raw_label_zh": "尺码不准",
+          "source_column": 3,
+          "evidence_span": "overall perfect for the pond cleaning I have to do",
+          "evidence_start": 67,
+          "evidence_end": 117,
+          "locatable": true
+        },
+        {
+          "raw_span": "but it is good enough.",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "but it is good enough.",
+          "evidence_start": 165,
+          "evidence_end": 187,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "size_fit_problem"
+      ],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "size_fit_problem",
+          "raw_label_zh": "尺码不准",
+          "evidence_spans": [
+            {
+              "evidence_span": "overall perfect for the pond cleaning I have to do",
+              "evidence_start": 67,
+              "evidence_end": 117
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "So far so good.",
+              "evidence_start": 0,
+              "evidence_end": 15
+            },
+            {
+              "evidence_span": "but it is good enough.",
+              "evidence_start": 165,
+              "evidence_end": 187
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [
+        "runs_too_small"
+      ],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "runs_too_small"
+        ],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [
+          "runs_too_small"
+        ],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [
+          "size up"
+        ],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-367",
+      "source_no": 17,
+      "excel_row": 18,
+      "review_no": 367,
+      "content": "First time in the water……leaked. I will be returning it.",
+      "rating": 1,
+      "human_issue_labels_zh": [
+        "防水性差"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "First time in the water……leaked.",
+          "raw_label_zh": "防水性差",
+          "source_column": 3,
+          "evidence_span": "First time in the water……leaked.",
+          "evidence_start": 0,
+          "evidence_end": 32,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "water_leaks_through"
+      ],
+      "expected_highlight_keys": [],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "water_leaks_through",
+          "raw_label_zh": "防水性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "First time in the water……leaked.",
+              "evidence_start": 0,
+              "evidence_end": 32
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "water_leaks_through"
+        ],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [
+          "water_leaks_through"
+        ],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [
+          "leaked",
+          "First time in the water……leaked"
+        ],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-368",
+      "source_no": 18,
+      "excel_row": 19,
+      "review_no": 368,
+      "content": "Excellent customer service",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "客服服务好"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Excellent customer service",
+          "raw_label_zh": "客服服务好",
+          "source_column": 3,
+          "evidence_span": "Excellent customer service",
+          "evidence_start": 0,
+          "evidence_end": 26,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [],
+      "evidence_spans": [],
+      "needs_new_label": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "candidate:good_customer_service",
+          "raw_label_zh": "客服服务好",
+          "evidence_spans": [
+            {
+              "evidence_span": "Excellent customer service",
+              "evidence_start": 0,
+              "evidence_end": 26
+            }
+          ],
+          "review_status": "needs_new_label",
+          "reason": "new_or_boundary_label_not_in_display_catalog"
+        }
+      ],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-369",
+      "source_no": 19,
+      "excel_row": 20,
+      "review_no": 369,
+      "content": "Work great",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Work great",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "Work great",
+          "evidence_start": 0,
+          "evidence_end": 10,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Work great",
+              "evidence_start": 0,
+              "evidence_end": 10
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-370",
+      "source_no": 20,
+      "excel_row": 21,
+      "review_no": 370,
+      "content": "Waders are great and work well…except, the boots are terrible.  You feel every rock you step on and the water pressure squeezes down on your toes that hurt after a while.  There is zero foot support and walking downhill? Forget about it. My feet were killing me after an evening of fishing in Yellowstone.  I’ll need to find a water shoe that will fit inside or a thick insole to make them more comfortable.  I would not recommend buying these",
+      "rating": 2,
+      "human_issue_labels_zh": [
+        "舒适度差"
+      ],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Waders are great and work well",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "Waders are great and work well",
+          "evidence_start": 0,
+          "evidence_end": 30,
+          "locatable": true
+        },
+        {
+          "raw_span": "…except, the boots are terrible. You feel every rock you step on and the water pressure squeezes down on your toes that hurt after a while. There is zero foot support and walking downhill? Forget about it. My feet were killing me after an evening of fishing in Yellowstone. I’ll need to find a water shoe that will fit inside or a thick insole to make them more comfortable. I would not recommend buying these",
+          "raw_label_zh": "舒适度差",
+          "source_column": 3,
+          "evidence_span": "…except, the boots are terrible.  You feel every rock you step on and the water pressure squeezes down on your toes that hurt after a while.  There is zero foot support and walking downhill? Forget about it. My feet were killing me after an evening of fishing in Yellowstone.  I’ll need to find a water shoe that will fit inside or a thick insole to make them more comfortable.  I would not recommend buying these",
+          "evidence_start": 30,
+          "evidence_end": 443,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "uncomfortable_fit"
+      ],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Waders are great and work well",
+              "evidence_start": 0,
+              "evidence_end": 30
+            }
+          ]
+        },
+        {
+          "label_type": "issue",
+          "canonical_label_key": "uncomfortable_fit",
+          "raw_label_zh": "舒适度差",
+          "evidence_spans": [
+            {
+              "evidence_span": "…except, the boots are terrible.  You feel every rock you step on and the water pressure squeezes down on your toes that hurt after a while.  There is zero foot support and walking downhill? Forget about it. My feet were killing me after an evening of fishing in Yellowstone.  I’ll need to find a water shoe that will fit inside or a thick insole to make them more comfortable.  I would not recommend buying these",
+              "evidence_start": 30,
+              "evidence_end": 443
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-371",
+      "source_no": 21,
+      "excel_row": 22,
+      "review_no": 371,
+      "content": "Wader is good it keeps me dry just like what it says, I bought another one for my wife and same review and she she loves it.",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意",
+        "防水可靠",
+        "透气性好"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Wader is good",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "Wader is good",
+          "evidence_start": 0,
+          "evidence_end": 13,
+          "locatable": true
+        },
+        {
+          "raw_span": "it keeps me dry just like what it says,",
+          "raw_label_zh": "防水可靠",
+          "source_column": 2,
+          "evidence_span": "it keeps me dry just like what it says,",
+          "evidence_start": 14,
+          "evidence_end": 53,
+          "locatable": true
+        },
+        {
+          "raw_span": "I bought another one for my wife and same review and she she loves it.",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "I bought another one for my wife and same review and she she loves it.",
+          "evidence_start": 54,
+          "evidence_end": 124,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied",
+        "keeps_water_out"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Wader is good",
+              "evidence_start": 0,
+              "evidence_end": 13
+            },
+            {
+              "evidence_span": "I bought another one for my wife and same review and she she loves it.",
+              "evidence_start": 54,
+              "evidence_end": 124
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "keeps_water_out",
+          "raw_label_zh": "防水可靠",
+          "evidence_spans": [
+            {
+              "evidence_span": "it keeps me dry just like what it says,",
+              "evidence_start": 14,
+              "evidence_end": 53
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "keeps_water_out"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "keeps_water_out"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "keeps me dry"
+        ]
+      },
+      "notes": [
+        "manual column label `透气性好` ignored because no locatable evidence was available"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-372",
+      "source_no": 22,
+      "excel_row": 23,
+      "review_no": 372,
+      "content": "I think these waders are a good choice for light duty.  They fit find and are comfortable but would  not be good for hardcore conditions.",
+      "rating": 4,
+      "human_issue_labels_zh": [
+        "不适合极端环境"
+      ],
+      "human_highlight_labels_zh": [
+        "尺码合适",
+        "舒适度好"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "I think these waders are a good choice for light duty.",
+          "raw_label_zh": "不适合极端环境",
+          "source_column": 2,
+          "evidence_span": "I think these waders are a good choice for light duty.",
+          "evidence_start": 0,
+          "evidence_end": 54,
+          "locatable": true
+        },
+        {
+          "raw_span": "They fit find",
+          "raw_label_zh": "尺码合适",
+          "source_column": 2,
+          "evidence_span": "They fit find",
+          "evidence_start": 56,
+          "evidence_end": 69,
+          "locatable": true
+        },
+        {
+          "raw_span": "and are comfortable",
+          "raw_label_zh": "舒适型好",
+          "source_column": 2,
+          "evidence_span": "and are comfortable",
+          "evidence_start": 70,
+          "evidence_end": 89,
+          "locatable": true
+        },
+        {
+          "raw_span": "but would not be good for hardcore conditions.",
+          "raw_label_zh": "不适合极端环境",
+          "source_column": 2,
+          "evidence_span": "but would  not be good for hardcore conditions.",
+          "evidence_start": 90,
+          "evidence_end": 137,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected",
+        "comfortable_to_wear"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "They fit find",
+              "evidence_start": 56,
+              "evidence_end": 69
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "comfortable_to_wear",
+          "raw_label_zh": "舒适型好",
+          "evidence_spans": [
+            {
+              "evidence_span": "and are comfortable",
+              "evidence_start": 70,
+              "evidence_end": 89
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "candidate:not_for_hardcore_conditions",
+          "raw_label_zh": "不适合极端环境",
+          "evidence_spans": [
+            {
+              "evidence_span": "I think these waders are a good choice for light duty.",
+              "evidence_start": 0,
+              "evidence_end": 54
+            },
+            {
+              "evidence_span": "but would  not be good for hardcore conditions.",
+              "evidence_start": 90,
+              "evidence_end": 137
+            }
+          ],
+          "review_status": "needs_new_label",
+          "reason": "new_or_boundary_label_not_in_display_catalog"
+        }
+      ],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": [
+        "manual column label `舒适度好` ignored because no locatable evidence was available"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-373",
+      "source_no": 23,
+      "excel_row": 24,
+      "review_no": 373,
+      "content": "Comfy.  Strap buckle came off while in use. Returned.",
+      "rating": 1,
+      "human_issue_labels_zh": [
+        "耐用性差"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Comfy.",
+          "raw_label_zh": "舒适性好",
+          "source_column": 2,
+          "evidence_span": "Comfy.",
+          "evidence_start": 0,
+          "evidence_end": 6,
+          "locatable": true
+        },
+        {
+          "raw_span": "Strap buckle came off while in use.",
+          "raw_label_zh": "耐用性差",
+          "source_column": 2,
+          "evidence_span": "Strap buckle came off while in use.",
+          "evidence_start": 8,
+          "evidence_end": 43,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "breaks_easily"
+      ],
+      "expected_highlight_keys": [
+        "comfortable_to_wear"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "breaks_easily",
+          "raw_label_zh": "耐用性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "Strap buckle came off while in use.",
+              "evidence_start": 8,
+              "evidence_end": 43
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "comfortable_to_wear",
+          "raw_label_zh": "舒适性好",
+          "evidence_spans": [
+            {
+              "evidence_span": "Comfy.",
+              "evidence_start": 0,
+              "evidence_end": 6
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-374",
+      "source_no": 24,
+      "excel_row": 25,
+      "review_no": 374,
+      "content": "(Review written after 4 hrs in these waders)These are half the cost of the closest thing you can get at Cabelas and do the same thing.They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:Cheap, Serviceable, Size chart was accurate (order +1 size up from shoe size), comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole and my feet got sore after 4 hrs on the rocks, boots need to have cleats attached for better traction, like all waders these will definitely fail some day.",
+      "rating": 4,
+      "human_issue_labels_zh": [
+        "厚实度不够",
+        "舒适度差(穿久了)"
+      ],
+      "human_highlight_labels_zh": [
+        "整体满意",
+        "价格便宜",
+        "舒适度好",
+        "尺码合适(拍大一码)"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "(Review written after 4 hrs in these waders)These are half the cost of the closest thing you can get at Cabelas and do the same thing.",
+          "raw_label_zh": "价格便宜",
+          "source_column": 2,
+          "evidence_span": "(Review written after 4 hrs in these waders)These are half the cost of the closest thing you can get at Cabelas and do the same thing.",
+          "evidence_start": 0,
+          "evidence_end": 134,
+          "locatable": true
+        },
+        {
+          "raw_span": "They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:",
+          "evidence_start": 134,
+          "evidence_end": 299,
+          "locatable": true
+        },
+        {
+          "raw_span": "Cheap, Serviceable, Size chart was accurate (order +1 size up from shoe size),",
+          "raw_label_zh": "尺码合适",
+          "source_column": 2,
+          "evidence_span": "Cheap, Serviceable, Size chart was accurate (order +1 size up from shoe size),",
+          "evidence_start": 299,
+          "evidence_end": 377,
+          "locatable": true
+        },
+        {
+          "raw_span": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+          "raw_label_zh": "厚实度不够",
+          "source_column": 2,
+          "evidence_span": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+          "evidence_start": 378,
+          "evidence_end": 551,
+          "locatable": true
+        },
+        {
+          "raw_span": "and my feet got sore after 4 hrs on the rocks, boots need to have cleats attached for better traction,",
+          "raw_label_zh": "舒适度差(穿久了)",
+          "source_column": 2,
+          "evidence_span": "and my feet got sore after 4 hrs on the rocks, boots need to have cleats attached for better traction,",
+          "evidence_start": 552,
+          "evidence_end": 654,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "uncomfortable_fit"
+      ],
+      "expected_highlight_keys": [
+        "good_value_for_the_price",
+        "fits_as_expected",
+        "overall_satisfied",
+        "comfortable_to_wear"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "价格便宜",
+          "evidence_spans": [
+            {
+              "evidence_span": "(Review written after 4 hrs in these waders)These are half the cost of the closest thing you can get at Cabelas and do the same thing.",
+              "evidence_start": 0,
+              "evidence_end": 134
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "Cheap, Serviceable, Size chart was accurate (order +1 size up from shoe size),",
+              "evidence_start": 299,
+              "evidence_end": 377
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适(拍大一码)",
+          "evidence_spans": [
+            {
+              "evidence_span": "Size chart was accurate (order +1 size up from shoe size)",
+              "evidence_start": 319,
+              "evidence_end": 376
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:",
+              "evidence_start": 134,
+              "evidence_end": 299
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "comfortable_to_wear",
+          "raw_label_zh": "舒适度好",
+          "evidence_spans": [
+            {
+              "evidence_span": "comfortable enough",
+              "evidence_start": 179,
+              "evidence_end": 197
+            }
+          ]
+        },
+        {
+          "label_type": "issue",
+          "canonical_label_key": "uncomfortable_fit",
+          "raw_label_zh": "舒适度差(穿久了)",
+          "evidence_spans": [
+            {
+              "evidence_span": "and my feet got sore after 4 hrs on the rocks, boots need to have cleats attached for better traction,",
+              "evidence_start": 552,
+              "evidence_end": 654
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "candidate:thin_boot_sole",
+          "raw_label_zh": "厚实度不够",
+          "evidence_spans": [
+            {
+              "evidence_span": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+              "evidence_start": 378,
+              "evidence_end": 551
+            }
+          ],
+          "review_status": "needs_new_label",
+          "reason": "new_or_boundary_label_not_in_display_catalog"
+        }
+      ],
+      "blocked_issue_keys": [
+        "runs_too_small"
+      ],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "runs_too_small"
+        ],
+        "frontstage_highlight_keys": [
+          "good_value_for_the_price"
+        ],
+        "audit_issue_keys": [
+          "runs_too_small"
+        ],
+        "audit_highlight_keys": [
+          "good_value_for_the_price"
+        ],
+        "audit_issue_evidence_spans": [
+          "size up"
+        ],
+        "audit_highlight_evidence_spans": [
+          "Cheap"
+        ]
+      },
+      "notes": [
+        "manual column label `舒适度好` supplemented by fallback evidence pattern",
+        "manual column label `尺码合适(拍大一码)` supplemented by fallback evidence pattern"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-375",
+      "source_no": 25,
+      "excel_row": 26,
+      "review_no": 375,
+      "content": "Product came used with mud marks.",
+      "rating": 1,
+      "human_issue_labels_zh": [
+        "收到像二手商品"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [],
+      "expected_issue_keys": [
+        "quality_control_storage_issue"
+      ],
+      "expected_highlight_keys": [],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "quality_control_storage_issue",
+          "raw_label_zh": "收到像二手商品",
+          "evidence_spans": [
+            {
+              "evidence_span": "Product came used with mud marks",
+              "evidence_start": 0,
+              "evidence_end": 32
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": [
+        "manual column label `收到像二手商品` supplemented by fallback evidence pattern"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-376",
+      "source_no": 26,
+      "excel_row": 27,
+      "review_no": 376,
+      "content": "functions as it should! the fitment is spot on! keeps water out and you dry! very comfortable and effective with some solid boot bottoms to match! very strong waders! high quality for such a low price! will be recommending these to my friends! comes with an awesome protective waterproof case for your phone that functions well!",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意",
+        "尺码合适",
+        "防水可靠",
+        "舒适度好",
+        "厚实度够",
+        "性价比高",
+        "赠送附件"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "functions as it should!",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "functions as it should!",
+          "evidence_start": 0,
+          "evidence_end": 23,
+          "locatable": true
+        },
+        {
+          "raw_span": "the fitment is spot on!",
+          "raw_label_zh": "尺码合适",
+          "source_column": 2,
+          "evidence_span": "the fitment is spot on!",
+          "evidence_start": 24,
+          "evidence_end": 47,
+          "locatable": true
+        },
+        {
+          "raw_span": "keeps water out and you dry!",
+          "raw_label_zh": "防水可靠",
+          "source_column": 2,
+          "evidence_span": "keeps water out and you dry!",
+          "evidence_start": 48,
+          "evidence_end": 76,
+          "locatable": true
+        },
+        {
+          "raw_span": "very comfortable",
+          "raw_label_zh": "舒适度好",
+          "source_column": 2,
+          "evidence_span": "very comfortable",
+          "evidence_start": 77,
+          "evidence_end": 93,
+          "locatable": true
+        },
+        {
+          "raw_span": "and effective with some solid boot bottoms to match! very strong waders!",
+          "raw_label_zh": "厚实度够",
+          "source_column": 2,
+          "evidence_span": "and effective with some solid boot bottoms to match! very strong waders!",
+          "evidence_start": 94,
+          "evidence_end": 166,
+          "locatable": true
+        },
+        {
+          "raw_span": "high quality for such a low price!",
+          "raw_label_zh": "性价比高",
+          "source_column": 2,
+          "evidence_span": "high quality for such a low price!",
+          "evidence_start": 167,
+          "evidence_end": 201,
+          "locatable": true
+        },
+        {
+          "raw_span": "will be recommending these to my friends! comes with an awesome protective waterproof case for your phone that functions well!",
+          "raw_label_zh": "赠送附件",
+          "source_column": 2,
+          "evidence_span": "will be recommending these to my friends! comes with an awesome protective waterproof case for your phone that functions well!",
+          "evidence_start": 202,
+          "evidence_end": 328,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "holds_up_well",
+        "fits_as_expected",
+        "good_value_for_the_price",
+        "overall_satisfied",
+        "comfortable_to_wear",
+        "useful_accessories",
+        "keeps_water_out"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "holds_up_well",
+          "raw_label_zh": "厚实度够",
+          "evidence_spans": [
+            {
+              "evidence_span": "and effective with some solid boot bottoms to match! very strong waders!",
+              "evidence_start": 94,
+              "evidence_end": 166
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "the fitment is spot on!",
+              "evidence_start": 24,
+              "evidence_end": 47
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "high quality for such a low price!",
+              "evidence_start": 167,
+              "evidence_end": 201
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "functions as it should!",
+              "evidence_start": 0,
+              "evidence_end": 23
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "comfortable_to_wear",
+          "raw_label_zh": "舒适度好",
+          "evidence_spans": [
+            {
+              "evidence_span": "very comfortable",
+              "evidence_start": 77,
+              "evidence_end": 93
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "useful_accessories",
+          "raw_label_zh": "赠送附件",
+          "evidence_spans": [
+            {
+              "evidence_span": "will be recommending these to my friends! comes with an awesome protective waterproof case for your phone that functions well!",
+              "evidence_start": 202,
+              "evidence_end": 328
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "keeps_water_out",
+          "raw_label_zh": "防水可靠",
+          "evidence_spans": [
+            {
+              "evidence_span": "keeps water out and you dry!",
+              "evidence_start": 48,
+              "evidence_end": 76
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "overall_satisfied"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "overall_satisfied"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "spot on"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-377",
+      "source_no": 27,
+      "excel_row": 28,
+      "review_no": 377,
+      "content": "For good",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "For good",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "For good",
+          "evidence_start": 0,
+          "evidence_end": 8,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "For good",
+              "evidence_start": 0,
+              "evidence_end": 8
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-378",
+      "source_no": 28,
+      "excel_row": 29,
+      "review_no": 378,
+      "content": "I’m 5’5 148lbs size 8, read all the reviews saying get a size up so I got size 9 , threw it on in my kitchen while I was cooking and had oven on so it was pretty warm in my kitchen already and I was only wear shorts on at the time no shirt or socks but was just itching to try it and it feels like the real deal. Definitely nice and sealed up good I was already started to break a sweat or two while wearing it around kitchen to living room for short amount of time but again was cooking so I was already hot. Only reason I gave it a 4 star is because this is definitely made for someone 5inches or more taller than me fits in a way loose but not where I’m stumble to wobble but I’m not complaining nothing really fits me true to size but would be great if it told you ideal height for the wear. But I’d buy it prolly 10 more times even with it being bigger than me jus because of how durable it is , can’t wait to get out in the river fishing trout with this on .",
+      "rating": 4,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "尺码合适(拍大一码)"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "I’m 5’5 148lbs size 8, read all the reviews saying get a size up so I got size 9 , threw it on in my kitchen while I was cooking and had oven on so it was pretty warm in my kitchen already and I was only wear shorts on at the time no shirt or socks but was just itching to try it and it feels like the real deal. Definitely nice and sealed up good I was already started to break a sweat or two while wearing it around kitchen to living room for short amount of time but again was cooking so I was already hot. Only reason I gave it a 4 star is because this is definitely made for someone 5inches or more taller than me fits in a way loose but not where I’m stumble to wobble but I’m not complaining nothing really fits me true to size but would be great if it told you ideal height for the wear. But I’d buy it prolly 10 more times even with it being bigger than me jus because of how durable it is , can’t wait to get out in the river fishing trout with this on .",
+          "raw_label_zh": "尺码合适(拍大一码)",
+          "source_column": 3,
+          "evidence_span": "I’m 5’5 148lbs size 8, read all the reviews saying get a size up so I got size 9 , threw it on in my kitchen while I was cooking and had oven on so it was pretty warm in my kitchen already and I was only wear shorts on at the time no shirt or socks but was just itching to try it and it feels like the real deal. Definitely nice and sealed up good I was already started to break a sweat or two while wearing it around kitchen to living room for short amount of time but again was cooking so I was already hot. Only reason I gave it a 4 star is because this is definitely made for someone 5inches or more taller than me fits in a way loose but not where I’m stumble to wobble but I’m not complaining nothing really fits me true to size but would be great if it told you ideal height for the wear. But I’d buy it prolly 10 more times even with it being bigger than me jus because of how durable it is , can’t wait to get out in the river fishing trout with this on .",
+          "evidence_start": 0,
+          "evidence_end": 964,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适(拍大一码)",
+          "evidence_spans": [
+            {
+              "evidence_span": "I’m 5’5 148lbs size 8, read all the reviews saying get a size up so I got size 9 , threw it on in my kitchen while I was cooking and had oven on so it was pretty warm in my kitchen already and I was only wear shorts on at the time no shirt or socks but was just itching to try it and it feels like the real deal. Definitely nice and sealed up good I was already started to break a sweat or two while wearing it around kitchen to living room for short amount of time but again was cooking so I was already hot. Only reason I gave it a 4 star is because this is definitely made for someone 5inches or more taller than me fits in a way loose but not where I’m stumble to wobble but I’m not complaining nothing really fits me true to size but would be great if it told you ideal height for the wear. But I’d buy it prolly 10 more times even with it being bigger than me jus because of how durable it is , can’t wait to get out in the river fishing trout with this on .",
+              "evidence_start": 0,
+              "evidence_end": 964
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [
+        "not_breathable",
+        "runs_too_small"
+      ],
+      "blocked_highlight_keys": [
+        "holds_up_well"
+      ],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "runs_too_small",
+          "not_breathable"
+        ],
+        "frontstage_highlight_keys": [
+          "fits_as_expected",
+          "holds_up_well"
+        ],
+        "audit_issue_keys": [
+          "runs_too_small",
+          "not_breathable"
+        ],
+        "audit_highlight_keys": [
+          "fits_as_expected",
+          "holds_up_well"
+        ],
+        "audit_issue_evidence_spans": [
+          "size up",
+          "sweat or two while wearing it around kitchen to living room for short amount of time",
+          "started to break a sweat"
+        ],
+        "audit_highlight_evidence_spans": [
+          "true to size",
+          "durable",
+          "how durable it is"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-379",
+      "source_no": 29,
+      "excel_row": 30,
+      "review_no": 379,
+      "content": "Roomy, sturdy and the boots fit great! Dry socks & pants rule",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "尺码合适",
+        "厚实度够",
+        "防水可靠"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Roomy,",
+          "raw_label_zh": "尺码合适",
+          "source_column": 2,
+          "evidence_span": "Roomy,",
+          "evidence_start": 0,
+          "evidence_end": 6,
+          "locatable": true
+        },
+        {
+          "raw_span": "sturdy",
+          "raw_label_zh": "厚实度够",
+          "source_column": 2,
+          "evidence_span": "sturdy",
+          "evidence_start": 7,
+          "evidence_end": 13,
+          "locatable": true
+        },
+        {
+          "raw_span": "Dry socks & pants rule",
+          "raw_label_zh": "防水可靠",
+          "source_column": 2,
+          "evidence_span": "Dry socks & pants rule",
+          "evidence_start": 39,
+          "evidence_end": 61,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "holds_up_well",
+        "fits_as_expected",
+        "keeps_water_out"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "holds_up_well",
+          "raw_label_zh": "厚实度够",
+          "evidence_spans": [
+            {
+              "evidence_span": "sturdy",
+              "evidence_start": 7,
+              "evidence_end": 13
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "Roomy,",
+              "evidence_start": 0,
+              "evidence_end": 6
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "keeps_water_out",
+          "raw_label_zh": "防水可靠",
+          "evidence_spans": [
+            {
+              "evidence_span": "Dry socks & pants rule",
+              "evidence_start": 39,
+              "evidence_end": 61
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "fits_as_expected",
+          "holds_up_well"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "fits_as_expected",
+          "holds_up_well"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "fit great",
+          "sturdy"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-380",
+      "source_no": 30,
+      "excel_row": 31,
+      "review_no": 380,
+      "content": "Awesome suit!",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Awesome suit!",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "Awesome suit!",
+          "evidence_start": 0,
+          "evidence_end": 13,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Awesome suit!",
+              "evidence_start": 0,
+              "evidence_end": 13
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-381",
+      "source_no": 31,
+      "excel_row": 32,
+      "review_no": 381,
+      "content": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
+          "evidence_start": 0,
+          "evidence_end": 97,
+          "locatable": true
+        },
+        {
+          "raw_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
+          "raw_label_zh": "整体满意",
+          "source_column": 3,
+          "evidence_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
+          "evidence_start": 0,
+          "evidence_end": 97,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
+              "evidence_start": 0,
+              "evidence_end": 97
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-382",
+      "source_no": 32,
+      "excel_row": 33,
+      "review_no": 382,
+      "content": "Seem to be working out well so far",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Seem to be working out well so far",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "Seem to be working out well so far",
+          "evidence_start": 0,
+          "evidence_end": 34,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Seem to be working out well so far",
+              "evidence_start": 0,
+              "evidence_end": 34
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-383",
+      "source_no": 33,
+      "excel_row": 34,
+      "review_no": 383,
+      "content": "As advertised !",
+      "rating": 4,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "As advertised !",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "As advertised !",
+          "evidence_start": 0,
+          "evidence_end": 15,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "As advertised !",
+              "evidence_start": 0,
+              "evidence_end": 15
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-384",
+      "source_no": 34,
+      "excel_row": 35,
+      "review_no": 384,
+      "content": "I ordered 2, one for him & one for me.True to size.  Great quality.",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "尺码合适",
+        "质量好"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "I ordered 2, one for him & one for me.True to size.",
+          "raw_label_zh": "尺码合适",
+          "source_column": 2,
+          "evidence_span": "I ordered 2, one for him & one for me.True to size.",
+          "evidence_start": 0,
+          "evidence_end": 51,
+          "locatable": true
+        },
+        {
+          "raw_span": "Great quality.",
+          "raw_label_zh": "质量好",
+          "source_column": 2,
+          "evidence_span": "Great quality.",
+          "evidence_start": 53,
+          "evidence_end": 67,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected",
+        "good_material_quality"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "I ordered 2, one for him & one for me.True to size.",
+              "evidence_start": 0,
+              "evidence_end": 51
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_material_quality",
+          "raw_label_zh": "质量好",
+          "evidence_spans": [
+            {
+              "evidence_span": "Great quality.",
+              "evidence_start": 53,
+              "evidence_end": 67
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "fits_as_expected",
+          "good_material_quality"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "fits_as_expected",
+          "good_material_quality"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "True to size",
+          "Great quality"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-385",
+      "source_no": 35,
+      "excel_row": 36,
+      "review_no": 385,
+      "content": "Great value especially for the price. It held up well without any tears or punctures. I would absolutely buy this again.",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "性价比高",
+        "耐用性好",
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Great value especially for the price.",
+          "raw_label_zh": "性价比高",
+          "source_column": 2,
+          "evidence_span": "Great value especially for the price.",
+          "evidence_start": 0,
+          "evidence_end": 37,
+          "locatable": true
+        },
+        {
+          "raw_span": "It held up well without any tears or punctures.",
+          "raw_label_zh": "耐用性好",
+          "source_column": 2,
+          "evidence_span": "It held up well without any tears or punctures.",
+          "evidence_start": 38,
+          "evidence_end": 85,
+          "locatable": true
+        },
+        {
+          "raw_span": "I would absolutely buy this again.",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "I would absolutely buy this again.",
+          "evidence_start": 86,
+          "evidence_end": 120,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "good_value_for_the_price",
+        "overall_satisfied",
+        "holds_up_well"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "Great value especially for the price.",
+              "evidence_start": 0,
+              "evidence_end": 37
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "I would absolutely buy this again.",
+              "evidence_start": 86,
+              "evidence_end": 120
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "holds_up_well",
+          "raw_label_zh": "耐用性好",
+          "evidence_spans": [
+            {
+              "evidence_span": "It held up well without any tears or punctures.",
+              "evidence_start": 38,
+              "evidence_end": 85
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [
+        "breaks_easily"
+      ],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "breaks_easily"
+        ],
+        "frontstage_highlight_keys": [
+          "holds_up_well",
+          "good_value_for_the_price"
+        ],
+        "audit_issue_keys": [
+          "breaks_easily"
+        ],
+        "audit_highlight_keys": [
+          "holds_up_well",
+          "good_value_for_the_price"
+        ],
+        "audit_issue_evidence_spans": [
+          "tears or punctures"
+        ],
+        "audit_highlight_evidence_spans": [
+          "held up well without any tears or punctures",
+          "Great value",
+          "Great value especially for the price"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-386",
+      "source_no": 36,
+      "excel_row": 37,
+      "review_no": 386,
+      "content": "BOOTS RUN SMALL. PURCHASE A LARGER SIZE. OTHERWISE WOULD RECOMMEND THESE WADERS. I USED THEM FOR THE FIRST TIME TODAY AND THEY ARE WATER TIGHT. THEY WILL MAKE YOU SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT. THEY SEEM TO BE MADE WELL EVEN AT THE SEAMS. ADJUSTABLE SUSPENDERS AND WAIST BELT. COMFORTABLE TO WEAR AND MOVE AROUND IN OTHER THAN SWEATING WHEN IT'S HOT OUTSIDE. I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
+      "rating": 4,
+      "human_issue_labels_zh": [
+        "尺码不准",
+        "透气性差"
+      ],
+      "human_highlight_labels_zh": [
+        "质量好",
+        "舒适度好"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "BOOTS RUN SMALL.",
+          "raw_label_zh": "尺码不准",
+          "source_column": 2,
+          "evidence_span": "BOOTS RUN SMALL.",
+          "evidence_start": 0,
+          "evidence_end": 16,
+          "locatable": true
+        },
+        {
+          "raw_span": "PURCHASE A LARGER SIZE. OTHERWISE WOULD RECOMMEND THESE WADERS. I USED THEM FOR THE FIRST TIME TODAY AND THEY ARE WATER TIGHT. THEY WILL MAKE YOU SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT.",
+          "raw_label_zh": "透气性差",
+          "source_column": 2,
+          "evidence_span": "PURCHASE A LARGER SIZE. OTHERWISE WOULD RECOMMEND THESE WADERS. I USED THEM FOR THE FIRST TIME TODAY AND THEY ARE WATER TIGHT. THEY WILL MAKE YOU SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT.",
+          "evidence_start": 17,
+          "evidence_end": 227,
+          "locatable": true
+        },
+        {
+          "raw_span": "THEY SEEM TO BE MADE WELL EVEN AT THE SEAMS.",
+          "raw_label_zh": "质量好",
+          "source_column": 2,
+          "evidence_span": "THEY SEEM TO BE MADE WELL EVEN AT THE SEAMS.",
+          "evidence_start": 228,
+          "evidence_end": 272,
+          "locatable": true
+        },
+        {
+          "raw_span": "I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
+          "raw_label_zh": "尺码不准",
+          "source_column": 2,
+          "evidence_span": "I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
+          "evidence_start": 393,
+          "evidence_end": 710,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "size_fit_problem",
+        "not_breathable"
+      ],
+      "expected_highlight_keys": [
+        "comfortable_to_wear",
+        "good_material_quality"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "size_fit_problem",
+          "raw_label_zh": "尺码不准",
+          "evidence_spans": [
+            {
+              "evidence_span": "BOOTS RUN SMALL.",
+              "evidence_start": 0,
+              "evidence_end": 16
+            },
+            {
+              "evidence_span": "I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
+              "evidence_start": 393,
+              "evidence_end": 710
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "comfortable_to_wear",
+          "raw_label_zh": "舒适度好",
+          "evidence_spans": [
+            {
+              "evidence_span": "COMFORTABLE TO WEAR AND MOVE AROUND",
+              "evidence_start": 311,
+              "evidence_end": 346
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_material_quality",
+          "raw_label_zh": "质量好",
+          "evidence_spans": [
+            {
+              "evidence_span": "THEY SEEM TO BE MADE WELL EVEN AT THE SEAMS.",
+              "evidence_start": 228,
+              "evidence_end": 272
+            }
+          ]
+        },
+        {
+          "label_type": "issue",
+          "canonical_label_key": "not_breathable",
+          "raw_label_zh": "透气性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "PURCHASE A LARGER SIZE. OTHERWISE WOULD RECOMMEND THESE WADERS. I USED THEM FOR THE FIRST TIME TODAY AND THEY ARE WATER TIGHT. THEY WILL MAKE YOU SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT.",
+              "evidence_start": 17,
+              "evidence_end": 227
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [
+        "runs_too_small"
+      ],
+      "blocked_highlight_keys": [
+        "looks_good"
+      ],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "runs_too_small",
+          "not_breathable"
+        ],
+        "frontstage_highlight_keys": [
+          "looks_good"
+        ],
+        "audit_issue_keys": [
+          "runs_too_small",
+          "not_breathable"
+        ],
+        "audit_highlight_keys": [
+          "looks_good"
+        ],
+        "audit_issue_evidence_spans": [
+          "RUN SMALL",
+          "SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT"
+        ],
+        "audit_highlight_evidence_spans": [
+          "SEEM TO BE MADE WELL"
+        ]
+      },
+      "notes": [
+        "manual column label `舒适度好` supplemented by fallback evidence pattern"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-387",
+      "source_no": 37,
+      "excel_row": 38,
+      "review_no": 387,
+      "content": "Just what I needed. Perfect fit. I ordered 1 foot size larger as suggested by reviewers and glad I did. Not bad at all for the price paid. Needed them the next morning. They were delivered overnight. Arrived just in time.",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "尺码合适(拍大一码)",
+        "性价比高",
+        "准时送达"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Just what I needed. Perfect fit. I ordered 1 foot size larger as suggested by reviewers and glad I did.",
+          "raw_label_zh": "尺码合适(拍大一码)",
+          "source_column": 2,
+          "evidence_span": "Just what I needed. Perfect fit. I ordered 1 foot size larger as suggested by reviewers and glad I did.",
+          "evidence_start": 0,
+          "evidence_end": 103,
+          "locatable": true
+        },
+        {
+          "raw_span": "Not bad at all for the price paid.",
+          "raw_label_zh": "性价比高",
+          "source_column": 2,
+          "evidence_span": "Not bad at all for the price paid.",
+          "evidence_start": 104,
+          "evidence_end": 138,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "arrives_on_time_and_intact",
+        "fits_as_expected",
+        "good_value_for_the_price"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "arrives_on_time_and_intact",
+          "raw_label_zh": "准时送达",
+          "evidence_spans": [
+            {
+              "evidence_span": "delivered overnight",
+              "evidence_start": 179,
+              "evidence_end": 198
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适(拍大一码)",
+          "evidence_spans": [
+            {
+              "evidence_span": "Just what I needed. Perfect fit. I ordered 1 foot size larger as suggested by reviewers and glad I did.",
+              "evidence_start": 0,
+              "evidence_end": 103
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "Not bad at all for the price paid.",
+              "evidence_start": 104,
+              "evidence_end": 138
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "fits_as_expected",
+          "good_value_for_the_price"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "fits_as_expected",
+          "good_value_for_the_price"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "Perfect fit",
+          "for the price",
+          "Perfect fit. I ordered 1 foot size larger as suggested by reviewers and glad I did.",
+          "Not bad at all for the price paid."
+        ]
+      },
+      "notes": [
+        "manual column label `准时送达` supplemented by fallback evidence pattern"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-388",
+      "source_no": 38,
+      "excel_row": 39,
+      "review_no": 388,
+      "content": "Decent waders for creeks and clean water. However, if where you fish has Hawthorne bushes or similar, the rubber gets punctured very easily.",
+      "rating": 3,
+      "human_issue_labels_zh": [
+        "容易被刺破"
+      ],
+      "human_highlight_labels_zh": [
+        "适合溪流清洁水域"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Decent waders for creeks and clean water.",
+          "raw_label_zh": "适合溪流清洁水域",
+          "source_column": 2,
+          "evidence_span": "Decent waders for creeks and clean water.",
+          "evidence_start": 0,
+          "evidence_end": 41,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "breaks_easily"
+      ],
+      "expected_highlight_keys": [
+        "works_well_for_use_case"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "breaks_easily",
+          "raw_label_zh": "容易被刺破",
+          "evidence_spans": [
+            {
+              "evidence_span": "rubber gets punctured very easily",
+              "evidence_start": 106,
+              "evidence_end": 139
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "works_well_for_use_case",
+          "raw_label_zh": "适合溪流清洁水域",
+          "evidence_spans": [
+            {
+              "evidence_span": "Decent waders for creeks and clean water.",
+              "evidence_start": 0,
+              "evidence_end": 41
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": [
+        "manual column label `容易被刺破` supplemented by fallback evidence pattern"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-389",
+      "source_no": 39,
+      "excel_row": 40,
+      "review_no": 389,
+      "content": "Already leaking after only a few uses. Disappointed.",
+      "rating": 2,
+      "human_issue_labels_zh": [
+        "耐用性差"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [],
+      "expected_issue_keys": [
+        "breaks_easily"
+      ],
+      "expected_highlight_keys": [],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "breaks_easily",
+          "raw_label_zh": "耐用性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "Already leaking after only a few uses",
+              "evidence_start": 0,
+              "evidence_end": 37
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [
+        "water_leaks_through"
+      ],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "water_leaks_through"
+        ],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [
+          "water_leaks_through"
+        ],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [
+          "leaking",
+          "Already leaking after only a few uses"
+        ],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": [
+        "manual column label `耐用性差` supplemented by fallback evidence pattern"
+      ]
+    },
+    {
+      "id": "waders-351-400-row-390",
+      "source_no": 40,
+      "excel_row": 41,
+      "review_no": 390,
+      "content": "Amazing waders!! Definitely recommend. Worked as intended, great quality and price point!",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意",
+        "性价比高"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Amazing waders!! Definitely recommend. Worked as intended,",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "Amazing waders!! Definitely recommend. Worked as intended,",
+          "evidence_start": 0,
+          "evidence_end": 58,
+          "locatable": true
+        },
+        {
+          "raw_span": "great quality and price point!",
+          "raw_label_zh": "性价比高",
+          "source_column": 2,
+          "evidence_span": "great quality and price point!",
+          "evidence_start": 59,
+          "evidence_end": 89,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "good_value_for_the_price",
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "great quality and price point!",
+              "evidence_start": 59,
+              "evidence_end": 89
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Amazing waders!! Definitely recommend. Worked as intended,",
+              "evidence_start": 0,
+              "evidence_end": 58
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [
+        "good_material_quality"
+      ],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "good_value_for_the_price",
+          "good_material_quality"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "good_value_for_the_price",
+          "good_material_quality"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "price point",
+          "great quality"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-391",
+      "source_no": 41,
+      "excel_row": 42,
+      "review_no": 391,
+      "content": "Boots sized right Nice and high on the chest.",
+      "rating": 4,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "尺码合适"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Boots sized right Nice and high on the chest.",
+          "raw_label_zh": "尺码合适",
+          "source_column": 2,
+          "evidence_span": "Boots sized right Nice and high on the chest.",
+          "evidence_start": 0,
+          "evidence_end": 45,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "Boots sized right Nice and high on the chest.",
+              "evidence_start": 0,
+              "evidence_end": 45
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-392",
+      "source_no": 42,
+      "excel_row": 43,
+      "review_no": 392,
+      "content": "I wore these for 3 days straight, twice a day, in the cold Alaskan waters for salmon fishing.  The boots had a good grip and there were no leaks.  If there's only one thing I would improve, it would be to make the front pocket just a little bit bigger.  I would certainly buy these again.",
+      "rating": 4,
+      "human_issue_labels_zh": [
+        "口袋太小"
+      ],
+      "human_highlight_labels_zh": [
+        "防水可靠"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "I wore these for 3 days straight, twice a day, in the cold Alaskan waters for salmon fishing. The boots had a good grip and there were no leaks.",
+          "raw_label_zh": "防水可靠",
+          "source_column": 2,
+          "evidence_span": "I wore these for 3 days straight, twice a day, in the cold Alaskan waters for salmon fishing.  The boots had a good grip and there were no leaks.",
+          "evidence_start": 0,
+          "evidence_end": 145,
+          "locatable": true
+        },
+        {
+          "raw_span": "If there's only one thing I would improve, it would be to make the front pocket just a little bit bigger.",
+          "raw_label_zh": "口袋太小",
+          "source_column": 2,
+          "evidence_span": "If there's only one thing I would improve, it would be to make the front pocket just a little bit bigger.",
+          "evidence_start": 147,
+          "evidence_end": 252,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "pocket_too_small"
+      ],
+      "expected_highlight_keys": [
+        "keeps_water_out"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "pocket_too_small",
+          "raw_label_zh": "口袋太小",
+          "evidence_spans": [
+            {
+              "evidence_span": "If there's only one thing I would improve, it would be to make the front pocket just a little bit bigger.",
+              "evidence_start": 147,
+              "evidence_end": 252
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "keeps_water_out",
+          "raw_label_zh": "防水可靠",
+          "evidence_spans": [
+            {
+              "evidence_span": "I wore these for 3 days straight, twice a day, in the cold Alaskan waters for salmon fishing.  The boots had a good grip and there were no leaks.",
+              "evidence_start": 0,
+              "evidence_end": 145
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [
+        "pocket_not_waterproof"
+      ],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "pocket_not_waterproof"
+        ],
+        "frontstage_highlight_keys": [
+          "keeps_water_out"
+        ],
+        "audit_issue_keys": [
+          "pocket_not_waterproof"
+        ],
+        "audit_highlight_keys": [
+          "keeps_water_out"
+        ],
+        "audit_issue_evidence_spans": [
+          "leaks.  If there's only one thing I would improve",
+          "it would be to make the front pocket"
+        ],
+        "audit_highlight_evidence_spans": [
+          "no leaks"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-393",
+      "source_no": 43,
+      "excel_row": 44,
+      "review_no": 393,
+      "content": "These are great for the money. I gave them 4 stars because the second time I wore them they leaked just a tiny bit. Nothing extravagant but definitely uncomfortable. They’ll work until I can get nicer ones.",
+      "rating": 4,
+      "human_issue_labels_zh": [
+        "防水性差",
+        "舒适性差"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "These are great for the money.",
+          "raw_label_zh": "性价比高",
+          "source_column": 2,
+          "evidence_span": "These are great for the money.",
+          "evidence_start": 0,
+          "evidence_end": 30,
+          "locatable": true
+        },
+        {
+          "raw_span": "I gave them 4 stars because the second time I wore them they leaked just a tiny bit.",
+          "raw_label_zh": "防水性差",
+          "source_column": 2,
+          "evidence_span": "I gave them 4 stars because the second time I wore them they leaked just a tiny bit.",
+          "evidence_start": 31,
+          "evidence_end": 115,
+          "locatable": true
+        },
+        {
+          "raw_span": "Nothing extravagant but definitely uncomfortable.",
+          "raw_label_zh": "舒适性差",
+          "source_column": 2,
+          "evidence_span": "Nothing extravagant but definitely uncomfortable.",
+          "evidence_start": 116,
+          "evidence_end": 165,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "uncomfortable_fit",
+        "water_leaks_through"
+      ],
+      "expected_highlight_keys": [
+        "good_value_for_the_price"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_value_for_the_price",
+          "raw_label_zh": "性价比高",
+          "evidence_spans": [
+            {
+              "evidence_span": "These are great for the money.",
+              "evidence_start": 0,
+              "evidence_end": 30
+            }
+          ]
+        },
+        {
+          "label_type": "issue",
+          "canonical_label_key": "uncomfortable_fit",
+          "raw_label_zh": "舒适性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "Nothing extravagant but definitely uncomfortable.",
+              "evidence_start": 116,
+              "evidence_end": 165
+            }
+          ]
+        },
+        {
+          "label_type": "issue",
+          "canonical_label_key": "water_leaks_through",
+          "raw_label_zh": "防水性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "I gave them 4 stars because the second time I wore them they leaked just a tiny bit.",
+              "evidence_start": 31,
+              "evidence_end": 115
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "water_leaks_through"
+        ],
+        "frontstage_highlight_keys": [
+          "overall_satisfied"
+        ],
+        "audit_issue_keys": [
+          "water_leaks_through"
+        ],
+        "audit_highlight_keys": [
+          "overall_satisfied"
+        ],
+        "audit_issue_evidence_spans": [
+          "leaked"
+        ],
+        "audit_highlight_evidence_spans": [
+          "These are great"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-394",
+      "source_no": 44,
+      "excel_row": 45,
+      "review_no": 394,
+      "content": "Fits perfect!",
+      "rating": 5,
+      "human_issue_labels_zh": [
+        "尺寸合适"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Fits perfect!",
+          "raw_label_zh": "尺寸合适",
+          "source_column": 2,
+          "evidence_span": "Fits perfect!",
+          "evidence_start": 0,
+          "evidence_end": 13,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺寸合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "Fits perfect!",
+              "evidence_start": 0,
+              "evidence_end": 13
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "fits_as_expected"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "fits_as_expected"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "Fits perfect",
+          "fits good"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-395",
+      "source_no": 45,
+      "excel_row": 46,
+      "review_no": 395,
+      "content": "The good news.  These waders appear to be a quality product for the price point.  The bad news is they run at least 1 size too small.  I wear size 14 and ordered 14 since the vendor states they run true to size.  See attached pictures.  Their 14 is at best a 12.",
+      "rating": 3,
+      "human_issue_labels_zh": [
+        "尺码不准"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "The good news. These waders appear to be a quality product for the price point. The bad news is they run at least 1 size too small. I wear size 14 and ordered 14 since the vendor states they run true to size. See attached pictures. Their 14 is at best a 12.",
+          "raw_label_zh": "尺码不准",
+          "source_column": 2,
+          "evidence_span": "The good news.  These waders appear to be a quality product for the price point.  The bad news is they run at least 1 size too small.  I wear size 14 and ordered 14 since the vendor states they run true to size.  See attached pictures.  Their 14 is at best a 12.",
+          "evidence_start": 0,
+          "evidence_end": 262,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "size_fit_problem"
+      ],
+      "expected_highlight_keys": [],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "size_fit_problem",
+          "raw_label_zh": "尺码不准",
+          "evidence_spans": [
+            {
+              "evidence_span": "The good news.  These waders appear to be a quality product for the price point.  The bad news is they run at least 1 size too small.  I wear size 14 and ordered 14 since the vendor states they run true to size.  See attached pictures.  Their 14 is at best a 12.",
+              "evidence_start": 0,
+              "evidence_end": 262
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [
+        "runs_too_small"
+      ],
+      "blocked_highlight_keys": [
+        "fits_as_expected",
+        "good_material_quality",
+        "good_value_for_the_price"
+      ],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "runs_too_small"
+        ],
+        "frontstage_highlight_keys": [
+          "fits_as_expected",
+          "good_value_for_the_price",
+          "good_material_quality"
+        ],
+        "audit_issue_keys": [
+          "runs_too_small"
+        ],
+        "audit_highlight_keys": [
+          "fits_as_expected",
+          "good_value_for_the_price",
+          "good_material_quality"
+        ],
+        "audit_issue_evidence_spans": [
+          "too small"
+        ],
+        "audit_highlight_evidence_spans": [
+          "true to size",
+          "for the price",
+          "quality product"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-396",
+      "source_no": 46,
+      "excel_row": 47,
+      "review_no": 396,
+      "content": "Ordered these for my wife and daughter.  They don't fish much and I needed a cheap pair of waders but I was pleasantly surprised by the quality and fit of these Tidwe waders.  I highly recommend them for a backup pair or for someone who doesn't need them often.",
+      "rating": 5,
+      "human_issue_labels_zh": [
+        "不适合经常使用"
+      ],
+      "human_highlight_labels_zh": [
+        "尺码合适",
+        "质量好"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Ordered these for my wife and daughter. They don't fish much and I needed a cheap pair of waders but I was pleasantly surprised by the quality",
+          "raw_label_zh": "质量好",
+          "source_column": 2,
+          "evidence_span": "Ordered these for my wife and daughter.  They don't fish much and I needed a cheap pair of waders but I was pleasantly surprised by the quality",
+          "evidence_start": 0,
+          "evidence_end": 143,
+          "locatable": true
+        },
+        {
+          "raw_span": "and fit of these Tidwe waders.",
+          "raw_label_zh": "尺码合适",
+          "source_column": 2,
+          "evidence_span": "and fit of these Tidwe waders.",
+          "evidence_start": 144,
+          "evidence_end": 174,
+          "locatable": true
+        },
+        {
+          "raw_span": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
+          "raw_label_zh": "不适合经常使用",
+          "source_column": 2,
+          "evidence_span": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
+          "evidence_start": 176,
+          "evidence_end": 261,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "fits_as_expected",
+        "good_material_quality"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "fits_as_expected",
+          "raw_label_zh": "尺码合适",
+          "evidence_spans": [
+            {
+              "evidence_span": "and fit of these Tidwe waders.",
+              "evidence_start": 144,
+              "evidence_end": 174
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_material_quality",
+          "raw_label_zh": "质量好",
+          "evidence_spans": [
+            {
+              "evidence_span": "Ordered these for my wife and daughter.  They don't fish much and I needed a cheap pair of waders but I was pleasantly surprised by the quality",
+              "evidence_start": 0,
+              "evidence_end": 143
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "candidate:not_for_frequent_use",
+          "raw_label_zh": "不适合经常使用",
+          "evidence_spans": [
+            {
+              "evidence_span": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
+              "evidence_start": 176,
+              "evidence_end": 261
+            }
+          ],
+          "review_status": "needs_new_label",
+          "reason": "new_or_boundary_label_not_in_display_catalog"
+        }
+      ],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [
+        "good_value_for_the_price",
+        "overall_satisfied"
+      ],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [
+          "good_value_for_the_price",
+          "overall_satisfied"
+        ],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [
+          "good_value_for_the_price",
+          "overall_satisfied"
+        ],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": [
+          "cheap",
+          "highly recommend"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-397",
+      "source_no": 47,
+      "excel_row": 48,
+      "review_no": 397,
+      "content": "Excellent",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Excellent",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "Excellent",
+          "evidence_start": 0,
+          "evidence_end": 9,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "Excellent",
+              "evidence_start": 0,
+              "evidence_end": 9
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-398",
+      "source_no": 48,
+      "excel_row": 49,
+      "review_no": 398,
+      "content": "Good for work or fishing in lakes",
+      "rating": 5,
+      "human_issue_labels_zh": [],
+      "human_highlight_labels_zh": [
+        "整体满意"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "for work or fishing in lakes",
+          "raw_label_zh": "整体满意",
+          "source_column": 2,
+          "evidence_span": "for work or fishing in lakes",
+          "evidence_start": 5,
+          "evidence_end": 33,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [],
+      "expected_highlight_keys": [
+        "overall_satisfied"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "overall_satisfied",
+          "raw_label_zh": "整体满意",
+          "evidence_spans": [
+            {
+              "evidence_span": "for work or fishing in lakes",
+              "evidence_start": 5,
+              "evidence_end": 33
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-399",
+      "source_no": 49,
+      "excel_row": 50,
+      "review_no": 399,
+      "content": "Leaks. Do not buy",
+      "rating": 1,
+      "human_issue_labels_zh": [
+        "防水性差"
+      ],
+      "human_highlight_labels_zh": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Leaks.",
+          "raw_label_zh": "防水性差",
+          "source_column": 2,
+          "evidence_span": "Leaks.",
+          "evidence_start": 0,
+          "evidence_end": 6,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "water_leaks_through"
+      ],
+      "expected_highlight_keys": [],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "water_leaks_through",
+          "raw_label_zh": "防水性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "Leaks.",
+              "evidence_start": 0,
+              "evidence_end": 6
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [
+          "water_leaks_through"
+        ],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [
+          "water_leaks_through"
+        ],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [
+          "Leaks"
+        ],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    },
+    {
+      "id": "waders-351-400-row-400",
+      "source_no": 50,
+      "excel_row": 51,
+      "review_no": 400,
+      "content": "Wear to go fishing in the river! Not insulated but lining has not leaked!",
+      "rating": 5,
+      "human_issue_labels_zh": [
+        "保暖性差"
+      ],
+      "human_highlight_labels_zh": [
+        "防水可靠"
+      ],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Wear to go fishing in the river! Not insulated",
+          "raw_label_zh": "保暖性差",
+          "source_column": 2,
+          "evidence_span": "Wear to go fishing in the river! Not insulated",
+          "evidence_start": 0,
+          "evidence_end": 46,
+          "locatable": true
+        },
+        {
+          "raw_span": "but lining has not leaked!",
+          "raw_label_zh": "防水可靠",
+          "source_column": 2,
+          "evidence_span": "but lining has not leaked!",
+          "evidence_start": 47,
+          "evidence_end": 73,
+          "locatable": true
+        }
+      ],
+      "expected_issue_keys": [
+        "insufficient_warmth"
+      ],
+      "expected_highlight_keys": [
+        "keeps_water_out"
+      ],
+      "evidence_spans": [
+        {
+          "label_type": "issue",
+          "canonical_label_key": "insufficient_warmth",
+          "raw_label_zh": "保暖性差",
+          "evidence_spans": [
+            {
+              "evidence_span": "Wear to go fishing in the river! Not insulated",
+              "evidence_start": 0,
+              "evidence_end": 46
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "keeps_water_out",
+          "raw_label_zh": "防水可靠",
+          "evidence_spans": [
+            {
+              "evidence_span": "but lining has not leaked!",
+              "evidence_start": 47,
+              "evidence_end": 73
+            }
+          ]
+        }
+      ],
+      "needs_new_label": [],
+      "blocked_issue_keys": [],
+      "blocked_highlight_keys": [],
+      "system_output": {
+        "frontstage_issue_keys": [],
+        "frontstage_highlight_keys": [],
+        "audit_issue_keys": [],
+        "audit_highlight_keys": [],
+        "audit_issue_evidence_spans": [],
+        "audit_highlight_evidence_spans": []
+      },
+      "notes": []
+    }
+  ]
+}
