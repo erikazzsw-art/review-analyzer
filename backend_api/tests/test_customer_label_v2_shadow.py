@@ -71,6 +71,10 @@ def _audit_reasons(result: dict[str, Any]) -> set[str]:
     }
 
 
+def _display_keys(result: dict[str, Any]) -> dict[str, list[str]]:
+    return display_keys_from_shadow(result)
+
+
 def test_v2_shadow_invalid_json_is_audit_only() -> None:
     result = run_customer_label_v2_shadow(_review("No leaks."), llm_output="{not json")
 
@@ -79,6 +83,49 @@ def test_v2_shadow_invalid_json_is_audit_only() -> None:
     assert _audit_reasons(result) == {"invalid_json"}
     assert result["shadow_safety"]["llm_called"] is False
     assert result["shadow_safety"]["production_db_write"] is False
+
+
+def test_v2_verifier_confidence_low_is_audit_only() -> None:
+    result = run_customer_label_v2_shadow(
+        _review("They do not keep you dry.", rating=1),
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="do not keep you dry",
+                aspect_key="waterproof",
+                confidence=0.4,
+            )
+        ],
+    )
+
+    assert _display_keys(result) == {"issue": [], "highlight": []}
+    assert result["verified_occurrences"]
+    assert "confidence_low" in result["downgrade_reasons"]
+    assert result["audit_occurrences"][0]["display_allowed"] is False
+
+
+def test_v2_verifier_schema_invalid_is_audit_only() -> None:
+    result = run_customer_label_v2_shadow(
+        _review("They do not keep you dry.", rating=1),
+        label_candidates=[
+            {
+                "label_type": "issue",
+                "canonical_label_key": "water_leaks_through",
+                "raw_label": "",
+                "aspect_key": "waterproof",
+                "polarity": "negative",
+                "evidence_candidate": "do not keep you dry",
+                "confidence": 0.9,
+                "reason": "schema fixture",
+            }
+        ],
+    )
+
+    assert _display_keys(result) == {"issue": [], "highlight": []}
+    assert result["verified_occurrences"] == []
+    assert result["candidate_pool_items"] == []
+    assert "schema_invalid" in result["downgrade_reasons"]
 
 
 def test_v2_shadow_evidence_missing_and_not_found_are_never_displayed() -> None:
@@ -102,6 +149,23 @@ def test_v2_shadow_evidence_missing_and_not_found_are_never_displayed() -> None:
 
     assert result["display_occurrences"] == []
     assert {"evidence_missing", "evidence_not_found"} <= _audit_reasons(result)
+
+
+def test_v2_verifier_source_review_blocked_is_audit_only() -> None:
+    result = run_customer_label_v2_shadow(
+        _review("My old waders leaked every trip; this pair fits fine.", rating=4),
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="old waders leaked",
+                aspect_key="waterproof",
+            )
+        ],
+    )
+
+    assert _display_keys(result) == {"issue": [], "highlight": []}
+    assert "source_review_blocked" in result["downgrade_reasons"]
 
 
 def test_v2_shadow_blocks_old_product_and_other_brand_water_leak_candidates() -> None:
@@ -205,6 +269,111 @@ def test_v2_shadow_splits_positive_no_leaks_from_negative_do_not_keep_dry() -> N
     assert "context_blocked" in _audit_reasons(negative)
 
 
+def test_v2_verifier_context_blocked_positive_leak_claim_is_audit_only() -> None:
+    result = run_customer_label_v2_shadow(
+        _review("No leaks and they kept me dry.", rating=5),
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="No leaks",
+                aspect_key="waterproof",
+            )
+        ],
+    )
+
+    assert _display_keys(result) == {"issue": [], "highlight": []}
+    assert "context_blocked" in result["downgrade_reasons"]
+
+
+def test_v2_verifier_aspect_blocked_is_audit_only() -> None:
+    result = run_customer_label_v2_shadow(
+        _review("They do not keep you dry.", rating=1),
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="do not keep you dry",
+                aspect_key="value_for_money",
+            )
+        ],
+    )
+
+    assert _display_keys(result) == {"issue": [], "highlight": []}
+    assert "aspect_blocked" in result["downgrade_reasons"]
+    assert result["audit_occurrences"][0]["aspect_allowed"] is False
+
+
+def test_v2_verifier_maturity_blocked_enters_candidate_pool() -> None:
+    result = run_customer_label_v2_shadow(
+        _review("They do not keep you dry.", rating=1),
+        maturity_level="L0_unknown",
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="do not keep you dry",
+                aspect_key="waterproof",
+            )
+        ],
+    )
+
+    assert _display_keys(result) == {"issue": [], "highlight": []}
+    assert "maturity_blocked" in result["downgrade_reasons"]
+    assert result["candidate_pool_items"]
+    assert result["candidate_pool_items"][0]["review_status"] == "pending"
+
+
+def test_v2_verifier_valid_display_occurrence_has_stable_fields() -> None:
+    result = run_customer_label_v2_shadow(
+        _review("They do not keep you dry.", rating=1),
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="do not keep you dry",
+                aspect_key="waterproof",
+            )
+        ],
+    )
+
+    assert _display_keys(result) == {"issue": ["water_leaks_through"], "highlight": []}
+    assert result["downgrade_reasons"] == []
+    occurrence = result["display_occurrences"][0]
+    assert {
+        "label_type",
+        "canonical_label_key",
+        "evidence_span",
+        "evidence_verified",
+        "source_review_allowed",
+        "aspect_allowed",
+        "context_allowed",
+        "maturity_allowed",
+        "display_allowed",
+        "downgrade_reasons",
+    } <= occurrence.keys()
+    assert occurrence["display_allowed"] is True
+    assert occurrence["downgrade_reasons"] == []
+
+
+def test_v2_verifier_audit_only_occurrence_never_enters_display() -> None:
+    candidate = _candidate(
+        label_type="issue",
+        canonical="water_leaks_through",
+        evidence="do not keep you dry",
+        aspect_key="waterproof",
+    )
+    candidate["cluster_propagated"] = True
+
+    result = run_customer_label_v2_shadow(_review("They do not keep you dry.", rating=1), label_candidates=[candidate])
+
+    assert result["verified_occurrences"]
+    assert result["display_occurrences"] == []
+    assert result["audit_occurrences"][0]["display_allowed"] is False
+    assert result["audit_occurrences"][0]["cluster_propagated"] is True
+    assert "cluster_propagated" in result["downgrade_reasons"]
+
+
 def test_v2_shadow_generic_praise_does_not_expand_to_four_pack() -> None:
     candidates = [
         _candidate(
@@ -242,7 +411,24 @@ def test_v2_shadow_unknown_label_enters_candidate_pool_only() -> None:
 
     assert result["display_occurrences"] == []
     assert result["candidate_pool_items"]
-    assert result["candidate_pool_items"][0]["review_status"] == "pending"
+    pool_item = result["candidate_pool_items"][0]
+    assert {
+        "candidate_id",
+        "review_id",
+        "session_id",
+        "product_id",
+        "category",
+        "sub_category",
+        "label_type",
+        "canonical_label_key",
+        "raw_label",
+        "evidence_candidate",
+        "confidence",
+        "downgrade_reasons",
+        "top_impact_score",
+        "review_status",
+    } <= pool_item.keys()
+    assert pool_item["review_status"] == "pending"
     assert "unknown_label" in _audit_reasons(result)
 
 

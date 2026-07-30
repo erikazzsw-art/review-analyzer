@@ -4,6 +4,7 @@ import copy
 import json
 import re
 from collections import Counter, defaultdict
+from dataclasses import asdict, dataclass
 from typing import Any, Callable
 
 from backend_api.app.services import specific_issue as v1_labels
@@ -20,6 +21,15 @@ CUSTOMER_LABEL_V2_PROMPT_VERSION = "customer-label-v2.0-shadow"
 CUSTOMER_LABEL_V2_VERIFIER_RULESET_VERSION = "customer-label-verifier-v2.0-shadow"
 CUSTOMER_LABEL_V2_MOCK_MODEL = "mock-v1-display-replay"
 DISPLAY_CONFIDENCE_THRESHOLD = 0.65
+CANDIDATE_POOL_PENDING_STATUS = "pending"
+CANDIDATE_POOL_REVIEW_ACTIONS = {
+    "accept",
+    "reject",
+    "correct_label",
+    "correct_evidence",
+    "needs_new_label",
+    "ignore",
+}
 
 VALID_LABEL_TYPES = {"issue", "highlight"}
 VALID_POLARITIES = {"negative", "positive", "mixed", "neutral"}
@@ -44,6 +54,43 @@ GENERIC_DISPLAY_SAFE_KEYS = {
     "looks_good",
     "first_impression_positive",
 }
+
+
+@dataclass(frozen=True)
+class VerificationContext:
+    review: dict[str, Any]
+    content: str
+    category: str
+    sub_category: str
+    maturity_level: str
+
+
+@dataclass(frozen=True)
+class VerificationOutcome:
+    occurrence: dict[str, Any] | None
+    audit_occurrence: dict[str, Any] | None
+    candidate_pool_item: dict[str, Any] | None
+
+
+@dataclass(frozen=True)
+class CandidatePoolItem:
+    candidate_id: str
+    review_id: Any
+    session_id: Any
+    product_id: Any
+    category: str
+    sub_category: str
+    label_type: str
+    canonical_label_key: str
+    raw_label: str
+    evidence_candidate: str
+    confidence: float
+    downgrade_reasons: list[str]
+    top_impact_score: float
+    review_status: str = CANDIDATE_POOL_PENDING_STATUS
+
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
 
 def _title_from_key(key: str) -> str:
@@ -122,6 +169,16 @@ def _append_reason(reasons: list[str], reason: str) -> None:
         reasons.append(reason)
 
 
+def _verification_context(review: dict[str, Any], maturity_level: str) -> VerificationContext:
+    return VerificationContext(
+        review=review,
+        content=str(review.get("content") or ""),
+        category=str(review.get("category") or "outdoor"),
+        sub_category=str(review.get("sub_category") or "waders"),
+        maturity_level=maturity_level,
+    )
+
+
 def _is_frontstage_occurrence(occurrence: dict[str, Any]) -> bool:
     return bool(
         occurrence.get("display_allowed") is True
@@ -134,6 +191,33 @@ def _is_frontstage_occurrence(occurrence: dict[str, Any]) -> bool:
         and occurrence.get("context_allowed") is True
         and occurrence.get("maturity_allowed") is True
     )
+
+
+def _display_gate_allowed(
+    *,
+    projected: dict[str, Any],
+    downgrade_reasons: list[str],
+    maturity_allowed: bool,
+    legacy_fallback: bool,
+) -> bool:
+    return bool(
+        not downgrade_reasons
+        and projected.get("source_review_allowed")
+        and projected.get("evidence_verified")
+        and projected.get("aspect_allowed") is not False
+        and projected.get("context_allowed") is not False
+        and maturity_allowed
+        and not projected.get("cluster_propagated")
+        and not legacy_fallback
+    )
+
+
+def _collect_downgrade_reasons(audit_occurrences: list[dict[str, Any]]) -> list[str]:
+    reasons: list[str] = []
+    for occurrence in audit_occurrences:
+        for reason in occurrence.get("downgrade_reasons") or []:
+            _append_reason(reasons, str(reason))
+    return reasons
 
 
 def _review_for_v1_replay(review: dict[str, Any]) -> dict[str, Any]:
@@ -303,22 +387,22 @@ def _candidate_pool_item(
     index: int,
 ) -> dict[str, Any]:
     canonical = str(candidate.get("canonical_label_key") or "").strip()
-    return {
-        "candidate_id": f"shadow:{review.get('id', 'row')}:{index}:{canonical or 'unknown'}",
-        "review_id": review.get("id"),
-        "session_id": review.get("session_id"),
-        "product_id": review.get("product_id"),
-        "category": str(review.get("category") or "outdoor"),
-        "sub_category": str(review.get("sub_category") or "waders"),
-        "label_type": _clean_label_type(candidate.get("label_type")) or "issue",
-        "canonical_label_key": canonical,
-        "raw_label": str(candidate.get("raw_label") or "").strip(),
-        "evidence_candidate": str(candidate.get("evidence_candidate") or "").strip(),
-        "confidence": _candidate_confidence(candidate.get("confidence")),
-        "downgrade_reasons": downgrade_reasons,
-        "top_impact_score": round(_candidate_confidence(candidate.get("confidence")), 3),
-        "review_status": "pending",
-    }
+    confidence = _candidate_confidence(candidate.get("confidence"))
+    return CandidatePoolItem(
+        candidate_id=f"shadow:{review.get('id', 'row')}:{index}:{canonical or 'unknown'}",
+        review_id=review.get("id"),
+        session_id=review.get("session_id"),
+        product_id=review.get("product_id"),
+        category=str(review.get("category") or "outdoor"),
+        sub_category=str(review.get("sub_category") or "waders"),
+        label_type=_clean_label_type(candidate.get("label_type")) or "issue",
+        canonical_label_key=canonical,
+        raw_label=str(candidate.get("raw_label") or "").strip(),
+        evidence_candidate=str(candidate.get("evidence_candidate") or "").strip(),
+        confidence=confidence,
+        downgrade_reasons=list(downgrade_reasons),
+        top_impact_score=round(confidence, 3),
+    ).as_dict()
 
 
 def _schema_reasons(candidate: dict[str, Any]) -> list[str]:
@@ -475,6 +559,8 @@ def _raw_occurrence_from_candidate(
         confidence=_v1_confidence(confidence),
         display_allowed=True,
     )
+    legacy_fallback = bool(candidate.get("legacy_fallback"))
+    cluster_propagated = bool(candidate.get("cluster_propagated"))
     return {
         "comment_id": review.get("id"),
         "type": label_type,
@@ -490,10 +576,10 @@ def _raw_occurrence_from_candidate(
         "evidence_start": evidence["evidence_start"],
         "evidence_end": evidence["evidence_end"],
         "confidence": _v1_confidence(confidence),
-        "source": "llm",
-        "source_detail": "customer_label_v2_shadow",
+        "source": "legacy" if legacy_fallback else str(candidate.get("source") or "llm"),
+        "source_detail": "legacy_fallback" if legacy_fallback else "customer_label_v2_shadow",
         "evidence_verified": bool(evidence["evidence_verified"]),
-        "cluster_propagated": False,
+        "cluster_propagated": cluster_propagated,
         "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
         "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
         "display_allowed": catalog.display_allowed,
@@ -509,15 +595,12 @@ def _v2_occurrence_from_projected(
     downgrade_reasons: list[str],
     maturity_allowed: bool,
 ) -> dict[str, Any]:
-    display_allowed = bool(
-        not downgrade_reasons
-        and projected.get("source_review_allowed")
-        and projected.get("evidence_verified")
-        and projected.get("aspect_allowed") is not False
-        and projected.get("context_allowed") is not False
-        and maturity_allowed
-        and not projected.get("cluster_propagated")
-        and not projected.get("legacy_fallback")
+    legacy_fallback = bool(projected.get("legacy_fallback") or candidate.get("legacy_fallback"))
+    display_allowed = _display_gate_allowed(
+        projected=projected,
+        downgrade_reasons=downgrade_reasons,
+        maturity_allowed=maturity_allowed,
+        legacy_fallback=legacy_fallback,
     )
     confidence = _candidate_confidence(candidate.get("confidence"))
     return {
@@ -540,7 +623,7 @@ def _v2_occurrence_from_projected(
         "maturity_allowed": maturity_allowed,
         "display_allowed": display_allowed,
         "cluster_propagated": bool(projected.get("cluster_propagated")),
-        "legacy_fallback": bool(projected.get("legacy_fallback")),
+        "legacy_fallback": legacy_fallback,
         "downgrade_reasons": downgrade_reasons,
         "verifier_reasons": [
             "evidence_exact_match" if projected.get("evidence_verified") else "evidence_not_verified",
@@ -551,15 +634,18 @@ def _v2_occurrence_from_projected(
 
 def _verify_candidate(
     *,
-    review: dict[str, Any],
+    context: VerificationContext,
     candidate: dict[str, Any],
     index: int,
-    maturity_level: str,
-) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+) -> VerificationOutcome:
     reasons = _schema_reasons(candidate)
     label_type = _clean_label_type(candidate.get("label_type"))
     canonical = str(candidate.get("canonical_label_key") or "").strip()
     evidence_text = str(candidate.get("evidence_candidate") or "").strip()
+    if candidate.get("cluster_propagated"):
+        _append_reason(reasons, "cluster_propagated")
+    if candidate.get("legacy_fallback"):
+        _append_reason(reasons, "legacy_fallback")
     if not evidence_text:
         _append_reason(reasons, "evidence_missing")
     if canonical and _is_unknown_candidate(canonical):
@@ -567,10 +653,10 @@ def _verify_candidate(
     confidence = _candidate_confidence(candidate.get("confidence"))
     if confidence < DISPLAY_CONFIDENCE_THRESHOLD:
         _append_reason(reasons, "confidence_low")
-    content = str(review.get("content") or "")
+    content = context.content
     if label_type and canonical and _evidence_too_generic(canonical, evidence_text, content):
         _append_reason(reasons, "evidence_too_generic")
-    maturity_allowed = _maturity_allowed(canonical, maturity_level)
+    maturity_allowed = _maturity_allowed(canonical, context.maturity_level)
     if canonical and not maturity_allowed:
         _append_reason(reasons, "maturity_blocked")
 
@@ -594,10 +680,14 @@ def _verify_candidate(
         and "unknown_label" not in reasons
         and "schema_invalid" not in reasons
     ):
-        raw_occurrence = _raw_occurrence_from_candidate(review=review, candidate=candidate, evidence=evidence)
+        raw_occurrence = _raw_occurrence_from_candidate(
+            review=context.review,
+            candidate=candidate,
+            evidence=evidence,
+        )
         projected = v1_labels._project_customer_label_occurrence(
             raw_occurrence,
-            comment=review,
+            comment=context.review,
             label_type=label_type,
             locale="en",
         )
@@ -623,7 +713,7 @@ def _verify_candidate(
     else:
         occurrence = None
         audit = _audit_occurrence(
-            review_id=review.get("id"),
+            review_id=context.review.get("id"),
             candidate=candidate,
             downgrade_reasons=reasons or ["schema_invalid"],
             evidence=evidence,
@@ -632,8 +722,17 @@ def _verify_candidate(
 
     pool_item = None
     if "unknown_label" in reasons or "maturity_blocked" in reasons:
-        pool_item = _candidate_pool_item(review=review, candidate=candidate, downgrade_reasons=reasons, index=index)
-    return occurrence, audit, pool_item
+        pool_item = _candidate_pool_item(
+            review=context.review,
+            candidate=candidate,
+            downgrade_reasons=reasons,
+            index=index,
+        )
+    return VerificationOutcome(
+        occurrence=occurrence,
+        audit_occurrence=audit,
+        candidate_pool_item=pool_item,
+    )
 
 
 def run_customer_label_v2_shadow(
@@ -662,6 +761,7 @@ def run_customer_label_v2_shadow(
         str(source_review.get("sub_category") or sub_category),
         maturity_level,
     )
+    verification_context = _verification_context(source_review, resolved_maturity)
 
     if label_candidates is not None:
         payload = {
@@ -708,21 +808,21 @@ def run_customer_label_v2_shadow(
                     )
                 )
                 continue
-            occurrence, audit, pool_item = _verify_candidate(
-                review=source_review,
+            outcome = _verify_candidate(
+                context=verification_context,
                 candidate=candidate,
                 index=index,
-                maturity_level=resolved_maturity,
             )
-            if occurrence:
-                verified_occurrences.append(occurrence)
-                if _is_frontstage_occurrence(occurrence):
-                    display_occurrences.append(occurrence)
-            if audit:
-                audit_occurrences.append(audit)
-            if pool_item:
-                candidate_pool_items.append(pool_item)
+            if outcome.occurrence:
+                verified_occurrences.append(outcome.occurrence)
+                if _is_frontstage_occurrence(outcome.occurrence):
+                    display_occurrences.append(outcome.occurrence)
+            if outcome.audit_occurrence:
+                audit_occurrences.append(outcome.audit_occurrence)
+            if outcome.candidate_pool_item:
+                candidate_pool_items.append(outcome.candidate_pool_item)
 
+    downgrade_reasons = _collect_downgrade_reasons(audit_occurrences)
     return {
         "review_id": source_review.get("id"),
         "schema_version": CUSTOMER_LABEL_V2_SCHEMA_VERSION,
@@ -738,6 +838,7 @@ def run_customer_label_v2_shadow(
         "display_occurrences": display_occurrences,
         "audit_occurrences": audit_occurrences,
         "candidate_pool_items": candidate_pool_items,
+        "downgrade_reasons": downgrade_reasons,
         "shadow_safety": {
             "production_upload": False,
             "production_write_path": False,

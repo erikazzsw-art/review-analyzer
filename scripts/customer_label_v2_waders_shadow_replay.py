@@ -32,7 +32,7 @@ POSTDEPLOY_AUDIT = (
     / "session122-readonly"
     / "session122-postdeploy-readonly-acceptance-audit.json"
 )
-ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step2-customer-label-v2-shadow-run"
+ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step3-verifier-safety-gate"
 ARTIFACT_PATH = ARTIFACT_DIR / "waders-shadow-summary.json"
 
 
@@ -188,6 +188,67 @@ def _edge_case_runs() -> dict[str, Any]:
                 )
             ],
         ),
+        "confidence_low": run_customer_label_v2_shadow(
+            {"id": "edge-confidence-low", "content": "They do not keep you dry.", "category": "outdoor", "sub_category": "waders"},
+            label_candidates=[
+                _candidate(
+                    label_type="issue",
+                    canonical="water_leaks_through",
+                    evidence="do not keep you dry",
+                    aspect_key="waterproof",
+                    confidence=0.4,
+                )
+            ],
+        ),
+        "schema_invalid": run_customer_label_v2_shadow(
+            {"id": "edge-schema-invalid", "content": "They do not keep you dry.", "category": "outdoor", "sub_category": "waders"},
+            label_candidates=[
+                {
+                    "label_type": "issue",
+                    "canonical_label_key": "water_leaks_through",
+                    "raw_label": "",
+                    "aspect_key": "waterproof",
+                    "polarity": "negative",
+                    "evidence_candidate": "do not keep you dry",
+                    "confidence": 0.9,
+                    "reason": "shadow edge-case fixture",
+                }
+            ],
+        ),
+        "unknown_label": run_customer_label_v2_shadow(
+            {"id": "edge-unknown-label", "content": "The boot seam leaked on the first trip.", "category": "outdoor", "sub_category": "waders"},
+            label_candidates=[
+                _candidate(
+                    label_type="issue",
+                    canonical="candidate:boot_seam_leak",
+                    evidence="boot seam leaked",
+                    aspect_key="seam_integrity",
+                )
+            ],
+        ),
+        "maturity_blocked": run_customer_label_v2_shadow(
+            {"id": "edge-maturity-blocked", "content": "They do not keep you dry.", "category": "outdoor", "sub_category": "waders"},
+            maturity_level="L0_unknown",
+            label_candidates=[
+                _candidate(
+                    label_type="issue",
+                    canonical="water_leaks_through",
+                    evidence="do not keep you dry",
+                    aspect_key="waterproof",
+                )
+            ],
+        ),
+        "aspect_blocked": run_customer_label_v2_shadow(
+            {"id": "edge-aspect-blocked", "content": "They do not keep you dry.", "category": "outdoor", "sub_category": "waders"},
+            label_candidates=[
+                _candidate(
+                    label_type="issue",
+                    canonical="water_leaks_through",
+                    evidence="do not keep you dry",
+                    aspect_key="value_for_money",
+                )
+            ],
+        ),
         "old_product_leak": run_customer_label_v2_shadow(
             {
                 "id": "edge-old-product",
@@ -290,6 +351,31 @@ def _edge_case_runs() -> dict[str, Any]:
                 _candidate(label_type="highlight", canonical="keeps_water_out", evidence="Great product", aspect_key="waterproof"),
             ],
         ),
+        "cluster_propagated_audit_only": run_customer_label_v2_shadow(
+            {"id": "edge-cluster-propagated", "content": "They do not keep you dry.", "category": "outdoor", "sub_category": "waders"},
+            label_candidates=[
+                {
+                    **_candidate(
+                        label_type="issue",
+                        canonical="water_leaks_through",
+                        evidence="do not keep you dry",
+                        aspect_key="waterproof",
+                    ),
+                    "cluster_propagated": True,
+                }
+            ],
+        ),
+        "valid_display_occurrence": run_customer_label_v2_shadow(
+            {"id": "edge-valid-display", "content": "They do not keep you dry.", "category": "outdoor", "sub_category": "waders"},
+            label_candidates=[
+                _candidate(
+                    label_type="issue",
+                    canonical="water_leaks_through",
+                    evidence="do not keep you dry",
+                    aspect_key="waterproof",
+                )
+            ],
+        ),
     }
     reason_counts: Counter[str] = Counter()
     display_violations: list[dict[str, Any]] = []
@@ -301,11 +387,19 @@ def _edge_case_runs() -> dict[str, Any]:
             "invalid_json",
             "evidence_missing",
             "evidence_not_found",
+            "confidence_low",
+            "schema_invalid",
+            "unknown_label",
+            "maturity_blocked",
+            "aspect_blocked",
             "old_product_leak",
             "generic_four_pack",
+            "cluster_propagated_audit_only",
         }:
             if result["display_occurrences"]:
                 display_violations.append({"case": name, "display_occurrences": result["display_occurrences"]})
+        if name == "valid_display_occurrence" and not result["display_occurrences"]:
+            display_violations.append({"case": name, "display_occurrences": []})
     return {
         "case_count": len(cases),
         "downgrade_reasons": dict(sorted(reason_counts.items())),
@@ -384,7 +478,7 @@ def main() -> None:
         postdeploy = _load_json(POSTDEPLOY_AUDIT) if POSTDEPLOY_AUDIT.exists() else {}
         artifact = {
             "status": "PASS" if not p0_violations and edge_cases["status"] == "PASS" else "REVIEW_NEEDED",
-            "scope": "5.9.9 Step 2 LLM evidence-first local shadow replay",
+            "scope": "5.9.9 Step 3 verifier safety gate local shadow replay",
             "llm_called": False,
             "production_upload": False,
             "production_write_path": False,

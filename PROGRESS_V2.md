@@ -8,6 +8,17 @@
 
 ---
 
+### 2026-07-30 5.9.9 Customer Label System v2 Step 3：Verifier safety gate + candidate pool MVP
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | step3-verifier-safety-gate | 固化 v2 deterministic verifier：将 verifier context/outcome、display gate、downgrade reason 聚合、candidate pool minimum item schema 拆成更清晰的内部结构；`run_customer_label_v2_shadow` 继续可用，并稳定输出 `label_candidates`、`verified_occurrences`、`display_occurrences`、`audit_occurrences`、`candidate_pool_items`、`downgrade_reasons`。 | `PASS`：focused tests 覆盖 `confidence_low`、`schema_invalid`、`unknown_label` candidate pool only、`maturity_blocked`、`aspect_blocked`、`context_blocked`、`source_review_blocked`、valid display occurrence、audit-only occurrence 不进入 display。 |
+| 2026-07-30 | candidate-pool-mvp-contract | 新增 `CandidatePoolItem` dataclass 作为 Step 4 candidate pool MVP 最小本地契约；当前不做复杂 UI、不写生产 DB，先让 unknown label 与 maturity blocked candidate 进入本地 candidate pool artifact/service 输出。 | Minimum fields 已对齐 contract：`candidate_id`、`review_id`、`session_id`、`product_id`、`category`、`sub_category`、`label_type`、`canonical_label_key`、`raw_label`、`evidence_candidate`、`confidence`、`downgrade_reasons`、`top_impact_score`、`review_status`。 |
+| 2026-07-30 | waders-step3-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 更新为 Step 3 artifact，并把新增 verifier gate edge cases 纳入 downgrade distribution。 | `PASS`：artifact `tmp/5.9.9-step3-verifier-safety-gate/waders-shadow-summary.json`；session120 issue/highlight TP/FP/FN `22/0/0`、`49/0/0`；session121 `11/0/0`、`2/0/0`；session122 `16/0/0`、`26/0/0`；六个重点标签 FP/FN=0；waders P0=`0`。 |
+| 2026-07-30 | frontstage-isolation | Step 3 仍为本地 shadow/verifier/schema/fixture replay，不接入 Results page、single review detail、raw review frontstage columns 或 single-tag download。 | 无 production upload / reanalysis / DB write / credit / LLM 成本；frontstage 仍只消费 5.9.8 v1/current display occurrences。报告：`docs/5.9.9-step3-verifier-safety-gate.md`。 |
+
+---
+
 ### 2026-07-30 5.9.9 Customer Label System v2 Step 2：LLM evidence-first shadow run
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -137,7 +148,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 2 已完成：本地 mock/fixture shadow runner + verifier + waders replay artifact PASS，P0=0 | Step 3/4：candidate pool 与轻量审核入口，继续保持 frontstage 只读 display occurrences |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 3 已完成：本地 mock/fixture shadow runner + verifier safety gate + candidate pool MVP contract + waders replay artifact PASS，P0=0 | Step 4：candidate pool 轻量审核入口/导出 MVP，继续保持 frontstage 只读 display occurrences |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
