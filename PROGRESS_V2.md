@@ -34,7 +34,8 @@
 | 2026-07-29 | step4.1-recall-fix | 基于 session120 人工 gold 新增 50 条稳定 fixture，补齐 waders `size_fit_problem`、气味、耐用、品控/质量、鞋底偏软、透气差，以及整体满意、性价比、外观、耐用、防水、尺码、场景适用、储物等 Customer Label 召回；同步收紧 `good_material_quality`、`works_well_for_use_case`、`not_used_yet`、cluster propagated 与 raw/frontstage 口径。 | 本地 session120 human gold 达到 both exact set `50/50`、issue exact `50/50`、highlight exact `50/50`，issue TP/FP/FN `22/0/0`，highlight TP/FP/FN `49/0/0`；后端目标回归 `80 passed in 11.52s`，前端 `npm run typecheck` PASS，`git diff --check` PASS；未执行生产上传、生产 reanalysis、credit 或 LLM。报告：`docs/5.9.8-step4.1-tidewe-waders-session120-recall-fix.md`。 |
 | 2026-07-29 | blind-sample-gate | 本轮未收到 Erika 明确提供的全新 waders 样本或新 `session_id`，因此不能把 session120 human gold 的本地 `50/50` 判为最终盲测 PASS；已重新梳理前台/audit 口径和人工上传验收清单。 | 本地相关后端回归 `80 passed in 8.91s`，前端 `npm run typecheck` PASS，`git diff --check` PASS；未执行生产上传、生产重分析、credit 或 LLM；等待 Erika 手动上传从未上传过的 50 条 waders 样本。报告：`docs/5.9.8-step4-tidewe-waders-new-blind-sample-acceptance-checklist.md`。 |
 | 2026-07-29 | session121-blind | Erika 提供全新 50 条 waders 样本结果页 `session_id=121` 与下载文件；Codex 只做生产 DB 只读验收、读取下载 XLSX、本地最新规则回放和小范围回归修复。生产下载仍 `REVIEW_NEEDED`：raw 文件为旧 29 列，无 `Audit ...` 分列，issue `evidence=false` 16 / issue `cluster=true` 16，16 条 evidence 不在当前 review 中；DB 另有 4 条 cache rows。 | 本地修复 negative dry、current leak、历史/泛化 leak、size/fit、西语 size、not_breathable 与 pocket evidence 后，session121 最新规则回放 `validation.status=PASS`，Top/单条/evidence/cluster P0 均为 0；后端目标回归 `82 passed in 9.33s`，前端 `npm run typecheck` PASS，`git diff --check` PASS。报告：`docs/5.9.8-step4-tidewe-waders-session121-blind-acceptance-report.md`。 |
-| 2026-07-30 | session122-prod-full-acceptance | 以真正已部署后的 session122 下载文件与生产只读数据做完整验收，覆盖 Top10、单条评论明细、single-tag 等价下载、raw review download 四条路径。Raw/Audit 分列结构已 PASS，但生产 raw 前台仍有 `water_leaks_through` P0：row 9 `other neoprene waders ... leak` 被污染成当前产品漏水；row 38 `They do not keep you dry.` 漏召回。 | `REVIEW_NEEDED`：P0=2，不能把 Step 4 改为 PASS，不能进入 5.9.9。已做本地窄修复并加 fixture，post-fix session122 只读回放 `validation.status=PASS`、six single-tag equivalent exports PASS；waders 目标回归 `82 passed in 6.10s`，frontend typecheck PASS，diff check PASS；待部署后重新下载验收。报告：`docs/5.9.8-step4-tidewe-waders-session122-blind-acceptance-report.md`；artifact：`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-full-acceptance-audit.json`。 |
+| 2026-07-30 | session122-prod-full-acceptance | 以真正已部署后的 session122 下载文件与生产只读数据做完整验收，覆盖 Top10、单条评论明细、single-tag 等价下载、raw review download 四条路径。Raw/Audit 分列结构已 PASS，但生产 raw 前台仍有 `water_leaks_through` P0：row 9 `other neoprene waders ... leak` 被污染成当前产品漏水；row 38 `They do not keep you dry.` 漏召回。 | `REVIEW_NEEDED`（部署前）：P0=2，Step 4 当时暂不 PASS。已做本地窄修复并加 fixture，post-fix session122 只读回放 `validation.status=PASS`、six single-tag equivalent exports PASS；waders 目标回归 `82 passed in 6.10s`，frontend typecheck PASS，diff check PASS；该结论已由下一条 `session122-postdeploy-pass` 覆盖。报告：`docs/5.9.8-step4-tidewe-waders-session122-blind-acceptance-report.md`；artifact：`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-full-acceptance-audit.json`。 |
+| 2026-07-30 | session122-postdeploy-pass | session122 P0 窄修复 commit `c38e7ff` 已 push `origin/develop` 并触发生产部署；Erika 确认 GitHub Actions/生产查看全绿。Codex 追加 production health check 与生产只读 replay：API `/health` 200、frontstage `/` 与 `/login` 200；Top10、单条评论明细、single-tag 等价下载、raw review download 四条路径均 P0=0。 | ✅ `PASS`：`frontstage_verified_violations=[]`，single detail no evidence / cluster propagated / evidence-not-found 均为 `0`，`water_leaks_through` FP/FN candidates 均为 `0`，`pocket_not_waterproof` FN candidates `0`；六个重点 single-tag 等价导出 PASS：`water_leaks_through=5`、`keeps_water_out=4`、`pocket_not_waterproof=0`、`fits_as_expected=6`、`good_value_for_the_price=9`、`holds_up_well=2`。DB 仍有 3 条短文本 L1 cache rows，仅记为历史缓存审计项，不构成语义 P0。artifact：`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-postdeploy-readonly-acceptance-audit.json`。Step 4 改为 PASS，正式进入 5.9.9 Step 1。 |
 
 ---
 
@@ -77,16 +78,16 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 9 | 1 | 2 | 75% | 5.1-5.9 基础迁移完成；5.9.8 标签口径重构/灰度验证进行中；5.9.9 调整为 Customer Label System v2，ABSA 延后为条件触发 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 已进入 Step 1，ABSA 延后为条件触发 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
 | 9. 增值功能 | 6 | 1 | 2 | 3 | ~33% | 9.3 完成；9.1/9.2 部分完成；9.4/9.5/9.6 待启动 |
-| **总计** | **53** | **30** | **10** | **13** | **~69%** | |
+| **总计** | **53** | **31** | **10** | **12** | **~70%** | |
 
 ### 按状态明细
 
-**✅ 已完成（30 个子模块）**
+**✅ 已完成（31 个子模块）**
 
 | 编号 | 名称 | 关键产出 |
 |------|------|---------|
@@ -104,6 +105,7 @@
 | 5.6 | 问评论/行动/复盘 | RAG页面+闭环能力迁移 |
 | 5.7 | 文案/设置/计费 | /copywriter+/settings+Paddle Checkout/Webhook+QuotaDialog |
 | 5.8 | 部署与Streamlit下线 | ECS+Docker Compose+Nginx+HTTPS+域名分层，生产运行中 |
+| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | waders 盲测与 session122 部署后完整验收 PASS；Top10/单条明细/raw review/single-tag 四路径 P0=0 |
 | 6.1 | 数据资产化 | 1060行Taxonomy入库+全品类扩展87子品类+441aspect |
 | 6.2 | Taxonomy接入分析链路 | 动态prompt模板+品类白名单+回归测试 |
 | 6.3 | Golden Set多品类演进 | 品类级mini Golden Set+CI多品类回归+other占比监控+飞书告警 |
@@ -125,7 +127,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | session121 全新 50 条盲样本地规则 PASS；生产下载仍 REVIEW_NEEDED | 部署本地最新规则与 raw/audit 分列导出口径；复测 Top10、单条明细、raw review、single-tag 下载均只用 verified occurrence；P0 为 0 后再进入 5.9.9 |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 1 已启动：v2 输出契约与回退策略文档落地 | Step 2 shadow run：用 waders gold/session120-122 回归对比 LLM evidence-first 与 v1 verified occurrence |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -136,11 +138,10 @@
 | 9.1 | 评论自动获取 | Rainforest单次拉取已实现 | 定时拉取+多数据源+ASIN监听列表 |
 | 9.2 | API调用 | 基础路由存在 | v1公开API+认证+限流+文档 |
 
-**⏳ 待启动（13 个子模块）**
+**⏳ 待启动（12 个子模块）**
 
 | 编号 | 名称 | 启动条件 |
 |------|------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | 5.9.8 waders 安全门禁和 gold 回归可复用；不再要求先凑齐 3-5 个类目或 3k+ 人工样本 |
 | 5.9.10 | ABSA 小模型 fine-tune POC（延后/条件触发） | 真实用户数据和候选审核自然累计到训练门槛，且 ROI 明确；目标仍为 ≥3k-5k 人工确认评论或 ≥5k-10k occurrence |
 | 6.8 | 用户反馈回路 | PMF验证通过 |
 | 6.9 | Niche商业化启动 | PMF验证通过 |
@@ -155,7 +156,7 @@
 | 9.6 | 团队管理(多租户) | ≥1付费用户 |
 
 ```
-[███████████████░░░░░░░] ~69%  (30 完成 / 10 进行中 / 13 待启动)
+[███████████████░░░░░░░] ~70%  (31 完成 / 10 进行中 / 12 待启动)
 ```
 
 ---
@@ -1159,8 +1160,8 @@ readiness 节奏：
 | Step 1 waders 差异基线与口径方案 | ✅ 完成 | 固化 TIDEWE 100 条人工对照，完成错误 taxonomy、首批标签候选、同义合并、aspect 映射和边界 case 方案 | `docs/5.9.8-step1-tidewe-waders-baseline.md` | 确认错误分类、标签命名、合并/拆分、aspect 归类是否符合业务判断 |
 | Step 2 明细展示 gating 与回归实现 | ✅ 完成 | 排除单条明细中的 cluster propagated / 无 evidence / source 不可验证标签，并让导出/前端下载一致 | 后端 occurrence 过滤、导出/前端下载一致、focused tests、waders 回放报告 | 已完成本地回归；真实上传抽查进入 Step 3/4 |
 | Step 3 waders catalog / aspect map / 边界 guard | ✅ 本地修复完成 / 待线上复测 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则；session 119 干净重传确认 L1 cache 风险已解除，Step 4 已修复 `water_leaks_through` 正负语境、旧产品、phone case/pocket 污染、`pocket_not_waterproof` 召回与 raw 导出 propagated/unverified 口径 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表、session 119 acceptance report、Step 4 修复报告 | 审核标签命名、边界规则和归类修正；下一轮由 Erika 手动上传全新样本验收 |
-| Step 4 waders 盲测与真实上传验收 | `REVIEW_NEEDED`：session121 生产下载结论作废；session122 Raw/Audit 分列已落地，但完整语义验收发现 `water_leaks_through` P0=2 | 验证不是“背答案”，用 50 条从未上传过的 waders 样本和真实上传判断标签是否达到用户可用；当前生产 raw 下载 row 9 存在旧/他牌漏水污染，row 38 存在当前产品漏水漏召回；本地 post-fix 只读回放和 six single-tag 等价下载均已 P0=0 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`、`docs/5.9.8-step4.1-tidewe-waders-session120-recall-fix.md`、`docs/5.9.8-step4-tidewe-waders-session121-blind-acceptance-report.md`、`docs/5.9.8-step4-tidewe-waders-session122-blind-acceptance-report.md`、`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-full-acceptance-audit.json`、focused gold fixture、真实上传抽查表 | 先部署 session122 P0 窄修复，再重新核验 Top10、单条明细、raw review 下载、single-tag download；生产实测 P0=0 后才允许 Step 4 PASS 并进入 5.9.9 |
-| Step 4.5 waders v2 shadow baseline | 待启动 | 用已完成的 waders gold set 定义新链路 schema：LLM 输出规范标签、`evidence_candidate` 与置信度；规则 verifier 只负责定位/验证/拦截；本阶段 shadow run，不替换前台 | `docs/5.9.9-customer-label-v2-contract.md`、waders shadow 对比、schema/version、回退策略 | 审核新 schema 是否符合业务理解，确认哪些字段进入前台/候选/audit |
+| Step 4 waders 盲测与真实上传验收 | ✅ PASS：session122 部署后复验 P0=0 | 验证不是“背答案”，用 50 条从未上传过的 waders 样本和真实上传判断标签是否达到用户可用；commit `c38e7ff` 部署后，Top10、单条评论明细、raw review download、single-tag download 四条路径均未发现 `water_leaks_through` / `keeps_water_out` / `pocket_not_waterproof` / `fits_as_expected` / `good_value_for_the_price` / `holds_up_well` P0；frontstage 无 evidence false、cluster propagated、旧产品/他牌/配件漏水污染 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`、`docs/5.9.8-step4.1-tidewe-waders-session120-recall-fix.md`、`docs/5.9.8-step4-tidewe-waders-session121-blind-acceptance-report.md`、`docs/5.9.8-step4-tidewe-waders-session122-blind-acceptance-report.md`、`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-postdeploy-readonly-acceptance-audit.json`、focused gold fixture、真实上传抽查表 | 已进入 5.9.9 Customer Label System v2 Step 1 |
+| Step 4.5 waders v2 shadow baseline | 已并入 5.9.9 Step 1/2 | 用已完成的 waders gold set 定义新链路 schema：LLM 输出规范标签、`evidence_candidate` 与置信度；规则 verifier 只负责定位/验证/拦截；shadow run 不替换前台 | `docs/5.9.9-customer-label-v2-contract.md`、waders shadow 对比、schema/version、回退策略 | Step 1 契约文档先固化展示/候选/audit 边界；shadow run 进入 5.9.9 Step 2 |
 | Step 5 Customer Label System v2 实现 | 待启动 | 将生成责任从“逐类目手写规则”迁回 LLM，把规则改成安全 verifier；新增 candidate pool、低置信降级、未覆盖类目成熟度分级 | LLM 输出 schema、verifier、candidate/audit 字段、maturity level、focused regression | 只审核高影响候选标签、Top 异常和边界样本，不逐类目写完整规则 |
 | Step 5.5 类目轻接入与降级策略 | 待启动 | 新增 sub_category 时优先复用通用/大类目标签；只配置轻量 taxonomy/catalog/边界说明；未验证细粒度标签先不强展示 | 类目成熟度规则、通用标签白名单、候选池审核 SOP、10-20 条风险抽检模板 | 判断类目是否值得升级为高精度支持，而不是一开始就深度标注 |
 | Step 6 50 用户 readiness 回归与上线门禁 | 待启动 | 把标签准确性、生产上传稳定性、未覆盖类目降级和异常闭环合并验收 | readiness 回归报告、生产/准生产 smoke 记录、降级策略验证、回滚与观察清单 | 授权真实上传 smoke，确认是否达到 50 付费用户试运行门槛 |
@@ -1227,7 +1228,7 @@ readiness 节奏：
 
 #### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 待启动（5.9.8 waders 安全门禁和 gold 回归稳定后进入）
+**状态：** 进行中（Step 1 v2 输出契约与回退策略已完成；下一步进入 Step 2 shadow run）
 
 **调整原因：**
 - 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
@@ -1263,7 +1264,7 @@ readiness 节奏：
 | `L3_sub_category` | 高价值/高上传量/已验收类目 | 展示细粒度 Customer Issue / Customer Label | 30-50 条 blind gold 或等价真实上传抽查通过 |
 
 **任务拆解：**
-- [ ] **Step 1: v2 输出契约与回退策略**
+- [x] **Step 1: v2 输出契约与回退策略**
   - 定义 LLM JSON schema、verifier 输入输出、display/candidate/audit 判定字段、schema/ruleset version。
   - 输出 `docs/5.9.9-customer-label-v2-contract.md`。
 - [ ] **Step 2: LLM evidence-first shadow run**
