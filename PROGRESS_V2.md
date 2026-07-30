@@ -8,6 +8,16 @@
 
 ---
 
+### 2026-07-30 5.9.9 Customer Label System v2 Step 2：LLM evidence-first shadow run
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | step2-shadow-runner | 新增本地 v2 shadow runner `backend_api/app/services/customer_label_v2_shadow.py`，支持 review content/rating/category/sub_category 输入，输出 v2 `label_candidates`，并通过 deterministic verifier 生成 `verified_occurrences`、`display_occurrences`、`audit_occurrences`、`candidate_pool_items`。默认 `mock-v1-display-replay`，不发起真实 LLM 调用。 | `PASS`：focused tests 覆盖 invalid JSON、evidence missing/not found、old product/other brand leak、accessory phone-case/pocket leak、no leaks/keep dry 正向防水、do not keep dry 当前产品漏水、generic praise 不扩展四件套、unknown candidate pool。 |
+| 2026-07-30 | waders-shadow-comparison | 新增离线 replay 脚本 `scripts/customer_label_v2_waders_shadow_replay.py`，使用 session120 human gold、session121 blind boundary fixture、session122 postdeploy acceptance summary 做 v2 shadow 对比。 | `PASS`：artifact `tmp/5.9.9-step2-customer-label-v2-shadow-run/waders-shadow-summary.json`；session120 issue/highlight TP/FP/FN `22/0/0`、`49/0/0`；session121 `11/0/0`、`2/0/0`；session122 `16/0/0`、`26/0/0`；evidence locate rate `100%`；waders P0=`0`。 |
+| 2026-07-30 | frontstage-isolation | v2 shadow 结果只进入本地 service 返回值、focused tests 与 shadow artifact；没有接入 Results page、single review detail、raw review frontstage columns 或 single-tag download。 | 无 production upload / reanalysis / DB write / credit / LLM 成本；frontstage 仍只消费 5.9.8 v1/current display occurrences。报告：`docs/5.9.9-step2-llm-evidence-first-shadow-run.md`。 |
+
+---
+
 ### 2026-07-29 5.9.9 路线调整：从 ABSA readiness 转为 Customer Label System v2
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -78,7 +88,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 已进入 Step 1，ABSA 延后为条件触发 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 2 shadow 已 PASS，下一步进入候选池/审核 MVP；ABSA 延后为条件触发 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -127,7 +137,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 1 已启动：v2 输出契约与回退策略文档落地 | Step 2 shadow run：用 waders gold/session120-122 回归对比 LLM evidence-first 与 v1 verified occurrence |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 2 已完成：本地 mock/fixture shadow runner + verifier + waders replay artifact PASS，P0=0 | Step 3/4：candidate pool 与轻量审核入口，继续保持 frontstage 只读 display occurrences |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -1228,7 +1238,7 @@ readiness 节奏：
 
 #### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 进行中（Step 1 v2 输出契约与回退策略已完成；下一步进入 Step 2 shadow run）
+**状态：** 进行中（Step 2 本地 LLM evidence-first shadow run 已 PASS；下一步进入 Step 3/4 candidate pool 与审核闭环 MVP）
 
 **调整原因：**
 - 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
@@ -1267,9 +1277,11 @@ readiness 节奏：
 - [x] **Step 1: v2 输出契约与回退策略**
   - 定义 LLM JSON schema、verifier 输入输出、display/candidate/audit 判定字段、schema/ruleset version。
   - 输出 `docs/5.9.9-customer-label-v2-contract.md`。
-- [ ] **Step 2: LLM evidence-first shadow run**
-  - 在不影响前台的情况下，让 LLM 生成 `canonical_label_key + evidence_candidate`。
-  - 用 waders session120 gold set 对比旧链路，记录 TP/FP/FN、evidence locate rate、candidate 降级原因。
+- [x] **Step 2: LLM evidence-first shadow run**
+  - 已用本地 `mock-v1-display-replay` 生成 v2 `label_candidates`，未发起真实 LLM 调用。
+  - 新增 deterministic verifier 雏形，输出 `verified_occurrences` / `display_occurrences` / `audit_occurrences` / `candidate_pool_items`，并覆盖 invalid JSON、evidence missing/not found、旧产品/他牌/配件漏水、正负防水、泛泛好评四件套抑制。
+  - 用 waders session120 human gold、session121 blind boundary fixture、session122 postdeploy acceptance summary 做 shadow 对比：P0=`0`，evidence locate rate `100%`，focused label FP/FN 均为 `0`。
+  - 输出 `docs/5.9.9-step2-llm-evidence-first-shadow-run.md` 与 `tmp/5.9.9-step2-customer-label-v2-shadow-run/waders-shadow-summary.json`。
 - [ ] **Step 3: Verifier 与 safety gate**
   - 抽出通用 verifier：evidence 定位、source-review 验证、aspect allow-list、context guard、confidence 降级。
   - 旧规则只作为 fallback / guard，不再作为未来类目的主生成模板。
