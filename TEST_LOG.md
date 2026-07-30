@@ -534,6 +534,12 @@ File "database.py", line 13, in get_connection
 | 2026-07-29 | session120 Step 4.1 后端目标回归 | `python3 -m pytest backend_api/tests/test_customer_label_waders_session120_human_gold.py backend_api/tests/test_customer_label_waders_step4_gold.py backend_api/tests/test_customer_label_waders_step2_gating.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_customer_label_50u_readiness.py backend_api/tests/test_outdoor_waders_taxonomy.py -q` | PASS，80 passed in 11.52s | session120 human gold both exact set `50/50`、issue exact `50/50`、highlight exact `50/50`，issue TP/FP/FN `22/0/0`，highlight TP/FP/FN `49/0/0`；旧 Step2/Step4、通用 specific issue、Phase5/6、50U readiness、waders taxonomy 回归通过。 |
 | 2026-07-29 | session120 Step 4.1 前端与 diff 验证 | `npm run typecheck`（cwd=`frontend`）；`git diff --check` | PASS，`tsc --noEmit`；PASS | 前端 Customer Label occurrence/parser context guard 类型通过；代码/fixture/文档 diff 无 whitespace error。 |
 
+### 2026-07-30 5.9.8 Step 4 session121 CI/CD 勘误与 session122 生产下载纠正
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | 勘误 | session121 对应构建后续确认未成功通过 CI/CD 部署，因此先前基于 session121 的 production download 结论作废；真正的部署后生产下载改以 session122 `/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-AGGREGATED-301-350.xlsx` 为准 | `tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/download-file-audit.json` status=PASS；`frontstage_verified_violations=[]`；`Raw Reviews` 50 行 / 15 列；`Label Audit` 50 行 / 30 列；`Audit ...` 分列已落地 |
+
 ---
 
 ### 2026-06-26 对比分析版本下拉框 + 产品列表同步修复
