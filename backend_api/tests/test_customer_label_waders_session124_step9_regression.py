@@ -138,6 +138,18 @@ def test_session124_step9_content_rules_block_high_confidence_false_positives() 
     assert "pocket_not_waterproof" not in _frontstage_keys(pocket_exists_only, "issue")
 
 
+def test_session124_step9_missing_hanger_true_missing_language_is_retained() -> None:
+    did_not_receive = _comment(
+        "I received the waders and cell phone case; BUT I did not receive the hanger to store the waders."
+    )
+    assert "missing_wader_hanger" in _frontstage_keys(did_not_receive, "issue")
+
+    cross_sentence_negation = _comment(
+        "The reason I chose this one was because it came with a hanger. Well it did not. Very disappointing."
+    )
+    assert "missing_wader_hanger" in _frontstage_keys(cross_sentence_negation, "issue")
+
+
 @pytest.mark.parametrize(
     ("label_type", "canonical", "evidence", "content"),
     [
@@ -202,6 +214,28 @@ def test_session124_step9_stored_occurrence_projection_blocks_bad_frontstage(
     comment = _comment(content, occurrences=[_stored_occurrence(label_type, canonical, evidence, content)])
 
     assert canonical not in _frontstage_keys(comment, label_type)
+
+
+@pytest.mark.parametrize(
+    ("evidence", "content"),
+    [
+        (
+            "I did not receive the hanger",
+            "I received the waders and cell phone case; BUT I did not receive the hanger to store the waders.",
+        ),
+        (
+            "came with a hanger. Well it did not",
+            "The reason I chose this one was because it came with a hanger. Well it did not. Very disappointing.",
+        ),
+    ],
+)
+def test_session124_step9_stored_missing_hanger_true_evidence_is_retained(
+    evidence: str,
+    content: str,
+) -> None:
+    comment = _comment(content, occurrences=[_stored_occurrence("issue", "missing_wader_hanger", evidence, content)])
+
+    assert "missing_wader_hanger" in _frontstage_keys(comment, "issue")
 
 
 def test_session124_step9_raw_export_frontstage_fields_dedupe_duplicate_labels() -> None:

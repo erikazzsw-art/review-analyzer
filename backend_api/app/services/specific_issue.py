@@ -661,8 +661,9 @@ def _is_valid_missing_wader_hanger_issue_evidence(evidence: str, content: str) -
     missing_patterns = [
         r"\b(?:missing|without|no)\b[^.!?\n]{0,80}\b(?:wader\s+)?(?:hanger|hook)\b",
         r"\b(?:wader\s+)?(?:hanger|hook)\b[^.!?\n]{0,100}\b(?:missing|not\s+included|wasn['’]?t\s+included|did\s+not\s+come|didn['’]?t\s+come)\b",
-        r"\bI\s+did\s+not\s+receive\s+the\s+(?:wader\s+)?(?:hanger|hook)\b",
+        r"\bI\s+(?:did\s+not|didn['’]?t)\s+receive\s+(?:the\s+|a\s+)?(?:wader\s+)?(?:hanger|hook)\b",
         r"\b(?:did\s+not|didn['’]?t)\s+(?:come\s+with|receive|get)\b[^.!?\n]{0,80}\b(?:wader\s+)?(?:hanger|hook)\b",
+        r"\b(?:came|come)\s+with\s+(?:a\s+)?(?:wader\s+)?(?:hanger|hook)\b[.!?\s]{0,50}\b(?:well\s+)?it\s+(?:did\s+not|didn['’]?t)\b",
     ]
     if _first_regex(missing_patterns, direct):
         return True
@@ -1689,6 +1690,8 @@ def _waders_issue_rule_occurrences(
         _first_content_span(
             content,
             [
+                r"\b(?:did\s+not|didn['’]?t)\s+(?:receive|get)\s+(?:the\s+|a\s+)?(?:wader\s+)?(?:hanger|hook)\b[^.!?\n]{0,80}",
+                r"\b(?:came|come)\s+with\s+(?:a\s+)?(?:wader\s+)?(?:hanger|hook)\b[.!?\s]{0,50}\b(?:well\s+)?it\s+(?:did\s+not|didn['’]?t)\b",
                 r"\b(?:hanger|hook)\b[^.!?\n]{0,80}\b(?:missing|did\s+not\s+come|didn['’]?t\s+come)\b",
                 r"\bdid\s+not\s+come\s+with\s+(?:wader\s+)?hanger\b",
             ],
@@ -2692,6 +2695,8 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             [
                 r"\b(?:missing|without|no)\b[^.!?\n]{0,80}\b(?:wader\s+)?(?:hanger|hook)\b",
                 r"\b(?:wader\s+)?(?:hanger|hook)\b[^.!?\n]{0,100}\b(?:missing|not\s+included|wasn['’]?t\s+included|did\s+not\s+come|didn['’]?t\s+come)\b",
+                r"\b(?:did\s+not|didn['’]?t)\s+(?:receive|get)\s+(?:the\s+|a\s+)?(?:wader\s+)?(?:hanger|hook)\b",
+                r"\b(?:came|come)\s+with\s+(?:a\s+)?(?:wader\s+)?(?:hanger|hook)\b[.!?\s]{0,50}\b(?:well\s+)?it\s+(?:did\s+not|didn['’]?t)\b",
             ],
             context_text,
         ):
