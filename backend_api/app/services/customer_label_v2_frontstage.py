@@ -11,6 +11,7 @@ from typing import Any
 
 from backend_api.app.services.customer_label_v2_maturity import (
     MATURITY_L3_SUB_CATEGORY,
+    MATURITY_LEVELS,
     resolve_customer_label_maturity,
 )
 from backend_api.app.services.customer_label_v2_shadow import run_customer_label_v2_shadow
@@ -23,6 +24,8 @@ CUSTOMER_LABEL_V2_FRONTSTAGE_READ_PATH_CONTRACT_VERSION = "customer-label-v2-fro
 CUSTOMER_LABEL_V2_FRONTSTAGE_READINESS_DRY_RUN_SCHEMA_VERSION = (
     "customer-label-v2-frontstage-readiness-dry-run.1"
 )
+CUSTOMER_LABEL_V2_FRONTSTAGE_CONFIG_SCHEMA_VERSION = "customer-label-v2-frontstage-config.1"
+CUSTOMER_LABEL_V2_FRONTSTAGE_OBSERVABILITY_SCHEMA_VERSION = "customer-label-v2-frontstage-observability.1"
 CUSTOMER_LABEL_V2_FRONTSTAGE_READ_MODEL_FIELD = "customer_label_v2_frontstage_read_model"
 READ_PATH_V1_CURRENT = "v1_current"
 READ_PATH_V2_SHADOW = "v2_shadow"
@@ -48,23 +51,224 @@ class CustomerLabelV2FrontstageFlag:
     rollback_categories: tuple[str, ...] = ()
     rollback_sub_categories: tuple[str, ...] = ()
     rollback_category_sub_categories: tuple[str, ...] = ()
+    kill_switch: bool = False
+    kill_switch_session_ids: tuple[Any, ...] = ()
+    kill_switch_categories: tuple[str, ...] = ()
+    kill_switch_sub_categories: tuple[str, ...] = ()
+    kill_switch_category_sub_categories: tuple[str, ...] = ()
     allow_runtime_shadow: bool = True
+    config_validation_errors: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class CustomerLabelV2FrontstageConfigResolution:
+    schema_version: str
+    source: str
+    valid: bool
+    fail_closed: bool
+    validation_errors: tuple[str, ...]
+    raw_feature_flag: CustomerLabelV2FrontstageFlag
+    effective_feature_flag: CustomerLabelV2FrontstageFlag
+
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+_ENV_PREFIX = "CUSTOMER_LABEL_V2_FRONTSTAGE_"
+_TRUTHY_CONFIG_VALUES = {"1", "true", "yes", "on", "enabled"}
+_FALSY_CONFIG_VALUES = {"0", "false", "no", "off", "disabled"}
+_BOOL_CONFIG_FIELDS = {
+    "enabled": "ENABLED",
+    "shadow_fixture_gate_passed": "SHADOW_FIXTURE_GATE_PASSED",
+    "rollback": "ROLLBACK",
+    "kill_switch": "KILL_SWITCH",
+    "allow_runtime_shadow": "ALLOW_RUNTIME_SHADOW",
+}
+_LIST_CONFIG_FIELDS = {
+    "session_ids": "SESSION_IDS",
+    "categories": "CATEGORIES",
+    "sub_categories": "SUB_CATEGORIES",
+    "category_sub_categories": "CATEGORY_SUB_CATEGORIES",
+    "enabled_maturity_levels": "ENABLED_MATURITY_LEVELS",
+    "rollback_session_ids": "ROLLBACK_SESSION_IDS",
+    "rollback_categories": "ROLLBACK_CATEGORIES",
+    "rollback_sub_categories": "ROLLBACK_SUB_CATEGORIES",
+    "rollback_category_sub_categories": "ROLLBACK_CATEGORY_SUB_CATEGORIES",
+    "kill_switch_session_ids": "KILL_SWITCH_SESSION_IDS",
+    "kill_switch_categories": "KILL_SWITCH_CATEGORIES",
+    "kill_switch_sub_categories": "KILL_SWITCH_SUB_CATEGORIES",
+    "kill_switch_category_sub_categories": "KILL_SWITCH_CATEGORY_SUB_CATEGORIES",
+}
+
+
 def _truthy_env(value: Any, *, default: bool = False) -> bool:
+    parsed, _ = _parse_config_bool(value, field_name="legacy_bool", default=default)
+    return parsed
+
+
+def _config_value(config: Mapping[str, Any], logical_name: str, env_suffix: str) -> Any:
+    if logical_name in config:
+        return config.get(logical_name)
+    env_name = f"{_ENV_PREFIX}{env_suffix}"
+    if env_name in config:
+        return config.get(env_name)
+    return None
+
+
+def _parse_config_bool(value: Any, *, field_name: str, default: bool = False) -> tuple[bool, list[str]]:
     if value is None:
-        return default
-    return str(value).strip().lower() in {"1", "true", "yes", "on", "enabled"}
+        return default, []
+    if isinstance(value, bool):
+        return value, []
+    cleaned = str(value).strip().lower()
+    if not cleaned:
+        return default, []
+    if cleaned in _TRUTHY_CONFIG_VALUES:
+        return True, []
+    if cleaned in _FALSY_CONFIG_VALUES:
+        return False, []
+    return False, [f"{field_name}:invalid_bool"]
+
+
+def _parse_config_values(value: Any, *, field_name: str) -> tuple[tuple[str, ...], list[str]]:
+    if value is None:
+        return (), []
+    if isinstance(value, str):
+        parts = [item.strip() for item in value.split(",")]
+    elif isinstance(value, (list, tuple, set)):
+        parts = [str(item).strip() for item in value]
+    else:
+        return (), [f"{field_name}:invalid_list"]
+
+    values = tuple(item for item in parts if item)
+    if not values and any(part == "" for part in parts):
+        return (), []
+    return values, []
+
+
+def _validate_scope_values(values: tuple[Any, ...], *, field_name: str, require_pair: bool = False) -> list[str]:
+    errors: list[str] = []
+    for value in values:
+        cleaned = str(value or "").strip()
+        if not cleaned:
+            continue
+        if require_pair:
+            if "/" not in cleaned:
+                errors.append(f"{field_name}:invalid_category_sub_category:{cleaned}")
+                continue
+            left, right = cleaned.split("/", 1)
+            if not _normalize_key(left) or not _normalize_key(right):
+                errors.append(f"{field_name}:invalid_category_sub_category:{cleaned}")
+        elif not _normalize_key(cleaned) and not (field_name.endswith("session_ids") and cleaned):
+            errors.append(f"{field_name}:invalid_scope:{cleaned}")
+    return errors
+
+
+def _validate_frontstage_flag(flag: CustomerLabelV2FrontstageFlag) -> list[str]:
+    errors: list[str] = []
+    invalid_maturity_levels = [
+        str(level)
+        for level in flag.enabled_maturity_levels
+        if str(level) not in set(MATURITY_LEVELS)
+    ]
+    if invalid_maturity_levels:
+        errors.append(f"enabled_maturity_levels:invalid:{'|'.join(invalid_maturity_levels)}")
+
+    for field_name in (
+        "category_sub_categories",
+        "rollback_category_sub_categories",
+        "kill_switch_category_sub_categories",
+    ):
+        errors.extend(_validate_scope_values(getattr(flag, field_name), field_name=field_name, require_pair=True))
+    for field_name in (
+        "categories",
+        "sub_categories",
+        "rollback_categories",
+        "rollback_sub_categories",
+        "kill_switch_categories",
+        "kill_switch_sub_categories",
+    ):
+        errors.extend(_validate_scope_values(getattr(flag, field_name), field_name=field_name))
+    return errors
 
 
 def _env_values(env: Mapping[str, str], name: str) -> tuple[str, ...]:
-    raw = str(env.get(name) or "").strip()
-    if not raw:
-        return ()
-    return tuple(item.strip() for item in raw.split(",") if item.strip())
+    values, _ = _parse_config_values(env.get(name), field_name=name)
+    return values
+
+
+def resolve_customer_label_v2_frontstage_config(
+    config: Mapping[str, Any] | None = None,
+    *,
+    source: str = "env",
+) -> CustomerLabelV2FrontstageConfigResolution:
+    """Resolve production-safe frontstage config and fail closed on invalid input."""
+    config = config or os.environ
+    errors: list[str] = []
+    bool_values: dict[str, bool] = {}
+    list_values: dict[str, tuple[str, ...]] = {}
+
+    for logical_name, env_suffix in _BOOL_CONFIG_FIELDS.items():
+        default = False if logical_name == "allow_runtime_shadow" else False
+        parsed, parse_errors = _parse_config_bool(
+            _config_value(config, logical_name, env_suffix),
+            field_name=logical_name,
+            default=default,
+        )
+        bool_values[logical_name] = parsed
+        errors.extend(parse_errors)
+
+    for logical_name, env_suffix in _LIST_CONFIG_FIELDS.items():
+        values, parse_errors = _parse_config_values(
+            _config_value(config, logical_name, env_suffix),
+            field_name=logical_name,
+        )
+        list_values[logical_name] = values
+        errors.extend(parse_errors)
+
+    raw_flag = CustomerLabelV2FrontstageFlag(
+        enabled=bool_values["enabled"],
+        session_ids=list_values["session_ids"],
+        categories=list_values["categories"],
+        sub_categories=list_values["sub_categories"],
+        category_sub_categories=list_values["category_sub_categories"],
+        shadow_fixture_gate_passed=bool_values["shadow_fixture_gate_passed"],
+        enabled_maturity_levels=list_values["enabled_maturity_levels"] or (MATURITY_L3_SUB_CATEGORY,),
+        rollback=bool_values["rollback"],
+        rollback_session_ids=list_values["rollback_session_ids"],
+        rollback_categories=list_values["rollback_categories"],
+        rollback_sub_categories=list_values["rollback_sub_categories"],
+        rollback_category_sub_categories=list_values["rollback_category_sub_categories"],
+        kill_switch=bool_values["kill_switch"],
+        kill_switch_session_ids=list_values["kill_switch_session_ids"],
+        kill_switch_categories=list_values["kill_switch_categories"],
+        kill_switch_sub_categories=list_values["kill_switch_sub_categories"],
+        kill_switch_category_sub_categories=list_values["kill_switch_category_sub_categories"],
+        allow_runtime_shadow=bool_values["allow_runtime_shadow"],
+    )
+    errors.extend(_validate_frontstage_flag(raw_flag))
+    validation_errors = tuple(dict.fromkeys(errors))
+
+    if validation_errors:
+        effective_flag = CustomerLabelV2FrontstageFlag(
+            allow_runtime_shadow=False,
+            config_validation_errors=validation_errors,
+        )
+    else:
+        effective_flag = raw_flag
+
+    return CustomerLabelV2FrontstageConfigResolution(
+        schema_version=CUSTOMER_LABEL_V2_FRONTSTAGE_CONFIG_SCHEMA_VERSION,
+        source=source,
+        valid=not validation_errors,
+        fail_closed=bool(validation_errors),
+        validation_errors=validation_errors,
+        raw_feature_flag=raw_flag,
+        effective_feature_flag=effective_flag,
+    )
 
 
 def customer_label_v2_frontstage_flag_from_env(
@@ -76,29 +280,7 @@ def customer_label_v2_frontstage_flag_from_env(
     merely enabling a flag cannot synthesize a live replacement without a shadow
     result or explicit local fixture.
     """
-    source = env or os.environ
-    return CustomerLabelV2FrontstageFlag(
-        enabled=_truthy_env(source.get("CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED")),
-        session_ids=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_SESSION_IDS"),
-        categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_CATEGORIES"),
-        sub_categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_SUB_CATEGORIES"),
-        category_sub_categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_CATEGORY_SUB_CATEGORIES"),
-        shadow_fixture_gate_passed=_truthy_env(source.get("CUSTOMER_LABEL_V2_FRONTSTAGE_SHADOW_FIXTURE_GATE_PASSED")),
-        enabled_maturity_levels=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED_MATURITY_LEVELS")
-        or (MATURITY_L3_SUB_CATEGORY,),
-        rollback=_truthy_env(source.get("CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK")),
-        rollback_session_ids=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_SESSION_IDS"),
-        rollback_categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_CATEGORIES"),
-        rollback_sub_categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_SUB_CATEGORIES"),
-        rollback_category_sub_categories=_env_values(
-            source,
-            "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_CATEGORY_SUB_CATEGORIES",
-        ),
-        allow_runtime_shadow=_truthy_env(
-            source.get("CUSTOMER_LABEL_V2_FRONTSTAGE_ALLOW_RUNTIME_SHADOW"),
-            default=False,
-        ),
-    )
+    return resolve_customer_label_v2_frontstage_config(env, source="env").effective_feature_flag
 
 
 def customer_label_v2_frontstage_cache_key(flag: CustomerLabelV2FrontstageFlag | None = None) -> str:
@@ -186,12 +368,54 @@ def _scope_match(
 
 def _flag_match_decision(flag: CustomerLabelV2FrontstageFlag, review: dict[str, Any]) -> dict[str, Any]:
     context = _scope_context(review)
+    if flag.config_validation_errors:
+        return {
+            **context,
+            "v2_requested": False,
+            "matched_scope": "none",
+            "rollback_active": False,
+            "kill_switch_active": False,
+            "reason": "config_invalid",
+            "config_validation_errors": list(flag.config_validation_errors),
+        }
+
+    if flag.kill_switch:
+        return {
+            **context,
+            "v2_requested": False,
+            "matched_scope": "kill_switch_global",
+            "rollback_active": False,
+            "kill_switch_active": True,
+            "reason": "kill_switch_global",
+        }
+
+    kill_switch_scope = _scope_match(
+        session_id=context["session_id"],
+        category=context["category"],
+        sub_category=context["sub_category"],
+        category_sub_category=context["category_sub_category"],
+        session_ids=flag.kill_switch_session_ids,
+        categories=flag.kill_switch_categories,
+        sub_categories=flag.kill_switch_sub_categories,
+        category_sub_categories=flag.kill_switch_category_sub_categories,
+    )
+    if kill_switch_scope:
+        return {
+            **context,
+            "v2_requested": False,
+            "matched_scope": f"kill_switch_{kill_switch_scope}",
+            "rollback_active": False,
+            "kill_switch_active": True,
+            "reason": f"kill_switch_{kill_switch_scope}",
+        }
+
     if flag.rollback:
         return {
             **context,
             "v2_requested": False,
             "matched_scope": "rollback_global",
             "rollback_active": True,
+            "kill_switch_active": False,
             "reason": "rollback_global",
         }
 
@@ -211,6 +435,7 @@ def _flag_match_decision(flag: CustomerLabelV2FrontstageFlag, review: dict[str, 
             "v2_requested": False,
             "matched_scope": f"rollback_{rollback_scope}",
             "rollback_active": True,
+            "kill_switch_active": False,
             "reason": f"rollback_{rollback_scope}",
         }
 
@@ -220,6 +445,7 @@ def _flag_match_decision(flag: CustomerLabelV2FrontstageFlag, review: dict[str, 
             "v2_requested": False,
             "matched_scope": "none",
             "rollback_active": False,
+            "kill_switch_active": False,
             "reason": "flag_off",
         }
 
@@ -237,6 +463,7 @@ def _flag_match_decision(flag: CustomerLabelV2FrontstageFlag, review: dict[str, 
             "v2_requested": True,
             "matched_scope": "global",
             "rollback_active": False,
+            "kill_switch_active": False,
             "reason": "flag_on_global",
         }
 
@@ -255,6 +482,7 @@ def _flag_match_decision(flag: CustomerLabelV2FrontstageFlag, review: dict[str, 
         "v2_requested": bool(matched_scope),
         "matched_scope": matched_scope or "none",
         "rollback_active": False,
+        "kill_switch_active": False,
         "reason": f"flag_on_{matched_scope}" if matched_scope else "scope_not_matched",
     }
 
@@ -428,6 +656,8 @@ def build_customer_label_v2_frontstage_read_model(
     flag = flag or CustomerLabelV2FrontstageFlag()
     review_copy = copy.deepcopy(review)
     flag_decision = _flag_match_decision(flag, review_copy)
+    provided_shadow_available = shadow_result is not None
+    runtime_shadow_generated = False
     v1_occurrences = _v1_current_frontstage_occurrences(review_copy, locale=locale)
 
     selected_read_path = READ_PATH_V1_CURRENT
@@ -453,6 +683,7 @@ def build_customer_label_v2_frontstage_read_model(
                     label_candidates=label_candidates,
                     llm_output=llm_output,
                 )
+                runtime_shadow_generated = True
             if shadow_result is None:
                 fallback_reason = "v2_shadow_missing"
             else:
@@ -487,6 +718,12 @@ def build_customer_label_v2_frontstage_read_model(
         "fallback_reason": fallback_reason,
         "flag_decision": flag_decision,
         "feature_flag": flag.as_dict(),
+        "shadow_input": {
+            "provided_shadow_available": provided_shadow_available,
+            "stored_shadow_available": provided_shadow_available,
+            "runtime_shadow_allowed": flag.allow_runtime_shadow,
+            "runtime_shadow_generated": runtime_shadow_generated,
+        },
         "v1_current": {
             "occurrence_count": len(v1_occurrences),
             "frontstage_occurrences": v1_occurrences,
@@ -640,6 +877,8 @@ def _readiness_blocked_reasons(
     shadow_reasons = _shadow_downgrade_reasons(shadow_result)
 
     blocked: list[str] = []
+    if fallback_reason == "config_invalid":
+        blocked.append("blocked_by_config_invalid")
     if fallback_reason == "flag_off":
         blocked.append("blocked_by_flag_off")
     if fallback_reason == "scope_not_matched":
@@ -654,6 +893,10 @@ def _readiness_blocked_reasons(
         blocked.append("blocked_by_no_stored_shadow")
     if bool(flag_decision.get("rollback_active")) or fallback_reason.startswith("rollback_"):
         blocked.append("rollback_selected_count")
+        blocked.append("rollback_global_count" if fallback_reason == "rollback_global" else "rollback_scoped_count")
+    if bool(flag_decision.get("kill_switch_active")) or fallback_reason.startswith("kill_switch_"):
+        blocked.append("kill_switch_selected_count")
+        blocked.append("kill_switch_global_count" if fallback_reason == "kill_switch_global" else "kill_switch_scoped_count")
 
     return list(dict.fromkeys(blocked))
 
@@ -668,8 +911,118 @@ def _readiness_observability_zero() -> dict[str, int]:
         "blocked_by_maturity": 0,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
         "frontstage_occurrence_count": 0,
+        "stored_shadow_available_count": 0,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0,
+    }
+
+
+def build_customer_label_v2_frontstage_observability_snapshot(
+    read_models: list[dict[str, Any]],
+    *,
+    scope: str = "5.9.9 Step 7.6 v2 frontstage production config observability",
+) -> dict[str, Any]:
+    """Build a local observability snapshot from read models; never mutates state."""
+    read_path_selected = Counter(str(model.get("read_path") or "") for model in read_models)
+    blocked_reason_counters: Counter[str] = Counter()
+    rollback_counters: Counter[str] = Counter(
+        {
+            "rollback_selected_count": 0,
+            "rollback_global_count": 0,
+            "rollback_scoped_count": 0,
+        }
+    )
+    kill_switch_counters: Counter[str] = Counter(
+        {
+            "kill_switch_selected_count": 0,
+            "kill_switch_global_count": 0,
+            "kill_switch_scoped_count": 0,
+        }
+    )
+    selected_v2_occurrence_count = 0
+    stored_shadow_availability: Counter[str] = Counter()
+    validation_errors: Counter[str] = Counter()
+
+    for model in read_models:
+        read_path = str(model.get("read_path") or "")
+        fallback_reason = str(model.get("fallback_reason") or "")
+        flag_decision = model.get("flag_decision") or {}
+        shadow_input = model.get("shadow_input") or {}
+        feature_flag = model.get("feature_flag") or {}
+
+        if read_path == READ_PATH_V2_SHADOW:
+            selected_v2_occurrence_count += len(model.get("frontstage_occurrences") or [])
+
+        if shadow_input.get("stored_shadow_available"):
+            stored_shadow_availability["available_count"] += 1
+        else:
+            stored_shadow_availability["missing_count"] += 1
+        if shadow_input.get("runtime_shadow_generated"):
+            stored_shadow_availability["runtime_shadow_generated_count"] += 1
+
+        for error in feature_flag.get("config_validation_errors") or flag_decision.get("config_validation_errors") or []:
+            validation_errors[str(error)] += 1
+
+        if fallback_reason == "config_invalid":
+            blocked_reason_counters["blocked_by_config_invalid"] += 1
+        if fallback_reason == "flag_off":
+            blocked_reason_counters["blocked_by_flag_off"] += 1
+        if fallback_reason == "scope_not_matched":
+            blocked_reason_counters["blocked_by_scope"] += 1
+        if fallback_reason == "shadow_fixture_gate_blocked":
+            blocked_reason_counters["blocked_by_fixture_gate"] += 1
+        if fallback_reason == "v2_shadow_missing":
+            blocked_reason_counters["blocked_by_no_stored_shadow"] += 1
+        if fallback_reason == "maturity_not_enabled_for_v2_frontstage":
+            blocked_reason_counters["blocked_by_maturity"] += 1
+        if bool(flag_decision.get("rollback_active")) or fallback_reason.startswith("rollback_"):
+            rollback_counters["rollback_selected_count"] += 1
+            if fallback_reason == "rollback_global":
+                rollback_counters["rollback_global_count"] += 1
+            else:
+                rollback_counters["rollback_scoped_count"] += 1
+        if bool(flag_decision.get("kill_switch_active")) or fallback_reason.startswith("kill_switch_"):
+            kill_switch_counters["kill_switch_selected_count"] += 1
+            if fallback_reason == "kill_switch_global":
+                kill_switch_counters["kill_switch_global_count"] += 1
+            else:
+                kill_switch_counters["kill_switch_scoped_count"] += 1
+
+    return {
+        "schema_version": CUSTOMER_LABEL_V2_FRONTSTAGE_OBSERVABILITY_SCHEMA_VERSION,
+        "scope": scope,
+        "read_path_selected": dict(sorted(read_path_selected.items())),
+        "blocked_reason_counters": dict(sorted(blocked_reason_counters.items())),
+        "rollback_counters": dict(sorted(rollback_counters.items())),
+        "kill_switch_counters": dict(sorted(kill_switch_counters.items())),
+        "selected_v2_occurrence_count": selected_v2_occurrence_count,
+        "stored_shadow_availability": {
+            "available_count": int(stored_shadow_availability.get("available_count") or 0),
+            "missing_count": int(stored_shadow_availability.get("missing_count") or 0),
+            "runtime_shadow_generated_count": int(stored_shadow_availability.get("runtime_shadow_generated_count") or 0),
+        },
+        "config_validation_errors": {
+            "count": sum(validation_errors.values()),
+            "by_error": dict(sorted(validation_errors.items())),
+        },
+        "safety": {
+            "production_upload": False,
+            "production_write_path": False,
+            "production_db_write": False,
+            "db_write": False,
+            "credit_consumed": False,
+            "llm_called": False,
+            "frontstage_replaced": False,
+            "frontstage_mutated": False,
+        },
     }
 
 
@@ -687,7 +1040,12 @@ def build_customer_label_v2_frontstage_readiness_dry_run_report(
     v2 frontstage selection when a stored shadow result is already present on
     the review payload.
     """
-    input_flag = flag or customer_label_v2_frontstage_flag_from_env(env_config)
+    config_resolution = None
+    if flag is None:
+        config_resolution = resolve_customer_label_v2_frontstage_config(env_config, source="env_config")
+        input_flag = config_resolution.effective_feature_flag
+    else:
+        input_flag = flag
     dry_run_flag = replace(input_flag, allow_runtime_shadow=False)
     observability = _readiness_observability_zero()
     selected_read_paths: Counter[str] = Counter()
@@ -697,6 +1055,11 @@ def build_customer_label_v2_frontstage_readiness_dry_run_report(
 
     for index, review in enumerate(reviews):
         stored_shadow = _stored_shadow_result_for_review(review)
+        if stored_shadow is None:
+            observability["stored_shadow_missing_count"] += 1
+        else:
+            observability["stored_shadow_available_count"] += 1
+        observability["config_validation_error_count"] += len(dry_run_flag.config_validation_errors)
         read_model = build_customer_label_v2_frontstage_read_model(
             review,
             flag=dry_run_flag,
@@ -745,10 +1108,13 @@ def build_customer_label_v2_frontstage_readiness_dry_run_report(
                 "maturity_enabled_for_frontstage": maturity_level in set(dry_run_flag.enabled_maturity_levels),
                 "stored_shadow_available": stored_shadow is not None,
                 "rollback_active": bool(flag_decision.get("rollback_active")),
+                "kill_switch_active": bool(flag_decision.get("kill_switch_active")),
                 "rollback_would_select_v1_current": bool(
                     flag_decision.get("rollback_active")
                     and read_path == READ_PATH_V1_CURRENT
                 ),
+                "config_valid": not dry_run_flag.config_validation_errors,
+                "config_validation_errors": list(dry_run_flag.config_validation_errors),
             },
             "selected_keys": selected_keys,
             "v1_current_keys": (read_model.get("v1_current") or {}).get("keys") or {},
@@ -781,8 +1147,13 @@ def build_customer_label_v2_frontstage_readiness_dry_run_report(
         "case_count": len(reviews),
         "input_feature_flag": input_flag.as_dict(),
         "effective_feature_flag": dry_run_flag.as_dict(),
+        "config_resolution": config_resolution.as_dict() if config_resolution else None,
         "env_config": dict(env_config or {}),
         "observability": observability,
+        "observability_snapshot": build_customer_label_v2_frontstage_observability_snapshot(
+            read_models,
+            scope=scope,
+        ),
         "selected_read_paths": dict(sorted(selected_read_paths.items())),
         "selected_read_path_preview": previews,
         "read_models": read_models,
@@ -810,6 +1181,8 @@ def customer_label_v2_frontstage_contract_summary() -> dict[str, Any]:
         "feature_flag": {
             "default_enabled": False,
             "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+            "config_schema_version": CUSTOMER_LABEL_V2_FRONTSTAGE_CONFIG_SCHEMA_VERSION,
+            "invalid_config_behavior": "fail_closed_to_v1_current",
             "controls": [
                 "session_id",
                 "category",
@@ -820,6 +1193,13 @@ def customer_label_v2_frontstage_contract_summary() -> dict[str, Any]:
             "enabled_maturity_levels_default": [MATURITY_L3_SUB_CATEGORY],
             "env_runtime_shadow_default": False,
             "rollback_controls": [
+                "global",
+                "session_id",
+                "category",
+                "sub_category",
+                "category_sub_category",
+            ],
+            "kill_switch_controls": [
                 "global",
                 "session_id",
                 "category",
@@ -840,6 +1220,8 @@ def customer_label_v2_frontstage_contract_summary() -> dict[str, Any]:
             "v2_shadow_missing": READ_PATH_V1_CURRENT,
             "maturity_not_enabled_for_v2_frontstage": READ_PATH_V1_CURRENT,
             "rollback": READ_PATH_V1_CURRENT,
+            "kill_switch": READ_PATH_V1_CURRENT,
+            "config_invalid": READ_PATH_V1_CURRENT,
         },
         "excluded_from_frontstage": [
             "label_candidates",

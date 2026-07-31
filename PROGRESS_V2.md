@@ -8,6 +8,44 @@
 
 ---
 
+### 2026-07-31 5.9.9 Customer Label System v2 Step 8：Vector bad case memory lite
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-31 | vector-bad-case-memory-lite | 新增 lightweight/local sparse token vector memory，将 audited bad case、gold regression、candidate pool reviewed result 变成本地可检索 memory；仅用于相似历史错例检索、candidate 聚类、审核排序、audit/debug report。 | Artifact `tmp/5.9.9-step8-vector-bad-case-memory-lite/vector-bad-case-memory-lite.json`：`status=PASS`、memory item count `81`，source counts：audited bad case `32`、candidate pool reviewed `14`、gold regression `35`。 |
+| 2026-07-31 | display-gate-guard | 明确 vector result 不能直接决定前台展示；display 仍由 evidence/context/aspect/maturity/feature flag gates 决定。新增 display gate probe 覆盖 no evidence 与 context blocked。 | `PASS`：no evidence display count `0`，context blocked display count `0`，`vector_result_decides_display=false`；focused Step 8 `5 passed`；Step 8 + shadow/frontstage focused `32 passed`；replay PASS，P0=`0`。报告：`docs/5.9.9-step8-vector-bad-case-memory-lite.md`。 |
+
+---
+
+### 2026-07-31 5.9.9 Customer Label System v2 Step 7.8：go/no-go acceptance pack
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-31 | go-no-go-pack | 新增灰度前 go/no-go acceptance pack，汇总 Step 6/7/7.5/7.6/7.7 的验收证据，输出 feature flag default-off、readiness dry-run、kill switch、rollback drill、stored shadow availability、L3-only gate、unknown/candidate/audit exclusion、replay P0、六个重点标签 FP/FN 九项 checklist。 | Artifact `tmp/5.9.9-step7.8-frontstage-go-no-go-acceptance-pack/go-no-go-acceptance-pack.json`：`status=PASS`、`go_no_go=GO_READY_FOR_ERIKA_AUTHORIZED_GRAY_RUN_ONLY`、`no_go_items=[]`、9 项 checklist 全 PASS。 |
+| 2026-07-31 | authorization-boundary | Acceptance pack 明确 `feature_flag_enabled_now=false`、`production_gray_run_executed=false`、`requires_erika_explicit_authorization=true`；本轮不构成生产开启授权。 | `PASS`：focused Step 7.8 `3 passed`；acceptance/runbook/config focused `12 passed`；replay PASS，P0=`0`；无 production upload / reanalysis / DB write / credit / 真实 LLM。报告：`docs/5.9.9-step7.8-frontstage-go-no-go-acceptance-pack.md`。 |
+
+---
+
+### 2026-07-31 5.9.9 Customer Label System v2 Step 7.7：gray-run runbook / rollback drill
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-31 | gray-run-runbook | 新增只读灰度 runbook，定义从 `0_percent_baseline` 到 stored shadow audit、scoped session、scoped sub_category、scoped category observation 的步骤；明确所有生产操作必须由 Erika 单独授权，本轮未执行生产灰度、未开启生产 feature flag。 | `PASS`：runbook artifact `production_execution.executed=false`、`requires_erika_explicit_authorization=true`、`feature_flag_enabled_now=false`。 |
+| 2026-07-31 | rollback-drill | 新增本地 rollback drill helper，覆盖 baseline v2 selected、global rollback、scoped rollback、global kill switch、scoped kill switch、flag off；除 baseline 外全部回 `v1_current`。 | Artifact `tmp/5.9.9-step7.7-frontstage-gray-run-rollback-drill/gray-run-rollback-drill.json`：`status=PASS`、rollback drill case count `6`、selected read paths `v1_current=5` / `v2_shadow=1`、rollback selected `2`、kill switch selected `2`、violations `[]`。 |
+| 2026-07-31 | step7.7-replay-artifact | `scripts/customer_label_v2_waders_shadow_replay.py` 纳入 Step 7.7 artifact，同时保留 Step 6/7/7.5/7.6 artifacts、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：focused Step 7.7 `3 passed`；相邻 config/readiness/runbook `19 passed`；replay PASS，P0=`0`；无 production upload / reanalysis / DB write / credit / 真实 LLM。报告：`docs/5.9.9-step7.7-frontstage-gray-run-rollback-drill.md`。 |
+
+---
+
+### 2026-07-31 5.9.9 Customer Label System v2 Step 7.6：production config / kill switch / observability contract
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-31 | production-safe-config | 新增 Customer Label v2 frontstage production-safe config helper：集中解析 env/config，支持 enabled、session/category/sub_category/category-sub_category scope、fixture gate、enabled maturity、rollback、global/scoped kill switch；默认全部 off，runtime shadow env 默认 false。invalid config 会 fail closed 到 `v1_current` 并记录 validation errors。 | `PASS`：focused config tests 覆盖默认全关、完整 env/config 解析、global kill switch、scoped kill switch、invalid config fail closed。生产 feature flag 未开启。 |
+| 2026-07-31 | observability-snapshot | 新增 frontstage observability snapshot：`read_path_selected`、blocked reason counters、rollback/kill switch counters、selected v2 occurrence count、stored shadow availability、config validation errors。 | Artifact `tmp/5.9.9-step7.6-frontstage-config-kill-switch-observability/frontstage-config-kill-switch-observability.json`：`status=PASS`、case count `8`、selected read paths `v1_current=7` / `v2_shadow=1`、kill switch selected `2`、rollback selected `2`、config validation error count `2`、case expectation violations `[]`。 |
+| 2026-07-31 | step7.6-replay-artifact | `scripts/customer_label_v2_waders_shadow_replay.py` 纳入 Step 7.6 artifact，同时保留 Step 6/7/7.5 artifacts、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：Step 6/7/7.5/7.6 focused `33 passed`；replay PASS，P0=`0`；无 production upload / reanalysis / DB write / credit / 真实 LLM。报告：`docs/5.9.9-step7.6-frontstage-config-kill-switch-observability.md`。 |
+
+---
+
 ### 2026-07-31 5.9.9 Customer Label System v2 Step 7.5：v2 frontstage read-path production readiness / dry-run pack
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -232,7 +270,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 7.5 已完成：Step 7 actual consumer integration 基础上新增 production readiness / dry-run pack，输出 flag/scope/fixture gate/maturity/stored shadow/rollback eligibility report 与 observability contract；默认 off，只有显式 flag + scope + fixture gate + L3 waders + stored verified v2 display 才可预览 v2_shadow；replay artifact PASS，P0=0；标签本体 v3 决策为先做 v3-lite 债务封顶，完整 v3 条件触发。 | 继续保持生产 feature flag 不开启；后续若 Erika 授权，可做生产配置存储、线上 kill switch/指标面板和小流量只读灰度；v3-lite 只做兼容投影、catalog backlog 和规则膨胀封顶，不替换当前前台链路。 |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 8 已完成：新增 lightweight/local vector bad case memory，将 audited bad case、gold regression、candidate pool reviewed result 转成本地可检索 memory；仅用于相似历史错例检索、candidate 聚类、审核排序、audit/debug report；生产 feature flag 仍未开启；replay artifact PASS，P0=0。 | 继续保持生产 feature flag 不开启；后续若 Erika 授权，可进入 scoped gray-run；v3-lite 只做兼容投影、catalog backlog 和规则膨胀封顶，不替换当前前台链路。 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -1333,7 +1371,7 @@ readiness 节奏：
 
 #### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 进行中（Step 7.5 v2 frontstage readiness dry-run pack 已 PASS；生产 feature flag 仍默认关闭且未开启；标签本体 v3 先做 v3-lite 债务封顶，完整 v3 条件触发）
+**状态：** 进行中（Step 8 vector bad case memory lite 已 PASS；生产 feature flag 仍默认关闭且未开启；标签本体 v3 先做 v3-lite 债务封顶，完整 v3 条件触发）
 
 **调整原因：**
 - 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
@@ -1411,9 +1449,26 @@ readiness 节奏：
   - dry-run 强制 `allow_runtime_shadow=False`，只承认可消费 stored shadow/read model；no stored shadow 会回 v1/current 并记录 `blocked_by_no_stored_shadow`。
   - 新增 observability contract：`v1_selected_count`、`v2_selected_count`、`blocked_by_flag_off`、`blocked_by_scope`、`blocked_by_fixture_gate`、`blocked_by_maturity`、`blocked_by_unknown_label`、`blocked_by_no_stored_shadow`、`rollback_selected_count`、`frontstage_occurrence_count`。
   - 输出 `docs/5.9.9-step7.5-frontstage-readiness-dry-run.md` 与 `tmp/5.9.9-step7.5-frontstage-readiness-dry-run/frontstage-readiness-dry-run.json`；生产 feature flag 仍未开启。
-- [ ] **Step 8: Vector bad case memory 轻量版（增强项，不阻塞 50 用户）**
-  - 将已审核 bad case、gold regression、candidate 审核结果向量化，用于检索相似历史错误、候选聚类和审核优先级排序。
-  - 明确 vector 结果不能直接决定前台展示；找不到 evidence 或 verifier 冲突时仍降级到 candidate/audit。
+- [x] **Step 7.6: production config / kill switch / observability contract**
+  - 已新增 production-safe config resolution helper，集中解析 env/config，支持 enabled、scope、fixture gate、enabled maturity、rollback、global/scoped kill switch；默认全部 off。
+  - invalid config fail closed 到 `v1_current`，并在 read model / readiness report / observability snapshot 中记录 `config_validation_errors`。
+  - 新增 observability snapshot：`read_path_selected`、blocked reason counters、rollback/kill switch counters、selected v2 occurrence count、stored shadow availability、config validation errors。
+  - 输出 `docs/5.9.9-step7.6-frontstage-config-kill-switch-observability.md` 与 `tmp/5.9.9-step7.6-frontstage-config-kill-switch-observability/frontstage-config-kill-switch-observability.json`；生产 feature flag 仍未开启。
+- [x] **Step 7.7: gray-run runbook / rollback drill**
+  - 已新增只读灰度 runbook，定义从 0% 到 scoped session/category/sub_category 的灰度步骤；本轮不执行生产开启。
+  - 已新增本地 rollback drill，覆盖 global rollback、scoped rollback、global kill switch、scoped kill switch、flag off；除 baseline v2 selected 外全部回 `v1_current`。
+  - 明确生产操作必须由 Erika 单独授权；artifact safety 标记 `production_gray_run_executed=false`、`production_feature_flag_enabled=false`。
+  - 输出 `docs/5.9.9-step7.7-frontstage-gray-run-rollback-drill.md` 与 `tmp/5.9.9-step7.7-frontstage-gray-run-rollback-drill/gray-run-rollback-drill.json`。
+- [x] **Step 7.8: go/no-go acceptance pack**
+  - 已汇总 Step 6/7/7.5/7.6/7.7 acceptance criteria，输出灰度前 go/no-go checklist。
+  - Checklist 覆盖 feature flag 默认 off、readiness dry-run PASS、kill switch PASS、rollback drill PASS、stored shadow availability、L3-only gate、unknown/candidate/audit 不进 frontstage、replay P0=0、六个重点标签 FP/FN=0。
+  - 输出 `go_no_go=GO_READY_FOR_ERIKA_AUTHORIZED_GRAY_RUN_ONLY`，并明确生产开启仍需 Erika 单独授权。
+  - 输出 `docs/5.9.9-step7.8-frontstage-go-no-go-acceptance-pack.md` 与 `tmp/5.9.9-step7.8-frontstage-go-no-go-acceptance-pack/go-no-go-acceptance-pack.json`。
+- [x] **Step 8: Vector bad case memory 轻量版（增强项，不阻塞 50 用户）**
+  - 已将 audited bad case、gold regression、candidate pool reviewed result 转成本地 sparse token vector memory，用于检索相似历史错例、candidate 聚类和审核优先级排序。
+  - 明确 vector 结果不能直接决定前台展示；display 仍由 evidence gate、context gate、aspect gate、maturity gate、feature flag/read-path gate 决定。
+  - 新增 display gate probe：no evidence / context blocked 仍不进 frontstage。
+  - 输出 `docs/5.9.9-step8-vector-bad-case-memory-lite.md` 与 `tmp/5.9.9-step8-vector-bad-case-memory-lite/vector-bad-case-memory-lite.json`。
 
 **标签本体 v3 执行计划（2026-07-30 决策）：**
 

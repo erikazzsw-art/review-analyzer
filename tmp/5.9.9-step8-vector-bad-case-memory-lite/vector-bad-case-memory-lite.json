@@ -1,0 +1,4252 @@
+{
+  "schema_version": "customer-label-v2-vector-bad-case-memory-lite-pack.1",
+  "scope": "5.9.9 Step 8 vector bad case memory lite",
+  "status": "PASS",
+  "memory": {
+    "schema_version": "customer-label-v2-bad-case-memory-lite.1",
+    "scope": "5.9.9 Step 8 vector bad case memory lite",
+    "status": "PASS",
+    "item_count": 81,
+    "source_counts": {
+      "audited_bad_case": 32,
+      "candidate_pool_reviewed": 14,
+      "gold_regression": 35
+    },
+    "downgrade_reason_counts": {
+      "aspect_blocked": 2,
+      "cluster_propagated": 1,
+      "confidence_low": 2,
+      "context_blocked": 2,
+      "evidence_missing": 1,
+      "evidence_not_found": 2,
+      "evidence_too_generic": 5,
+      "gold_regression_reference": 35,
+      "invalid_json": 1,
+      "maturity_blocked": 16,
+      "schema_invalid": 1,
+      "source_review_blocked": 2,
+      "unknown_label": 12
+    },
+    "memory_items": [
+      {
+        "memory_id": "badcase:01eee6c8545e2cbe",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:4d6ed1c4394a62c1",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "candidate:not_for_hardcore_conditions",
+        "raw_label": "不适合极端环境",
+        "evidence": "I think these waders are a good choice for light duty.",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "needs_new_label",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 1.76,
+        "vector_terms": {
+          "candidate": 0.058824,
+          "choice": 0.058824,
+          "conditions": 0.058824,
+          "duty": 0.058824,
+          "good": 0.058824,
+          "hardcore": 0.058824,
+          "issue": 0.058824,
+          "label": 0.117647,
+          "light": 0.058824,
+          "needs": 0.058824,
+          "new": 0.058824,
+          "outdoor": 0.058824,
+          "think": 0.058824,
+          "unknown": 0.058824,
+          "waders": 0.117647
+        },
+        "vector_norm": 0.269565,
+        "metadata": {
+          "action": "needs_new_label",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:02fe2fc86efba61b",
+        "source_type": "gold_regression",
+        "source_id": "session122-do-not-keep-you-dry",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "water_leaks_through keeps_water_out",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "They do not keep you dry.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.045455,
+          "do": 0.045455,
+          "dry": 0.045455,
+          "expected": 0.045455,
+          "gold": 0.090909,
+          "keep": 0.045455,
+          "keeps": 0.045455,
+          "labels": 0.045455,
+          "leaks": 0.045455,
+          "locked": 0.045455,
+          "out": 0.045455,
+          "outdoor": 0.045455,
+          "reference": 0.045455,
+          "regression": 0.090909,
+          "they": 0.045455,
+          "through": 0.045455,
+          "waders": 0.045455,
+          "water": 0.090909,
+          "you": 0.045455
+        },
+        "vector_norm": 0.240524,
+        "metadata": {
+          "expected_issue_keys": [
+            "water_leaks_through"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": [
+            "keeps_water_out"
+          ]
+        }
+      },
+      {
+        "memory_id": "badcase:04935d64be767cae",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-356",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "insufficient_warmth keeps_water_out good_traction",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Waterproof, decent footing/grip. Not for super cold water but good for spring fly fishing.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.034483,
+          "cold": 0.034483,
+          "decent": 0.034483,
+          "expected": 0.034483,
+          "fishing": 0.034483,
+          "fly": 0.034483,
+          "footing": 0.034483,
+          "gold": 0.068966,
+          "good": 0.068966,
+          "grip": 0.034483,
+          "insufficient": 0.034483,
+          "keeps": 0.034483,
+          "labels": 0.034483,
+          "locked": 0.034483,
+          "out": 0.034483,
+          "outdoor": 0.034483,
+          "reference": 0.034483,
+          "regression": 0.068966,
+          "spring": 0.034483,
+          "super": 0.034483,
+          "traction": 0.034483,
+          "waders": 0.034483,
+          "warmth": 0.034483,
+          "water": 0.068966,
+          "waterproof": 0.034483
+        },
+        "vector_norm": 0.209752,
+        "metadata": {
+          "expected_issue_keys": [
+            "insufficient_warmth"
+          ],
+          "expected_highlight_keys": [
+            "keeps_water_out",
+            "good_traction"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:057da030fda168dd",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-7",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "lightweight_waders holds_up_well",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Lightweight but sturdy my husband loves them for fishing.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.043478,
+          "expected": 0.043478,
+          "fishing": 0.043478,
+          "gold": 0.086957,
+          "holds": 0.043478,
+          "husband": 0.043478,
+          "labels": 0.043478,
+          "lightweight": 0.086957,
+          "locked": 0.043478,
+          "loves": 0.043478,
+          "my": 0.043478,
+          "outdoor": 0.043478,
+          "reference": 0.043478,
+          "regression": 0.086957,
+          "sturdy": 0.043478,
+          "them": 0.043478,
+          "up": 0.043478,
+          "waders": 0.086957,
+          "well": 0.043478
+        },
+        "vector_norm": 0.242077,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "lightweight_waders",
+            "holds_up_well"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:08f85fb49aa431db",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-positive-no-leaks:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "Water Leaks Through",
+        "evidence": "No leaks",
+        "content": "",
+        "downgrade_reasons": [
+          "context_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.076923,
+          "context": 0.076923,
+          "issue": 0.076923,
+          "leaks": 0.230769,
+          "no": 0.076923,
+          "outdoor": 0.076923,
+          "through": 0.153846,
+          "waders": 0.076923,
+          "water": 0.153846
+        },
+        "vector_norm": 0.36891,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:0c83c22aedd3d613",
+        "source_type": "gold_regression",
+        "source_id": "session121-green-ones-not-waterproof",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "water_leaks_through overall_dissatisfied keeps_water_out",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "bought 2, the brown ones were water proof, but the green ones weren't. My partner used a trash bag that was more water proof than these.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "bag": 0.027027,
+          "blocked": 0.027027,
+          "bought": 0.027027,
+          "brown": 0.027027,
+          "dissatisfied": 0.027027,
+          "expected": 0.027027,
+          "gold": 0.054054,
+          "green": 0.027027,
+          "keeps": 0.027027,
+          "labels": 0.027027,
+          "leaks": 0.027027,
+          "locked": 0.027027,
+          "more": 0.027027,
+          "my": 0.027027,
+          "ones": 0.054054,
+          "out": 0.027027,
+          "outdoor": 0.027027,
+          "overall": 0.027027,
+          "partner": 0.027027,
+          "proof": 0.054054,
+          "reference": 0.027027,
+          "regression": 0.054054,
+          "than": 0.027027,
+          "that": 0.027027,
+          "through": 0.027027,
+          "trash": 0.027027,
+          "used": 0.027027,
+          "waders": 0.027027,
+          "water": 0.108108,
+          "weren": 0.027027
+        },
+        "vector_norm": 0.204049,
+        "metadata": {
+          "expected_issue_keys": [
+            "water_leaks_through",
+            "overall_dissatisfied"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": [
+            "keeps_water_out"
+          ]
+        }
+      },
+      {
+        "memory_id": "badcase:0cb1c044a34d86a3",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-5",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "quality_control_storage_issue",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Waders came covered in mold.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.052632,
+          "came": 0.052632,
+          "control": 0.052632,
+          "covered": 0.052632,
+          "expected": 0.052632,
+          "gold": 0.105263,
+          "issue": 0.052632,
+          "labels": 0.052632,
+          "locked": 0.052632,
+          "mold": 0.052632,
+          "outdoor": 0.052632,
+          "quality": 0.052632,
+          "reference": 0.052632,
+          "regression": 0.105263,
+          "storage": 0.052632,
+          "waders": 0.105263
+        },
+        "vector_norm": 0.263159,
+        "metadata": {
+          "expected_issue_keys": [
+            "quality_control_storage_issue"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:11f1df5dd1e3e7d9",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-6",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "fits_as_expected looks_good",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Although I haven't used in the water yet, they seem well made, good material, and fit as expected.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "although": 0.035714,
+          "blocked": 0.035714,
+          "expected": 0.107143,
+          "fit": 0.035714,
+          "fits": 0.035714,
+          "gold": 0.071429,
+          "good": 0.071429,
+          "haven": 0.035714,
+          "labels": 0.035714,
+          "locked": 0.035714,
+          "looks": 0.035714,
+          "made": 0.035714,
+          "material": 0.035714,
+          "outdoor": 0.035714,
+          "reference": 0.035714,
+          "regression": 0.071429,
+          "seem": 0.035714,
+          "they": 0.035714,
+          "used": 0.035714,
+          "waders": 0.035714,
+          "water": 0.035714,
+          "well": 0.035714,
+          "yet": 0.035714
+        },
+        "vector_norm": 0.225877,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "fits_as_expected",
+            "looks_good"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:17a58a79d9f3e296",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:572238d660e14e29",
+        "category": "office",
+        "sub_category": "办公椅",
+        "label_type": "highlight",
+        "canonical_label_key": "fits_as_expected",
+        "raw_label": "Fits as expected",
+        "evidence": "fits perfectly",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "accepted",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 1.71,
+        "vector_terms": {
+          "accepted": 0.090909,
+          "blocked": 0.090909,
+          "expected": 0.181818,
+          "fits": 0.272727,
+          "highlight": 0.090909,
+          "maturity": 0.090909,
+          "office": 0.090909,
+          "perfectly": 0.090909
+        },
+        "vector_norm": 0.396263,
+        "metadata": {
+          "action": "accept",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:1accf47dc62a9b74",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:01df10d24340e31f",
+        "category": "beauty",
+        "sub_category": "睫毛膏",
+        "label_type": "issue",
+        "canonical_label_key": "smudges_easily",
+        "raw_label": "Smudges easily",
+        "evidence": "smudges easily",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "accepted",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 1.71,
+        "vector_terms": {
+          "accepted": 0.090909,
+          "beauty": 0.090909,
+          "blocked": 0.090909,
+          "easily": 0.272727,
+          "issue": 0.090909,
+          "maturity": 0.090909,
+          "smudges": 0.272727
+        },
+        "vector_norm": 0.435984,
+        "metadata": {
+          "action": "accept",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:1fd30c6542bf7403",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-apparel-l2-low-confidence-audit:0",
+        "category": "apparel",
+        "sub_category": "Men's Crew T-Shirts",
+        "label_type": "highlight",
+        "canonical_label_key": "fits_as_expected",
+        "raw_label": "",
+        "evidence": "fits perfectly",
+        "content": "",
+        "downgrade_reasons": [
+          "confidence_low"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.7,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "apparel": 0.090909,
+          "confidence": 0.090909,
+          "crew": 0.090909,
+          "expected": 0.090909,
+          "fits": 0.181818,
+          "highlight": 0.090909,
+          "low": 0.090909,
+          "men": 0.090909,
+          "perfectly": 0.090909,
+          "shirts": 0.090909
+        },
+        "vector_norm": 0.327777,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:24e9c7e2f819347d",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:71cd6775d1fda797",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "candidate:thin_boot_sole",
+        "raw_label": "厚实度不够",
+        "evidence": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "needs_new_label",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 1.76,
+        "vector_terms": {
+          "body": 0.028571,
+          "boot": 0.028571,
+          "boots": 0.028571,
+          "buffered": 0.028571,
+          "candidate": 0.028571,
+          "choices": 0.028571,
+          "comes": 0.028571,
+          "cons": 0.028571,
+          "extras": 0.028571,
+          "isn": 0.028571,
+          "issue": 0.028571,
+          "label": 0.057143,
+          "make": 0.028571,
+          "material": 0.028571,
+          "much": 0.028571,
+          "needs": 0.028571,
+          "new": 0.028571,
+          "other": 0.028571,
+          "outdoor": 0.028571,
+          "pressure": 0.028571,
+          "purchase": 0.028571,
+          "separate": 0.028571,
+          "sole": 0.057143,
+          "sucks": 0.028571,
+          "that": 0.028571,
+          "thin": 0.057143,
+          "unknown": 0.028571,
+          "very": 0.028571,
+          "waders": 0.028571,
+          "water": 0.028571,
+          "you": 0.028571,
+          "your": 0.028571
+        },
+        "vector_norm": 0.182945,
+        "metadata": {
+          "action": "needs_new_label",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:299385fcc8abf68e",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-351",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "overall_satisfied keeps_water_out",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Great product and keeps ou dry",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.047619,
+          "dry": 0.047619,
+          "expected": 0.047619,
+          "gold": 0.095238,
+          "great": 0.047619,
+          "keeps": 0.095238,
+          "labels": 0.047619,
+          "locked": 0.047619,
+          "ou": 0.047619,
+          "out": 0.047619,
+          "outdoor": 0.047619,
+          "overall": 0.047619,
+          "product": 0.047619,
+          "reference": 0.047619,
+          "regression": 0.095238,
+          "satisfied": 0.047619,
+          "waders": 0.047619,
+          "water": 0.047619
+        },
+        "vector_norm": 0.247436,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "overall_satisfied",
+            "keeps_water_out"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:299f73eb8dea242d",
+        "source_type": "gold_regression",
+        "source_id": "session121-all-waders-leak-eventually",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "You can pay $1000 for a pair of waders. Or you can pay $65.00 for 10 pairs of waders. Pro tip: ALL WADERS LEAK EVENTUALLY. I have owned 3 pairs of TidWe waders over the past 5 years. 1 pair finally leaked, the second pair I am still wearing, the third pair is still in the box.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "00": 0.018519,
+          "10": 0.018519,
+          "1000": 0.018519,
+          "65": 0.018519,
+          "all": 0.018519,
+          "am": 0.018519,
+          "blocked": 0.018519,
+          "box": 0.018519,
+          "can": 0.037037,
+          "eventually": 0.018519,
+          "expected": 0.018519,
+          "finally": 0.018519,
+          "gold": 0.037037,
+          "have": 0.018519,
+          "labels": 0.018519,
+          "leak": 0.018519,
+          "leaked": 0.018519,
+          "leaks": 0.018519,
+          "locked": 0.018519,
+          "outdoor": 0.018519,
+          "over": 0.018519,
+          "owned": 0.018519,
+          "pair": 0.074074,
+          "pairs": 0.037037,
+          "past": 0.018519,
+          "pay": 0.037037,
+          "pro": 0.018519,
+          "reference": 0.018519,
+          "regression": 0.037037,
+          "second": 0.018519,
+          "still": 0.037037,
+          "third": 0.018519,
+          "through": 0.018519,
+          "tidwe": 0.018519,
+          "tip": 0.018519,
+          "waders": 0.092593,
+          "water": 0.018519,
+          "wearing": 0.018519,
+          "years": 0.018519,
+          "you": 0.037037
+        },
+        "vector_norm": 0.185187,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [
+            "water_leaks_through"
+          ],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:2c0dbe96ebcb860a",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-8",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "fits_as_expected looks_good",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Purchased for my son, an avid ocean fisherman, and he loves these! Fit great and appear well made! He’s 6’1 and weighs about 190 ordered size 12.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "12": 0.028571,
+          "190": 0.028571,
+          "about": 0.028571,
+          "appear": 0.028571,
+          "avid": 0.028571,
+          "blocked": 0.028571,
+          "expected": 0.057143,
+          "fisherman": 0.028571,
+          "fit": 0.028571,
+          "fits": 0.028571,
+          "gold": 0.057143,
+          "good": 0.028571,
+          "great": 0.028571,
+          "he": 0.057143,
+          "labels": 0.028571,
+          "locked": 0.028571,
+          "looks": 0.028571,
+          "loves": 0.028571,
+          "made": 0.028571,
+          "my": 0.028571,
+          "ocean": 0.028571,
+          "ordered": 0.028571,
+          "outdoor": 0.028571,
+          "purchased": 0.028571,
+          "reference": 0.028571,
+          "regression": 0.057143,
+          "size": 0.028571,
+          "son": 0.028571,
+          "waders": 0.028571,
+          "weighs": 0.028571,
+          "well": 0.028571
+        },
+        "vector_norm": 0.187354,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "fits_as_expected",
+            "looks_good"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:2c1e6e73dbd29f9e",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-baby-l1-issue-blocked:0",
+        "category": "baby",
+        "sub_category": "Baby Bibs",
+        "label_type": "issue",
+        "canonical_label_key": "quality_problem",
+        "raw_label": "",
+        "evidence": "quality is poor",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "baby": 0.2,
+          "bibs": 0.1,
+          "blocked": 0.1,
+          "issue": 0.1,
+          "maturity": 0.1,
+          "poor": 0.1,
+          "problem": 0.1,
+          "quality": 0.2
+        },
+        "vector_norm": 0.374166,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:3541e437638fd133",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-10",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "size_fit_problem quality_problem",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Top boot seam was already damaged and clearly repaired and sent out as new. Boot size was perfect but pants were huge",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "already": 0.032258,
+          "blocked": 0.032258,
+          "boot": 0.064516,
+          "clearly": 0.032258,
+          "damaged": 0.032258,
+          "expected": 0.032258,
+          "fit": 0.032258,
+          "gold": 0.064516,
+          "huge": 0.032258,
+          "labels": 0.032258,
+          "locked": 0.032258,
+          "new": 0.032258,
+          "out": 0.032258,
+          "outdoor": 0.032258,
+          "pants": 0.032258,
+          "perfect": 0.032258,
+          "problem": 0.064516,
+          "quality": 0.032258,
+          "reference": 0.032258,
+          "regression": 0.064516,
+          "repaired": 0.032258,
+          "seam": 0.032258,
+          "sent": 0.032258,
+          "size": 0.064516,
+          "top": 0.032258,
+          "waders": 0.032258
+        },
+        "vector_norm": 0.206552,
+        "metadata": {
+          "expected_issue_keys": [
+            "size_fit_problem",
+            "quality_problem"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:3632297474c59301",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-353",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "looks_good",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Se ve de muy buena calidad",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.052632,
+          "buena": 0.052632,
+          "calidad": 0.052632,
+          "de": 0.052632,
+          "expected": 0.052632,
+          "gold": 0.105263,
+          "good": 0.052632,
+          "labels": 0.052632,
+          "locked": 0.052632,
+          "looks": 0.052632,
+          "muy": 0.052632,
+          "outdoor": 0.052632,
+          "reference": 0.052632,
+          "regression": 0.105263,
+          "se": 0.052632,
+          "ve": 0.052632,
+          "waders": 0.052632
+        },
+        "vector_norm": 0.252413,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "looks_good"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:366dcfb5a7abdc96",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-outdoor-l2-waterproof-specific-blocked:0",
+        "category": "outdoor",
+        "sub_category": "帐篷",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "",
+        "evidence": "leaked through the tent",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.1,
+          "issue": 0.1,
+          "leaked": 0.1,
+          "leaks": 0.1,
+          "maturity": 0.1,
+          "outdoor": 0.1,
+          "tent": 0.1,
+          "through": 0.2,
+          "water": 0.1
+        },
+        "vector_norm": 0.34641,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:36ad83925898f75c",
+        "source_type": "gold_regression",
+        "source_id": "session121-pocket-not-waterproof",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "pocket_not_waterproof keeps_water_out water_leaks_through",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "I’m an avid surf fisherman and these have become my go to waders over the more expensive brands. No matter how much you spend on waders, they will eventually leak. I bought these as a replacement for TIDEWE waders that lasted 3 seasons. You’ll definitely get your money’s worth. My gripe is that the pocket isn’t waterproof. It’s just a flap over with Velcro.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "avid": 0.015152,
+          "become": 0.015152,
+          "blocked": 0.015152,
+          "bought": 0.015152,
+          "brands": 0.015152,
+          "definitely": 0.015152,
+          "eventually": 0.015152,
+          "expected": 0.015152,
+          "expensive": 0.015152,
+          "fisherman": 0.015152,
+          "flap": 0.015152,
+          "get": 0.015152,
+          "go": 0.015152,
+          "gold": 0.030303,
+          "gripe": 0.015152,
+          "have": 0.015152,
+          "how": 0.015152,
+          "isn": 0.015152,
+          "just": 0.015152,
+          "keeps": 0.015152,
+          "labels": 0.015152,
+          "lasted": 0.015152,
+          "leak": 0.015152,
+          "leaks": 0.015152,
+          "ll": 0.015152,
+          "locked": 0.015152,
+          "matter": 0.015152,
+          "money": 0.015152,
+          "more": 0.015152,
+          "much": 0.015152,
+          "my": 0.030303,
+          "no": 0.015152,
+          "out": 0.015152,
+          "outdoor": 0.015152,
+          "over": 0.030303,
+          "pocket": 0.030303,
+          "reference": 0.015152,
+          "regression": 0.030303,
+          "replacement": 0.015152,
+          "seasons": 0.015152,
+          "spend": 0.015152,
+          "surf": 0.015152,
+          "that": 0.030303,
+          "they": 0.015152,
+          "through": 0.015152,
+          "tidewe": 0.015152,
+          "velcro": 0.015152,
+          "waders": 0.060606,
+          "water": 0.030303,
+          "waterproof": 0.030303,
+          "will": 0.015152,
+          "worth": 0.015152,
+          "you": 0.030303,
+          "your": 0.015152
+        },
+        "vector_norm": 0.148456,
+        "metadata": {
+          "expected_issue_keys": [
+            "pocket_not_waterproof"
+          ],
+          "expected_highlight_keys": [
+            "keeps_water_out"
+          ],
+          "blocked_issue_keys": [
+            "water_leaks_through"
+          ],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:376b77d454248d45",
+        "source_type": "gold_regression",
+        "source_id": "session121-fit-daughter-wonderfully",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "fits_as_expected",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Fit my daughter wonderfully!! She is 5.2 and 120 lbs with size 6 shoe.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "120": 0.045455,
+          "blocked": 0.045455,
+          "daughter": 0.045455,
+          "expected": 0.090909,
+          "fit": 0.045455,
+          "fits": 0.045455,
+          "gold": 0.090909,
+          "labels": 0.045455,
+          "lbs": 0.045455,
+          "locked": 0.045455,
+          "my": 0.045455,
+          "outdoor": 0.045455,
+          "reference": 0.045455,
+          "regression": 0.090909,
+          "she": 0.045455,
+          "shoe": 0.045455,
+          "size": 0.045455,
+          "waders": 0.045455,
+          "wonderfully": 0.045455
+        },
+        "vector_norm": 0.240524,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "fits_as_expected"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:3a86c305d4f926ef",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-office-l1-fit-blocked:0",
+        "category": "office",
+        "sub_category": "办公椅",
+        "label_type": "highlight",
+        "canonical_label_key": "fits_as_expected",
+        "raw_label": "",
+        "evidence": "fits perfectly",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.125,
+          "expected": 0.125,
+          "fits": 0.25,
+          "highlight": 0.125,
+          "maturity": 0.125,
+          "office": 0.125,
+          "perfectly": 0.125
+        },
+        "vector_norm": 0.395285,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:3d4c51447b9859b7",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-invalid-json:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "audit",
+        "canonical_label_key": "",
+        "raw_label": "",
+        "evidence": "",
+        "content": "",
+        "downgrade_reasons": [
+          "invalid_json"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "audit": 0.2,
+          "invalid": 0.2,
+          "json": 0.2,
+          "outdoor": 0.2,
+          "waders": 0.2
+        },
+        "vector_norm": 0.447214,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:3edf3cef4ca41145",
+        "source_type": "gold_regression",
+        "source_id": "session121-got-soaked-holes",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "water_leaks_through not_breathable keeps_water_out",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "The first time I wore them, I got soaked. There are definitely holes in both sides of the legs and boots. They didn’t last a minute. They do NOT breath, which is understandable but noteworthy.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.02439,
+          "boots": 0.02439,
+          "both": 0.02439,
+          "breath": 0.02439,
+          "breathable": 0.02439,
+          "definitely": 0.02439,
+          "didn": 0.02439,
+          "do": 0.02439,
+          "expected": 0.02439,
+          "first": 0.02439,
+          "gold": 0.04878,
+          "got": 0.02439,
+          "holes": 0.02439,
+          "keeps": 0.02439,
+          "labels": 0.02439,
+          "last": 0.02439,
+          "leaks": 0.02439,
+          "legs": 0.02439,
+          "locked": 0.02439,
+          "minute": 0.02439,
+          "noteworthy": 0.02439,
+          "out": 0.02439,
+          "outdoor": 0.02439,
+          "reference": 0.02439,
+          "regression": 0.04878,
+          "sides": 0.02439,
+          "soaked": 0.02439,
+          "them": 0.02439,
+          "there": 0.02439,
+          "they": 0.04878,
+          "through": 0.02439,
+          "time": 0.02439,
+          "understandable": 0.02439,
+          "waders": 0.02439,
+          "water": 0.04878,
+          "which": 0.02439,
+          "wore": 0.02439
+        },
+        "vector_norm": 0.17073,
+        "metadata": {
+          "expected_issue_keys": [
+            "water_leaks_through",
+            "not_breathable"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": [
+            "keeps_water_out"
+          ]
+        }
+      },
+      {
+        "memory_id": "badcase:3f9a0afad1b8e269",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-evidence-not-found:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "Water Leaks Through",
+        "evidence": "leaked through the seams",
+        "content": "",
+        "downgrade_reasons": [
+          "evidence_not_found"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "evidence": 0.071429,
+          "found": 0.071429,
+          "issue": 0.071429,
+          "leaked": 0.071429,
+          "leaks": 0.142857,
+          "outdoor": 0.071429,
+          "seams": 0.071429,
+          "through": 0.214286,
+          "waders": 0.071429,
+          "water": 0.142857
+        },
+        "vector_norm": 0.349928,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:40bd7c06db46633c",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-11",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "overall_satisfied",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "They work well - highly recommend,",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.055556,
+          "expected": 0.055556,
+          "gold": 0.111111,
+          "highly": 0.055556,
+          "labels": 0.055556,
+          "locked": 0.055556,
+          "outdoor": 0.055556,
+          "overall": 0.055556,
+          "recommend": 0.055556,
+          "reference": 0.055556,
+          "regression": 0.111111,
+          "satisfied": 0.055556,
+          "they": 0.055556,
+          "waders": 0.055556,
+          "well": 0.055556,
+          "work": 0.055556
+        },
+        "vector_norm": 0.26058,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "overall_satisfied"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:43ef557863c40153",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-negative-do-not-keep-dry:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "keeps_water_out",
+        "raw_label": "",
+        "evidence": "keep you dry",
+        "content": "",
+        "downgrade_reasons": [
+          "context_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.090909,
+          "context": 0.090909,
+          "dry": 0.090909,
+          "highlight": 0.090909,
+          "keep": 0.090909,
+          "keeps": 0.090909,
+          "out": 0.090909,
+          "outdoor": 0.090909,
+          "waders": 0.090909,
+          "water": 0.090909,
+          "you": 0.090909
+        },
+        "vector_norm": 0.301511,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:45560d03845f5e4d",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:85f61303a2f5fead",
+        "category": "3c",
+        "sub_category": "USB C Charger Block",
+        "label_type": "issue",
+        "canonical_label_key": "charging_fails",
+        "raw_label": "Charging fails",
+        "evidence": "fails to charge",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "accepted",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 1.71,
+        "vector_terms": {
+          "3c": 0.071429,
+          "accepted": 0.071429,
+          "block": 0.071429,
+          "blocked": 0.071429,
+          "charge": 0.071429,
+          "charger": 0.071429,
+          "charging": 0.142857,
+          "fails": 0.214286,
+          "issue": 0.071429,
+          "maturity": 0.071429,
+          "usb": 0.071429
+        },
+        "vector_norm": 0.335031,
+        "metadata": {
+          "action": "accept",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:489f30aeb25b6f94",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-9",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "overall_satisfied",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Excellent ! Worked perfectly!",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.0625,
+          "excellent": 0.0625,
+          "expected": 0.0625,
+          "gold": 0.125,
+          "labels": 0.0625,
+          "locked": 0.0625,
+          "outdoor": 0.0625,
+          "overall": 0.0625,
+          "perfectly": 0.0625,
+          "reference": 0.0625,
+          "regression": 0.125,
+          "satisfied": 0.0625,
+          "waders": 0.0625,
+          "worked": 0.0625
+        },
+        "vector_norm": 0.279508,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "overall_satisfied"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:49a460ae0e17d80f",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:c2eb87dfe99ac14c",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "Water Leaks Through",
+        "evidence": "do not keep you dry",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "accepted",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 1.71,
+        "vector_terms": {
+          "accepted": 0.0625,
+          "blocked": 0.0625,
+          "do": 0.0625,
+          "dry": 0.0625,
+          "issue": 0.0625,
+          "keep": 0.0625,
+          "leaks": 0.125,
+          "maturity": 0.0625,
+          "outdoor": 0.0625,
+          "through": 0.125,
+          "waders": 0.0625,
+          "water": 0.125,
+          "you": 0.0625
+        },
+        "vector_norm": 0.293151,
+        "metadata": {
+          "action": "accept",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:4abebb706e03e32c",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-generic-four-pack:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "fits_as_expected",
+        "raw_label": "",
+        "evidence": "Great product",
+        "content": "",
+        "downgrade_reasons": [
+          "evidence_too_generic"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "evidence": 0.1,
+          "expected": 0.1,
+          "fits": 0.1,
+          "generic": 0.1,
+          "great": 0.1,
+          "highlight": 0.1,
+          "outdoor": 0.1,
+          "product": 0.1,
+          "too": 0.1,
+          "waders": 0.1
+        },
+        "vector_norm": 0.316228,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:4e87990a55653c80",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-361",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "size_fit_problem",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "The only thing I hate about these waders is the belt loops are too high and the chest belt tightens around the lower portion of the front pocket. Poor design.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "about": 0.030303,
+          "around": 0.030303,
+          "belt": 0.060606,
+          "blocked": 0.030303,
+          "chest": 0.030303,
+          "design": 0.030303,
+          "expected": 0.030303,
+          "fit": 0.030303,
+          "front": 0.030303,
+          "gold": 0.060606,
+          "hate": 0.030303,
+          "high": 0.030303,
+          "labels": 0.030303,
+          "locked": 0.030303,
+          "loops": 0.030303,
+          "lower": 0.030303,
+          "only": 0.030303,
+          "outdoor": 0.030303,
+          "pocket": 0.030303,
+          "poor": 0.030303,
+          "portion": 0.030303,
+          "problem": 0.030303,
+          "reference": 0.030303,
+          "regression": 0.060606,
+          "size": 0.030303,
+          "thing": 0.030303,
+          "tightens": 0.030303,
+          "too": 0.030303,
+          "waders": 0.060606
+        },
+        "vector_norm": 0.194034,
+        "metadata": {
+          "expected_issue_keys": [
+            "size_fit_problem"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:531dd7b67a3e87d7",
+        "source_type": "gold_regression",
+        "source_id": "session121-did-not-keep-dry",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "water_leaks_through size_fit_problem keeps_water_out",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "First the sizing is not great. We ordered by boot size and the boots fit but the rest of it was way too big. And more importantly it did not keep him dry. The insides on the legs were wet.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "big": 0.023256,
+          "blocked": 0.023256,
+          "boot": 0.023256,
+          "boots": 0.023256,
+          "by": 0.023256,
+          "did": 0.023256,
+          "dry": 0.023256,
+          "expected": 0.023256,
+          "first": 0.023256,
+          "fit": 0.046512,
+          "gold": 0.046512,
+          "great": 0.023256,
+          "him": 0.023256,
+          "importantly": 0.023256,
+          "insides": 0.023256,
+          "keep": 0.023256,
+          "keeps": 0.023256,
+          "labels": 0.023256,
+          "leaks": 0.023256,
+          "legs": 0.023256,
+          "locked": 0.023256,
+          "more": 0.023256,
+          "ordered": 0.023256,
+          "out": 0.023256,
+          "outdoor": 0.023256,
+          "problem": 0.023256,
+          "reference": 0.023256,
+          "regression": 0.046512,
+          "rest": 0.023256,
+          "size": 0.046512,
+          "sizing": 0.023256,
+          "through": 0.023256,
+          "too": 0.023256,
+          "waders": 0.023256,
+          "water": 0.046512,
+          "way": 0.023256,
+          "we": 0.023256,
+          "wet": 0.023256
+        },
+        "vector_norm": 0.169306,
+        "metadata": {
+          "expected_issue_keys": [
+            "water_leaks_through",
+            "size_fit_problem"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": [
+            "keeps_water_out"
+          ]
+        }
+      },
+      {
+        "memory_id": "badcase:537e57990b2b654b",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-3",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "fits_as_expected",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "I am 6'3\" with size 13-wide feet, but I am quite slim.  Getting anything to fit is difficult.  I ordered the size 14 and was pleasantly surprised that my feet slid easily into the flexible bots and the inside leg length fitted me perfectly.  I have not yet tested in water so cannot comment on its leakproof quality, but at this point I am pleased with the purchase.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "13": 0.017241,
+          "14": 0.017241,
+          "am": 0.051724,
+          "anything": 0.017241,
+          "blocked": 0.017241,
+          "bots": 0.017241,
+          "cannot": 0.017241,
+          "comment": 0.017241,
+          "difficult": 0.017241,
+          "easily": 0.017241,
+          "expected": 0.034483,
+          "feet": 0.034483,
+          "fit": 0.017241,
+          "fits": 0.017241,
+          "fitted": 0.017241,
+          "flexible": 0.017241,
+          "getting": 0.017241,
+          "gold": 0.034483,
+          "have": 0.017241,
+          "inside": 0.017241,
+          "into": 0.017241,
+          "its": 0.017241,
+          "labels": 0.017241,
+          "leakproof": 0.017241,
+          "leg": 0.017241,
+          "length": 0.017241,
+          "locked": 0.017241,
+          "me": 0.017241,
+          "my": 0.017241,
+          "ordered": 0.017241,
+          "outdoor": 0.017241,
+          "perfectly": 0.017241,
+          "pleasantly": 0.017241,
+          "pleased": 0.017241,
+          "point": 0.017241,
+          "purchase": 0.017241,
+          "quality": 0.017241,
+          "quite": 0.017241,
+          "reference": 0.017241,
+          "regression": 0.034483,
+          "size": 0.034483,
+          "slid": 0.017241,
+          "slim": 0.017241,
+          "so": 0.017241,
+          "surprised": 0.017241,
+          "tested": 0.017241,
+          "that": 0.017241,
+          "waders": 0.017241,
+          "water": 0.017241,
+          "wide": 0.017241,
+          "yet": 0.017241
+        },
+        "vector_norm": 0.148314,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "fits_as_expected"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:5725b855d11f28a8",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-generic-four-pack:2",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "holds_up_well",
+        "raw_label": "",
+        "evidence": "Great product",
+        "content": "",
+        "downgrade_reasons": [
+          "evidence_too_generic"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "evidence": 0.090909,
+          "generic": 0.090909,
+          "great": 0.090909,
+          "highlight": 0.090909,
+          "holds": 0.090909,
+          "outdoor": 0.090909,
+          "product": 0.090909,
+          "too": 0.090909,
+          "up": 0.090909,
+          "waders": 0.090909,
+          "well": 0.090909
+        },
+        "vector_norm": 0.301511,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:57e9c52da9d920dd",
+        "source_type": "gold_regression",
+        "source_id": "session122-other-neoprene-waders-leak",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "keeps_water_out water_leaks_through",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "These waders are awesome. I have spent hundreds of dollars on other neoprene waders that continue to leak and lead to a less than optimal fishing experience. These waders are lightweight and keep you dry. They also dry out super quick between wears. So far, I have had them for a couple weeks and I am completely satisfied.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "also": 0.017241,
+          "am": 0.017241,
+          "awesome": 0.017241,
+          "between": 0.017241,
+          "blocked": 0.017241,
+          "completely": 0.017241,
+          "continue": 0.017241,
+          "couple": 0.017241,
+          "dollars": 0.017241,
+          "dry": 0.034483,
+          "expected": 0.017241,
+          "experience": 0.017241,
+          "far": 0.017241,
+          "fishing": 0.017241,
+          "gold": 0.034483,
+          "had": 0.017241,
+          "have": 0.034483,
+          "hundreds": 0.017241,
+          "keep": 0.017241,
+          "keeps": 0.017241,
+          "labels": 0.017241,
+          "lead": 0.017241,
+          "leak": 0.017241,
+          "leaks": 0.017241,
+          "less": 0.017241,
+          "lightweight": 0.017241,
+          "locked": 0.017241,
+          "neoprene": 0.017241,
+          "optimal": 0.017241,
+          "other": 0.017241,
+          "out": 0.034483,
+          "outdoor": 0.017241,
+          "quick": 0.017241,
+          "reference": 0.017241,
+          "regression": 0.034483,
+          "satisfied": 0.017241,
+          "so": 0.017241,
+          "spent": 0.017241,
+          "super": 0.017241,
+          "than": 0.017241,
+          "that": 0.017241,
+          "them": 0.017241,
+          "they": 0.017241,
+          "through": 0.017241,
+          "waders": 0.068966,
+          "water": 0.034483,
+          "wears": 0.017241,
+          "weeks": 0.017241,
+          "you": 0.017241
+        },
+        "vector_norm": 0.156126,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "keeps_water_out"
+          ],
+          "blocked_issue_keys": [
+            "water_leaks_through"
+          ],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:5ad7be3d630c6aca",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-362",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "fits_as_expected",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Fit me well.  I’m about 5’ 8” and weigh about 180 lbs.  My shoe size is 9 1/2, and I bought a wader boot size of 10.  They fit fine.  I tried them out, and they worked good.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "10": 0.026316,
+          "180": 0.026316,
+          "about": 0.052632,
+          "blocked": 0.026316,
+          "boot": 0.026316,
+          "bought": 0.026316,
+          "expected": 0.052632,
+          "fine": 0.026316,
+          "fit": 0.052632,
+          "fits": 0.026316,
+          "gold": 0.052632,
+          "good": 0.026316,
+          "labels": 0.026316,
+          "lbs": 0.026316,
+          "locked": 0.026316,
+          "me": 0.026316,
+          "my": 0.026316,
+          "out": 0.026316,
+          "outdoor": 0.026316,
+          "reference": 0.026316,
+          "regression": 0.052632,
+          "shoe": 0.026316,
+          "size": 0.052632,
+          "them": 0.026316,
+          "they": 0.052632,
+          "tried": 0.026316,
+          "wader": 0.026316,
+          "waders": 0.026316,
+          "weigh": 0.026316,
+          "well": 0.026316,
+          "worked": 0.026316
+        },
+        "vector_norm": 0.189767,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "fits_as_expected"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:5ecf174fdd2873d7",
+        "source_type": "gold_regression",
+        "source_id": "session121-shoe-size-wrong",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "size_fit_problem fits_as_expected",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "I’m a 10.5 shoe. I ordered the 11 and they fit like they are a 10. It said to order try to size which is wrong.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "10": 0.064516,
+          "11": 0.032258,
+          "blocked": 0.032258,
+          "expected": 0.064516,
+          "fit": 0.064516,
+          "fits": 0.032258,
+          "gold": 0.064516,
+          "labels": 0.032258,
+          "like": 0.032258,
+          "locked": 0.032258,
+          "order": 0.032258,
+          "ordered": 0.032258,
+          "outdoor": 0.032258,
+          "problem": 0.032258,
+          "reference": 0.032258,
+          "regression": 0.064516,
+          "said": 0.032258,
+          "shoe": 0.032258,
+          "size": 0.064516,
+          "they": 0.064516,
+          "try": 0.032258,
+          "waders": 0.032258,
+          "which": 0.032258,
+          "wrong": 0.032258
+        },
+        "vector_norm": 0.216393,
+        "metadata": {
+          "expected_issue_keys": [
+            "size_fit_problem"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": [
+            "fits_as_expected"
+          ]
+        }
+      },
+      {
+        "memory_id": "badcase:5f93c636e5162e32",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-maturity-blocked:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "",
+        "evidence": "do not keep you dry",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.083333,
+          "do": 0.083333,
+          "dry": 0.083333,
+          "issue": 0.083333,
+          "keep": 0.083333,
+          "leaks": 0.083333,
+          "maturity": 0.083333,
+          "outdoor": 0.083333,
+          "through": 0.083333,
+          "waders": 0.083333,
+          "water": 0.083333,
+          "you": 0.083333
+        },
+        "vector_norm": 0.288674,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:6164262737213dfc",
+        "source_type": "audited_bad_case",
+        "source_id": "waders-351-400-row-396:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "candidate:not_for_frequent_use",
+        "raw_label": "不适合经常使用",
+        "evidence": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "backup": 0.052632,
+          "candidate": 0.052632,
+          "doesn": 0.052632,
+          "frequent": 0.052632,
+          "highly": 0.052632,
+          "issue": 0.052632,
+          "label": 0.052632,
+          "need": 0.052632,
+          "often": 0.052632,
+          "outdoor": 0.052632,
+          "pair": 0.052632,
+          "recommend": 0.052632,
+          "someone": 0.052632,
+          "them": 0.105263,
+          "unknown": 0.052632,
+          "use": 0.052632,
+          "waders": 0.052632,
+          "who": 0.052632
+        },
+        "vector_norm": 0.24119,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:64f28170331a7980",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-357",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "good_value_for_the_price overall_satisfied",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Nice waders for the price.  Will function as desired.  Not certain of the longevity of the product.  Made from thin material.  So not certain of durability.  Used two time this far.  Worked well during thise two outings.  Everything is as described.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.022727,
+          "certain": 0.045455,
+          "described": 0.022727,
+          "desired": 0.022727,
+          "durability": 0.022727,
+          "during": 0.022727,
+          "everything": 0.022727,
+          "expected": 0.022727,
+          "far": 0.022727,
+          "from": 0.022727,
+          "function": 0.022727,
+          "gold": 0.045455,
+          "good": 0.022727,
+          "labels": 0.022727,
+          "locked": 0.022727,
+          "longevity": 0.022727,
+          "made": 0.022727,
+          "material": 0.022727,
+          "nice": 0.022727,
+          "outdoor": 0.022727,
+          "outings": 0.022727,
+          "overall": 0.022727,
+          "price": 0.045455,
+          "product": 0.022727,
+          "reference": 0.022727,
+          "regression": 0.045455,
+          "satisfied": 0.022727,
+          "so": 0.022727,
+          "thin": 0.022727,
+          "thise": 0.022727,
+          "time": 0.022727,
+          "two": 0.045455,
+          "used": 0.022727,
+          "value": 0.022727,
+          "waders": 0.045455,
+          "well": 0.022727,
+          "will": 0.022727,
+          "worked": 0.022727
+        },
+        "vector_norm": 0.170075,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "good_value_for_the_price",
+            "overall_satisfied"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:68c182e140ae907f",
+        "source_type": "audited_bad_case",
+        "source_id": "waders-351-400-row-368:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "candidate:good_customer_service",
+        "raw_label": "客服服务好",
+        "evidence": "Excellent customer service",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "candidate": 0.083333,
+          "customer": 0.166667,
+          "excellent": 0.083333,
+          "good": 0.083333,
+          "highlight": 0.083333,
+          "label": 0.083333,
+          "outdoor": 0.083333,
+          "service": 0.166667,
+          "unknown": 0.083333,
+          "waders": 0.083333
+        },
+        "vector_norm": 0.333333,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:6b0249a7fa3717e2",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:b1f868a8103046d5",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "candidate:not_for_frequent_use",
+        "raw_label": "不适合经常使用",
+        "evidence": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "needs_new_label",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 1.76,
+        "vector_terms": {
+          "backup": 0.045455,
+          "candidate": 0.045455,
+          "doesn": 0.045455,
+          "frequent": 0.045455,
+          "highly": 0.045455,
+          "issue": 0.045455,
+          "label": 0.090909,
+          "need": 0.045455,
+          "needs": 0.045455,
+          "new": 0.045455,
+          "often": 0.045455,
+          "outdoor": 0.045455,
+          "pair": 0.045455,
+          "recommend": 0.045455,
+          "someone": 0.045455,
+          "them": 0.090909,
+          "unknown": 0.045455,
+          "use": 0.045455,
+          "waders": 0.045455,
+          "who": 0.045455
+        },
+        "vector_norm": 0.231775,
+        "metadata": {
+          "action": "needs_new_label",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:6c59b0a2eef253c7",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-phone-case:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "",
+        "evidence": "It is not waterproof",
+        "content": "",
+        "downgrade_reasons": [
+          "source_review_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.1,
+          "issue": 0.1,
+          "leaks": 0.1,
+          "outdoor": 0.1,
+          "review": 0.1,
+          "source": 0.1,
+          "through": 0.1,
+          "waders": 0.1,
+          "water": 0.1,
+          "waterproof": 0.1
+        },
+        "vector_norm": 0.316228,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:6f9ffd04c56a5c45",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-355",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "overall_satisfied",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Un buen producto",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.0625,
+          "buen": 0.0625,
+          "expected": 0.0625,
+          "gold": 0.125,
+          "labels": 0.0625,
+          "locked": 0.0625,
+          "outdoor": 0.0625,
+          "overall": 0.0625,
+          "producto": 0.0625,
+          "reference": 0.0625,
+          "regression": 0.125,
+          "satisfied": 0.0625,
+          "un": 0.0625,
+          "waders": 0.0625
+        },
+        "vector_norm": 0.279508,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "overall_satisfied"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:70959b0e92dbf33a",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-cluster-propagated:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "",
+        "evidence": "do not keep you dry",
+        "content": "",
+        "downgrade_reasons": [
+          "cluster_propagated"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "cluster": 0.083333,
+          "do": 0.083333,
+          "dry": 0.083333,
+          "issue": 0.083333,
+          "keep": 0.083333,
+          "leaks": 0.083333,
+          "outdoor": 0.083333,
+          "propagated": 0.083333,
+          "through": 0.083333,
+          "waders": 0.083333,
+          "water": 0.083333,
+          "you": 0.083333
+        },
+        "vector_norm": 0.288674,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:70d275302c23aa33",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-1",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "size_fit_problem",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "The inseam seemed tight, a bit restrictive. I’ll be returning this item",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "bit": 0.045455,
+          "blocked": 0.045455,
+          "expected": 0.045455,
+          "fit": 0.045455,
+          "gold": 0.090909,
+          "inseam": 0.045455,
+          "item": 0.045455,
+          "labels": 0.045455,
+          "ll": 0.045455,
+          "locked": 0.045455,
+          "outdoor": 0.045455,
+          "problem": 0.045455,
+          "reference": 0.045455,
+          "regression": 0.090909,
+          "restrictive": 0.045455,
+          "returning": 0.045455,
+          "seemed": 0.045455,
+          "size": 0.045455,
+          "tight": 0.045455,
+          "waders": 0.045455
+        },
+        "vector_norm": 0.231775,
+        "metadata": {
+          "expected_issue_keys": [
+            "size_fit_problem"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:738739e3e5558275",
+        "source_type": "audited_bad_case",
+        "source_id": "waders-351-400-row-374:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "candidate:thin_boot_sole",
+        "raw_label": "厚实度不够",
+        "evidence": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "body": 0.03125,
+          "boot": 0.03125,
+          "boots": 0.03125,
+          "buffered": 0.03125,
+          "candidate": 0.03125,
+          "choices": 0.03125,
+          "comes": 0.03125,
+          "cons": 0.03125,
+          "extras": 0.03125,
+          "isn": 0.03125,
+          "issue": 0.03125,
+          "label": 0.03125,
+          "make": 0.03125,
+          "material": 0.03125,
+          "much": 0.03125,
+          "other": 0.03125,
+          "outdoor": 0.03125,
+          "pressure": 0.03125,
+          "purchase": 0.03125,
+          "separate": 0.03125,
+          "sole": 0.0625,
+          "sucks": 0.03125,
+          "that": 0.03125,
+          "thin": 0.0625,
+          "unknown": 0.03125,
+          "very": 0.03125,
+          "waders": 0.03125,
+          "water": 0.03125,
+          "you": 0.03125,
+          "your": 0.03125
+        },
+        "vector_norm": 0.1875,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:74f566d3d116b405",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-360",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "overall_satisfied",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "They're nice waders.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.058824,
+          "expected": 0.058824,
+          "gold": 0.117647,
+          "labels": 0.058824,
+          "locked": 0.058824,
+          "nice": 0.058824,
+          "outdoor": 0.058824,
+          "overall": 0.058824,
+          "re": 0.058824,
+          "reference": 0.058824,
+          "regression": 0.117647,
+          "satisfied": 0.058824,
+          "they": 0.058824,
+          "waders": 0.117647
+        },
+        "vector_norm": 0.282109,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "overall_satisfied"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:798f9f010fe1f632",
+        "source_type": "audited_bad_case",
+        "source_id": "waders-351-400-row-365:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "candidate:breathes_well_evidence_unclear",
+        "raw_label": "透气性好",
+        "evidence": "Keep me dryish for the most part",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "breathes": 0.066667,
+          "candidate": 0.066667,
+          "dryish": 0.066667,
+          "evidence": 0.066667,
+          "highlight": 0.066667,
+          "keep": 0.066667,
+          "label": 0.066667,
+          "me": 0.066667,
+          "most": 0.066667,
+          "outdoor": 0.066667,
+          "part": 0.066667,
+          "unclear": 0.066667,
+          "unknown": 0.066667,
+          "waders": 0.066667,
+          "well": 0.066667
+        },
+        "vector_norm": 0.2582,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:7c48e48947d11599",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-automotive-l1-quality-blocked:0",
+        "category": "automotive",
+        "sub_category": "车载充电器",
+        "label_type": "issue",
+        "canonical_label_key": "quality_problem",
+        "raw_label": "",
+        "evidence": "quality is poor",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.91,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "automotive": 0.125,
+          "blocked": 0.125,
+          "issue": 0.125,
+          "maturity": 0.125,
+          "poor": 0.125,
+          "problem": 0.125,
+          "quality": 0.25
+        },
+        "vector_norm": 0.395285,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:83c6ee63562054e9",
+        "source_type": "gold_regression",
+        "source_id": "session121-spanish-boot-too-small",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "size_fit_problem",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Buen producto, pero es difícil encontrar la talla adecuada con las indicaciones de la publicación. En mi caso el traje quedó bien pero la talla de botas fue muy pequeña.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "adecuada": 0.022222,
+          "bien": 0.022222,
+          "blocked": 0.022222,
+          "botas": 0.022222,
+          "buen": 0.022222,
+          "caso": 0.022222,
+          "cil": 0.022222,
+          "con": 0.022222,
+          "de": 0.044444,
+          "dif": 0.022222,
+          "el": 0.022222,
+          "en": 0.022222,
+          "encontrar": 0.022222,
+          "es": 0.022222,
+          "expected": 0.022222,
+          "fit": 0.022222,
+          "fue": 0.022222,
+          "gold": 0.044444,
+          "indicaciones": 0.022222,
+          "la": 0.066667,
+          "labels": 0.022222,
+          "las": 0.022222,
+          "locked": 0.022222,
+          "mi": 0.022222,
+          "muy": 0.022222,
+          "outdoor": 0.022222,
+          "peque": 0.022222,
+          "pero": 0.044444,
+          "problem": 0.022222,
+          "producto": 0.022222,
+          "publicaci": 0.022222,
+          "qued": 0.022222,
+          "reference": 0.022222,
+          "regression": 0.044444,
+          "size": 0.022222,
+          "talla": 0.044444,
+          "traje": 0.022222,
+          "waders": 0.022222
+        },
+        "vector_norm": 0.17356,
+        "metadata": {
+          "expected_issue_keys": [
+            "size_fit_problem"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:99f1a58852cd4bf4",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-359",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "fits_as_expected overall_satisfied",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Good product fits good",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.052632,
+          "expected": 0.105263,
+          "fits": 0.105263,
+          "gold": 0.105263,
+          "good": 0.105263,
+          "labels": 0.052632,
+          "locked": 0.052632,
+          "outdoor": 0.052632,
+          "overall": 0.052632,
+          "product": 0.052632,
+          "reference": 0.052632,
+          "regression": 0.105263,
+          "satisfied": 0.052632,
+          "waders": 0.052632
+        },
+        "vector_norm": 0.28343,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "fits_as_expected",
+            "overall_satisfied"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:9d6a41164746af9c",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-unknown-label:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "candidate:boot_seam_leak",
+        "raw_label": "Boot Seam Leak",
+        "evidence": "boot seam leaked",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "boot": 0.2,
+          "candidate": 0.066667,
+          "issue": 0.066667,
+          "label": 0.066667,
+          "leak": 0.133333,
+          "leaked": 0.066667,
+          "outdoor": 0.066667,
+          "seam": 0.2,
+          "unknown": 0.066667,
+          "waders": 0.066667
+        },
+        "vector_norm": 0.359011,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:9e27dfbf15c61b26",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:cf6b45d6c153e154",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "candidate:breathes_well_evidence_unclear",
+        "raw_label": "透气性好",
+        "evidence": "Keep me dryish for the most part",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "needs_new_label",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 1.76,
+        "vector_terms": {
+          "breathes": 0.055556,
+          "candidate": 0.055556,
+          "dryish": 0.055556,
+          "evidence": 0.055556,
+          "highlight": 0.055556,
+          "keep": 0.055556,
+          "label": 0.111111,
+          "me": 0.055556,
+          "most": 0.055556,
+          "needs": 0.055556,
+          "new": 0.055556,
+          "outdoor": 0.055556,
+          "part": 0.055556,
+          "unclear": 0.055556,
+          "unknown": 0.055556,
+          "waders": 0.055556,
+          "well": 0.055556
+        },
+        "vector_norm": 0.248454,
+        "metadata": {
+          "action": "needs_new_label",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:9ea1544d09fd6b21",
+        "source_type": "audited_bad_case",
+        "source_id": "waders-351-400-row-372:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "candidate:not_for_hardcore_conditions",
+        "raw_label": "不适合极端环境",
+        "evidence": "I think these waders are a good choice for light duty.",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "candidate": 0.071429,
+          "choice": 0.071429,
+          "conditions": 0.071429,
+          "duty": 0.071429,
+          "good": 0.071429,
+          "hardcore": 0.071429,
+          "issue": 0.071429,
+          "label": 0.071429,
+          "light": 0.071429,
+          "outdoor": 0.071429,
+          "think": 0.071429,
+          "unknown": 0.071429,
+          "waders": 0.142857
+        },
+        "vector_norm": 0.285716,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:a66b5fc9c4f3bdc7",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-2",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "breaks_easily good_value_for_the_price",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "They are alright it was something not that expensive to buy I got to use them about 10 times before I got a hole somewhere on the boot. If you need something or just getting started in wading and don’t have the money at the moment I would say give them a try but if you do have the budget go with something else",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "10": 0.017241,
+          "about": 0.017241,
+          "alright": 0.017241,
+          "before": 0.017241,
+          "blocked": 0.017241,
+          "boot": 0.017241,
+          "breaks": 0.017241,
+          "budget": 0.017241,
+          "buy": 0.017241,
+          "do": 0.017241,
+          "don": 0.017241,
+          "easily": 0.017241,
+          "else": 0.017241,
+          "expected": 0.017241,
+          "expensive": 0.017241,
+          "getting": 0.017241,
+          "give": 0.017241,
+          "go": 0.017241,
+          "gold": 0.034483,
+          "good": 0.017241,
+          "got": 0.034483,
+          "have": 0.034483,
+          "hole": 0.017241,
+          "if": 0.034483,
+          "just": 0.017241,
+          "labels": 0.017241,
+          "locked": 0.017241,
+          "moment": 0.017241,
+          "money": 0.017241,
+          "need": 0.017241,
+          "outdoor": 0.017241,
+          "price": 0.017241,
+          "reference": 0.017241,
+          "regression": 0.034483,
+          "say": 0.017241,
+          "something": 0.051724,
+          "somewhere": 0.017241,
+          "started": 0.017241,
+          "that": 0.017241,
+          "them": 0.034483,
+          "they": 0.017241,
+          "times": 0.017241,
+          "try": 0.017241,
+          "use": 0.017241,
+          "value": 0.017241,
+          "waders": 0.017241,
+          "wading": 0.017241,
+          "would": 0.017241,
+          "you": 0.034483
+        },
+        "vector_norm": 0.15227,
+        "metadata": {
+          "expected_issue_keys": [
+            "breaks_easily"
+          ],
+          "expected_highlight_keys": [
+            "good_value_for_the_price"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:a6b5fb6adbe6d90a",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:3c5dc187d659426a",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "candidate:good_customer_service",
+        "raw_label": "客服服务好",
+        "evidence": "Excellent customer service",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "needs_new_label",
+        "review_count": 1,
+        "confidence": 0.88,
+        "top_impact_score": 1.76,
+        "vector_terms": {
+          "candidate": 0.066667,
+          "customer": 0.133333,
+          "excellent": 0.066667,
+          "good": 0.066667,
+          "highlight": 0.066667,
+          "label": 0.133333,
+          "needs": 0.066667,
+          "new": 0.066667,
+          "outdoor": 0.066667,
+          "service": 0.133333,
+          "unknown": 0.066667,
+          "waders": 0.066667
+        },
+        "vector_norm": 0.305505,
+        "metadata": {
+          "action": "needs_new_label",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:a6ea6d70065bf055",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:57e2850afc96bd0a",
+        "category": "pet",
+        "sub_category": "Dog Treats",
+        "label_type": "highlight",
+        "canonical_label_key": "good_value_for_the_price",
+        "raw_label": "Good value for the price",
+        "evidence": "great value for the price",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "accepted",
+        "review_count": 1,
+        "confidence": 0.91,
+        "top_impact_score": 1.729,
+        "vector_terms": {
+          "accepted": 0.0625,
+          "blocked": 0.0625,
+          "dog": 0.0625,
+          "good": 0.125,
+          "great": 0.0625,
+          "highlight": 0.0625,
+          "maturity": 0.0625,
+          "pet": 0.0625,
+          "price": 0.1875,
+          "treats": 0.0625,
+          "value": 0.1875
+        },
+        "vector_norm": 0.342327,
+        "metadata": {
+          "action": "accept",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:a962fbac4b186c01",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:df3be235a1d23c9c",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "candidate:boot_seam_leak",
+        "raw_label": "Boot Seam Leak",
+        "evidence": "boot seam leaked",
+        "content": "",
+        "downgrade_reasons": [
+          "unknown_label"
+        ],
+        "review_status": "needs_new_label",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 1.8,
+        "vector_terms": {
+          "boot": 0.166667,
+          "candidate": 0.055556,
+          "issue": 0.055556,
+          "label": 0.111111,
+          "leak": 0.111111,
+          "leaked": 0.055556,
+          "needs": 0.055556,
+          "new": 0.055556,
+          "outdoor": 0.055556,
+          "seam": 0.166667,
+          "unknown": 0.055556,
+          "waders": 0.055556
+        },
+        "vector_norm": 0.323943,
+        "metadata": {
+          "action": "needs_new_label",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:b07da4ecaf3d482e",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-old-product:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "",
+        "evidence": "leaked",
+        "content": "",
+        "downgrade_reasons": [
+          "source_review_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.1,
+          "issue": 0.1,
+          "leaked": 0.1,
+          "leaks": 0.1,
+          "outdoor": 0.1,
+          "review": 0.1,
+          "source": 0.1,
+          "through": 0.1,
+          "waders": 0.1,
+          "water": 0.1
+        },
+        "vector_norm": 0.316228,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:b16fbbc6187fab3a",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:4acc0c2c9ec16d51",
+        "category": "outdoor",
+        "sub_category": "帐篷",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "Water leaks through",
+        "evidence": "leaked through the tent",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "accepted",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 1.71,
+        "vector_terms": {
+          "accepted": 0.071429,
+          "blocked": 0.071429,
+          "issue": 0.071429,
+          "leaked": 0.071429,
+          "leaks": 0.142857,
+          "maturity": 0.071429,
+          "outdoor": 0.071429,
+          "tent": 0.071429,
+          "through": 0.214286,
+          "water": 0.142857
+        },
+        "vector_norm": 0.349928,
+        "metadata": {
+          "action": "accept",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:bf910bb84ce216e5",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-12",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "good_material_quality",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Good quality",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.0625,
+          "expected": 0.0625,
+          "gold": 0.125,
+          "good": 0.125,
+          "labels": 0.0625,
+          "locked": 0.0625,
+          "material": 0.0625,
+          "outdoor": 0.0625,
+          "quality": 0.125,
+          "reference": 0.0625,
+          "regression": 0.125,
+          "waders": 0.0625
+        },
+        "vector_norm": 0.306186,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "good_material_quality"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:c09e9d38dccd0a36",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-354",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "size_fit_problem good_value_for_the_price",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Great material for price,  shoe size is maybe 1 size smaller then normal",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.037037,
+          "expected": 0.037037,
+          "fit": 0.037037,
+          "gold": 0.074074,
+          "good": 0.037037,
+          "great": 0.037037,
+          "labels": 0.037037,
+          "locked": 0.037037,
+          "material": 0.037037,
+          "maybe": 0.037037,
+          "normal": 0.037037,
+          "outdoor": 0.037037,
+          "price": 0.074074,
+          "problem": 0.037037,
+          "reference": 0.037037,
+          "regression": 0.074074,
+          "shoe": 0.037037,
+          "size": 0.111111,
+          "smaller": 0.037037,
+          "then": 0.037037,
+          "value": 0.037037,
+          "waders": 0.037037
+        },
+        "vector_norm": 0.231296,
+        "metadata": {
+          "expected_issue_keys": [
+            "size_fit_problem"
+          ],
+          "expected_highlight_keys": [
+            "good_value_for_the_price"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:c37106d544ce5d7b",
+        "source_type": "gold_regression",
+        "source_id": "session121-water-sinks-in",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "water_leaks_through keeps_water_out",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "I tried to try twice in 2 different occasions. Water sinks in the twice. I've done it Not happy with this product",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.034483,
+          "different": 0.034483,
+          "done": 0.034483,
+          "expected": 0.034483,
+          "gold": 0.068966,
+          "happy": 0.034483,
+          "keeps": 0.034483,
+          "labels": 0.034483,
+          "leaks": 0.034483,
+          "locked": 0.034483,
+          "occasions": 0.034483,
+          "out": 0.034483,
+          "outdoor": 0.034483,
+          "product": 0.034483,
+          "reference": 0.034483,
+          "regression": 0.068966,
+          "sinks": 0.034483,
+          "through": 0.034483,
+          "tried": 0.034483,
+          "try": 0.034483,
+          "twice": 0.068966,
+          "ve": 0.034483,
+          "waders": 0.034483,
+          "water": 0.103448
+        },
+        "vector_norm": 0.220798,
+        "metadata": {
+          "expected_issue_keys": [
+            "water_leaks_through"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": [
+            "keeps_water_out"
+          ]
+        }
+      },
+      {
+        "memory_id": "badcase:c90ae8aa4b7d6f64",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-aspect-blocked:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "",
+        "evidence": "do not keep you dry",
+        "content": "",
+        "downgrade_reasons": [
+          "aspect_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "aspect": 0.083333,
+          "blocked": 0.083333,
+          "do": 0.083333,
+          "dry": 0.083333,
+          "issue": 0.083333,
+          "keep": 0.083333,
+          "leaks": 0.083333,
+          "outdoor": 0.083333,
+          "through": 0.083333,
+          "waders": 0.083333,
+          "water": 0.083333,
+          "you": 0.083333
+        },
+        "vector_norm": 0.288674,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:cd42fba172f3eae4",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-generic-four-pack:3",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "keeps_water_out",
+        "raw_label": "",
+        "evidence": "Great product",
+        "content": "",
+        "downgrade_reasons": [
+          "evidence_too_generic"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "evidence": 0.090909,
+          "generic": 0.090909,
+          "great": 0.090909,
+          "highlight": 0.090909,
+          "keeps": 0.090909,
+          "out": 0.090909,
+          "outdoor": 0.090909,
+          "product": 0.090909,
+          "too": 0.090909,
+          "waders": 0.090909,
+          "water": 0.090909
+        },
+        "vector_norm": 0.301511,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:d39fa5b660419579",
+        "source_type": "gold_regression",
+        "source_id": "session120-row-4",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "I wore these 2 times and started leaking already.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "already": 0.052632,
+          "blocked": 0.052632,
+          "expected": 0.052632,
+          "gold": 0.105263,
+          "labels": 0.052632,
+          "leaking": 0.052632,
+          "leaks": 0.052632,
+          "locked": 0.052632,
+          "outdoor": 0.052632,
+          "reference": 0.052632,
+          "regression": 0.105263,
+          "started": 0.052632,
+          "through": 0.052632,
+          "times": 0.052632,
+          "waders": 0.052632,
+          "water": 0.052632,
+          "wore": 0.052632
+        },
+        "vector_norm": 0.252413,
+        "metadata": {
+          "expected_issue_keys": [
+            "water_leaks_through"
+          ],
+          "expected_highlight_keys": [],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:d400148d65688389",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-generic-four-pack:1",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "highlight",
+        "canonical_label_key": "good_value_for_the_price",
+        "raw_label": "",
+        "evidence": "Great product",
+        "content": "",
+        "downgrade_reasons": [
+          "evidence_too_generic"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "evidence": 0.090909,
+          "generic": 0.090909,
+          "good": 0.090909,
+          "great": 0.090909,
+          "highlight": 0.090909,
+          "outdoor": 0.090909,
+          "price": 0.090909,
+          "product": 0.090909,
+          "too": 0.090909,
+          "value": 0.090909,
+          "waders": 0.090909
+        },
+        "vector_norm": 0.301511,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:d6020fcab2b76b4d",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-home-l2-aspect-blocked:0",
+        "category": "home",
+        "sub_category": "床架",
+        "label_type": "issue",
+        "canonical_label_key": "quality_problem",
+        "raw_label": "",
+        "evidence": "frame cracked",
+        "content": "",
+        "downgrade_reasons": [
+          "aspect_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "aspect": 0.125,
+          "blocked": 0.125,
+          "cracked": 0.125,
+          "frame": 0.125,
+          "home": 0.125,
+          "issue": 0.125,
+          "problem": 0.125,
+          "quality": 0.125
+        },
+        "vector_norm": 0.353553,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:deb9485cdf232088",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-schema-invalid:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "",
+        "evidence": "do not keep you dry",
+        "content": "",
+        "downgrade_reasons": [
+          "schema_invalid"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "do": 0.083333,
+          "dry": 0.083333,
+          "invalid": 0.083333,
+          "issue": 0.083333,
+          "keep": 0.083333,
+          "leaks": 0.083333,
+          "outdoor": 0.083333,
+          "schema": 0.083333,
+          "through": 0.083333,
+          "waders": 0.083333,
+          "water": 0.083333,
+          "you": 0.083333
+        },
+        "vector_norm": 0.288674,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:e0b0750ad91fac9e",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:0a3d8d1499cedbd8",
+        "category": "baby",
+        "sub_category": "Baby Bibs",
+        "label_type": "issue",
+        "canonical_label_key": "quality_problem",
+        "raw_label": "Quality problem",
+        "evidence": "quality is poor",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "accepted",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 1.71,
+        "vector_terms": {
+          "accepted": 0.076923,
+          "baby": 0.153846,
+          "bibs": 0.076923,
+          "blocked": 0.076923,
+          "issue": 0.076923,
+          "maturity": 0.076923,
+          "poor": 0.076923,
+          "problem": 0.153846,
+          "quality": 0.230769
+        },
+        "vector_norm": 0.36891,
+        "metadata": {
+          "action": "accept",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:e437d8e62c7e043d",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-358",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "overall_satisfied good_material_quality",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "Good quality, better than I expected.",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "better": 0.047619,
+          "blocked": 0.047619,
+          "expected": 0.095238,
+          "gold": 0.095238,
+          "good": 0.095238,
+          "labels": 0.047619,
+          "locked": 0.047619,
+          "material": 0.047619,
+          "outdoor": 0.047619,
+          "overall": 0.047619,
+          "quality": 0.095238,
+          "reference": 0.047619,
+          "regression": 0.095238,
+          "satisfied": 0.047619,
+          "than": 0.047619,
+          "waders": 0.047619
+        },
+        "vector_norm": 0.265131,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "overall_satisfied"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": [
+            "good_material_quality"
+          ]
+        }
+      },
+      {
+        "memory_id": "badcase:e831d6ccff81d1be",
+        "source_type": "gold_regression",
+        "source_id": "waders-351-400-row-352",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "",
+        "canonical_label_key": "fits_as_expected good_value_for_the_price",
+        "raw_label": "gold regression expected/blocked labels",
+        "evidence": "",
+        "content": "I bought these for my boyfriend and he is 6’3 300lbs with a size 14 foot, and these fit him perfect! There is a lot of wiggle room in the body/waist area, and the shoes fit EXACTLY to size (a little snug so I would recommend sizing up ESPECIALLY if you wear thick socks). Very worth it for the price!",
+        "downgrade_reasons": [
+          "gold_regression_reference"
+        ],
+        "review_status": "locked",
+        "review_count": 1,
+        "confidence": 0.0,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "14": 0.018519,
+          "300lbs": 0.018519,
+          "area": 0.018519,
+          "blocked": 0.018519,
+          "body": 0.018519,
+          "bought": 0.018519,
+          "boyfriend": 0.018519,
+          "especially": 0.018519,
+          "exactly": 0.018519,
+          "expected": 0.037037,
+          "fit": 0.037037,
+          "fits": 0.018519,
+          "foot": 0.018519,
+          "gold": 0.037037,
+          "good": 0.018519,
+          "he": 0.018519,
+          "him": 0.018519,
+          "if": 0.018519,
+          "labels": 0.018519,
+          "little": 0.018519,
+          "locked": 0.018519,
+          "lot": 0.018519,
+          "my": 0.018519,
+          "outdoor": 0.018519,
+          "perfect": 0.018519,
+          "price": 0.037037,
+          "recommend": 0.018519,
+          "reference": 0.018519,
+          "regression": 0.037037,
+          "room": 0.018519,
+          "shoes": 0.018519,
+          "size": 0.037037,
+          "sizing": 0.018519,
+          "snug": 0.018519,
+          "so": 0.018519,
+          "socks": 0.018519,
+          "there": 0.018519,
+          "thick": 0.018519,
+          "up": 0.018519,
+          "value": 0.018519,
+          "very": 0.018519,
+          "waders": 0.018519,
+          "waist": 0.018519,
+          "wear": 0.018519,
+          "wiggle": 0.018519,
+          "worth": 0.018519,
+          "would": 0.018519,
+          "you": 0.018519
+        },
+        "vector_norm": 0.150448,
+        "metadata": {
+          "expected_issue_keys": [],
+          "expected_highlight_keys": [
+            "fits_as_expected",
+            "good_value_for_the_price"
+          ],
+          "blocked_issue_keys": [],
+          "blocked_highlight_keys": []
+        }
+      },
+      {
+        "memory_id": "badcase:ef892e08cb82c399",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-confidence-low:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "",
+        "evidence": "do not keep you dry",
+        "content": "",
+        "downgrade_reasons": [
+          "confidence_low"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.4,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "confidence": 0.083333,
+          "do": 0.083333,
+          "dry": 0.083333,
+          "issue": 0.083333,
+          "keep": 0.083333,
+          "leaks": 0.083333,
+          "low": 0.083333,
+          "outdoor": 0.083333,
+          "through": 0.083333,
+          "waders": 0.083333,
+          "water": 0.083333,
+          "you": 0.083333
+        },
+        "vector_norm": 0.288674,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:efcfcf5278a22e44",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-beauty-l2-specific-blocked:0",
+        "category": "beauty",
+        "sub_category": "睫毛膏",
+        "label_type": "issue",
+        "canonical_label_key": "smudges_easily",
+        "raw_label": "",
+        "evidence": "smudges easily",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "beauty": 0.125,
+          "blocked": 0.125,
+          "easily": 0.25,
+          "issue": 0.125,
+          "maturity": 0.125,
+          "smudges": 0.25
+        },
+        "vector_norm": 0.433013,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:f19d09744ff35df1",
+        "source_type": "audited_bad_case",
+        "source_id": "edge-evidence-missing:0",
+        "category": "outdoor",
+        "sub_category": "waders",
+        "label_type": "issue",
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "Water Leaks Through",
+        "evidence": "",
+        "content": "",
+        "downgrade_reasons": [
+          "evidence_missing",
+          "evidence_too_generic"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "evidence": 0.142857,
+          "generic": 0.071429,
+          "issue": 0.071429,
+          "leaks": 0.142857,
+          "missing": 0.071429,
+          "outdoor": 0.071429,
+          "through": 0.142857,
+          "too": 0.071429,
+          "waders": 0.071429,
+          "water": 0.142857
+        },
+        "vector_norm": 0.33503,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:f462ad6b4d8f98c6",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-kitchen-l2-evidence-not-found:0",
+        "category": "kitchen",
+        "sub_category": "不粘锅",
+        "label_type": "issue",
+        "canonical_label_key": "not_worth_the_price",
+        "raw_label": "Not worth the price",
+        "evidence": "too expensive for the coating",
+        "content": "",
+        "downgrade_reasons": [
+          "evidence_not_found"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "coating": 0.090909,
+          "evidence": 0.090909,
+          "expensive": 0.090909,
+          "found": 0.090909,
+          "issue": 0.090909,
+          "kitchen": 0.090909,
+          "price": 0.181818,
+          "too": 0.090909,
+          "worth": 0.181818
+        },
+        "vector_norm": 0.352089,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:f7e1726d8cad15b7",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-3c-l2-specific-blocked:0",
+        "category": "3c",
+        "sub_category": "USB C Charger Block",
+        "label_type": "issue",
+        "canonical_label_key": "charging_fails",
+        "raw_label": "",
+        "evidence": "fails to charge",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.9,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "3c": 0.090909,
+          "block": 0.090909,
+          "blocked": 0.090909,
+          "charge": 0.090909,
+          "charger": 0.090909,
+          "charging": 0.090909,
+          "fails": 0.181818,
+          "issue": 0.090909,
+          "maturity": 0.090909,
+          "usb": 0.090909
+        },
+        "vector_norm": 0.327777,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      },
+      {
+        "memory_id": "badcase:f808d64bf0dd92ae",
+        "source_type": "candidate_pool_reviewed",
+        "source_id": "pool:d36757a7abb96daf",
+        "category": "automotive",
+        "sub_category": "车载充电器",
+        "label_type": "issue",
+        "canonical_label_key": "quality_problem",
+        "raw_label": "Quality problem",
+        "evidence": "quality is poor",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "accepted",
+        "review_count": 1,
+        "confidence": 0.91,
+        "top_impact_score": 1.729,
+        "vector_terms": {
+          "accepted": 0.090909,
+          "automotive": 0.090909,
+          "blocked": 0.090909,
+          "issue": 0.090909,
+          "maturity": 0.090909,
+          "poor": 0.090909,
+          "problem": 0.181818,
+          "quality": 0.272727
+        },
+        "vector_norm": 0.396263,
+        "metadata": {
+          "action": "accept",
+          "action_applied": true,
+          "reviewer": "step5-local-review-fixture"
+        }
+      },
+      {
+        "memory_id": "badcase:fada1a2662aed6d9",
+        "source_type": "audited_bad_case",
+        "source_id": "maturity-pet-l1-value-blocked:0",
+        "category": "pet",
+        "sub_category": "Dog Treats",
+        "label_type": "highlight",
+        "canonical_label_key": "good_value_for_the_price",
+        "raw_label": "",
+        "evidence": "great value for the price",
+        "content": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ],
+        "review_status": "",
+        "review_count": 1,
+        "confidence": 0.91,
+        "top_impact_score": 0.0,
+        "vector_terms": {
+          "blocked": 0.083333,
+          "dog": 0.083333,
+          "good": 0.083333,
+          "great": 0.083333,
+          "highlight": 0.083333,
+          "maturity": 0.083333,
+          "pet": 0.083333,
+          "price": 0.166667,
+          "treats": 0.083333,
+          "value": 0.166667
+        },
+        "vector_norm": 0.333333,
+        "metadata": {
+          "ruleset_version": "customer-label-verifier-v2.0-shadow",
+          "prompt_version": "customer-label-v2.0-shadow"
+        }
+      }
+    ],
+    "display_contract": {
+      "vector_memory_can_select_frontstage": false,
+      "display_decision_source": "evidence_context_aspect_maturity_feature_flag_gates",
+      "allowed_uses": [
+        "similar_historical_bad_case_retrieval",
+        "candidate_clustering",
+        "review_prioritization",
+        "audit_debug_report"
+      ]
+    },
+    "safety": {
+      "production_upload": false,
+      "production_write_path": false,
+      "production_db_write": false,
+      "db_write": false,
+      "credit_consumed": false,
+      "llm_called": false,
+      "frontstage_replaced": false,
+      "frontstage_mutated": false
+    }
+  },
+  "debug_report": {
+    "schema_version": "customer-label-v2-bad-case-memory-report-lite.1",
+    "scope": "5.9.9 Step 8 vector bad case memory lite",
+    "status": "PASS",
+    "memory_schema_version": "customer-label-v2-bad-case-memory-lite.1",
+    "memory_item_count": 81,
+    "similar_history": [
+      {
+        "query_index": 0,
+        "results": [
+          {
+            "memory_id": "badcase:4abebb706e03e32c",
+            "score": 0.258199,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "fits_as_expected",
+            "raw_label": "",
+            "evidence": "Great product",
+            "downgrade_reasons": [
+              "evidence_too_generic"
+            ],
+            "review_status": ""
+          },
+          {
+            "memory_id": "badcase:b07da4ecaf3d482e",
+            "score": 0.258199,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "water_leaks_through",
+            "raw_label": "",
+            "evidence": "leaked",
+            "downgrade_reasons": [
+              "source_review_blocked"
+            ],
+            "review_status": ""
+          },
+          {
+            "memory_id": "badcase:5725b855d11f28a8",
+            "score": 0.246183,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "holds_up_well",
+            "raw_label": "",
+            "evidence": "Great product",
+            "downgrade_reasons": [
+              "evidence_too_generic"
+            ],
+            "review_status": ""
+          },
+          {
+            "memory_id": "badcase:cd42fba172f3eae4",
+            "score": 0.246183,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "keeps_water_out",
+            "raw_label": "",
+            "evidence": "Great product",
+            "downgrade_reasons": [
+              "evidence_too_generic"
+            ],
+            "review_status": ""
+          },
+          {
+            "memory_id": "badcase:d400148d65688389",
+            "score": 0.246183,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "good_value_for_the_price",
+            "raw_label": "",
+            "evidence": "Great product",
+            "downgrade_reasons": [
+              "evidence_too_generic"
+            ],
+            "review_status": ""
+          }
+        ]
+      },
+      {
+        "query_index": 1,
+        "results": [
+          {
+            "memory_id": "badcase:9d6a41164746af9c",
+            "score": 0.946864,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "candidate:boot_seam_leak",
+            "raw_label": "Boot Seam Leak",
+            "evidence": "boot seam leaked",
+            "downgrade_reasons": [
+              "unknown_label"
+            ],
+            "review_status": ""
+          },
+          {
+            "memory_id": "badcase:a962fbac4b186c01",
+            "score": 0.908108,
+            "source_type": "candidate_pool_reviewed",
+            "canonical_label_key": "candidate:boot_seam_leak",
+            "raw_label": "Boot Seam Leak",
+            "evidence": "boot seam leaked",
+            "downgrade_reasons": [
+              "unknown_label"
+            ],
+            "review_status": "needs_new_label"
+          },
+          {
+            "memory_id": "badcase:3541e437638fd133",
+            "score": 0.275654,
+            "source_type": "gold_regression",
+            "canonical_label_key": "size_fit_problem quality_problem",
+            "raw_label": "gold regression expected/blocked labels",
+            "evidence": "",
+            "downgrade_reasons": [
+              "gold_regression_reference"
+            ],
+            "review_status": "locked"
+          },
+          {
+            "memory_id": "badcase:24e9c7e2f819347d",
+            "score": 0.214397,
+            "source_type": "candidate_pool_reviewed",
+            "canonical_label_key": "candidate:thin_boot_sole",
+            "raw_label": "厚实度不够",
+            "evidence": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+            "downgrade_reasons": [
+              "unknown_label"
+            ],
+            "review_status": "needs_new_label"
+          },
+          {
+            "memory_id": "badcase:738739e3e5558275",
+            "score": 0.196116,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "candidate:thin_boot_sole",
+            "raw_label": "厚实度不够",
+            "evidence": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
+            "downgrade_reasons": [
+              "unknown_label"
+            ],
+            "review_status": ""
+          }
+        ]
+      },
+      {
+        "query_index": 2,
+        "results": [
+          {
+            "memory_id": "badcase:6c59b0a2eef253c7",
+            "score": 0.3,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "water_leaks_through",
+            "raw_label": "",
+            "evidence": "It is not waterproof",
+            "downgrade_reasons": [
+              "source_review_blocked"
+            ],
+            "review_status": ""
+          },
+          {
+            "memory_id": "badcase:36ad83925898f75c",
+            "score": 0.29047,
+            "source_type": "gold_regression",
+            "canonical_label_key": "pocket_not_waterproof keeps_water_out water_leaks_through",
+            "raw_label": "gold regression expected/blocked labels",
+            "evidence": "",
+            "downgrade_reasons": [
+              "gold_regression_reference"
+            ],
+            "review_status": "locked"
+          },
+          {
+            "memory_id": "badcase:3a86c305d4f926ef",
+            "score": 0.2,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "fits_as_expected",
+            "raw_label": "",
+            "evidence": "fits perfectly",
+            "downgrade_reasons": [
+              "maturity_blocked"
+            ],
+            "review_status": ""
+          },
+          {
+            "memory_id": "badcase:7c48e48947d11599",
+            "score": 0.2,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "quality_problem",
+            "raw_label": "",
+            "evidence": "quality is poor",
+            "downgrade_reasons": [
+              "maturity_blocked"
+            ],
+            "review_status": ""
+          },
+          {
+            "memory_id": "badcase:366dcfb5a7abdc96",
+            "score": 0.182575,
+            "source_type": "audited_bad_case",
+            "canonical_label_key": "water_leaks_through",
+            "raw_label": "",
+            "evidence": "leaked through the tent",
+            "downgrade_reasons": [
+              "maturity_blocked"
+            ],
+            "review_status": ""
+          }
+        ]
+      }
+    ],
+    "unknown_candidate_clusters": [
+      {
+        "cluster_id": "unknown:1",
+        "item_count": 12,
+        "memory_ids": [
+          "badcase:01eee6c8545e2cbe",
+          "badcase:24e9c7e2f819347d",
+          "badcase:6164262737213dfc",
+          "badcase:68c182e140ae907f",
+          "badcase:6b0249a7fa3717e2",
+          "badcase:738739e3e5558275",
+          "badcase:798f9f010fe1f632",
+          "badcase:9d6a41164746af9c",
+          "badcase:9e27dfbf15c61b26",
+          "badcase:9ea1544d09fd6b21",
+          "badcase:a6b5fb6adbe6d90a",
+          "badcase:a962fbac4b186c01"
+        ],
+        "canonical_label_keys": [
+          "candidate:boot_seam_leak",
+          "candidate:breathes_well_evidence_unclear",
+          "candidate:good_customer_service",
+          "candidate:not_for_frequent_use",
+          "candidate:not_for_hardcore_conditions",
+          "candidate:thin_boot_sole"
+        ],
+        "raw_labels": [
+          "Boot Seam Leak",
+          "不适合极端环境",
+          "不适合经常使用",
+          "厚实度不够",
+          "客服服务好",
+          "透气性好"
+        ],
+        "representative_memory_id": "badcase:01eee6c8545e2cbe"
+      }
+    ],
+    "maturity_blocked_priorities": [
+      {
+        "memory_id": "badcase:a6ea6d70065bf055",
+        "priority_score": 112.639,
+        "review_count": 1,
+        "top_impact_score": 1.729,
+        "confidence": 0.91,
+        "canonical_label_key": "good_value_for_the_price",
+        "raw_label": "Good value for the price",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:f808d64bf0dd92ae",
+        "priority_score": 112.639,
+        "review_count": 1,
+        "top_impact_score": 1.729,
+        "confidence": 0.91,
+        "canonical_label_key": "quality_problem",
+        "raw_label": "Quality problem",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:17a58a79d9f3e296",
+        "priority_score": 112.61,
+        "review_count": 1,
+        "top_impact_score": 1.71,
+        "confidence": 0.9,
+        "canonical_label_key": "fits_as_expected",
+        "raw_label": "Fits as expected",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:1accf47dc62a9b74",
+        "priority_score": 112.61,
+        "review_count": 1,
+        "top_impact_score": 1.71,
+        "confidence": 0.9,
+        "canonical_label_key": "smudges_easily",
+        "raw_label": "Smudges easily",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:45560d03845f5e4d",
+        "priority_score": 112.61,
+        "review_count": 1,
+        "top_impact_score": 1.71,
+        "confidence": 0.9,
+        "canonical_label_key": "charging_fails",
+        "raw_label": "Charging fails",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:49a460ae0e17d80f",
+        "priority_score": 112.61,
+        "review_count": 1,
+        "top_impact_score": 1.71,
+        "confidence": 0.9,
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "Water Leaks Through",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:b16fbbc6187fab3a",
+        "priority_score": 112.61,
+        "review_count": 1,
+        "top_impact_score": 1.71,
+        "confidence": 0.9,
+        "canonical_label_key": "water_leaks_through",
+        "raw_label": "Water leaks through",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:e0b0750ad91fac9e",
+        "priority_score": 112.61,
+        "review_count": 1,
+        "top_impact_score": 1.71,
+        "confidence": 0.9,
+        "canonical_label_key": "quality_problem",
+        "raw_label": "Quality problem",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:7c48e48947d11599",
+        "priority_score": 110.91,
+        "review_count": 1,
+        "top_impact_score": 0.0,
+        "confidence": 0.91,
+        "canonical_label_key": "quality_problem",
+        "raw_label": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      },
+      {
+        "memory_id": "badcase:fada1a2662aed6d9",
+        "priority_score": 110.91,
+        "review_count": 1,
+        "top_impact_score": 0.0,
+        "confidence": 0.91,
+        "canonical_label_key": "good_value_for_the_price",
+        "raw_label": "",
+        "downgrade_reasons": [
+          "maturity_blocked"
+        ]
+      }
+    ],
+    "display_contract": {
+      "vector_memory_can_select_frontstage": false,
+      "display_decision_source": "evidence_context_aspect_maturity_feature_flag_gates",
+      "allowed_uses": [
+        "similar_historical_bad_case_retrieval",
+        "candidate_clustering",
+        "review_prioritization",
+        "audit_debug_report"
+      ]
+    },
+    "safety": {
+      "production_upload": false,
+      "production_write_path": false,
+      "production_db_write": false,
+      "db_write": false,
+      "credit_consumed": false,
+      "llm_called": false,
+      "frontstage_replaced": false,
+      "frontstage_mutated": false
+    }
+  },
+  "display_gate_probe": {
+    "no_evidence_display_count": 0,
+    "no_evidence_downgrade_reasons": [
+      "evidence_missing",
+      "evidence_too_generic"
+    ],
+    "context_blocked_display_count": 0,
+    "context_blocked_downgrade_reasons": [
+      "source_review_blocked"
+    ],
+    "vector_memory_can_select_frontstage": false
+  },
+  "violations": [],
+  "source_artifacts": [
+    "tmp/5.9.9-step7-v2-frontstage-read-path-integration/candidate-pool-reviewed.json",
+    "backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json",
+    "backend_api/tests/fixtures/customer_label_waders_session120_human_gold.json",
+    "backend_api/tests/fixtures/customer_label_waders_session121_blind_regression.json",
+    "backend_api/tests/fixtures/customer_label_v2_maturity_rollout.json"
+  ],
+  "safety": {
+    "production_upload": false,
+    "production_write_path": false,
+    "production_db_write": false,
+    "db_write": false,
+    "credit_consumed": false,
+    "llm_called": false,
+    "runtime_shadow_called": false,
+    "frontstage_replaced": false,
+    "frontstage_mutated": false,
+    "vector_result_decides_display": false
+  }
+}

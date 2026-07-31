@@ -12,8 +12,17 @@
     "blocked_by_maturity": 3,
     "blocked_by_unknown_label": 1,
     "blocked_by_no_stored_shadow": 1,
+    "blocked_by_config_invalid": 0,
     "rollback_selected_count": 1,
-    "frontstage_occurrence_count": 11
+    "rollback_global_count": 0,
+    "rollback_scoped_count": 1,
+    "kill_switch_selected_count": 0,
+    "kill_switch_global_count": 0,
+    "kill_switch_scoped_count": 0,
+    "frontstage_occurrence_count": 11,
+    "stored_shadow_available_count": 9,
+    "stored_shadow_missing_count": 1,
+    "config_validation_error_count": 0
   },
   "selected_read_paths": {
     "v1_current": 8,
@@ -40,7 +49,10 @@
         "maturity_enabled_for_frontstage": true,
         "stored_shadow_available": true,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [
@@ -84,7 +96,10 @@
         "maturity_enabled_for_frontstage": true,
         "stored_shadow_available": true,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [
@@ -128,7 +143,10 @@
         "maturity_enabled_for_frontstage": true,
         "stored_shadow_available": true,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [
@@ -172,7 +190,10 @@
         "maturity_enabled_for_frontstage": false,
         "stored_shadow_available": true,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [],
@@ -210,7 +231,10 @@
         "maturity_enabled_for_frontstage": false,
         "stored_shadow_available": true,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [],
@@ -248,7 +272,10 @@
         "maturity_enabled_for_frontstage": false,
         "stored_shadow_available": true,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [],
@@ -284,7 +311,10 @@
         "maturity_enabled_for_frontstage": true,
         "stored_shadow_available": true,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [
@@ -329,7 +359,10 @@
         "maturity_enabled_for_frontstage": true,
         "stored_shadow_available": true,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [],
@@ -367,7 +400,10 @@
         "maturity_enabled_for_frontstage": true,
         "stored_shadow_available": false,
         "rollback_active": false,
-        "rollback_would_select_v1_current": false
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": false,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [
@@ -400,7 +436,8 @@
       "selected_read_path": "v1_current",
       "fallback_reason": "rollback_session",
       "blocked_reasons": [
-        "rollback_selected_count"
+        "rollback_selected_count",
+        "rollback_scoped_count"
       ],
       "checks": {
         "flag_enabled": true,
@@ -411,7 +448,10 @@
         "maturity_enabled_for_frontstage": true,
         "stored_shadow_available": true,
         "rollback_active": true,
-        "rollback_would_select_v1_current": true
+        "kill_switch_active": false,
+        "rollback_would_select_v1_current": true,
+        "config_valid": true,
+        "config_validation_errors": []
       },
       "selected_keys": {
         "issue": [
@@ -458,7 +498,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": true
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": true,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": false,
@@ -475,8 +521,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 1,
@@ -487,8 +540,57 @@
         "blocked_by_maturity": 0,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 2
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 2,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v1_current": 1
+        },
+        "blocked_reason_counters": {
+          "blocked_by_flag_off": 1
+        },
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v1_current": 1
@@ -514,7 +616,10 @@
             "maturity_enabled_for_frontstage": true,
             "stored_shadow_available": true,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [
@@ -557,6 +662,7 @@
             "v2_requested": false,
             "matched_scope": "none",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "flag_off"
           },
           "feature_flag": {
@@ -574,7 +680,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 2,
@@ -789,6 +907,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -801,6 +921,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -820,7 +947,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -874,7 +1003,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -893,8 +1028,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 1,
@@ -905,8 +1047,57 @@
         "blocked_by_maturity": 0,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 2
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 2,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v1_current": 1
+        },
+        "blocked_reason_counters": {
+          "blocked_by_scope": 1
+        },
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v1_current": 1
@@ -932,7 +1123,10 @@
             "maturity_enabled_for_frontstage": true,
             "stored_shadow_available": true,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [
@@ -975,6 +1169,7 @@
             "v2_requested": false,
             "matched_scope": "none",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "scope_not_matched"
           },
           "feature_flag": {
@@ -994,7 +1189,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 2,
@@ -1209,6 +1416,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -1221,6 +1430,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -1240,7 +1456,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -1294,7 +1512,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -1313,8 +1537,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 1,
@@ -1325,8 +1556,57 @@
         "blocked_by_maturity": 0,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 2
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 2,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v1_current": 1
+        },
+        "blocked_reason_counters": {
+          "blocked_by_fixture_gate": 1
+        },
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v1_current": 1
@@ -1352,7 +1632,10 @@
             "maturity_enabled_for_frontstage": true,
             "stored_shadow_available": true,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [
@@ -1395,6 +1678,7 @@
             "v2_requested": true,
             "matched_scope": "sub_category",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "flag_on_sub_category"
           },
           "feature_flag": {
@@ -1414,7 +1698,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 2,
@@ -1629,6 +1925,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -1641,6 +1939,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -1660,7 +1965,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -1714,7 +2021,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -1733,8 +2046,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 1,
@@ -1745,8 +2065,57 @@
         "blocked_by_maturity": 1,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 0
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 0,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v1_current": 1
+        },
+        "blocked_reason_counters": {
+          "blocked_by_maturity": 1
+        },
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v1_current": 1
@@ -1772,7 +2141,10 @@
             "maturity_enabled_for_frontstage": false,
             "stored_shadow_available": true,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [],
@@ -1809,6 +2181,7 @@
             "v2_requested": true,
             "matched_scope": "category",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "flag_on_category"
           },
           "feature_flag": {
@@ -1828,7 +2201,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 0,
@@ -1917,6 +2302,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -1929,6 +2316,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -1948,7 +2342,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -2002,7 +2398,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -2021,8 +2423,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 1,
@@ -2033,8 +2442,57 @@
         "blocked_by_maturity": 1,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 0
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 0,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v1_current": 1
+        },
+        "blocked_reason_counters": {
+          "blocked_by_maturity": 1
+        },
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v1_current": 1
@@ -2060,7 +2518,10 @@
             "maturity_enabled_for_frontstage": false,
             "stored_shadow_available": true,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [],
@@ -2097,6 +2558,7 @@
             "v2_requested": true,
             "matched_scope": "category",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "flag_on_category"
           },
           "feature_flag": {
@@ -2116,7 +2578,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 0,
@@ -2205,6 +2679,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -2217,6 +2693,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -2236,7 +2719,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -2290,7 +2775,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -2309,8 +2800,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 1,
@@ -2321,8 +2819,57 @@
         "blocked_by_maturity": 1,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 0
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 0,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v1_current": 1
+        },
+        "blocked_reason_counters": {
+          "blocked_by_maturity": 1
+        },
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v1_current": 1
@@ -2348,7 +2895,10 @@
             "maturity_enabled_for_frontstage": false,
             "stored_shadow_available": true,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [],
@@ -2385,6 +2935,7 @@
             "v2_requested": true,
             "matched_scope": "category",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "flag_on_category"
           },
           "feature_flag": {
@@ -2404,7 +2955,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 0,
@@ -2493,6 +3056,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -2505,6 +3070,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -2524,7 +3096,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -2578,7 +3152,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -2597,8 +3177,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 0,
@@ -2609,8 +3196,55 @@
         "blocked_by_maturity": 0,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 1
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 1,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v2_shadow": 1
+        },
+        "blocked_reason_counters": {},
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 1,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v2_shadow": 1
@@ -2634,7 +3268,10 @@
             "maturity_enabled_for_frontstage": true,
             "stored_shadow_available": true,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [
@@ -2678,6 +3315,7 @@
             "v2_requested": true,
             "matched_scope": "sub_category",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "flag_on_sub_category"
           },
           "feature_flag": {
@@ -2697,7 +3335,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 2,
@@ -2910,6 +3560,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -2922,6 +3574,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -2941,7 +3600,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -2995,7 +3656,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -3014,8 +3681,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 0,
@@ -3026,8 +3700,55 @@
         "blocked_by_maturity": 0,
         "blocked_by_unknown_label": 1,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 0
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 0,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v2_shadow": 1
+        },
+        "blocked_reason_counters": {},
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v2_shadow": 1
@@ -3053,7 +3774,10 @@
             "maturity_enabled_for_frontstage": true,
             "stored_shadow_available": true,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [],
@@ -3090,6 +3814,7 @@
             "v2_requested": true,
             "matched_scope": "sub_category",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "flag_on_sub_category"
           },
           "feature_flag": {
@@ -3109,7 +3834,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 0,
@@ -3198,6 +3935,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -3210,6 +3949,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -3229,7 +3975,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -3283,7 +4031,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": true
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": true,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -3302,8 +4056,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 1,
@@ -3314,8 +4075,57 @@
         "blocked_by_maturity": 0,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 1,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 0,
-        "frontstage_occurrence_count": 2
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 0,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 2,
+        "stored_shadow_available_count": 0,
+        "stored_shadow_missing_count": 1,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v1_current": 1
+        },
+        "blocked_reason_counters": {
+          "blocked_by_no_stored_shadow": 1
+        },
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 0,
+          "rollback_selected_count": 0
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 0,
+          "missing_count": 1,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v1_current": 1
@@ -3341,7 +4151,10 @@
             "maturity_enabled_for_frontstage": true,
             "stored_shadow_available": false,
             "rollback_active": false,
-            "rollback_would_select_v1_current": false
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": false,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [
@@ -3384,6 +4197,7 @@
             "v2_requested": true,
             "matched_scope": "sub_category",
             "rollback_active": false,
+            "kill_switch_active": false,
             "reason": "flag_on_sub_category"
           },
           "feature_flag": {
@@ -3403,7 +4217,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": false,
+            "stored_shadow_available": false,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 2,
@@ -3618,6 +4444,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -3630,6 +4458,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -3649,7 +4484,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",
@@ -3705,7 +4542,13 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
       "effective_feature_flag": {
         "enabled": true,
@@ -3726,8 +4569,15 @@
         "rollback_categories": [],
         "rollback_sub_categories": [],
         "rollback_category_sub_categories": [],
-        "allow_runtime_shadow": false
+        "kill_switch": false,
+        "kill_switch_session_ids": [],
+        "kill_switch_categories": [],
+        "kill_switch_sub_categories": [],
+        "kill_switch_category_sub_categories": [],
+        "allow_runtime_shadow": false,
+        "config_validation_errors": []
       },
+      "config_resolution": null,
       "env_config": {},
       "observability": {
         "v1_selected_count": 1,
@@ -3738,8 +4588,55 @@
         "blocked_by_maturity": 0,
         "blocked_by_unknown_label": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_config_invalid": 0,
         "rollback_selected_count": 1,
-        "frontstage_occurrence_count": 2
+        "rollback_global_count": 0,
+        "rollback_scoped_count": 1,
+        "kill_switch_selected_count": 0,
+        "kill_switch_global_count": 0,
+        "kill_switch_scoped_count": 0,
+        "frontstage_occurrence_count": 2,
+        "stored_shadow_available_count": 1,
+        "stored_shadow_missing_count": 0,
+        "config_validation_error_count": 0
+      },
+      "observability_snapshot": {
+        "schema_version": "customer-label-v2-frontstage-observability.1",
+        "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+        "read_path_selected": {
+          "v1_current": 1
+        },
+        "blocked_reason_counters": {},
+        "rollback_counters": {
+          "rollback_global_count": 0,
+          "rollback_scoped_count": 1,
+          "rollback_selected_count": 1
+        },
+        "kill_switch_counters": {
+          "kill_switch_global_count": 0,
+          "kill_switch_scoped_count": 0,
+          "kill_switch_selected_count": 0
+        },
+        "selected_v2_occurrence_count": 0,
+        "stored_shadow_availability": {
+          "available_count": 1,
+          "missing_count": 0,
+          "runtime_shadow_generated_count": 0
+        },
+        "config_validation_errors": {
+          "count": 0,
+          "by_error": {}
+        },
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
       },
       "selected_read_paths": {
         "v1_current": 1
@@ -3754,7 +4651,8 @@
           "selected_read_path": "v1_current",
           "fallback_reason": "rollback_session",
           "blocked_reasons": [
-            "rollback_selected_count"
+            "rollback_selected_count",
+            "rollback_scoped_count"
           ],
           "checks": {
             "flag_enabled": true,
@@ -3765,7 +4663,10 @@
             "maturity_enabled_for_frontstage": true,
             "stored_shadow_available": true,
             "rollback_active": true,
-            "rollback_would_select_v1_current": true
+            "kill_switch_active": false,
+            "rollback_would_select_v1_current": true,
+            "config_valid": true,
+            "config_validation_errors": []
           },
           "selected_keys": {
             "issue": [
@@ -3808,6 +4709,7 @@
             "v2_requested": false,
             "matched_scope": "rollback_session",
             "rollback_active": true,
+            "kill_switch_active": false,
             "reason": "rollback_session"
           },
           "feature_flag": {
@@ -3829,7 +4731,19 @@
             "rollback_categories": [],
             "rollback_sub_categories": [],
             "rollback_category_sub_categories": [],
-            "allow_runtime_shadow": false
+            "kill_switch": false,
+            "kill_switch_session_ids": [],
+            "kill_switch_categories": [],
+            "kill_switch_sub_categories": [],
+            "kill_switch_category_sub_categories": [],
+            "allow_runtime_shadow": false,
+            "config_validation_errors": []
+          },
+          "shadow_input": {
+            "provided_shadow_available": true,
+            "stored_shadow_available": true,
+            "runtime_shadow_allowed": false,
+            "runtime_shadow_generated": false
           },
           "v1_current": {
             "occurrence_count": 2,
@@ -4044,6 +4958,8 @@
         "feature_flag": {
           "default_enabled": false,
           "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "config_schema_version": "customer-label-v2-frontstage-config.1",
+          "invalid_config_behavior": "fail_closed_to_v1_current",
           "controls": [
             "session_id",
             "category",
@@ -4056,6 +4972,13 @@
           ],
           "env_runtime_shadow_default": false,
           "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "kill_switch_controls": [
             "global",
             "session_id",
             "category",
@@ -4075,7 +4998,9 @@
           "shadow_fixture_gate_blocked": "v1_current",
           "v2_shadow_missing": "v1_current",
           "maturity_not_enabled_for_v2_frontstage": "v1_current",
-          "rollback": "v1_current"
+          "rollback": "v1_current",
+          "kill_switch": "v1_current",
+          "config_invalid": "v1_current"
         },
         "excluded_from_frontstage": [
           "label_candidates",

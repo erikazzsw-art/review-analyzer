@@ -9,6 +9,10 @@ from backend_api.app.services.customer_label_catalog import (
     CustomerLabelCatalogState,
     set_customer_label_catalog_state_for_tests,
 )
+from backend_api.app.services.customer_label_v2_bad_case_memory import (
+    build_customer_label_v2_bad_case_memory,
+    build_customer_label_v2_bad_case_memory_debug_report,
+)
 from backend_api.app.services.customer_label_v2_candidate_pool import (
     build_candidate_pool_artifact,
     build_reviewed_candidate_pool_artifact,
@@ -21,10 +25,19 @@ from backend_api.app.services.customer_label_v2_frontstage import (
     READ_PATH_V1_CURRENT,
     READ_PATH_V2_SHADOW,
     CustomerLabelV2FrontstageFlag,
+    build_customer_label_v2_frontstage_observability_snapshot,
     build_customer_label_v2_frontstage_read_model,
     build_customer_label_v2_frontstage_readiness_dry_run_report,
     build_frontstage_read_path_artifact,
     frontstage_keys_from_read_model,
+    resolve_customer_label_v2_frontstage_config,
+)
+from backend_api.app.services.customer_label_v2_frontstage_acceptance import (
+    build_customer_label_v2_frontstage_go_no_go_acceptance_pack,
+)
+from backend_api.app.services.customer_label_v2_frontstage_runbook import (
+    build_customer_label_v2_frontstage_rollback_drill_report,
+    customer_label_v2_frontstage_gray_run_runbook,
 )
 from backend_api.app.services.customer_label_v2_maturity import maturity_contract_summary
 from backend_api.app.services.customer_label_v2_shadow import (
@@ -66,6 +79,10 @@ POSTDEPLOY_AUDIT = (
 )
 STEP7_SCOPE = "5.9.9 Step 7 v2 frontstage read-path actual consumer integration"
 STEP7_5_SCOPE = "5.9.9 Step 7.5 v2 frontstage readiness dry-run"
+STEP7_6_SCOPE = "5.9.9 Step 7.6 v2 frontstage production config / kill switch / observability"
+STEP7_7_SCOPE = "5.9.9 Step 7.7 v2 frontstage gray-run runbook / rollback drill"
+STEP7_8_SCOPE = "5.9.9 Step 7.8 v2 frontstage go/no-go acceptance pack"
+STEP8_SCOPE = "5.9.9 Step 8 vector bad case memory lite"
 ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step7-v2-frontstage-read-path-integration"
 ARTIFACT_PATH = ARTIFACT_DIR / "waders-shadow-summary.json"
 FRONTSTAGE_READ_PATH_ARTIFACT_PATH = ARTIFACT_DIR / "frontstage-read-path-contract.json"
@@ -76,6 +93,16 @@ REVIEWED_CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool-reviewed.
 REVIEWED_CANDIDATE_POOL_CSV_PATH = ARTIFACT_DIR / "candidate-pool-reviewed.csv"
 STEP7_5_ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step7.5-frontstage-readiness-dry-run"
 FRONTSTAGE_READINESS_DRY_RUN_ARTIFACT_PATH = STEP7_5_ARTIFACT_DIR / "frontstage-readiness-dry-run.json"
+STEP7_6_ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step7.6-frontstage-config-kill-switch-observability"
+FRONTSTAGE_CONFIG_KILL_SWITCH_OBSERVABILITY_ARTIFACT_PATH = (
+    STEP7_6_ARTIFACT_DIR / "frontstage-config-kill-switch-observability.json"
+)
+STEP7_7_ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step7.7-frontstage-gray-run-rollback-drill"
+FRONTSTAGE_GRAY_RUN_ROLLBACK_DRILL_ARTIFACT_PATH = STEP7_7_ARTIFACT_DIR / "gray-run-rollback-drill.json"
+STEP7_8_ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step7.8-frontstage-go-no-go-acceptance-pack"
+FRONTSTAGE_GO_NO_GO_ACCEPTANCE_PACK_ARTIFACT_PATH = STEP7_8_ARTIFACT_DIR / "go-no-go-acceptance-pack.json"
+STEP8_ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step8-vector-bad-case-memory-lite"
+VECTOR_BAD_CASE_MEMORY_LITE_ARTIFACT_PATH = STEP8_ARTIFACT_DIR / "vector-bad-case-memory-lite.json"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -997,10 +1024,437 @@ def _readiness_counter_as_contract(counter: Counter[str]) -> dict[str, int]:
         "blocked_by_maturity",
         "blocked_by_unknown_label",
         "blocked_by_no_stored_shadow",
+        "blocked_by_config_invalid",
         "rollback_selected_count",
+        "rollback_global_count",
+        "rollback_scoped_count",
+        "kill_switch_selected_count",
+        "kill_switch_global_count",
+        "kill_switch_scoped_count",
         "frontstage_occurrence_count",
+        "stored_shadow_available_count",
+        "stored_shadow_missing_count",
+        "config_validation_error_count",
     ]
     return {field: int(counter.get(field) or 0) for field in fields}
+
+
+def _step7_6_frontstage_config_kill_switch_observability_artifact() -> dict[str, Any]:
+    waders_candidates = [
+        _candidate(
+            label_type="issue",
+            canonical="water_leaks_through",
+            evidence="do not keep you dry",
+            aspect_key="waterproof",
+        )
+    ]
+
+    def stored_review(case: str) -> dict[str, Any]:
+        return _stored_shadow_readiness_review(
+            _step6_waders_v1_review(),
+            case=case,
+            candidates=waders_candidates,
+        )
+
+    enabled_waders_env = {
+        "CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED": "true",
+        "CUSTOMER_LABEL_V2_FRONTSTAGE_SUB_CATEGORIES": "outdoor/waders",
+        "CUSTOMER_LABEL_V2_FRONTSTAGE_SHADOW_FIXTURE_GATE_PASSED": "true",
+        "CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED_MATURITY_LEVELS": "L3_sub_category",
+        "CUSTOMER_LABEL_V2_FRONTSTAGE_ALLOW_RUNTIME_SHADOW": "false",
+    }
+    cases: dict[str, dict[str, Any]] = {
+        "default_off_v1_current": {
+            "review": stored_review("default_off_v1_current"),
+            "env_config": {},
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_blocked_reasons": ["blocked_by_flag_off"],
+            "expected_config_valid": True,
+        },
+        "enabled_scoped_l3_waders_v2": {
+            "review": stored_review("enabled_scoped_l3_waders_v2"),
+            "env_config": enabled_waders_env,
+            "expected_path": READ_PATH_V2_SHADOW,
+            "expected_blocked_reasons": [],
+            "expected_config_valid": True,
+            "expected_keys": {"issue": ["water_leaks_through"], "highlight": []},
+        },
+        "fixture_gate_fail_v1_current": {
+            "review": stored_review("fixture_gate_fail_v1_current"),
+            "env_config": {
+                **enabled_waders_env,
+                "CUSTOMER_LABEL_V2_FRONTSTAGE_SHADOW_FIXTURE_GATE_PASSED": "false",
+            },
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_blocked_reasons": ["blocked_by_fixture_gate"],
+            "expected_config_valid": True,
+        },
+        "global_rollback_v1_current": {
+            "review": stored_review("global_rollback_v1_current"),
+            "env_config": {
+                **enabled_waders_env,
+                "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK": "true",
+            },
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_blocked_reasons": ["rollback_selected_count", "rollback_global_count"],
+            "expected_config_valid": True,
+        },
+        "scoped_rollback_v1_current": {
+            "review": stored_review("scoped_rollback_v1_current"),
+            "env_config": {
+                **enabled_waders_env,
+                "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_SUB_CATEGORIES": "outdoor/waders",
+            },
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_blocked_reasons": ["rollback_selected_count", "rollback_scoped_count"],
+            "expected_config_valid": True,
+        },
+        "global_kill_switch_v1_current": {
+            "review": stored_review("global_kill_switch_v1_current"),
+            "env_config": {
+                **enabled_waders_env,
+                "CUSTOMER_LABEL_V2_FRONTSTAGE_KILL_SWITCH": "true",
+            },
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_blocked_reasons": ["kill_switch_selected_count", "kill_switch_global_count"],
+            "expected_config_valid": True,
+        },
+        "scoped_kill_switch_v1_current": {
+            "review": stored_review("scoped_kill_switch_v1_current"),
+            "env_config": {
+                **enabled_waders_env,
+                "CUSTOMER_LABEL_V2_FRONTSTAGE_KILL_SWITCH_CATEGORIES": "outdoor",
+            },
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_blocked_reasons": ["kill_switch_selected_count", "kill_switch_scoped_count"],
+            "expected_config_valid": True,
+        },
+        "invalid_config_fail_closed_v1_current": {
+            "review": stored_review("invalid_config_fail_closed_v1_current"),
+            "env_config": {
+                **enabled_waders_env,
+                "CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED_MATURITY_LEVELS": "L3_sub_category,L9_future",
+                "CUSTOMER_LABEL_V2_FRONTSTAGE_CATEGORY_SUB_CATEGORIES": "outdoor",
+            },
+            "expected_path": READ_PATH_V1_CURRENT,
+            "expected_blocked_reasons": ["blocked_by_config_invalid"],
+            "expected_config_valid": False,
+        },
+    }
+
+    reports: dict[str, dict[str, Any]] = {}
+    read_models: list[dict[str, Any]] = []
+    observability: Counter[str] = Counter()
+    selected_read_paths: Counter[str] = Counter()
+    config_validation_errors: Counter[str] = Counter()
+    violations: list[dict[str, Any]] = []
+
+    for name, case in cases.items():
+        config_resolution = resolve_customer_label_v2_frontstage_config(case["env_config"], source=f"{STEP7_6_SCOPE}:{name}")
+        report = build_customer_label_v2_frontstage_readiness_dry_run_report(
+            [case["review"]],
+            env_config=case["env_config"],
+            scope=STEP7_6_SCOPE,
+        )
+        reports[name] = {
+            "config_resolution": config_resolution.as_dict(),
+            "dry_run_report": report,
+        }
+        read_models.extend(report["read_models"])
+        observability.update(report["observability"])
+        selected_read_paths.update(report["selected_read_paths"])
+        for error in config_resolution.validation_errors:
+            config_validation_errors[str(error)] += 1
+
+        preview = report["selected_read_path_preview"][0]
+        if preview["selected_read_path"] != case["expected_path"]:
+            violations.append(
+                {
+                    "case": name,
+                    "error": "selected_read_path_mismatch",
+                    "expected": case["expected_path"],
+                    "actual": preview["selected_read_path"],
+                }
+            )
+        for reason in case["expected_blocked_reasons"]:
+            if reason not in preview["blocked_reasons"]:
+                violations.append(
+                    {
+                        "case": name,
+                        "error": "blocked_reason_missing",
+                        "expected_reason": reason,
+                        "actual_reasons": preview["blocked_reasons"],
+                    }
+                )
+        expected_keys = case.get("expected_keys")
+        if expected_keys is not None and preview["selected_keys"] != expected_keys:
+            violations.append(
+                {
+                    "case": name,
+                    "error": "selected_keys_mismatch",
+                    "expected": expected_keys,
+                    "actual": preview["selected_keys"],
+                }
+            )
+        expected_config_valid = bool(case["expected_config_valid"])
+        if bool(config_resolution.valid) != expected_config_valid:
+            violations.append(
+                {
+                    "case": name,
+                    "error": "config_validation_mismatch",
+                    "expected_valid": expected_config_valid,
+                    "actual_valid": config_resolution.valid,
+                    "validation_errors": list(config_resolution.validation_errors),
+                }
+            )
+
+    observability_snapshot = build_customer_label_v2_frontstage_observability_snapshot(
+        read_models,
+        scope=STEP7_6_SCOPE,
+    )
+    return {
+        "schema_version": "customer-label-v2-frontstage-config-kill-switch-observability.1",
+        "scope": STEP7_6_SCOPE,
+        "status": "PASS" if not violations else "REVIEW_NEEDED",
+        "case_count": len(cases),
+        "selected_read_paths": dict(sorted(selected_read_paths.items())),
+        "observability": dict(_readiness_counter_as_contract(observability)),
+        "observability_snapshot": observability_snapshot,
+        "config_validation_errors": {
+            "count": sum(config_validation_errors.values()),
+            "by_error": dict(sorted(config_validation_errors.items())),
+        },
+        "case_expectation_violations": violations,
+        "cases": reports,
+        "safety": {
+            "production_upload": False,
+            "production_write_path": False,
+            "production_db_write": False,
+            "db_write": False,
+            "credit_consumed": False,
+            "llm_called": False,
+            "runtime_shadow_called": False,
+            "frontstage_replaced": False,
+            "frontstage_mutated": False,
+            "production_feature_flag_enabled": False,
+        },
+    }
+
+
+def _step7_7_frontstage_gray_run_rollback_drill_artifact() -> dict[str, Any]:
+    review = _step6_waders_v1_review()
+    shadow_result = run_customer_label_v2_shadow(
+        review,
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="do not keep you dry",
+                aspect_key="waterproof",
+            )
+        ],
+    )
+    runbook = customer_label_v2_frontstage_gray_run_runbook()
+    rollback_drill = build_customer_label_v2_frontstage_rollback_drill_report(
+        review,
+        shadow_result=shadow_result,
+        scope=STEP7_7_SCOPE,
+    )
+    violations: list[dict[str, Any]] = []
+
+    if runbook["production_execution"]["executed"]:
+        violations.append({"error": "runbook_executed_production"})
+    if not runbook["production_execution"]["requires_erika_explicit_authorization"]:
+        violations.append({"error": "runbook_missing_erika_authorization_gate"})
+    if rollback_drill["status"] != "PASS":
+        violations.append({"error": "rollback_drill_failed", "violations": rollback_drill["violations"]})
+    if rollback_drill["selected_read_paths"] != {READ_PATH_V1_CURRENT: 5, READ_PATH_V2_SHADOW: 1}:
+        violations.append(
+            {
+                "error": "rollback_drill_selected_path_mismatch",
+                "selected_read_paths": rollback_drill["selected_read_paths"],
+            }
+        )
+    for case in rollback_drill["cases"]:
+        if case["case"] == "baseline_v2_selected":
+            continue
+        if case["actual_path"] != READ_PATH_V1_CURRENT:
+            violations.append(
+                {
+                    "case": case["case"],
+                    "error": "rollback_case_did_not_select_v1_current",
+                    "actual_path": case["actual_path"],
+                }
+            )
+
+    return {
+        "schema_version": "customer-label-v2-frontstage-gray-run-rollback-drill.1",
+        "scope": STEP7_7_SCOPE,
+        "status": "PASS" if not violations else "REVIEW_NEEDED",
+        "runbook": runbook,
+        "rollback_drill": rollback_drill,
+        "case_expectation_violations": violations,
+        "safety": {
+            "production_upload": False,
+            "production_write_path": False,
+            "production_db_write": False,
+            "db_write": False,
+            "credit_consumed": False,
+            "llm_called": False,
+            "runtime_shadow_called": False,
+            "frontstage_replaced": False,
+            "frontstage_mutated": False,
+            "production_feature_flag_enabled": False,
+            "production_gray_run_executed": False,
+        },
+    }
+
+
+def _step7_8_frontstage_go_no_go_acceptance_pack(
+    *,
+    frontstage_read_path_artifact: dict[str, Any],
+    frontstage_consumer_integration_artifact: dict[str, Any],
+    frontstage_readiness_dry_run_artifact: dict[str, Any],
+    frontstage_config_kill_switch_observability_artifact: dict[str, Any],
+    frontstage_gray_run_rollback_drill_artifact: dict[str, Any],
+    p0_count: int,
+    focus_metrics: dict[str, dict[str, int]],
+) -> dict[str, Any]:
+    pack = build_customer_label_v2_frontstage_go_no_go_acceptance_pack(
+        step6_read_path_artifact=frontstage_read_path_artifact,
+        step7_consumer_integration_artifact=frontstage_consumer_integration_artifact,
+        step7_5_readiness_artifact=frontstage_readiness_dry_run_artifact,
+        step7_6_config_artifact=frontstage_config_kill_switch_observability_artifact,
+        step7_7_runbook_artifact=frontstage_gray_run_rollback_drill_artifact,
+        p0_count=p0_count,
+        focus_label_metrics=focus_metrics,
+        scope=STEP7_8_SCOPE,
+    )
+    pack["source_artifacts"] = [
+        str(FRONTSTAGE_READ_PATH_ARTIFACT_PATH.relative_to(ROOT)),
+        str(FRONTSTAGE_CONSUMER_INTEGRATION_ARTIFACT_PATH.relative_to(ROOT)),
+        str(FRONTSTAGE_READINESS_DRY_RUN_ARTIFACT_PATH.relative_to(ROOT)),
+        str(FRONTSTAGE_CONFIG_KILL_SWITCH_OBSERVABILITY_ARTIFACT_PATH.relative_to(ROOT)),
+        str(FRONTSTAGE_GRAY_RUN_ROLLBACK_DRILL_ARTIFACT_PATH.relative_to(ROOT)),
+        str(ARTIFACT_PATH.relative_to(ROOT)),
+    ]
+    return pack
+
+
+def _step8_vector_bad_case_memory_lite_artifact(
+    *,
+    audited_shadow_results: list[dict[str, Any]],
+    gold_regression_cases: list[dict[str, Any]],
+    reviewed_candidate_pool_artifact: dict[str, Any],
+) -> dict[str, Any]:
+    memory = build_customer_label_v2_bad_case_memory(
+        audited_shadow_results=audited_shadow_results,
+        gold_regression_cases=gold_regression_cases,
+        reviewed_candidate_pool_artifact=reviewed_candidate_pool_artifact,
+        scope=STEP8_SCOPE,
+    )
+    debug_report = build_customer_label_v2_bad_case_memory_debug_report(
+        memory,
+        queries=[
+            "old waders leaked but the current product is fine",
+            {
+                "canonical_label_key": "candidate:boot_seam_leak",
+                "raw_label": "Boot seam leak",
+                "evidence": "boot seam leaked",
+                "downgrade_reasons": ["unknown_label"],
+            },
+            {
+                "canonical_label_key": "pocket_not_waterproof",
+                "evidence": "pocket is not waterproof",
+                "downgrade_reasons": ["maturity_blocked"],
+            },
+        ],
+        scope=STEP8_SCOPE,
+    )
+    no_evidence_shadow = run_customer_label_v2_shadow(
+        {
+            "id": "step8-artifact-no-evidence",
+            "content": "They do not keep you dry.",
+            "category": "outdoor",
+            "sub_category": "waders",
+        },
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="",
+                aspect_key="waterproof",
+            )
+        ],
+    )
+    context_blocked_shadow = run_customer_label_v2_shadow(
+        {
+            "id": "step8-artifact-context-blocked",
+            "content": (
+                "Bought as a gift for my boyfriend who has had numerous pairs of waders in the past "
+                "that have leaked. These have not caused any issues."
+            ),
+            "category": "outdoor",
+            "sub_category": "waders",
+        },
+        label_candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="water_leaks_through",
+                evidence="leaked",
+                aspect_key="waterproof",
+            )
+        ],
+    )
+    display_gate_probe = {
+        "no_evidence_display_count": len(no_evidence_shadow["display_occurrences"]),
+        "no_evidence_downgrade_reasons": no_evidence_shadow["downgrade_reasons"],
+        "context_blocked_display_count": len(context_blocked_shadow["display_occurrences"]),
+        "context_blocked_downgrade_reasons": context_blocked_shadow["downgrade_reasons"],
+        "vector_memory_can_select_frontstage": memory["display_contract"]["vector_memory_can_select_frontstage"],
+    }
+    violations: list[dict[str, Any]] = []
+    if memory["display_contract"]["vector_memory_can_select_frontstage"]:
+        violations.append({"error": "vector_memory_can_select_frontstage"})
+    if display_gate_probe["no_evidence_display_count"] != 0:
+        violations.append({"error": "no_evidence_entered_frontstage"})
+    if display_gate_probe["context_blocked_display_count"] != 0:
+        violations.append({"error": "context_blocked_entered_frontstage"})
+    if not debug_report["similar_history"][0]["results"]:
+        violations.append({"error": "similar_bad_case_retrieval_empty"})
+    if not debug_report["unknown_candidate_clusters"]:
+        violations.append({"error": "unknown_candidate_clusters_empty"})
+    if not debug_report["maturity_blocked_priorities"]:
+        violations.append({"error": "maturity_blocked_priorities_empty"})
+
+    return {
+        "schema_version": "customer-label-v2-vector-bad-case-memory-lite-pack.1",
+        "scope": STEP8_SCOPE,
+        "status": "PASS" if not violations else "REVIEW_NEEDED",
+        "memory": memory,
+        "debug_report": debug_report,
+        "display_gate_probe": display_gate_probe,
+        "violations": violations,
+        "source_artifacts": [
+            str(REVIEWED_CANDIDATE_POOL_ARTIFACT_PATH.relative_to(ROOT)),
+            str(HUMAN_351_400_GOLD.relative_to(ROOT)),
+            str(SESSION120_GOLD.relative_to(ROOT)),
+            str(SESSION121_FIXTURE.relative_to(ROOT)),
+            str(MATURITY_ROLLOUT_FIXTURE.relative_to(ROOT)),
+        ],
+        "safety": {
+            "production_upload": False,
+            "production_write_path": False,
+            "production_db_write": False,
+            "db_write": False,
+            "credit_consumed": False,
+            "llm_called": False,
+            "runtime_shadow_called": False,
+            "frontstage_replaced": False,
+            "frontstage_mutated": False,
+            "vector_result_decides_display": False,
+        },
+    }
 
 
 def _human_351_400_candidate_shadow_results() -> list[dict[str, Any]]:
@@ -1493,8 +1947,16 @@ def main() -> None:
         frontstage_read_path_artifact = _step6_frontstage_read_path_artifact()
         frontstage_consumer_integration_artifact = _step7_frontstage_consumer_integration_artifact()
         frontstage_readiness_dry_run_artifact = _step7_5_frontstage_readiness_dry_run_artifact()
+        frontstage_config_kill_switch_observability_artifact = (
+            _step7_6_frontstage_config_kill_switch_observability_artifact()
+        )
+        frontstage_gray_run_rollback_drill_artifact = _step7_7_frontstage_gray_run_rollback_drill_artifact()
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
         STEP7_5_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        STEP7_6_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        STEP7_7_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        STEP7_8_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        STEP8_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
         FRONTSTAGE_READ_PATH_ARTIFACT_PATH.write_text(
             json.dumps(frontstage_read_path_artifact, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
@@ -1505,6 +1967,14 @@ def main() -> None:
         )
         FRONTSTAGE_READINESS_DRY_RUN_ARTIFACT_PATH.write_text(
             json.dumps(frontstage_readiness_dry_run_artifact, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        FRONTSTAGE_CONFIG_KILL_SWITCH_OBSERVABILITY_ARTIFACT_PATH.write_text(
+            json.dumps(frontstage_config_kill_switch_observability_artifact, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        FRONTSTAGE_GRAY_RUN_ROLLBACK_DRILL_ARTIFACT_PATH.write_text(
+            json.dumps(frontstage_gray_run_rollback_drill_artifact, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         datasets = [session120, session121, session122, human_351_400]
@@ -1519,6 +1989,19 @@ def main() -> None:
             metrics = focus_metrics.get(key, {})
             if int(metrics.get("fp") or 0) or int(metrics.get("fn") or 0):
                 p0_violations.append({"label": key, "metrics": metrics})
+        frontstage_go_no_go_acceptance_pack = _step7_8_frontstage_go_no_go_acceptance_pack(
+            frontstage_read_path_artifact=frontstage_read_path_artifact,
+            frontstage_consumer_integration_artifact=frontstage_consumer_integration_artifact,
+            frontstage_readiness_dry_run_artifact=frontstage_readiness_dry_run_artifact,
+            frontstage_config_kill_switch_observability_artifact=frontstage_config_kill_switch_observability_artifact,
+            frontstage_gray_run_rollback_drill_artifact=frontstage_gray_run_rollback_drill_artifact,
+            p0_count=len(p0_violations),
+            focus_metrics=focus_metrics,
+        )
+        FRONTSTAGE_GO_NO_GO_ACCEPTANCE_PACK_ARTIFACT_PATH.write_text(
+            json.dumps(frontstage_go_no_go_acceptance_pack, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
         postdeploy = _load_json(POSTDEPLOY_AUDIT) if POSTDEPLOY_AUDIT.exists() else {}
         human_gold_payload = _load_json(HUMAN_351_400_GOLD)
         candidate_pool_artifact = build_candidate_pool_artifact(
@@ -1556,6 +2039,20 @@ def main() -> None:
             REVIEWED_CANDIDATE_POOL_CSV_PATH,
             reviewed_candidate_pool_artifact,
         )
+        gold_regression_cases = _session120_reviews()[:12] + session121_reviews[:12] + _human_351_400_reviews()[:12]
+        vector_bad_case_memory_lite_artifact = _step8_vector_bad_case_memory_lite_artifact(
+            audited_shadow_results=(
+                edge_case_shadow_results
+                + human_351_400_candidate_shadow_results
+                + maturity_rollout_shadow_results
+            ),
+            gold_regression_cases=gold_regression_cases,
+            reviewed_candidate_pool_artifact=reviewed_candidate_pool_artifact,
+        )
+        VECTOR_BAD_CASE_MEMORY_LITE_ARTIFACT_PATH.write_text(
+            json.dumps(vector_bad_case_memory_lite_artifact, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
         artifact = {
             "status": (
                 "PASS"
@@ -1566,7 +2063,11 @@ def main() -> None:
                     and frontstage_read_path_artifact["status"] == "PASS"
                     and frontstage_consumer_integration_artifact["status"] == "PASS"
                     and frontstage_readiness_dry_run_artifact["status"] == "PASS"
+                    and frontstage_config_kill_switch_observability_artifact["status"] == "PASS"
+                    and frontstage_gray_run_rollback_drill_artifact["status"] == "PASS"
+                    and frontstage_go_no_go_acceptance_pack["status"] == "PASS"
                     and reviewed_candidate_pool_artifact["status"] == "PASS"
+                    and vector_bad_case_memory_lite_artifact["status"] == "PASS"
                 )
                 else "REVIEW_NEEDED"
             ),
@@ -1618,6 +2119,47 @@ def main() -> None:
                 ],
                 "artifact_json": str(FRONTSTAGE_READINESS_DRY_RUN_ARTIFACT_PATH.relative_to(ROOT)),
             },
+            "frontstage_config_kill_switch_observability": {
+                "schema_version": frontstage_config_kill_switch_observability_artifact["schema_version"],
+                "status": frontstage_config_kill_switch_observability_artifact["status"],
+                "case_count": frontstage_config_kill_switch_observability_artifact["case_count"],
+                "selected_read_paths": frontstage_config_kill_switch_observability_artifact["selected_read_paths"],
+                "observability": frontstage_config_kill_switch_observability_artifact["observability"],
+                "observability_snapshot": frontstage_config_kill_switch_observability_artifact[
+                    "observability_snapshot"
+                ],
+                "config_validation_errors": frontstage_config_kill_switch_observability_artifact[
+                    "config_validation_errors"
+                ],
+                "case_expectation_violations": frontstage_config_kill_switch_observability_artifact[
+                    "case_expectation_violations"
+                ],
+                "artifact_json": str(FRONTSTAGE_CONFIG_KILL_SWITCH_OBSERVABILITY_ARTIFACT_PATH.relative_to(ROOT)),
+            },
+            "frontstage_gray_run_rollback_drill": {
+                "schema_version": frontstage_gray_run_rollback_drill_artifact["schema_version"],
+                "status": frontstage_gray_run_rollback_drill_artifact["status"],
+                "runbook_status": frontstage_gray_run_rollback_drill_artifact["runbook"]["status"],
+                "rollback_drill_status": frontstage_gray_run_rollback_drill_artifact["rollback_drill"]["status"],
+                "rollback_drill_case_count": frontstage_gray_run_rollback_drill_artifact["rollback_drill"][
+                    "case_count"
+                ],
+                "selected_read_paths": frontstage_gray_run_rollback_drill_artifact["rollback_drill"][
+                    "selected_read_paths"
+                ],
+                "case_expectation_violations": frontstage_gray_run_rollback_drill_artifact[
+                    "case_expectation_violations"
+                ],
+                "artifact_json": str(FRONTSTAGE_GRAY_RUN_ROLLBACK_DRILL_ARTIFACT_PATH.relative_to(ROOT)),
+            },
+            "frontstage_go_no_go_acceptance_pack": {
+                "schema_version": frontstage_go_no_go_acceptance_pack["schema_version"],
+                "status": frontstage_go_no_go_acceptance_pack["status"],
+                "go_no_go": frontstage_go_no_go_acceptance_pack["go_no_go"],
+                "no_go_items": frontstage_go_no_go_acceptance_pack["no_go_items"],
+                "acceptance_criteria": frontstage_go_no_go_acceptance_pack["acceptance_criteria"],
+                "artifact_json": str(FRONTSTAGE_GO_NO_GO_ACCEPTANCE_PACK_ARTIFACT_PATH.relative_to(ROOT)),
+            },
             "candidate_pool_mvp": {
                 "schema_version": candidate_pool_artifact["schema_version"],
                 "raw_item_count": candidate_pool_artifact["raw_item_count"],
@@ -1636,6 +2178,21 @@ def main() -> None:
                 "artifact_json": str(reviewed_candidate_pool_json_path.relative_to(ROOT)),
                 "artifact_csv": str(reviewed_candidate_pool_csv_path.relative_to(ROOT)),
                 "safety": reviewed_candidate_pool_artifact["safety"],
+            },
+            "vector_bad_case_memory_lite": {
+                "schema_version": vector_bad_case_memory_lite_artifact["schema_version"],
+                "status": vector_bad_case_memory_lite_artifact["status"],
+                "memory_item_count": vector_bad_case_memory_lite_artifact["memory"]["item_count"],
+                "source_counts": vector_bad_case_memory_lite_artifact["memory"]["source_counts"],
+                "unknown_candidate_cluster_count": len(
+                    vector_bad_case_memory_lite_artifact["debug_report"]["unknown_candidate_clusters"]
+                ),
+                "maturity_blocked_priority_count": len(
+                    vector_bad_case_memory_lite_artifact["debug_report"]["maturity_blocked_priorities"]
+                ),
+                "display_gate_probe": vector_bad_case_memory_lite_artifact["display_gate_probe"],
+                "violations": vector_bad_case_memory_lite_artifact["violations"],
+                "artifact_json": str(VECTOR_BAD_CASE_MEMORY_LITE_ARTIFACT_PATH.relative_to(ROOT)),
             },
             "aggregate_focus_label_metrics": focus_metrics,
             "aggregate_downgrade_reasons": _aggregate_downgrades(datasets, edge_cases),
@@ -1662,10 +2219,14 @@ def main() -> None:
                 str(FRONTSTAGE_READ_PATH_ARTIFACT_PATH.relative_to(ROOT)),
                 str(FRONTSTAGE_CONSUMER_INTEGRATION_ARTIFACT_PATH.relative_to(ROOT)),
                 str(FRONTSTAGE_READINESS_DRY_RUN_ARTIFACT_PATH.relative_to(ROOT)),
+                str(FRONTSTAGE_CONFIG_KILL_SWITCH_OBSERVABILITY_ARTIFACT_PATH.relative_to(ROOT)),
+                str(FRONTSTAGE_GRAY_RUN_ROLLBACK_DRILL_ARTIFACT_PATH.relative_to(ROOT)),
+                str(FRONTSTAGE_GO_NO_GO_ACCEPTANCE_PACK_ARTIFACT_PATH.relative_to(ROOT)),
                 str(candidate_pool_json_path.relative_to(ROOT)),
                 str(candidate_pool_csv_path.relative_to(ROOT)),
                 str(reviewed_candidate_pool_json_path.relative_to(ROOT)),
                 str(reviewed_candidate_pool_csv_path.relative_to(ROOT)),
+                str(VECTOR_BAD_CASE_MEMORY_LITE_ARTIFACT_PATH.relative_to(ROOT)),
             ],
         }
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
