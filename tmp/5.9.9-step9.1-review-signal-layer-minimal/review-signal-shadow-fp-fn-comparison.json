@@ -1,0 +1,5683 @@
+{
+  "dataset_summaries": {
+    "airpods_screenshot_gold": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "name": "airpods_screenshot_gold",
+      "review_count": 1,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "unresolved_mapping_count": 6
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "airpods_shadow_probe": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "name": "airpods_shadow_probe",
+      "review_count": 3,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "unresolved_mapping_count": 3
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "candidate_pool_reviewed": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "name": "candidate_pool_reviewed",
+      "review_count": 1,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 0
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "unresolved_mapping_count": 1
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "session120_human_gold": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 8
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 7
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "name": "session120_human_gold",
+      "review_count": 9,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 8
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 7
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    "session121_blind_regression": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 3
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 2
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "name": "session121_blind_regression",
+      "review_count": 5,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 3
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 2
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "unresolved_mapping_count": 1
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "session124_readonly_local_copy": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 2,
+          "fn_keys": [
+            "runs_too_small",
+            "strong_chemical_smell"
+          ],
+          "fp": 9,
+          "fp_keys": [
+            "breaks_easily",
+            "missing_wader_hanger",
+            "pocket_not_waterproof",
+            "poor_traction",
+            "runs_too_small",
+            "water_leaks_through"
+          ],
+          "tp": 5
+        },
+        "customer_label": {
+          "fn": 2,
+          "fn_keys": [
+            "keeps_water_out"
+          ],
+          "fp": 3,
+          "fp_keys": [
+            "feels_well_made",
+            "not_used_yet",
+            "useful_storage_space"
+          ],
+          "tp": 17
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": -2,
+        "issue_fp_delta": -9,
+        "label_fn_delta": -2,
+        "label_fp_delta": -3
+      },
+      "name": "session124_readonly_local_copy",
+      "review_count": 10,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 7
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 19
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 2,
+          "label": 2
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 1
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 9,
+          "label": 2
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    "waders_351_400_human_gold": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 4
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 3,
+          "fp_keys": [
+            "fits_as_expected",
+            "good_value_for_the_price",
+            "overall_satisfied"
+          ],
+          "tp": 10
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": -3
+      },
+      "name": "waders_351_400_human_gold",
+      "review_count": 7,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 4
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 10
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 3
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "unresolved_mapping_count": 3
+      },
+      "status": "REVIEW_NEEDED"
+    }
+  },
+  "decision": {
+    "full_label_extraction_ready": false,
+    "production_action_taken": false,
+    "review_needed_reason": "Signal routing passed leakage/FN gates, but unresolved extraction/canonical mapping remains.",
+    "routing_layer_ready_for_controlled_gray_review": true
+  },
+  "overall": {
+    "baseline": {
+      "customer_issue": {
+        "fn": 2,
+        "fn_keys": [
+          "runs_too_small",
+          "strong_chemical_smell"
+        ],
+        "fp": 9,
+        "fp_keys": [
+          "breaks_easily",
+          "missing_wader_hanger",
+          "pocket_not_waterproof",
+          "poor_traction",
+          "runs_too_small",
+          "water_leaks_through"
+        ],
+        "tp": 20
+      },
+      "customer_label": {
+        "fn": 2,
+        "fn_keys": [
+          "keeps_water_out"
+        ],
+        "fp": 6,
+        "fp_keys": [
+          "feels_well_made",
+          "fits_as_expected",
+          "good_value_for_the_price",
+          "not_used_yet",
+          "overall_satisfied",
+          "useful_storage_space"
+        ],
+        "tp": 36
+      }
+    },
+    "fp_fn_delta": {
+      "issue_fn_delta": -2,
+      "issue_fp_delta": -9,
+      "label_fn_delta": -2,
+      "label_fp_delta": -6
+    },
+    "name": "overall",
+    "review_count": 36,
+    "signal_shadow": {
+      "customer_issue": {
+        "fn": 0,
+        "fn_keys": [],
+        "fp": 0,
+        "fp_keys": [],
+        "tp": 22
+      },
+      "customer_label": {
+        "fn": 0,
+        "fn_keys": [],
+        "fp": 0,
+        "fp_keys": [],
+        "tp": 38
+      }
+    },
+    "split_metrics": {
+      "evidence_not_found_count": 0,
+      "label_extraction_fn": {
+        "issue": 2,
+        "label": 2
+      },
+      "label_extraction_fp": {
+        "issue": 0,
+        "label": 4
+      },
+      "non_product_leakage_count": 0,
+      "routing_fn": {
+        "issue": 0,
+        "label": 0
+      },
+      "routing_fp": {
+        "issue": 9,
+        "label": 2
+      },
+      "unresolved_mapping_count": 14
+    },
+    "status": "REVIEW_NEEDED"
+  },
+  "review_comparisons": [
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "airpods_screenshot_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 6
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "airpods_shadow_probe",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 3
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "airpods_shadow_probe",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "airpods_shadow_probe",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "breaks_easily"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "breaks_easily"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "breaks_easily"
+          ]
+        },
+        "customer_issue_keys": [
+          "breaks_easily"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_value_for_the_price"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "good_value_for_the_price"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price"
+        ]
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "breaks_easily"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "breaks_easily"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "breaks_easily"
+          ]
+        },
+        "customer_issue_keys": [
+          "breaks_easily"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_value_for_the_price"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "good_value_for_the_price"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "fits_as_expected"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "fits_as_expected"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "fits_as_expected"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected"
+        ]
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "fits_as_expected"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "fits_as_expected"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "fits_as_expected"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "fits_as_expected",
+            "looks_good"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "fits_as_expected",
+            "looks_good"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "fits_as_expected",
+            "looks_good"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected",
+          "looks_good"
+        ]
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "fits_as_expected",
+            "looks_good"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "fits_as_expected",
+            "looks_good"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "fits_as_expected",
+            "looks_good"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected",
+          "looks_good"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "size_fit_problem",
+            "strong_chemical_smell"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "size_fit_problem",
+            "strong_chemical_smell"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "size_fit_problem",
+            "strong_chemical_smell"
+          ]
+        },
+        "customer_issue_keys": [
+          "size_fit_problem",
+          "strong_chemical_smell"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "size_fit_problem",
+            "strong_chemical_smell"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "size_fit_problem",
+            "strong_chemical_smell"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "size_fit_problem",
+            "strong_chemical_smell"
+          ]
+        },
+        "customer_issue_keys": [
+          "size_fit_problem",
+          "strong_chemical_smell"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "soft_soles"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "soft_soles"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "soft_soles"
+          ]
+        },
+        "customer_issue_keys": [
+          "soft_soles"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "keeps_water_out"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "keeps_water_out"
+        ]
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "soft_soles"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "soft_soles"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "soft_soles"
+          ]
+        },
+        "customer_issue_keys": [
+          "soft_soles"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "keeps_water_out"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "keeps_water_out"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "size_fit_problem"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "size_fit_problem"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "size_fit_problem"
+          ]
+        },
+        "customer_issue_keys": [
+          "size_fit_problem"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "overall_satisfied"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "overall_satisfied"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "overall_satisfied"
+          ]
+        },
+        "customer_label_keys": [
+          "overall_satisfied"
+        ]
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "size_fit_problem"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "size_fit_problem"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "size_fit_problem"
+          ]
+        },
+        "customer_issue_keys": [
+          "size_fit_problem"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "overall_satisfied"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "overall_satisfied"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "overall_satisfied"
+          ]
+        },
+        "customer_label_keys": [
+          "overall_satisfied"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "size_fit_problem"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "size_fit_problem"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "size_fit_problem"
+          ]
+        },
+        "customer_issue_keys": [
+          "size_fit_problem"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "size_fit_problem"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "size_fit_problem"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "size_fit_problem"
+          ]
+        },
+        "customer_issue_keys": [
+          "size_fit_problem"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "not_breathable",
+            "strong_chemical_smell"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "not_breathable",
+            "strong_chemical_smell"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "not_breathable",
+            "strong_chemical_smell"
+          ]
+        },
+        "customer_issue_keys": [
+          "not_breathable",
+          "strong_chemical_smell"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "not_breathable",
+            "strong_chemical_smell"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "not_breathable",
+            "strong_chemical_smell"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "not_breathable",
+            "strong_chemical_smell"
+          ]
+        },
+        "customer_issue_keys": [
+          "not_breathable",
+          "strong_chemical_smell"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "looks_good"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "looks_good"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "looks_good"
+          ]
+        },
+        "customer_label_keys": [
+          "looks_good"
+        ]
+      },
+      "dataset": "session120_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "looks_good"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "looks_good"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "looks_good"
+          ]
+        },
+        "customer_label_keys": [
+          "looks_good"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "size_fit_problem",
+            "water_leaks_through"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "size_fit_problem",
+            "water_leaks_through"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "size_fit_problem",
+            "water_leaks_through"
+          ]
+        },
+        "customer_issue_keys": [
+          "size_fit_problem",
+          "water_leaks_through"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "session121_blind_regression",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "size_fit_problem",
+            "water_leaks_through"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "size_fit_problem",
+            "water_leaks_through"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "size_fit_problem",
+            "water_leaks_through"
+          ]
+        },
+        "customer_issue_keys": [
+          "size_fit_problem",
+          "water_leaks_through"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "session121_blind_regression",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "pocket_not_waterproof"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "pocket_not_waterproof"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "pocket_not_waterproof"
+          ]
+        },
+        "customer_issue_keys": [
+          "pocket_not_waterproof"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "session121_blind_regression",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "pocket_not_waterproof"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "pocket_not_waterproof"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "pocket_not_waterproof"
+          ]
+        },
+        "customer_issue_keys": [
+          "pocket_not_waterproof"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "fits_as_expected"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "fits_as_expected"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "fits_as_expected"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected"
+        ]
+      },
+      "dataset": "session121_blind_regression",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "fits_as_expected"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "fits_as_expected"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "fits_as_expected"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "keeps_water_out"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "keeps_water_out"
+        ]
+      },
+      "dataset": "session121_blind_regression",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "keeps_water_out"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "keeps_water_out"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 1
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "keeps_water_out",
+            "overall_satisfied"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "keeps_water_out",
+            "overall_satisfied"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "keeps_water_out",
+            "overall_satisfied"
+          ]
+        },
+        "customer_label_keys": [
+          "keeps_water_out",
+          "overall_satisfied"
+        ]
+      },
+      "dataset": "waders_351_400_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "keeps_water_out",
+            "overall_satisfied"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "keeps_water_out",
+            "overall_satisfied"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "keeps_water_out",
+            "overall_satisfied"
+          ]
+        },
+        "customer_label_keys": [
+          "keeps_water_out",
+          "overall_satisfied"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "breaks_easily",
+            "uncomfortable_fit"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "breaks_easily",
+            "uncomfortable_fit"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "breaks_easily",
+            "uncomfortable_fit"
+          ]
+        },
+        "customer_issue_keys": [
+          "breaks_easily",
+          "uncomfortable_fit"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "fits_as_expected",
+            "good_value_for_the_price"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "fits_as_expected",
+            "good_value_for_the_price"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "fits_as_expected",
+            "good_value_for_the_price"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected",
+          "good_value_for_the_price"
+        ]
+      },
+      "dataset": "waders_351_400_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "breaks_easily",
+            "uncomfortable_fit"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "breaks_easily",
+            "uncomfortable_fit"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "breaks_easily",
+            "uncomfortable_fit"
+          ]
+        },
+        "customer_issue_keys": [
+          "breaks_easily",
+          "uncomfortable_fit"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "fits_as_expected",
+            "good_value_for_the_price"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "fits_as_expected",
+            "good_value_for_the_price"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "fits_as_expected",
+            "good_value_for_the_price"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected",
+          "good_value_for_the_price"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 1
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "waders_351_400_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ]
+        },
+        "customer_label_keys": [
+          "comfortable_to_wear",
+          "fits_as_expected"
+        ]
+      },
+      "dataset": "waders_351_400_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ]
+        },
+        "customer_label_keys": [
+          "comfortable_to_wear",
+          "fits_as_expected"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 1
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "uncomfortable_fit"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "uncomfortable_fit"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "uncomfortable_fit"
+          ]
+        },
+        "customer_issue_keys": [
+          "uncomfortable_fit"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 2,
+          "fp_keys": [
+            "good_value_for_the_price",
+            "overall_satisfied"
+          ],
+          "keys": [
+            "comfortable_to_wear",
+            "fits_as_expected",
+            "good_value_for_the_price",
+            "overall_satisfied"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ]
+        },
+        "customer_label_keys": [
+          "comfortable_to_wear",
+          "fits_as_expected",
+          "good_value_for_the_price",
+          "overall_satisfied"
+        ]
+      },
+      "dataset": "waders_351_400_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": -2
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "uncomfortable_fit"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "uncomfortable_fit"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "uncomfortable_fit"
+          ]
+        },
+        "customer_issue_keys": [
+          "uncomfortable_fit"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "comfortable_to_wear",
+            "fits_as_expected"
+          ]
+        },
+        "customer_label_keys": [
+          "comfortable_to_wear",
+          "fits_as_expected"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 2,
+          "label_keys": [
+            "good_value_for_the_price",
+            "overall_satisfied"
+          ]
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 1
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "good_material_quality"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "fits_as_expected"
+          ],
+          "keys": [
+            "fits_as_expected",
+            "good_material_quality"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "good_material_quality"
+          ]
+        },
+        "customer_label_keys": [
+          "fits_as_expected",
+          "good_material_quality"
+        ]
+      },
+      "dataset": "waders_351_400_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": -1
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "good_material_quality"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_material_quality"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "good_material_quality"
+          ]
+        },
+        "customer_label_keys": [
+          "good_material_quality"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 1,
+          "label_keys": [
+            "fits_as_expected"
+          ]
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "insufficient_warmth"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "insufficient_warmth"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "insufficient_warmth"
+          ]
+        },
+        "customer_issue_keys": [
+          "insufficient_warmth"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "keeps_water_out"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "keeps_water_out"
+        ]
+      },
+      "dataset": "waders_351_400_human_gold",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "insufficient_warmth"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "insufficient_warmth"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "insufficient_warmth"
+          ]
+        },
+        "customer_issue_keys": [
+          "insufficient_warmth"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "keeps_water_out"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "keeps_water_out"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "breaks_easily"
+          ],
+          "keys": [
+            "breaks_easily"
+          ],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [
+          "breaks_easily"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price",
+            "holds_up_well",
+            "keeps_water_out"
+          ],
+          "fn": 1,
+          "fn_keys": [
+            "keeps_water_out"
+          ],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_value_for_the_price",
+            "holds_up_well"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "good_value_for_the_price",
+            "holds_up_well"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price",
+          "holds_up_well"
+        ]
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -1,
+        "label_fn_delta": -1,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price",
+            "holds_up_well",
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_value_for_the_price",
+            "holds_up_well",
+            "keeps_water_out"
+          ],
+          "tp": 3,
+          "tp_keys": [
+            "good_value_for_the_price",
+            "holds_up_well",
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price",
+          "holds_up_well",
+          "keeps_water_out"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 1,
+          "label_keys": [
+            "keeps_water_out"
+          ]
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 1,
+          "issue_keys": [
+            "breaks_easily"
+          ],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 2,
+          "fp_keys": [
+            "missing_wader_hanger",
+            "runs_too_small"
+          ],
+          "keys": [
+            "missing_wader_hanger",
+            "runs_too_small"
+          ],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [
+          "missing_wader_hanger",
+          "runs_too_small"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "useful_storage_space"
+          ],
+          "keys": [
+            "good_value_for_the_price",
+            "keeps_water_out",
+            "useful_storage_space"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price",
+          "keeps_water_out",
+          "useful_storage_space"
+        ]
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -2,
+        "label_fn_delta": 0,
+        "label_fp_delta": -1
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price",
+          "keeps_water_out"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 2,
+          "issue_keys": [
+            "missing_wader_hanger",
+            "runs_too_small"
+          ],
+          "label": 1,
+          "label_keys": [
+            "useful_storage_space"
+          ]
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "poor_traction"
+          ],
+          "keys": [
+            "poor_traction"
+          ],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [
+          "poor_traction"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_traction",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "fn": 1,
+          "fn_keys": [
+            "keeps_water_out"
+          ],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_traction",
+            "good_value_for_the_price"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "good_traction",
+            "good_value_for_the_price"
+          ]
+        },
+        "customer_label_keys": [
+          "good_traction",
+          "good_value_for_the_price"
+        ]
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -1,
+        "label_fn_delta": -1,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "good_traction",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_traction",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "tp": 3,
+          "tp_keys": [
+            "good_traction",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "good_traction",
+          "good_value_for_the_price",
+          "keeps_water_out"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 1,
+          "label_keys": [
+            "keeps_water_out"
+          ]
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 1,
+          "issue_keys": [
+            "poor_traction"
+          ],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "missing_wader_hanger"
+          ],
+          "keys": [
+            "missing_wader_hanger"
+          ],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [
+          "missing_wader_hanger"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_material_quality"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "feels_well_made"
+          ],
+          "keys": [
+            "feels_well_made",
+            "good_material_quality"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "good_material_quality"
+          ]
+        },
+        "customer_label_keys": [
+          "feels_well_made",
+          "good_material_quality"
+        ]
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -1,
+        "label_fn_delta": 0,
+        "label_fp_delta": -1
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "good_material_quality"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_material_quality"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "good_material_quality"
+          ]
+        },
+        "customer_label_keys": [
+          "good_material_quality"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 1,
+          "label_keys": [
+            "feels_well_made"
+          ]
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 1,
+          "issue_keys": [
+            "missing_wader_hanger"
+          ],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "missing_wader_hanger"
+          ],
+          "keys": [
+            "missing_wader_hanger"
+          ],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [
+          "missing_wader_hanger"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -1,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 1,
+          "issue_keys": [
+            "missing_wader_hanger"
+          ],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "water_leaks_through"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "water_leaks_through"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "water_leaks_through"
+          ]
+        },
+        "customer_issue_keys": [
+          "water_leaks_through"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "water_leaks_through"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "water_leaks_through"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "water_leaks_through"
+          ]
+        },
+        "customer_issue_keys": [
+          "water_leaks_through"
+        ],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "breaks_easily",
+            "not_breathable",
+            "runs_too_small"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "water_leaks_through"
+          ],
+          "keys": [
+            "breaks_easily",
+            "not_breathable",
+            "runs_too_small",
+            "water_leaks_through"
+          ],
+          "tp": 3,
+          "tp_keys": [
+            "breaks_easily",
+            "not_breathable",
+            "runs_too_small"
+          ]
+        },
+        "customer_issue_keys": [
+          "breaks_easily",
+          "not_breathable",
+          "runs_too_small",
+          "water_leaks_through"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_material_quality",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_material_quality",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "tp": 3,
+          "tp_keys": [
+            "good_material_quality",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "good_material_quality",
+          "good_value_for_the_price",
+          "keeps_water_out"
+        ]
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -1,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "breaks_easily",
+            "not_breathable",
+            "runs_too_small"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "breaks_easily",
+            "not_breathable",
+            "runs_too_small"
+          ],
+          "tp": 3,
+          "tp_keys": [
+            "breaks_easily",
+            "not_breathable",
+            "runs_too_small"
+          ]
+        },
+        "customer_issue_keys": [
+          "breaks_easily",
+          "not_breathable",
+          "runs_too_small"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_material_quality",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_material_quality",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ],
+          "tp": 3,
+          "tp_keys": [
+            "good_material_quality",
+            "good_value_for_the_price",
+            "keeps_water_out"
+          ]
+        },
+        "customer_label_keys": [
+          "good_material_quality",
+          "good_value_for_the_price",
+          "keeps_water_out"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 1,
+          "issue_keys": [
+            "water_leaks_through"
+          ],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "poor_traction"
+          ],
+          "keys": [
+            "poor_traction"
+          ],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [
+          "poor_traction"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price",
+            "lightweight_waders"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "not_used_yet"
+          ],
+          "keys": [
+            "good_value_for_the_price",
+            "lightweight_waders",
+            "not_used_yet"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "good_value_for_the_price",
+            "lightweight_waders"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price",
+          "lightweight_waders",
+          "not_used_yet"
+        ]
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -1,
+        "label_fn_delta": 0,
+        "label_fp_delta": -1
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price",
+            "lightweight_waders"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_value_for_the_price",
+            "lightweight_waders"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "good_value_for_the_price",
+            "lightweight_waders"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price",
+          "lightweight_waders"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 1,
+          "issue_keys": [
+            "poor_traction"
+          ],
+          "label": 1,
+          "label_keys": [
+            "not_used_yet"
+          ]
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "feels_thin_and_flimsy"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "feels_thin_and_flimsy"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "feels_thin_and_flimsy"
+          ]
+        },
+        "customer_issue_keys": [
+          "feels_thin_and_flimsy"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price",
+            "holds_up_well"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_value_for_the_price",
+            "holds_up_well"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "good_value_for_the_price",
+            "holds_up_well"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price",
+          "holds_up_well"
+        ]
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "feels_thin_and_flimsy"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "feels_thin_and_flimsy"
+          ],
+          "tp": 1,
+          "tp_keys": [
+            "feels_thin_and_flimsy"
+          ]
+        },
+        "customer_issue_keys": [
+          "feels_thin_and_flimsy"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_value_for_the_price",
+            "holds_up_well"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_value_for_the_price",
+            "holds_up_well"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "good_value_for_the_price",
+            "holds_up_well"
+          ]
+        },
+        "customer_label_keys": [
+          "good_value_for_the_price",
+          "holds_up_well"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [
+            "runs_too_small",
+            "strong_chemical_smell"
+          ],
+          "fn": 2,
+          "fn_keys": [
+            "runs_too_small",
+            "strong_chemical_smell"
+          ],
+          "fp": 1,
+          "fp_keys": [
+            "pocket_not_waterproof"
+          ],
+          "keys": [
+            "pocket_not_waterproof"
+          ],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [
+          "pocket_not_waterproof"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_material_quality",
+            "keeps_water_out",
+            "useful_storage_space"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_material_quality",
+            "keeps_water_out",
+            "useful_storage_space"
+          ],
+          "tp": 3,
+          "tp_keys": [
+            "good_material_quality",
+            "keeps_water_out",
+            "useful_storage_space"
+          ]
+        },
+        "customer_label_keys": [
+          "good_material_quality",
+          "keeps_water_out",
+          "useful_storage_space"
+        ]
+      },
+      "dataset": "session124_readonly_local_copy",
+      "fp_fn_delta": {
+        "issue_fn_delta": -2,
+        "issue_fp_delta": -1,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [
+            "runs_too_small",
+            "strong_chemical_smell"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "runs_too_small",
+            "strong_chemical_smell"
+          ],
+          "tp": 2,
+          "tp_keys": [
+            "runs_too_small",
+            "strong_chemical_smell"
+          ]
+        },
+        "customer_issue_keys": [
+          "runs_too_small",
+          "strong_chemical_smell"
+        ],
+        "customer_label": {
+          "expected_keys": [
+            "good_material_quality",
+            "keeps_water_out",
+            "useful_storage_space"
+          ],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [
+            "good_material_quality",
+            "keeps_water_out",
+            "useful_storage_space"
+          ],
+          "tp": 3,
+          "tp_keys": [
+            "good_material_quality",
+            "keeps_water_out",
+            "useful_storage_space"
+          ]
+        },
+        "customer_label_keys": [
+          "good_material_quality",
+          "keeps_water_out",
+          "useful_storage_space"
+        ]
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 2,
+          "issue_keys": [
+            "runs_too_small",
+            "strong_chemical_smell"
+          ],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 1,
+          "issue_keys": [
+            "pocket_not_waterproof"
+          ],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "baseline": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "dataset": "candidate_pool_reviewed",
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": 0
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "schema_version": "review-signals-fp-fn-comparison.1",
+      "signal_shadow": {
+        "customer_issue": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_issue_keys": [],
+        "customer_label": {
+          "expected_keys": [],
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "keys": [],
+          "tp": 0,
+          "tp_keys": []
+        },
+        "customer_label_keys": []
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "routing_fp": {
+          "issue": 0,
+          "issue_keys": [],
+          "label": 0,
+          "label_keys": []
+        },
+        "unresolved_mapping_count": 1
+      },
+      "status": "REVIEW_NEEDED"
+    }
+  ],
+  "reviewable_cases": [
+    {
+      "candidate_id": "pool:df3be235a1d23c9c",
+      "dataset": "candidate_pool_reviewed",
+      "reason": "candidate_pool_reviewed_sample_without_full_review_content_or_candidate_mapping_only",
+      "review_id": "edge-unknown-label",
+      "review_status": "needs_new_label"
+    },
+    {
+      "candidate_id": "pool:cf6b45d6c153e154",
+      "dataset": "candidate_pool_reviewed",
+      "reason": "candidate_pool_reviewed_sample_without_full_review_content_or_candidate_mapping_only",
+      "review_id": "edge-unknown-label",
+      "review_status": "needs_new_label"
+    },
+    {
+      "candidate_id": "pool:3c5dc187d659426a",
+      "dataset": "candidate_pool_reviewed",
+      "reason": "candidate_pool_reviewed_sample_without_full_review_content_or_candidate_mapping_only",
+      "review_id": "edge-unknown-label",
+      "review_status": "needs_new_label"
+    },
+    {
+      "candidate_id": "pool:b1f868a8103046d5",
+      "dataset": "candidate_pool_reviewed",
+      "reason": "candidate_pool_reviewed_sample_without_full_review_content_or_candidate_mapping_only",
+      "review_id": "edge-unknown-label",
+      "review_status": "needs_new_label"
+    },
+    {
+      "candidate_id": "pool:4d6ed1c4394a62c1",
+      "dataset": "candidate_pool_reviewed",
+      "reason": "candidate_pool_reviewed_sample_without_full_review_content_or_candidate_mapping_only",
+      "review_id": "edge-unknown-label",
+      "review_status": "needs_new_label"
+    },
+    {
+      "candidate_id": "pool:71cd6775d1fda797",
+      "dataset": "candidate_pool_reviewed",
+      "reason": "candidate_pool_reviewed_sample_without_full_review_content_or_candidate_mapping_only",
+      "review_id": "edge-unknown-label",
+      "review_status": "needs_new_label"
+    }
+  ],
+  "routing_leakage": {
+    "evidence_not_found_count": 0,
+    "non_product_to_issue_label_leakage_count": 0
+  },
+  "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+  "safety": {
+    "credit_consumed": false,
+    "db_write": false,
+    "frontstage_mutated": false,
+    "frontstage_replaced": false,
+    "insight_engine_runtime_connected": false,
+    "llm_called": false,
+    "production_db_write": false,
+    "production_feature_flag_enabled": false,
+    "production_gray_run_executed": false,
+    "production_upload": false,
+    "production_write_path": false
+  },
+  "schema_version": "review-signals-fp-fn-comparison.1",
+  "scope": "5.9.9 Step 9.1 Phase 3 baseline vs signal shadow FP/FN comparison",
+  "segment_summaries": {
+    "accessory": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 4,
+          "fp_keys": [
+            "missing_wader_hanger",
+            "runs_too_small"
+          ],
+          "tp": 1
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 4,
+          "fp_keys": [
+            "feels_well_made",
+            "good_value_for_the_price",
+            "overall_satisfied",
+            "useful_storage_space"
+          ],
+          "tp": 5
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -4,
+        "label_fn_delta": 0,
+        "label_fp_delta": -4
+      },
+      "name": "accessory",
+      "review_count": 6,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 1
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 5
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 3
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 4,
+          "label": 1
+        },
+        "unresolved_mapping_count": 7
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "audience_context_motivation_expectation": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 5,
+          "fp_keys": [
+            "breaks_easily",
+            "missing_wader_hanger",
+            "poor_traction",
+            "runs_too_small"
+          ],
+          "tp": 9
+        },
+        "customer_label": {
+          "fn": 1,
+          "fn_keys": [
+            "keeps_water_out"
+          ],
+          "fp": 4,
+          "fp_keys": [
+            "feels_well_made",
+            "fits_as_expected",
+            "not_used_yet",
+            "useful_storage_space"
+          ],
+          "tp": 18
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -5,
+        "label_fn_delta": -1,
+        "label_fp_delta": -4
+      },
+      "name": "audience_context_motivation_expectation",
+      "review_count": 17,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 9
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 19
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 1
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 2
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 5,
+          "label": 2
+        },
+        "unresolved_mapping_count": 7
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "five_star_mixed_review": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 2,
+          "fp_keys": [
+            "breaks_easily",
+            "water_leaks_through"
+          ],
+          "tp": 5
+        },
+        "customer_label": {
+          "fn": 1,
+          "fn_keys": [
+            "keeps_water_out"
+          ],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 8
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -2,
+        "label_fn_delta": -1,
+        "label_fp_delta": 0
+      },
+      "name": "five_star_mixed_review",
+      "review_count": 5,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 5
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 9
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 1
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 2,
+          "label": 0
+        },
+        "unresolved_mapping_count": 6
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "generic_vague": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 3,
+          "fp_keys": [
+            "breaks_easily",
+            "missing_wader_hanger",
+            "poor_traction"
+          ],
+          "tp": 2
+        },
+        "customer_label": {
+          "fn": 1,
+          "fn_keys": [
+            "keeps_water_out"
+          ],
+          "fp": 3,
+          "fp_keys": [
+            "good_value_for_the_price",
+            "not_used_yet",
+            "overall_satisfied"
+          ],
+          "tp": 10
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -3,
+        "label_fn_delta": -1,
+        "label_fp_delta": -3
+      },
+      "name": "generic_vague",
+      "review_count": 11,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 2
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 11
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 1
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 2
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 3,
+          "label": 1
+        },
+        "unresolved_mapping_count": 7
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "mixed_review": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 2,
+          "fn_keys": [
+            "runs_too_small",
+            "strong_chemical_smell"
+          ],
+          "fp": 3,
+          "fp_keys": [
+            "pocket_not_waterproof",
+            "poor_traction"
+          ],
+          "tp": 11
+        },
+        "customer_label": {
+          "fn": 1,
+          "fn_keys": [
+            "keeps_water_out"
+          ],
+          "fp": 4,
+          "fp_keys": [
+            "fits_as_expected",
+            "good_value_for_the_price",
+            "not_used_yet",
+            "overall_satisfied"
+          ],
+          "tp": 17
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": -2,
+        "issue_fp_delta": -3,
+        "label_fn_delta": -1,
+        "label_fp_delta": -4
+      },
+      "name": "mixed_review",
+      "review_count": 15,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 13
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 18
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 2,
+          "label": 1
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 3
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 3,
+          "label": 1
+        },
+        "unresolved_mapping_count": 7
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "old_or_other_product": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 6
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 2,
+          "fp_keys": [
+            "good_value_for_the_price",
+            "overall_satisfied"
+          ],
+          "tp": 4
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": 0,
+        "label_fn_delta": 0,
+        "label_fp_delta": -2
+      },
+      "name": "old_or_other_product",
+      "review_count": 9,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 6
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 4
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 2
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 0,
+          "label": 0
+        },
+        "unresolved_mapping_count": 8
+      },
+      "status": "REVIEW_NEEDED"
+    },
+    "shipping_service": {
+      "baseline": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "missing_wader_hanger"
+          ],
+          "tp": 1
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 1,
+          "fp_keys": [
+            "feels_well_made"
+          ],
+          "tp": 1
+        }
+      },
+      "fp_fn_delta": {
+        "issue_fn_delta": 0,
+        "issue_fp_delta": -1,
+        "label_fn_delta": 0,
+        "label_fp_delta": -1
+      },
+      "name": "shipping_service",
+      "review_count": 4,
+      "signal_shadow": {
+        "customer_issue": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 1
+        },
+        "customer_label": {
+          "fn": 0,
+          "fn_keys": [],
+          "fp": 0,
+          "fp_keys": [],
+          "tp": 1
+        }
+      },
+      "split_metrics": {
+        "evidence_not_found_count": 0,
+        "label_extraction_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "label_extraction_fp": {
+          "issue": 0,
+          "label": 1
+        },
+        "non_product_leakage_count": 0,
+        "routing_fn": {
+          "issue": 0,
+          "label": 0
+        },
+        "routing_fp": {
+          "issue": 1,
+          "label": 0
+        },
+        "unresolved_mapping_count": 0
+      },
+      "status": "PASS"
+    }
+  },
+  "status": "REVIEW_NEEDED",
+  "unresolved_mappings": {
+    "unresolved_mapping_count": 14
+  }
+}

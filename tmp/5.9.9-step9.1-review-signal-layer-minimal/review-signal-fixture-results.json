@@ -1,0 +1,1294 @@
+{
+  "fixture_path": "backend_api/tests/fixtures/review_signal_step9_1_airpods_minimal.json",
+  "review_results": [
+    {
+      "rating": 5,
+      "review_id": "airpods-erika-long-review",
+      "review_signals": [
+        {
+          "confidence": 0.94,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 38,
+          "evidence_span": "daughter",
+          "evidence_start": 30,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Buyer identity signal, not a product strength or weakness.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "audience"
+        },
+        {
+          "confidence": 0.91,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 46,
+          "evidence_span": "son",
+          "evidence_start": 43,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Family audience signal, not a product label.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "audience"
+        },
+        {
+          "confidence": 0.9,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 62,
+          "evidence_span": "kids",
+          "evidence_start": 58,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Audience segment signal.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "audience"
+        },
+        {
+          "confidence": 0.92,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 109,
+          "evidence_span": "around the house",
+          "evidence_start": 93,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Usage place/context signal.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "usage_location"
+        },
+        {
+          "confidence": 0.88,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 126,
+          "evidence_span": "homework",
+          "evidence_start": 118,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Usage behavior/activity signal.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "behavior"
+        },
+        {
+          "confidence": 0.89,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 150,
+          "evidence_span": "dance practice",
+          "evidence_start": 136,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Usage behavior/activity signal.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "behavior"
+        },
+        {
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "evidence_end": 172,
+          "evidence_span": "comfortable",
+          "evidence_start": 161,
+          "evidence_verified": true,
+          "polarity": "positive",
+          "reason": "Current product comfort praise.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.positive",
+            "customer_label_candidate"
+          ],
+          "signal_type": "product_positive"
+        },
+        {
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "evidence_end": 191,
+          "evidence_span": "fit is secure",
+          "evidence_start": 178,
+          "evidence_verified": true,
+          "polarity": "positive",
+          "reason": "Current product fit praise.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.positive",
+            "customer_label_candidate"
+          ],
+          "signal_type": "product_positive"
+        },
+        {
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "evidence_end": 218,
+          "evidence_span": "battery life is great",
+          "evidence_start": 197,
+          "evidence_verified": true,
+          "polarity": "positive",
+          "reason": "Current product battery-life praise.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.positive",
+            "customer_label_candidate"
+          ],
+          "signal_type": "product_positive"
+        },
+        {
+          "confidence": 0.93,
+          "current_product_scope": "current_product_context",
+          "evidence_end": 292,
+          "evidence_span": "I bought them because I wanted noise cancellation for a loud environment",
+          "evidence_start": 220,
+          "evidence_verified": true,
+          "polarity": "positive",
+          "reason": "The text explains why the buyer chose the product.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "purchase_motives"
+          ],
+          "signal_type": "purchase_motivation"
+        },
+        {
+          "confidence": 0.91,
+          "current_product_scope": "current_product_context",
+          "evidence_end": 346,
+          "evidence_span": "I expected stronger noise cancellation in loud rooms",
+          "evidence_start": 294,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "The text states an unmet expectation.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "unmet_needs"
+          ],
+          "signal_type": "expectation"
+        },
+        {
+          "confidence": 0.95,
+          "current_product_scope": "current_product",
+          "evidence_end": 382,
+          "evidence_span": "noise cancellation is poor",
+          "evidence_start": 356,
+          "evidence_verified": true,
+          "polarity": "negative",
+          "reason": "Current product negative performance claim in a 5-star mixed review.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.negative",
+            "customer_issue_candidate"
+          ],
+          "signal_type": "product_negative"
+        },
+        {
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "evidence_end": 417,
+          "evidence_span": "charging indicator is unclear",
+          "evidence_start": 388,
+          "evidence_verified": true,
+          "polarity": "negative",
+          "reason": "Current product usability complaint in a 5-star mixed review.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.negative",
+            "customer_issue_candidate"
+          ],
+          "signal_type": "product_negative"
+        },
+        {
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "evidence_end": 458,
+          "evidence_span": "fall out when she dances",
+          "evidence_start": 434,
+          "evidence_verified": true,
+          "polarity": "negative",
+          "reason": "Current product fit/stability complaint in a 5-star mixed review.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.negative",
+            "customer_issue_candidate"
+          ],
+          "signal_type": "product_negative"
+        },
+        {
+          "confidence": 0.91,
+          "current_product_scope": "other_product",
+          "evidence_end": 506,
+          "evidence_span": "AirPod 3 and 2nd generation Pros",
+          "evidence_start": 474,
+          "evidence_verified": true,
+          "polarity": "mixed",
+          "reason": "Old/other product comparison must stay out of current product issue/label routing.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "audit.filter_only"
+          ],
+          "signal_type": "comparison_or_other_product"
+        },
+        {
+          "confidence": 0.86,
+          "current_product_scope": "accessory_only",
+          "evidence_end": 558,
+          "evidence_span": "case cover is cute",
+          "evidence_start": 540,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Accessory-only observation; not a current product issue/label.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "audit.filter_only"
+          ],
+          "signal_type": "accessory_only"
+        },
+        {
+          "confidence": 0.72,
+          "current_product_scope": "unclear",
+          "evidence_end": 572,
+          "evidence_span": "Overall good",
+          "evidence_start": 560,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Generic sentiment lacks a specific current-product attribute.",
+          "review_id": "airpods-erika-long-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "audit.filter_only"
+          ],
+          "signal_type": "generic_or_vague"
+        }
+      ],
+      "route_counts": {
+        "audit.filter_only": 3,
+        "consumer_profile": 6,
+        "customer_issue_candidate": 3,
+        "customer_label_candidate": 3,
+        "purchase_motives": 1,
+        "unmet_needs": 1,
+        "user_experience.negative": 3,
+        "user_experience.positive": 3
+      },
+      "routing_projection": {
+        "audit_filter_signals": [
+          {
+            "confidence": 0.91,
+            "current_product_scope": "other_product",
+            "evidence_end": 506,
+            "evidence_span": "AirPod 3 and 2nd generation Pros",
+            "evidence_start": 474,
+            "evidence_verified": true,
+            "polarity": "mixed",
+            "reason": "Old/other product comparison must stay out of current product issue/label routing.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "audit.filter_only"
+            ],
+            "signal_type": "comparison_or_other_product"
+          },
+          {
+            "confidence": 0.86,
+            "current_product_scope": "accessory_only",
+            "evidence_end": 558,
+            "evidence_span": "case cover is cute",
+            "evidence_start": 540,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Accessory-only observation; not a current product issue/label.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "audit.filter_only"
+            ],
+            "signal_type": "accessory_only"
+          },
+          {
+            "confidence": 0.72,
+            "current_product_scope": "unclear",
+            "evidence_end": 572,
+            "evidence_span": "Overall good",
+            "evidence_start": 560,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Generic sentiment lacks a specific current-product attribute.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "audit.filter_only"
+            ],
+            "signal_type": "generic_or_vague"
+          }
+        ],
+        "consumer_profile_signals": [
+          {
+            "confidence": 0.94,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 38,
+            "evidence_span": "daughter",
+            "evidence_start": 30,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Buyer identity signal, not a product strength or weakness.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "audience"
+          },
+          {
+            "confidence": 0.91,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 46,
+            "evidence_span": "son",
+            "evidence_start": 43,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Family audience signal, not a product label.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "audience"
+          },
+          {
+            "confidence": 0.9,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 62,
+            "evidence_span": "kids",
+            "evidence_start": 58,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Audience segment signal.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "audience"
+          },
+          {
+            "confidence": 0.92,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 109,
+            "evidence_span": "around the house",
+            "evidence_start": 93,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Usage place/context signal.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "usage_location"
+          },
+          {
+            "confidence": 0.88,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 126,
+            "evidence_span": "homework",
+            "evidence_start": 118,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Usage behavior/activity signal.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "behavior"
+          },
+          {
+            "confidence": 0.89,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 150,
+            "evidence_span": "dance practice",
+            "evidence_start": 136,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Usage behavior/activity signal.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "behavior"
+          }
+        ],
+        "customer_issue_candidates": [
+          {
+            "confidence": 0.95,
+            "current_product_scope": "current_product",
+            "evidence_end": 382,
+            "evidence_span": "noise cancellation is poor",
+            "evidence_start": 356,
+            "evidence_verified": true,
+            "polarity": "negative",
+            "reason": "Current product negative performance claim in a 5-star mixed review.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.negative",
+              "customer_issue_candidate"
+            ],
+            "signal_type": "product_negative"
+          },
+          {
+            "confidence": 0.93,
+            "current_product_scope": "current_product",
+            "evidence_end": 417,
+            "evidence_span": "charging indicator is unclear",
+            "evidence_start": 388,
+            "evidence_verified": true,
+            "polarity": "negative",
+            "reason": "Current product usability complaint in a 5-star mixed review.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.negative",
+              "customer_issue_candidate"
+            ],
+            "signal_type": "product_negative"
+          },
+          {
+            "confidence": 0.94,
+            "current_product_scope": "current_product",
+            "evidence_end": 458,
+            "evidence_span": "fall out when she dances",
+            "evidence_start": 434,
+            "evidence_verified": true,
+            "polarity": "negative",
+            "reason": "Current product fit/stability complaint in a 5-star mixed review.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.negative",
+              "customer_issue_candidate"
+            ],
+            "signal_type": "product_negative"
+          }
+        ],
+        "customer_label_candidates": [
+          {
+            "confidence": 0.94,
+            "current_product_scope": "current_product",
+            "evidence_end": 172,
+            "evidence_span": "comfortable",
+            "evidence_start": 161,
+            "evidence_verified": true,
+            "polarity": "positive",
+            "reason": "Current product comfort praise.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.positive",
+              "customer_label_candidate"
+            ],
+            "signal_type": "product_positive"
+          },
+          {
+            "confidence": 0.93,
+            "current_product_scope": "current_product",
+            "evidence_end": 191,
+            "evidence_span": "fit is secure",
+            "evidence_start": 178,
+            "evidence_verified": true,
+            "polarity": "positive",
+            "reason": "Current product fit praise.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.positive",
+              "customer_label_candidate"
+            ],
+            "signal_type": "product_positive"
+          },
+          {
+            "confidence": 0.94,
+            "current_product_scope": "current_product",
+            "evidence_end": 218,
+            "evidence_span": "battery life is great",
+            "evidence_start": 197,
+            "evidence_verified": true,
+            "polarity": "positive",
+            "reason": "Current product battery-life praise.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.positive",
+              "customer_label_candidate"
+            ],
+            "signal_type": "product_positive"
+          }
+        ],
+        "leakage_violations": [],
+        "purchase_motive_signals": [
+          {
+            "confidence": 0.93,
+            "current_product_scope": "current_product_context",
+            "evidence_end": 292,
+            "evidence_span": "I bought them because I wanted noise cancellation for a loud environment",
+            "evidence_start": 220,
+            "evidence_verified": true,
+            "polarity": "positive",
+            "reason": "The text explains why the buyer chose the product.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "purchase_motives"
+            ],
+            "signal_type": "purchase_motivation"
+          }
+        ],
+        "unmet_need_signals": [
+          {
+            "confidence": 0.91,
+            "current_product_scope": "current_product_context",
+            "evidence_end": 346,
+            "evidence_span": "I expected stronger noise cancellation in loud rooms",
+            "evidence_start": 294,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "The text states an unmet expectation.",
+            "review_id": "airpods-erika-long-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "unmet_needs"
+            ],
+            "signal_type": "expectation"
+          }
+        ],
+        "user_experience": {
+          "negative": [
+            {
+              "confidence": 0.95,
+              "current_product_scope": "current_product",
+              "evidence_end": 382,
+              "evidence_span": "noise cancellation is poor",
+              "evidence_start": 356,
+              "evidence_verified": true,
+              "polarity": "negative",
+              "reason": "Current product negative performance claim in a 5-star mixed review.",
+              "review_id": "airpods-erika-long-review",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.negative",
+                "customer_issue_candidate"
+              ],
+              "signal_type": "product_negative"
+            },
+            {
+              "confidence": 0.93,
+              "current_product_scope": "current_product",
+              "evidence_end": 417,
+              "evidence_span": "charging indicator is unclear",
+              "evidence_start": 388,
+              "evidence_verified": true,
+              "polarity": "negative",
+              "reason": "Current product usability complaint in a 5-star mixed review.",
+              "review_id": "airpods-erika-long-review",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.negative",
+                "customer_issue_candidate"
+              ],
+              "signal_type": "product_negative"
+            },
+            {
+              "confidence": 0.94,
+              "current_product_scope": "current_product",
+              "evidence_end": 458,
+              "evidence_span": "fall out when she dances",
+              "evidence_start": 434,
+              "evidence_verified": true,
+              "polarity": "negative",
+              "reason": "Current product fit/stability complaint in a 5-star mixed review.",
+              "review_id": "airpods-erika-long-review",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.negative",
+                "customer_issue_candidate"
+              ],
+              "signal_type": "product_negative"
+            }
+          ],
+          "positive": [
+            {
+              "confidence": 0.94,
+              "current_product_scope": "current_product",
+              "evidence_end": 172,
+              "evidence_span": "comfortable",
+              "evidence_start": 161,
+              "evidence_verified": true,
+              "polarity": "positive",
+              "reason": "Current product comfort praise.",
+              "review_id": "airpods-erika-long-review",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.positive",
+                "customer_label_candidate"
+              ],
+              "signal_type": "product_positive"
+            },
+            {
+              "confidence": 0.93,
+              "current_product_scope": "current_product",
+              "evidence_end": 191,
+              "evidence_span": "fit is secure",
+              "evidence_start": 178,
+              "evidence_verified": true,
+              "polarity": "positive",
+              "reason": "Current product fit praise.",
+              "review_id": "airpods-erika-long-review",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.positive",
+                "customer_label_candidate"
+              ],
+              "signal_type": "product_positive"
+            },
+            {
+              "confidence": 0.94,
+              "current_product_scope": "current_product",
+              "evidence_end": 218,
+              "evidence_span": "battery life is great",
+              "evidence_start": 197,
+              "evidence_verified": true,
+              "polarity": "positive",
+              "reason": "Current product battery-life praise.",
+              "review_id": "airpods-erika-long-review",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.positive",
+                "customer_label_candidate"
+              ],
+              "signal_type": "product_positive"
+            }
+          ]
+        }
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "schema_version": "review-signals-shadow.1",
+      "shadow_safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "signal_counts_by_type": {
+        "accessory_only": 1,
+        "audience": 3,
+        "behavior": 2,
+        "comparison_or_other_product": 1,
+        "expectation": 1,
+        "generic_or_vague": 1,
+        "product_negative": 3,
+        "product_positive": 3,
+        "purchase_motivation": 1,
+        "usage_location": 1
+      },
+      "source": "fixture_shadow"
+    },
+    {
+      "rating": 3,
+      "review_id": "airpods-mixed-positive-and-negative",
+      "review_signals": [
+        {
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "evidence_end": 18,
+          "evidence_span": "sound is crisp",
+          "evidence_start": 4,
+          "evidence_verified": true,
+          "polarity": "positive",
+          "reason": "Specific current product praise inside a mixed review.",
+          "review_id": "airpods-mixed-positive-and-negative",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.positive",
+            "customer_label_candidate"
+          ],
+          "signal_type": "product_positive"
+        },
+        {
+          "confidence": 0.92,
+          "current_product_scope": "current_product",
+          "evidence_end": 38,
+          "evidence_span": "pairing is easy",
+          "evidence_start": 23,
+          "evidence_verified": true,
+          "polarity": "positive",
+          "reason": "Specific current product setup praise inside a mixed review.",
+          "review_id": "airpods-mixed-positive-and-negative",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.positive",
+            "customer_label_candidate"
+          ],
+          "signal_type": "product_positive"
+        },
+        {
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "evidence_end": 69,
+          "evidence_span": "left earbud falls out",
+          "evidence_start": 48,
+          "evidence_verified": true,
+          "polarity": "negative",
+          "reason": "Specific current product complaint inside a mixed review.",
+          "review_id": "airpods-mixed-positive-and-negative",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "user_experience.negative",
+            "customer_issue_candidate"
+          ],
+          "signal_type": "product_negative"
+        }
+      ],
+      "route_counts": {
+        "customer_issue_candidate": 1,
+        "customer_label_candidate": 2,
+        "user_experience.negative": 1,
+        "user_experience.positive": 2
+      },
+      "routing_projection": {
+        "audit_filter_signals": [],
+        "consumer_profile_signals": [],
+        "customer_issue_candidates": [
+          {
+            "confidence": 0.94,
+            "current_product_scope": "current_product",
+            "evidence_end": 69,
+            "evidence_span": "left earbud falls out",
+            "evidence_start": 48,
+            "evidence_verified": true,
+            "polarity": "negative",
+            "reason": "Specific current product complaint inside a mixed review.",
+            "review_id": "airpods-mixed-positive-and-negative",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.negative",
+              "customer_issue_candidate"
+            ],
+            "signal_type": "product_negative"
+          }
+        ],
+        "customer_label_candidates": [
+          {
+            "confidence": 0.93,
+            "current_product_scope": "current_product",
+            "evidence_end": 18,
+            "evidence_span": "sound is crisp",
+            "evidence_start": 4,
+            "evidence_verified": true,
+            "polarity": "positive",
+            "reason": "Specific current product praise inside a mixed review.",
+            "review_id": "airpods-mixed-positive-and-negative",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.positive",
+              "customer_label_candidate"
+            ],
+            "signal_type": "product_positive"
+          },
+          {
+            "confidence": 0.92,
+            "current_product_scope": "current_product",
+            "evidence_end": 38,
+            "evidence_span": "pairing is easy",
+            "evidence_start": 23,
+            "evidence_verified": true,
+            "polarity": "positive",
+            "reason": "Specific current product setup praise inside a mixed review.",
+            "review_id": "airpods-mixed-positive-and-negative",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "user_experience.positive",
+              "customer_label_candidate"
+            ],
+            "signal_type": "product_positive"
+          }
+        ],
+        "leakage_violations": [],
+        "purchase_motive_signals": [],
+        "unmet_need_signals": [],
+        "user_experience": {
+          "negative": [
+            {
+              "confidence": 0.94,
+              "current_product_scope": "current_product",
+              "evidence_end": 69,
+              "evidence_span": "left earbud falls out",
+              "evidence_start": 48,
+              "evidence_verified": true,
+              "polarity": "negative",
+              "reason": "Specific current product complaint inside a mixed review.",
+              "review_id": "airpods-mixed-positive-and-negative",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.negative",
+                "customer_issue_candidate"
+              ],
+              "signal_type": "product_negative"
+            }
+          ],
+          "positive": [
+            {
+              "confidence": 0.93,
+              "current_product_scope": "current_product",
+              "evidence_end": 18,
+              "evidence_span": "sound is crisp",
+              "evidence_start": 4,
+              "evidence_verified": true,
+              "polarity": "positive",
+              "reason": "Specific current product praise inside a mixed review.",
+              "review_id": "airpods-mixed-positive-and-negative",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.positive",
+                "customer_label_candidate"
+              ],
+              "signal_type": "product_positive"
+            },
+            {
+              "confidence": 0.92,
+              "current_product_scope": "current_product",
+              "evidence_end": 38,
+              "evidence_span": "pairing is easy",
+              "evidence_start": 23,
+              "evidence_verified": true,
+              "polarity": "positive",
+              "reason": "Specific current product setup praise inside a mixed review.",
+              "review_id": "airpods-mixed-positive-and-negative",
+              "route_blocked_reasons": [],
+              "route_to": [
+                "user_experience.positive",
+                "customer_label_candidate"
+              ],
+              "signal_type": "product_positive"
+            }
+          ]
+        }
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "schema_version": "review-signals-shadow.1",
+      "shadow_safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "signal_counts_by_type": {
+        "product_negative": 1,
+        "product_positive": 2
+      },
+      "source": "fixture_shadow"
+    },
+    {
+      "rating": 4,
+      "review_id": "airpods-context-routing",
+      "review_signals": [
+        {
+          "confidence": 0.93,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 11,
+          "evidence_span": "daughter",
+          "evidence_start": 3,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Buyer/user audience signal.",
+          "review_id": "airpods-context-routing",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "audience"
+        },
+        {
+          "confidence": 0.89,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 43,
+          "evidence_span": "after school at night",
+          "evidence_start": 22,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Usage time signal.",
+          "review_id": "airpods-context-routing",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "usage_time"
+        },
+        {
+          "confidence": 0.88,
+          "current_product_scope": "non_product_context",
+          "evidence_end": 64,
+          "evidence_span": "doing homework",
+          "evidence_start": 50,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Usage behavior signal.",
+          "review_id": "airpods-context-routing",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "consumer_profile"
+          ],
+          "signal_type": "behavior"
+        },
+        {
+          "confidence": 0.91,
+          "current_product_scope": "current_product_context",
+          "evidence_end": 98,
+          "evidence_span": "I bought them for online classes",
+          "evidence_start": 66,
+          "evidence_verified": true,
+          "polarity": "positive",
+          "reason": "Purchase motivation signal.",
+          "review_id": "airpods-context-routing",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "purchase_motives"
+          ],
+          "signal_type": "purchase_motivation"
+        }
+      ],
+      "route_counts": {
+        "consumer_profile": 3,
+        "purchase_motives": 1
+      },
+      "routing_projection": {
+        "audit_filter_signals": [],
+        "consumer_profile_signals": [
+          {
+            "confidence": 0.93,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 11,
+            "evidence_span": "daughter",
+            "evidence_start": 3,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Buyer/user audience signal.",
+            "review_id": "airpods-context-routing",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "audience"
+          },
+          {
+            "confidence": 0.89,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 43,
+            "evidence_span": "after school at night",
+            "evidence_start": 22,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Usage time signal.",
+            "review_id": "airpods-context-routing",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "usage_time"
+          },
+          {
+            "confidence": 0.88,
+            "current_product_scope": "non_product_context",
+            "evidence_end": 64,
+            "evidence_span": "doing homework",
+            "evidence_start": 50,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Usage behavior signal.",
+            "review_id": "airpods-context-routing",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "consumer_profile"
+            ],
+            "signal_type": "behavior"
+          }
+        ],
+        "customer_issue_candidates": [],
+        "customer_label_candidates": [],
+        "leakage_violations": [],
+        "purchase_motive_signals": [
+          {
+            "confidence": 0.91,
+            "current_product_scope": "current_product_context",
+            "evidence_end": 98,
+            "evidence_span": "I bought them for online classes",
+            "evidence_start": 66,
+            "evidence_verified": true,
+            "polarity": "positive",
+            "reason": "Purchase motivation signal.",
+            "review_id": "airpods-context-routing",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "purchase_motives"
+            ],
+            "signal_type": "purchase_motivation"
+          }
+        ],
+        "unmet_need_signals": [],
+        "user_experience": {
+          "negative": [],
+          "positive": []
+        }
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "schema_version": "review-signals-shadow.1",
+      "shadow_safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "signal_counts_by_type": {
+        "audience": 1,
+        "behavior": 1,
+        "purchase_motivation": 1,
+        "usage_time": 1
+      },
+      "source": "fixture_shadow"
+    },
+    {
+      "rating": 4,
+      "review_id": "airpods-audit-filter-review",
+      "review_signals": [
+        {
+          "confidence": 0.89,
+          "current_product_scope": "shipping_service",
+          "evidence_end": 17,
+          "evidence_span": "Shipping was fast",
+          "evidence_start": 0,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Shipping/service signal, not current product quality.",
+          "review_id": "airpods-audit-filter-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "audit.filter_only"
+          ],
+          "signal_type": "shipping_service"
+        },
+        {
+          "confidence": 0.92,
+          "current_product_scope": "other_product",
+          "evidence_end": 82,
+          "evidence_span": "old AirPod 3 battery died quickly",
+          "evidence_start": 49,
+          "evidence_verified": true,
+          "polarity": "negative",
+          "reason": "Old product complaint must not become current product issue.",
+          "review_id": "airpods-audit-filter-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "audit.filter_only"
+          ],
+          "signal_type": "comparison_or_other_product"
+        },
+        {
+          "confidence": 0.87,
+          "current_product_scope": "accessory_only",
+          "evidence_end": 118,
+          "evidence_span": "silicone case cover looks nice",
+          "evidence_start": 88,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Accessory-only praise must not become current product label.",
+          "review_id": "airpods-audit-filter-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "audit.filter_only"
+          ],
+          "signal_type": "accessory_only"
+        },
+        {
+          "confidence": 0.7,
+          "current_product_scope": "unclear",
+          "evidence_end": 132,
+          "evidence_span": "Nice product",
+          "evidence_start": 120,
+          "evidence_verified": true,
+          "polarity": "neutral",
+          "reason": "Generic vague praise.",
+          "review_id": "airpods-audit-filter-review",
+          "route_blocked_reasons": [],
+          "route_to": [
+            "audit.filter_only"
+          ],
+          "signal_type": "generic_or_vague"
+        }
+      ],
+      "route_counts": {
+        "audit.filter_only": 4
+      },
+      "routing_projection": {
+        "audit_filter_signals": [
+          {
+            "confidence": 0.89,
+            "current_product_scope": "shipping_service",
+            "evidence_end": 17,
+            "evidence_span": "Shipping was fast",
+            "evidence_start": 0,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Shipping/service signal, not current product quality.",
+            "review_id": "airpods-audit-filter-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "audit.filter_only"
+            ],
+            "signal_type": "shipping_service"
+          },
+          {
+            "confidence": 0.92,
+            "current_product_scope": "other_product",
+            "evidence_end": 82,
+            "evidence_span": "old AirPod 3 battery died quickly",
+            "evidence_start": 49,
+            "evidence_verified": true,
+            "polarity": "negative",
+            "reason": "Old product complaint must not become current product issue.",
+            "review_id": "airpods-audit-filter-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "audit.filter_only"
+            ],
+            "signal_type": "comparison_or_other_product"
+          },
+          {
+            "confidence": 0.87,
+            "current_product_scope": "accessory_only",
+            "evidence_end": 118,
+            "evidence_span": "silicone case cover looks nice",
+            "evidence_start": 88,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Accessory-only praise must not become current product label.",
+            "review_id": "airpods-audit-filter-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "audit.filter_only"
+            ],
+            "signal_type": "accessory_only"
+          },
+          {
+            "confidence": 0.7,
+            "current_product_scope": "unclear",
+            "evidence_end": 132,
+            "evidence_span": "Nice product",
+            "evidence_start": 120,
+            "evidence_verified": true,
+            "polarity": "neutral",
+            "reason": "Generic vague praise.",
+            "review_id": "airpods-audit-filter-review",
+            "route_blocked_reasons": [],
+            "route_to": [
+              "audit.filter_only"
+            ],
+            "signal_type": "generic_or_vague"
+          }
+        ],
+        "consumer_profile_signals": [],
+        "customer_issue_candidates": [],
+        "customer_label_candidates": [],
+        "leakage_violations": [],
+        "purchase_motive_signals": [],
+        "unmet_need_signals": [],
+        "user_experience": {
+          "negative": [],
+          "positive": []
+        }
+      },
+      "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+      "schema_version": "review-signals-shadow.1",
+      "shadow_safety": {
+        "credit_consumed": false,
+        "db_write": false,
+        "frontstage_mutated": false,
+        "frontstage_replaced": false,
+        "insight_engine_runtime_connected": false,
+        "llm_called": false,
+        "production_db_write": false,
+        "production_feature_flag_enabled": false,
+        "production_gray_run_executed": false,
+        "production_upload": false,
+        "production_write_path": false
+      },
+      "signal_counts_by_type": {
+        "accessory_only": 1,
+        "comparison_or_other_product": 1,
+        "generic_or_vague": 1,
+        "shipping_service": 1
+      },
+      "source": "fixture_shadow"
+    }
+  ],
+  "ruleset_version": "2026-07-31-step9.1-minimal-routing",
+  "safety": {
+    "credit_consumed": false,
+    "db_write": false,
+    "frontstage_mutated": false,
+    "frontstage_replaced": false,
+    "insight_engine_runtime_connected": false,
+    "llm_called": false,
+    "production_db_write": false,
+    "production_feature_flag_enabled": false,
+    "production_gray_run_executed": false,
+    "production_upload": false,
+    "production_write_path": false
+  },
+  "schema_version": "review-signals-shadow.1",
+  "scope": "5.9.9 Step 9.1 review signal layer minimal validation"
+}

@@ -1,0 +1,270 @@
+{
+  "schema_version": "review-signals-step9.1-fixture.1",
+  "scope": "5.9.9 Step 9.1 review signal layer minimal validation",
+  "samples": [
+    {
+      "id": "airpods-erika-long-review",
+      "product_id": "AIRPODS-step9-1-fixture",
+      "category": "electronics",
+      "sub_category": "earbuds",
+      "rating": 5,
+      "content": "I bought these AirPods for my daughter, my son, and other kids in the family. She wears them around the house, during homework, and for dance practice. They are comfortable, the fit is secure, and battery life is great. I bought them because I wanted noise cancellation for a loud environment. I expected stronger noise cancellation in loud rooms, but the noise cancellation is poor, the charging indicator is unclear, and they still fall out when she dances. Compared with AirPod 3 and 2nd generation Pros, these are simpler for kids. The case cover is cute. Overall good.",
+      "review_signals": [
+        {
+          "signal_type": "audience",
+          "polarity": "neutral",
+          "evidence_span": "daughter",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.94,
+          "reason": "Buyer identity signal, not a product strength or weakness."
+        },
+        {
+          "signal_type": "audience",
+          "polarity": "neutral",
+          "evidence_span": "son",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.91,
+          "reason": "Family audience signal, not a product label."
+        },
+        {
+          "signal_type": "audience",
+          "polarity": "neutral",
+          "evidence_span": "kids",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.9,
+          "reason": "Audience segment signal."
+        },
+        {
+          "signal_type": "usage_location",
+          "polarity": "neutral",
+          "evidence_span": "around the house",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.92,
+          "reason": "Usage place/context signal."
+        },
+        {
+          "signal_type": "behavior",
+          "polarity": "neutral",
+          "evidence_span": "homework",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.88,
+          "reason": "Usage behavior/activity signal."
+        },
+        {
+          "signal_type": "behavior",
+          "polarity": "neutral",
+          "evidence_span": "dance practice",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.89,
+          "reason": "Usage behavior/activity signal."
+        },
+        {
+          "signal_type": "product_positive",
+          "polarity": "positive",
+          "evidence_span": "comfortable",
+          "current_product_scope": "current_product",
+          "confidence": 0.94,
+          "reason": "Current product comfort praise."
+        },
+        {
+          "signal_type": "product_positive",
+          "polarity": "positive",
+          "evidence_span": "fit is secure",
+          "current_product_scope": "current_product",
+          "confidence": 0.93,
+          "reason": "Current product fit praise."
+        },
+        {
+          "signal_type": "product_positive",
+          "polarity": "positive",
+          "evidence_span": "battery life is great",
+          "current_product_scope": "current_product",
+          "confidence": 0.94,
+          "reason": "Current product battery-life praise."
+        },
+        {
+          "signal_type": "purchase_motivation",
+          "polarity": "positive",
+          "evidence_span": "I bought them because I wanted noise cancellation for a loud environment",
+          "current_product_scope": "current_product_context",
+          "confidence": 0.93,
+          "reason": "The text explains why the buyer chose the product."
+        },
+        {
+          "signal_type": "expectation",
+          "polarity": "neutral",
+          "evidence_span": "I expected stronger noise cancellation in loud rooms",
+          "current_product_scope": "current_product_context",
+          "confidence": 0.91,
+          "reason": "The text states an unmet expectation."
+        },
+        {
+          "signal_type": "product_negative",
+          "polarity": "negative",
+          "evidence_span": "noise cancellation is poor",
+          "current_product_scope": "current_product",
+          "confidence": 0.95,
+          "reason": "Current product negative performance claim in a 5-star mixed review."
+        },
+        {
+          "signal_type": "product_negative",
+          "polarity": "negative",
+          "evidence_span": "charging indicator is unclear",
+          "current_product_scope": "current_product",
+          "confidence": 0.93,
+          "reason": "Current product usability complaint in a 5-star mixed review."
+        },
+        {
+          "signal_type": "product_negative",
+          "polarity": "negative",
+          "evidence_span": "fall out when she dances",
+          "current_product_scope": "current_product",
+          "confidence": 0.94,
+          "reason": "Current product fit/stability complaint in a 5-star mixed review."
+        },
+        {
+          "signal_type": "comparison_or_other_product",
+          "polarity": "mixed",
+          "evidence_span": "AirPod 3 and 2nd generation Pros",
+          "current_product_scope": "other_product",
+          "confidence": 0.91,
+          "reason": "Old/other product comparison must stay out of current product issue/label routing."
+        },
+        {
+          "signal_type": "accessory_only",
+          "polarity": "neutral",
+          "evidence_span": "case cover is cute",
+          "current_product_scope": "accessory_only",
+          "confidence": 0.86,
+          "reason": "Accessory-only observation; not a current product issue/label."
+        },
+        {
+          "signal_type": "generic_or_vague",
+          "polarity": "neutral",
+          "evidence_span": "Overall good",
+          "current_product_scope": "unclear",
+          "confidence": 0.72,
+          "reason": "Generic sentiment lacks a specific current-product attribute."
+        }
+      ]
+    },
+    {
+      "id": "airpods-mixed-positive-and-negative",
+      "product_id": "AIRPODS-step9-1-fixture",
+      "category": "electronics",
+      "sub_category": "earbuds",
+      "rating": 3,
+      "content": "The sound is crisp and pairing is easy, but the left earbud falls out during workouts.",
+      "review_signals": [
+        {
+          "signal_type": "product_positive",
+          "polarity": "positive",
+          "evidence_span": "sound is crisp",
+          "current_product_scope": "current_product",
+          "confidence": 0.93,
+          "reason": "Specific current product praise inside a mixed review."
+        },
+        {
+          "signal_type": "product_positive",
+          "polarity": "positive",
+          "evidence_span": "pairing is easy",
+          "current_product_scope": "current_product",
+          "confidence": 0.92,
+          "reason": "Specific current product setup praise inside a mixed review."
+        },
+        {
+          "signal_type": "product_negative",
+          "polarity": "negative",
+          "evidence_span": "left earbud falls out",
+          "current_product_scope": "current_product",
+          "confidence": 0.94,
+          "reason": "Specific current product complaint inside a mixed review."
+        }
+      ]
+    },
+    {
+      "id": "airpods-context-routing",
+      "product_id": "AIRPODS-step9-1-fixture",
+      "category": "electronics",
+      "sub_category": "earbuds",
+      "rating": 4,
+      "content": "My daughter uses them after school at night while doing homework. I bought them for online classes.",
+      "review_signals": [
+        {
+          "signal_type": "audience",
+          "polarity": "neutral",
+          "evidence_span": "daughter",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.93,
+          "reason": "Buyer/user audience signal."
+        },
+        {
+          "signal_type": "usage_time",
+          "polarity": "neutral",
+          "evidence_span": "after school at night",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.89,
+          "reason": "Usage time signal."
+        },
+        {
+          "signal_type": "behavior",
+          "polarity": "neutral",
+          "evidence_span": "doing homework",
+          "current_product_scope": "non_product_context",
+          "confidence": 0.88,
+          "reason": "Usage behavior signal."
+        },
+        {
+          "signal_type": "purchase_motivation",
+          "polarity": "positive",
+          "evidence_span": "I bought them for online classes",
+          "current_product_scope": "current_product_context",
+          "confidence": 0.91,
+          "reason": "Purchase motivation signal."
+        }
+      ]
+    },
+    {
+      "id": "airpods-audit-filter-review",
+      "product_id": "AIRPODS-step9-1-fixture",
+      "category": "electronics",
+      "sub_category": "earbuds",
+      "rating": 4,
+      "content": "Shipping was fast and the box arrived intact. My old AirPod 3 battery died quickly. The silicone case cover looks nice. Nice product.",
+      "review_signals": [
+        {
+          "signal_type": "shipping_service",
+          "polarity": "neutral",
+          "evidence_span": "Shipping was fast",
+          "current_product_scope": "shipping_service",
+          "confidence": 0.89,
+          "reason": "Shipping/service signal, not current product quality."
+        },
+        {
+          "signal_type": "comparison_or_other_product",
+          "polarity": "negative",
+          "evidence_span": "old AirPod 3 battery died quickly",
+          "current_product_scope": "other_product",
+          "confidence": 0.92,
+          "reason": "Old product complaint must not become current product issue."
+        },
+        {
+          "signal_type": "accessory_only",
+          "polarity": "neutral",
+          "evidence_span": "silicone case cover looks nice",
+          "current_product_scope": "accessory_only",
+          "confidence": 0.87,
+          "reason": "Accessory-only praise must not become current product label."
+        },
+        {
+          "signal_type": "generic_or_vague",
+          "polarity": "neutral",
+          "evidence_span": "Nice product",
+          "current_product_scope": "unclear",
+          "confidence": 0.7,
+          "reason": "Generic vague praise."
+        }
+      ]
+    }
+  ]
+}
