@@ -8,6 +8,19 @@
 
 ---
 
+### 2026-07-31 5.9.9 下一阶段：Step 9 Erika-led production truth check + v3-lite 并行边界
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-31 | step9-baseline-pack | Step 9 第一轮已完成 Erika-led production truth check 的旁路 baseline 与记录框架：确认 Step 7.8 仍为 `GO_READY_FOR_ERIKA_AUTHORIZED_GRAY_RUN_ONLY`、生产 feature flag 仍默认关闭、rollback/kill switch/observability/stored shadow contract 均有本地安全证据；明确四条必查路径为 Results Top10、single review detail、raw review export、single-tag download。 | 当前结论 `BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW`：本轮未触发 production upload / reanalysis / DB write / credit / 真实 LLM / feature flag 或 scope 开启 / rollback / kill switch；Step 9 PASS 仍必须等待 Erika 真实生产页面人工确认。报告：`docs/5.9.9-step9-erika-led-production-truth-check.md`；artifact：`tmp/5.9.9-step9-erika-led-production-truth-check/production-truth-check-observation.json`。 |
+| 2026-07-31 | erika-manual-checklist | 新增 Erika 参与 Step 9 的具体人工验收步骤：准备真实样本、通过正常产品界面上传/选择 session、检查 Results Top10、single review detail、raw review export、single-tag download，并给出 `PASS` / `FIX_REQUIRED_BEFORE_GRAY_EXPAND` / `ROLLBACK_REQUIRED` / `BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW` 之一。 | Checklist artifact：`tmp/5.9.9-step9-erika-led-production-truth-check/erika-production-truth-check-checklist.json`；同步写入 Step 9 文档第 10 节；仍未执行任何生产写路径或 feature flag/scope 操作。 |
+| 2026-07-31 | step9-next-task | 下一步定义为 `5.9.9 Step 9: Erika-led production truth check`。Step 1-8 的代码、本地 artifact、focused tests、replay、go/no-go acceptance pack 已完成并 push；剩余核心风险转为真实生产数据、真实页面和 Erika 产品判断下的 Customer Label / Customer Issue 准确性。 | 待 Erika 单独授权后执行；生产 feature flag 当前仍默认关闭。Step 9 PASS 不能只由 AI 冷灰度判定，必须以 Erika 实际上传/查看页面后的人工验收为主。 |
+| 2026-07-31 | production-boundary | Step 9 第一轮目标是最小范围生产真值检查：生产健康 baseline、stored shadow/read model 可用性、受控 scope、四条前台路径、observability、rollback/kill switch。Codex 不主动触发生产上传、reanalysis、DB write、credit、真实 LLM 或 feature flag 开启，除非 Erika 对具体动作单独授权。 | 若 Erika 通过正常产品界面自行上传样本，Codex 只做旁路记录、归因、incident/gold/candidate pool 整理和必要的 rollback 建议。 |
+| 2026-07-31 | v3-lite-scope-correction | v3-lite 明确拆成两段：Part A 只做 `customer_insights` 兼容投影与 catalog backlog 草稿；Part B 新增可执行 catalog applicability gate，让 verifier / v3 shadow 能按标签适用的 category、sub_category、aspect 与反例判断 display/candidate/audit。两段都必须与 Step 9 发布隔离，不写 production DB、不接前台、不改变 prompt、不替换 `specific_issue.py`、不部署到生产。 | Part A 完成后只能算治理与迁移准备，不能宣称已真正降低扩品类手写规则；真正减负必须以 Part B 可执行门禁 + 新增普通 sub_category 接入演练通过为准。Step 9 如发现真实错标/漏标，优先记录为 incident/gold/candidate/backlog，而不是立即扩大 Python 规则。 |
+| 2026-07-31 | v3-lite-part-a-pass | 完成 v3-lite Part A shadow/read model：新增 `customer_insights` 兼容投影，从当前 verified source-review `display_occurrences` 单向生成未来结构；新增 catalog backlog draft，合并 waders 已验证标签、351-400 `needs_new_label`、candidate pool reviewed artifact，并对齐 `canonical_label_key`、`label_type`、`aspect_key`、`evidence_candidate`、`downgrade_reasons`、`maturity_level`、`review_status`、`catalog_action`。 | `PASS`：v3-lite summary P0=`0`，customer_insights coverage `216/216=100%`，catalog backlog draft `185` items（`keep_active=172`、`maturity_review=7`、`propose_new_label=6`），frontstage exclusion probe `audit_occurrences=2` / `candidate_pool_items=1` 且 projected layers 仅 `display_occurrences`。报告：`docs/5.9.9-v3-lite-customer-insights-shadow.md`；artifact：`tmp/5.9.9-v3-lite-customer-insights-shadow/`。 |
+
+---
+
 ### 2026-07-31 5.9.9 Customer Label System v2 Step 8：Vector bad case memory lite
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -1371,7 +1384,7 @@ readiness 节奏：
 
 #### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 进行中（Step 8 vector bad case memory lite 已 PASS；生产 feature flag 仍默认关闭且未开启；标签本体 v3 先做 v3-lite 债务封顶，完整 v3 条件触发）
+**状态：** 进行中（Step 1-8 代码、本地 artifact、focused tests、replay、go/no-go acceptance pack 已完成并 push；下一步为 Step 9 Erika-led production truth check；生产 feature flag 仍默认关闭且未开启；v3-lite Part A `customer_insights` shadow projection + catalog backlog draft 已 PASS；Part B executable catalog applicability gate 待启动；完整 v3 条件触发）
 
 **调整原因：**
 - 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
@@ -1469,30 +1482,139 @@ readiness 节奏：
   - 明确 vector 结果不能直接决定前台展示；display 仍由 evidence gate、context gate、aspect gate、maturity gate、feature flag/read-path gate 决定。
   - 新增 display gate probe：no evidence / context blocked 仍不进 frontstage。
   - 输出 `docs/5.9.9-step8-vector-bad-case-memory-lite.md` 与 `tmp/5.9.9-step8-vector-bad-case-memory-lite/vector-bad-case-memory-lite.json`。
+- [x] **v3-lite Part A: customer_insights shadow projection + catalog backlog draft**
+  - 已新增独立 shadow/read-model helper，从当前 verified source-review `display_occurrences` 单向投影 `customer_insights`；`audit_occurrences`、`candidate_pool_items`、`label_candidates` 只记录为 excluded layers，不进入 `customer_insights` 或 frontstage。
+  - 已从 waders verified display、351-400 `needs_new_label`、candidate pool reviewed artifact 生成 catalog backlog draft；该草稿只用于治理与回归，不作为运行时生成源。
+  - 验收 `PASS`：waders/session120/session121/session122/351-400 replay P0=`0`；customer_insights coverage `216/216=100%`；frontstage exclusion probe `audit_occurrences=2` / `candidate_pool_items=1` 且 projected layers 仅 `display_occurrences`。
+  - 输出 `docs/5.9.9-v3-lite-customer-insights-shadow.md` 与 `tmp/5.9.9-v3-lite-customer-insights-shadow/`；不写 production DB、不接前台、不改 prompt、不替换 `specific_issue.py`、不改变 Step 9 验证对象。
+- [ ] **Step 9: Erika-led production truth check**
+  - 定位：Step 1-8 已证明本地安全边界和 read-path contract 齐备；Step 9 验证真实生产数据、真实页面、真实用户路径和 Erika 产品判断下的 Customer Label / Customer Issue 是否可用。
+  - 验收口径：AI 冷灰度、本地 replay、focused tests 只能作为安全网，不能替代 Erika 真实上传/查看页面后的人工验收；Step 9 PASS 必须包含 Erika 对错标、漏标、evidence 是否可信、标签是否符合产品直觉的确认。
+  - 第一轮不默认写业务代码：先做生产健康 baseline、feature flag 当前值确认、stored shadow/read model 可用性确认、受控 scope 设计、observability/rollback/kill switch 确认。若发现缺少生产 stored shadow 或观测数据，再单独拆支持性代码/脚本任务。
+  - 生产边界：Codex 不主动触发 production upload、reanalysis、DB write、credit、真实 LLM、feature flag/scope 开启、rollback 或 kill switch，除非 Erika 对具体动作单独授权。
+  - Erika 可以通过正常产品界面自行上传真实样本并判断页面结果；Codex 负责旁路记录、错标/漏标归因、incident/gold/candidate pool/catalog backlog 整理，以及必要时建议 rollback/kill switch。
+  - 必查用户路径：Results Top10、single review detail、raw review export、single-tag download。
+  - 必查质量问题：Customer Issue FP/FN、Customer Label FP/FN、evidence 不存在/不支持标签、cluster propagated 污染、旧产品/他牌/配件语境、未实际使用、泛泛好评误判、未验证类目细粒度标签误展示。
+  - 输出目标：`docs/5.9.9-step9-erika-led-production-truth-check.md` 与 `tmp/5.9.9-step9-erika-led-production-truth-check/` 观察 artifact；结论只能是 `PASS`、`ROLLBACK_REQUIRED`、`FIX_REQUIRED_BEFORE_GRAY_EXPAND` 或 `BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW`。
+
+**Step 9 与 v3-lite 并行边界（2026-07-31）：**
+
+- 可以并行：Step 9 是线上当前 5.9.9 v2 read path 的真实验收；v3-lite 是本地 shadow/read model 与 catalog 治理准备，二者目标不同。
+- 必须隔离：Step 9 验证对象必须稳定，不能混入 v3-lite 未验收代码；v3-lite 建议独立分支/独立 artifact，不随 Step 9 部署。
+- v3-lite 不得写 production DB，不得接前台，不得开启 feature flag，不得改变 prompt confidence，不得拆 `category/review_intent`，不得替换 `specific_issue.py`，不得改变用户可见输出。
+- v3-lite 拆为 Part A / Part B：Part A 只做 `customer_insights` 兼容投影与 catalog backlog 草稿；Part B 做可执行 catalog applicability gate，让 verifier / v3 shadow 能按标签适用的 category、sub_category、aspect 与反例决定 display/candidate/audit。
+- Part A 完成后只能说明“未来迁移材料已整理好”，不能宣称已真正降低扩品类手写规则；真正减负必须等 Part B 被 shadow/verifier 消费，并通过新增普通 sub_category 接入演练。
+- Step 9 发现的真实错标/漏标，优先沉淀为 incident、gold sample、candidate pool review、catalog backlog 或 anti-example；只有 P0 安全问题才考虑 `specific_issue.py` 窄修补。
+- 若 Step 9 需要 rollback/kill switch，以线上稳定优先；v3-lite 继续本地化，不参与线上应急。
+- 完整 v3 仍按准备度触发：Step 9 至少一轮稳定 + v3-lite Part A/Part B 跑过真实数据 shadow + candidate pool 有真实重复积累后，再评估是否进入完整 v3 selected read path。
+
+**下一轮任务提示词：Step 9**
+
+```text
+加载 PROGRESS_V2.md，继续 5.9.9 Step 9: Erika-led production truth check。
+
+背景：5.9.9 Step 1-8 已完成并 push；Step 7.8 go/no-go 为 GO_READY_FOR_ERIKA_AUTHORIZED_GRAY_RUN_ONLY；生产 feature flag 仍默认关闭。Step 9 的目标不是继续本地冷灰度，而是由 Erika 主导真实生产样本验收 Customer Label / Customer Issue 的准确性，Codex 负责旁路记录、归因、观测、rollback 建议和文档沉淀。
+
+硬边界：
+1. 未经 Erika 对具体动作单独授权，不触发 production upload、reanalysis、DB write、credit、真实 LLM、feature flag/scope 开启、rollback 或 kill switch。
+2. 第一轮先确认生产健康 baseline、当前 feature flag、stored shadow/read model 可用性、observability、rollback/kill switch。
+3. Erika 可以通过正常产品界面自行上传真实样本并判断页面结果；Codex 不替代 Erika 的产品验收。
+4. 必查 Results Top10、single review detail、raw review export、single-tag download。
+5. PASS 必须以 Erika 对错标/漏标、evidence 是否可信、标签是否符合产品直觉的确认作为核心依据；AI 冷灰度不能单独判 PASS。
+
+产出：
+- docs/5.9.9-step9-erika-led-production-truth-check.md
+- tmp/5.9.9-step9-erika-led-production-truth-check/ 下的观察 artifact
+- 结论为 PASS、ROLLBACK_REQUIRED、FIX_REQUIRED_BEFORE_GRAY_EXPAND 或 BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW
+```
+
+**已完成任务提示词归档：v3-lite Part A**
+
+```text
+加载 PROGRESS_V2.md，启动 5.9.9 v3-lite Part A: customer_insights shadow projection + catalog backlog draft。
+
+背景：v3-lite 可以与 Step 9 逻辑并行，但必须发布隔离。Part A 不是完整 v3，也不是生产切换；目标是封顶规则债务，为未来 customer_insights / executable catalog 做兼容投影和治理准备。Part A 做完不能宣称已真正降低扩品类手写规则，只能说明迁移材料和 backlog 已准备好。
+
+硬边界：
+1. 只做本地/独立分支 shadow/read model，不写 production DB、不接前台、不部署到生产、不改变用户可见输出。
+2. 不改变 prompt confidence，不拆 category/review_intent，不替换 specific_issue.py，不影响 Step 9 验证对象。
+3. 新增 customer_insights 兼容投影，从当前 verified source-review display_occurrences 生成新结构。
+4. 对齐 candidate pool 与 catalog backlog 字段：canonical_label_key、label_type、aspect_key、evidence_candidate、downgrade_reasons、maturity_level、review_status、catalog_action。
+5. 从 waders 已验证标签、351-400 needs_new_label、candidate pool reviewed artifact 生成第一版 catalog backlog 草稿；该草稿只用于治理和回归，不作为运行时生成源。
+6. specific_issue.py 后续只允许 P0 安全修补；非 P0 新标签和 recall gap 优先进入 candidate pool / catalog backlog。
+7. 不在 Part A 增加 severity/actionability/L4 自动行动字段；不把 catalog backlog 接入前台或运行时 display 决策。
+
+验收：
+- waders/session120/session121/session122/351-400 replay 继续 P0=0
+- customer_insights 投影覆盖现有 frontstage display occurrences >= 98%
+- candidate/audit 不进入 frontstage 的 contract 不回退
+- 输出 docs/5.9.9-v3-lite-customer-insights-shadow.md 与 tmp/5.9.9-v3-lite-customer-insights-shadow/ artifact
+```
+
+**后续任务提示词：v3-lite Part B**
+
+```text
+加载 PROGRESS_V2.md，启动 5.9.9 v3-lite Part B: executable catalog applicability gate。
+
+背景：Part A 只完成 customer_insights 投影与 catalog backlog 草稿；它不能单独解决扩品类手写规则问题。Part B 的目标是把 backlog/catalog 变成 verifier / v3 shadow 可消费的轻量标签目录，让系统能判断“这个标签在当前 category/sub_category/aspect 下能不能展示”。Part B 仍然 shadow-only，不接生产前台。
+
+硬边界：
+1. 不写 production DB、不接前台、不部署生产、不改变 Step 9 验证对象。
+2. 不替换 specific_issue.py；只允许读取现有 verified display、candidate pool、gold fixture、catalog/backlog artifact，构建本地可执行 gate。
+3. 不新增 severity/actionability/L4 自动行动；本轮只做标签适用范围、反例和 display eligibility。
+4. catalog gate 只能决定 v3 shadow/read-model 的 display/candidate/audit 分流，不得直接改变用户可见输出。
+
+任务：
+1. 定义 catalog applicability 最小字段：canonical_label_key、label_type、display labels、allowed_aspect_keys、applicable_categories、applicable_sub_categories、maturity_level、status、examples、anti_examples。
+2. 从 Part A catalog backlog、waders verified display、351-400 needs_new_label、candidate pool reviewed artifact 生成 executable catalog draft。
+3. 新增 pure helper：输入 label candidate + category/sub_category/aspect/evidence context，输出 allowed / blocked / candidate_pool 与 reason code。
+4. 接入 v3 shadow，不接 frontstage：customer_insights selected display 只来自 evidence/context/aspect/maturity/catalog applicability 全部通过的 occurrence。
+5. 增加 wrong-category probe：如 waders 不能展示 battery/mascara 等外类目标签，3C/beauty 也不能展示 waders-only 细粒度标签。
+6. 增加新增普通 sub_category 接入演练：选择非 waders 的 L1/L2 候选，用 20-30 条样本验证只靠 taxonomy/maturity/catalog/backlog 配置和抽检，不靠新增普通类目专属 Python 规则。
+
+验收：
+- waders/session120/session121/session122/351-400 replay 继续 P0=0
+- wrong-category probe P0=0
+- customer_insights selected display 仍只来自 verified source-review evidence，candidate/audit 不进前台
+- 新增普通 sub_category 演练不得修改 specific_issue.py 普通类目专属规则
+- 记录工程耗时、人工复核耗时、是否只改 catalog/taxonomy/backlog 或通用 engine
+- 若新增普通 sub_category 仍需 2-3 天工程或大量 Python 分支，Part B 判定 REVIEW_NEEDED，不得宣称 v3-lite 已完成减负目标
+```
 
 **标签本体 v3 执行计划（2026-07-30 决策）：**
 
 **定位：**
 - 完整 v3 不作为 5.9.9 立即全量重构项；当前不改 prompt confidence、不拆 `category/review_intent`、不替换 `specific_issue.py`、不改变前台结果。
-- 近期只做 `v3-lite`，目标是封顶规则债务：让未来迁移变成机械迁移，而不是继续翻更长的 Python 规则。
+- 近期 `v3-lite` 拆成 Part A / Part B：Part A 做 shadow 投影与 catalog backlog 草稿；Part B 做可执行 catalog applicability gate。Part A 只负责治理准备，不能单独宣称已降低扩品类手写规则；Part B 才是减负目标的最小闭环。
 - 完整 v3 的价值是长期减负：统一 `issue_tag` / `highlight_tag` / `customer_label` 为 `customer_insights`，把标签定义、同义词、反例、成熟度和 owner/version 从代码迁入可治理 catalog。
 
-**v3-lite（当前可做，预计 `3-5` 个工作日，不改变任何对外输出）：**
+**v3-lite Part A（已完成，shadow-only，不改变任何对外输出）：**
 - 新增 `customer_insights` 兼容投影：从当前 verified source-review `display_occurrences` 生成新结构，仅作为 shadow/read model，不写生产 DB，不接前台。
 - 对齐 candidate pool 与未来 catalog backlog 字段：`canonical_label_key`、`label_type`、`aspect_key`、`evidence_candidate`、`downgrade_reasons`、`maturity_level`、`review_status`、`catalog_action`。
 - 从 waders 已验证标签、351-400 needs_new_label、candidate pool reviewed artifact 生成第一版 catalog backlog 草稿；该草稿只用于治理和回归，不作为运行时生成源。
 - 设定规则膨胀封顶原则：`specific_issue.py` 后续只允许 P0 安全修补；新标签、边界不清标签、非 P0 recall gap 优先进入 candidate pool / catalog backlog；每次 P0 修补同步沉淀为 catalog rule 或 anti-example。
-- v3-lite 验收：waders/session120/121/122/351-400 replay 继续 P0=`0`；`customer_insights` 投影覆盖现有 frontstage display occurrences ≥ `98%`；candidate/audit 不进入 frontstage 的 contract 不回退。
+- Part A 验收：waders/session120/session121/session122/351-400 replay 继续 P0=`0`；`customer_insights` 投影覆盖现有 frontstage display occurrences ≥ `98%`；candidate/audit 不进入 frontstage 的 contract 不回退。
+- Part A 当前结果：`PASS`，P0=`0`，coverage `216/216=100%`，catalog backlog draft `185` items，报告 `docs/5.9.9-v3-lite-customer-insights-shadow.md`，artifact `tmp/5.9.9-v3-lite-customer-insights-shadow/`。
+- Part A 非目标：不新增 `severity` / `actionability` / L4 自动行动；不让 catalog backlog 参与运行时 display 决策；不以 Part A 完成作为“扩品类减负已完成”的证据。
+
+**v3-lite Part B（Part A 后执行，仍不改变任何对外输出）：**
+- 新增 executable catalog applicability gate：把 catalog/backlog 草稿升级为 verifier / v3 shadow 可消费的轻量标签目录。
+- 最小字段：`canonical_label_key`、`label_type`、display labels、`allowed_aspect_keys`、`applicable_categories`、`applicable_sub_categories`、`maturity_level`、`status`、`examples`、`anti_examples`。
+- Gate 输入：label candidate / occurrence + category + sub_category + aspect_key + evidence/context；输出：`display_allowed` / `candidate_pool` / `audit_only` 与稳定 reason code。
+- Gate 行为：标签不适用于当前 category/sub_category/aspect 时，不进入 selected display，只进入 audit/candidate pool；例如 waders-only 细粒度标签不得漂移到 3C/beauty，battery/mascara 类标签不得漂移到 waders。
+- 接入范围：只接 v3 shadow/read model，不接生产 frontstage，不改变 Step 9 验证对象；`specific_issue.py` 仍只允许 P0 安全修补。
+- Part B 验收：waders replay P0=`0`；wrong-category probe P0=`0`；新增一个非 waders 普通 sub_category 接入演练，禁止新增普通类目专属 Python 规则，记录工程耗时、人工审核耗时和改动类型。
+- 减负判定：只有 Part B 通过新增普通 sub_category 演练，才能宣称 v3-lite 初步具备降低扩品类手写规则的能力；若仍需 `2-3` 天工程或大量 Python 分支，判定为 `REVIEW_NEEDED`。
 
 **完整 v3 启动条件（不按日期硬启动，按准备度触发）：**
 - 5.9.9 live frontstage read path 已具备可灰度、可回滚、可观测能力，并在真实使用中稳定至少一轮。
-- v3-lite 已跑过真实上传数据，投影覆盖率 ≥ `98%`，没有破坏 waders 六个重点标签 P0 门禁。
+- v3-lite Part A/Part B 已跑过真实上传数据 shadow，投影覆盖率 ≥ `98%`，wrong-category probe P0=`0`，没有破坏 waders 六个重点标签 P0 门禁。
 - candidate pool 有真实重复积累，能区分高价值新标签、一次性噪音和需要反例治理的边界样本。
-- 新增标签已经默认进入 catalog backlog，而不是继续优先写入 `specific_issue.py`。
+- 新增标签已经默认进入 catalog backlog / applicability review，而不是继续优先写入 `specific_issue.py`。
 - 启动评审时间建议：最快 `2026-08` 下旬评估，更稳妥是 `2026-09` 初；首个完整版对象只选 `outdoor/waders` L3，不做多品类同时切换。
 
 **完整 v3 分阶段实施：**
-- Phase 1：waders catalog engine shadow。将 waders 已成熟标签、反例、同义词、maturity gate 迁入 `customer_insight_catalog` 草稿和通用解释器；不替换旧链路，只比较覆盖率、冲突率、FP/FN。
+- Phase 1：waders catalog engine shadow。基于 v3-lite Part B 的 applicability gate，将 waders 已成熟标签、反例、同义词、maturity gate 迁入 `customer_insight_catalog` 与通用解释器；不替换旧链路，只比较覆盖率、冲突率、FP/FN。
 - Phase 2：waders L3 feature flag 切换。复用 Step 6 read-path contract，只允许 `outdoor/waders` + fixture gate PASS + rollback 可用时选择 v3 `customer_insights`。
 - Phase 3：再处理 aspect confidence、主 aspect 加权、`category/review_intent` 拆分。由于会影响 prompt/schema/cache/回放兼容，这部分必须放在 waders v3 shadow 稳定之后。
 - Phase 4：按 candidate pool ROI 推广高价值 sub_category。每次只推进 1-2 个，不承诺所有 sub_category 都做 L3。
