@@ -417,6 +417,8 @@ _NEGATED_WATER_LEAK_PATTERNS = [
     r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+(?:experience|experienced|had|have|see|seen)\s+(?:any\s+)?leak(?:ing|s)?\b",
     r"\b(did|does|do|has|have|had)(?:n['’]?t| not)\s+leak(?:ed|ing|s)?\b",
     r"\b(?:did|does|do)(?:n['’]?t| not)\s+get\s+wet\b",
+    r"\bno\s+(?:water\s+)?seep(?:ing|ed|s)?\s+in\b",
+    r"\bno\s+water\s+seep(?:ing|ed|s)?\b",
     r"\b(?:do|does|did)(?:n['’]?t| not)\s+see[^.!?\n]{0,80}\bleak\b",
     r"\bnot\s+a\s+leak\b",
     r"\bnot\s+leaking\b",
@@ -569,6 +571,9 @@ _SIZE_FIT_PROBLEM_BLOCKED_PATTERNS = [
     r"\btrue\s+to\s+size\b",
     r"\bfitted\s+me\s+perfectly\b",
     r"\bwrong\s+size\b[^.!?\n]{0,80}\bnot\s+the\s+waders?\s+fault\b",
+    r"\bI\s+(?:ordered|bought|purchased)\s+the\s+wrong\s+size\b",
+    r"\bI\s+made\s+that\s+mistake\b",
+    r"\bmy\s+mistake\b[^.!?\n]{0,80}\b(?:size|sizing)\b",
 ]
 
 
@@ -610,6 +615,167 @@ def _is_valid_flimsy_issue_evidence(evidence: str, content: str) -> bool:
     if _first_regex(_FLIMSY_ISSUE_EVIDENCE_PATTERNS, basis):
         return True
     return _first_regex(_FLIMSY_ISSUE_EVIDENCE_PATTERNS, context)
+
+
+_ACCESSORY_WATERPROOF_FAILURE_PATTERNS = [
+    r"\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b[^.!?\n]{0,160}\b(?:isn['’]?t|is\s+not|aren['’]?t|are\s+not)\s+(?:water\s*proof|waterproof)\b",
+    r"\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b[^.!?\n]{0,160}\b(?:not\s+(?:water\s*proof|waterproof)|leak(?:ing|ed|s)?|water\s+(?:gets|got|came|comes)\s+in|got\s+wet|gets?\s+wet|soak(?:ed|s)?|submerged)\b",
+    r"\b(?:not\s+(?:water\s*proof|waterproof)|leak(?:ing|ed|s)?|water\s+(?:gets|got|came|comes)\s+in|got\s+wet|gets?\s+wet|soak(?:ed|s)?|submerged)\b[^.!?\n]{0,160}\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b",
+    r"\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b[\s\S]{0,240}\b(?:isn['’]?t|is\s+not|aren['’]?t|are\s+not|not)\s+(?:water\s*proof|waterproof)\b",
+    r"\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b[\s\S]{0,240}\b(?:water\s+leaks?\s+in|water\s+(?:gets|got|came|comes)\s+in|got\s+wet|gets?\s+wet|soak(?:ed|s)?|submerged)\b",
+]
+
+
+def _is_valid_pocket_not_waterproof_issue_evidence(evidence: str, content: str) -> bool:
+    basis = str(evidence or "").strip()
+    if not basis:
+        return False
+    window = _evidence_context_window(content, basis)
+    scoped = f"{basis}\n{window}"
+    if _first_regex(
+        [
+            r"\b(?:pockets?|front pouch|outside front pouch|phone case|phone sleeve|phone protector|bag|pouch)\b[^.!?\n]{0,100}\b(?:if|whether|to\s+see\s+if)[^.!?\n]{0,100}\bget\s+wet\b[^.!?\n]{0,140}\b(?:stayed|kept|remained)\s+dry\b",
+            r"\b(?:stayed|kept|remained)\s+dry\b[^.!?\n]{0,160}\b(?:pockets?|front pouch|outside front pouch|phone case|phone sleeve|phone protector|bag|pouch)\b",
+        ],
+        scoped,
+    ):
+        return False
+    return _first_regex(_ACCESSORY_WATERPROOF_FAILURE_PATTERNS, scoped)
+
+
+def _first_pocket_not_waterproof_evidence(content: str) -> str:
+    for _start, span in _clause_spans(content):
+        evidence = _regex_span(_ACCESSORY_WATERPROOF_FAILURE_PATTERNS, span)
+        if evidence and _is_valid_pocket_not_waterproof_issue_evidence(evidence, content):
+            return evidence
+    evidence = _regex_span(_ACCESSORY_WATERPROOF_FAILURE_PATTERNS, content)
+    return evidence if _is_valid_pocket_not_waterproof_issue_evidence(evidence, content) else ""
+
+
+def _is_valid_missing_wader_hanger_issue_evidence(evidence: str, content: str) -> bool:
+    basis = str(evidence or "").strip()
+    if not basis:
+        return False
+    context = _evidence_context_sentence(content, basis)
+    direct = f"{basis}\n{context}"
+    missing_patterns = [
+        r"\b(?:missing|without|no)\b[^.!?\n]{0,80}\b(?:wader\s+)?(?:hanger|hook)\b",
+        r"\b(?:wader\s+)?(?:hanger|hook)\b[^.!?\n]{0,100}\b(?:missing|not\s+included|wasn['’]?t\s+included|did\s+not\s+come|didn['’]?t\s+come)\b",
+        r"\bI\s+did\s+not\s+receive\s+the\s+(?:wader\s+)?(?:hanger|hook)\b",
+        r"\b(?:did\s+not|didn['’]?t)\s+(?:come\s+with|receive|get)\b[^.!?\n]{0,80}\b(?:wader\s+)?(?:hanger|hook)\b",
+    ]
+    if _first_regex(missing_patterns, direct):
+        return True
+    window = _evidence_context_window(content, basis)
+    scoped = f"{basis}\n{window}"
+    if _first_regex(
+        [
+            r"\b(?:hanger|hook)\b[^.!?\n]{0,100}\b(?:comes?\s+with|included|provided|works?\s+great|strong\s+enough|thoughtful\s+touch)\b",
+            r"\b(?:comes?\s+with|included|provided)\b[^.!?\n]{0,100}\b(?:hanger|hook)\b",
+            r"\b(?:hanger|hook)\s+(?:that\s+was\s+)?provided\b",
+        ],
+        scoped,
+    ):
+        return False
+    return _first_regex(missing_patterns, scoped)
+
+
+def _is_positive_traction_context(text: str) -> bool:
+    return _first_regex(
+        [
+            r"\b(?:good|great|decent|excellent|solid)\s+(?:footing|traction|grip)\b",
+            r"\bprovide(?:s|d)?\s+(?:good|great|decent|excellent|solid)\s+(?:footing|traction|grip)\b",
+            r"\b(?:traction|grip)\b[^.!?\n]{0,80}\b(?:good|great|decent|excellent|solid)\b",
+        ],
+        text,
+    )
+
+
+def _is_valid_poor_traction_issue_evidence(evidence: str, content: str) -> bool:
+    basis = str(evidence or "").strip()
+    if not basis:
+        return False
+    context = _evidence_context_sentence(content, basis)
+    scoped = f"{basis}\n{context}"
+    if _is_positive_traction_context(scoped):
+        return False
+    return _first_regex(
+        [
+            r"\b(?:poor|bad|weak|low|no|lack(?:ing)?)\s+(?:footing|traction|grip)\b",
+            r"\b(?:footing|traction|grip)\b[^.!?\n]{0,80}\b(?:poor|bad|weak|low|lacking|not\s+good|terrible)\b",
+            r"\b(?:soles?|boots?)\b[^.!?\n]{0,100}\b(?:slipped|slip|slides?|slippery)\b",
+            r"\b(?:slipped|slip|slides?)\b[^.!?\n]{0,100}\b(?:soles?|boots?|rocks?|mud|river)\b",
+            r"\b(?:slick|slippery)\s+rocks\b[^.!?\n]{0,100}\b(?:fell|slipped|dangerous|no\s+grip|poor\s+traction)\b",
+        ],
+        scoped,
+    )
+
+
+def _is_negated_breaks_easily_context(text: str) -> bool:
+    return _first_regex(
+        [
+            r"\b(?:don|do|does|did)(?:n['’]?t| not)\s+tear\s+easily\b",
+            r"\b(?:don|do|does|did)(?:n['’]?t| not)\s+(?:rip|tear|break)\b",
+            r"\bno\s+(?:rips?|tears?|holes?|punctures?)\b",
+            r"\bno\s+rips?\s+or\s+tears?\b",
+            r"\bwithout\s+(?:any\s+)?(?:rips?|tears?|holes?|punctures?)\b",
+            r"\bhold(?:s)?\s+up\s+well\b[^.!?\n]{0,100}\b(?:don|do|does|did)(?:n['’]?t| not)\s+tear\s+easily\b",
+        ],
+        text,
+    )
+
+
+def _is_valid_breaks_easily_issue_evidence(evidence: str, content: str) -> bool:
+    basis = str(evidence or "").strip()
+    if not basis:
+        return False
+    context = _evidence_context_sentence(content, basis)
+    scoped = f"{basis}\n{context}"
+    if _is_negated_breaks_easily_context(scoped):
+        return False
+    return _first_regex(
+        [
+            r"\bno\s+durability\b",
+            r"\bgot\s+a\s+hole\b",
+            r"\bholes?\s+in\s+(?:them|it|the\s+material|the\s+waders?|boots?)\b",
+            r"\b(?:easily\s+)?(?:rip|ripped|tear|tears|tore|torn)\b",
+            r"\bpunctured\s+very\s+easily\b",
+            r"\balready\s+leaking\s+after\s+only\s+a\s+few\s+uses\b",
+            r"\b(?:stitching|threads?|seams?)\b[^.!?\n]{0,100}\b(?:broke|came\s+loose|loose|failed|split)\b",
+            r"\bbroke\b",
+            r"\bdestroyed\b",
+        ],
+        scoped,
+    )
+
+
+def _is_user_ordering_error_size_context(text: str) -> bool:
+    return _first_regex(_SIZE_FIT_PROBLEM_BLOCKED_PATTERNS[-3:], text)
+
+
+def _has_later_negative_update(content: str, evidence: str) -> bool:
+    content_lower = str(content or "").lower()
+    if not content_lower:
+        return False
+    evidence_lower = str(evidence or "").strip().lower()
+    evidence_index = content_lower.find(evidence_lower) if evidence_lower else 0
+    search_from = max(evidence_index, 0)
+    update_index = content_lower.find("update", search_from)
+    if update_index < 0:
+        return False
+    tail = content_lower[update_index:]
+    return _first_regex(
+        [
+            r"\bterrible\b",
+            r"\bhorrible\b",
+            r"\buncomfortable\b",
+            r"\bsuper\s+tight\b",
+            r"\bdo\s+not\s+recommend\b",
+            r"\breturn\s+process\b",
+            r"\bstarted\s+the\s+return\b",
+        ],
+        tail,
+    )
 
 
 def _is_suppressed_water_leak_issue_occurrence(occurrence: dict[str, Any]) -> bool:
@@ -1163,8 +1329,11 @@ def _negative_outcome_context(content: str) -> bool:
             r"\bhad\s+to\s+switch\s+to\s+a\s+different\s+brand\b",
             r"\bdon['’]?t\s+buy\s+these\b",
             r"\bwould\s+not\s+recommend\b",
+            r"\bdo\s+not\s+recommend\b",
             r"\bthese\s+are\s+horrible\b",
             r"\btrash\b",
+            r"\breturn\s+process\b",
+            r"\bstarted\s+the\s+return\b",
             r"\breducing\s+the\s+rating\b",
             r"\bnot\s+what\s+I\s+had\s+in\s+mind\b",
             r"\bvery\s+disappointed\b",
@@ -1274,14 +1443,7 @@ def _waders_issue_rule_occurrences(
         "pocket_not_waterproof",
         "Pocket Not Waterproof",
         "accessory_storage",
-        _regex_span(
-            [
-                r"\bpockets?\s+(?:isn['’]?t|is not|aren['’]?t|are not)\s+(?:water\s*proof|waterproof)\b",
-                r"\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b[\s\S]{0,220}\b(?:not waterproof|(?<!no )leak|water gets in|water leaks in|wet|soak|submerged)",
-                r"\b(?:not waterproof|(?<!no )leak(?:ing|ed|s)?|water gets in|water leaks in|wet|soak|submerged)[\s\S]{0,220}\b(?:outer\s+)?(?:pockets?|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|case|bag)\b",
-            ],
-            content,
-        ),
+        _first_pocket_not_waterproof_evidence(content),
     )
     add(
         "quality_control_storage_issue",
@@ -1318,6 +1480,7 @@ def _waders_issue_rule_occurrences(
             [
                 r"\bno\s+durability\b",
                 r"\bgot\s+a\s+hole\b[^.!?\n]{0,80}",
+                r"\b(?:stitching|threads?|seams?)\b[^.!?\n]{0,100}\b(?:broke|came\s+loose|loose|failed|split)\b",
                 r"\b(?:rip|ripped|tear|tears|tore|torn)\b[^.!?\n]{0,80}",
                 r"\bpunctured\s+very\s+easily\b",
                 r"\balready\s+leaking\s+after\s+only\s+a\s+few\s+uses\b",
@@ -1327,6 +1490,10 @@ def _waders_issue_rule_occurrences(
             ],
             blocked_patterns=[
                 r"\bdidn['’]?t\s+(?:get\s+wet\s+or\s+)?tear\b",
+                r"\b(?:don|do|does|did)(?:n['’]?t| not)\s+tear\s+easily\b",
+                r"\b(?:don|do|does|did)(?:n['’]?t| not)\s+(?:rip|tear|break)\b",
+                r"\bno\s+(?:rips?|tears?|holes?|punctures?)\b",
+                r"\bno\s+rips?\s+or\s+tears?\b",
                 r"\bwithout\s+(?:any\s+)?(?:tears?|punctures?)\b",
                 r"\bzipper\b",
             ],
@@ -1482,7 +1649,20 @@ def _waders_issue_rule_occurrences(
         "poor_traction",
         "Poor Traction",
         "grip",
-        _first_content_span(content, [r"\bslick\s+or\s+slipper\s+rocks\b", r"\bslippery\s+rocks\b", r"\bsoles\s+slipped\b[^.!?\n]{0,80}"]),
+        _first_content_span(
+            content,
+            [
+                r"\b(?:poor|bad|weak|low|no|lack(?:ing)?)\s+(?:footing|traction|grip)\b",
+                r"\b(?:footing|traction|grip)\b[^.!?\n]{0,80}\b(?:poor|bad|weak|low|lacking|not\s+good|terrible)\b",
+                r"\b(?:soles?|boots?)\b[^.!?\n]{0,100}\b(?:slipped|slip|slides?|slippery)\b",
+                r"\b(?:slipped|slip|slides?)\b[^.!?\n]{0,100}\b(?:soles?|boots?|rocks?|mud|river)\b",
+                r"\b(?:slick|slippery)\s+rocks\b[^.!?\n]{0,100}\b(?:fell|slipped|dangerous|no\s+grip|poor\s+traction)\b",
+            ],
+            blocked_patterns=[
+                r"\b(?:good|great|decent|excellent|solid)\s+(?:footing|traction|grip)\b",
+                r"\bprovide(?:s|d)?\s+(?:good|great|decent|excellent|solid)\s+(?:footing|traction|grip)\b",
+            ],
+        ),
     )
     add(
         "boots_too_stiff",
@@ -1780,26 +1960,27 @@ def _waders_highlight_rule_occurrences(
             ],
         ),
     )
-    add(
-        "comfortable_to_wear",
-        "Comfortable To Wear",
-        "comfort",
-        _first_content_span(
-            content,
-            [
-                r"\band\s+are\s+comfortable\b",
-                r"\bcomfortable\s+enough\b",
-                r"\bvery\s+comfortable\b",
-                r"\bcomfy\b",
-                r"\bcomfortable\s+to\s+wear\s+and\s+move\s+around\b",
-            ],
-            blocked_patterns=[
-                r"\buncomfortable\b",
-                r"\bnot\s+comfortable\b",
-                r"\bmore\s+comfortable\b",
-            ],
-        ),
-    )
+    if not negative_outcome:
+        add(
+            "comfortable_to_wear",
+            "Comfortable To Wear",
+            "comfort",
+            _first_content_span(
+                content,
+                [
+                    r"\band\s+are\s+comfortable\b",
+                    r"\bcomfortable\s+enough\b",
+                    r"\bvery\s+comfortable\b",
+                    r"\bcomfy\b",
+                    r"\bcomfortable\s+to\s+wear\s+and\s+move\s+around\b",
+                ],
+                blocked_patterns=[
+                    r"\buncomfortable\b",
+                    r"\bnot\s+comfortable\b",
+                    r"\bmore\s+comfortable\b",
+                ],
+            ),
+        )
     add(
         "good_traction",
         "Good Traction",
@@ -2161,6 +2342,44 @@ def _project_customer_label_occurrence(
     context_allowed = True
     if label_type == "issue" and canonical == "water_leaks_through":
         context_allowed = not _is_blocked_water_leak_issue_context(content, stored_evidence)
+    if (
+        label_type == "issue"
+        and canonical == "pocket_not_waterproof"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        context_allowed = context_allowed and _is_valid_pocket_not_waterproof_issue_evidence(
+            stored_evidence,
+            content,
+        )
+    if (
+        label_type == "issue"
+        and canonical == "missing_wader_hanger"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        context_allowed = context_allowed and _is_valid_missing_wader_hanger_issue_evidence(
+            stored_evidence,
+            content,
+        )
+    if (
+        label_type == "issue"
+        and canonical == "poor_traction"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        context_allowed = context_allowed and _is_valid_poor_traction_issue_evidence(stored_evidence, content)
+    if (
+        label_type == "issue"
+        and canonical == "breaks_easily"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        context_allowed = context_allowed and _is_valid_breaks_easily_issue_evidence(stored_evidence, content)
+    if (
+        label_type == "issue"
+        and canonical == "size_fit_problem"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        context_allowed = context_allowed and not _is_user_ordering_error_size_context(
+            _evidence_context_window(content, stored_evidence)
+        )
     if label_type == "issue" and canonical == "feels_thin_and_flimsy":
         context_allowed = _is_valid_flimsy_issue_evidence(stored_evidence, content)
     if label_type == "highlight" and canonical == "keeps_water_out":
@@ -2179,6 +2398,16 @@ def _project_customer_label_occurrence(
                 r"\btheir\s+\d+\s+is\s+at\s+best\s+a\s+\d+\b",
             ],
             fit_window,
+        ) and not _has_later_negative_update(content, stored_evidence)
+    if (
+        label_type == "highlight"
+        and canonical == "comfortable_to_wear"
+        and _is_waders_context(occurrence_sub_category, content)
+    ):
+        comfort_context = _evidence_context_window(content, stored_evidence)
+        context_allowed = context_allowed and not (
+            _first_regex([r"\buncomfortable\b", r"\bnot\s+comfortable\b"], comfort_context)
+            or _has_later_negative_update(content, stored_evidence)
         )
     if label_type == "highlight" and canonical == "not_used_yet":
         context_allowed = False
@@ -2441,15 +2670,10 @@ def _project_customer_label_occurrences(
 
 def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str, str, str] | None:
     text = f"{evidence} {content[:400]}".lower()
+    context_text = _evidence_context_window(content, evidence).lower()
 
     if aspect_key in {"accessory_storage", "organization", "capacity"}:
-        if _first_regex(
-            [
-                r"\b(?:pockets?|phone case|phone sleeve|phone protector|case)\b.*\b(wet|soak|water|leak|not waterproof|submerged)",
-                r"\b(wet|soak|water|leak|not waterproof|submerged).*\b(?:pockets?|phone case|phone sleeve|phone protector|case)\b",
-            ],
-            text,
-        ):
+        if _is_valid_pocket_not_waterproof_issue_evidence(evidence, content):
             return ("Pocket Not Waterproof", "pocket_not_waterproof", "regex_alias_rule")
         if _first_regex([r"\bpockets?\b.*\b(small|tight|tiny|too small|not enough room)"], text):
             return ("Pocket Too Small", "pocket_too_small", "regex_alias_rule")
@@ -2464,7 +2688,13 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             text,
         ):
             return ("Missing Accessories", "missing_accessories", "regex_alias_rule")
-        if _first_regex([r"\bmissing\b.*\b(hanger|hook)", r"\bno\b.*\b(hanger|hook)"], text):
+        if _is_valid_missing_wader_hanger_issue_evidence(evidence, content) or _first_regex(
+            [
+                r"\b(?:missing|without|no)\b[^.!?\n]{0,80}\b(?:wader\s+)?(?:hanger|hook)\b",
+                r"\b(?:wader\s+)?(?:hanger|hook)\b[^.!?\n]{0,100}\b(?:missing|not\s+included|wasn['’]?t\s+included|did\s+not\s+come|didn['’]?t\s+come)\b",
+            ],
+            context_text,
+        ):
             return ("Missing Wader Hanger", "missing_wader_hanger", "regex_alias_rule")
 
     if aspect_key in {"waterproof", "waterproof_performance", "seam_integrity"}:
@@ -2512,7 +2742,13 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Quality Control / Storage Issue", "quality_control_storage_issue", "regex_alias_rule")
         if _first_regex([r"\b(fell apart|falls apart)\b"], text):
             return ("Falls Apart", "falls_apart", "regex_alias_rule")
-        if _first_regex([r"\b(got a hole|broke|breaks|broken|cracked|snapped|ripped|rip|tear|tore|torn|no durability|destroyed)\b"], text):
+        if _is_valid_breaks_easily_issue_evidence(evidence, content) or _first_regex(
+            [
+                r"\b(got a hole|broke|breaks|broken|cracked|snapped|ripped|rip|tear|tore|torn|no durability|destroyed)\b",
+                r"\b(?:stitching|threads?|seams?)\b[^.!?\n]{0,100}\b(?:broke|came\s+loose|loose|failed|split)\b",
+            ],
+            context_text,
+        ) and not _is_negated_breaks_easily_context(context_text):
             return ("Breaks Easily", "breaks_easily", "regex_alias_rule")
         if aspect_key in {"material", "build_quality"} and _first_regex(
             [
@@ -2595,7 +2831,7 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
             return ("Insufficient Warmth", "insufficient_warmth", "regex_alias_rule")
 
     if aspect_key in {"grip"}:
-        if _first_regex([r"\bslick\s+or\s+slipper\s+rocks\b", r"\bslippery\s+rocks\b", r"\bsoles?\s+slipped\b"], text):
+        if _is_valid_poor_traction_issue_evidence(evidence, content):
             return ("Poor Traction", "poor_traction", "regex_alias_rule")
         if _first_regex([r"\bsoles\s+are\s+a\s+bit\s+soft\b", r"\breal\s+soft\s+flexible\b.*\bcrush(?:es)?\s+your\s+foot\b"], text):
             return ("Soft Soles", "soft_soles", "regex_alias_rule")

@@ -187,6 +187,8 @@ function isBlockedWaterLeakIssueContext(content: string, evidence: string): bool
     /\bhave(?:n['’]?t| not)\s+had\s+(?:any\s+)?(?:issues?\s+with\s+)?leaks?\b/,
     /\bno\s+issues?\s+with\s+leaks?\b/,
     /\bnot\s+leaking\b/,
+    /\bno\s+(?:water\s+)?seep(?:ing|ed|s)?\s+in\b/,
+    /\bno\s+water\s+seep(?:ing|ed|s)?\b/,
   ], basis);
   const positiveDry = firstRegex([
     /\b(?:remained|stayed|kept|keep|keeps)\s+(?:(?:me|you|us|him|her|them|my\s+\w+|your\s+\w+|his\s+\w+|her\s+\w+|their\s+\w+)\s+)?(?:\w+ly\s+)?dry\b/,
@@ -210,6 +212,123 @@ function isBlockedWaterLeakIssueContext(content: string, evidence: string): bool
   return negated || positiveDry || oldProduct || evidenceAccessoryLeak || accessoryLeak;
 }
 
+function isValidPocketNotWaterproofIssueEvidence(content: string, evidence: string): boolean {
+  const basis = evidence.trim();
+  if (!basis) return false;
+  const scoped = `${basis}\n${windowForEvidence(content, basis)}`;
+  if (firstRegex([
+    /\b(?:pockets?|front pouch|outside front pouch|phone case|phone sleeve|phone protector|bag|pouch)\b[^.!?\n]{0,100}\b(?:if|whether|to\s+see\s+if)[^.!?\n]{0,100}\bget\s+wet\b[^.!?\n]{0,140}\b(?:stayed|kept|remained)\s+dry\b/,
+    /\b(?:stayed|kept|remained)\s+dry\b[^.!?\n]{0,160}\b(?:pockets?|front pouch|outside front pouch|phone case|phone sleeve|phone protector|bag|pouch)\b/,
+  ], scoped)) {
+    return false;
+  }
+  return firstRegex([
+    /\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b[^.!?\n]{0,160}\b(?:isn['’]?t|is\s+not|aren['’]?t|are\s+not)\s+(?:water\s*proof|waterproof)\b/,
+    /\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b[^.!?\n]{0,160}\b(?:not\s+(?:water\s*proof|waterproof)|leak(?:ing|ed|s)?|water\s+(?:gets|got|came|comes)\s+in|got\s+wet|gets?\s+wet|soak(?:ed|s)?|submerged)\b/,
+    /\b(?:not\s+(?:water\s*proof|waterproof)|leak(?:ing|ed|s)?|water\s+(?:gets|got|came|comes)\s+in|got\s+wet|gets?\s+wet|soak(?:ed|s)?|submerged)\b[^.!?\n]{0,160}\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b/,
+    /\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b[\s\S]{0,240}\b(?:isn['’]?t|is\s+not|aren['’]?t|are\s+not|not)\s+(?:water\s*proof|waterproof)\b/,
+    /\b(?:outer\s+)?(?:pockets?|breast pocket|front pouch|outside front pouch|storage pocket|hand warmer pocket|phone case|phone sleeve|phone protector|bag|pouch)\b[\s\S]{0,240}\b(?:water\s+leaks?\s+in|water\s+(?:gets|got|came|comes)\s+in|got\s+wet|gets?\s+wet|soak(?:ed|s)?|submerged)\b/,
+  ], scoped);
+}
+
+function isValidMissingWaderHangerIssueEvidence(content: string, evidence: string): boolean {
+  const basis = evidence.trim();
+  if (!basis) return false;
+  const direct = `${basis}\n${sentenceForEvidence(content, basis)}`;
+  const missingPatterns = [
+    /\b(?:missing|without|no)\b[^.!?\n]{0,80}\b(?:wader\s+)?(?:hanger|hook)\b/,
+    /\b(?:wader\s+)?(?:hanger|hook)\b[^.!?\n]{0,100}\b(?:missing|not\s+included|wasn['’]?t\s+included|did\s+not\s+come|didn['’]?t\s+come)\b/,
+    /\bI\s+did\s+not\s+receive\s+the\s+(?:wader\s+)?(?:hanger|hook)\b/,
+    /\b(?:did\s+not|didn['’]?t)\s+(?:come\s+with|receive|get)\b[^.!?\n]{0,80}\b(?:wader\s+)?(?:hanger|hook)\b/,
+  ];
+  if (firstRegex(missingPatterns, direct)) return true;
+  const scoped = `${basis}\n${windowForEvidence(content, basis)}`;
+  if (firstRegex([
+    /\b(?:hanger|hook)\b[^.!?\n]{0,100}\b(?:comes?\s+with|included|provided|works?\s+great|strong\s+enough|thoughtful\s+touch)\b/,
+    /\b(?:comes?\s+with|included|provided)\b[^.!?\n]{0,100}\b(?:hanger|hook)\b/,
+    /\b(?:hanger|hook)\s+(?:that\s+was\s+)?provided\b/,
+  ], scoped)) {
+    return false;
+  }
+  return firstRegex(missingPatterns, scoped);
+}
+
+function isPositiveTractionContext(text: string): boolean {
+  return firstRegex([
+    /\b(?:good|great|decent|excellent|solid)\s+(?:footing|traction|grip)\b/,
+    /\bprovide(?:s|d)?\s+(?:good|great|decent|excellent|solid)\s+(?:footing|traction|grip)\b/,
+    /\b(?:traction|grip)\b[^.!?\n]{0,80}\b(?:good|great|decent|excellent|solid)\b/,
+  ], text);
+}
+
+function isValidPoorTractionIssueEvidence(content: string, evidence: string): boolean {
+  const basis = evidence.trim();
+  if (!basis) return false;
+  const scoped = `${basis}\n${sentenceForEvidence(content, basis)}`;
+  if (isPositiveTractionContext(scoped)) return false;
+  return firstRegex([
+    /\b(?:poor|bad|weak|low|no|lack(?:ing)?)\s+(?:footing|traction|grip)\b/,
+    /\b(?:footing|traction|grip)\b[^.!?\n]{0,80}\b(?:poor|bad|weak|low|lacking|not\s+good|terrible)\b/,
+    /\b(?:soles?|boots?)\b[^.!?\n]{0,100}\b(?:slipped|slip|slides?|slippery)\b/,
+    /\b(?:slipped|slip|slides?)\b[^.!?\n]{0,100}\b(?:soles?|boots?|rocks?|mud|river)\b/,
+    /\b(?:slick|slippery)\s+rocks\b[^.!?\n]{0,100}\b(?:fell|slipped|dangerous|no\s+grip|poor\s+traction)\b/,
+  ], scoped);
+}
+
+function isNegatedBreaksEasilyContext(text: string): boolean {
+  return firstRegex([
+    /\b(?:don|do|does|did)(?:n['’]?t| not)\s+tear\s+easily\b/,
+    /\b(?:don|do|does|did)(?:n['’]?t| not)\s+(?:rip|tear|break)\b/,
+    /\bno\s+(?:rips?|tears?|holes?|punctures?)\b/,
+    /\bno\s+rips?\s+or\s+tears?\b/,
+    /\bwithout\s+(?:any\s+)?(?:rips?|tears?|holes?|punctures?)\b/,
+  ], text);
+}
+
+function isValidBreaksEasilyIssueEvidence(content: string, evidence: string): boolean {
+  const basis = evidence.trim();
+  if (!basis) return false;
+  const scoped = `${basis}\n${sentenceForEvidence(content, basis)}`;
+  if (isNegatedBreaksEasilyContext(scoped)) return false;
+  return firstRegex([
+    /\bno\s+durability\b/,
+    /\bgot\s+a\s+hole\b/,
+    /\bholes?\s+in\s+(?:them|it|the\s+material|the\s+waders?|boots?)\b/,
+    /\b(?:easily\s+)?(?:rip|ripped|tear|tears|tore|torn)\b/,
+    /\bpunctured\s+very\s+easily\b/,
+    /\balready\s+leaking\s+after\s+only\s+a\s+few\s+uses\b/,
+    /\b(?:stitching|threads?|seams?)\b[^.!?\n]{0,100}\b(?:broke|came\s+loose|loose|failed|split)\b/,
+    /\bbroke\b/,
+    /\bdestroyed\b/,
+  ], scoped);
+}
+
+function isUserOrderingErrorSizeContext(content: string, evidence: string): boolean {
+  const scoped = `${evidence}\n${windowForEvidence(content, evidence)}`;
+  return firstRegex([
+    /\bI\s+(?:ordered|bought|purchased)\s+the\s+wrong\s+size\b/,
+    /\bI\s+made\s+that\s+mistake\b/,
+    /\bmy\s+mistake\b[^.!?\n]{0,80}\b(?:size|sizing)\b/,
+  ], scoped);
+}
+
+function hasLaterNegativeUpdate(content: string, evidence: string): boolean {
+  const lower = content.toLowerCase();
+  const evidenceIndex = evidence ? lower.indexOf(evidence.toLowerCase()) : 0;
+  const updateIndex = lower.indexOf("update", Math.max(evidenceIndex, 0));
+  if (updateIndex < 0) return false;
+  const tail = lower.slice(updateIndex);
+  return firstRegex([
+    /\bterrible\b/,
+    /\bhorrible\b/,
+    /\buncomfortable\b/,
+    /\bsuper\s+tight\b/,
+    /\bdo\s+not\s+recommend\b/,
+    /\breturn\s+process\b/,
+    /\bstarted\s+the\s+return\b/,
+  ], tail);
+}
+
 function isWadersLabelContextAllowed(
   type: CustomerLabelType,
   canonicalLabelKey: string,
@@ -220,6 +339,28 @@ function isWadersLabelContextAllowed(
   if (!isWadersContext(subCategory)) return true;
 
   if (type === "highlight" && canonicalLabelKey === "not_used_yet") {
+    return false;
+  }
+  if (type === "issue" && canonicalLabelKey === "pocket_not_waterproof") {
+    return isValidPocketNotWaterproofIssueEvidence(content, evidence);
+  }
+  if (type === "issue" && canonicalLabelKey === "missing_wader_hanger") {
+    return isValidMissingWaderHangerIssueEvidence(content, evidence);
+  }
+  if (type === "issue" && canonicalLabelKey === "poor_traction") {
+    return isValidPoorTractionIssueEvidence(content, evidence);
+  }
+  if (type === "issue" && canonicalLabelKey === "breaks_easily") {
+    return isValidBreaksEasilyIssueEvidence(content, evidence);
+  }
+  if (type === "issue" && canonicalLabelKey === "size_fit_problem") {
+    return !isUserOrderingErrorSizeContext(content, evidence);
+  }
+  if (
+    type === "highlight" &&
+    (canonicalLabelKey === "fits_as_expected" || canonicalLabelKey === "comfortable_to_wear") &&
+    hasLaterNegativeUpdate(content, evidence)
+  ) {
     return false;
   }
   if (type === "highlight" && canonicalLabelKey === "good_material_quality") {

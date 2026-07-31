@@ -132,10 +132,21 @@ def _join_customer_label_field(
     display_only: bool = True,
 ) -> str:
     iterator = iter_specific_issue_occurrences if label_type == "issue" else iter_customer_highlight_occurrences
+    canonical_field = "canonical_issue_key" if label_type == "issue" else "canonical_highlight_key"
     values = []
+    seen_occurrences: set[str] = set()
     for occurrence in iterator(comment, locale="zh"):
         if display_only and not _is_export_frontstage_occurrence(occurrence):
             continue
+        if display_only:
+            dedupe_key = str(
+                occurrence.get(canonical_field) or occurrence.get("canonical_label_key") or ""
+            ).strip()
+            if not dedupe_key:
+                dedupe_key = str(occurrence.get("evidence_span") or occurrence.get(field) or "").strip()
+            if dedupe_key in seen_occurrences:
+                continue
+            seen_occurrences.add(dedupe_key)
         if field in {
             "verified_evidence",
             "cluster_propagated",

@@ -30,6 +30,7 @@ import {
   rowReviewCount,
   rowUsesLegacyStats,
   type CustomerLabelEvidence,
+  type CustomerLabelOccurrence,
 } from "@/lib/customer-labels";
 import {
   Table,
@@ -100,6 +101,25 @@ function reviewBody(comment: Record<string, unknown>): string {
   return rv(comment.content || comment.body || comment.comment, "");
 }
 
+function customerLabelOccurrencesForExport(
+  comment: Record<string, unknown>,
+  type: "issue" | "highlight",
+  locale: string,
+  displayOnly = true,
+): CustomerLabelOccurrence[] {
+  const occurrences = customerLabelOccurrences(comment, type, locale)
+    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence));
+  if (!displayOnly) return occurrences;
+
+  const seen = new Set<string>();
+  return occurrences.filter((occurrence) => {
+    const key = occurrence.canonicalLabelKey || occurrence.evidenceSpan || occurrence.label;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function joinCustomerLabelField(
   comment: Record<string, unknown>,
   type: "issue" | "highlight",
@@ -107,8 +127,7 @@ function joinCustomerLabelField(
   locale: string,
   displayOnly = true,
 ): string {
-  return customerLabelOccurrences(comment, type, locale)
-    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence))
+  return customerLabelOccurrencesForExport(comment, type, locale, displayOnly)
     .map((occurrence) => {
       if (field === "label") return occurrence.label;
       if (field === "canonical_label_key") return occurrence.canonicalLabelKey;
@@ -127,8 +146,7 @@ function joinCustomerLabelEvidenceVerified(
   locale: string,
   displayOnly = true,
 ): string {
-  return customerLabelOccurrences(comment, type, locale)
-    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence))
+  return customerLabelOccurrencesForExport(comment, type, locale, displayOnly)
     .map((occurrence) => (occurrence.evidenceVerified ? "true" : "false"))
     .join(", ");
 }
@@ -139,8 +157,7 @@ function joinCustomerLabelClusterPropagated(
   locale: string,
   displayOnly = true,
 ): string {
-  return customerLabelOccurrences(comment, type, locale)
-    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence))
+  return customerLabelOccurrencesForExport(comment, type, locale, displayOnly)
     .map((occurrence) => (occurrence.clusterPropagated ? "true" : "false"))
     .join(", ");
 }
@@ -151,8 +168,7 @@ function joinCustomerLabelLegacyFallback(
   locale: string,
   displayOnly = true,
 ): string {
-  return customerLabelOccurrences(comment, type, locale)
-    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence))
+  return customerLabelOccurrencesForExport(comment, type, locale, displayOnly)
     .map((occurrence) => (occurrence.legacyFallback ? "true" : "false"))
     .join(", ");
 }
@@ -163,8 +179,7 @@ function joinCustomerLabelSourceReviewAllowed(
   locale: string,
   displayOnly = true,
 ): string {
-  return customerLabelOccurrences(comment, type, locale)
-    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence))
+  return customerLabelOccurrencesForExport(comment, type, locale, displayOnly)
     .map((occurrence) => (isVerifiedSourceReviewOccurrence(occurrence) ? "true" : "false"))
     .join(", ");
 }
@@ -175,8 +190,7 @@ function joinCustomerLabelAspectAllowed(
   locale: string,
   displayOnly = true,
 ): string {
-  return customerLabelOccurrences(comment, type, locale)
-    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence))
+  return customerLabelOccurrencesForExport(comment, type, locale, displayOnly)
     .map((occurrence) => (occurrence.aspectAllowed ? "true" : "false"))
     .join(", ");
 }
@@ -187,8 +201,7 @@ function joinCustomerLabelContextAllowed(
   locale: string,
   displayOnly = true,
 ): string {
-  return customerLabelOccurrences(comment, type, locale)
-    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence))
+  return customerLabelOccurrencesForExport(comment, type, locale, displayOnly)
     .map((occurrence) => (occurrence.contextAllowed ? "true" : "false"))
     .join(", ");
 }
@@ -199,8 +212,7 @@ function joinCustomerLabelDimension(
   locale: string,
   displayOnly = true,
 ): string {
-  return customerLabelOccurrences(comment, type, locale)
-    .filter((occurrence) => !displayOnly || isVerifiedSourceReviewOccurrence(occurrence))
+  return customerLabelOccurrencesForExport(comment, type, locale, displayOnly)
     .map((occurrence) => occurrence.dimension || (occurrence.aspectKey ? aspectLabel(occurrence.aspectKey, locale) : ""))
     .filter(Boolean)
     .join(", ");
