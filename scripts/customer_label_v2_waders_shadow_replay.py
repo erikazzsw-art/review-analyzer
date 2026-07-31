@@ -36,7 +36,15 @@ from backend_api.app.services.customer_label_v2_shadow import (
 from backend_api.app.services.specific_issue import (
     CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
     CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+    build_customer_highlight_rows,
+    build_specific_issue_rows,
+    customer_highlight_tags_for_comment,
+    customer_issue_tags_for_comment,
+    decorate_comment_customer_labels,
+    iter_customer_highlight_occurrences,
+    iter_specific_issue_occurrences,
 )
+from review_analyzer.exporter import _build_comments_data
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES_DIR = ROOT / "backend_api" / "tests" / "fixtures"
@@ -55,10 +63,11 @@ POSTDEPLOY_AUDIT = (
     / "session122-readonly"
     / "session122-postdeploy-readonly-acceptance-audit.json"
 )
-STEP6_SCOPE = "5.9.9 Step 6 v2 frontstage feature flag read-path local contract"
-ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step6-v2-frontstage-feature-flag-read-path"
+STEP7_SCOPE = "5.9.9 Step 7 v2 frontstage read-path actual consumer integration"
+ARTIFACT_DIR = ROOT / "tmp" / "5.9.9-step7-v2-frontstage-read-path-integration"
 ARTIFACT_PATH = ARTIFACT_DIR / "waders-shadow-summary.json"
 FRONTSTAGE_READ_PATH_ARTIFACT_PATH = ARTIFACT_DIR / "frontstage-read-path-contract.json"
+FRONTSTAGE_CONSUMER_INTEGRATION_ARTIFACT_PATH = ARTIFACT_DIR / "frontstage-consumer-integration.json"
 CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool.json"
 CANDIDATE_POOL_CSV_PATH = ARTIFACT_DIR / "candidate-pool.csv"
 REVIEWED_CANDIDATE_POOL_ARTIFACT_PATH = ARTIFACT_DIR / "candidate-pool-reviewed.json"
@@ -461,10 +470,219 @@ def _step6_frontstage_read_path_artifact() -> dict[str, Any]:
             )
         if any(model["frontstage_consumers"][consumer]["input_layer"] != "display_occurrences" for consumer in model["frontstage_consumers"]):
             violations.append({"case": name, "error": "consumer_not_display_occurrences"})
-    artifact = build_frontstage_read_path_artifact(read_models, scope=STEP6_SCOPE)
+    artifact = build_frontstage_read_path_artifact(read_models, scope=STEP7_SCOPE)
     artifact["case_expectation_violations"] = violations
     artifact["status"] = "PASS" if artifact["status"] == "PASS" and not violations else "REVIEW_NEEDED"
     return artifact
+
+
+def _decorate_with_stored_v2_shadow(
+    review: dict[str, Any],
+    *,
+    candidates: list[dict[str, Any]],
+    flag: CustomerLabelV2FrontstageFlag,
+) -> dict[str, Any]:
+    return decorate_comment_customer_labels(
+        {
+            **review,
+            "customer_label_v2_shadow_result": run_customer_label_v2_shadow(
+                review,
+                label_candidates=candidates,
+            ),
+        },
+        locale="en",
+        v2_frontstage_flag=flag,
+    )
+
+
+def _consumer_snapshot(comments: list[dict[str, Any]]) -> dict[str, Any]:
+    issue_rows = build_specific_issue_rows(comments, locale="en", limit=20)
+    highlight_rows = build_customer_highlight_rows(comments, locale="en", limit=20)
+    _, raw_rows = _build_comments_data(comments, include_specific_issue=True)
+    return {
+        "results_top10": {
+            "issue_keys": [str(row.get("canonical_issue_key") or "") for row in issue_rows],
+            "highlight_keys": [str(row.get("canonical_highlight_key") or "") for row in highlight_rows],
+        },
+        "single_review_detail": {
+            "issue_tags": [customer_issue_tags_for_comment(comment, locale="en") for comment in comments],
+            "highlight_tags": [customer_highlight_tags_for_comment(comment, locale="en") for comment in comments],
+        },
+        "raw_review_export": {
+            "issue_labels": [str(row[11]) for row in raw_rows],
+            "issue_evidence": [str(row[12]) for row in raw_rows],
+            "highlight_labels": [str(row[13]) for row in raw_rows],
+            "highlight_evidence": [str(row[14]) for row in raw_rows],
+        },
+        "single_tag_download": {
+            "issue_keys": [
+                str(occurrence.get("canonical_issue_key") or "")
+                for comment in comments
+                for occurrence in iter_specific_issue_occurrences(comment, locale="en")
+            ],
+            "highlight_keys": [
+                str(occurrence.get("canonical_highlight_key") or "")
+                for comment in comments
+                for occurrence in iter_customer_highlight_occurrences(comment, locale="en")
+            ],
+        },
+    }
+
+
+def _step7_frontstage_consumer_integration_artifact() -> dict[str, Any]:
+    waders_flag = CustomerLabelV2FrontstageFlag(
+        enabled=True,
+        sub_categories=("outdoor/waders",),
+        shadow_fixture_gate_passed=True,
+        allow_runtime_shadow=False,
+    )
+    waders_candidates = [
+        _candidate(
+            label_type="issue",
+            canonical="water_leaks_through",
+            evidence="do not keep you dry",
+            aspect_key="waterproof",
+        )
+    ]
+    baseline = decorate_comment_customer_labels(
+        _step6_waders_v1_review(),
+        locale="en",
+        v2_frontstage_flag=CustomerLabelV2FrontstageFlag(),
+    )
+    flag_off = _decorate_with_stored_v2_shadow(
+        _step6_waders_v1_review(),
+        candidates=waders_candidates,
+        flag=CustomerLabelV2FrontstageFlag(),
+    )
+    flag_on = _decorate_with_stored_v2_shadow(
+        _step6_waders_v1_review(),
+        candidates=waders_candidates,
+        flag=waders_flag,
+    )
+    l1_blocked = _decorate_with_stored_v2_shadow(
+        _step6_review(
+            review_id="step7-consumer-l1",
+            content="The bib quality is poor.",
+            category="baby",
+            sub_category="Baby Bibs",
+        ),
+        candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="quality_problem",
+                evidence="quality is poor",
+                aspect_key="build_quality",
+            )
+        ],
+        flag=CustomerLabelV2FrontstageFlag(
+            enabled=True,
+            categories=("baby",),
+            shadow_fixture_gate_passed=True,
+            allow_runtime_shadow=False,
+        ),
+    )
+    unknown = _decorate_with_stored_v2_shadow(
+        _step6_review(
+            review_id="step7-consumer-unknown",
+            content="The boot seam leaked on the first trip.",
+            category="outdoor",
+            sub_category="waders",
+        ),
+        candidates=[
+            _candidate(
+                label_type="issue",
+                canonical="candidate:boot_seam_leak",
+                raw_label="Boot seam leak",
+                evidence="boot seam leaked",
+                aspect_key="seam_integrity",
+            )
+        ],
+        flag=waders_flag,
+    )
+    rollback = _decorate_with_stored_v2_shadow(
+        _step6_waders_v1_review(),
+        candidates=waders_candidates,
+        flag=CustomerLabelV2FrontstageFlag(
+            enabled=True,
+            sub_categories=("outdoor/waders",),
+            shadow_fixture_gate_passed=True,
+            rollback_session_ids=("step6-readpath-session",),
+            allow_runtime_shadow=False,
+        ),
+    )
+
+    cases = {
+        "flag_off_v1_current": {
+            "snapshot": _consumer_snapshot([flag_off]),
+            "expected_snapshot": _consumer_snapshot([baseline]),
+            "read_path": READ_PATH_V1_CURRENT,
+        },
+        "flag_on_l3_waders_v2_shadow": {
+            "snapshot": _consumer_snapshot([flag_on]),
+            "expected_issue_keys": ["water_leaks_through"],
+            "read_path": READ_PATH_V2_SHADOW,
+        },
+        "l1_maturity_blocked_v1_empty": {
+            "snapshot": _consumer_snapshot([l1_blocked]),
+            "expected_issue_keys": [],
+            "read_path": READ_PATH_V1_CURRENT,
+        },
+        "unknown_label_v2_empty": {
+            "snapshot": _consumer_snapshot([unknown]),
+            "expected_issue_keys": [],
+            "read_path": READ_PATH_V2_SHADOW,
+        },
+        "rollback_v1_current": {
+            "snapshot": _consumer_snapshot([rollback]),
+            "expected_snapshot": _consumer_snapshot([baseline]),
+            "read_path": READ_PATH_V1_CURRENT,
+        },
+    }
+
+    violations: list[dict[str, Any]] = []
+    for name, case in cases.items():
+        snapshot = case["snapshot"]
+        expected_snapshot = case.get("expected_snapshot")
+        if expected_snapshot is not None and snapshot != expected_snapshot:
+            violations.append({"case": name, "error": "v1_current_snapshot_mismatch"})
+        expected_issue_keys = case.get("expected_issue_keys")
+        if expected_issue_keys is not None:
+            for consumer, payload in snapshot.items():
+                issue_keys = payload.get("issue_keys") if isinstance(payload, dict) else None
+                if issue_keys is not None and issue_keys != expected_issue_keys:
+                    violations.append(
+                        {
+                            "case": name,
+                            "consumer": consumer,
+                            "error": "issue_key_mismatch",
+                            "expected": expected_issue_keys,
+                            "actual": issue_keys,
+                        }
+                    )
+        if name == "flag_on_l3_waders_v2_shadow":
+            if "zipper_fails" in snapshot["single_tag_download"]["issue_keys"]:
+                violations.append({"case": name, "error": "v1_key_leaked_into_v2_single_tag_download"})
+        if name == "unknown_label_v2_empty":
+            if snapshot["single_tag_download"]["issue_keys"]:
+                violations.append({"case": name, "error": "unknown_label_entered_single_tag_download"})
+
+    return {
+        "schema_version": "customer-label-v2-frontstage-consumer-integration.1",
+        "scope": STEP7_SCOPE,
+        "status": "PASS" if not violations else "REVIEW_NEEDED",
+        "case_count": len(cases),
+        "violations": violations,
+        "cases": cases,
+        "safety": {
+            "production_upload": False,
+            "production_write_path": False,
+            "production_db_write": False,
+            "db_write": False,
+            "credit_consumed": False,
+            "llm_called": False,
+            "frontstage_replaced": False,
+        },
+    }
 
 
 def _human_351_400_candidate_shadow_results() -> list[dict[str, Any]]:
@@ -955,9 +1173,14 @@ def main() -> None:
         human_351_400_candidate_shadow_results = _human_351_400_candidate_shadow_results()
         maturity_rollout, maturity_rollout_shadow_results = _maturity_rollout_shadow_results()
         frontstage_read_path_artifact = _step6_frontstage_read_path_artifact()
+        frontstage_consumer_integration_artifact = _step7_frontstage_consumer_integration_artifact()
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
         FRONTSTAGE_READ_PATH_ARTIFACT_PATH.write_text(
             json.dumps(frontstage_read_path_artifact, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        FRONTSTAGE_CONSUMER_INTEGRATION_ARTIFACT_PATH.write_text(
+            json.dumps(frontstage_consumer_integration_artifact, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         datasets = [session120, session121, session122, human_351_400]
@@ -976,7 +1199,7 @@ def main() -> None:
         human_gold_payload = _load_json(HUMAN_351_400_GOLD)
         candidate_pool_artifact = build_candidate_pool_artifact(
             edge_case_shadow_results + human_351_400_candidate_shadow_results + maturity_rollout_shadow_results,
-            scope=STEP6_SCOPE,
+            scope=STEP7_SCOPE,
             source_artifacts=[
                 str(SESSION120_GOLD.relative_to(ROOT)),
                 str(SESSION121_FIXTURE.relative_to(ROOT)),
@@ -998,7 +1221,7 @@ def main() -> None:
         reviewed_candidate_pool_artifact = build_reviewed_candidate_pool_artifact(
             candidate_pool_artifact,
             review_actions,
-            scope=STEP6_SCOPE,
+            scope=STEP7_SCOPE,
             source_artifacts=[str(candidate_pool_json_path.relative_to(ROOT))],
         )
         reviewed_candidate_pool_json_path = write_reviewed_candidate_pool_json_artifact(
@@ -1017,11 +1240,12 @@ def main() -> None:
                     and edge_cases["status"] == "PASS"
                     and maturity_rollout["status"] == "PASS"
                     and frontstage_read_path_artifact["status"] == "PASS"
+                    and frontstage_consumer_integration_artifact["status"] == "PASS"
                     and reviewed_candidate_pool_artifact["status"] == "PASS"
                 )
                 else "REVIEW_NEEDED"
             ),
-            "scope": STEP6_SCOPE,
+            "scope": STEP7_SCOPE,
             "llm_called": False,
             "production_upload": False,
             "production_write_path": False,
@@ -1050,6 +1274,13 @@ def main() -> None:
                 "violations": frontstage_read_path_artifact["violations"],
                 "case_expectation_violations": frontstage_read_path_artifact["case_expectation_violations"],
                 "artifact_json": str(FRONTSTAGE_READ_PATH_ARTIFACT_PATH.relative_to(ROOT)),
+            },
+            "frontstage_consumer_integration": {
+                "schema_version": frontstage_consumer_integration_artifact["schema_version"],
+                "status": frontstage_consumer_integration_artifact["status"],
+                "case_count": frontstage_consumer_integration_artifact["case_count"],
+                "violations": frontstage_consumer_integration_artifact["violations"],
+                "artifact_json": str(FRONTSTAGE_CONSUMER_INTEGRATION_ARTIFACT_PATH.relative_to(ROOT)),
             },
             "candidate_pool_mvp": {
                 "schema_version": candidate_pool_artifact["schema_version"],
@@ -1093,6 +1324,7 @@ def main() -> None:
             "artifact_files_written": [
                 str(ARTIFACT_PATH.relative_to(ROOT)),
                 str(FRONTSTAGE_READ_PATH_ARTIFACT_PATH.relative_to(ROOT)),
+                str(FRONTSTAGE_CONSUMER_INTEGRATION_ARTIFACT_PATH.relative_to(ROOT)),
                 str(candidate_pool_json_path.relative_to(ROOT)),
                 str(candidate_pool_csv_path.relative_to(ROOT)),
                 str(reviewed_candidate_pool_json_path.relative_to(ROOT)),

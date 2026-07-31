@@ -9,11 +9,13 @@ from datetime import datetime
 import xlsxwriter
 
 from backend_api.app.services.category_grouper import CATEGORY_ZH_LABELS
+from backend_api.app.services.customer_label_v2_frontstage import customer_label_v2_frontstage_flag_from_env
 from backend_api.app.services.specific_issue import (
     build_customer_highlight_rows,
     build_specific_issue_rows,
     customer_highlight_tags_for_comment,
     customer_issue_tags_for_comment,
+    decorate_comment_customer_labels,
     iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
 )
@@ -249,6 +251,14 @@ def _build_comments_data(
     return headers, rows
 
 
+def _decorate_comments_for_export(comments: list[dict]) -> list[dict]:
+    flag = customer_label_v2_frontstage_flag_from_env()
+    return [
+        decorate_comment_customer_labels(comment, locale="zh", v2_frontstage_flag=flag)
+        for comment in comments
+    ]
+
+
 def _build_label_audit_data(comments: list[dict]) -> tuple[list[str], list[list[str]]]:
     """构建独立审计 Sheet，避免内部字段混入用户默认 Raw Reviews."""
     headers = [
@@ -443,7 +453,7 @@ def export_to_xlsx(
     if not session:
         raise ValueError("未找到该分析记录")
 
-    comments = get_comments(user_id, session_id=session_id)
+    comments = _decorate_comments_for_export(get_comments(user_id, session_id=session_id))
     filename = _build_filename(session, "xlsx")
 
     output = io.BytesIO()
@@ -588,7 +598,7 @@ def export_to_csv(
     if not session:
         raise ValueError("未找到该分析记录")
 
-    comments = get_comments(user_id, session_id=session_id)
+    comments = _decorate_comments_for_export(get_comments(user_id, session_id=session_id))
     filename = _build_filename(session, "csv")
 
     headers, rows = _build_comments_data(comments, include_specific_issue=True)

@@ -8,6 +8,27 @@
 
 ---
 
+### 2026-07-30 标签本体 v3 执行策略：先 v3-lite 封顶，完整 v3 条件触发
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | strategy-decision | 标签本体 v3 不作为当前 5.9.9 的立即全量重构项。短期优先完成 5.9.9 frontstage read-path 生产化准备；v3 只先做 `v3-lite`，用于封顶规则债务、对齐未来 `customer_insights` 结构和 candidate pool/catalog backlog。 | 决策：完整 v3 按准备度触发，不按固定日期启动；最早在 5.9.9 灰度稳定 + v3-lite 跑过真实数据 + candidate pool 有稳定积累后，从 `outdoor/waders` L3 开始。 |
+| 2026-07-30 | workload-model | 完整 v3 的目标不是让每个新 sub_category 继续消耗 `2-3` 天工程，而是把新增类目的常态成本降到配置、抽检和审核。轻接入/L1-L2 目标 `0.5-1` 天；复用已有标签的小类目 `1-1.5` 天；需要 L3 精细标签的小类目 `1.5-3` 天，其主要成本应是 gold 复核，不是 Python 规则工程。 | 若完整 v3 后新增普通 sub_category 仍需 `2-3` 天工程，说明 v3 没有真正减负，只是把规则从代码搬到配置。 |
+| 2026-07-30 | debt-control | 立即停止把“每个新增标签都优先写进 `specific_issue.py`”作为默认策略；`specific_issue.py` 后续只允许 P0 级安全修补。新标签、边界不清标签、非 P0 recall gap 优先进入 candidate pool / catalog backlog；每次 P0 修补同步记录为未来 catalog rule / anti-example。 | 目标：避免等待完整 v3 期间规则继续失控；晚迁移不等于放任膨胀。 |
+| 2026-07-30 | v3-value | v3 的收益定位为长期减负：统一 `issue_tag` / `highlight_tag` / `customer_label` 为 `customer_insights`；把标签定义、同义词、反例、成熟度和 owner/version 从散落代码迁入可治理 catalog；复用 5.9.9 的 verifier、candidate pool、maturity gate 和 feature flag，不推翻已有安全边界。 | 短期完整 v3 会增加负担；只有 shadow-only、兼容投影、逐步 catalog 化时，才是在给系统长期减负。 |
+
+---
+
+### 2026-07-30 5.9.9 Customer Label System v2 Step 7：v2 frontstage read-path actual consumer integration
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-30 | actual-consumer-integration | 将 Step 6 read-path contract 接入实际 frontstage 读路径：Results page Top10、single review detail、raw review export、single-tag download 均优先消费 selected `customer_label_v2_frontstage_read_model.frontstage_occurrences`；默认无 selected v2 model 时继续 v1/current。新增 default-off env flag bridge，env runtime shadow 默认 `False`，支持读取本地/测试环境已存的 `customer_label_v2_shadow_result`。 | `PASS`：focused integration tests 覆盖 flag off 四路径保持 v1/current、flag on + L3 waders 四路径消费 verified v2 display、L0/L1/L2 maturity blocked、unknown/new label、rollback；无 production upload / reanalysis / DB write / credit / 真实 LLM。 |
+| 2026-07-30 | frontend-parser-alignment | 前端 `customerLabelOccurrences()` 优先解析 selected v2 read model，raw review XLSX、单评标签和 single-tag download 共享同一 parser；未命中 selected v2 时保持旧 `customer_label_occurrences` / aspect / legacy tag fallback。 | `PASS`：`npm run typecheck` 通过；前端只做 read-model 兼容，不新增前台开关、不开启生产展示替换。 |
+| 2026-07-30 | step7-replay-artifact | `scripts/customer_label_v2_waders_shadow_replay.py` 输出 Step 7 artifact，并新增 `frontstage-consumer-integration.json`，记录四条实际 consumer snapshot；保留 Step 6 contract case、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；`frontstage-consumer-integration.json` case count `5`、violations `0`；`frontstage-read-path-contract.json` case count `8`、violations `0`；六个重点标签 FP/FN=0。报告：`docs/5.9.9-step7-v2-frontstage-read-path-integration.md`。 |
+
+---
+
 ### 2026-07-30 5.9.9 Customer Label System v2 Step 6：v2 frontstage feature flag / read-path contract
 
 | 日期 | 变更类型 | 描述 | 验证结果 |
@@ -143,7 +164,7 @@
 
 ## 总体进度
 
-> 最后更新：2026-07-27 | 基于代码实际状态 + 文档 checkbox 统计
+> 最后更新：2026-07-30 | 基于代码实际状态 + 文档 checkbox 统计
 
 ### 按模块组
 
@@ -152,7 +173,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 5 category maturity + 10 大类 L1/L2 灰度已 PASS；ABSA 延后为条件触发 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 7 frontstage read-path consumer integration 已 PASS；ABSA 延后为条件触发 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -201,7 +222,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 6 已完成：v2 shadow 到 frontstage 的 feature flag/read-path 本地 contract，默认 off，支持 session/category/sub_category scope、L3 waders 首候选、fixture gate 与 rollback；replay artifact PASS，P0=0 | 继续保持 live frontstage 不替换；后续若 Erika 授权，可把 contract 接到实际 Results/detail/export/single-tag 读路径并配置生产 kill switch/观测。 |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 7 已完成：Step 6 read-path contract 已接入实际 Results Top10、single review detail、raw review export、single-tag download；默认 off，只有显式 flag + scope + fixture gate + L3 waders + selected verified v2 display 才生效；replay artifact PASS，P0=0；标签本体 v3 决策为先做 v3-lite 债务封顶，完整 v3 条件触发。 | 继续保持生产 feature flag 不开启；后续若 Erika 授权，可做生产配置存储、kill switch/观测指标和小流量只读灰度；v3-lite 只做兼容投影、catalog backlog 和规则膨胀封顶，不替换当前前台链路。 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -1302,7 +1323,7 @@ readiness 节奏：
 
 #### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 进行中（Step 5 category maturity + 10 大类 L1/L2 灰度已 PASS；frontstage 仍未替换为 v2 shadow）
+**状态：** 进行中（Step 7 v2 frontstage read-path actual consumer integration 已 PASS；生产 feature flag 仍默认关闭且未开启；标签本体 v3 先做 v3-lite 债务封顶，完整 v3 条件触发）
 
 **调整原因：**
 - 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
@@ -1364,16 +1385,78 @@ readiness 节奏：
   - 未验证细粒度标签只进 audit/candidate，避免用户误以为系统已经高精度支持该类目。
   - 已以当前 taxonomy 的 10 个大类为灰度范围建立 20 条 synthetic fixture，证明 L1/L2 通用/大类标签分流可用，不要求所有 sub_category 达到 L3。
   - frontstage 真实展示路径仍未替换为 v2 shadow；后续切换必须另行 feature flag / 验收。
-- [ ] **Step 6: waders 切换验收与 50 用户前置判断**
-  - 先用 waders shadow 对比证明 v2 不低于 5.9.8 本地 gold；通过后再 feature flag 切换。
-  - 若 v2 召回下降或 FP 上升，回退到 5.9.8 旧链路，保留 v2 继续 shadow。
-- [ ] **Step 7: Vector bad case memory 轻量版（增强项，不阻塞 50 用户）**
+- [x] **Step 6: v2 frontstage feature flag / read-path contract**
+  - 已新增本地 frontstage read-path helper，默认 off，支持 session/category/sub_category/category-sub_category scope、L3-only eligibility、fixture gate 与 rollback。
+  - 四条 consumer（Results Top10、single review detail、raw review export、single-tag download）在 contract 中统一绑定 selected `display_occurrences`；`label_candidates`、`audit_occurrences`、`candidate_pool_items` 永不进入 selected frontstage set。
+  - 当前仍不替换 live frontstage、不写 production DB、不调用真实 LLM、不消耗 credit；后续生产接线必须另行配置 kill switch、观测指标和灰度开关。
+  - 输出 `docs/5.9.9-step6-v2-frontstage-feature-flag-read-path.md` 与 `tmp/5.9.9-step6-v2-frontstage-feature-flag-read-path/frontstage-read-path-contract.json`。
+- [x] **Step 7: v2 frontstage read-path actual consumer integration**
+  - 已把 Step 6 selected read model 接入实际 Results Top10、single review detail、raw review export、single-tag download。
+  - 默认仍走 v1/current；只有显式 flag + scope 命中 + shadow fixture gate PASS + `L3_sub_category` + verified v2 `display_occurrences` 才进入 selected v2。
+  - `label_candidates`、`audit_occurrences`、`candidate_pool_items`、maturity blocked、unknown/new label 仍不进入实际前台 consumer；rollback 立即回 v1/current。
+  - 已提交并推送到 `origin/develop`；生产 feature flag 仍保持关闭，仅保留本地/测试环境可控接线。
+  - 输出 `docs/5.9.9-step7-v2-frontstage-read-path-integration.md` 与 `tmp/5.9.9-step7-v2-frontstage-read-path-integration/frontstage-consumer-integration.json`。
+- [ ] **Step 8: Vector bad case memory 轻量版（增强项，不阻塞 50 用户）**
   - 将已审核 bad case、gold regression、candidate 审核结果向量化，用于检索相似历史错误、候选聚类和审核优先级排序。
   - 明确 vector 结果不能直接决定前台展示；找不到 evidence 或 verifier 冲突时仍降级到 candidate/audit。
+
+**标签本体 v3 执行计划（2026-07-30 决策）：**
+
+**定位：**
+- 完整 v3 不作为 5.9.9 立即全量重构项；当前不改 prompt confidence、不拆 `category/review_intent`、不替换 `specific_issue.py`、不改变前台结果。
+- 近期只做 `v3-lite`，目标是封顶规则债务：让未来迁移变成机械迁移，而不是继续翻更长的 Python 规则。
+- 完整 v3 的价值是长期减负：统一 `issue_tag` / `highlight_tag` / `customer_label` 为 `customer_insights`，把标签定义、同义词、反例、成熟度和 owner/version 从代码迁入可治理 catalog。
+
+**v3-lite（当前可做，预计 `3-5` 个工作日，不改变任何对外输出）：**
+- 新增 `customer_insights` 兼容投影：从当前 verified source-review `display_occurrences` 生成新结构，仅作为 shadow/read model，不写生产 DB，不接前台。
+- 对齐 candidate pool 与未来 catalog backlog 字段：`canonical_label_key`、`label_type`、`aspect_key`、`evidence_candidate`、`downgrade_reasons`、`maturity_level`、`review_status`、`catalog_action`。
+- 从 waders 已验证标签、351-400 needs_new_label、candidate pool reviewed artifact 生成第一版 catalog backlog 草稿；该草稿只用于治理和回归，不作为运行时生成源。
+- 设定规则膨胀封顶原则：`specific_issue.py` 后续只允许 P0 安全修补；新标签、边界不清标签、非 P0 recall gap 优先进入 candidate pool / catalog backlog；每次 P0 修补同步沉淀为 catalog rule 或 anti-example。
+- v3-lite 验收：waders/session120/121/122/351-400 replay 继续 P0=`0`；`customer_insights` 投影覆盖现有 frontstage display occurrences ≥ `98%`；candidate/audit 不进入 frontstage 的 contract 不回退。
+
+**完整 v3 启动条件（不按日期硬启动，按准备度触发）：**
+- 5.9.9 live frontstage read path 已具备可灰度、可回滚、可观测能力，并在真实使用中稳定至少一轮。
+- v3-lite 已跑过真实上传数据，投影覆盖率 ≥ `98%`，没有破坏 waders 六个重点标签 P0 门禁。
+- candidate pool 有真实重复积累，能区分高价值新标签、一次性噪音和需要反例治理的边界样本。
+- 新增标签已经默认进入 catalog backlog，而不是继续优先写入 `specific_issue.py`。
+- 启动评审时间建议：最快 `2026-08` 下旬评估，更稳妥是 `2026-09` 初；首个完整版对象只选 `outdoor/waders` L3，不做多品类同时切换。
+
+**完整 v3 分阶段实施：**
+- Phase 1：waders catalog engine shadow。将 waders 已成熟标签、反例、同义词、maturity gate 迁入 `customer_insight_catalog` 草稿和通用解释器；不替换旧链路，只比较覆盖率、冲突率、FP/FN。
+- Phase 2：waders L3 feature flag 切换。复用 Step 6 read-path contract，只允许 `outdoor/waders` + fixture gate PASS + rollback 可用时选择 v3 `customer_insights`。
+- Phase 3：再处理 aspect confidence、主 aspect 加权、`category/review_intent` 拆分。由于会影响 prompt/schema/cache/回放兼容，这部分必须放在 waders v3 shadow 稳定之后。
+- Phase 4：按 candidate pool ROI 推广高价值 sub_category。每次只推进 1-2 个，不承诺所有 sub_category 都做 L3。
+
+**完整 v3 后新增 sub_category 工作量模型：**
+
+| 新增目标 | 工程量 | 人工/产品复核 | 总工作量 | 默认策略 |
+|----------|--------|---------------|----------|----------|
+| L1 快速接入 / 保守展示 | `0-0.5` 天 | `0.5` 天 | `0.5-1` 天 | 低价值或上传少的小类目默认走 L1 |
+| L2 基础标签展示 / 复用已有标签 | `0.5` 天 | `0.5-1` 天 | `1-1.5` 天 | 大多数普通小类目目标状态 |
+| L3 精细标签 / 小类目深做 | `0.5-1` 天 | `1-2` 天 | `1.5-3` 天 | 仅高价值、客户重点看、上传量足够时启动 |
+| 特殊类目 / 全新语义边界 | `1-2` 天 | `1-2` 天 | `2-4` 天 | 需要新增 aspect/tag/anti-example 边界时才出现 |
+
+**减负判定：**
+- 完整 v3 后，新增普通 sub_category 不应再需要 `2-3` 天工程；如果仍然需要，说明 v3 没有真正减负，只是把规则从 Python 搬到了 YAML。
+- L3 的主要成本应是 gold 样本复核和边界确认，不是继续手写大量规则。
+- 未验证类目默认 L1/L2 保守接入；只有 ROI 明确的类目才进入 L3。
+
+**完整 v3 代码完成后的专项验收流程：**
+- 必须专门做一轮“新增普通 sub_category 接入演练”，不能只靠单元测试、现有 waders replay 或代码 review 宣布完整 v3 完成。
+- 选择一个非 waders、非已深度规则化的普通 sub_category；优先从 `baby`、`pet`、`office` 等 L1/L2 候选中挑选上传量合理、语义边界不过分特殊的小类目。
+- 准备全新评论样本：L1/L2 普通验收使用 `20-30` 条；若要验 L3 精细标签，则使用 `30-50` 条并补人工 gold。
+- 演练期间禁止为了通过验收去 `specific_issue.py` 增加普通类目专属 Python 规则；允许动作仅限 taxonomy 确认、maturity 配置、catalog/backlog 配置、candidate pool 审核和必要的通用 engine bugfix。
+- 上传或本地 replay 后必须检查四条用户可见路径：Results Top10、single review detail、raw review export、single-tag download；四条路径都必须从 v3 `customer_insights` selected display 读取，且旧字段只作为 projection/兼容层。
+- 必须检查 candidate pool：新类目专属、不确定、unknown/new label、低成熟度细粒度标签默认进入 candidate/audit，不得直接进入 frontstage。
+- 必须记录真实工作量和改动类型：工程耗时、人工审核耗时、是否改 Python 业务规则、是否只改 catalog/taxonomy/backlog、是否新增通用 engine bugfix。
+- 若新增普通 sub_category 仍需要 `2-3` 天工程，或需要大量手写 Python 分支/regex，完整 v3 判定为 `NOT COMPLETE`；最多只能标记为“架构迁移完成，减负目标未完成”。
 
 **验收标准：**
 - 前台无 evidence 展示率 `= 0`，cluster propagated 前台展示率 `= 0`。
 - waders gold set 不发生 P0 回退；`water_leaks_through`、`keeps_water_out`、phone case/pocket、旧产品/他牌、未实际使用等边界继续通过。
+- 完整 v3 代码完成后，必须通过新增普通 sub_category 专项验收演练；普通类目接入不得依赖 `specific_issue.py` 专属规则新增。
+- 新增普通 sub_category 工程耗时目标 `≤ 0.5-1` 天，总耗时目标 `≤ 1-1.5` 天；超出时必须复盘是类目确实特殊，还是 v3 没有真正减负。
+- Results Top10、single review detail、raw review export、single-tag download 四条路径都必须读取 v3 selected `customer_insights` display；audit/candidate 不得混入用户前台。
 - 未验证 sub_category 不展示未经确认的细粒度标签；candidate/audit 字段必须能追溯原始 LLM 输出和降级原因。
 - 10 个大类至少完成 L1/L2 灰度抽检；每个大类 10-20 条风险样本中不得出现系统性 P0 错误。
 - 50 用户前可不完成 vector bad case memory，但必须保留 candidate/audit 数据结构，确保后续可接入 bad case retrieval。

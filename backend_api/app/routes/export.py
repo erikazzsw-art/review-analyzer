@@ -9,9 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 
 from backend_api.app.deps import get_current_user
+from backend_api.app.services.customer_label_v2_frontstage import customer_label_v2_frontstage_flag_from_env
 from backend_api.app.services.specific_issue import (
     build_customer_highlight_rows,
     build_specific_issue_rows,
+    decorate_comment_customer_labels,
 )
 from review_analyzer.database import get_comments, get_session_by_id
 from review_analyzer.exporter import export_to_xlsx
@@ -39,6 +41,11 @@ def export_module_xlsx(
     comments = get_comments(user_id, session_id=session_id)
     for c in comments:
         c.pop("embedding", None)
+    v2_frontstage_flag = customer_label_v2_frontstage_flag_from_env()
+    comments = [
+        decorate_comment_customer_labels(c, locale=locale, v2_frontstage_flag=v2_frontstage_flag)
+        for c in comments
+    ]
 
     output = _build_module_xlsx(module, comments, locale)
     try:

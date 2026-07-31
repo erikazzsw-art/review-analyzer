@@ -21,6 +21,10 @@ from backend_api.app.schemas.analysis import (
     AnalysisSessionPayload,
     AnalysisSessionResultsPayload,
 )
+from backend_api.app.services.customer_label_v2_frontstage import (
+    customer_label_v2_frontstage_cache_key,
+    customer_label_v2_frontstage_flag_from_env,
+)
 from backend_api.app.services.locale import get_analysis_locale
 from backend_api.app.services.specific_issue import (
     CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
@@ -60,10 +64,12 @@ def _cache_key(
     start: str,
     end: str,
     comment_ids: tuple[int, ...],
+    frontstage_read_path_key: str,
 ) -> str:
     raw = (
         f"{user_id}|{product_id}|{start}|{end}|{len(comment_ids)}|{hash(comment_ids)}|"
-        f"{CUSTOMER_LABEL_RULESET_VERSION}|{CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION}"
+        f"{CUSTOMER_LABEL_RULESET_VERSION}|{CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION}|"
+        f"{frontstage_read_path_key}"
     )
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
@@ -77,8 +83,9 @@ def _cached_build_insights(
     comments: list[dict[str, Any]],
     context: dict[str, Any],
     locale: str = "en",
+    frontstage_read_path_key: str = "",
 ) -> dict[str, Any]:
-    key = _cache_key(user_id, product_id, start, end, comment_ids)
+    key = _cache_key(user_id, product_id, start, end, comment_ids, frontstage_read_path_key)
     now = time.time()
     cached = _INSIGHTS_CACHE.get(key)
     if cached and now - cached[0] < _INSIGHTS_CACHE_TTL:
@@ -107,10 +114,14 @@ def get_session_results(
         )
 
     locale = get_analysis_locale(request)
+    v2_frontstage_flag = customer_label_v2_frontstage_flag_from_env()
     comments = get_comments(user_id, session_id=session_id)
     for c in comments:
         c.pop("embedding", None)
-    comments = [decorate_comment_customer_labels(c, locale=locale) for c in comments]
+    comments = [
+        decorate_comment_customer_labels(c, locale=locale, v2_frontstage_flag=v2_frontstage_flag)
+        for c in comments
+    ]
     context = _build_results_context(session)
     modules = build_results_insights(
         user_id, comments, context, locale=locale
@@ -153,6 +164,7 @@ def get_aggregated_results(
     )
 
     locale = get_analysis_locale(request)
+    v2_frontstage_flag = customer_label_v2_frontstage_flag_from_env()
     comments = get_comments(
         user_id,
         product_id=product_id,
@@ -164,7 +176,10 @@ def get_aggregated_results(
     )
     for c in comments:
         c.pop("embedding", None)
-    comments = [decorate_comment_customer_labels(c, locale=locale) for c in comments]
+    comments = [
+        decorate_comment_customer_labels(c, locale=locale, v2_frontstage_flag=v2_frontstage_flag)
+        for c in comments
+    ]
 
     time_label = _fmt_time_label(range_label, start_iso, end_iso)
     context = {
@@ -181,6 +196,7 @@ def get_aggregated_results(
         modules_raw = _cached_build_insights(
             user_id, product_id, start_iso or "", end_iso or "", comment_ids, comments, context,
             locale=locale,
+            frontstage_read_path_key=customer_label_v2_frontstage_cache_key(v2_frontstage_flag),
         )
         if modules_raw:
             try:

@@ -3422,7 +3422,101 @@ def _is_frontstage_countable_occurrence(occurrence: dict[str, Any]) -> bool:
     )
 
 
+def _read_model_from_comment(comment: dict[str, Any]) -> dict[str, Any] | None:
+    model = comment.get("customer_label_v2_frontstage_read_model")
+    if isinstance(model, dict):
+        return model
+    aj = coerce_aspects_json(comment.get("aspects_json"))
+    model = aj.get("customer_label_v2_frontstage_read_model") if aj else None
+    return model if isinstance(model, dict) else None
+
+
+def _confidence_label_from_v2(value: Any) -> str:
+    try:
+        confidence = float(value)
+    except (TypeError, ValueError):
+        return _clean_confidence(value, default="high")
+    if confidence >= 0.8:
+        return "high"
+    if confidence >= 0.65:
+        return "medium"
+    return "low"
+
+
+def _selected_customer_label_v2_occurrences(
+    comment: dict[str, Any],
+    *,
+    label_type: str,
+    locale: str,
+) -> list[dict[str, Any]] | None:
+    read_model = _read_model_from_comment(comment)
+    if not read_model or str(read_model.get("read_path") or "") != "v2_shadow":
+        return None
+
+    content = str(comment.get("content") or "").strip()
+    selected: list[dict[str, Any]] = []
+    for occurrence in read_model.get("frontstage_occurrences") or []:
+        if not isinstance(occurrence, dict):
+            continue
+        if str(occurrence.get("source_version") or "") != "v2_shadow":
+            continue
+        if str(occurrence.get("label_type") or "") != label_type:
+            continue
+        canonical = str(occurrence.get("canonical_label_key") or "").strip()
+        if not canonical or str(canonical).startswith("candidate:"):
+            continue
+        aspect_key = str(occurrence.get("aspect_key") or "").strip()
+        dimension_en, dimension_zh = _aspect_dimension_labels({}, aspect_key)
+        label = str(occurrence.get("label") or canonical).strip()
+        display_en = str(occurrence.get("display_label_en") or label or canonical).strip()
+        display_zh = str(occurrence.get("display_label_zh") or display_en or label or canonical).strip()
+        raw_occurrence = {
+            "comment_id": comment.get("id") if comment.get("id") is not None else occurrence.get("review_id"),
+            "type": label_type,
+            "raw_label": label,
+            "canonical_label_key": canonical,
+            "display_label_en": display_en,
+            "display_label_zh": display_zh,
+            "aspect_key": aspect_key,
+            "dimension_en": dimension_en,
+            "dimension_zh": dimension_zh,
+            "sub_category": str(read_model.get("sub_category") or comment.get("sub_category") or ""),
+            "evidence_span": str(occurrence.get("evidence_span") or "").strip(),
+            "evidence_start": occurrence.get("evidence_start"),
+            "evidence_end": occurrence.get("evidence_end"),
+            "confidence": _confidence_label_from_v2(occurrence.get("confidence")),
+            "source": str(occurrence.get("source") or "llm"),
+            "source_detail": "customer_label_v2_frontstage_read_path",
+            "evidence_verified": True,
+            "cluster_propagated": False,
+            "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+            "display_allowed": True,
+            "aspect_allowed": True,
+            "context_allowed": True,
+            "source_review_allowed": True,
+            "legacy_fallback": False,
+        }
+        projected = _project_customer_label_occurrence(
+            raw_occurrence,
+            comment={**comment, "content": content},
+            label_type=label_type,
+            locale=locale,
+            inherited_cluster_propagated=False,
+        )
+        if projected and _is_frontstage_countable_occurrence(projected):
+            projected["source_version"] = "v2_shadow"
+            projected["customer_label_v2_read_path"] = True
+            projected["customer_label_v2_read_path_schema_version"] = str(read_model.get("schema_version") or "")
+            selected.append(projected)
+    return selected
+
+
 def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en") -> list[dict[str, Any]]:
+    selected_v2 = _selected_customer_label_v2_occurrences(comment, label_type="issue", locale=locale)
+    if selected_v2 is not None:
+        return selected_v2
+
     content = str(comment.get("content") or "").strip()
     aj = coerce_aspects_json(comment.get("aspects_json"))
     schema_version = ""
@@ -3735,6 +3829,10 @@ def _legacy_highlight_occurrences(comment: dict[str, Any], locale: str) -> list[
 
 
 def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "en") -> list[dict[str, Any]]:
+    selected_v2 = _selected_customer_label_v2_occurrences(comment, label_type="highlight", locale=locale)
+    if selected_v2 is not None:
+        return selected_v2
+
     content = str(comment.get("content") or "").strip()
     aj = coerce_aspects_json(comment.get("aspects_json"))
     customer_schema_version = ""
@@ -3878,7 +3976,15 @@ def customer_highlight_tags_from_aspects(
     return ",".join(customer_highlight_tags_for_comment(comment, locale=locale)[:limit])
 
 
-def decorate_comment_customer_labels(comment: dict[str, Any], locale: str = "en") -> dict[str, Any]:
+def decorate_comment_customer_labels(
+    comment: dict[str, Any],
+    locale: str = "en",
+    *,
+    v2_frontstage_flag: Any | None = None,
+    v2_shadow_result: dict[str, Any] | None = None,
+    v2_label_candidates: list[dict[str, Any]] | None = None,
+    v2_llm_output: str | dict[str, Any] | list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     decorated = dict(comment)
     aj = coerce_aspects_json(decorated.get("aspects_json"))
     if aj:
@@ -3910,6 +4016,24 @@ def decorate_comment_customer_labels(comment: dict[str, Any], locale: str = "en"
             )
             if enriched:
                 decorated["aspects_json"] = enriched
+    if v2_frontstage_flag is not None:
+        from backend_api.app.services.customer_label_v2_frontstage import (
+            attach_customer_label_v2_frontstage_read_model,
+        )
+
+        if v2_shadow_result is None:
+            stored_shadow_result = decorated.get("customer_label_v2_shadow_result")
+            if not isinstance(stored_shadow_result, dict) and aj:
+                stored_shadow_result = aj.get("customer_label_v2_shadow_result")
+            v2_shadow_result = stored_shadow_result if isinstance(stored_shadow_result, dict) else None
+        decorated = attach_customer_label_v2_frontstage_read_model(
+            decorated,
+            flag=v2_frontstage_flag,
+            shadow_result=v2_shadow_result,
+            label_candidates=v2_label_candidates,
+            llm_output=v2_llm_output,
+            locale=locale,
+        )
     decorated["customer_issue_tags"] = ", ".join(customer_issue_tags_for_comment(decorated, locale=locale))
     decorated["customer_highlight_tags"] = ", ".join(customer_highlight_tags_for_comment(decorated, locale=locale))
     decorated["customer_label_schema_version"] = CUSTOMER_LABEL_SCHEMA_VERSION

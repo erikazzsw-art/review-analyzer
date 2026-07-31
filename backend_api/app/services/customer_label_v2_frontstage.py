@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import copy
+import json
+import os
 import re
 from collections import Counter
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -17,6 +20,7 @@ from backend_api.app.services.specific_issue import (
 )
 
 CUSTOMER_LABEL_V2_FRONTSTAGE_READ_PATH_CONTRACT_VERSION = "customer-label-v2-frontstage-read-path.1"
+CUSTOMER_LABEL_V2_FRONTSTAGE_READ_MODEL_FIELD = "customer_label_v2_frontstage_read_model"
 READ_PATH_V1_CURRENT = "v1_current"
 READ_PATH_V2_SHADOW = "v2_shadow"
 FRONTSTAGE_CONSUMERS = (
@@ -45,6 +49,58 @@ class CustomerLabelV2FrontstageFlag:
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def _truthy_env(value: Any, *, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on", "enabled"}
+
+
+def _env_values(env: Mapping[str, str], name: str) -> tuple[str, ...]:
+    raw = str(env.get(name) or "").strip()
+    if not raw:
+        return ()
+    return tuple(item.strip() for item in raw.split(",") if item.strip())
+
+
+def customer_label_v2_frontstage_flag_from_env(
+    env: Mapping[str, str] | None = None,
+) -> CustomerLabelV2FrontstageFlag:
+    """Build the production-safe read-path flag from environment configuration.
+
+    Every control defaults to off. Runtime shadow execution is also off here so
+    merely enabling a flag cannot synthesize a live replacement without a shadow
+    result or explicit local fixture.
+    """
+    source = env or os.environ
+    return CustomerLabelV2FrontstageFlag(
+        enabled=_truthy_env(source.get("CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED")),
+        session_ids=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_SESSION_IDS"),
+        categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_CATEGORIES"),
+        sub_categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_SUB_CATEGORIES"),
+        category_sub_categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_CATEGORY_SUB_CATEGORIES"),
+        shadow_fixture_gate_passed=_truthy_env(source.get("CUSTOMER_LABEL_V2_FRONTSTAGE_SHADOW_FIXTURE_GATE_PASSED")),
+        enabled_maturity_levels=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED_MATURITY_LEVELS")
+        or (MATURITY_L3_SUB_CATEGORY,),
+        rollback=_truthy_env(source.get("CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK")),
+        rollback_session_ids=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_SESSION_IDS"),
+        rollback_categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_CATEGORIES"),
+        rollback_sub_categories=_env_values(source, "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_SUB_CATEGORIES"),
+        rollback_category_sub_categories=_env_values(
+            source,
+            "CUSTOMER_LABEL_V2_FRONTSTAGE_ROLLBACK_CATEGORY_SUB_CATEGORIES",
+        ),
+        allow_runtime_shadow=_truthy_env(
+            source.get("CUSTOMER_LABEL_V2_FRONTSTAGE_ALLOW_RUNTIME_SHADOW"),
+            default=False,
+        ),
+    )
+
+
+def customer_label_v2_frontstage_cache_key(flag: CustomerLabelV2FrontstageFlag | None = None) -> str:
+    payload = (flag or customer_label_v2_frontstage_flag_from_env()).as_dict()
+    return json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
 
 
 def _normalize_key(value: Any) -> str:
@@ -250,10 +306,14 @@ def _normalize_v1_occurrence(occurrence: dict[str, Any], *, locale: str) -> dict
         "review_id": occurrence.get("comment_id"),
         "label_type": label_type,
         "label": label,
+        "display_label_en": str(occurrence.get("display_label_en") or label or canonical).strip(),
+        "display_label_zh": str(occurrence.get("display_label_zh") or label or canonical).strip(),
         "canonical_label_key": canonical,
         "aspect_key": str(occurrence.get("aspect_key") or "").strip(),
         "dimension": str(occurrence.get("dimension") or "").strip(),
         "evidence_span": str(occurrence.get("evidence_span") or "").strip(),
+        "evidence_start": occurrence.get("evidence_start"),
+        "evidence_end": occurrence.get("evidence_end"),
         "confidence": occurrence.get("issue_confidence")
         if label_type == "issue"
         else occurrence.get("highlight_confidence") or occurrence.get("confidence"),
@@ -275,16 +335,21 @@ def _normalize_v1_occurrence(occurrence: dict[str, Any], *, locale: str) -> dict
 def _normalize_v2_occurrence(occurrence: dict[str, Any], *, locale: str) -> dict[str, Any]:
     label_type = str(occurrence.get("label_type") or "").strip()
     canonical = str(occurrence.get("canonical_label_key") or "").strip()
+    display_en = str(occurrence.get("display_label_en") or "").strip()
+    display_zh = str(occurrence.get("display_label_zh") or "").strip()
     return {
         "source_version": READ_PATH_V2_SHADOW,
         "review_id": occurrence.get("review_id"),
         "label_type": label_type,
-        "label": _label_for_locale(occurrence.get("display_label_en"), occurrence.get("display_label_zh"), locale)
-        or canonical,
+        "label": _label_for_locale(display_en, display_zh, locale) or canonical,
+        "display_label_en": display_en or canonical,
+        "display_label_zh": display_zh or display_en or canonical,
         "canonical_label_key": canonical,
         "aspect_key": str(occurrence.get("aspect_key") or "").strip(),
         "dimension": "",
         "evidence_span": str(occurrence.get("evidence_span") or "").strip(),
+        "evidence_start": occurrence.get("evidence_start"),
+        "evidence_end": occurrence.get("evidence_end"),
         "confidence": occurrence.get("confidence"),
         "source": str(occurrence.get("source") or "llm").strip(),
         "locale": locale,
@@ -450,6 +515,34 @@ def build_customer_label_v2_frontstage_read_model(
     }
 
 
+def attach_customer_label_v2_frontstage_read_model(
+    review: dict[str, Any],
+    *,
+    flag: CustomerLabelV2FrontstageFlag | None = None,
+    shadow_result: dict[str, Any] | None = None,
+    label_candidates: list[dict[str, Any]] | None = None,
+    llm_output: str | dict[str, Any] | list[dict[str, Any]] | None = None,
+    locale: str = "en",
+    include_v1_fallback: bool = False,
+) -> dict[str, Any]:
+    decorated = dict(review)
+    flag = flag or customer_label_v2_frontstage_flag_from_env()
+    if not flag.enabled and not include_v1_fallback:
+        return decorated
+
+    read_model = build_customer_label_v2_frontstage_read_model(
+        decorated,
+        flag=flag,
+        shadow_result=shadow_result,
+        label_candidates=label_candidates,
+        llm_output=llm_output,
+        locale=locale,
+    )
+    if include_v1_fallback or read_model.get("read_path") == READ_PATH_V2_SHADOW:
+        decorated[CUSTOMER_LABEL_V2_FRONTSTAGE_READ_MODEL_FIELD] = read_model
+    return decorated
+
+
 def build_frontstage_read_path_artifact(
     read_models: list[dict[str, Any]],
     *,
@@ -506,6 +599,7 @@ def customer_label_v2_frontstage_contract_summary() -> dict[str, Any]:
         "v2_read_path": READ_PATH_V2_SHADOW,
         "feature_flag": {
             "default_enabled": False,
+            "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
             "controls": [
                 "session_id",
                 "category",
@@ -514,6 +608,7 @@ def customer_label_v2_frontstage_contract_summary() -> dict[str, Any]:
             ],
             "shadow_fixture_gate_required": True,
             "enabled_maturity_levels_default": [MATURITY_L3_SUB_CATEGORY],
+            "env_runtime_shadow_default": False,
             "rollback_controls": [
                 "global",
                 "session_id",

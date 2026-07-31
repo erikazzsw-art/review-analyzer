@@ -333,6 +333,78 @@ function payloadOccurrences(payload: RecordValue | null): RecordValue[] {
     : [];
 }
 
+function customerLabelV2FrontstageReadModel(comment: RecordValue, payload: RecordValue | null): RecordValue | null {
+  const topLevel = comment.customer_label_v2_frontstage_read_model;
+  if (topLevel && typeof topLevel === "object" && !Array.isArray(topLevel)) {
+    return topLevel as RecordValue;
+  }
+  const nested = payload?.customer_label_v2_frontstage_read_model;
+  return nested && typeof nested === "object" && !Array.isArray(nested) ? nested as RecordValue : null;
+}
+
+function customerLabelV2FrontstageOccurrences(
+  comment: RecordValue,
+  type: CustomerLabelType,
+  locale: string,
+  payload: RecordValue | null,
+): CustomerLabelOccurrence[] | null {
+  const readModel = customerLabelV2FrontstageReadModel(comment, payload);
+  if (!readModel || readModel.read_path !== "v2_shadow") return null;
+  const occurrences = Array.isArray(readModel.frontstage_occurrences)
+    ? readModel.frontstage_occurrences.filter((item): item is RecordValue => Boolean(item) && typeof item === "object")
+    : [];
+  const subCategory = String(readModel.sub_category || payload?.sub_category || comment.sub_category || comment.category || "").trim();
+  return occurrences
+    .filter((occurrence) =>
+      occurrence.source_version === "v2_shadow" &&
+      occurrence.label_type === type &&
+      !String(occurrence.canonical_label_key || "").startsWith("candidate:") &&
+      (!Array.isArray(occurrence.downgrade_reasons) || occurrence.downgrade_reasons.length === 0)
+    )
+    .map((occurrence) => {
+      const aspectKey = String(occurrence.aspect_key || "").trim();
+      const label = String(
+        locale.startsWith("zh")
+          ? occurrence.display_label_zh || occurrence.label || occurrence.display_label_en
+          : occurrence.display_label_en || occurrence.label || occurrence.display_label_zh,
+      ).trim();
+      const evidenceSpan = String(occurrence.evidence_span || "").trim();
+      const content = reviewBody(comment);
+      const occurrenceEvidenceVerified = boolValue(occurrence.evidence_verified ?? occurrence.verified_evidence);
+      return {
+        type,
+        label,
+        rawLabel: String(occurrence.raw_label || label).trim(),
+        canonicalLabelKey: String(occurrence.canonical_label_key || "").trim(),
+        aspectKey,
+        dimension: String(occurrence.dimension || (aspectKey ? aspectLabel(aspectKey, locale) : "")).trim(),
+        evidenceSpan,
+        evidenceVerified: occurrenceEvidenceVerified && evidenceVerified(comment, evidenceSpan, false),
+        clusterPropagated: false,
+        confidence: String(occurrence.confidence || "").trim(),
+        source: String(occurrence.source || "customer_label_v2_frontstage_read_path").trim(),
+        subCategory,
+        legacyFallback: false,
+        aspectAllowed: boolValue(occurrence.aspect_allowed ?? true) &&
+          isLabelAspectAllowed(type, String(occurrence.canonical_label_key || "").trim(), aspectKey),
+        contextAllowed: boolValue(occurrence.context_allowed ?? true) &&
+          !(type === "issue" && occurrence.canonical_label_key === "water_leaks_through" &&
+            isBlockedWaterLeakIssueContext(content, evidenceSpan)) &&
+          isWadersLabelContextAllowed(
+            type,
+            String(occurrence.canonical_label_key || "").trim(),
+            content,
+            evidenceSpan,
+            subCategory,
+          ),
+      };
+    })
+    .filter((occurrence) => {
+      if (!occurrence.label || !occurrence.canonicalLabelKey) return false;
+      return isCustomerLabelAllowed(occurrence.label, locale, occurrence.aspectKey, occurrence.dimension);
+    });
+}
+
 export function isCustomerLabelAllowed(
   label: string,
   locale: string,
@@ -477,6 +549,9 @@ export function customerLabelOccurrences(
   locale: string,
 ): CustomerLabelOccurrence[] {
   const payload = parseAspectsPayload(comment);
+  const selectedV2 = customerLabelV2FrontstageOccurrences(comment, type, locale, payload);
+  if (selectedV2 !== null) return selectedV2;
+
   const clusterPropagated = boolValue(payload?.cluster_propagated);
   const subCategory = String(payload?.sub_category || comment.sub_category || comment.category || "").trim();
   const projected = payloadOccurrences(payload)
