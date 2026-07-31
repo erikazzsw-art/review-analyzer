@@ -1,0 +1,4122 @@
+{
+  "schema_version": "customer-label-v2-frontstage-readiness-dry-run-pack.1",
+  "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+  "status": "PASS",
+  "case_count": 10,
+  "observability": {
+    "v1_selected_count": 8,
+    "v2_selected_count": 2,
+    "blocked_by_flag_off": 1,
+    "blocked_by_scope": 1,
+    "blocked_by_fixture_gate": 1,
+    "blocked_by_maturity": 3,
+    "blocked_by_unknown_label": 1,
+    "blocked_by_no_stored_shadow": 1,
+    "rollback_selected_count": 1,
+    "frontstage_occurrence_count": 11
+  },
+  "selected_read_paths": {
+    "v1_current": 8,
+    "v2_shadow": 2
+  },
+  "selected_read_path_preview": [
+    {
+      "case": "flag_off_v1_current",
+      "review_id": "step6-readpath-waders",
+      "session_id": "step6-readpath-session",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "selected_read_path": "v1_current",
+      "fallback_reason": "flag_off",
+      "blocked_reasons": [
+        "blocked_by_flag_off"
+      ],
+      "checks": {
+        "flag_enabled": false,
+        "matched_scope": "none",
+        "scope_matched": false,
+        "shadow_fixture_gate_passed": false,
+        "maturity_level": "L3_sub_category",
+        "maturity_enabled_for_frontstage": true,
+        "stored_shadow_available": true,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 2,
+      "v1_current_occurrence_count": 2,
+      "v2_shadow_occurrence_count": 0
+    },
+    {
+      "case": "scope_miss_v1_current",
+      "review_id": "step6-readpath-waders",
+      "session_id": "step6-readpath-session",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "selected_read_path": "v1_current",
+      "fallback_reason": "scope_not_matched",
+      "blocked_reasons": [
+        "blocked_by_scope"
+      ],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "none",
+        "scope_matched": false,
+        "shadow_fixture_gate_passed": true,
+        "maturity_level": "L3_sub_category",
+        "maturity_enabled_for_frontstage": true,
+        "stored_shadow_available": true,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 2,
+      "v1_current_occurrence_count": 2,
+      "v2_shadow_occurrence_count": 0
+    },
+    {
+      "case": "fixture_gate_fail_v1_current",
+      "review_id": "step6-readpath-waders",
+      "session_id": "step6-readpath-session",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "selected_read_path": "v1_current",
+      "fallback_reason": "shadow_fixture_gate_blocked",
+      "blocked_reasons": [
+        "blocked_by_fixture_gate"
+      ],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "sub_category",
+        "scope_matched": true,
+        "shadow_fixture_gate_passed": false,
+        "maturity_level": "L3_sub_category",
+        "maturity_enabled_for_frontstage": true,
+        "stored_shadow_available": true,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 2,
+      "v1_current_occurrence_count": 2,
+      "v2_shadow_occurrence_count": 0
+    },
+    {
+      "case": "l0_maturity_blocked",
+      "review_id": "step7-5-l0",
+      "session_id": "step6-readpath-session",
+      "category": "toys",
+      "sub_category": "mystery_toy",
+      "selected_read_path": "v1_current",
+      "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+      "blocked_reasons": [
+        "blocked_by_maturity"
+      ],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "category",
+        "scope_matched": true,
+        "shadow_fixture_gate_passed": true,
+        "maturity_level": "L0_unknown",
+        "maturity_enabled_for_frontstage": false,
+        "stored_shadow_available": true,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 0,
+      "v1_current_occurrence_count": 0,
+      "v2_shadow_occurrence_count": 0
+    },
+    {
+      "case": "l1_maturity_blocked",
+      "review_id": "step7-5-l1",
+      "session_id": "step6-readpath-session",
+      "category": "baby",
+      "sub_category": "baby_bibs",
+      "selected_read_path": "v1_current",
+      "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+      "blocked_reasons": [
+        "blocked_by_maturity"
+      ],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "category",
+        "scope_matched": true,
+        "shadow_fixture_gate_passed": true,
+        "maturity_level": "L1_generic",
+        "maturity_enabled_for_frontstage": false,
+        "stored_shadow_available": true,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 0,
+      "v1_current_occurrence_count": 0,
+      "v2_shadow_occurrence_count": 0
+    },
+    {
+      "case": "l2_maturity_blocked",
+      "review_id": "step7-5-l2",
+      "session_id": "step6-readpath-session",
+      "category": "home",
+      "sub_category": "unknown",
+      "selected_read_path": "v1_current",
+      "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+      "blocked_reasons": [
+        "blocked_by_maturity"
+      ],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "category",
+        "scope_matched": true,
+        "shadow_fixture_gate_passed": true,
+        "maturity_level": "L2_category",
+        "maturity_enabled_for_frontstage": false,
+        "stored_shadow_available": true,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 0,
+      "v1_current_occurrence_count": 0,
+      "v2_shadow_occurrence_count": 0
+    },
+    {
+      "case": "l3_waders_stored_shadow_v2",
+      "review_id": "step6-readpath-waders",
+      "session_id": "step6-readpath-session",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "selected_read_path": "v2_shadow",
+      "fallback_reason": "",
+      "blocked_reasons": [],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "sub_category",
+        "scope_matched": true,
+        "shadow_fixture_gate_passed": true,
+        "maturity_level": "L3_sub_category",
+        "maturity_enabled_for_frontstage": true,
+        "stored_shadow_available": true,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "selected_occurrence_count": 1,
+      "v1_current_occurrence_count": 2,
+      "v2_shadow_occurrence_count": 1
+    },
+    {
+      "case": "unknown_label_candidate_pool_only",
+      "review_id": "step7-5-unknown",
+      "session_id": "step6-readpath-session",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "selected_read_path": "v2_shadow",
+      "fallback_reason": "",
+      "blocked_reasons": [
+        "blocked_by_unknown_label"
+      ],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "sub_category",
+        "scope_matched": true,
+        "shadow_fixture_gate_passed": true,
+        "maturity_level": "L3_sub_category",
+        "maturity_enabled_for_frontstage": true,
+        "stored_shadow_available": true,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 0,
+      "v1_current_occurrence_count": 0,
+      "v2_shadow_occurrence_count": 0
+    },
+    {
+      "case": "no_stored_shadow_v1_current",
+      "review_id": "step6-readpath-waders",
+      "session_id": "step6-readpath-session",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "selected_read_path": "v1_current",
+      "fallback_reason": "v2_shadow_missing",
+      "blocked_reasons": [
+        "blocked_by_no_stored_shadow"
+      ],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "sub_category",
+        "scope_matched": true,
+        "shadow_fixture_gate_passed": true,
+        "maturity_level": "L3_sub_category",
+        "maturity_enabled_for_frontstage": true,
+        "stored_shadow_available": false,
+        "rollback_active": false,
+        "rollback_would_select_v1_current": false
+      },
+      "selected_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 2,
+      "v1_current_occurrence_count": 2,
+      "v2_shadow_occurrence_count": 0
+    },
+    {
+      "case": "rollback_v1_current",
+      "review_id": "step6-readpath-waders",
+      "session_id": "step6-readpath-session",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "selected_read_path": "v1_current",
+      "fallback_reason": "rollback_session",
+      "blocked_reasons": [
+        "rollback_selected_count"
+      ],
+      "checks": {
+        "flag_enabled": true,
+        "matched_scope": "rollback_session",
+        "scope_matched": false,
+        "shadow_fixture_gate_passed": true,
+        "maturity_level": "L3_sub_category",
+        "maturity_enabled_for_frontstage": true,
+        "stored_shadow_available": true,
+        "rollback_active": true,
+        "rollback_would_select_v1_current": true
+      },
+      "selected_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v1_current_keys": {
+        "issue": [
+          "zipper_fails",
+          "water_leaks_through"
+        ],
+        "highlight": []
+      },
+      "v2_shadow_keys": {
+        "issue": [],
+        "highlight": []
+      },
+      "selected_occurrence_count": 2,
+      "v1_current_occurrence_count": 2,
+      "v2_shadow_occurrence_count": 0
+    }
+  ],
+  "case_expectation_violations": [],
+  "cases": {
+    "flag_off_v1_current": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": false,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": false,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": true
+      },
+      "effective_feature_flag": {
+        "enabled": false,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": false,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 1,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 1,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 0,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 2
+      },
+      "selected_read_paths": {
+        "v1_current": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "flag_off_v1_current",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "selected_read_path": "v1_current",
+          "fallback_reason": "flag_off",
+          "blocked_reasons": [
+            "blocked_by_flag_off"
+          ],
+          "checks": {
+            "flag_enabled": false,
+            "matched_scope": "none",
+            "scope_matched": false,
+            "shadow_fixture_gate_passed": false,
+            "maturity_level": "L3_sub_category",
+            "maturity_enabled_for_frontstage": true,
+            "stored_shadow_available": true,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 2,
+          "v1_current_occurrence_count": 2,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "read_path": "v1_current",
+          "fallback_reason": "flag_off",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "outdoor",
+            "sub_category": "waders",
+            "category_sub_category": "outdoor/waders",
+            "maturity_level": "L3_sub_category",
+            "v2_requested": false,
+            "matched_scope": "none",
+            "rollback_active": false,
+            "reason": "flag_off"
+          },
+          "feature_flag": {
+            "enabled": false,
+            "session_ids": [],
+            "categories": [],
+            "sub_categories": [],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": false,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 2,
+            "frontstage_occurrences": [
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Zipper Fails",
+                "display_label_en": "Zipper Fails",
+                "display_label_zh": "拉链容易故障",
+                "canonical_label_key": "zipper_fails",
+                "aspect_key": "zipper_quality",
+                "dimension": "Zipper Quality",
+                "evidence_span": "zipper broke",
+                "evidence_start": 4,
+                "evidence_end": 16,
+                "confidence": "high",
+                "source": "step6_v1_fixture",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              },
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Water Leaks Through",
+                "display_label_en": "Water Leaks Through",
+                "display_label_zh": "容易进水",
+                "canonical_label_key": "water_leaks_through",
+                "aspect_key": "waterproof",
+                "dimension": "Waterproofing",
+                "evidence_span": "do not keep you dry",
+                "evidence_start": 34,
+                "evidence_end": 53,
+                "confidence": "high",
+                "source": "current_product_leak_text_rule",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              }
+            ],
+            "keys": {
+              "issue": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": false,
+            "maturity_level": null,
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 0,
+            "candidate_pool_item_count": 0,
+            "downgrade_reasons": [],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Zipper Fails",
+              "display_label_en": "Zipper Fails",
+              "display_label_zh": "拉链容易故障",
+              "canonical_label_key": "zipper_fails",
+              "aspect_key": "zipper_quality",
+              "dimension": "Zipper Quality",
+              "evidence_span": "zipper broke",
+              "evidence_start": 4,
+              "evidence_end": 16,
+              "confidence": "high",
+              "source": "step6_v1_fixture",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            },
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Water Leaks Through",
+              "display_label_en": "Water Leaks Through",
+              "display_label_zh": "容易进水",
+              "canonical_label_key": "water_leaks_through",
+              "aspect_key": "waterproof",
+              "dimension": "Waterproofing",
+              "evidence_span": "do not keep you dry",
+              "evidence_start": 34,
+              "evidence_end": 53,
+              "confidence": "high",
+              "source": "current_product_leak_text_rule",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            }
+          ],
+          "frontstage_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "scope_miss_v1_current": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [
+          "home"
+        ],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [
+          "home"
+        ],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 1,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 1,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 0,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 2
+      },
+      "selected_read_paths": {
+        "v1_current": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "scope_miss_v1_current",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "selected_read_path": "v1_current",
+          "fallback_reason": "scope_not_matched",
+          "blocked_reasons": [
+            "blocked_by_scope"
+          ],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "none",
+            "scope_matched": false,
+            "shadow_fixture_gate_passed": true,
+            "maturity_level": "L3_sub_category",
+            "maturity_enabled_for_frontstage": true,
+            "stored_shadow_available": true,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 2,
+          "v1_current_occurrence_count": 2,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "read_path": "v1_current",
+          "fallback_reason": "scope_not_matched",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "outdoor",
+            "sub_category": "waders",
+            "category_sub_category": "outdoor/waders",
+            "maturity_level": "L3_sub_category",
+            "v2_requested": false,
+            "matched_scope": "none",
+            "rollback_active": false,
+            "reason": "scope_not_matched"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [
+              "home"
+            ],
+            "sub_categories": [],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": true,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 2,
+            "frontstage_occurrences": [
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Zipper Fails",
+                "display_label_en": "Zipper Fails",
+                "display_label_zh": "拉链容易故障",
+                "canonical_label_key": "zipper_fails",
+                "aspect_key": "zipper_quality",
+                "dimension": "Zipper Quality",
+                "evidence_span": "zipper broke",
+                "evidence_start": 4,
+                "evidence_end": 16,
+                "confidence": "high",
+                "source": "step6_v1_fixture",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              },
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Water Leaks Through",
+                "display_label_en": "Water Leaks Through",
+                "display_label_zh": "容易进水",
+                "canonical_label_key": "water_leaks_through",
+                "aspect_key": "waterproof",
+                "dimension": "Waterproofing",
+                "evidence_span": "do not keep you dry",
+                "evidence_start": 34,
+                "evidence_end": 53,
+                "confidence": "high",
+                "source": "current_product_leak_text_rule",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              }
+            ],
+            "keys": {
+              "issue": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": false,
+            "maturity_level": null,
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 0,
+            "candidate_pool_item_count": 0,
+            "downgrade_reasons": [],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Zipper Fails",
+              "display_label_en": "Zipper Fails",
+              "display_label_zh": "拉链容易故障",
+              "canonical_label_key": "zipper_fails",
+              "aspect_key": "zipper_quality",
+              "dimension": "Zipper Quality",
+              "evidence_span": "zipper broke",
+              "evidence_start": 4,
+              "evidence_end": 16,
+              "confidence": "high",
+              "source": "step6_v1_fixture",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            },
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Water Leaks Through",
+              "display_label_en": "Water Leaks Through",
+              "display_label_zh": "容易进水",
+              "canonical_label_key": "water_leaks_through",
+              "aspect_key": "waterproof",
+              "dimension": "Waterproofing",
+              "evidence_span": "do not keep you dry",
+              "evidence_start": 34,
+              "evidence_end": 53,
+              "confidence": "high",
+              "source": "current_product_leak_text_rule",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            }
+          ],
+          "frontstage_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "fixture_gate_fail_v1_current": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": false,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": false,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 1,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 1,
+        "blocked_by_maturity": 0,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 2
+      },
+      "selected_read_paths": {
+        "v1_current": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "fixture_gate_fail_v1_current",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "selected_read_path": "v1_current",
+          "fallback_reason": "shadow_fixture_gate_blocked",
+          "blocked_reasons": [
+            "blocked_by_fixture_gate"
+          ],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "sub_category",
+            "scope_matched": true,
+            "shadow_fixture_gate_passed": false,
+            "maturity_level": "L3_sub_category",
+            "maturity_enabled_for_frontstage": true,
+            "stored_shadow_available": true,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 2,
+          "v1_current_occurrence_count": 2,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "read_path": "v1_current",
+          "fallback_reason": "shadow_fixture_gate_blocked",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "outdoor",
+            "sub_category": "waders",
+            "category_sub_category": "outdoor/waders",
+            "maturity_level": "L3_sub_category",
+            "v2_requested": true,
+            "matched_scope": "sub_category",
+            "rollback_active": false,
+            "reason": "flag_on_sub_category"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [],
+            "sub_categories": [
+              "outdoor/waders"
+            ],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": false,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 2,
+            "frontstage_occurrences": [
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Zipper Fails",
+                "display_label_en": "Zipper Fails",
+                "display_label_zh": "拉链容易故障",
+                "canonical_label_key": "zipper_fails",
+                "aspect_key": "zipper_quality",
+                "dimension": "Zipper Quality",
+                "evidence_span": "zipper broke",
+                "evidence_start": 4,
+                "evidence_end": 16,
+                "confidence": "high",
+                "source": "step6_v1_fixture",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              },
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Water Leaks Through",
+                "display_label_en": "Water Leaks Through",
+                "display_label_zh": "容易进水",
+                "canonical_label_key": "water_leaks_through",
+                "aspect_key": "waterproof",
+                "dimension": "Waterproofing",
+                "evidence_span": "do not keep you dry",
+                "evidence_start": 34,
+                "evidence_end": 53,
+                "confidence": "high",
+                "source": "current_product_leak_text_rule",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              }
+            ],
+            "keys": {
+              "issue": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": false,
+            "maturity_level": null,
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 0,
+            "candidate_pool_item_count": 0,
+            "downgrade_reasons": [],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Zipper Fails",
+              "display_label_en": "Zipper Fails",
+              "display_label_zh": "拉链容易故障",
+              "canonical_label_key": "zipper_fails",
+              "aspect_key": "zipper_quality",
+              "dimension": "Zipper Quality",
+              "evidence_span": "zipper broke",
+              "evidence_start": 4,
+              "evidence_end": 16,
+              "confidence": "high",
+              "source": "step6_v1_fixture",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            },
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Water Leaks Through",
+              "display_label_en": "Water Leaks Through",
+              "display_label_zh": "容易进水",
+              "canonical_label_key": "water_leaks_through",
+              "aspect_key": "waterproof",
+              "dimension": "Waterproofing",
+              "evidence_span": "do not keep you dry",
+              "evidence_start": 34,
+              "evidence_end": 53,
+              "confidence": "high",
+              "source": "current_product_leak_text_rule",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            }
+          ],
+          "frontstage_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "l0_maturity_blocked": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [
+          "toys"
+        ],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [
+          "toys"
+        ],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 1,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 1,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 0
+      },
+      "selected_read_paths": {
+        "v1_current": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "l0_maturity_blocked",
+          "review_id": "step7-5-l0",
+          "session_id": "step6-readpath-session",
+          "category": "toys",
+          "sub_category": "mystery_toy",
+          "selected_read_path": "v1_current",
+          "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+          "blocked_reasons": [
+            "blocked_by_maturity"
+          ],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "category",
+            "scope_matched": true,
+            "shadow_fixture_gate_passed": true,
+            "maturity_level": "L0_unknown",
+            "maturity_enabled_for_frontstage": false,
+            "stored_shadow_available": true,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 0,
+          "v1_current_occurrence_count": 0,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step7-5-l0",
+          "session_id": "step6-readpath-session",
+          "category": "toys",
+          "sub_category": "mystery_toy",
+          "read_path": "v1_current",
+          "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "toys",
+            "sub_category": "mystery_toy",
+            "category_sub_category": "toys/mystery_toy",
+            "maturity_level": "L0_unknown",
+            "v2_requested": true,
+            "matched_scope": "category",
+            "rollback_active": false,
+            "reason": "flag_on_category"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [
+              "toys"
+            ],
+            "sub_categories": [],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": true,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 0,
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": true,
+            "maturity_level": "L0_unknown",
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 1,
+            "candidate_pool_item_count": 1,
+            "downgrade_reasons": [
+              "maturity_blocked"
+            ],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [],
+          "frontstage_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "l1_maturity_blocked": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [
+          "baby"
+        ],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [
+          "baby"
+        ],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 1,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 1,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 0
+      },
+      "selected_read_paths": {
+        "v1_current": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "l1_maturity_blocked",
+          "review_id": "step7-5-l1",
+          "session_id": "step6-readpath-session",
+          "category": "baby",
+          "sub_category": "baby_bibs",
+          "selected_read_path": "v1_current",
+          "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+          "blocked_reasons": [
+            "blocked_by_maturity"
+          ],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "category",
+            "scope_matched": true,
+            "shadow_fixture_gate_passed": true,
+            "maturity_level": "L1_generic",
+            "maturity_enabled_for_frontstage": false,
+            "stored_shadow_available": true,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 0,
+          "v1_current_occurrence_count": 0,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step7-5-l1",
+          "session_id": "step6-readpath-session",
+          "category": "baby",
+          "sub_category": "baby_bibs",
+          "read_path": "v1_current",
+          "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "baby",
+            "sub_category": "baby_bibs",
+            "category_sub_category": "baby/baby_bibs",
+            "maturity_level": "L1_generic",
+            "v2_requested": true,
+            "matched_scope": "category",
+            "rollback_active": false,
+            "reason": "flag_on_category"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [
+              "baby"
+            ],
+            "sub_categories": [],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": true,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 0,
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": true,
+            "maturity_level": "L1_generic",
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 1,
+            "candidate_pool_item_count": 1,
+            "downgrade_reasons": [
+              "maturity_blocked"
+            ],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [],
+          "frontstage_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "l2_maturity_blocked": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [
+          "home"
+        ],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [
+          "home"
+        ],
+        "sub_categories": [],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 1,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 1,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 0
+      },
+      "selected_read_paths": {
+        "v1_current": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "l2_maturity_blocked",
+          "review_id": "step7-5-l2",
+          "session_id": "step6-readpath-session",
+          "category": "home",
+          "sub_category": "unknown",
+          "selected_read_path": "v1_current",
+          "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+          "blocked_reasons": [
+            "blocked_by_maturity"
+          ],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "category",
+            "scope_matched": true,
+            "shadow_fixture_gate_passed": true,
+            "maturity_level": "L2_category",
+            "maturity_enabled_for_frontstage": false,
+            "stored_shadow_available": true,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 0,
+          "v1_current_occurrence_count": 0,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step7-5-l2",
+          "session_id": "step6-readpath-session",
+          "category": "home",
+          "sub_category": "unknown",
+          "read_path": "v1_current",
+          "fallback_reason": "maturity_not_enabled_for_v2_frontstage",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "home",
+            "sub_category": "unknown",
+            "category_sub_category": "home/unknown",
+            "maturity_level": "L2_category",
+            "v2_requested": true,
+            "matched_scope": "category",
+            "rollback_active": false,
+            "reason": "flag_on_category"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [
+              "home"
+            ],
+            "sub_categories": [],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": true,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 0,
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": true,
+            "maturity_level": "L2_category",
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 1,
+            "candidate_pool_item_count": 1,
+            "downgrade_reasons": [
+              "maturity_blocked"
+            ],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [],
+          "frontstage_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v1_current",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "l3_waders_stored_shadow_v2": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 0,
+        "v2_selected_count": 1,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 0,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 1
+      },
+      "selected_read_paths": {
+        "v2_shadow": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "l3_waders_stored_shadow_v2",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "selected_read_path": "v2_shadow",
+          "fallback_reason": "",
+          "blocked_reasons": [],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "sub_category",
+            "scope_matched": true,
+            "shadow_fixture_gate_passed": true,
+            "maturity_level": "L3_sub_category",
+            "maturity_enabled_for_frontstage": true,
+            "stored_shadow_available": true,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "selected_occurrence_count": 1,
+          "v1_current_occurrence_count": 2,
+          "v2_shadow_occurrence_count": 1
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "read_path": "v2_shadow",
+          "fallback_reason": "",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "outdoor",
+            "sub_category": "waders",
+            "category_sub_category": "outdoor/waders",
+            "maturity_level": "L3_sub_category",
+            "v2_requested": true,
+            "matched_scope": "sub_category",
+            "rollback_active": false,
+            "reason": "flag_on_sub_category"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [],
+            "sub_categories": [
+              "outdoor/waders"
+            ],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": true,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 2,
+            "frontstage_occurrences": [
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Zipper Fails",
+                "display_label_en": "Zipper Fails",
+                "display_label_zh": "拉链容易故障",
+                "canonical_label_key": "zipper_fails",
+                "aspect_key": "zipper_quality",
+                "dimension": "Zipper Quality",
+                "evidence_span": "zipper broke",
+                "evidence_start": 4,
+                "evidence_end": 16,
+                "confidence": "high",
+                "source": "step6_v1_fixture",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              },
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Water Leaks Through",
+                "display_label_en": "Water Leaks Through",
+                "display_label_zh": "容易进水",
+                "canonical_label_key": "water_leaks_through",
+                "aspect_key": "waterproof",
+                "dimension": "Waterproofing",
+                "evidence_span": "do not keep you dry",
+                "evidence_start": 34,
+                "evidence_end": 53,
+                "confidence": "high",
+                "source": "current_product_leak_text_rule",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              }
+            ],
+            "keys": {
+              "issue": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": true,
+            "maturity_level": "L3_sub_category",
+            "display_occurrence_count": 1,
+            "audit_occurrence_count": 0,
+            "candidate_pool_item_count": 0,
+            "downgrade_reasons": [],
+            "frontstage_occurrences": [
+              {
+                "source_version": "v2_shadow",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Water Leaks Through",
+                "display_label_en": "Water Leaks Through",
+                "display_label_zh": "Water Leaks Through",
+                "canonical_label_key": "water_leaks_through",
+                "aspect_key": "waterproof",
+                "dimension": "",
+                "evidence_span": "do not keep you dry",
+                "evidence_start": 34,
+                "evidence_end": 53,
+                "confidence": 0.9,
+                "source": "llm",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              }
+            ],
+            "keys": {
+              "issue": [
+                "water_leaks_through"
+              ],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [
+            {
+              "source_version": "v2_shadow",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Water Leaks Through",
+              "display_label_en": "Water Leaks Through",
+              "display_label_zh": "Water Leaks Through",
+              "canonical_label_key": "water_leaks_through",
+              "aspect_key": "waterproof",
+              "dimension": "",
+              "evidence_span": "do not keep you dry",
+              "evidence_start": 34,
+              "evidence_end": 53,
+              "confidence": 0.9,
+              "source": "llm",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            }
+          ],
+          "frontstage_keys": {
+            "issue": [
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v2_shadow",
+              "occurrence_count": 1,
+              "issue_keys": [
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v2_shadow",
+              "occurrence_count": 1,
+              "issue_keys": [
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v2_shadow",
+              "occurrence_count": 1,
+              "issue_keys": [
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v2_shadow",
+              "occurrence_count": 1,
+              "issue_keys": [
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "unknown_label_candidate_pool_only": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 0,
+        "v2_selected_count": 1,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 0,
+        "blocked_by_unknown_label": 1,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 0
+      },
+      "selected_read_paths": {
+        "v2_shadow": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "unknown_label_candidate_pool_only",
+          "review_id": "step7-5-unknown",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "selected_read_path": "v2_shadow",
+          "fallback_reason": "",
+          "blocked_reasons": [
+            "blocked_by_unknown_label"
+          ],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "sub_category",
+            "scope_matched": true,
+            "shadow_fixture_gate_passed": true,
+            "maturity_level": "L3_sub_category",
+            "maturity_enabled_for_frontstage": true,
+            "stored_shadow_available": true,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 0,
+          "v1_current_occurrence_count": 0,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step7-5-unknown",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "read_path": "v2_shadow",
+          "fallback_reason": "",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "outdoor",
+            "sub_category": "waders",
+            "category_sub_category": "outdoor/waders",
+            "maturity_level": "L3_sub_category",
+            "v2_requested": true,
+            "matched_scope": "sub_category",
+            "rollback_active": false,
+            "reason": "flag_on_sub_category"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [],
+            "sub_categories": [
+              "outdoor/waders"
+            ],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": true,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 0,
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": true,
+            "maturity_level": "L3_sub_category",
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 1,
+            "candidate_pool_item_count": 1,
+            "downgrade_reasons": [
+              "unknown_label"
+            ],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [],
+          "frontstage_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v2_shadow",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v2_shadow",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v2_shadow",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v2_shadow",
+              "occurrence_count": 0,
+              "issue_keys": [],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "no_stored_shadow_v1_current": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": true
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 1,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 0,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 1,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 2
+      },
+      "selected_read_paths": {
+        "v1_current": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "no_stored_shadow_v1_current",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "selected_read_path": "v1_current",
+          "fallback_reason": "v2_shadow_missing",
+          "blocked_reasons": [
+            "blocked_by_no_stored_shadow"
+          ],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "sub_category",
+            "scope_matched": true,
+            "shadow_fixture_gate_passed": true,
+            "maturity_level": "L3_sub_category",
+            "maturity_enabled_for_frontstage": true,
+            "stored_shadow_available": false,
+            "rollback_active": false,
+            "rollback_would_select_v1_current": false
+          },
+          "selected_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 2,
+          "v1_current_occurrence_count": 2,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "read_path": "v1_current",
+          "fallback_reason": "v2_shadow_missing",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "outdoor",
+            "sub_category": "waders",
+            "category_sub_category": "outdoor/waders",
+            "maturity_level": "L3_sub_category",
+            "v2_requested": true,
+            "matched_scope": "sub_category",
+            "rollback_active": false,
+            "reason": "flag_on_sub_category"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [],
+            "sub_categories": [
+              "outdoor/waders"
+            ],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": true,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 2,
+            "frontstage_occurrences": [
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Zipper Fails",
+                "display_label_en": "Zipper Fails",
+                "display_label_zh": "拉链容易故障",
+                "canonical_label_key": "zipper_fails",
+                "aspect_key": "zipper_quality",
+                "dimension": "Zipper Quality",
+                "evidence_span": "zipper broke",
+                "evidence_start": 4,
+                "evidence_end": 16,
+                "confidence": "high",
+                "source": "step6_v1_fixture",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              },
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Water Leaks Through",
+                "display_label_en": "Water Leaks Through",
+                "display_label_zh": "容易进水",
+                "canonical_label_key": "water_leaks_through",
+                "aspect_key": "waterproof",
+                "dimension": "Waterproofing",
+                "evidence_span": "do not keep you dry",
+                "evidence_start": 34,
+                "evidence_end": 53,
+                "confidence": "high",
+                "source": "current_product_leak_text_rule",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              }
+            ],
+            "keys": {
+              "issue": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": false,
+            "maturity_level": null,
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 0,
+            "candidate_pool_item_count": 0,
+            "downgrade_reasons": [],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Zipper Fails",
+              "display_label_en": "Zipper Fails",
+              "display_label_zh": "拉链容易故障",
+              "canonical_label_key": "zipper_fails",
+              "aspect_key": "zipper_quality",
+              "dimension": "Zipper Quality",
+              "evidence_span": "zipper broke",
+              "evidence_start": 4,
+              "evidence_end": 16,
+              "confidence": "high",
+              "source": "step6_v1_fixture",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            },
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Water Leaks Through",
+              "display_label_en": "Water Leaks Through",
+              "display_label_zh": "容易进水",
+              "canonical_label_key": "water_leaks_through",
+              "aspect_key": "waterproof",
+              "dimension": "Waterproofing",
+              "evidence_span": "do not keep you dry",
+              "evidence_start": 34,
+              "evidence_end": 53,
+              "confidence": "high",
+              "source": "current_product_leak_text_rule",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            }
+          ],
+          "frontstage_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    },
+    "rollback_v1_current": {
+      "schema_version": "customer-label-v2-frontstage-readiness-dry-run.1",
+      "scope": "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+      "status": "PASS",
+      "case_count": 1,
+      "input_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [
+          "step6-readpath-session"
+        ],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "effective_feature_flag": {
+        "enabled": true,
+        "session_ids": [],
+        "categories": [],
+        "sub_categories": [
+          "outdoor/waders"
+        ],
+        "category_sub_categories": [],
+        "shadow_fixture_gate_passed": true,
+        "enabled_maturity_levels": [
+          "L3_sub_category"
+        ],
+        "rollback": false,
+        "rollback_session_ids": [
+          "step6-readpath-session"
+        ],
+        "rollback_categories": [],
+        "rollback_sub_categories": [],
+        "rollback_category_sub_categories": [],
+        "allow_runtime_shadow": false
+      },
+      "env_config": {},
+      "observability": {
+        "v1_selected_count": 1,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 0,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 1,
+        "frontstage_occurrence_count": 2
+      },
+      "selected_read_paths": {
+        "v1_current": 1
+      },
+      "selected_read_path_preview": [
+        {
+          "case": "rollback_v1_current",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "selected_read_path": "v1_current",
+          "fallback_reason": "rollback_session",
+          "blocked_reasons": [
+            "rollback_selected_count"
+          ],
+          "checks": {
+            "flag_enabled": true,
+            "matched_scope": "rollback_session",
+            "scope_matched": false,
+            "shadow_fixture_gate_passed": true,
+            "maturity_level": "L3_sub_category",
+            "maturity_enabled_for_frontstage": true,
+            "stored_shadow_available": true,
+            "rollback_active": true,
+            "rollback_would_select_v1_current": true
+          },
+          "selected_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v1_current_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "v2_shadow_keys": {
+            "issue": [],
+            "highlight": []
+          },
+          "selected_occurrence_count": 2,
+          "v1_current_occurrence_count": 2,
+          "v2_shadow_occurrence_count": 0
+        }
+      ],
+      "read_models": [
+        {
+          "schema_version": "customer-label-v2-frontstage-read-path.1",
+          "review_id": "step6-readpath-waders",
+          "session_id": "step6-readpath-session",
+          "category": "outdoor",
+          "sub_category": "waders",
+          "read_path": "v1_current",
+          "fallback_reason": "rollback_session",
+          "flag_decision": {
+            "session_id": "step6-readpath-session",
+            "category": "outdoor",
+            "sub_category": "waders",
+            "category_sub_category": "outdoor/waders",
+            "maturity_level": "L3_sub_category",
+            "v2_requested": false,
+            "matched_scope": "rollback_session",
+            "rollback_active": true,
+            "reason": "rollback_session"
+          },
+          "feature_flag": {
+            "enabled": true,
+            "session_ids": [],
+            "categories": [],
+            "sub_categories": [
+              "outdoor/waders"
+            ],
+            "category_sub_categories": [],
+            "shadow_fixture_gate_passed": true,
+            "enabled_maturity_levels": [
+              "L3_sub_category"
+            ],
+            "rollback": false,
+            "rollback_session_ids": [
+              "step6-readpath-session"
+            ],
+            "rollback_categories": [],
+            "rollback_sub_categories": [],
+            "rollback_category_sub_categories": [],
+            "allow_runtime_shadow": false
+          },
+          "v1_current": {
+            "occurrence_count": 2,
+            "frontstage_occurrences": [
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Zipper Fails",
+                "display_label_en": "Zipper Fails",
+                "display_label_zh": "拉链容易故障",
+                "canonical_label_key": "zipper_fails",
+                "aspect_key": "zipper_quality",
+                "dimension": "Zipper Quality",
+                "evidence_span": "zipper broke",
+                "evidence_start": 4,
+                "evidence_end": 16,
+                "confidence": "high",
+                "source": "step6_v1_fixture",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              },
+              {
+                "source_version": "v1_current",
+                "review_id": "step6-readpath-waders",
+                "label_type": "issue",
+                "label": "Water Leaks Through",
+                "display_label_en": "Water Leaks Through",
+                "display_label_zh": "容易进水",
+                "canonical_label_key": "water_leaks_through",
+                "aspect_key": "waterproof",
+                "dimension": "Waterproofing",
+                "evidence_span": "do not keep you dry",
+                "evidence_start": 34,
+                "evidence_end": 53,
+                "confidence": "high",
+                "source": "current_product_leak_text_rule",
+                "locale": "en",
+                "source_review_allowed": true,
+                "evidence_verified": true,
+                "verified_evidence": true,
+                "display_allowed": true,
+                "cluster_propagated": false,
+                "legacy_fallback": false,
+                "aspect_allowed": true,
+                "context_allowed": true,
+                "maturity_allowed": true,
+                "downgrade_reasons": []
+              }
+            ],
+            "keys": {
+              "issue": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight": []
+            }
+          },
+          "v2_shadow": {
+            "available": false,
+            "maturity_level": null,
+            "display_occurrence_count": 0,
+            "audit_occurrence_count": 0,
+            "candidate_pool_item_count": 0,
+            "downgrade_reasons": [],
+            "frontstage_occurrences": [],
+            "keys": {
+              "issue": [],
+              "highlight": []
+            }
+          },
+          "frontstage_occurrences": [
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Zipper Fails",
+              "display_label_en": "Zipper Fails",
+              "display_label_zh": "拉链容易故障",
+              "canonical_label_key": "zipper_fails",
+              "aspect_key": "zipper_quality",
+              "dimension": "Zipper Quality",
+              "evidence_span": "zipper broke",
+              "evidence_start": 4,
+              "evidence_end": 16,
+              "confidence": "high",
+              "source": "step6_v1_fixture",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            },
+            {
+              "source_version": "v1_current",
+              "review_id": "step6-readpath-waders",
+              "label_type": "issue",
+              "label": "Water Leaks Through",
+              "display_label_en": "Water Leaks Through",
+              "display_label_zh": "容易进水",
+              "canonical_label_key": "water_leaks_through",
+              "aspect_key": "waterproof",
+              "dimension": "Waterproofing",
+              "evidence_span": "do not keep you dry",
+              "evidence_start": 34,
+              "evidence_end": 53,
+              "confidence": "high",
+              "source": "current_product_leak_text_rule",
+              "locale": "en",
+              "source_review_allowed": true,
+              "evidence_verified": true,
+              "verified_evidence": true,
+              "display_allowed": true,
+              "cluster_propagated": false,
+              "legacy_fallback": false,
+              "aspect_allowed": true,
+              "context_allowed": true,
+              "maturity_allowed": true,
+              "downgrade_reasons": []
+            }
+          ],
+          "frontstage_keys": {
+            "issue": [
+              "zipper_fails",
+              "water_leaks_through"
+            ],
+            "highlight": []
+          },
+          "frontstage_consumers": {
+            "results_top10": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_review_detail": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "raw_review_export": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            },
+            "single_tag_download": {
+              "read_path": "v1_current",
+              "occurrence_count": 2,
+              "issue_keys": [
+                "zipper_fails",
+                "water_leaks_through"
+              ],
+              "highlight_keys": [],
+              "input_layer": "display_occurrences",
+              "audit_and_candidate_pool_excluded": true
+            }
+          },
+          "excluded_layers": {
+            "audit_occurrences": true,
+            "candidate_pool_items": true,
+            "label_candidates": true
+          },
+          "safety": {
+            "production_upload": false,
+            "production_write_path": false,
+            "production_db_write": false,
+            "db_write": false,
+            "credit_consumed": false,
+            "llm_called": false,
+            "frontstage_replaced": false,
+            "frontstage_mutated": false
+          }
+        }
+      ],
+      "violations": [],
+      "contract": {
+        "schema_version": "customer-label-v2-frontstage-read-path.1",
+        "default_read_path": "v1_current",
+        "v2_read_path": "v2_shadow",
+        "feature_flag": {
+          "default_enabled": false,
+          "env_prefix": "CUSTOMER_LABEL_V2_FRONTSTAGE_",
+          "controls": [
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ],
+          "shadow_fixture_gate_required": true,
+          "enabled_maturity_levels_default": [
+            "L3_sub_category"
+          ],
+          "env_runtime_shadow_default": false,
+          "rollback_controls": [
+            "global",
+            "session_id",
+            "category",
+            "sub_category",
+            "category_sub_category"
+          ]
+        },
+        "frontstage_consumers": {
+          "results_top10": "Count selected display occurrences only.",
+          "single_review_detail": "Render selected display occurrences only.",
+          "raw_review_export": "Write selected display occurrences to frontstage columns only.",
+          "single_tag_download": "Download selected verified evidence occurrences for the requested label only."
+        },
+        "fallback": {
+          "flag_off": "v1_current",
+          "scope_not_matched": "v1_current",
+          "shadow_fixture_gate_blocked": "v1_current",
+          "v2_shadow_missing": "v1_current",
+          "maturity_not_enabled_for_v2_frontstage": "v1_current",
+          "rollback": "v1_current"
+        },
+        "excluded_from_frontstage": [
+          "label_candidates",
+          "audit_occurrences",
+          "candidate_pool_items",
+          "maturity_blocked_candidates",
+          "unknown_label_candidates"
+        ],
+        "safety": {
+          "production_upload": false,
+          "production_write_path": false,
+          "production_db_write": false,
+          "db_write": false,
+          "credit_consumed": false,
+          "llm_called": false,
+          "frontstage_replaced": false,
+          "frontstage_mutated": false
+        }
+      },
+      "safety": {
+        "production_upload": false,
+        "production_write_path": false,
+        "production_db_write": false,
+        "db_write": false,
+        "credit_consumed": false,
+        "llm_called": false,
+        "runtime_shadow_called": false,
+        "frontstage_replaced": false,
+        "frontstage_mutated": false
+      }
+    }
+  },
+  "safety": {
+    "production_upload": false,
+    "production_write_path": false,
+    "production_db_write": false,
+    "db_write": false,
+    "credit_consumed": false,
+    "llm_called": false,
+    "runtime_shadow_called": false,
+    "frontstage_replaced": false,
+    "frontstage_mutated": false
+  }
+}

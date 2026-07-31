@@ -1,10 +1,20 @@
 # ClueAI V2 项目进度追踪
 
-> 最后更新：2026-07-30
+> 最后更新：2026-07-31
 > V2 目标：商业化升级，4 项核心功能跑通可运营  
 > 时间窗口：2026-05-26 ~ 2026-06-20（4 周）  
 > 每日投入：7 小时  
 > 分工：技术实现由 AI 完成，Erika 负责产品需求定义、PRD、技术选型理解、验收、面试准备
+
+---
+
+### 2026-07-31 5.9.9 Customer Label System v2 Step 7.5：v2 frontstage read-path production readiness / dry-run pack
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-07-31 | readiness-dry-run-helper | 新增 Customer Label v2 frontstage readiness dry-run report helper：输入本地 review payload + feature flag/env config，逐条输出 selected read path preview、flag/scope/fixture gate/maturity/stored shadow/rollback 检查结果。dry-run 强制 `allow_runtime_shadow=False`，只承认可消费 stored shadow/read model，不触发 runtime shadow、DB 写入、credit 或真实 LLM。 | `PASS`：focused tests 覆盖 flag off、scope miss、fixture gate fail、L0/L1/L2 maturity blocked、L3 waders + stored shadow、unknown/new label、no stored shadow、rollback。当前默认 frontstage 行为保持 v1/current；生产 feature flag 未开启。 |
+| 2026-07-31 | observability-contract | 新增 Step 7.5 observability/report contract：`v1_selected_count`、`v2_selected_count`、`blocked_by_flag_off`、`blocked_by_scope`、`blocked_by_fixture_gate`、`blocked_by_maturity`、`blocked_by_unknown_label`、`blocked_by_no_stored_shadow`、`rollback_selected_count`、`frontstage_occurrence_count`。 | Artifact `tmp/5.9.9-step7.5-frontstage-readiness-dry-run/frontstage-readiness-dry-run.json`：`status=PASS`、case count `10`、selected read paths `v1_current=8` / `v2_shadow=2`、case expectation violations `[]`。 |
+| 2026-07-31 | step7.5-replay-artifact | `scripts/customer_label_v2_waders_shadow_replay.py` 纳入 Step 7.5 dry-run artifact，同时保留 Step 6/7 read-path contract、actual consumer integration、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：focused Step 7.5 `10 passed`；Step 6/7/7.5 focused `27 passed`；related backend regression `69 passed`；waders/customer-label 目标回归 `125 passed`；replay PASS，P0=`0`；六个重点标签 FP/FN=0；frontend typecheck PASS；ruff PASS。报告：`docs/5.9.9-step7.5-frontstage-readiness-dry-run.md`。 |
 
 ---
 
@@ -164,7 +174,7 @@
 
 ## 总体进度
 
-> 最后更新：2026-07-30 | 基于代码实际状态 + 文档 checkbox 统计
+> 最后更新：2026-07-31 | 基于代码实际状态 + 文档 checkbox 统计
 
 ### 按模块组
 
@@ -173,7 +183,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 7 frontstage read-path consumer integration 已 PASS；ABSA 延后为条件触发 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 7.5 frontstage readiness dry-run 已 PASS；ABSA 延后为条件触发 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -222,7 +232,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 7 已完成：Step 6 read-path contract 已接入实际 Results Top10、single review detail、raw review export、single-tag download；默认 off，只有显式 flag + scope + fixture gate + L3 waders + selected verified v2 display 才生效；replay artifact PASS，P0=0；标签本体 v3 决策为先做 v3-lite 债务封顶，完整 v3 条件触发。 | 继续保持生产 feature flag 不开启；后续若 Erika 授权，可做生产配置存储、kill switch/观测指标和小流量只读灰度；v3-lite 只做兼容投影、catalog backlog 和规则膨胀封顶，不替换当前前台链路。 |
+| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 7.5 已完成：Step 7 actual consumer integration 基础上新增 production readiness / dry-run pack，输出 flag/scope/fixture gate/maturity/stored shadow/rollback eligibility report 与 observability contract；默认 off，只有显式 flag + scope + fixture gate + L3 waders + stored verified v2 display 才可预览 v2_shadow；replay artifact PASS，P0=0；标签本体 v3 决策为先做 v3-lite 债务封顶，完整 v3 条件触发。 | 继续保持生产 feature flag 不开启；后续若 Erika 授权，可做生产配置存储、线上 kill switch/指标面板和小流量只读灰度；v3-lite 只做兼容投影、catalog backlog 和规则膨胀封顶，不替换当前前台链路。 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -1323,7 +1333,7 @@ readiness 节奏：
 
 #### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
 
-**状态：** 进行中（Step 7 v2 frontstage read-path actual consumer integration 已 PASS；生产 feature flag 仍默认关闭且未开启；标签本体 v3 先做 v3-lite 债务封顶，完整 v3 条件触发）
+**状态：** 进行中（Step 7.5 v2 frontstage readiness dry-run pack 已 PASS；生产 feature flag 仍默认关闭且未开启；标签本体 v3 先做 v3-lite 债务封顶，完整 v3 条件触发）
 
 **调整原因：**
 - 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
@@ -1396,6 +1406,11 @@ readiness 节奏：
   - `label_candidates`、`audit_occurrences`、`candidate_pool_items`、maturity blocked、unknown/new label 仍不进入实际前台 consumer；rollback 立即回 v1/current。
   - 已提交并推送到 `origin/develop`；生产 feature flag 仍保持关闭，仅保留本地/测试环境可控接线。
   - 输出 `docs/5.9.9-step7-v2-frontstage-read-path-integration.md` 与 `tmp/5.9.9-step7-v2-frontstage-read-path-integration/frontstage-consumer-integration.json`。
+- [x] **Step 7.5: v2 frontstage production readiness / dry-run pack**
+  - 已新增只读 readiness dry-run report helper，输入本地 review payload + feature flag/env config，输出 selected read path preview 与 flag/scope/fixture gate/maturity/stored shadow/rollback 检查结果。
+  - dry-run 强制 `allow_runtime_shadow=False`，只承认可消费 stored shadow/read model；no stored shadow 会回 v1/current 并记录 `blocked_by_no_stored_shadow`。
+  - 新增 observability contract：`v1_selected_count`、`v2_selected_count`、`blocked_by_flag_off`、`blocked_by_scope`、`blocked_by_fixture_gate`、`blocked_by_maturity`、`blocked_by_unknown_label`、`blocked_by_no_stored_shadow`、`rollback_selected_count`、`frontstage_occurrence_count`。
+  - 输出 `docs/5.9.9-step7.5-frontstage-readiness-dry-run.md` 与 `tmp/5.9.9-step7.5-frontstage-readiness-dry-run/frontstage-readiness-dry-run.json`；生产 feature flag 仍未开启。
 - [ ] **Step 8: Vector bad case memory 轻量版（增强项，不阻塞 50 用户）**
   - 将已审核 bad case、gold regression、candidate 审核结果向量化，用于检索相似历史错误、候选聚类和审核优先级排序。
   - 明确 vector 结果不能直接决定前台展示；找不到 evidence 或 verifier 冲突时仍降级到 candidate/audit。

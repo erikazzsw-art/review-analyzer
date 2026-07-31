@@ -6,7 +6,7 @@ import os
 import re
 from collections import Counter
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any
 
 from backend_api.app.services.customer_label_v2_maturity import (
@@ -20,6 +20,9 @@ from backend_api.app.services.specific_issue import (
 )
 
 CUSTOMER_LABEL_V2_FRONTSTAGE_READ_PATH_CONTRACT_VERSION = "customer-label-v2-frontstage-read-path.1"
+CUSTOMER_LABEL_V2_FRONTSTAGE_READINESS_DRY_RUN_SCHEMA_VERSION = (
+    "customer-label-v2-frontstage-readiness-dry-run.1"
+)
 CUSTOMER_LABEL_V2_FRONTSTAGE_READ_MODEL_FIELD = "customer_label_v2_frontstage_read_model"
 READ_PATH_V1_CURRENT = "v1_current"
 READ_PATH_V2_SHADOW = "v2_shadow"
@@ -586,6 +589,213 @@ def build_frontstage_read_path_artifact(
             "db_write": False,
             "credit_consumed": False,
             "llm_called": False,
+            "frontstage_replaced": False,
+            "frontstage_mutated": False,
+        },
+    }
+
+
+def _stored_shadow_result_for_review(review: dict[str, Any]) -> dict[str, Any] | None:
+    stored_shadow = review.get("customer_label_v2_shadow_result")
+    if isinstance(stored_shadow, dict):
+        return stored_shadow
+
+    raw_aspects = review.get("aspects_json")
+    if isinstance(raw_aspects, dict):
+        aspects_json = raw_aspects
+    elif isinstance(raw_aspects, str) and raw_aspects.strip():
+        try:
+            parsed = json.loads(raw_aspects)
+        except json.JSONDecodeError:
+            aspects_json = None
+        else:
+            aspects_json = parsed if isinstance(parsed, dict) else None
+    else:
+        aspects_json = None
+
+    nested_shadow = aspects_json.get("customer_label_v2_shadow_result") if aspects_json else None
+    return nested_shadow if isinstance(nested_shadow, dict) else None
+
+
+def _shadow_downgrade_reasons(shadow_result: dict[str, Any] | None) -> set[str]:
+    if not isinstance(shadow_result, dict):
+        return set()
+
+    reasons = {str(reason) for reason in shadow_result.get("downgrade_reasons") or [] if str(reason)}
+    for layer in ("display_occurrences", "audit_occurrences", "candidate_pool_items"):
+        for item in shadow_result.get(layer) or []:
+            if not isinstance(item, dict):
+                continue
+            reasons.update(str(reason) for reason in item.get("downgrade_reasons") or [] if str(reason))
+    return reasons
+
+
+def _readiness_blocked_reasons(
+    read_model: dict[str, Any],
+    *,
+    shadow_result: dict[str, Any] | None,
+) -> list[str]:
+    fallback_reason = str(read_model.get("fallback_reason") or "")
+    flag_decision = read_model.get("flag_decision") or {}
+    shadow_reasons = _shadow_downgrade_reasons(shadow_result)
+
+    blocked: list[str] = []
+    if fallback_reason == "flag_off":
+        blocked.append("blocked_by_flag_off")
+    if fallback_reason == "scope_not_matched":
+        blocked.append("blocked_by_scope")
+    if fallback_reason == "shadow_fixture_gate_blocked":
+        blocked.append("blocked_by_fixture_gate")
+    if fallback_reason == "maturity_not_enabled_for_v2_frontstage" or "maturity_blocked" in shadow_reasons:
+        blocked.append("blocked_by_maturity")
+    if "unknown_label" in shadow_reasons:
+        blocked.append("blocked_by_unknown_label")
+    if fallback_reason == "v2_shadow_missing":
+        blocked.append("blocked_by_no_stored_shadow")
+    if bool(flag_decision.get("rollback_active")) or fallback_reason.startswith("rollback_"):
+        blocked.append("rollback_selected_count")
+
+    return list(dict.fromkeys(blocked))
+
+
+def _readiness_observability_zero() -> dict[str, int]:
+    return {
+        "v1_selected_count": 0,
+        "v2_selected_count": 0,
+        "blocked_by_flag_off": 0,
+        "blocked_by_scope": 0,
+        "blocked_by_fixture_gate": 0,
+        "blocked_by_maturity": 0,
+        "blocked_by_unknown_label": 0,
+        "blocked_by_no_stored_shadow": 0,
+        "rollback_selected_count": 0,
+        "frontstage_occurrence_count": 0,
+    }
+
+
+def build_customer_label_v2_frontstage_readiness_dry_run_report(
+    reviews: list[dict[str, Any]],
+    *,
+    flag: CustomerLabelV2FrontstageFlag | None = None,
+    env_config: Mapping[str, str] | None = None,
+    scope: str = "5.9.9 Step 7.5 v2 frontstage readiness dry-run",
+    locale: str = "en",
+) -> dict[str, Any]:
+    """Build a read-only production-readiness report for the v2 frontstage path.
+
+    The report deliberately refuses runtime shadow execution. It only previews
+    v2 frontstage selection when a stored shadow result is already present on
+    the review payload.
+    """
+    input_flag = flag or customer_label_v2_frontstage_flag_from_env(env_config)
+    dry_run_flag = replace(input_flag, allow_runtime_shadow=False)
+    observability = _readiness_observability_zero()
+    selected_read_paths: Counter[str] = Counter()
+    previews: list[dict[str, Any]] = []
+    read_models: list[dict[str, Any]] = []
+    violations: list[dict[str, Any]] = []
+
+    for index, review in enumerate(reviews):
+        stored_shadow = _stored_shadow_result_for_review(review)
+        read_model = build_customer_label_v2_frontstage_read_model(
+            review,
+            flag=dry_run_flag,
+            shadow_result=stored_shadow,
+            locale=locale,
+        )
+        read_models.append(read_model)
+
+        read_path = str(read_model.get("read_path") or "")
+        selected_read_paths[read_path] += 1
+        if read_path == READ_PATH_V2_SHADOW:
+            observability["v2_selected_count"] += 1
+        else:
+            observability["v1_selected_count"] += 1
+
+        selected_occurrences = list(read_model.get("frontstage_occurrences") or [])
+        observability["frontstage_occurrence_count"] += len(selected_occurrences)
+
+        blocked_reasons = _readiness_blocked_reasons(read_model, shadow_result=stored_shadow)
+        for reason in blocked_reasons:
+            if reason in observability:
+                observability[reason] += 1
+
+        flag_decision = read_model.get("flag_decision") or {}
+        maturity_level = str(
+            (read_model.get("v2_shadow") or {}).get("maturity_level")
+            or flag_decision.get("maturity_level")
+            or ""
+        )
+        selected_keys = frontstage_keys_from_read_model(read_model)
+        preview = {
+            "case": str(review.get("_dry_run_case") or review.get("case") or read_model.get("review_id") or index),
+            "review_id": read_model.get("review_id"),
+            "session_id": read_model.get("session_id"),
+            "category": read_model.get("category"),
+            "sub_category": read_model.get("sub_category"),
+            "selected_read_path": read_path,
+            "fallback_reason": str(read_model.get("fallback_reason") or ""),
+            "blocked_reasons": blocked_reasons,
+            "checks": {
+                "flag_enabled": dry_run_flag.enabled,
+                "matched_scope": str(flag_decision.get("matched_scope") or ""),
+                "scope_matched": bool(flag_decision.get("v2_requested")),
+                "shadow_fixture_gate_passed": dry_run_flag.shadow_fixture_gate_passed,
+                "maturity_level": maturity_level,
+                "maturity_enabled_for_frontstage": maturity_level in set(dry_run_flag.enabled_maturity_levels),
+                "stored_shadow_available": stored_shadow is not None,
+                "rollback_active": bool(flag_decision.get("rollback_active")),
+                "rollback_would_select_v1_current": bool(
+                    flag_decision.get("rollback_active")
+                    and read_path == READ_PATH_V1_CURRENT
+                ),
+            },
+            "selected_keys": selected_keys,
+            "v1_current_keys": (read_model.get("v1_current") or {}).get("keys") or {},
+            "v2_shadow_keys": (read_model.get("v2_shadow") or {}).get("keys") or {},
+            "selected_occurrence_count": len(selected_occurrences),
+            "v1_current_occurrence_count": int((read_model.get("v1_current") or {}).get("occurrence_count") or 0),
+            "v2_shadow_occurrence_count": int(
+                (read_model.get("v2_shadow") or {}).get("display_occurrence_count") or 0
+            ),
+        }
+        previews.append(preview)
+
+        if read_path == READ_PATH_V2_SHADOW and stored_shadow is None:
+            violations.append({"case": preview["case"], "error": "v2_selected_without_stored_shadow"})
+        if "blocked_by_no_stored_shadow" in blocked_reasons and read_path == READ_PATH_V2_SHADOW:
+            violations.append({"case": preview["case"], "error": "missing_shadow_entered_v2"})
+        if "rollback_selected_count" in blocked_reasons and read_path != READ_PATH_V1_CURRENT:
+            violations.append({"case": preview["case"], "error": "rollback_did_not_select_v1_current"})
+        if any(
+            str(occurrence.get("canonical_label_key") or "").startswith("candidate:")
+            or occurrence.get("downgrade_reasons")
+            for occurrence in selected_occurrences
+        ):
+            violations.append({"case": preview["case"], "error": "candidate_or_downgraded_label_selected"})
+
+    return {
+        "schema_version": CUSTOMER_LABEL_V2_FRONTSTAGE_READINESS_DRY_RUN_SCHEMA_VERSION,
+        "scope": scope,
+        "status": "PASS" if not violations else "REVIEW_NEEDED",
+        "case_count": len(reviews),
+        "input_feature_flag": input_flag.as_dict(),
+        "effective_feature_flag": dry_run_flag.as_dict(),
+        "env_config": dict(env_config or {}),
+        "observability": observability,
+        "selected_read_paths": dict(sorted(selected_read_paths.items())),
+        "selected_read_path_preview": previews,
+        "read_models": read_models,
+        "violations": violations,
+        "contract": customer_label_v2_frontstage_contract_summary(),
+        "safety": {
+            "production_upload": False,
+            "production_write_path": False,
+            "production_db_write": False,
+            "db_write": False,
+            "credit_consumed": False,
+            "llm_called": False,
+            "runtime_shadow_called": False,
             "frontstage_replaced": False,
             "frontstage_mutated": False,
         },
