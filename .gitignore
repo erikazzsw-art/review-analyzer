@@ -55,6 +55,9 @@ data/raw/
 test-results/
 test_data/
 
+# Local replay / acceptance artifacts（不进 git；历史已跟踪文件需 git rm --cached 单独迁出）
+/tmp/
+
 # Python 构建产物
 *.egg-info/
 
