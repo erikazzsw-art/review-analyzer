@@ -5,6 +5,16 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from backend_api.app.services.review_signal_frontstage import (
+    READ_PATH_REVIEW_SIGNAL_STORED_SHADOW,
+    READ_PATH_V1_CURRENT,
+    ReviewSignalFrontstageFlag,
+    attach_review_signal_frontstage_adapter_for_local_test,
+    build_review_signal_frontstage_read_model,
+    build_review_signal_phase4_implementation_artifact,
+    frontstage_keys_from_review_signal_read_model,
+    resolve_review_signal_frontstage_config,
+)
 from backend_api.app.services.review_signal_shadow import (
     REVIEW_SIGNAL_FP_FN_SCHEMA_VERSION,
     REVIEW_SIGNAL_GOLD_SCHEMA_VERSION,
@@ -37,6 +47,17 @@ from backend_api.app.services.review_signal_shadow import (
     review_signal_shadow_safety_flags,
     run_review_signal_shadow,
 )
+from backend_api.app.services.specific_issue import (
+    CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+    CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+    build_customer_highlight_rows,
+    build_specific_issue_rows,
+    customer_highlight_tags_for_comment,
+    customer_issue_tags_for_comment,
+    iter_customer_highlight_occurrences,
+    iter_specific_issue_occurrences,
+)
+from review_analyzer.exporter import _build_comments_data
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = ROOT / "backend_api" / "tests" / "fixtures" / "review_signal_step9_1_airpods_minimal.json"
@@ -60,6 +81,7 @@ FIXTURE_RESULTS_PATH = ARTIFACT_DIR / "review-signal-fixture-results.json"
 GOLD_ASSIMILATION_PATH = ARTIFACT_DIR / "review-signal-gold-assimilation.json"
 ROUTING_PROJECTION_PATH = ARTIFACT_DIR / "review-signal-routing-projection.json"
 FP_FN_COMPARISON_PATH = ARTIFACT_DIR / "review-signal-shadow-fp-fn-comparison.json"
+PHASE4_IMPLEMENTATION_PATH = ARTIFACT_DIR / "review-signal-phase4-implementation.json"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -1307,6 +1329,435 @@ def _build_routing_table_artifact(fixture: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _phase4_v1_occurrence(
+    *,
+    label_type: str,
+    canonical: str,
+    display_en: str,
+    aspect_key: str,
+    evidence: str,
+    comment_id: str,
+) -> dict[str, Any]:
+    return {
+        "comment_id": comment_id,
+        "type": label_type,
+        "raw_label": display_en,
+        "canonical_label_key": canonical,
+        "display_label_en": display_en,
+        "display_label_zh": display_en,
+        "aspect_key": aspect_key,
+        "evidence_span": evidence,
+        "evidence_start": -1,
+        "evidence_end": -1,
+        "confidence": "high",
+        "source": "rule",
+        "source_detail": "phase4_v1_fixture",
+        "evidence_verified": True,
+        "cluster_propagated": False,
+        "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+        "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+        "display_allowed": True,
+        "source_review_allowed": True,
+        "verified_evidence": True,
+        "legacy_fallback": False,
+        "aspect_allowed": True,
+        "context_allowed": True,
+    }
+
+
+def _phase4_review_with_v1() -> dict[str, Any]:
+    return {
+        "id": "phase4-review-v1",
+        "session_id": "phase4-session",
+        "product_id": "phase4-product",
+        "content": "The zipper broke on day one.",
+        "rating": 1,
+        "category": "outdoor",
+        "sub_category": "waders",
+        "aspects_json": {
+            "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "customer_label_occurrence_ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+            "sub_category": "waders",
+            "customer_label_occurrences": [
+                _phase4_v1_occurrence(
+                    label_type="issue",
+                    canonical="zipper_fails",
+                    display_en="Zipper Fails",
+                    aspect_key="zipper_quality",
+                    evidence="zipper broke",
+                    comment_id="phase4-review-v1",
+                )
+            ],
+        },
+    }
+
+
+def _phase4_review_without_v1() -> dict[str, Any]:
+    return {
+        "id": "phase4-review-guarded",
+        "session_id": "phase4-session",
+        "product_id": "phase4-product",
+        "content": (
+            "The seams leaked after one trip. They are comfortable for long walks. "
+            "My daughter used them for fishing. I bought them for spring creeks. "
+            "I expected more traction on slick rocks. The hanger works great. "
+            "Overall good, but the missing phrase is not here."
+        ),
+        "rating": 4,
+        "category": "outdoor",
+        "sub_category": "waders",
+    }
+
+
+def _phase4_stored_occurrence(
+    *,
+    label_type: str,
+    canonical: str,
+    signal_type: str,
+    route_to: list[str],
+    evidence: str,
+    display_en: str,
+    aspect_key: str = "fit",
+    **overrides: Any,
+) -> dict[str, Any]:
+    payload = {
+        "label_type": label_type,
+        "canonical_label_key": canonical,
+        "display_label_en": display_en,
+        "display_label_zh": display_en,
+        "signal_type": signal_type,
+        "route_to": route_to,
+        "evidence_span": evidence,
+        "evidence_verified": True,
+        "display_allowed": True,
+        "source_review_allowed": True,
+        "aspect_allowed": True,
+        "context_allowed": True,
+        "maturity_allowed": True,
+        "cluster_propagated": False,
+        "legacy_fallback": False,
+        "mapping_status": "mapped",
+        "confidence": 0.93,
+        "aspect_key": aspect_key,
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _phase4_stored_shadow_with_mixed_occurrences() -> dict[str, Any]:
+    return {
+        "schema_version": "review-signal-stored-shadow.test",
+        "frontstage_occurrences": [
+            _phase4_stored_occurrence(
+                label_type="issue",
+                canonical="water_leaks_through",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="seams leaked",
+                display_en="Water Leaks Through",
+                aspect_key="waterproof",
+            ),
+            _phase4_stored_occurrence(
+                label_type="highlight",
+                canonical="comfortable_to_wear",
+                signal_type=SIGNAL_PRODUCT_POSITIVE,
+                route_to=["user_experience.positive", ROUTE_CUSTOMER_LABEL_CANDIDATE],
+                evidence="comfortable",
+                display_en="Comfortable To Wear",
+                aspect_key="comfort",
+            ),
+            _phase4_stored_occurrence(
+                label_type="issue",
+                canonical="candidate:boot_seam_leak",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="seams leaked",
+                display_en="Boot Seam Leak",
+                aspect_key="seam_integrity",
+            ),
+            _phase4_stored_occurrence(
+                label_type="highlight",
+                canonical="",
+                signal_type=SIGNAL_PRODUCT_POSITIVE,
+                route_to=["user_experience.positive", ROUTE_CUSTOMER_LABEL_CANDIDATE],
+                evidence="comfortable",
+                display_en="Unresolved Comfort Variant",
+                mapping_status="extraction_unresolved",
+            ),
+            _phase4_stored_occurrence(
+                label_type="issue",
+                canonical="family_use",
+                signal_type=SIGNAL_AUDIENCE,
+                route_to=[ROUTE_CONSUMER_PROFILE],
+                evidence="daughter",
+                display_en="Family Use",
+            ),
+            _phase4_stored_occurrence(
+                label_type="highlight",
+                canonical="purchase_reason",
+                signal_type=SIGNAL_PURCHASE_MOTIVATION,
+                route_to=[ROUTE_PURCHASE_MOTIVES],
+                evidence="I bought them for spring creeks",
+                display_en="Spring Creek Purchase",
+            ),
+            _phase4_stored_occurrence(
+                label_type="issue",
+                canonical="traction_expectation",
+                signal_type=SIGNAL_EXPECTATION,
+                route_to=[ROUTE_UNMET_NEEDS],
+                evidence="I expected more traction on slick rocks",
+                display_en="Traction Expectation",
+            ),
+            _phase4_stored_occurrence(
+                label_type="issue",
+                canonical="missing_wader_hanger",
+                signal_type=SIGNAL_ACCESSORY_ONLY,
+                route_to=[ROUTE_AUDIT_FILTER],
+                evidence="hanger works great",
+                display_en="Missing Wader Hanger",
+            ),
+            _phase4_stored_occurrence(
+                label_type="highlight",
+                canonical="overall_satisfied",
+                signal_type=SIGNAL_AUDIT_ONLY,
+                route_to=[ROUTE_AUDIT_FILTER],
+                evidence="Overall good",
+                display_en="Overall Satisfied",
+                audit_only=True,
+            ),
+            _phase4_stored_occurrence(
+                label_type="issue",
+                canonical="water_leaks_through",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="missing seam evidence",
+                display_en="Water Leaks Through",
+                display_allowed=False,
+            ),
+        ],
+    }
+
+
+def _phase4_flag(**overrides: Any) -> ReviewSignalFrontstageFlag:
+    payload = {"enabled": True, "session_ids": ("phase4-session",)}
+    payload.update(overrides)
+    return ReviewSignalFrontstageFlag(**payload)
+
+
+def _phase4_raw_value(headers: list[str], row: list[str], header: str) -> str:
+    return str(row[headers.index(header)])
+
+
+def _phase4_four_path_snapshot(comments: list[dict[str, Any]]) -> dict[str, Any]:
+    issue_rows = build_specific_issue_rows(comments, locale="en", limit=20)
+    highlight_rows = build_customer_highlight_rows(comments, locale="en", limit=20)
+    raw_headers, raw_rows = _build_comments_data(comments, include_specific_issue=True)
+    return {
+        "top_issue_keys": [str(row.get("canonical_issue_key") or "") for row in issue_rows],
+        "top_highlight_keys": [str(row.get("canonical_highlight_key") or "") for row in highlight_rows],
+        "detail_issue_tags": [customer_issue_tags_for_comment(comment, locale="en") for comment in comments],
+        "detail_highlight_tags": [customer_highlight_tags_for_comment(comment, locale="en") for comment in comments],
+        "raw_issue_labels": [_phase4_raw_value(raw_headers, row, "客户痛点") for row in raw_rows],
+        "raw_issue_evidence": [_phase4_raw_value(raw_headers, row, "痛点证据") for row in raw_rows],
+        "raw_highlight_labels": [_phase4_raw_value(raw_headers, row, "客户亮点") for row in raw_rows],
+        "raw_highlight_evidence": [_phase4_raw_value(raw_headers, row, "亮点证据") for row in raw_rows],
+        "single_issue_keys": [
+            str(occurrence.get("canonical_issue_key") or "")
+            for comment in comments
+            for occurrence in iter_specific_issue_occurrences(comment, locale="en")
+        ],
+        "single_highlight_keys": [
+            str(occurrence.get("canonical_highlight_key") or "")
+            for comment in comments
+            for occurrence in iter_customer_highlight_occurrences(comment, locale="en")
+        ],
+        "single_issue_evidence_verified": [
+            bool(occurrence.get("verified_evidence"))
+            for comment in comments
+            for occurrence in iter_specific_issue_occurrences(comment, locale="en")
+        ],
+        "single_highlight_evidence_verified": [
+            bool(occurrence.get("verified_evidence"))
+            for comment in comments
+            for occurrence in iter_customer_highlight_occurrences(comment, locale="en")
+        ],
+    }
+
+
+def _phase4_path_check(name: str, actual: Any, expected: Any) -> dict[str, Any]:
+    return {
+        "name": name,
+        "status": "PASS" if actual == expected else "FAIL",
+        "actual": actual,
+        "expected": expected,
+    }
+
+
+def _build_phase4_implementation_artifact() -> dict[str, Any]:
+    stored_shadow = _phase4_stored_shadow_with_mixed_occurrences()
+    flag_off_review = _phase4_review_with_v1()
+    flag_off_model = build_review_signal_frontstage_read_model(
+        flag_off_review,
+        flag=ReviewSignalFrontstageFlag(),
+        stored_shadow=stored_shadow,
+    )
+    flag_off_snapshot = _phase4_four_path_snapshot(
+        [attach_review_signal_frontstage_adapter_for_local_test(flag_off_review, flag_off_model)]
+    )
+
+    guarded_review = _phase4_review_without_v1()
+    guarded_model = build_review_signal_frontstage_read_model(
+        guarded_review,
+        flag=_phase4_flag(),
+        stored_shadow=stored_shadow,
+    )
+    guarded_snapshot = _phase4_four_path_snapshot(
+        [attach_review_signal_frontstage_adapter_for_local_test(guarded_review, guarded_model)]
+    )
+
+    invalid_flag = resolve_review_signal_frontstage_config({"enabled": "maybe"}, source="replay").effective_feature_flag
+    fail_closed_cases = [
+        (
+            "invalid_config",
+            invalid_flag,
+            stored_shadow,
+            "config_invalid",
+        ),
+        (
+            "scope_miss",
+            ReviewSignalFrontstageFlag(enabled=True, session_ids=("other-session",)),
+            stored_shadow,
+            "scope_not_matched",
+        ),
+        ("stored_shadow_missing", _phase4_flag(), None, "review_signal_stored_shadow_missing"),
+        ("rollback", _phase4_flag(rollback_session_ids=("phase4-session",)), stored_shadow, "rollback_session"),
+        ("kill_switch", _phase4_flag(kill_switch=True), stored_shadow, "kill_switch_global"),
+    ]
+    fail_closed_models = [
+        build_review_signal_frontstage_read_model(
+            {**flag_off_review, "id": case_name},
+            flag=flag,
+            stored_shadow=case_stored_shadow,
+        )
+        for case_name, flag, case_stored_shadow, _expected_reason in fail_closed_cases
+    ]
+
+    checks = [
+        _phase4_path_check("flag_off_read_path", flag_off_model["read_path"], READ_PATH_V1_CURRENT),
+        _phase4_path_check("flag_off_top10_v1_issue", flag_off_snapshot["top_issue_keys"], ["zipper_fails"]),
+        _phase4_path_check("guarded_read_path", guarded_model["read_path"], READ_PATH_REVIEW_SIGNAL_STORED_SHADOW),
+        _phase4_path_check(
+            "guarded_selected_keys",
+            frontstage_keys_from_review_signal_read_model(guarded_model),
+            {"issue": ["water_leaks_through"], "highlight": ["comfortable_to_wear"]},
+        ),
+        _phase4_path_check("results_top10_issue", guarded_snapshot["top_issue_keys"], ["water_leaks_through"]),
+        _phase4_path_check(
+            "results_top10_label",
+            guarded_snapshot["top_highlight_keys"],
+            ["comfortable_to_wear"],
+        ),
+        _phase4_path_check(
+            "single_review_detail_issue_chips",
+            guarded_snapshot["detail_issue_tags"],
+            [["Water Leaks Through"]],
+        ),
+        _phase4_path_check(
+            "single_review_detail_label_chips",
+            guarded_snapshot["detail_highlight_tags"],
+            [["Comfortable To Wear"]],
+        ),
+        _phase4_path_check("raw_review_export_issue", guarded_snapshot["raw_issue_labels"], ["Water Leaks Through"]),
+        _phase4_path_check(
+            "raw_review_export_label",
+            guarded_snapshot["raw_highlight_labels"],
+            ["Comfortable To Wear"],
+        ),
+        _phase4_path_check(
+            "single_tag_download_issue_keys",
+            guarded_snapshot["single_issue_keys"],
+            ["water_leaks_through"],
+        ),
+        _phase4_path_check(
+            "single_tag_download_label_keys",
+            guarded_snapshot["single_highlight_keys"],
+            ["comfortable_to_wear"],
+        ),
+        _phase4_path_check(
+            "single_tag_download_verified_evidence",
+            guarded_snapshot["single_issue_evidence_verified"] + guarded_snapshot["single_highlight_evidence_verified"],
+            [True, True],
+        ),
+        _phase4_path_check(
+            "fail_closed_reasons",
+            [model["fallback_reason"] for model in fail_closed_models],
+            [expected_reason for *_rest, expected_reason in fail_closed_cases],
+        ),
+    ]
+    compatibility = {
+        "status": "PASS" if all(check["status"] == "PASS" for check in checks) else "REVIEW_NEEDED",
+        "checks": checks,
+        "paths": {
+            "results_top10": {
+                "status": "PASS"
+                if guarded_snapshot["top_issue_keys"] == ["water_leaks_through"]
+                and guarded_snapshot["top_highlight_keys"] == ["comfortable_to_wear"]
+                else "FAIL",
+                "snapshot": {
+                    "issue_keys": guarded_snapshot["top_issue_keys"],
+                    "label_keys": guarded_snapshot["top_highlight_keys"],
+                },
+            },
+            "single_review_detail": {
+                "status": "PASS"
+                if guarded_snapshot["detail_issue_tags"] == [["Water Leaks Through"]]
+                and guarded_snapshot["detail_highlight_tags"] == [["Comfortable To Wear"]]
+                else "FAIL",
+                "snapshot": {
+                    "issue_chips": guarded_snapshot["detail_issue_tags"],
+                    "label_chips": guarded_snapshot["detail_highlight_tags"],
+                },
+            },
+            "raw_review_export": {
+                "status": "PASS"
+                if guarded_snapshot["raw_issue_labels"] == ["Water Leaks Through"]
+                and guarded_snapshot["raw_highlight_labels"] == ["Comfortable To Wear"]
+                else "FAIL",
+                "snapshot": {
+                    "issue_labels": guarded_snapshot["raw_issue_labels"],
+                    "issue_evidence": guarded_snapshot["raw_issue_evidence"],
+                    "label_labels": guarded_snapshot["raw_highlight_labels"],
+                    "label_evidence": guarded_snapshot["raw_highlight_evidence"],
+                },
+            },
+            "single_tag_download": {
+                "status": "PASS"
+                if guarded_snapshot["single_issue_keys"] == ["water_leaks_through"]
+                and guarded_snapshot["single_highlight_keys"] == ["comfortable_to_wear"]
+                and guarded_snapshot["single_issue_evidence_verified"] == [True]
+                and guarded_snapshot["single_highlight_evidence_verified"] == [True]
+                else "FAIL",
+                "snapshot": {
+                    "issue_keys": guarded_snapshot["single_issue_keys"],
+                    "label_keys": guarded_snapshot["single_highlight_keys"],
+                    "issue_evidence_verified": guarded_snapshot["single_issue_evidence_verified"],
+                    "label_evidence_verified": guarded_snapshot["single_highlight_evidence_verified"],
+                },
+            },
+        },
+        "local_test_adapter": {
+            "used": True,
+            "production_connected": False,
+            "adapter_field": "customer_label_v2_frontstage_read_model",
+        },
+    }
+    read_models = [flag_off_model, guarded_model, *fail_closed_models]
+    return build_review_signal_phase4_implementation_artifact(
+        read_models,
+        four_path_compatibility=compatibility,
+    )
+
+
 def main() -> None:
     fixture = _load_json(FIXTURE_PATH)
     results = [
@@ -1325,6 +1776,7 @@ def main() -> None:
     )
     fixture_results = _build_fixture_results(fixture, results)
     routing_table = _build_routing_table_artifact(fixture)
+    phase4_implementation = _build_phase4_implementation_artifact()
 
     _write_json(SUMMARY_PATH, summary)
     _write_json(ROUTING_TABLE_PATH, routing_table)
@@ -1332,10 +1784,12 @@ def main() -> None:
     _write_json(GOLD_ASSIMILATION_PATH, gold_assimilation)
     _write_json(ROUTING_PROJECTION_PATH, routing_projection)
     _write_json(FP_FN_COMPARISON_PATH, fp_fn_comparison)
+    _write_json(PHASE4_IMPLEMENTATION_PATH, phase4_implementation)
     print(
         json.dumps(
             {
                 "status": summary["status"],
+                "phase4_implementation_status": phase4_implementation["status"],
                 "review_count": summary["review_count"],
                 "signal_count": summary["signal_count"],
                 "local_gold_review_count": gold_assimilation["review_count"],
@@ -1345,6 +1799,7 @@ def main() -> None:
                 ],
                 "unresolved_mapping_count": fp_fn_comparison["unresolved_mappings"]["unresolved_mapping_count"],
                 "artifact_dir": str(ARTIFACT_DIR.relative_to(ROOT)),
+                "phase4_artifact": str(PHASE4_IMPLEMENTATION_PATH.relative_to(ROOT)),
             },
             ensure_ascii=False,
             sort_keys=True,
