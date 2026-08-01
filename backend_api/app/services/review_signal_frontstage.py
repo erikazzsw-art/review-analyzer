@@ -582,12 +582,65 @@ def _display_gate_blocks(
     return False, start, end, evidence_verified
 
 
+_NEGATED_BREATHABLE_PATTERNS = [
+    r"\bnot\s+(?:very\s+|the\s+most\s+)?breathable\b",
+    r"\b(?:do|does|did|don['’]?t|doesn['’]?t|didn['’]?t|cannot|can['’]?t)\s+(?:not\s+)?breath(?:e|es|ed|ing)?\b",
+    r"\b(?:isn['’]?t|aren['’]?t|wasn['’]?t|weren['’]?t)\s+(?:very\s+|the\s+most\s+)?breathable\b",
+    r"\b(?:less|least)\s+breathable\b",
+]
+
+_POSITIVE_BREATHABLE_PATTERNS = [
+    r"\b(?:very|really|super|so|quite|pretty|extremely|highly)\s+breathable\b",
+    r"\b(?:is|are|was|were|be|being)\s+(?:very\s+|really\s+|super\s+|so\s+|quite\s+|pretty\s+|extremely\s+|highly\s+)?breathable\b",
+    r"\bbreathable\s+(?:due\s+to|because|since|and)\b",
+]
+
+
+def _is_positive_breathable_evidence(evidence_span: str, content: str) -> bool:
+    evidence = str(evidence_span or "").strip()
+    if not evidence:
+        return False
+    context = evidence
+    if content:
+        start, end, located = _locate_evidence(content, evidence)
+        if located:
+            left = (
+                max(
+                    content.rfind(".", 0, start),
+                    content.rfind("!", 0, start),
+                    content.rfind("?", 0, start),
+                    content.rfind("\n", 0, start),
+                )
+                + 1
+            )
+            right_candidates = [
+                index
+                for index in (
+                    content.find(".", end),
+                    content.find("!", end),
+                    content.find("?", end),
+                    content.find("\n", end),
+                )
+                if index >= 0
+            ]
+            right = min(right_candidates) if right_candidates else len(content)
+            context = content[left:right]
+    if not re.search(r"\bbreath(?:able|e|es|ed|ing)\b", context, re.IGNORECASE):
+        return False
+    if any(re.search(pattern, context, re.IGNORECASE) for pattern in _NEGATED_BREATHABLE_PATTERNS):
+        return False
+    return any(re.search(pattern, context, re.IGNORECASE) for pattern in _POSITIVE_BREATHABLE_PATTERNS)
+
+
 def _review_signal_route_gate_reasons(
     *,
     label_type: str,
     signal_type: str,
     route_to: list[str],
     occurrence: dict[str, Any],
+    canonical: str = "",
+    evidence_span: str = "",
+    content: str = "",
 ) -> list[str]:
     reasons: list[str] = []
     if signal_type not in PRODUCT_SIGNAL_TYPES:
@@ -608,6 +661,11 @@ def _review_signal_route_gate_reasons(
             reasons.append("blocked_by_display_gate")
     else:
         reasons.append("blocked_by_display_gate")
+    if label_type == "issue" and canonical == "not_breathable" and _is_positive_breathable_evidence(
+        evidence_span,
+        content,
+    ):
+        reasons.append("blocked_by_semantic_polarity")
     return reasons
 
 
@@ -634,6 +692,9 @@ def _normalize_frontstage_occurrence(
         signal_type=signal_type,
         route_to=route_to,
         occurrence=occurrence,
+        canonical=canonical,
+        evidence_span=evidence_span,
+        content=content,
     )
     display_blocks, start, end, evidence_verified = _display_gate_blocks(
         occurrence,
@@ -824,6 +885,7 @@ def _zero_observability() -> dict[str, Any]:
         "blocked_by_audit_only": 0,
         "blocked_by_non_product_signal": 0,
         "blocked_by_display_gate": 0,
+        "blocked_by_semantic_polarity": 0,
         "rollback_selected": 0,
         "kill_switch_selected": 0,
         "issue_occurrence_count": 0,
@@ -956,17 +1018,26 @@ def attach_review_signal_frontstage_adapter_for_local_test(
         if not isinstance(occurrence, dict):
             continue
         adapted = copy.deepcopy(occurrence)
-        adapted["source_version"] = LOCAL_TEST_ADAPTER_READ_PATH
+        adapted["source_version"] = READ_PATH_REVIEW_SIGNAL_STORED_SHADOW
         adapted["source"] = "review_signal_stored_shadow_local_test_adapter"
         adapted_occurrences.append(adapted)
 
-    decorated[LOCAL_TEST_CUSTOMER_LABEL_V2_READ_MODEL_FIELD] = {
+    review_signal_read_model = {
         "schema_version": REVIEW_SIGNAL_FRONTSTAGE_READ_PATH_SCHEMA_VERSION,
-        "read_path": LOCAL_TEST_ADAPTER_READ_PATH,
-        "review_signal_read_path": READ_PATH_REVIEW_SIGNAL_STORED_SHADOW,
+        "read_path": READ_PATH_REVIEW_SIGNAL_STORED_SHADOW,
         "review_signal_local_test_adapter": True,
         "sub_category": read_model.get("sub_category"),
         "frontstage_occurrences": adapted_occurrences,
+    }
+    decorated[REVIEW_SIGNAL_FRONTSTAGE_READ_MODEL_FIELD] = review_signal_read_model
+    decorated[LOCAL_TEST_CUSTOMER_LABEL_V2_READ_MODEL_FIELD] = {
+        **review_signal_read_model,
+        "read_path": LOCAL_TEST_ADAPTER_READ_PATH,
+        "review_signal_read_path": READ_PATH_REVIEW_SIGNAL_STORED_SHADOW,
+        "frontstage_occurrences": [
+            {**copy.deepcopy(occurrence), "source_version": LOCAL_TEST_ADAPTER_READ_PATH}
+            for occurrence in adapted_occurrences
+        ],
     }
     return decorated
 

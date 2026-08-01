@@ -3663,13 +3663,31 @@ def _is_frontstage_countable_occurrence(occurrence: dict[str, Any]) -> bool:
     )
 
 
+_CUSTOMER_LABEL_V2_FRONTSTAGE_READ_MODEL_FIELD = "customer_label_v2_frontstage_read_model"
+_CUSTOMER_LABEL_V2_READ_PATH = "v2_shadow"
+_REVIEW_SIGNAL_FRONTSTAGE_READ_MODEL_FIELD = "review_signal_frontstage_read_model"
+_REVIEW_SIGNAL_READ_PATH = "review_signal_stored_shadow"
+
+
 def _read_model_from_comment(comment: dict[str, Any]) -> dict[str, Any] | None:
-    model = comment.get("customer_label_v2_frontstage_read_model")
-    if isinstance(model, dict):
-        return model
+    for field in (
+        _REVIEW_SIGNAL_FRONTSTAGE_READ_MODEL_FIELD,
+        _CUSTOMER_LABEL_V2_FRONTSTAGE_READ_MODEL_FIELD,
+    ):
+        model = comment.get(field)
+        if isinstance(model, dict):
+            return model
     aj = coerce_aspects_json(comment.get("aspects_json"))
-    model = aj.get("customer_label_v2_frontstage_read_model") if aj else None
-    return model if isinstance(model, dict) else None
+    if not aj:
+        return None
+    for field in (
+        _REVIEW_SIGNAL_FRONTSTAGE_READ_MODEL_FIELD,
+        _CUSTOMER_LABEL_V2_FRONTSTAGE_READ_MODEL_FIELD,
+    ):
+        model = aj.get(field)
+        if isinstance(model, dict):
+            return model
+    return None
 
 
 def _confidence_label_from_v2(value: Any) -> str:
@@ -3684,6 +3702,99 @@ def _confidence_label_from_v2(value: Any) -> str:
     return "low"
 
 
+def _selected_review_signal_occurrences(
+    comment: dict[str, Any],
+    read_model: dict[str, Any],
+    *,
+    label_type: str,
+    locale: str,
+) -> list[dict[str, Any]]:
+    content = str(comment.get("content") or "").strip()
+    selected: list[dict[str, Any]] = []
+    for occurrence in read_model.get("frontstage_occurrences") or []:
+        if not isinstance(occurrence, dict):
+            continue
+        if str(occurrence.get("source_version") or "") != _REVIEW_SIGNAL_READ_PATH:
+            continue
+        if str(occurrence.get("label_type") or "") != label_type:
+            continue
+        canonical = str(occurrence.get("canonical_label_key") or "").strip()
+        if not canonical or canonical.startswith("candidate:"):
+            continue
+
+        aspect_key = str(occurrence.get("aspect_key") or "").strip()
+        dimension_en, dimension_zh = _aspect_dimension_labels({}, aspect_key)
+        display_en = str(occurrence.get("display_label_en") or occurrence.get("label") or canonical).strip()
+        display_zh = str(occurrence.get("display_label_zh") or display_en).strip()
+        label = _display_label_for_locale(display_en, display_zh, locale) or canonical
+        evidence_span = str(occurrence.get("evidence_span") or "").strip()
+        located = _locate_evidence_span(content, evidence_span)
+        evidence_verified = bool(
+            occurrence.get("evidence_verified", occurrence.get("verified_evidence"))
+            and located["evidence_verified"]
+        )
+        common = {
+            "comment_id": comment.get("id") if comment.get("id") is not None else occurrence.get("review_id"),
+            "content": content,
+            "type": label_type,
+            "raw_label": label,
+            "canonical_label_key": canonical,
+            "display_label_en": display_en,
+            "display_label_zh": display_zh,
+            "aspect_key": aspect_key,
+            "dimension": _display_label_for_locale(dimension_en, dimension_zh, locale),
+            "dimension_en": dimension_en,
+            "dimension_zh": dimension_zh,
+            "sub_category": str(read_model.get("sub_category") or comment.get("sub_category") or comment.get("category") or ""),
+            "evidence_span": str(located["evidence_span"] or evidence_span),
+            "evidence_start": located["evidence_start"],
+            "evidence_end": located["evidence_end"],
+            "confidence": _confidence_label_from_v2(occurrence.get("confidence")),
+            "source": str(occurrence.get("source") or "review_signal_stored_shadow"),
+            "source_detail": "review_signal_frontstage_read_path",
+            "evidence_verified": evidence_verified,
+            "verified_evidence": evidence_verified,
+            "cluster_propagated": False,
+            "schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
+            "ruleset_version": CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
+            "display_allowed": True,
+            "aspect_allowed": bool(occurrence.get("aspect_allowed", True)),
+            "context_allowed": bool(occurrence.get("context_allowed", True)),
+            "source_review_allowed": True,
+            "legacy_fallback": False,
+            "maturity_allowed": bool(occurrence.get("maturity_allowed", True)),
+            "source_version": _REVIEW_SIGNAL_READ_PATH,
+            "review_signal_read_path": True,
+            "review_signal_read_path_schema_version": str(read_model.get("schema_version") or ""),
+        }
+        if label_type == "issue":
+            projected = {
+                **common,
+                "specific_issue": label,
+                "specific_issue_en": display_en,
+                "specific_issue_zh": display_zh,
+                "canonical_issue_key": canonical,
+                "issue_confidence": common["confidence"],
+                "issue_source": common["source_detail"],
+                "specific_issue_raw": label,
+            }
+        else:
+            projected = {
+                **common,
+                "customer_highlight": label,
+                "customer_highlight_en": display_en,
+                "customer_highlight_zh": display_zh,
+                "canonical_highlight_key": canonical,
+                "highlight_confidence": common["confidence"],
+                "highlight_source": common["source_detail"],
+                "customer_highlight_raw": label,
+                "highlight_display_allowed": True,
+            }
+        if _is_frontstage_countable_occurrence(projected):
+            selected.append(projected)
+    return selected
+
+
 def _selected_customer_label_v2_occurrences(
     comment: dict[str, Any],
     *,
@@ -3691,7 +3802,17 @@ def _selected_customer_label_v2_occurrences(
     locale: str,
 ) -> list[dict[str, Any]] | None:
     read_model = _read_model_from_comment(comment)
-    if not read_model or str(read_model.get("read_path") or "") != "v2_shadow":
+    if not read_model:
+        return None
+    read_path = str(read_model.get("read_path") or "")
+    if read_path == _REVIEW_SIGNAL_READ_PATH:
+        return _selected_review_signal_occurrences(
+            comment,
+            read_model,
+            label_type=label_type,
+            locale=locale,
+        )
+    if read_path != _CUSTOMER_LABEL_V2_READ_PATH:
         return None
 
     content = str(comment.get("content") or "").strip()
@@ -3699,7 +3820,7 @@ def _selected_customer_label_v2_occurrences(
     for occurrence in read_model.get("frontstage_occurrences") or []:
         if not isinstance(occurrence, dict):
             continue
-        if str(occurrence.get("source_version") or "") != "v2_shadow":
+        if str(occurrence.get("source_version") or "") != _CUSTOMER_LABEL_V2_READ_PATH:
             continue
         if str(occurrence.get("label_type") or "") != label_type:
             continue
@@ -3746,7 +3867,7 @@ def _selected_customer_label_v2_occurrences(
             inherited_cluster_propagated=False,
         )
         if projected and _is_frontstage_countable_occurrence(projected):
-            projected["source_version"] = "v2_shadow"
+            projected["source_version"] = _CUSTOMER_LABEL_V2_READ_PATH
             projected["customer_label_v2_read_path"] = True
             projected["customer_label_v2_read_path_schema_version"] = str(read_model.get("schema_version") or "")
             selected.append(projected)

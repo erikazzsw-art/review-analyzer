@@ -426,3 +426,178 @@ def test_single_tag_download_excludes_candidate_non_product_and_unverified_rows(
     assert "overall_satisfied" not in all_single_keys
     assert snapshot["single_issue_evidence_verified"] == [True]
     assert snapshot["single_highlight_evidence_verified"] == [True]
+
+
+def test_not_breathable_positive_breathable_evidence_is_blocked_without_dropping_real_sweat_issue() -> None:
+    review = {
+        "id": "phase4-review-breathable-boundary",
+        "session_id": "phase4-session",
+        "product_id": "phase4-product",
+        "content": (
+            "SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT. "
+            "I started to break a sweat after hiking."
+        ),
+        "rating": 4,
+        "category": "outdoor",
+        "sub_category": "waders",
+    }
+    stored_shadow = {
+        "frontstage_occurrences": [
+            _stored_occurrence(
+                label_type="issue",
+                canonical="not_breathable",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT",
+                display_en="Not Breathable",
+                aspect_key="breathability",
+            ),
+            _stored_occurrence(
+                label_type="issue",
+                canonical="not_breathable",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="started to break a sweat",
+                display_en="Not Breathable",
+                aspect_key="breathability",
+            ),
+        ]
+    }
+    model = build_review_signal_frontstage_read_model(review, flag=_phase4_flag(), stored_shadow=stored_shadow)
+    decorated = attach_review_signal_frontstage_adapter_for_local_test(review, model)
+    snapshot = _four_path_snapshot([decorated])
+    observability = build_review_signal_frontstage_observability_snapshot([model])
+
+    assert model["read_path"] == READ_PATH_REVIEW_SIGNAL_STORED_SHADOW
+    assert model["review_signal_stored_shadow"]["selected_occurrence_count"] == 1
+    assert model["review_signal_stored_shadow"]["blocked_occurrence_count"] == 1
+    assert model["review_signal_stored_shadow"]["blocked_occurrences"][0]["blocked_reasons"] == [
+        "blocked_by_semantic_polarity"
+    ]
+    assert snapshot["top_issue_keys"] == ["not_breathable"]
+    assert snapshot["raw_issue_evidence"] == ["started to break a sweat"]
+    assert snapshot["single_issue_keys"] == ["not_breathable"]
+    assert observability["counters"]["blocked_by_semantic_polarity"] == 1
+    assert observability["counters"]["routing_leakage_count"] == 0
+
+
+def test_review_signal_selected_occurrences_feed_detail_export_and_single_tag_without_canonical_drift() -> None:
+    cases = [
+        (
+            "coverage-runs-small",
+            "These waders are too small for me.",
+            _stored_occurrence(
+                label_type="issue",
+                canonical="runs_too_small",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="too small",
+                display_en="Runs Too Small",
+                aspect_key="size_fit",
+            ),
+        ),
+        (
+            "coverage-pocket",
+            "The front pocket leaks whenever I kneel.",
+            _stored_occurrence(
+                label_type="issue",
+                canonical="pocket_not_waterproof",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="front pocket leaks",
+                display_en="Pocket Not Waterproof",
+                aspect_key="waterproof",
+            ),
+        ),
+        (
+            "coverage-sweat",
+            "I started to break a sweat after hiking.",
+            _stored_occurrence(
+                label_type="issue",
+                canonical="not_breathable",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="started to break a sweat",
+                display_en="Not Breathable",
+                aspect_key="breathability",
+            ),
+        ),
+        (
+            "coverage-great-quality",
+            "Great quality from the first trip.",
+            _stored_occurrence(
+                label_type="highlight",
+                canonical="feels_well_made",
+                signal_type=SIGNAL_PRODUCT_POSITIVE,
+                route_to=["user_experience.positive", ROUTE_CUSTOMER_LABEL_CANDIDATE],
+                evidence="Great quality",
+                display_en="Feels Well Made",
+                aspect_key="build_quality",
+            ),
+        ),
+        (
+            "coverage-good-quality",
+            "Good quality and sturdy straps.",
+            _stored_occurrence(
+                label_type="highlight",
+                canonical="feels_well_made",
+                signal_type=SIGNAL_PRODUCT_POSITIVE,
+                route_to=["user_experience.positive", ROUTE_CUSTOMER_LABEL_CANDIDATE],
+                evidence="Good quality",
+                display_en="Feels Well Made",
+                aspect_key="build_quality",
+            ),
+        ),
+    ]
+    reviews = [
+        {
+            "id": review_id,
+            "session_id": "phase4-session",
+            "product_id": "phase4-product",
+            "content": content,
+            "rating": 4,
+            "category": "outdoor",
+            "sub_category": "waders",
+        }
+        for review_id, content, _occurrence in cases
+    ]
+    models = [
+        build_review_signal_frontstage_read_model(
+            review,
+            flag=_phase4_flag(),
+            stored_shadow={"frontstage_occurrences": [occurrence]},
+        )
+        for review, (_review_id, _content, occurrence) in zip(reviews, cases)
+    ]
+    decorated = [
+        attach_review_signal_frontstage_adapter_for_local_test(review, model)
+        for review, model in zip(reviews, models)
+    ]
+    snapshot = _four_path_snapshot(decorated)
+    selected_count = sum(len(model["frontstage_occurrences"]) for model in models)
+    single_issue_occurrences = [
+        occurrence
+        for comment in decorated
+        for occurrence in iter_specific_issue_occurrences(comment, locale="en")
+    ]
+    single_highlight_occurrences = [
+        occurrence
+        for comment in decorated
+        for occurrence in iter_customer_highlight_occurrences(comment, locale="en")
+    ]
+
+    assert selected_count == 5
+    assert len(single_issue_occurrences) + len(single_highlight_occurrences) == selected_count
+    assert snapshot["detail_issue_tags"] == [["Runs Too Small"], ["Pocket Not Waterproof"], ["Not Breathable"], [], []]
+    assert snapshot["detail_highlight_tags"] == [[], [], [], ["Feels Well Made"], ["Feels Well Made"]]
+    assert snapshot["raw_issue_labels"] == ["Runs Too Small", "Pocket Not Waterproof", "Not Breathable", "", ""]
+    assert snapshot["raw_issue_evidence"] == ["too small", "front pocket leaks", "started to break a sweat", "", ""]
+    assert snapshot["raw_highlight_labels"] == ["", "", "", "Feels Well Made", "Feels Well Made"]
+    assert snapshot["raw_highlight_evidence"] == ["", "", "", "Great quality", "Good quality"]
+    assert snapshot["single_issue_keys"] == ["runs_too_small", "pocket_not_waterproof", "not_breathable"]
+    assert snapshot["single_highlight_keys"] == ["feels_well_made", "feels_well_made"]
+    assert "good_material_quality" not in snapshot["top_highlight_keys"]
+    assert "good_material_quality" not in snapshot["single_highlight_keys"]
+    assert build_customer_highlight_rows(decorated, locale="en", limit=20)[0]["canonical_highlight_key"] == (
+        "feels_well_made"
+    )
