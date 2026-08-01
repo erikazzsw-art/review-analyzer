@@ -4346,6 +4346,8 @@ def decorate_comment_customer_labels(
     v2_shadow_result: dict[str, Any] | None = None,
     v2_label_candidates: list[dict[str, Any]] | None = None,
     v2_llm_output: str | dict[str, Any] | list[dict[str, Any]] | None = None,
+    review_signal_frontstage_flag: Any | None = None,
+    review_signal_stored_shadow: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     decorated = dict(comment)
     aj = coerce_aspects_json(decorated.get("aspects_json"))
@@ -4394,6 +4396,17 @@ def decorate_comment_customer_labels(
             shadow_result=v2_shadow_result,
             label_candidates=v2_label_candidates,
             llm_output=v2_llm_output,
+            locale=locale,
+        )
+    if review_signal_frontstage_flag is not None:
+        from backend_api.app.services.review_signal_frontstage import (
+            attach_review_signal_frontstage_read_model,
+        )
+
+        decorated = attach_review_signal_frontstage_read_model(
+            decorated,
+            flag=review_signal_frontstage_flag,
+            stored_shadow=review_signal_stored_shadow,
             locale=locale,
         )
     decorated["customer_issue_tags"] = ", ".join(customer_issue_tags_for_comment(decorated, locale=locale))

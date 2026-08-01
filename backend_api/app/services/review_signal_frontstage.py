@@ -35,6 +35,7 @@ LOCAL_TEST_CUSTOMER_LABEL_V2_READ_MODEL_FIELD = "customer_label_v2_frontstage_re
 READ_PATH_V1_CURRENT = "v1_current"
 READ_PATH_REVIEW_SIGNAL_STORED_SHADOW = "review_signal_stored_shadow"
 LOCAL_TEST_ADAPTER_READ_PATH = "v2_shadow"
+PRODUCTION_FRONTSTAGE_ALLOWED_SUB_CATEGORIES = ("waders",)
 
 FRONTSTAGE_CONSUMERS = (
     "results_top10",
@@ -254,6 +255,11 @@ def review_signal_frontstage_flag_from_env(env: Mapping[str, str] | None = None)
     return resolve_review_signal_frontstage_config(env, source="env").effective_feature_flag
 
 
+def review_signal_frontstage_cache_key(flag: ReviewSignalFrontstageFlag | None = None) -> str:
+    payload = (flag or review_signal_frontstage_flag_from_env()).as_dict()
+    return json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
+
+
 def _session_id_for_review(review: dict[str, Any]) -> str:
     for field in ("session_id", "analysis_session_id", "upload_session_id"):
         value = review.get(field)
@@ -271,6 +277,16 @@ def _scope_context(review: dict[str, Any]) -> dict[str, str]:
         "sub_category": sub_category,
         "category_sub_category": f"{category}/{sub_category}",
     }
+
+
+def _production_frontstage_scope_allowed(review: dict[str, Any], flag: ReviewSignalFrontstageFlag) -> bool:
+    context = _scope_context(review)
+    session_values = {str(value).strip() for value in flag.session_ids if str(value).strip()}
+    return bool(
+        context["session_id"]
+        and context["session_id"] in session_values
+        and context["sub_category"] in set(PRODUCTION_FRONTSTAGE_ALLOWED_SUB_CATEGORIES)
+    )
 
 
 def _normalized_scope_values(values: tuple[Any, ...]) -> set[str]:
@@ -794,6 +810,7 @@ def build_review_signal_frontstage_read_model(
     flag: ReviewSignalFrontstageFlag | None = None,
     stored_shadow: dict[str, Any] | None = None,
     locale: str = "en",
+    production_frontstage_connected: bool = False,
 ) -> dict[str, Any]:
     flag = flag or ReviewSignalFrontstageFlag()
     review_copy = copy.deepcopy(review)
@@ -824,7 +841,14 @@ def build_review_signal_frontstage_read_model(
                 elif blocked is not None:
                     blocked_occurrences.append(blocked)
 
+    if selected_read_path == READ_PATH_REVIEW_SIGNAL_STORED_SHADOW and not selected_occurrences:
+        selected_read_path = READ_PATH_V1_CURRENT
+        fallback_reason = "review_signal_no_readable_occurrences"
+
     keys = _occurrence_keys(selected_occurrences)
+    frontstage_connected = bool(
+        production_frontstage_connected and selected_read_path == READ_PATH_REVIEW_SIGNAL_STORED_SHADOW
+    )
     return {
         "schema_version": REVIEW_SIGNAL_FRONTSTAGE_READ_PATH_SCHEMA_VERSION,
         "review_id": review_copy.get("id"),
@@ -864,8 +888,8 @@ def build_review_signal_frontstage_read_model(
         "safety": {
             **review_signal_shadow_safety_flags(),
             "runtime_shadow_called": False,
-            "production_frontstage_connected": False,
-            "user_visible_results_changed": False,
+            "production_frontstage_connected": frontstage_connected,
+            "user_visible_results_changed": frontstage_connected,
         },
     }
 
@@ -879,6 +903,7 @@ def _zero_observability() -> dict[str, Any]:
         "blocked_by_flag_off": 0,
         "blocked_by_scope": 0,
         "blocked_by_no_stored_shadow": 0,
+        "blocked_by_no_readable_data": 0,
         "blocked_by_config_invalid": 0,
         "blocked_by_mapping_unresolved": 0,
         "blocked_by_candidate_key": 0,
@@ -924,6 +949,8 @@ def build_review_signal_frontstage_observability_snapshot(
             counters["blocked_by_scope"] += 1
         if fallback_reason == "review_signal_stored_shadow_missing":
             counters["blocked_by_no_stored_shadow"] += 1
+        if fallback_reason == "review_signal_no_readable_occurrences":
+            counters["blocked_by_no_readable_data"] += 1
         if fallback_reason == "config_invalid":
             counters["blocked_by_config_invalid"] += 1
         if bool(flag_decision.get("rollback_active")) or fallback_reason.startswith("rollback_"):
@@ -996,6 +1023,33 @@ def build_review_signal_frontstage_observability_snapshot(
             "user_visible_results_changed": False,
         },
     }
+
+
+def attach_review_signal_frontstage_read_model(
+    review: dict[str, Any],
+    *,
+    flag: ReviewSignalFrontstageFlag | None = None,
+    stored_shadow: dict[str, Any] | None = None,
+    locale: str = "en",
+    include_v1_fallback: bool = False,
+) -> dict[str, Any]:
+    decorated = dict(review)
+    flag = flag or review_signal_frontstage_flag_from_env()
+    if not flag.enabled and not include_v1_fallback:
+        return decorated
+    if not include_v1_fallback and not _production_frontstage_scope_allowed(decorated, flag):
+        return decorated
+
+    read_model = build_review_signal_frontstage_read_model(
+        decorated,
+        flag=flag,
+        stored_shadow=stored_shadow,
+        locale=locale,
+        production_frontstage_connected=True,
+    )
+    if include_v1_fallback or read_model.get("read_path") == READ_PATH_REVIEW_SIGNAL_STORED_SHADOW:
+        decorated[REVIEW_SIGNAL_FRONTSTAGE_READ_MODEL_FIELD] = read_model
+    return decorated
 
 
 def attach_review_signal_frontstage_adapter_for_local_test(

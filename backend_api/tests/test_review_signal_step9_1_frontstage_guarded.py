@@ -7,6 +7,7 @@ from backend_api.app.services.review_signal_frontstage import (
     READ_PATH_V1_CURRENT,
     ReviewSignalFrontstageFlag,
     attach_review_signal_frontstage_adapter_for_local_test,
+    attach_review_signal_frontstage_read_model,
     build_review_signal_frontstage_observability_snapshot,
     build_review_signal_frontstage_read_model,
     frontstage_keys_from_review_signal_read_model,
@@ -601,3 +602,108 @@ def test_review_signal_selected_occurrences_feed_detail_export_and_single_tag_wi
     assert build_customer_highlight_rows(decorated, locale="en", limit=20)[0]["canonical_highlight_key"] == (
         "feels_well_made"
     )
+
+
+def test_production_attach_requires_waders_session_scope_and_feeds_existing_four_paths() -> None:
+    review = _review_without_v1()
+    decorated = attach_review_signal_frontstage_read_model(
+        review,
+        flag=_phase4_flag(),
+        stored_shadow=_stored_shadow_with_mixed_occurrences(),
+        locale="en",
+    )
+    snapshot = _four_path_snapshot([decorated])
+    read_model = decorated["review_signal_frontstage_read_model"]
+
+    assert read_model["read_path"] == READ_PATH_REVIEW_SIGNAL_STORED_SHADOW
+    assert read_model["safety"]["production_frontstage_connected"] is True
+    assert read_model["safety"]["user_visible_results_changed"] is True
+    assert snapshot["top_issue_keys"] == ["water_leaks_through"]
+    assert snapshot["top_highlight_keys"] == ["comfortable_to_wear"]
+    assert snapshot["detail_issue_tags"] == [["Water Leaks Through"]]
+    assert snapshot["detail_highlight_tags"] == [["Comfortable To Wear"]]
+    assert snapshot["raw_issue_labels"] == ["Water Leaks Through"]
+    assert snapshot["raw_highlight_labels"] == ["Comfortable To Wear"]
+    assert snapshot["single_issue_keys"] == ["water_leaks_through"]
+    assert snapshot["single_highlight_keys"] == ["comfortable_to_wear"]
+
+
+def test_production_attach_does_not_expand_to_non_waders_or_non_session_scoped_flags() -> None:
+    stored_shadow = _stored_shadow_with_mixed_occurrences()
+    non_waders = {**_review_without_v1(), "sub_category": "tents"}
+    no_session_scope_flag = ReviewSignalFrontstageFlag(
+        enabled=True,
+        category_sub_categories=("outdoor/waders",),
+    )
+
+    assert "review_signal_frontstage_read_model" not in attach_review_signal_frontstage_read_model(
+        non_waders,
+        flag=_phase4_flag(),
+        stored_shadow=stored_shadow,
+    )
+    assert "review_signal_frontstage_read_model" not in attach_review_signal_frontstage_read_model(
+        _review_without_v1(),
+        flag=no_session_scope_flag,
+        stored_shadow=stored_shadow,
+    )
+
+
+def test_production_attach_falls_back_to_v1_when_stored_shadow_has_no_readable_occurrences() -> None:
+    review = _review_with_v1()
+    stored_shadow = {
+        "frontstage_occurrences": [
+            _stored_occurrence(
+                label_type="issue",
+                canonical="candidate:boot_seam_leak",
+                signal_type=SIGNAL_PRODUCT_NEGATIVE,
+                route_to=["user_experience.negative", ROUTE_CUSTOMER_ISSUE_CANDIDATE],
+                evidence="zipper broke",
+                display_en="Boot Seam Leak",
+            ),
+            _stored_occurrence(
+                label_type="highlight",
+                canonical="overall_satisfied",
+                signal_type=SIGNAL_AUDIT_ONLY,
+                route_to=[ROUTE_AUDIT_FILTER],
+                evidence="zipper broke",
+                display_en="Overall Satisfied",
+                audit_only=True,
+            ),
+        ]
+    }
+    read_model = build_review_signal_frontstage_read_model(review, flag=_phase4_flag(), stored_shadow=stored_shadow)
+    decorated = attach_review_signal_frontstage_read_model(
+        review,
+        flag=_phase4_flag(),
+        stored_shadow=stored_shadow,
+    )
+    snapshot = _four_path_snapshot([decorated])
+    observability = build_review_signal_frontstage_observability_snapshot([read_model])
+
+    assert read_model["read_path"] == READ_PATH_V1_CURRENT
+    assert read_model["fallback_reason"] == "review_signal_no_readable_occurrences"
+    assert observability["counters"]["blocked_by_no_readable_data"] == 1
+    assert "review_signal_frontstage_read_model" not in decorated
+    assert snapshot["top_issue_keys"] == ["zipper_fails"]
+    assert snapshot["detail_issue_tags"] == [["Zipper Fails"]]
+    assert snapshot["raw_issue_labels"] == ["Zipper Fails"]
+    assert snapshot["single_issue_keys"] == ["zipper_fails"]
+
+
+def test_production_attach_rollback_and_kill_switch_restore_old_path() -> None:
+    review = _review_with_v1()
+    baseline = _four_path_snapshot([review])
+    stored_shadow = _stored_shadow_with_mixed_occurrences()
+
+    for flag in (
+        _phase4_flag(rollback_session_ids=("phase4-session",)),
+        _phase4_flag(kill_switch=True),
+    ):
+        decorated = attach_review_signal_frontstage_read_model(
+            review,
+            flag=flag,
+            stored_shadow=stored_shadow,
+        )
+
+        assert "review_signal_frontstage_read_model" not in decorated
+        assert _four_path_snapshot([decorated]) == baseline

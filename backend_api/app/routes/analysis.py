@@ -26,6 +26,10 @@ from backend_api.app.services.customer_label_v2_frontstage import (
     customer_label_v2_frontstage_flag_from_env,
 )
 from backend_api.app.services.locale import get_analysis_locale
+from backend_api.app.services.review_signal_frontstage import (
+    review_signal_frontstage_cache_key,
+    review_signal_frontstage_flag_from_env,
+)
 from backend_api.app.services.specific_issue import (
     CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
     CUSTOMER_LABEL_RULESET_VERSION,
@@ -56,6 +60,17 @@ _LOGGER = logging.getLogger(__name__)
 _INSIGHTS_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 _INSIGHTS_CACHE_TTL = 60 * 30  # 30 分钟
 _INSIGHTS_CACHE_MAX = 256
+
+
+def _frontstage_read_path_cache_key(
+    *,
+    customer_label_v2_flag: Any,
+    review_signal_flag: Any,
+) -> str:
+    return (
+        f"customer_label_v2={customer_label_v2_frontstage_cache_key(customer_label_v2_flag)}|"
+        f"review_signal={review_signal_frontstage_cache_key(review_signal_flag)}"
+    )
 
 
 def _cache_key(
@@ -115,11 +130,17 @@ def get_session_results(
 
     locale = get_analysis_locale(request)
     v2_frontstage_flag = customer_label_v2_frontstage_flag_from_env()
+    review_signal_frontstage_flag = review_signal_frontstage_flag_from_env()
     comments = get_comments(user_id, session_id=session_id)
     for c in comments:
         c.pop("embedding", None)
     comments = [
-        decorate_comment_customer_labels(c, locale=locale, v2_frontstage_flag=v2_frontstage_flag)
+        decorate_comment_customer_labels(
+            c,
+            locale=locale,
+            v2_frontstage_flag=v2_frontstage_flag,
+            review_signal_frontstage_flag=review_signal_frontstage_flag,
+        )
         for c in comments
     ]
     context = _build_results_context(session)
@@ -165,6 +186,7 @@ def get_aggregated_results(
 
     locale = get_analysis_locale(request)
     v2_frontstage_flag = customer_label_v2_frontstage_flag_from_env()
+    review_signal_frontstage_flag = review_signal_frontstage_flag_from_env()
     comments = get_comments(
         user_id,
         product_id=product_id,
@@ -177,7 +199,12 @@ def get_aggregated_results(
     for c in comments:
         c.pop("embedding", None)
     comments = [
-        decorate_comment_customer_labels(c, locale=locale, v2_frontstage_flag=v2_frontstage_flag)
+        decorate_comment_customer_labels(
+            c,
+            locale=locale,
+            v2_frontstage_flag=v2_frontstage_flag,
+            review_signal_frontstage_flag=review_signal_frontstage_flag,
+        )
         for c in comments
     ]
 
@@ -196,7 +223,10 @@ def get_aggregated_results(
         modules_raw = _cached_build_insights(
             user_id, product_id, start_iso or "", end_iso or "", comment_ids, comments, context,
             locale=locale,
-            frontstage_read_path_key=customer_label_v2_frontstage_cache_key(v2_frontstage_flag),
+            frontstage_read_path_key=_frontstage_read_path_cache_key(
+                customer_label_v2_flag=v2_frontstage_flag,
+                review_signal_flag=review_signal_frontstage_flag,
+            ),
         )
         if modules_raw:
             try:

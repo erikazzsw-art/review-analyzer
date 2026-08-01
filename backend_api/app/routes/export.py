@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 
 from backend_api.app.deps import get_current_user
 from backend_api.app.services.customer_label_v2_frontstage import customer_label_v2_frontstage_flag_from_env
+from backend_api.app.services.review_signal_frontstage import review_signal_frontstage_flag_from_env
 from backend_api.app.services.specific_issue import (
     build_customer_highlight_rows,
     build_specific_issue_rows,
@@ -42,8 +43,14 @@ def export_module_xlsx(
     for c in comments:
         c.pop("embedding", None)
     v2_frontstage_flag = customer_label_v2_frontstage_flag_from_env()
+    review_signal_frontstage_flag = review_signal_frontstage_flag_from_env()
     comments = [
-        decorate_comment_customer_labels(c, locale=locale, v2_frontstage_flag=v2_frontstage_flag)
+        decorate_comment_customer_labels(
+            c,
+            locale=locale,
+            v2_frontstage_flag=v2_frontstage_flag,
+            review_signal_frontstage_flag=review_signal_frontstage_flag,
+        )
         for c in comments
     ]
 

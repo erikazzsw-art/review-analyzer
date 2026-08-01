@@ -10,6 +10,7 @@ import xlsxwriter
 
 from backend_api.app.services.category_grouper import CATEGORY_ZH_LABELS
 from backend_api.app.services.customer_label_v2_frontstage import customer_label_v2_frontstage_flag_from_env
+from backend_api.app.services.review_signal_frontstage import review_signal_frontstage_flag_from_env
 from backend_api.app.services.specific_issue import (
     build_customer_highlight_rows,
     build_specific_issue_rows,
@@ -264,8 +265,14 @@ def _build_comments_data(
 
 def _decorate_comments_for_export(comments: list[dict]) -> list[dict]:
     flag = customer_label_v2_frontstage_flag_from_env()
+    review_signal_flag = review_signal_frontstage_flag_from_env()
     return [
-        decorate_comment_customer_labels(comment, locale="zh", v2_frontstage_flag=flag)
+        decorate_comment_customer_labels(
+            comment,
+            locale="zh",
+            v2_frontstage_flag=flag,
+            review_signal_frontstage_flag=review_signal_flag,
+        )
         for comment in comments
     ]
 
