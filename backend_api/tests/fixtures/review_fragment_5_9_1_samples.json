@@ -1,0 +1,336 @@
+{
+  "schema_version": "review-fragment-samples.5.9.1",
+  "contract_version": "review-fragment-contract.5.9.1",
+  "scope": "5.9.1 fragment-level output contract samples for Erika manual acceptance",
+  "source_notes": [
+    "Samples reuse existing AirPods and waders fixture-style reviews as human-readable contract examples.",
+    "This fixture is not connected to active upload, results, export, or frontend paths."
+  ],
+  "samples": [
+    {
+      "id": "airpods-erika-long-review",
+      "product_id": "AIRPODS-step9-1-fixture",
+      "category": "electronics",
+      "sub_category": "earbuds",
+      "rating": 5,
+      "content": "I bought these AirPods for my daughter, my son, and other kids in the family. She wears them around the house, during homework, and for dance practice. They are comfortable, the fit is secure, and battery life is great. I bought them because I wanted noise cancellation for a loud environment. I expected stronger noise cancellation in loud rooms, but the noise cancellation is poor, the charging indicator is unclear, and they still fall out when she dances. Compared with AirPod 3 and 2nd generation Pros, these are simpler for kids. The case cover is cute. Overall good.",
+      "fragments": [
+        {
+          "fragment_text": "my daughter",
+          "module": "consumer_profile",
+          "aspect_key": "audience_child",
+          "polarity": "neutral",
+          "evidence_span": "daughter",
+          "confidence": 0.94,
+          "current_product_scope": "non_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "She wears them around the house",
+          "module": "consumer_profile",
+          "aspect_key": "usage_location_home",
+          "polarity": "neutral",
+          "evidence_span": "around the house",
+          "confidence": 0.92,
+          "current_product_scope": "non_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "They are comfortable",
+          "module": "product_highlight",
+          "aspect_key": "comfort",
+          "polarity": "positive",
+          "evidence_span": "comfortable",
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the fit is secure",
+          "module": "product_highlight",
+          "aspect_key": "fit_stability",
+          "polarity": "positive",
+          "evidence_span": "fit is secure",
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "battery life is great",
+          "module": "product_highlight",
+          "aspect_key": "battery_life",
+          "polarity": "positive",
+          "evidence_span": "battery life is great",
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "I bought them because I wanted noise cancellation for a loud environment",
+          "module": "purchase_motive",
+          "aspect_key": "noise_cancellation_for_loud_environment",
+          "polarity": "neutral",
+          "evidence_span": "wanted noise cancellation for a loud environment",
+          "confidence": 0.93,
+          "current_product_scope": "current_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "I expected stronger noise cancellation in loud rooms",
+          "module": "unmet_need",
+          "aspect_key": "stronger_noise_cancellation",
+          "polarity": "negative",
+          "evidence_span": "expected stronger noise cancellation",
+          "confidence": 0.91,
+          "current_product_scope": "current_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the noise cancellation is poor",
+          "module": "product_issue",
+          "aspect_key": "noise_cancellation",
+          "polarity": "negative",
+          "evidence_span": "noise cancellation is poor",
+          "confidence": 0.95,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the charging indicator is unclear",
+          "module": "product_issue",
+          "aspect_key": "charging_indicator",
+          "polarity": "negative",
+          "evidence_span": "charging indicator is unclear",
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "they still fall out when she dances",
+          "module": "product_issue",
+          "aspect_key": "fit_stability",
+          "polarity": "negative",
+          "evidence_span": "fall out when she dances",
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "Compared with AirPod 3 and 2nd generation Pros",
+          "module": "comparison_or_other_product",
+          "aspect_key": "other_airpods_comparison",
+          "polarity": "mixed",
+          "evidence_span": "AirPod 3 and 2nd generation Pros",
+          "confidence": 0.91,
+          "current_product_scope": "other_product",
+          "can_aggregate": false,
+          "reject_reason": "other_product_or_competitor"
+        },
+        {
+          "fragment_text": "The case cover is cute",
+          "module": "accessory_or_bundle",
+          "aspect_key": "case_cover_appearance",
+          "polarity": "positive",
+          "evidence_span": "case cover is cute",
+          "confidence": 0.86,
+          "current_product_scope": "accessory_only",
+          "can_aggregate": false,
+          "reject_reason": "accessory_only"
+        },
+        {
+          "fragment_text": "Overall good",
+          "module": "audit_filter",
+          "aspect_key": null,
+          "polarity": "neutral",
+          "evidence_span": "Overall good",
+          "confidence": 0.72,
+          "current_product_scope": "unclear",
+          "can_aggregate": false,
+          "reject_reason": "fragment_too_vague"
+        }
+      ]
+    },
+    {
+      "id": "waders-phone-case-boundary",
+      "product_id": "TIDEWE-WD001",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "rating": 3,
+      "content": "The waders are fine, the measurements are very accurate. However, the waterproof phone case is not at all what it shows as. It is not waterproof; water leaks in very easily but does not come out, leaving my phone completely submerged under water.",
+      "fragments": [
+        {
+          "fragment_text": "The waders are fine",
+          "module": "product_highlight",
+          "aspect_key": "overall_satisfied",
+          "polarity": "positive",
+          "evidence_span": "waders are fine",
+          "confidence": 0.82,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the measurements are very accurate",
+          "module": "product_highlight",
+          "aspect_key": "fits_as_expected",
+          "polarity": "positive",
+          "evidence_span": "measurements are very accurate",
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the waterproof phone case is not at all what it shows as",
+          "module": "accessory_or_bundle",
+          "aspect_key": "phone_case_not_as_advertised",
+          "polarity": "negative",
+          "evidence_span": "phone case is not at all what it shows as",
+          "confidence": 0.91,
+          "current_product_scope": "accessory_only",
+          "can_aggregate": false,
+          "reject_reason": "accessory_only"
+        },
+        {
+          "fragment_text": "It is not waterproof; water leaks in very easily",
+          "module": "accessory_or_bundle",
+          "aspect_key": "phone_case_not_waterproof",
+          "polarity": "negative",
+          "evidence_span": "water leaks in very easily",
+          "confidence": 0.92,
+          "current_product_scope": "accessory_only",
+          "can_aggregate": false,
+          "reject_reason": "accessory_only"
+        }
+      ]
+    },
+    {
+      "id": "waders-old-products-and-value",
+      "product_id": "TIDEWE-WD001",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "rating": 5,
+      "content": "Bought as a gift for my boyfriend who has had numerous pairs of waders in the past that have leaked. These were affordable and have not caused him any issues in the handful of times that he's used them.",
+      "fragments": [
+        {
+          "fragment_text": "Bought as a gift for my boyfriend",
+          "module": "consumer_profile",
+          "aspect_key": "gift_recipient_partner",
+          "polarity": "neutral",
+          "evidence_span": "gift for my boyfriend",
+          "confidence": 0.9,
+          "current_product_scope": "non_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "numerous pairs of waders in the past that have leaked",
+          "module": "comparison_or_other_product",
+          "aspect_key": "past_waders_leaked",
+          "polarity": "negative",
+          "evidence_span": "waders in the past that have leaked",
+          "confidence": 0.9,
+          "current_product_scope": "other_product",
+          "can_aggregate": false,
+          "reject_reason": "other_product_or_competitor"
+        },
+        {
+          "fragment_text": "These were affordable",
+          "module": "product_highlight",
+          "aspect_key": "good_value_for_the_price",
+          "polarity": "positive",
+          "evidence_span": "affordable",
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "have not caused him any issues",
+          "module": "audit_filter",
+          "aspect_key": null,
+          "polarity": "positive",
+          "evidence_span": "not caused him any issues",
+          "confidence": 0.75,
+          "current_product_scope": "unclear",
+          "can_aggregate": false,
+          "reject_reason": "fragment_too_vague"
+        }
+      ]
+    },
+    {
+      "id": "waders-waterproofing-only",
+      "product_id": "TIDEWE-WD001",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "rating": 1,
+      "content": "Don't buy these. I used them for 1 hour and they leaked like crazy. I couldn't return them since they were destroyed. These are horrible",
+      "fragments": [
+        {
+          "fragment_text": "I used them for 1 hour and they leaked like crazy",
+          "module": "product_issue",
+          "aspect_key": "water_leaks_through",
+          "polarity": "negative",
+          "evidence_span": "leaked like crazy",
+          "confidence": 0.96,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ]
+    },
+    {
+      "id": "waders-not-tested-boundary",
+      "product_id": "TIDEWE-WD001",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "rating": 4,
+      "content": "I am 6'3\" with size 13-wide feet, but I am quite slim. Getting anything to fit is difficult. I ordered the size 14 and was pleasantly surprised that my feet slid easily into the flexible bots and the inside leg length fitted me perfectly. I have not yet tested in water so cannot comment on its leakproof quality, but at this point I am pleased with the purchase.",
+      "fragments": [
+        {
+          "fragment_text": "my feet slid easily into the flexible bots and the inside leg length fitted me perfectly",
+          "module": "product_highlight",
+          "aspect_key": "fits_as_expected",
+          "polarity": "positive",
+          "evidence_span": "my feet slid easily into the flexible bots and the inside leg length fitted me perfectly",
+          "confidence": 0.95,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "I have not yet tested in water so cannot comment on its leakproof quality",
+          "module": "audit_filter",
+          "aspect_key": "keeps_water_out",
+          "polarity": "neutral",
+          "evidence_span": "not yet tested in water",
+          "confidence": 0.91,
+          "current_product_scope": "unclear",
+          "can_aggregate": false,
+          "reject_reason": "not_used_yet"
+        },
+        {
+          "fragment_text": "I am pleased with the purchase",
+          "module": "audit_filter",
+          "aspect_key": null,
+          "polarity": "positive",
+          "evidence_span": "pleased with the purchase",
+          "confidence": 0.78,
+          "current_product_scope": "unclear",
+          "can_aggregate": false,
+          "reject_reason": "fragment_too_vague"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # ClueAI V2 项目进度追踪
 
-> 最后更新：2026-08-01
+> 最后更新：2026-08-03
 > V2 目标：商业化升级，4 项核心功能跑通可运营  
 > 时间窗口：2026-05-26 ~ 2026-06-20（4 周）  
 > 每日投入：7 小时  
@@ -8,243 +8,72 @@
 
 ---
 
-### 2026-07-31 5.9.9 下一阶段：Step 9 Erika-led production truth check + v3-lite 并行边界
+## 当前标签系统进度（通俗版）
 
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-08-01 | step9.1-waders-session-scoped-frontstage-read-path | 按 Erika 授权完成 Step 9.1 review-signal guarded read path 的 production frontstage 代码级受控接入：`analysis` results、module export、full export 入口通过共用 decorator 读取 `review_signal_stored_shadow` 并附加 `review_signal_frontstage_read_model`；实际四路径继续复用 existing Customer Issue / Customer Label iterator。Production attach 代码级限制为显式 `session_id` 命中且 `sub_category=waders`，category/global/non-waders scope 均不接入；stored shadow missing 或 selected occurrence 为空自动回落旧路径；rollback / kill switch 不附加新 model。 | 聚焦 Step 9.1 `26 passed`；customer-label v2 frontstage/config/integration `23 passed`；export/analysis 相关 `16 passed`；ruff PASS；compileall PASS；`scripts/review_signal_step9_1_shadow_replay.py` 仍为 Phase 4 `PASS`。本轮未写 production DB、未 upload/reanalysis、未调用 LLM、未新增 credit 消耗、未 push/deploy、未扩大到其他类目或全站。新上传 waders session 的生产只读核验仍待 Erika 提供 session_id 后执行；建议先只用 `REVIEW_SIGNAL_FRONTSTAGE_SESSION_IDS=<new_session_id>` 启用，不用 category/global scope。 |
-| 2026-08-01 | step9.1-guarded-read-path-local-fix-replay | 完成 Step 9.1 Phase 5 三个 blocker 的本地最小修复：`review_signal_stored_shadow` gate 增加 `not_breathable` 正向 breathable 语义挡板；本地 adapter 暴露专用 `review_signal_frontstage_read_model`，旧 detail/export/single-tag helper 直接消费 guarded-selected occurrences，不再经 `v2_shadow` 二次投影；`feels_well_made` 在 review-signal 路径保持 canonical 不漂移。 | 聚焦 Step 9.1 `22 passed`；customer-label v2 兼容 `23 passed`；ruff/compileall PASS；`scripts/review_signal_step9_1_shadow_replay.py` 返回 Phase 4 `PASS`。session123 只读 replay：50 rows，selected `48` / single-tag `48`，`semantic_not_breathable_residual_count=0`、`selected_occurrence_to_single_tag_missing_count=0`、`canonical_mapping_drift_count=0`，四路径 PASS，hard thresholds 仍全 0。生产 frontstage 仍未连接，未 upload/reanalysis/credit/真实 LLM/feature flag/scope/rollback/kill switch/push/deploy；本轮无 production DB write，仅 read-only `SHOW/SELECT`，历史 authorized stored-shadow write 仍单独记录。因此仍不能灰度扩大，不能视为前台已接入。Artifact：`tmp/5.9.9-step9.1-review-signal-layer-minimal/review-signal-session123-local-guarded-four-path-replay.json`。 |
-| 2026-08-01 | step9.1-phase5-session123-stored-shadow-replay | 修正 Phase 5 production source：根目录 `.env` 的 `DATABASE_URL` 指向不含目标 session 的小库；同一 `.env` 的 `PROD_DATABASE_URL` 才包含 `session_id=123/124`。在 Erika 明确授权下，仅为 `session_id=123` / `TIDEWE-下水服-WD001` 生成并写入 `comments.aspects_json.review_signal_stored_shadow`，随后只读回读并按 one-by-one 完成四路径 guarded replay。 | 最终结论 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`。Phase 4 implementation `PASS`；50/50 shadow rows 可回读；candidate/frontstage `0`、routing leakage `0`、evidence-not-found frontstage `0`、runtime shadow generated `0`。四路径硬安全合同均 PASS，但 Results Top10 发现 `not_breathable` 语义 FP，详情/export/single-tag 有 13 条 selected coverage FN 与 2 条 canonical drift。Production frontstage/feature flag/scope 未开启，未 upload/reanalysis/credit/real LLM/rollback/kill switch/push/deploy，用户可见结果未改变。唯一 production write 是 Erika 授权的 shadow-only 写入，业务字段未改。Artifacts：`tmp/5.9.9-step9.1-review-signal-layer-minimal/review-signal-phase5-production-truth-check-replay.json` 及同目录 Phase 5.1-5.6 artifacts。 |
-| 2026-07-31 | step9-baseline-pack | Step 9 第一轮已完成 Erika-led production truth check 的旁路 baseline 与记录框架：确认 Step 7.8 仍为 `GO_READY_FOR_ERIKA_AUTHORIZED_GRAY_RUN_ONLY`、生产 feature flag 仍默认关闭、rollback/kill switch/observability/stored shadow contract 均有本地安全证据；明确四条必查路径为 Results Top10、single review detail、raw review export、single-tag download。 | 第一轮 baseline 曾为 `BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW`；在 session124 read-only observation 与 release-isolation incident 后，Step 9 当前正式结论已升级为 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`。报告：`docs/5.9.9-step9-erika-led-production-truth-check.md`；artifact：`tmp/5.9.9-step9-erika-led-production-truth-check/production-truth-check-observation.json`。 |
-| 2026-07-31 | erika-manual-checklist | 新增 Erika 参与 Step 9 的具体人工验收步骤：准备真实样本、通过正常产品界面上传/选择 session、检查 Results Top10、single review detail、raw review export、single-tag download，并给出 `PASS` / `FIX_REQUIRED_BEFORE_GRAY_EXPAND` / `ROLLBACK_REQUIRED` / `BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW` 之一。 | Checklist artifact：`tmp/5.9.9-step9-erika-led-production-truth-check/erika-production-truth-check-checklist.json`；同步写入 Step 9 文档第 10 节；仍未执行任何生产写路径或 feature flag/scope 操作。 |
-| 2026-07-31 | session124-intake | Erika 提供生产结果页 `session_id=124` / `product_id=TIDEWE-下水服-WD001`。Codex 仅做只读 HTTP HEAD 可达性检查，返回 `307 -> /login`，说明路由可达但页面内容需要 Erika 登录态，Codex 未观察页面内标签结果。 | Artifact：`tmp/5.9.9-step9-erika-led-production-truth-check/session124-intake.json`；状态 `PENDING_ERIKA_PAGE_REVIEW_OR_READONLY_AUTH`；未执行 production DB read/write、upload、reanalysis、credit、LLM、feature flag/scope、rollback、kill switch。 |
-| 2026-07-31 | session124-top10-xlsx-sidechannel | Erika 提供 `TIDEWE-下水服-WD001_401-450-customer label-customer issue.xlsx`，Codex 本地只读解析为 Positive/Negative Top10 汇总导出。Positive Top10 初看多数合理；Negative Top10 出现疑似 evidence/极性问题：`Missing Wader Hanger` evidence 为 hanger works great、`Pocket Not Waterproof` evidence 仅为 breast pocket、`Poor Traction` evidence 为 good traction、`Size/Fit Problem` 可能是用户下错尺码、`Breaks Easily` 混入 don’t tear easily。 | Codex preliminary conclusion `FIX_REQUIRED_BEFORE_GRAY_EXPAND_CANDIDATE`；后续结合 raw export、production read-only observation 与 release-isolation incident，Step 9 当前正式结论为 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`。Artifact：`tmp/5.9.9-step9-erika-led-production-truth-check/session124-top10-xlsx-sidechannel-review.json`。 |
-| 2026-07-31 | session124-readonly-observation | Erika 明确授权 Codex 对 `session_id=124` 做 production read-only observation，禁止写库/重分析/credit/LLM/feature flag/scope/rollback/kill switch。Codex 使用 read-only transaction 读取生产 session/job/comment/ledger/usage/review_pool，并与 Erika raw export 旁路对照。 | `REVIEW_NEEDED`：session/job/comment 基础健康多项 PASS，但存在 1 条 L1 cache row；Top10/raw export 发现多条用户可见疑似错标/极性问题：`Pocket Not Waterproof`、`Poor Traction`、`Missing Wader Hanger`、`Breaks Easily`、`Water Leaks Through` context 污染等。Artifact：`tmp/5.9.9-step9-erika-led-production-truth-check/session124-production-readonly-observation.json` 与 `session124-readonly/acceptance-summary.json`。 |
-| 2026-07-31 | release-isolation-incident | Erika 指出 v3-lite 没有严格发布隔离：`a238c22 Add v3-lite customer insights shadow` 已提交并 push 到 `develop`。Codex 本地确认 `.github/workflows/deploy.yml` 对 push `develop` 自动 deploy；公开 GitHub API 只读确认 `a238c22` 和后续包含它的 `006734c` Deploy to Production 均 `success`。Runtime import grep 只发现 tests/scripts import，未发现 backend/worker/frontstage runtime import。 | Step 9 正式结论升级为 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`：当前不建议 rollback/kill switch，但必须先恢复发布隔离、清理 develop/生产包里的 v3-lite，再继续 v2 gray expand 或声称 Step 9 PASS。Artifact：`tmp/5.9.9-step9-erika-led-production-truth-check/release-isolation-incident.json`。 |
-| 2026-07-31 | v3-lite-develop-cleanup | 按 Erika 授权执行非破坏性迁出：已创建并推送远端隔离分支 `feature/5.9.9-v3-lite-shadow-only` 保存 v3-lite 现状；develop cleanup 移除生产包内 tracked v3-lite 文件：`backend_api/app/services/customer_insights_v3_lite.py`、`backend_api/tests/test_customer_insights_v3_lite.py`、`scripts/customer_insights_v3_lite_shadow_replay.py`、`docs/5.9.9-v3-lite-customer-insights-shadow.md`。 | cleanup commit `ef38815c1910fd5e44d68af0652a61d5810fe843` 已完成；clean develop deploy run `30605986774` 已 `completed/success`。release-isolation blocker 已解除，但 Step 9 因 session124 标签质量修复仍保持 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`，不得扩大 v2 gray exposure。 |
-| 2026-07-31 | session124-label-fix-local-replay | 基于 session124 read-only observation 完成本地标签质量修复：收紧 `Pocket Not Waterproof`、`Missing Wader Hanger`、`Poor Traction`、`Breaks Easily`、`Water Leaks Through`、update-aware `Fits as Expected` / `Comfortable To Wear`、用户选错尺码 `Size/Fit Problem` policy，并对 backend/frontend raw export display-only 字段按 canonical 去重。 | Local artifact replay `tmp/5.9.9-step9-erika-led-production-truth-check/session124-readonly/session124-postfix-local-replay.json` 为 `PASS`：7 类 bad case residual 均为 `0`，raw export duplicate examples `0`。Focused backend `10 passed`，扩展 waders/v2 `44 passed`，session121/step4/export `9 passed`，frontend typecheck PASS；未触发 production upload/reanalysis/DB write/credit/LLM/feature flag/scope/rollback/kill switch。仍需部署后生产复验与 Erika 四路径人工验收，Step 9 当前结论保持 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`。 |
-| 2026-07-31 | session124-label-fix-deploy-followup | 首轮 session124 label fix commit `b4fe418` 已 push `develop`，CI run `30608120173` 与 production deploy run `30608120228` 均 `completed/success`；随后在既有 session124 read-only 授权边界内执行部署后只读复验。 | 原高置信 false positive 已明显下降：breast-pocket `Pocket Not Waterproof`、good-traction `Poor Traction`、negated `Breaks Easily`、`no water seeping in`、later-update positive conflict、用户下错尺码均不再前台展示；但复验暴露 `Missing Wader Hanger` 真缺失 rows 13/14 未召回，以及历史 L1 cache row `1`。已追加窄修复保留 `did not receive/get the hanger` 与 `came with a hanger. Well it did not`，focused session124 `13 passed`，扩展 customer-label/export `53 passed`，ruff/compileall/diff-check PASS；Step 9 仍为 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`，需 follow-up 部署后复验与 Erika 四路径人工验收。 |
-| 2026-07-31 | step9.1-review-signal-layer-plan | Erika 人工验证 5.9.9 后发现 Customer Issue / Customer Label 仍存在较多错标、漏标；核心原因不是单个标签规则缺失，而是上游未先区分“当前产品优缺点”与“人群特征、使用地点、行为、期望、购买动机、竞品/旧产品/配件/物流、泛泛情绪”等评论片段类型。 | 新增 `5.9.9 Step 9.1: Review Signal Layer for Customer Label Routing Fix` 作为 Step 9 `FIX_REQUIRED_BEFORE_GRAY_EXPAND` 后的必要修复项；上线前暂不启动完整 v3，不扩大 v2 frontstage scope。本轮先做 shadow-only / 本地测试修复：只有 `product_positive` 可成为 Customer Label 候选，`product_negative` 可成为 Customer Issue 候选，其他信号流向已有洞察模块或 audit/filter；任何前台切换、灰度接入、feature flag scope 另行授权。 |
-| 2026-07-31 | step9.1-review-signal-layer-minimal | 完成 Step 9.1 最小 `review_signals` shadow-only routing validation：新增片段级 schema/helper、本地 AirPods 长评核心片段 fixture、focused tests 与 replay artifact；只验证分流合同，不接前台、不替换现有 Customer Issue / Customer Label。 | `PASS_MINIMAL_SHADOW_ONLY`：`8 passed`，artifact `tmp/5.9.9-step9.1-review-signal-layer-minimal/` 生成 `review-signal-shadow-summary.json` / `review-signal-routing-table.json` / `review-signal-fixture-results.json`。summary 显示 `non_product_to_issue_label_leakage_count=0`，Customer Issue candidates 只来自 `product_negative`，Customer Label candidates 只来自 `product_positive`；未触发 production upload/reanalysis/DB write/credit/LLM/feature flag/frontstage 替换。 |
-| 2026-07-31 | step9.1-review-signal-phase2-3-local | 完成 Step 9.1 Phase 2-3 本地 gold assimilation + signal-derived routing projection + baseline vs signal shadow FP/FN 对比：从 Erika AirPods 截图、session120 human gold、session121 blind fixture、351-400 human gold、session124 readonly local copy、candidate-pool reviewed 本地样本整理 `36` 条 review / `145` 个 fragment。 | `REVIEW_NEEDED_LOCAL_SHADOW_ROUTING_PASS_MAPPING_UNRESOLVED`：routing leakage `0`，evidence not found `0`，routing FN `0`；baseline→signal shadow overall Customer Issue FP `9→0` / FN `2→0`，Customer Label FP `6→0` / FN `2→0`；但 unresolved mapping `14`（AirPods 无 canonical、`candidate:*` needs-new-label 等）仍需 label extraction / canonical mapping 评审。新增 artifact `review-signal-gold-assimilation.json` / `review-signal-routing-projection.json` / `review-signal-shadow-fp-fn-comparison.json`；focused Step 9.1 `16 passed`，replay/ruff/compileall PASS；未接 runtime/frontstage，未改用户可见结果，未执行 production upload/reanalysis/credit/LLM/feature flag/deploy。 |
-| 2026-07-31 | step9.1-post-push-mapping-phase4-plan | 完成 Step 9.1 post-push safety check、14 条 unresolved mapping 本地评审分类，并准备 Phase 4 frontstage guarded read path 设计方案。 | Safety artifact `review-signal-post-push-safety-check.json`：`0bd3f5f` 与当前 `99d37dd` 均因既有 `develop` push workflow 触发 CI + Deploy，4 个相关 run 全部 `completed/success`；runtime import grep 仅发现 tests/scripts，未发现 insight_engine/worker/frontstage 接入，未扩大 deploy scope。Mapping artifact `review-signal-unresolved-mapping-review.json`：`map_to_existing_canonical=4`、`propose_new_candidate_label=8`、`keep_audit_only=1`、`needs_erika_review=1`，`candidate:*` 不计 PASS。Phase 4 plan artifact `review-signal-phase4-guarded-read-path-plan.json` 为 `READY_FOR_ERIKA_REVIEW_DESIGN_ONLY`；仍未改 production runtime/frontstage/user-visible result，未写 production DB，未触发 upload/reanalysis/credit/LLM/feature flag。 |
-| 2026-07-31 | step9.1-erika-mapping-decisions-recorded | Erika 完成 14 条 unresolved mapping 决策：4 条批准映射到现有 canonical，`fit is secure` 不映射 `fits_as_expected`、改入 `candidate:secure_earbud_fit`，其余 proposed candidate labels 全部批准进入候选池，`Keep me dryish for the most part` 保持 audit-only。 | Mapping artifact 更新为 `ERIKA_DECISIONS_RECORDED_NOT_LABEL_EXTRACTION_PASS`：`map_to_existing_canonical=4`、`propose_new_candidate_label=9`、`keep_audit_only=1`、`needs_erika_review=0`；`candidate:*` 仍不是正式 canonical、不计 PASS、不进 frontstage。仅更新本地 artifact / docs / progress，未改 production runtime/frontstage/user-visible result，未写 production DB，未触发 upload/reanalysis/credit/LLM/feature flag。 |
-| 2026-07-31 | step9.1-phase4-readiness-prep | 完成 Step 9.1 Phase 4 / frontstage guarded read path readiness checklist 与 implementation prep，对齐既有 Phase 4 方案，不新建 Step 9.1.1：Customer Issue 只消费 `product_negative`，Customer Label 只消费 `product_positive`，`candidate:*` 与 `audit_only` 不进 frontstage，consumer_profile / purchase_motives / unmet_needs / audit.filter_only 路由隔离。 | Artifact `review-signal-phase4-readiness-checklist.json` 为 `READY_FOR_IMPLEMENTATION_AUTHORIZATION`；四条路径 Results Top10 / single review detail / raw export / single-tag download 的兼容策略、feature flag default-off、stored shadow only、rollback/kill switch、observability、fail-closed safety defaults 已明确。Phase 4 实现仍需 Erika 单独授权；Phase 5 production truth check replay 仍 blocked pending Phase 4 implementation pass + Erika auth。未改 production runtime/frontstage/user-visible result，未写 production DB，未触发 upload/reanalysis/credit/真实 LLM/feature flag，不 push/deploy。 |
-| 2026-07-31 | step9.1-phase4-guarded-read-path-implementation | 完成 Step 9.1 Phase 4 本地/测试版 guarded read path implementation，仍对齐既有 Step 9.1，不新建 Step 9.1.1：新增 `review_signal_frontstage.py` pure helper 与 focused tests；默认仍 `v1_current`，只有显式本地/测试 flag + scope match + stored shadow present 时选择 `review_signal_stored_shadow`；frontstage read 期间禁止 runtime shadow generation。 | Artifact `review-signal-phase4-implementation.json` 为 `PASS`：四条真实现有路径 Results Top10 / single review detail / raw review export / single-tag download 均 `PASS`；observability 显示 `selected_read_path.v1_current=6`、`selected_read_path.review_signal_stored_shadow=1`、`candidate_key_frontstage_count=0`、`routing_leakage_count=0`、`evidence_not_found_frontstage_count=0`、`runtime_shadow_generated_count=0`。`candidate:*`、`audit_only`、non-product signals、unresolved mapping、display gate failure 均 fail closed。Phase 5 仍 `BLOCKED_PENDING_ERIKA_PRODUCTION_AUTH`；未写 production DB，未触发 upload/reanalysis/credit/真实 LLM/production feature flag，未接 production frontstage，未改用户可见结果，未 push/deploy。 |
-| 2026-07-31 | step9.1-phase5-production-preflight-blocked | Erika 明确授权 Step 9.1 Phase 5 production read-only truth check replay；Codex 按 one-by-one 执行 Phase 5.0 / 5.1，并在 preflight 阶段停止。Phase 5.0 确认 Phase 4 implementation 为 `PASS`、授权仅限 read-only、历史目标样本为 `session_id=124` / `product_id=TIDEWE-下水服-WD001`。 | Phase 5.1 结论 `BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW`：review-signal feature flag 默认 off、scope 未扩大、rollback/kill switch 仅确认可用未执行；production DB 只读命令仅 `SELECT/SHOW`，但当前可用 DB 源中 `session_id=124` / comments 均为 `0`，且 `review_signal` stored shadow/read model 为 `0`。因此 Results Top10 / single review detail / raw export / single-tag download 四路径 production replay 未执行。Artifact：`review-signal-phase5-production-preflight.json`、`review-signal-phase5-production-truth-check-replay.json`；未写 production DB，未触发 upload/reanalysis/credit/真实 LLM/feature flag/scope/rollback/kill switch，不 push/deploy，不改用户可见结果。 |
-| 2026-07-31 | step9-freeze-gray-pass | Erika 明确：当前 Step 9 结论保持 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`；不再尝试将 Step 9 判为 `PASS`，不再推进 gray run、gray expand、production scope、feature flag 开启或灰度扩大准备。 | 当前 5.9.9 主线收敛为“修复人工验收发现的 Customer Issue / Customer Label 错标、漏标”。Step 7.8 go/no-go pack、rollback drill、kill switch drill 等灰度材料保留为历史安全资产，但在 Step 9.1 标签质量修复通过前不是执行主线。 |
-| 2026-07-31 | step9-next-task | 下一步从继续尝试 Step 9 PASS / gray expand，调整为 `5.9.9 Step 9.1: Customer Issue / Label Routing Accuracy Fix`。Step 1-8 的安全资产保留，Step 9 的真实人工验收结论保持 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`。 | 待 Step 9.1 修复并通过本地/测试样本验收后，才回到 Erika-led production truth check；生产 feature flag 当前仍默认关闭，且本轮不做灰度扩大准备。 |
-| 2026-07-31 | production-boundary | Step 9 第一轮目标是最小范围生产真值检查：生产健康 baseline、stored shadow/read model 可用性、受控 scope、四条前台路径、observability、rollback/kill switch。Codex 不主动触发生产上传、reanalysis、DB write、credit、真实 LLM 或 feature flag 开启，除非 Erika 对具体动作单独授权。 | 若 Erika 通过正常产品界面自行上传样本，Codex 只做旁路记录、归因、incident/gold/candidate pool 整理和必要的 rollback 建议。 |
-| 2026-07-31 | v3-lite-scope-correction | v3-lite 明确拆成两段：Part A 只做 `customer_insights` 兼容投影与 catalog backlog 草稿；Part B 新增可执行 catalog applicability gate，让 verifier / v3 shadow 能按标签适用的 category、sub_category、aspect 与反例判断 display/candidate/audit。两段都必须与 Step 9 发布隔离，不写 production DB、不接前台、不改变 prompt、不替换 `specific_issue.py`、不部署到生产。 | Part A 完成后只能算治理与迁移准备，不能宣称已真正降低扩品类手写规则；真正减负必须以 Part B 可执行门禁 + 新增普通 sub_category 接入演练通过为准。Step 9 如发现真实错标/漏标，优先记录为 incident/gold/candidate/backlog，而不是立即扩大 Python 规则。 |
-| 2026-07-31 | v3-lite-part-a-pass | 完成 v3-lite Part A shadow/read model：新增 `customer_insights` 兼容投影，从当前 verified source-review `display_occurrences` 单向生成未来结构；新增 catalog backlog draft，合并 waders 已验证标签、351-400 `needs_new_label`、candidate pool reviewed artifact，并对齐 `canonical_label_key`、`label_type`、`aspect_key`、`evidence_candidate`、`downgrade_reasons`、`maturity_level`、`review_status`、`catalog_action`。 | `PASS`：v3-lite summary P0=`0`，customer_insights coverage `216/216=100%`，catalog backlog draft `185` items（`keep_active=172`、`maturity_review=7`、`propose_new_label=6`），frontstage exclusion probe `audit_occurrences=2` / `candidate_pool_items=1` 且 projected layers 仅 `display_occurrences`。因 Step 9 发布隔离要求，tracked v3-lite 代码/报告已迁出 `develop`，保存在 `feature/5.9.9-v3-lite-shadow-only`；本地 artifact 目录 `tmp/5.9.9-v3-lite-customer-insights-shadow/` 未跟踪。 |
+### 当前结论
 
----
+5.9.8 和 5.9.9 的标签准确性路线已经归档为“走偏路线”。
 
-### 2026-07-31 5.9.9 Customer Label System v2 Step 8：Vector bad case memory lite
+它们做了很多安全验证和局部修补，但没有证明系统能稳定输出准确标签。Erika 人工审核后确认：新旧路径都存在质量问题，旧路径尤其容易出现错标、重复标签和无中生有。
 
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-31 | vector-bad-case-memory-lite | 新增 lightweight/local sparse token vector memory，将 audited bad case、gold regression、candidate pool reviewed result 变成本地可检索 memory；仅用于相似历史错例检索、candidate 聚类、审核排序、audit/debug report。 | Artifact `tmp/5.9.9-step8-vector-bad-case-memory-lite/vector-bad-case-memory-lite.json`：`status=PASS`、memory item count `81`，source counts：audited bad case `32`、candidate pool reviewed `14`、gold regression `35`。 |
-| 2026-07-31 | display-gate-guard | 明确 vector result 不能直接决定前台展示；display 仍由 evidence/context/aspect/maturity/feature flag gates 决定。新增 display gate probe 覆盖 no evidence 与 context blocked。 | `PASS`：no evidence display count `0`，context blocked display count `0`，`vector_result_decides_display=false`；focused Step 8 `5 passed`；Step 8 + shadow/frontstage focused `32 passed`；replay PASS，P0=`0`。报告：`docs/5.9.9-step8-vector-bad-case-memory-lite.md`。 |
+所以当前状态是：**标签系统未通过，暂停继续扩大使用范围。**
 
----
+### 现在不再继续做什么
 
-### 2026-07-31 5.9.9 Customer Label System v2 Step 7.8：go/no-go acceptance pack
+- 不再围绕单个类目长期手写规则。
+- 不再把旧标签路径当质量兜底。
+- 不再把“流程安全”当成“标签准确”。
+- 不再写很多天代码后才让 Erika 看结果。
+- 不再让没有原文依据的标签进入展示。
 
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-31 | go-no-go-pack | 新增灰度前 go/no-go acceptance pack，汇总 Step 6/7/7.5/7.6/7.7 的验收证据，输出 feature flag default-off、readiness dry-run、kill switch、rollback drill、stored shadow availability、L3-only gate、unknown/candidate/audit exclusion、replay P0、六个重点标签 FP/FN 九项 checklist。 | Artifact `tmp/5.9.9-step7.8-frontstage-go-no-go-acceptance-pack/go-no-go-acceptance-pack.json`：`status=PASS`、`go_no_go=GO_READY_FOR_ERIKA_AUTHORIZED_GRAY_RUN_ONLY`、`no_go_items=[]`、9 项 checklist 全 PASS。 |
-| 2026-07-31 | authorization-boundary | Acceptance pack 明确 `feature_flag_enabled_now=false`、`production_gray_run_executed=false`、`requires_erika_explicit_authorization=true`；本轮不构成生产开启授权。 | `PASS`：focused Step 7.8 `3 passed`；acceptance/runbook/config focused `12 passed`；replay PASS，P0=`0`；无 production upload / reanalysis / DB write / credit / 真实 LLM。报告：`docs/5.9.9-step7.8-frontstage-go-no-go-acceptance-pack.md`。 |
+### 新目标
 
----
+新目标是：**先把每条评论拆成有意义的原文片段，再把每个片段放进正确模块。**
 
-### 2026-07-31 5.9.9 Customer Label System v2 Step 7.7：gray-run runbook / rollback drill
+模块流向如下：
 
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-31 | gray-run-runbook | 新增只读灰度 runbook，定义从 `0_percent_baseline` 到 stored shadow audit、scoped session、scoped sub_category、scoped category observation 的步骤；明确所有生产操作必须由 Erika 单独授权，本轮未执行生产灰度、未开启生产 feature flag。 | `PASS`：runbook artifact `production_execution.executed=false`、`requires_erika_explicit_authorization=true`、`feature_flag_enabled_now=false`。 |
-| 2026-07-31 | rollback-drill | 新增本地 rollback drill helper，覆盖 baseline v2 selected、global rollback、scoped rollback、global kill switch、scoped kill switch、flag off；除 baseline 外全部回 `v1_current`。 | Artifact `tmp/5.9.9-step7.7-frontstage-gray-run-rollback-drill/gray-run-rollback-drill.json`：`status=PASS`、rollback drill case count `6`、selected read paths `v1_current=5` / `v2_shadow=1`、rollback selected `2`、kill switch selected `2`、violations `[]`。 |
-| 2026-07-31 | step7.7-replay-artifact | `scripts/customer_label_v2_waders_shadow_replay.py` 纳入 Step 7.7 artifact，同时保留 Step 6/7/7.5/7.6 artifacts、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：focused Step 7.7 `3 passed`；相邻 config/readiness/runbook `19 passed`；replay PASS，P0=`0`；无 production upload / reanalysis / DB write / credit / 真实 LLM。报告：`docs/5.9.9-step7.7-frontstage-gray-run-rollback-drill.md`。 |
+| 评论片段说的内容 | 应该流向 |
+|---|---|
+| 产品哪里好 | 用户体验：产品亮点 |
+| 产品哪里不好 | 用户体验：产品问题 |
+| 谁在用 | 消费者画像：人群特征 |
+| 用户怎么用 | 消费者画像：用户行为 |
+| 在哪里、什么时候、什么场景用 | 消费者画像：使用场景 |
+| 为什么买 | 购买动机 |
+| 想解决但没解决的事 | 未满足需求 |
+| 旧产品、竞品、替代品 | 竞品/旧产品对比 |
+| 物流、客服、退换货、配件 | 单独记录，不能混进当前产品亮点或问题 |
 
----
+### 当前进度
 
-### 2026-07-31 5.9.9 Customer Label System v2 Step 7.6：production config / kill switch / observability contract
+- 已确认旧 5.9.8 / 5.9.9 标签路线不能继续作为当前主线。
+- 已把走偏路线归档到 `docs/历史归档_已废弃模块文档.md`。
+- 已新增当前计划文档：`docs/当前标签系统计划_通俗版.md`。
+- 已确定后续必须让 Erika 高频验收，不能用测试结果替代标签质量判断。
 
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-31 | production-safe-config | 新增 Customer Label v2 frontstage production-safe config helper：集中解析 env/config，支持 enabled、session/category/sub_category/category-sub_category scope、fixture gate、enabled maturity、rollback、global/scoped kill switch；默认全部 off，runtime shadow env 默认 false。invalid config 会 fail closed 到 `v1_current` 并记录 validation errors。 | `PASS`：focused config tests 覆盖默认全关、完整 env/config 解析、global kill switch、scoped kill switch、invalid config fail closed。生产 feature flag 未开启。 |
-| 2026-07-31 | observability-snapshot | 新增 frontstage observability snapshot：`read_path_selected`、blocked reason counters、rollback/kill switch counters、selected v2 occurrence count、stored shadow availability、config validation errors。 | Artifact `tmp/5.9.9-step7.6-frontstage-config-kill-switch-observability/frontstage-config-kill-switch-observability.json`：`status=PASS`、case count `8`、selected read paths `v1_current=7` / `v2_shadow=1`、kill switch selected `2`、rollback selected `2`、config validation error count `2`、case expectation violations `[]`。 |
-| 2026-07-31 | step7.6-replay-artifact | `scripts/customer_label_v2_waders_shadow_replay.py` 纳入 Step 7.6 artifact，同时保留 Step 6/7/7.5 artifacts、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：Step 6/7/7.5/7.6 focused `33 passed`；replay PASS，P0=`0`；无 production upload / reanalysis / DB write / credit / 真实 LLM。报告：`docs/5.9.9-step7.6-frontstage-config-kill-switch-observability.md`。 |
+### 下一步
 
----
+1. 先选 1-3 条真实评论，做“原文片段 -> 模块 -> 标签”的人工样例。
+2. Erika 先审核样例理解是否正确。
+3. 样例通过后，再扩展到 10-20 条评论。
+4. 小样本通过后，才开始设计 AI 输出方式。
+5. 代码实现必须服务已经被 Erika 确认过的口径。
 
-### 2026-07-31 5.9.9 Customer Label System v2 Step 7.5：v2 frontstage read-path production readiness / dry-run pack
+### Erika 必须验收的点
 
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-31 | readiness-dry-run-helper | 新增 Customer Label v2 frontstage readiness dry-run report helper：输入本地 review payload + feature flag/env config，逐条输出 selected read path preview、flag/scope/fixture gate/maturity/stored shadow/rollback 检查结果。dry-run 强制 `allow_runtime_shadow=False`，只承认可消费 stored shadow/read model，不触发 runtime shadow、DB 写入、credit 或真实 LLM。 | `PASS`：focused tests 覆盖 flag off、scope miss、fixture gate fail、L0/L1/L2 maturity blocked、L3 waders + stored shadow、unknown/new label、no stored shadow、rollback。当前默认 frontstage 行为保持 v1/current；生产 feature flag 未开启。 |
-| 2026-07-31 | observability-contract | 新增 Step 7.5 observability/report contract：`v1_selected_count`、`v2_selected_count`、`blocked_by_flag_off`、`blocked_by_scope`、`blocked_by_fixture_gate`、`blocked_by_maturity`、`blocked_by_unknown_label`、`blocked_by_no_stored_shadow`、`rollback_selected_count`、`frontstage_occurrence_count`。 | Artifact `tmp/5.9.9-step7.5-frontstage-readiness-dry-run/frontstage-readiness-dry-run.json`：`status=PASS`、case count `10`、selected read paths `v1_current=8` / `v2_shadow=2`、case expectation violations `[]`。 |
-| 2026-07-31 | step7.5-replay-artifact | `scripts/customer_label_v2_waders_shadow_replay.py` 纳入 Step 7.5 dry-run artifact，同时保留 Step 6/7 read-path contract、actual consumer integration、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：focused Step 7.5 `10 passed`；Step 6/7/7.5 focused `27 passed`；related backend regression `69 passed`；waders/customer-label 目标回归 `125 passed`；replay PASS，P0=`0`；六个重点标签 FP/FN=0；frontend typecheck PASS；ruff PASS。报告：`docs/5.9.9-step7.5-frontstage-readiness-dry-run.md`。 |
-
----
-
-### 2026-07-30 标签本体 v3 执行策略：先 v3-lite 封顶，完整 v3 条件触发
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | strategy-decision | 标签本体 v3 不作为当前 5.9.9 的立即全量重构项。短期优先完成 5.9.9 frontstage read-path 生产化准备；v3 只先做 `v3-lite`，用于封顶规则债务、对齐未来 `customer_insights` 结构和 candidate pool/catalog backlog。 | 决策：完整 v3 按准备度触发，不按固定日期启动；最早在 5.9.9 灰度稳定 + v3-lite 跑过真实数据 + candidate pool 有稳定积累后，从 `outdoor/waders` L3 开始。 |
-| 2026-07-30 | workload-model | 完整 v3 的目标不是让每个新 sub_category 继续消耗 `2-3` 天工程，而是把新增类目的常态成本降到配置、抽检和审核。轻接入/L1-L2 目标 `0.5-1` 天；复用已有标签的小类目 `1-1.5` 天；需要 L3 精细标签的小类目 `1.5-3` 天，其主要成本应是 gold 复核，不是 Python 规则工程。 | 若完整 v3 后新增普通 sub_category 仍需 `2-3` 天工程，说明 v3 没有真正减负，只是把规则从代码搬到配置。 |
-| 2026-07-30 | debt-control | 立即停止把“每个新增标签都优先写进 `specific_issue.py`”作为默认策略；`specific_issue.py` 后续只允许 P0 级安全修补。新标签、边界不清标签、非 P0 recall gap 优先进入 candidate pool / catalog backlog；每次 P0 修补同步记录为未来 catalog rule / anti-example。 | 目标：避免等待完整 v3 期间规则继续失控；晚迁移不等于放任膨胀。 |
-| 2026-07-30 | v3-value | v3 的收益定位为长期减负：统一 `issue_tag` / `highlight_tag` / `customer_label` 为 `customer_insights`；把标签定义、同义词、反例、成熟度和 owner/version 从散落代码迁入可治理 catalog；复用 5.9.9 的 verifier、candidate pool、maturity gate 和 feature flag，不推翻已有安全边界。 | 短期完整 v3 会增加负担；只有 shadow-only、兼容投影、逐步 catalog 化时，才是在给系统长期减负。 |
-
----
-
-### 2026-07-30 5.9.9 Customer Label System v2 Step 7：v2 frontstage read-path actual consumer integration
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | actual-consumer-integration | 将 Step 6 read-path contract 接入实际 frontstage 读路径：Results page Top10、single review detail、raw review export、single-tag download 均优先消费 selected `customer_label_v2_frontstage_read_model.frontstage_occurrences`；默认无 selected v2 model 时继续 v1/current。新增 default-off env flag bridge，env runtime shadow 默认 `False`，支持读取本地/测试环境已存的 `customer_label_v2_shadow_result`。 | `PASS`：focused integration tests 覆盖 flag off 四路径保持 v1/current、flag on + L3 waders 四路径消费 verified v2 display、L0/L1/L2 maturity blocked、unknown/new label、rollback；无 production upload / reanalysis / DB write / credit / 真实 LLM。 |
-| 2026-07-30 | frontend-parser-alignment | 前端 `customerLabelOccurrences()` 优先解析 selected v2 read model，raw review XLSX、单评标签和 single-tag download 共享同一 parser；未命中 selected v2 时保持旧 `customer_label_occurrences` / aspect / legacy tag fallback。 | `PASS`：`npm run typecheck` 通过；前端只做 read-model 兼容，不新增前台开关、不开启生产展示替换。 |
-| 2026-07-30 | step7-replay-artifact | `scripts/customer_label_v2_waders_shadow_replay.py` 输出 Step 7 artifact，并新增 `frontstage-consumer-integration.json`，记录四条实际 consumer snapshot；保留 Step 6 contract case、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；`frontstage-consumer-integration.json` case count `5`、violations `0`；`frontstage-read-path-contract.json` case count `8`、violations `0`；六个重点标签 FP/FN=0。报告：`docs/5.9.9-step7-v2-frontstage-read-path-integration.md`。 |
-
----
-
-### 2026-07-30 5.9.9 Customer Label System v2 Step 6：v2 frontstage feature flag / read-path contract
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | frontstage-read-path-contract | 新增本地 pure helper `backend_api/app/services/customer_label_v2_frontstage.py`，定义 v2 shadow 到 frontstage 的 feature flag/read-path contract：默认 off；支持 per-session、per-category、per-sub_category、category/sub_category scope；默认需要 `shadow_fixture_gate_passed=True` 且只允许 `L3_sub_category` 进入 v2 frontstage read path；支持 global/scoped rollback 回 v1/current。 | `PASS`：focused tests 覆盖 flag off、flag on + L3 waders、fixture gate fallback、L0/L1/L2 maturity blocked、unknown/new label candidate pool only、rollback；helper 为本地纯选择/投影，不写 DB、不触发 LLM。 |
-| 2026-07-30 | consumer-contract | 梳理当前 frontstage 四条消费路径：Results page Top10、single review detail、raw review export、single-tag download；Step 6 合同把四条路径统一绑定 selected `display_occurrences`，明确 `label_candidates`、`audit_occurrences`、`candidate_pool_items` 不进入 frontstage。 | `PASS`：`frontstage-read-path-contract.json` case count `8`，selected `v1_current=6`、`v2_shadow=2`，violations `0`；live frontstage 未替换。 |
-| 2026-07-30 | step6-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 升级输出 Step 6 artifact，并保留 Step 5 category maturity、candidate pool reviewed artifact 与 waders/session120/121/122/351-400 回归。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；candidate pool raw/deduped `14/14`，reviewed `14`，invalid `0`，`needs_new_label=6`、`accepted=8`；六个重点标签 FP/FN=0。报告：`docs/5.9.9-step6-v2-frontstage-feature-flag-read-path.md`。 |
-
----
-
-### 2026-07-30 5.9.9 Customer Label System v2 Step 5：Category Maturity + 10 大类 L1/L2 灰度
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | maturity-contract-helper | 新增本地 pure helper `backend_api/app/services/customer_label_v2_maturity.py`，复用 `backend_api/app/data/sub_category_categories.json` 作为 10 大类与 sub_category 归属数据源；定义 `L0_unknown`、`L1_generic`、`L2_category`、`L3_sub_category` display/audit/candidate pool 边界。初始灰度：`home`、`3c`、`apparel`、`outdoor`、`beauty`、`kitchen` 为 L2；`baby`、`pet`、`automotive`、`office` 为 L1；`outdoor/waders` override 为 L3；未命中默认 L0。 | `PASS`：helper 为纯配置/纯函数，不读写 DB；maturity contract summary 明确 safety flags，未触发生产写路径。 |
-| 2026-07-30 | verifier-maturity-gate | `run_customer_label_v2_shadow` 接入 maturity resolver：L0 默认不进 display；L1 只允许 generic-safe highlights；L2 只允许高置信 category-safe 基础标签，且仍需 evidence/context/aspect gate；L3 waders 不回退。unknown/new label 继续 `unknown_label` candidate pool only；maturity blocked 候选进入 candidate pool artifact。 | `PASS`：focused tests 覆盖 L0/L1/L2/L3、unknown label、maturity_blocked candidate pool aggregation/review artifact；v2 shadow/candidate pool 既有契约不回退。 |
-| 2026-07-30 | ten-category-rollout-fixture | 新增 `backend_api/tests/fixtures/customer_label_v2_maturity_rollout.json`，覆盖 10 个大类、20 条 synthetic review/candidate cases，验证 display/audit/candidate_pool 分流：L1 generic display + non-generic block；L2 foundational display + confidence/evidence/aspect/sub_category-specific block。 | `PASS`：maturity rollout replay `category_count=10`、`case_count=20`、`violations=[]`。 |
-| 2026-07-30 | step5-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 输出 Step 5 artifact，并保留 session120/session121/session122/waders351-400 回归；候选池 artifact 合并 unknown/new label 与 maturity_blocked candidates。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；candidate pool raw/deduped `14/14`，reviewed `14`，invalid `0`，`needs_new_label=6`、`accepted=8`；六个重点标签 FP/FN=0。报告：`docs/5.9.9-step5-category-maturity-l1-l2-rollout.md`。 |
-
----
-
-### 2026-07-30 5.9.9 Customer Label System v2 Step 4.6：waders 351-400 human gold assimilation + evidence regression
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | human-gold-fixture | 将 Erika 人工标注的 waders 351-400 Excel 转为标准化 human gold fixture：`backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json`。每条样本包含 review/content/rating、expected issue/highlight keys、locatable evidence spans、blocked labels、needs_new_label candidates 与 notes；5 条无可定位 evidence 的人工标签进入 fixture validation errors，未静默进入 display expected。 | `PASS`：focused test 校验 50 条样本 schema、expected evidence exact span locatable、needs_new_label evidence locatable、validation errors 显式记录。 |
-| 2026-07-30 | waders-label-regression-fix | 基于 351-400 gold 做最小修复：补齐 size/fit、durability、comfort、waterproof、value、quality、arrival、accessory/use-case evidence patterns；收紧 old product / accessory / not-used-yet / price-only / fit-advice / generic quality / wrong aspect guard；同一 review 同一 label 去重展示但保留多个 verified evidence spans。 | `PASS`：351-400 current shadow vs human gold issue TP/FP/FN `20/0/2`、highlight `62/0/8`；六个重点标签在 351-400 内 FP/FN=0。 |
-| 2026-07-30 | candidate-pool-assimilation | 351-400 新标签或边界不清标签不进入 frontstage，统一进入本地 candidate pool / needs_new_label：`breathes_well_evidence_unclear`、`good_customer_service`、`not_for_hardcore_conditions`、`thin_boot_sole`、`not_for_frequent_use`。 | `PASS`：Step 4.6 replay candidate pool raw/deduped items `7/7`，reviewed actions `7`，invalid `0`，`needs_new_label=6`、`accepted=1`；全部本地 artifact，不写 DB。 |
-| 2026-07-30 | waders-step4.6-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 纳入 `waders_351_400_human_gold` dataset，并输出 Step 4.6 artifact。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；全 replay 六个重点标签 FP/FN=0：`water_leaks_through`、`keeps_water_out`、`pocket_not_waterproof`、`fits_as_expected`、`good_value_for_the_price`、`holds_up_well`。报告：`docs/5.9.9-step4.6-waders-351-400-human-gold-assimilation.md`。 |
-
----
-
-### 2026-07-30 5.9.9 Customer Label System v2 Step 4.5：Candidate Pool lightweight review entry MVP
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | review-action-apply-helper | 在 `backend_api/app/services/customer_label_v2_candidate_pool.py` 新增本地 pure review action apply helper，输入 candidate pool artifact/items + review actions，复用 `accept`、`reject`、`correct_label`、`correct_evidence`、`needs_new_label`、`ignore`；invalid action 不改变 source candidate item，只进入 `validation_errors` / `action_audit`。 | `PASS`：focused tests 覆盖 accept/reject/ignore 状态流转、correct_label / correct_evidence / needs_new_label 条件字段与输出、invalid action audit-only。 |
-| 2026-07-30 | reviewed-artifact-export | 新增 reviewed candidate pool schema `customer-label-v2-candidate-pool-reviewed-mvp.1`，输出稳定 JSON 与 reviewed CSV；每个 reviewed item 保留 `source_candidate_item`、action、validation errors、review_status、deterministic `reviewed_at`。 | `PASS`：artifact `tmp/5.9.9-step4.5-candidate-pool-review-entry-mvp/candidate-pool-reviewed.json`、`candidate-pool-reviewed.csv`；unknown label 保留 source candidate trace，maturity blocked 保留 downgrade reasons。 |
-| 2026-07-30 | waders-step4.5-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 升级输出 Step 4.5 本地 artifact，并用 mock review actions 生成 reviewed candidate pool；frontstage 仍只消费 5.9.8 verified display occurrences。 | `PASS`：`python3 scripts/customer_label_v2_waders_shadow_replay.py` 输出 `status=PASS`、P0=`0`；六个重点标签 FP/FN=0；无 production upload / reanalysis / DB write / credit / LLM。报告：`docs/5.9.9-step4.5-candidate-pool-review-entry-mvp.md`。 |
-
----
-
-### 2026-07-30 5.9.9 Customer Label System v2 Step 4：Candidate Pool MVP + audit export
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | candidate-pool-helper | 新增本地 pure helper `backend_api/app/services/customer_label_v2_candidate_pool.py`，从 `run_customer_label_v2_shadow` 结果收集 `candidate_pool_items`，支持按 `canonical_label_key` / `raw_label` / `sub_category` / `downgrade_reasons` 去重，聚合 review/session/product/source candidate IDs，并按 downgrade reason priority、review count、impact score、confidence 稳定排序。 | `PASS`：focused tests 覆盖 unknown label aggregation/dedupe、maturity blocked aggregation/dedupe、mixed downgrade reason priority、required fields、display occurrence 不进 candidate pool、audit-only occurrence 不进 candidate pool 除非触发 unknown/maturity gate。 |
-| 2026-07-30 | artifact-export | `scripts/customer_label_v2_waders_shadow_replay.py` 升级为 Step 4 artifact 输出，新增候选池 JSON/CSV 本地导出：`tmp/5.9.9-step4-candidate-pool-mvp/candidate-pool.json`、`candidate-pool.csv`，主 replay artifact 为 `waders-shadow-summary.json`。 | `PASS`：candidate pool artifact schema `customer-label-v2-candidate-pool-mvp.1`；raw item `2`、deduped item `2`；包含 contract minimum fields 与安全标记；无 production upload / reanalysis / DB write / credit / LLM。 |
-| 2026-07-30 | review-action-contract | 定义本地 pure review action validation helper，支持 `accept`、`reject`、`correct_label`、`correct_evidence`、`needs_new_label`、`ignore`；仅做 schema validation，不写 DB。 | `PASS`：focused tests 覆盖 valid/invalid action、`correct_label` 条件字段、`correct_evidence` 条件字段、`needs_new_label` 条件字段。 |
-| 2026-07-30 | waders-step4-shadow-replay | Step 4 replay 继续使用 session120 human gold、session121 blind boundary fixture、session122 postdeploy acceptance summary 做 shadow 对比；frontstage 仍只消费 5.9.8 v1/current display occurrences。 | `PASS`：session120 issue/highlight TP/FP/FN `22/0/0`、`49/0/0`；session121 `11/0/0`、`2/0/0`；session122 `16/0/0`、`26/0/0`；六个重点标签 FP/FN=0；waders P0=`0`。报告：`docs/5.9.9-step4-candidate-pool-mvp.md`。 |
-
----
-
-### 2026-07-30 5.9.9 Customer Label System v2 Step 3：Verifier safety gate + candidate pool MVP
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | step3-verifier-safety-gate | 固化 v2 deterministic verifier：将 verifier context/outcome、display gate、downgrade reason 聚合、candidate pool minimum item schema 拆成更清晰的内部结构；`run_customer_label_v2_shadow` 继续可用，并稳定输出 `label_candidates`、`verified_occurrences`、`display_occurrences`、`audit_occurrences`、`candidate_pool_items`、`downgrade_reasons`。 | `PASS`：focused tests 覆盖 `confidence_low`、`schema_invalid`、`unknown_label` candidate pool only、`maturity_blocked`、`aspect_blocked`、`context_blocked`、`source_review_blocked`、valid display occurrence、audit-only occurrence 不进入 display。 |
-| 2026-07-30 | candidate-pool-mvp-contract | 新增 `CandidatePoolItem` dataclass 作为 Step 4 candidate pool MVP 最小本地契约；当前不做复杂 UI、不写生产 DB，先让 unknown label 与 maturity blocked candidate 进入本地 candidate pool artifact/service 输出。 | Minimum fields 已对齐 contract：`candidate_id`、`review_id`、`session_id`、`product_id`、`category`、`sub_category`、`label_type`、`canonical_label_key`、`raw_label`、`evidence_candidate`、`confidence`、`downgrade_reasons`、`top_impact_score`、`review_status`。 |
-| 2026-07-30 | waders-step3-shadow-replay | `scripts/customer_label_v2_waders_shadow_replay.py` 更新为 Step 3 artifact，并把新增 verifier gate edge cases 纳入 downgrade distribution。 | `PASS`：artifact `tmp/5.9.9-step3-verifier-safety-gate/waders-shadow-summary.json`；session120 issue/highlight TP/FP/FN `22/0/0`、`49/0/0`；session121 `11/0/0`、`2/0/0`；session122 `16/0/0`、`26/0/0`；六个重点标签 FP/FN=0；waders P0=`0`。 |
-| 2026-07-30 | frontstage-isolation | Step 3 仍为本地 shadow/verifier/schema/fixture replay，不接入 Results page、single review detail、raw review frontstage columns 或 single-tag download。 | 无 production upload / reanalysis / DB write / credit / LLM 成本；frontstage 仍只消费 5.9.8 v1/current display occurrences。报告：`docs/5.9.9-step3-verifier-safety-gate.md`。 |
-
----
-
-### 2026-07-30 5.9.9 Customer Label System v2 Step 2：LLM evidence-first shadow run
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-30 | step2-shadow-runner | 新增本地 v2 shadow runner `backend_api/app/services/customer_label_v2_shadow.py`，支持 review content/rating/category/sub_category 输入，输出 v2 `label_candidates`，并通过 deterministic verifier 生成 `verified_occurrences`、`display_occurrences`、`audit_occurrences`、`candidate_pool_items`。默认 `mock-v1-display-replay`，不发起真实 LLM 调用。 | `PASS`：focused tests 覆盖 invalid JSON、evidence missing/not found、old product/other brand leak、accessory phone-case/pocket leak、no leaks/keep dry 正向防水、do not keep dry 当前产品漏水、generic praise 不扩展四件套、unknown candidate pool。 |
-| 2026-07-30 | waders-shadow-comparison | 新增离线 replay 脚本 `scripts/customer_label_v2_waders_shadow_replay.py`，使用 session120 human gold、session121 blind boundary fixture、session122 postdeploy acceptance summary 做 v2 shadow 对比。 | `PASS`：artifact `tmp/5.9.9-step2-customer-label-v2-shadow-run/waders-shadow-summary.json`；session120 issue/highlight TP/FP/FN `22/0/0`、`49/0/0`；session121 `11/0/0`、`2/0/0`；session122 `16/0/0`、`26/0/0`；evidence locate rate `100%`；waders P0=`0`。 |
-| 2026-07-30 | frontstage-isolation | v2 shadow 结果只进入本地 service 返回值、focused tests 与 shadow artifact；没有接入 Results page、single review detail、raw review frontstage columns 或 single-tag download。 | 无 production upload / reanalysis / DB write / credit / LLM 成本；frontstage 仍只消费 5.9.8 v1/current display occurrences。报告：`docs/5.9.9-step2-llm-evidence-first-shadow-run.md`。 |
-
----
-
-### 2026-07-29 5.9.9 路线调整：从 ABSA readiness 转为 Customer Label System v2
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-29 | plan-previous | 旧计划曾将原 `6.7 ABSA 小模型 fine-tune` 从技术优化模块迁入 5.9 Customer Issue / Customer Label 准确性计划之后，拆为 `5.9.9 ABSA fine-tune 数据集 readiness` 与 `5.9.10 ABSA 小模型 fine-tune POC`。 | 现已被下方 `strategy-adjustment` 覆盖；保留为决策过程记录。 |
-| 2026-07-29 | plan-previous | 旧计划曾在 5.9.8 阶段表补充 `Step 4.5 waders ABSA 数据集 v0` 与 `Step 5.5 ABSA fine-tune 启动评审`，让标签口径治理自然沉淀为可训练数据资产。 | 现调整为先做 Customer Label System v2；ABSA 数据资产自然沉淀但不作为近期主线。 |
-| 2026-07-29 | strategy-adjustment | Erika 指出：一人公司当前没有稳定流量、没有跨多个核心类目的足量人工标注，也很难只围绕少数类目定向获客；因此近期继续把 ABSA 数据集 readiness 作为主线，会导致产品上线被训练数据门槛卡住。 | 5.9.9 主线调整为 `Customer Label System v2`：LLM 输出规范标签与 evidence candidate，规则只做 evidence 定位/验证/安全拦截，新增候选标签审核与类目成熟度分级；ABSA fine-tune 延后为数据自然积累后的条件触发项。 |
-| 2026-07-29 | scope-control | 明确 5.9.8 已完成的 waders 规则、gold fixture、catalog、taxonomy、raw/frontstage/audit 分离和 evidence gating 不推翻，改作为 v2 verifier、安全门禁和回归基线；停止把“每新增 sub_category 手写 3-5 天规则”作为未来复制模板。 | 本轮仅更新计划文档；未改业务代码、未触发生产 API、credit 或 LLM 成本。 |
-| 2026-07-29 | scope-refinement | 明确 5.9.9 采用 `增强版 MVP` 路线：50 用户前优先完成 LLM evidence-first、verifier、display/candidate/audit 分流、轻量 candidate pool 审核入口、类目成熟度和 10 个大类 L1/L2 灰度；当前 taxonomy 约 89 个 sub_category 不要求全部达到 waders 级 L3。 | `vector bad case memory` 作为减少重复人工审核、辅助候选排序和 bad case retrieval 的增强项，可轻量 shadow/试运行期接入，但不作为 50 用户试运行硬门禁；ABSA fine-tune 仍延后。 |
-
----
-
-### 2026-07-29 5.9.8 Step 4 TIDEWE waders 标签漏标/错标主修复
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-29 | analysis | 对人工标注 Excel 与 session 119 raw 下载做本地只读对照，确认问题不是 L1 cache，而是 Customer Issue / Customer Label 生成层、aspect 归类、prompt 边界和 raw 导出口径。最高频前台 FP：Issue `water_leaks_through` 6；最高频前台 FN：Issue `breaks_easily` 9、`inaccurate_size_chart` 7、Highlight `fits_as_expected` 20、`good_value_for_the_price` 18、`keeps_water_out` 16；最高频 audit FP 为四件套 propagated/unverified。 | 未调用生产上传、生产重分析、credit 或 LLM；分析来源为本地 Excel 与 session 119 下载文件。 |
-| 2026-07-29 | fix | 在 Customer Issue / Customer Label 生成层补齐 waders content-rule occurrence、allowed aspect map、water leak 语义 guard、phone case/pocket accessory_storage 归类、未实际使用/泛泛好评/负面泛评四件套抑制；同步更新 prompt v2.4 与 outdoor/waders taxonomy 边界说明。 | 新分析链路会生成更正确的 canonical labels，而不是只在前台隐藏错误标签。 |
-| 2026-07-29 | export | raw/full review 下载口径改为 display 与 audit 分列：前台字段只保留 verified source-review occurrence；candidate、cluster propagated、evidence false 只进入 `Audit ...` 字段，避免用户误以为都是展示标签。前端 raw XLSX 同步相同口径。 | raw/frontstage/single-tag 下载口径统一；audit 字段仍可追溯候选来源。 |
-| 2026-07-29 | test | 新增 `backend_api/tests/fixtures/customer_label_waders_step4_gold.json` 与 `backend_api/tests/test_customer_label_waders_step4_gold.py`，覆盖 phone case 漏水、旧产品历史漏水、no leaks 正向、防水真实漏标、未实际使用、泛泛负评、single-tag/raw 口径等 hard cases。 | `python3 -m pytest backend_api/tests/test_customer_label_waders_step4_gold.py backend_api/tests/test_customer_label_waders_step2_gating.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_customer_label_50u_readiness.py backend_api/tests/test_outdoor_waders_taxonomy.py -q` PASS，73 passed in 3.07s；`npm run typecheck` PASS；`git diff --check` PASS。 |
-| 2026-07-29 | acceptance-ready | 产出 Step 4 修复报告与手动验收清单，等待 Erika 使用从未上传过的 50 条 waders 样本做前端上传验收，彻底排除缓存争议。 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`；Codex 未执行生产上传。 |
-| 2026-07-29 | session120-retest | Erika 上传 50 条样本并提供结果页 `session_id=120` 与下载文件；Codex 只做生产 DB 只读验收和本地最新规则回放。生产当前结果仍 `REVIEW_NEEDED`：真实下载文件无 `Audit ...` 分列，raw 前台字段混入 issue evidence false 90 / issue cluster true 90 / highlight evidence false 24 / highlight cluster true 24；DB 还有 `Good`、`Perfect!`、`Good quality` 3 条短文本 cache。 | 本地追加修复 row 3/27/28/31 后，session120 最新规则回放 `validation.status=PASS`；新增报告 `docs/5.9.8-step4-tidewe-waders-session120-acceptance-report.md`。 |
-| 2026-07-29 | session120-human-gold | Erika 在 session120 下载文件追加人工标注后，Codex 对 `download_raw_all`、`download_verified_only`、`local_latest_replay` 三组口径做本地只读对比。当前生产下载文件仍 FAIL；本地最新规则 both exact `10/50`、issue exact `37/50`、highlight exact `18/50`，issue FP 从 82 降到 3，highlight FP 从 22 降到 10。 | P0 `water_leaks_through` 本地已达到人工 3 / 命中 3 / FP 0；整体仍 `REVIEW_NEEDED`，剩余重点是 size/fit、气味、耐用、泛泛满意、性价比、外观、适用场景和储物亮点召回。报告：`docs/5.9.8-step4-tidewe-waders-session120-human-label-comparison.md`。 |
-| 2026-07-29 | step4.1-recall-fix | 基于 session120 人工 gold 新增 50 条稳定 fixture，补齐 waders `size_fit_problem`、气味、耐用、品控/质量、鞋底偏软、透气差，以及整体满意、性价比、外观、耐用、防水、尺码、场景适用、储物等 Customer Label 召回；同步收紧 `good_material_quality`、`works_well_for_use_case`、`not_used_yet`、cluster propagated 与 raw/frontstage 口径。 | 本地 session120 human gold 达到 both exact set `50/50`、issue exact `50/50`、highlight exact `50/50`，issue TP/FP/FN `22/0/0`，highlight TP/FP/FN `49/0/0`；后端目标回归 `80 passed in 11.52s`，前端 `npm run typecheck` PASS，`git diff --check` PASS；未执行生产上传、生产 reanalysis、credit 或 LLM。报告：`docs/5.9.8-step4.1-tidewe-waders-session120-recall-fix.md`。 |
-| 2026-07-29 | blind-sample-gate | 本轮未收到 Erika 明确提供的全新 waders 样本或新 `session_id`，因此不能把 session120 human gold 的本地 `50/50` 判为最终盲测 PASS；已重新梳理前台/audit 口径和人工上传验收清单。 | 本地相关后端回归 `80 passed in 8.91s`，前端 `npm run typecheck` PASS，`git diff --check` PASS；未执行生产上传、生产重分析、credit 或 LLM；等待 Erika 手动上传从未上传过的 50 条 waders 样本。报告：`docs/5.9.8-step4-tidewe-waders-new-blind-sample-acceptance-checklist.md`。 |
-| 2026-07-29 | session121-blind | Erika 提供全新 50 条 waders 样本结果页 `session_id=121` 与下载文件；Codex 只做生产 DB 只读验收、读取下载 XLSX、本地最新规则回放和小范围回归修复。生产下载仍 `REVIEW_NEEDED`：raw 文件为旧 29 列，无 `Audit ...` 分列，issue `evidence=false` 16 / issue `cluster=true` 16，16 条 evidence 不在当前 review 中；DB 另有 4 条 cache rows。 | 本地修复 negative dry、current leak、历史/泛化 leak、size/fit、西语 size、not_breathable 与 pocket evidence 后，session121 最新规则回放 `validation.status=PASS`，Top/单条/evidence/cluster P0 均为 0；后端目标回归 `82 passed in 9.33s`，前端 `npm run typecheck` PASS，`git diff --check` PASS。报告：`docs/5.9.8-step4-tidewe-waders-session121-blind-acceptance-report.md`。 |
-| 2026-07-30 | session122-prod-full-acceptance | 以真正已部署后的 session122 下载文件与生产只读数据做完整验收，覆盖 Top10、单条评论明细、single-tag 等价下载、raw review download 四条路径。Raw/Audit 分列结构已 PASS，但生产 raw 前台仍有 `water_leaks_through` P0：row 9 `other neoprene waders ... leak` 被污染成当前产品漏水；row 38 `They do not keep you dry.` 漏召回。 | `REVIEW_NEEDED`（部署前）：P0=2，Step 4 当时暂不 PASS。已做本地窄修复并加 fixture，post-fix session122 只读回放 `validation.status=PASS`、six single-tag equivalent exports PASS；waders 目标回归 `82 passed in 6.10s`，frontend typecheck PASS，diff check PASS；该结论已由下一条 `session122-postdeploy-pass` 覆盖。报告：`docs/5.9.8-step4-tidewe-waders-session122-blind-acceptance-report.md`；artifact：`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-full-acceptance-audit.json`。 |
-| 2026-07-30 | session122-postdeploy-pass | session122 P0 窄修复 commit `c38e7ff` 已 push `origin/develop` 并触发生产部署；Erika 确认 GitHub Actions/生产查看全绿。Codex 追加 production health check 与生产只读 replay：API `/health` 200、frontstage `/` 与 `/login` 200；Top10、单条评论明细、single-tag 等价下载、raw review download 四条路径均 P0=0。 | ✅ `PASS`：`frontstage_verified_violations=[]`，single detail no evidence / cluster propagated / evidence-not-found 均为 `0`，`water_leaks_through` FP/FN candidates 均为 `0`，`pocket_not_waterproof` FN candidates `0`；六个重点 single-tag 等价导出 PASS：`water_leaks_through=5`、`keeps_water_out=4`、`pocket_not_waterproof=0`、`fits_as_expected=6`、`good_value_for_the_price=9`、`holds_up_well=2`。DB 仍有 3 条短文本 L1 cache rows，仅记为历史缓存审计项，不构成语义 P0。artifact：`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-postdeploy-readonly-acceptance-audit.json`。Step 4 改为 PASS，正式进入 5.9.9 Step 1。 |
-
----
-
-### 2026-07-29 5.9.8 Step 3 TIDEWE waders 人工上传验收预检
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-29 | docs | 基于人工标注表与 Step 1 重点行号，生成 29 条 TIDEWE waders Customer Issue / Customer Label 人工验收矩阵，覆盖四件套扩散、无 evidence、cluster propagated、no leaks / leak proof / kept dry / stayed dry、phone case / pocket 漏水、未实际使用、泛泛好评、mixed review、aspect 冲突。 | 产出 `docs/5.9.8-step3-tidewe-waders-human-acceptance-matrix.md` |
-| 2026-07-29 | safety | 完成只读预检：读取仓库文档、Step 2 fixture/test、人工 Excel sheet 结构与重点行内容；未调用生产上传、生产重分析、credit 或 LLM。 | PASS；当前等待 Erika 确认 `GO` |
-| 2026-07-29 | gate | 明确 GO 后真实上传验收边界：若进入生产上传，执行前必须再次提醒会触发真实分析并消耗 credit/LLM，且等待 Erika 明确授权；上传后再补充结果页 Top10、单条明细、raw review XLSX、后端完整导出、单标签下载、异常样例和结论。 | 待 GO / 待生产授权 |
-| 2026-07-29 | stop | Erika 已回复 `GO` 并授权生产上传/credit/LLM；生产 preflight 健康检查通过并生成本地上传样本，但生产账号登录失败。 | STOP at auth preflight；未上传、未创建 job/session、未触发 credit/LLM/export；账号标识与原始 preflight 细节保留在私有本地记录，不进入仓库。 |
-| 2026-07-29 | acceptance | Erika 手动上传同批 TIDEWE waders 评论并提供结果页；Codex 仅做生产 DB 只读校验和本地等价导出，生成 `docs/5.9.8-step3-tidewe-waders-acceptance-report.md`。 | `REVIEW_NEEDED`：展示 gating 硬门禁通过，但 `water_leaks_through` 仍被 phone case、旧产品、no leaks 正向语境污染，`pocket_not_waterproof` 未正确召回。 |
-| 2026-07-29 | cache-risk | Erika 指出同批评论此前上传过，现有结果可能命中缓存。只读证据确认存在缓存复用，且 content hash 由 `content + rating + category` 计算，不含 ASIN。 | 当前结果不可作为干净新分析验收，只能验证当前线上结果页/导出口径 gating；干净复测需清用户历史和全局同批分析缓存。 |
-| 2026-07-29 | cleanup-audit | Erika 已从测试账号删除本次产品及评论；Codex 随后执行生产 DB 只读清理审计。 | 用户侧 L1 已清，但全局缓存仍存在复用风险；详细计数和对象 ID 保留在私有本地记录。 |
-| 2026-07-29 | cache-clear | Erika 明确授权后，执行限定范围的全局分析缓存清理，仅置空同批样本命中的分析缓存字段，未删除评论源。 | 清理后只读复核显示已满足干净重传前置条件；未上传、未触发 credit/LLM。下一次由 Erika 前端手动重传会消耗真实分析 credit 与 LLM 成本。 |
-| 2026-07-29 | clean-retest | Erika 手动干净重传同批 TIDEWE waders 人工样本，生成 `session_id=119`；Codex 仅做生产 DB 只读验收、本地等价导出、读取实际前端 raw 下载文件并整理异常样例。 | `REVIEW_NEEDED`：用户侧/全局 L1 缓存污染已清，`review_analyze=-100` 且 `review_pool` 回填仅限同批 49 个 hash；但 `water_leaks_through` 仍被 phone case、旧产品历史漏水、no-leaks 正向语境污染，`pocket_not_waterproof` 仍未 verified 召回，实际 raw 下载审计列仍包含大量 propagated/unverified 四件套。详见 `docs/5.9.8-step3-tidewe-waders-session119-acceptance-report.md`。 |
-
----
-
-### 2026-07-28 5.9.8 Step 2 TIDEWE waders Customer Issue / Customer Label 展示 gating
-
-| 日期 | 变更类型 | 描述 | 验证结果 |
-|------|---------|------|---------|
-| 2026-07-28 | fix | Customer Issue / Customer Label 前台展示与 Top occurrence 统一改为 verified source-review occurrence：必须 display_allowed=true、evidence 可在当前评论原文定位、evidence_verified=true、cluster_propagated=false、非 legacy fallback，且通过 label/aspect allow-list 与 water leak context 边界。legacy、无 evidence、cluster propagated 仅保留 audit/candidate，不再进入单条评论明细标签或 Top 计数。 | `python3 -m pytest backend_api/tests/test_customer_label_waders_step2_gating.py backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_customer_label_50u_readiness.py -q` PASS；`npm run typecheck` PASS |
-| 2026-07-28 | fix | 补齐 no leaks / leak proof / stayed dry / kept dry 正向防水边界：只允许触发 `keeps_water_out` highlight，不触发 `water_leaks_through` issue；旧产品/他牌漏水、phone case/pocket 漏水不再作为整体 waterproof issue 的 source-review occurrence。 | focused waders fixture 覆盖 row 31/46/52/62/91 等边界，PASS |
-| 2026-07-28 | feat | Raw review full export 与前端 raw review XLSX 增加 Customer Label occurrence 审计列：Canonical Highlight Key、内部维度/aspect、Evidence Span、Highlight Confidence、Highlight Evidence Verified、Highlight Cluster Propagated；单标签下载与客户端 Top 聚合只导出 verified source-review occurrence。 | export 回归与前端 typecheck PASS |
-| 2026-07-28 | test | 新增 `backend_api/tests/fixtures/customer_label_waders_step2_gating.json` 与 focused pytest，覆盖四件套扩散、无 evidence、cluster propagated、phone case/pocket、未实际使用、泛泛好评、mixed review、aspect 冲突等 5.9.8 Step 1 代表样例。 | 4 条 focused pytest PASS |
-| 2026-07-28 | safety | 本步骤仅修改本地业务代码、前端代码、fixture 和测试；未请求生产写路径，未触发生产上传、重分析、credit 或 LLM 成本。 | 本地验证完成 |
+- 标签有没有对应原文。
+- 标签是不是原文真实表达的意思。
+- 有没有错标、漏标、重复、无中生有。
+- 片段有没有流错模块。
+- 旧产品、竞品、配件、物流、售后有没有被误当成当前产品亮点或问题。
+- 泛泛好评有没有被硬扩展成多个具体亮点。
+- 正负向有没有标反。
 
 ---
 
 ## 总体进度
 
-> 最后更新：2026-07-31 | 基于代码实际状态 + 文档 checkbox 统计
+> 最后更新：2026-08-03 | 这里只保留整体模块概况；标签准确性以本文顶部通俗计划为准
 
 ### 按模块组
 
@@ -253,8 +82,8 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.9 基础迁移完成；5.9.8 waders 盲测/生产复验 PASS；5.9.9 Customer Label System v2 Step 7.5 frontstage readiness dry-run 已 PASS；ABSA 延后为条件触发 |
-| 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成（数据资产化→成本优化）；原 6.7 ABSA 已延后，近期由 5.9.9 v2 承接标签准确性；6.8-6.9 待 PMF 验证后启动 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 9 | 1 | 2 | 75% | 5.1-5.8 基础迁移完成；5.9.8 / 5.9.9 标签准确性路线已归档，当前改为“评论片段理解与多模块分流”，待 Erika 验收 |
+| 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成；标签训练和复杂模型化延后，先把片段理解与人工验收口径跑通 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
 | 9. 增值功能 | 6 | 1 | 2 | 3 | ~33% | 9.3 完成；9.1/9.2 部分完成；9.4/9.5/9.6 待启动 |
@@ -262,7 +91,7 @@
 
 ### 按状态明细
 
-**✅ 已完成（31 个子模块）**
+**已完成 / 历史完成（数量暂保留，标签方向以顶部当前计划为准）**
 
 | 编号 | 名称 | 关键产出 |
 |------|------|---------|
@@ -280,7 +109,7 @@
 | 5.6 | 问评论/行动/复盘 | RAG页面+闭环能力迁移 |
 | 5.7 | 文案/设置/计费 | /copywriter+/settings+Paddle Checkout/Webhook+QuotaDialog |
 | 5.8 | 部署与Streamlit下线 | ECS+Docker Compose+Nginx+HTTPS+域名分层，生产运行中 |
-| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | waders 盲测与 session122 部署后完整验收 PASS；Top10/单条明细/raw review/single-tag 四路径 P0=0 |
+| 5.9.8 | Customer Issue / Customer Label 口径重构与灰度验证 | 已归档：waders 单类目规则修补不能代表整体标签准确性，不再作为当前质量通过依据 |
 | 6.1 | 数据资产化 | 1060行Taxonomy入库+全品类扩展87子品类+441aspect |
 | 6.2 | Taxonomy接入分析链路 | 动态prompt模板+品类白名单+回归测试 |
 | 6.3 | Golden Set多品类演进 | 品类级mini Golden Set+CI多品类回归+other占比监控+飞书告警 |
@@ -298,11 +127,11 @@
 | 8.7 | Credit定价体系 | 海外4档套餐+统一credit池，已部署上线 |
 | 9.3 | 智能推送 | 设置页拆分为3子页+推送内容增强(B1-B6)+飞书Webhook推送 |
 
-**🔄 进行中（10 个子模块）**
+**进行中（标签方向已改为短循环验收）**
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9.9 | Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度） | Step 8 已完成：新增 lightweight/local vector bad case memory，将 audited bad case、gold regression、candidate pool reviewed result 转成本地可检索 memory；仅用于相似历史错例检索、candidate 聚类、审核排序、audit/debug report；生产 feature flag 仍未开启；replay artifact PASS，P0=0。 | 继续保持生产 feature flag 不开启；后续若 Erika 授权，可进入 scoped gray-run；v3-lite 只做兼容投影、catalog backlog 和规则膨胀封顶，不替换当前前台链路。 |
+| 5.9 新方向 | 评论片段理解与多模块分流 | OPC 低维护方案已定：不推翻现有产品目标，只把 LLM 自由标签收进 Taxonomy 白名单、原文证据门禁、candidate/other 候选池。 | 先做 2-3 周止血版：高置信标签才进 TOP10；Pydantic/JSON 校验优先，Pydantic AI 后置评估。 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -313,7 +142,7 @@
 | 9.1 | 评论自动获取 | Rainforest单次拉取已实现 | 定时拉取+多数据源+ASIN监听列表 |
 | 9.2 | API调用 | 基础路由存在 | v1公开API+认证+限流+文档 |
 
-**⏳ 待启动（12 个子模块）**
+**待启动（数量暂保留，后续再统一整理）**
 
 | 编号 | 名称 | 启动条件 |
 |------|------|---------|
@@ -458,7 +287,7 @@
 | `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
 | `5.7` 文案/设置/计费迁移 | 已完成 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
 | `5.8` 部署与 Streamlit 下线路径 | 已完成（ECS 生产环境运行中） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
-| `5.9` Customer Issue / Customer Label 口径重构与灰度验证 | MVP 准确性优先二次重构进行中；历史 Phase 7 / 50U readiness 记录保留 | 展示准确性、aspect 归类准确性、人工在环闭环、真实上传抽查、边界 case 门禁 | 仅回滚标签/分析结果相关链路 |
+| `5.9` 标签准确性 | 旧路线已归档；当前改为评论片段理解与多模块分流 | 先让每段评论进正确模块，再决定展示和聚合 | 暂停扩大标签使用范围，先由 Erika 验收样例 |
 
 ### 执行顺序
 
@@ -702,7 +531,7 @@
 > 目标：种子用户拿到手时，看到的是一个视觉成熟、文案专业的产品，而非开发者原型。
 > 设计 spec 文档：`docs/figma-p0-prototype-spec.md`
 > 参考风格：Linear（精致度）+ PostHog（亲和感）+ Notion（简洁文案）
-> **编号说明**：Step C1–C10 保留原 C 前缀作为任务标识，以保持与 git commit 和讨论记录的可追溯性。结构上 C1–C4 归属 5.8.3、C5–C7 归属 5.8.4、C8–C10 归属 5.8.5。原 C9.8 已提取为独立模块 [5.9](#59-customer-issue--customer-label-口径重构与灰度验证)。
+> **编号说明**：Step C1–C10 保留原 C 前缀作为任务标识。原 C9.8 已改为独立模块 [5.9](#59-标签准确性评论片段理解与多模块分流)。
 
 #### 5.8.3 上线前必做（原 P0）
 
@@ -821,952 +650,182 @@
   - [x] 模块右上角下载（用户体验/消费动机/未满足的需求/用户画像）改为 TOP10 格式（排名/标签/出现次数/提及占比/代表性评论前20条摘要）；user_experience 和 consumer_profile 输出正负两个 sheet
   - [x] 所有下载 Excel 表头支持 i18n：前端通过 `getLocale()` 传 locale，后端 export 端点接受 `?locale=zh|en` 参数
 
-> **注意**：原 Step C9.8（Customer Issue / Customer Label 口径重构与灰度验证，2026-07-24 ~ 2026-07-27）因体量独立（完整 Phase 0-7 执行阶段、独立验证记录与风险清单），且属于数据层/标签架构重构而非 UI 美化，已提取为独立模块 [5.9](#59-customer-issue--customer-label-口径重构与灰度验证)。
+> **注意**：原 Step C9.8 已改为独立模块 [5.9](#59-标签准确性评论片段理解与多模块分流)。旧 5.9.8 / 5.9.9 标签路线已归档，不再作为当前计划。
 
 - [ ] **Step C10: 暗色模式（可选）**
   - 仅在种子用户反馈中有明确需求时执行
   - 需要为所有 color token 增加 dark 变体
 
 
-### 5.9 Customer Issue / Customer Label 口径重构与灰度验证
-
-> 原 5.8 Step C9.8，2026-07-24 ~ 2026-07-27。因体量独立（完整 Phase 0-7 执行阶段、独立验证记录与风险清单），且属于数据层/标签架构重构而非 UI 美化，单独成模块。
-
-> 背景：增长分析页的产品亮点 / 高频痛点曾把内部 aspect、前台 Customer Issue / Customer Label、代表评论、下载原文和 Mention Share 分母混在一起。典型问题包括 `Comfortable To Wear` 代表评论过宽、`Water Leaks Through` 被 `no leaks / remained dry` 等表达污染、高频痛点第一条 Mention Share 出现 100% 且用户不可解释。
-
-当前结论：
-- Phase 1-6.5 已完成代码、导出、前端展示、验证集和真实 Foxelli raw replay。
-- Phase 7 P0 read-path 性能修复已完成并推送 `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7`。
-- Phase 7 第二批 / P1 authenticated route smoke 已完成：session 3/4/5 的 results、aggregate results、模块导出、完整导出均为 200。
-- Phase 7 生产部署已确认：GitHub Actions `Deploy to Production` run `30230691101` 已将 `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` 部署成功；生产只读 `/analysis/sessions/{id}/results` smoke 覆盖 114/96/111/110，均 200、无 `embedding`、无 SSL/connection error。
-- Phase 7 P1 worker 写路径优化已完成编码、本地回归并推送 `origin/develop=2d8c1a4`：analysis / cluster / embedding 写入改为批量事务，worker analysis 按 50 条 flush 并保留逐条 fallback。
-- Phase 7 P1 worker 写路径优化部署已确认：GitHub Actions `Deploy to Production` run `30236160482` completed/success for `2d8c1a4`，deploy job 于 2026-07-27 04:07:47 UTC 完成。
-- Phase 7 P1 staging/dev 写路径 smoke 已完成：clueai-dev 60 条与 300 条临时 worker smoke 均通过，credit / ledger / analytics / review_pool / push 均在验证进程内 no-op，临时数据已清理。
-- Phase 7 P2 date/index 已完成 production migration/backfill/行为验收：Erika 已确认 production 备份/PITR、当前维护窗口、`059 DOWN` + 备份恢复回滚方案、验收样本 session 95/96/114；生产 `059` 已执行并提交，`comments=8340` 行数不变，`review_date` 8325/8340、NULL=15（均为空 raw date）、ISO 7711/7711、Amazon 文本 614/614；3 个新索引存在；Amazon 文本日期精确日过滤返回正确样本。
-- Phase 7 生产 live `/analysis/results` + export smoke 已获 Erika 授权并完成：仅 session 114/96；aggregate results、`user_experience` 模块导出、完整导出均 200，导出文件为有效 XLSX。
-- Phase 7 第一轮只读灰度门禁结论已收口为 FAIL / STOP at session 114；不继续扩大到 96/111/110/95。
-- P2 production DDL/backfill gate 已完成；未执行生产上传、重分析、QA、aggregate/export smoke，未触发 credit/quota/analytics/LLM 成本路径。
-- Phase 7 第一轮生产只读灰度观察已按停止条件收口：Erika 授权后仅请求 session 114 的 `GET /analysis/sessions/114/results`；返回 200 且 credit / analytics / LLM / upload_jobs delta 全部为 0，但 Top Issue / Top Label 的 Representative Evidence 只各有 1 条 verified span，其余高频 occurrence 为 cluster-propagated evidence，已停止 96/111/110/95 后续观察。
-- Phase 7 正向门禁项已核对通过：生产 `RESULTS_AI_ENHANCEMENT_ENABLED` effective=false；session-level read-only route、payload 无 `embedding`、无 SSL/connection error、credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0；date span、`review_date` 与 Amazon 文本日期归一化链路正常。
-- Phase 7 P0 Evidence/Propagation 修复已完成并推送 `origin/develop=5d1ae587f5f09b3f00cfdaad6b10d21565e9fefb`；GitHub Actions `Deploy to Production` run `30249258312` completed/success。
-- Phase 7 修复后第二轮生产只读灰度已获 Erika 授权 A：使用本地生产 session secret，仅调用 `GET /analysis/sessions/{id}/results` 与生产数据库 SELECT；未调用 `/analysis/results`、export、QA、upload、analysis job、reanalyze 或 modern compare。
-- Phase 7 修复后第二轮只读灰度按停止条件收口为 FAIL / STOP at session 96：session 114 通过核心 evidence/propagation 观察，但 session 96 的 Top Issue / Top Label 均无可定位 Representative Evidence，已停止 111/110/95；credit / analytics / LLM / upload_jobs delta 全部为 0。
-- Phase 7 第二轮阻塞本地修复已完成：legacy/top row 可从同一条真实评论的旧 `aspects_json.aspects[].evidence_span` 或价格相关原文短语补 verified span；无 verified span 时 Representative Evidence 为空且 `reason=""`，不输出不可验证占位；前端 client XLSX / tag download recount 过滤 `cluster_propagated=true` occurrence，导出代表证据只信 verified source-review；aggregate cache key 纳入 occurrence ruleset version。
-- Phase 7 第二轮阻塞本地验证通过：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py -q`：53 passed；`npm run typecheck`：passed。
-- Phase 7 第二轮阻塞修复已推送 `origin/develop=ff7e67e256a834c444869b3d809eae7cb1cbbd0d`；GitHub Actions `Deploy to Production` run `30254814989` / run number `#132` 已由 Erika 提供的 Actions 页面确认 completed/success，branch=`develop`，commit=`ff7e67e`，duration=`4m31s`；production `/opt/clueai` HEAD 已确认同步为 `ff7e67e256a834c444869b3d809eae7cb1cbbd0d`。
-- Phase 7 第三轮生产 runtime preflight 已确认：production api 容器内 `RESULTS_AI_ENHANCEMENT_ENABLED_ENV=None`、`RESULTS_AI_DISABLED_PROVIDERS_ENV=None`，运行时 `_results_ai_enabled()` 返回 `False`，`_results_ai_disabled_providers()` 返回 `['deepseek']`。
-- Phase 7 第三轮生产只读灰度已获 Erika 授权并执行：仅调用 `GET /analysis/sessions/{id}/results` 与生产数据库 SELECT；114/96 通过，111 命中 FAIL / STOP，原因是正向 `no leakage` 代表证据进入 `Water Leaks Through` Top Issue；credit / analytics / LLM / upload_jobs delta 全部为 0。110/95 已在同一授权批次脚本中采集，但因人工语义审查后确认 111 应停止，不作为继续放量通过依据。
-- Phase 7 第三轮阻塞本地修复已完成：`no leakage / no leaks / without leakage / remained dry / kept dry / stayed dry / keep you dry` 等正向防水/否定漏水 evidence 不再生成、投影或保留 `Water Leaks Through` issue；`no leakage` 可进入 `Keeps Water Out` highlight；occurrence ruleset version 已 bump 到 `2026-07-28-phase7-waterproof-positive-guard`，避免 aggregate cache 复用旧规则结果。
-- Phase 7 第三轮阻塞本地验证通过：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py -q`：57 passed；`frontend/ npm run typecheck`：passed；`git diff --check`：passed；未请求生产、未 push。
-- Phase 7 session 111 修复已部署确认：GitHub Actions `Deploy to Production` run `30319680758` / `#133` completed/success for `9625a87c73dd6d2c716a358e65ba785f94e26851`；production `/opt/clueai` HEAD 同步为 `9625a87c73dd6d2c716a358e65ba785f94e26851`；production api 容器内 `RESULTS_AI_ENHANCEMENT_ENABLED_ENV=None`，运行时 effective=`False`。
-- Phase 7 第四轮生产只读灰度已获 Erika 授权并执行：仅调用 `GET /analysis/sessions/{id}/results` 与生产数据库 SELECT；按 114 -> 96 -> 111 -> 110 -> 95 顺序全部通过，payload 均无 `embedding`、无 SSL/connection error，credit / analytics / LLM / upload_jobs delta 全部为 0。
-- Phase 7 第四轮 session 111 专项结论：`Water Leaks Through` Top Issue count=8，Representative Evidence 为 `Leaked the first time out`、`leak appeared to be coming from a seam`、`boots started filling with water` 等可定位负向漏水证据；`no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 未进入 `Water Leaks Through` issue；comment 26388 / 26302 均为 5-star positive、`issue_tag=""`，未作为 `Water Leaks Through` Representative Evidence；正向防水 evidence 进入 `Keeps Water Out` highlight。
-- `50U-T2` 质量保障与回归基线已完成本地/代码侧门禁：新增 40 条正式 gold sample fixture，覆盖 `Water Leaks Through`、`Keeps Water Out`、`Value for Money`、`Not Breathable`、missing evidence、cluster-propagated evidence、broad/internal label、Amazon 文本日期，以及正向防水 evidence 不得进入漏水 issue；新增 deterministic pytest gate 与纯本地 label quality warning helper。
-- `50U-T2` 本地验证通过：`python3 -m pytest backend_api/tests/test_specific_issue.py backend_api/tests/test_customer_label_phase6_validation.py backend_api/tests/test_export_customer_label_phase5.py backend_api/tests/test_analysis_results_llm_fallback.py backend_api/tests/test_customer_label_50u_readiness.py -q`：63 passed、4 warnings（既有 Starlette/httpx 与 `datetime.utcnow()` deprecation）；未请求生产、未 push。
-- `50U-T3` 运营 runbook 与上线门禁已完成文档侧收口：新增 `docs/50u-readiness-runbook.md`，覆盖上传失败、worker stuck、LLM 成本异常、credit 补偿、analytics/ledger/LLM usage 对账、`review_date`/date filter、`Not Breathable`/Representative Evidence/`cluster_propagated` 异常记录、50 用户前 checklist 与每日/每周观察项；新增 `docs/50u-production-write-smoke-authorization.md`，明确生产写路径 smoke 的样本/session/credit/LLM 成本/停止条件/回滚补偿/API allow/deny 授权模板。
-- `50U-T1` 授权前准备包已完成文档侧补强：基于本地文档与路由/credit/LLM 代码阅读，补充生产写路径 smoke 审批前必须确认项，包括 smoke 用户、样本来源/去重风险、产品/variant 副作用、session 数量、预计/上限 credit、预计/上限 LLM non-cache calls 与 RMB 成本、允许/禁止 API、停止条件、回滚/补偿 owner 与观测指标。本轮只是授权前准备，未启动生产 smoke。
-- `50U-T1` 后续授权信息部分补齐：Erika 已确认未来 smoke 使用 production 环境、账号 `[REDACTED_PROD_EMAIL]` / 用户名 `[REDACTED_PROD_USERNAME]`，auth/session method 为浏览器登录后使用正常 HttpOnly session cookie；密码仅用于登录方式确认，不写入仓库文档。`50U-T1` 仍未启动，仍缺生产 base URL / deploy run、样本文件与来源、product/variant 副作用、credit/LLM 成本 cap、API allowlist、停止/补偿/cleanup acceptance 等执行前授权项。
-- `50U-T1` 样本策略已补充为建议口径：首轮使用新 CSV/XLSX 文件与未上传过的新评论内容，优先选择已被 taxonomy / 本地回归覆盖的已知支持类目；不建议把全新类目作为首轮 T1 smoke，以免把生产写路径验证与类目扩展风险混在一起。若 Erika 要测新类目，建议在首轮写路径通过后单独开第二个授权块。
-- `50U-T1` 样本与成本字段已进一步补齐：Erika 已在测试账号产品管理中新建 `MAILESI-充电头-XHD-PD25W`；本地找到原始样本 `/Users/zhangxi/Desktop/评论分析项目/MAILESI-充电头-XHD-PD25W-100条.xlsx`（100 行），并派生上传用 `/Users/zhangxi/Desktop/评论分析项目/MAILESI-充电头-XHD-PD25W-15条-smoke.xlsx`（15 行，`content/rating/date/reviewer/source`，本地 parser 15/15 通过）。建议 category 明确填 `USB C Charger Block`，session count=1，expected/max credit=`-15 review_analyze`，LLM non-cache calls `<=15`，max LLM cost `<= ¥10.00`，locale/provider chain=`en: gpt-4o-mini -> deepseek-chat -> qwen-plus`。本轮未登录生产、未上传、未触发 credit/quota/analytics/LLM 成本。
-- `50U-T1` Erika 审批项 1-4 已记录：样本允许用于 production smoke；确认不含不应进入生产的私密数据（本地正文扫描无 email/phone/order-like，reviewer 按公开评论名处理）；确认 smoke 用户 + 产品 + `USB C Charger Block` 下未上传过这批评论；接受 API allowlist、停止条件、补偿与 cleanup 规则。第 5 项按推荐值记录为 app=`https://app.clueai-reviewlens.com`、api=`https://api.clueai-reviewlens.com`、executor=Codex with Erika final GO、window=最终 GO 后 30 分钟；production deploy run / production HEAD 仍需执行前确认 `1e93e38`。
-- `50U-T1` GO 后执行前 preflight 发现：正常 upload worker 在分析完成后会将本批评论 content hash 回填到全局 `review_pool` / `review_pool_meta`，用于跨用户 LLM 缓存复用；这不是额外 API、不会额外扣 credit，但属于 production 内部写入。已补充到 `docs/50u-production-write-smoke-authorization.md` 与 `docs/50u-readiness-runbook.md`，并将其限定为 approved 15-row smoke content hashes。当前仍停在上传前，尚未执行生产上传、未触发 credit/quota/analytics/LLM 成本；需 Erika 明确接受该 `review_pool` side effect 后继续。
-- `50U-T1` GO 后 auth preflight STOP：Erika 已明确接受 `review_pool` / `review_pool_meta` 仅限 15 条 approved content hashes 的 worker 回填并要求继续执行；生产 `/health` 200，样本本地解析 15/15、batch hash 已计算；但 `POST /auth/login` 使用 approved email 与 username 均返回 401。只读 DB lookup 确认 smoke user 存在、plan=`pro`、未软删、有 bcrypt password hash。已停止在上传前；未创建 upload job、未执行生产上传、未 poll results、未触发 credit/quota/analytics/LLM 成本。继续需要有效生产登录凭证或 Erika 提供的 authenticated browser session/cookie。
-- `50U-T1` updated credential preflight 已通过但 upload STOP：生产登录、额度、产品、taxonomy 与重复上传检查通过；随后唯一写路径上传返回 500，按停止条件立即停止。事后只读对账确认未创建业务记录、未扣 credit、未写 LLM/analytics/cache 相关记录；精确账号、对象 ID、计数和时间戳保留在私有本地记录。后续需查生产 API 日志；不得自动重试上传。
-- `50U-T1` upload 500 根因已定位并修复生产容器环境：生产 API traceback 显示 `psycopg2.errors.ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction`，发生在 `review_analyzer/database.py:create_upload_job()` 第一条 `INSERT upload_jobs`；诊断确认 `PGOPTIONS` 未设置、DSN query 为空、`pg_is_in_recovery=False`，但 API 容器新连接 `transaction_read_only=on` / `default_transaction_read_only=on`，`pg_settings.source=session`。手动 `SET default_transaction_read_only=off` 可恢复。Erika 在 production `deploy/.env` 加入 `PGOPTIONS=-c default_transaction_read_only=off` 并 `docker compose up -d --force-recreate api worker scheduler`；复查 API 容器内 `PGOPTIONS=-c default_transaction_read_only=off`、`default_transaction_read_only=off`、`transaction_read_only=off`。本轮仅修复环境并记录，不重试上传；继续 50U-T1 需要 Erika 重新明确 GO。
-- `50U-T1` PGOPTIONS 修复后重试已执行并 STOP：重新只读 preflight 全通过（`/health`、login、`/me`、credit=14967、product_ref_id=77、taxonomy 命中、duplicate session=0、DB read-only flags=off/off、before counters 已记录）；为避免非必要外部 side effect，上传前临时关闭 smoke 用户 webhook 推送配置，worker 完成后已恢复且未记录 webhook URL/secret。`POST /uploads?locale=en` 返回 `job_id=96`，poll 在约 31s 后 `done`，`session_id=115`；session results 可读，comments=15，无 embedding 泄漏，Representative Evidence 可定位，Top negative 仅 `No clear friction` fallback row，无 `cluster_propagated=true` top row / waterproof 正向漏水误证据。DB after 对账：credit balance 14967→14952，`credit_ledger` 新增唯一 `review_analyze` delta=-15 / ref_id=96；`llm_usage_log` 新增 14 non-cache rows，cost_yuan=0.089850；`analysis_job_complete` 存在；products/product_variants count unchanged；`review_pool` 影响限定为 approved 15 hashes；push_snapshots/action_items 无新增。最终按停止条件 STOP：comments=15 / processed=15 / review_date_normalized=15，但 analyzed=14/15，未分析项来自 LLM schema_invalid exhausted 后 worker 以 `aspects_json=NULL` 写 legacy fallback 并将 job 标记 done；同时 `llm_usage_log.model_name` 记录为 provider `openai`，不满足允许模型名 `gpt-4o-mini/deepseek-chat/qwen-plus` 口径。本轮未执行 QA、reanalysis、aggregate/export、modern compare、手动 production SQL 写入或 push。
-- `50U-T1` STOP 后本地修复已完成但未部署/未 push：`workers/jobs.py` 将 exhausted LLM error fallback 改为结构化非空 `aspects_json` 并用 `analysis_error/analysis_fallback` 标记，同时禁止该 degraded fallback 回填 `review_pool`；`review_analyzer/database.py` 的 user/global content_hash cache 读取排除 `analysis_error` fallback；`backend_api/app/services/llm_router.py` 成功返回值改为真实 `model_id`，避免 `llm_usage_log.model_name=openai`。新增/补充 focused tests，`python3 -m py_compile ...` 通过，`python3 -m pytest backend_api/tests/test_worker_error_fallback.py backend_api/tests/test_database_read_path.py -q`：14 passed。后续需代码 review、部署，再经 Erika 新授权决定是否做新的生产写路径验证；不得复用本次 session 做 reanalysis。
-- `50U-T1` post-fix 部署与新样本 smoke 已通过：部署 `941320a fix(worker): preserve exhausted llm fallback analysis` 后公网 `/health` 200；使用原始 100 条文件中新的非重复 15-row postfix 样本（Excel rows 19-33，upload-ready `content/rating/date/reviewer/source`），batch hash=`329c4314c593678ba87c4dbd9b57103264e104955012bdc0742e429bdb00bc86`。首次重试前发现 `PGOPTIONS` 虽在容器 env 中，但 psycopg2 新连接仍为 `default_transaction_read_only=on` / `transaction_read_only=on`；新增并部署 `afe761e fix(db): force pooled connections read write`，在连接池借出连接时强制 read/write session，GitHub Actions `Deploy to Production` run `30341505845` completed/success，部署后 ECS 内 `get_connection()` flags 已由 Erika 验证为 off/off/false。
-- `50U-T1` production write-path smoke 最终 PASS：Erika 新 GO 后上传 postfix 15-row 样本，`POST /uploads?locale=en` 返回 `job_id=97`，poll queued→processing→done 约 30s，`session_id=116`；DB 对账 comments=15 / processed=15 / analyzed=15 / review_date_normalized=15，session category=`USB C Charger Block`、product_ref_id=77、variant_ref_id=NULL，credit balance 14952→14937，`credit_ledger` 唯一 `review_analyze` delta=-15 / ref_id=97；`llm_usage_log` 15 non-cache rows、model_name=`gpt-4o-mini`、cost_yuan=0.084751；`analysis_job_complete` present；products/product_variants unchanged；review_pool approved 15/15、start 后 outside rows=0；session-scoped results 15 comments、无 embedding 泄漏、8/8 evidence-like 字段可定位、无 `cluster_propagated=true` top row、无 positive waterproof evidence under `Water Leaks Through`。本轮未执行 QA、reanalysis、aggregate/export smoke、modern compare 或手动 production SQL 写入。
-- **单列后续问题（暂不跟进）**：生产 DB role / Supabase pooler / session 默认值仍表现为新连接默认 read-only；当前最小修复通过应用层连接池兜底恢复 read/write，适合生产止血。后续应单独排查为什么 `default_transaction_read_only=on` 成为默认值，并增加启动期或内部 diagnostics 的 DB write-flag healthcheck；该治理不混入当前 50U-T1 smoke 收口。
-- **规则**：Phase 7 只读灰度门禁可按通过收口；`50U-T2` 仅完成低风险本地质量基线，`50U-T3` 仅完成文档/SOP/门禁梳理。未获 Erika 新授权前仍不得执行生产上传、重分析、QA、aggregate/export smoke、modern compare 或生产业务 API；`50U-T1` 不自动重试。
-
-#### 5.9.1 核心口径定义
-
-- `Customer Issue`：前台展示给用户看的具体问题标签，例如 `Water Leaks Through`、`Missing Parts`。
-- `Customer Label`：前台展示给用户看的具体亮点标签，例如 `Comfortable To Wear`、`Feels Well Made`。
-- `Aspect / Internal Aspect`：内部维度，只做归类、治理、下载审计和责任分发，不作为前台 Top 主标签。
-- `Mention Share = mention_count / 同类 label mention_count 总数`。
-- `Impact Review Share = review_count / 当前筛选范围总评论数`。
-- 同一评论同一 canonical label 默认只计 1 次用于 Top 排名和 `review_count`。
-- 代表评论只能来自 verified evidence span；`cluster_propagated=true` 和 evidence 不在原文中的 occurrence 不能进入 Representative Evidence。
-
-#### 5.9.2 执行阶段总表
-
-| Phase | 状态 | 产物 / 结论 |
-|------|------|-------------|
-| Phase 0 口径冻结 | ✅ 完成 | 冻结 `Customer Issue / Customer Label / Mention Share / Impact Review Share / Aspect` 定义；旧 session 保守兼容 |
-| Phase 1 当前问题止血 | ✅ 完成 | 防止 `no leaks / without leaks / didn't leak / remained dry / kept dry` 误触发 `Water Leaks Through`；missing evidence 与 cluster propagated 不进入代表证据 |
-| Phase 2 标签数据层 | ✅ 完成 | 新增 `customer_label_catalog`、`customer_label_alias_rules`、`customer_label_candidates`；`customer_label_catalog.py` 支持 catalog / alias / candidate 保守解析；broad/internal label 可禁用 |
-| Phase 3 occurrence 抽取 | ✅ 完成 | 新增并行 `customer_label_occurrences` schema；每个 occurrence 带 raw label、canonical key、display label、aspect、evidence span、confidence、source、`evidence_verified`、`cluster_propagated`、version |
-| Phase 4 聚合算法 | ✅ 完成 | `_build_customer_label_rows()` 统一 Issue / Highlight 聚合；按同类 mention 分母算 `mention_share`；输出 `mention_count`、`review_count`、`impact_review_share`、`raw_occurrence_count`；正评中的真实 issue 和差评中的真实 highlight 都可进入 Top |
-| Phase 5 前端和下载 | ✅ 完成 | 页面表头改为 `Customer Issue/Customer Label + Mention Share + Impact Reviews + Representative Evidence`；下载改为 occurrence 级 evidence + related reviews；导出补齐审计字段 |
-| Phase 6 验证与回归 | ✅ 完成 | 新增固定验证集与 `test_customer_label_phase6_validation.py`，覆盖 Foxelli、Comfortable evidence 失配、mixed review、否定漏水、真实漏水、cluster propagated、床架、睫毛膏、legacy old session、Internal Aspect 过滤 |
-| Phase 6 真实 Foxelli raw replay | ✅ 完成 | `scratch/session114_raw_replay.xlsx` 上传 clueai-dev 生成 session 3；最终 `Water Leaks Through=5 mentions / 5 reviews`，全部来自当前产品真实漏水原文 span，无旧风险 `9/9` 过计数 |
-| Phase 6.5 results LLM fallback | ✅ 完成 | `RESULTS_AI_ENHANCEMENT_ENABLED=false` 默认关闭；results 主 payload 先返回 heuristic，不被 DeepSeek / OpenAI enhancement 失败阻塞；AI 只能增强文本，不能覆盖 rows |
-| Phase 7 P0 read-path | ✅ 完成 | `get_comments()` 默认瘦列读取，不返回 `embedding`；`aspects_json` compact 投影；date span fallback 改 SQL `MIN/MAX`；连接关闭重试一次；`backend_api/tests` 176 passed |
-| Phase 7 P1 authenticated smoke | ✅ 完成 | clueai-dev/preprod route 层 session 3/4/5 authenticated smoke 通过；生产只读 results smoke 覆盖 114/96/111/110；未改 Not Breathable，未重构 Phase 1-6 核心算法 |
-| Phase 7 P1 worker write-path | ✅ 已推送 / staging 写入验证通过 | `origin/develop=2d8c1a4`；GitHub Actions deploy run `30236160482` success；clueai-dev 60 条与 300 条临时 worker smoke 通过；analysis 每 50 条 flush，cluster / embedding 批量写，保留单条 API 和异常 fallback |
-| Phase 7 P2 date/index | ✅ production migration/backfill 验收完成 | clueai-dev 已执行 `059`，`review_date` 1501/1501、NULL=0，ISO 1409/1409、Amazon 文本 92/92；production 已执行 `059`，`review_date` 8325/8340、NULL=15（均为空 raw date）、ISO 7711/7711、Amazon 文本 614/614；3 个索引存在；`get_comments` range/date span 与 product/compare 聚合优先 normalized date，旧库保留 fallback |
-| Phase 7 生产 credit/export 门禁 | ✅ 已完成（限定样本） | Erika 于 2026-07-27 授权 session 114/96；aggregate `/analysis/results`、模块导出、完整导出均 200；共写入 6 条 credit ledger（2 insight、4 export），analytics_events +0 |
-| Phase 7 第一轮生产只读灰度观察 | ❌ FAIL / STOP at session 114 | Erika 授权后仅执行 session 114 的 session-level results；200 / 0.620s、92 comments、无 embedding、无 SSL error、ledger/analytics/LLM/upload_jobs delta=0，date/review_date/Amazon 文本日期链路通过；但 Top Issue `Not Breathable` 与 Top Label `Comfortable to Wear` 均只有 1 条 verified Representative Evidence，其余高频 occurrence 为 cluster-propagated evidence，96/111/110/95 未请求 |
-| Phase 7 修复后第二轮生产只读灰度观察 | ❌ FAIL / STOP at session 96 | P0 Evidence/Propagation 修复部署 run `30249258312` success；Erika 授权 A 后仅请求 session-level results，顺序执行 114 -> 96 后停止；114 的 Top Issue `Water Leaks Through` 与 Top Label `Comfortable to Wear` 代表证据可定位且 API Top 统计未被 propagated 放大；96 的 `Value for Money` Top Issue / Top Label 均无 Representative Evidence，触发停止条件；111/110/95 未请求；delta 全部为 0 |
-| Phase 7 第二轮阻塞本地修复 | ✅ 本地完成 / 待部署复验 | 修复 session 96 `Value for Money` legacy/top row Representative Evidence 缺口：legacy label 可从同条评论 verified aspect span 或价格相关原文短语补 span；无 verified span 时前台/导出不展示 Representative Evidence；前端 `customerLabelOccurrences()` recount/export 过滤 propagated occurrence；模块/完整导出不再信旧 `representative_evidence` 字段；本地 focused pytest 53 passed、frontend typecheck passed；未请求生产 |
-| Phase 7 第三轮生产只读灰度观察 | FAIL / STOP at session 111 | deploy run `30254814989` / `#132` success for `ff7e67e`；production HEAD 与 results AI effective=false 均确认；Erika 授权后仅请求 session-level results 与 DB SELECT；114/96 通过，111 的 `Water Leaks Through` Top Issue 第一条 evidence 为正向 `no leakage`（comment 26388，5-star，highlight `Waterproofing`，issue_tag 为空），触发停止；110/95 已在同一授权批次脚本中采集但不改变 stop 结论；delta 全部为 0 |
-| Phase 7 第三轮阻塞本地修复 | ✅ 已部署 / 第四轮复验通过 | 修复 session 111 正向防水 evidence 污染：`Water Leaks Through` issue 入口新增正向防水/否定漏水 guard，覆盖旧 aspect hint、已成型 occurrence payload、legacy fallback 与 enrich 合并；`no leakage` 可进入 `Keeps Water Out` highlight；新增 comment 26388/26302 风格回归；focused pytest 57 passed、frontend typecheck passed、`git diff --check` passed；已由 deploy run `30319680758` 部署 `9625a87` 并通过第四轮只读灰度 |
-| Phase 7 第四轮生产只读灰度观察 | ✅ PASS | deploy run `30319680758` / `#133` success for `9625a87`；production HEAD 与 results AI effective=false 均确认；Erika 授权后仅请求 session-level results 与 DB SELECT；114/96/111/110/95 全部 200、payload 无 `embedding`、无 SSL/connection error、Representative Evidence 可定位；111 正向防水短语不再进入 `Water Leaks Through` issue，26388/26302 未作为 issue evidence；delta 全部为 0 |
-
-#### 5.9.3 验证记录
-
-真实样本验证：
-
-| session | 样本 | 结果 |
-|---------|------|------|
-| 3 | Foxelli Waders raw replay，92 reviews | `Water Leaks Through` count=5 / pct=62.5；`Comfortable To Wear` count=64 / pct=48.1；代表证据均为原文 span |
-| 4 | 432 reviews | `Breaks Easily` count=13 / pct=44.8；`Feels Well Made` count=290 / pct=92.7 |
-| 5 | 545 reviews | 无明确 Top Issue（`No clear friction`）；`Comfortable To Wear` count=463 / pct=89.6 |
-
-生产只读 results smoke（已部署 `1d537fd` 后）：
-
-| session | route | status / time | comments | Top Issue | Top Label | embedding | SSL/connection error |
-|---------|-------|---------------|----------|-----------|-----------|-----------|----------------------|
-| 114 | `/analysis/sessions/114/results` | 200 / 0.741s | 92 | `Not Breathable` | `Comfortable to Wear` | false | false |
-| 96 | `/analysis/sessions/96/results` | 200 / 0.726s | 661 | `Value for Money` count=6 | `Value for Money` count=135 | false | false |
-| 111 | `/analysis/sessions/111/results` | 200 / 0.394s | 100 | `Water Leaks Through` count=13 | `Keeps Water Out` count=17 | false | false |
-| 110 | `/analysis/sessions/110/results` | 200 / 0.426s | 100 | `Water Leaks Through` count=13 | `Holds Up Well` count=46 | false | false |
-
-Phase 7 小流量灰度观察清单（准备阶段，仅文档整理；不触发生产入口）：
-
-| session | 选择原因 | 已有基线 | 观察重点 | 执行边界 |
-|---------|----------|----------|----------|----------|
-| 114 | Foxelli / Amazon 文本日期样本，92 comments，已覆盖 production read-only results 与授权 export smoke | Top Issue `Not Breathable`，Top Label `Comfortable to Wear`；P2 normalized span `2018-12-05 ~ 2026-07-05`；Amazon 样本 `id=26410` 可精确映射到 `2026-07-05` | Representative Evidence 必须来自真实 evidence span；`Not Breathable` 只观察不改逻辑；Amazon 文本日期不得被精确日窗口误过滤 | 仅观察已有 results/filter 行为；不上传、不重分析、不 QA、不再跑 aggregate/export |
-| 96 | 较大真实 session，661 comments，覆盖 date span 与同名 issue/label 并存 | Top Issue `Value for Money` count=6，Top Label `Value for Money` count=135；P2 normalized span `2024-04-10 ~ 2025-12-01` | 核对 issue/highlight 同名时是否语义可解释；Representative Evidence 不得来自 missing / propagated span；date filter 持续走 `review_date` | 如需再次请求 production route，先确认是否会写 insight/export ledger |
-| 111 | 100 comments，issue/highlight 为防水正反向组合 | Top Issue `Water Leaks Through` count=13，Top Label `Keeps Water Out` count=17 | 继续观察否定漏水 / 防水正向表达不污染 `Water Leaks Through`；证据 span 必须能在原文中定位 | 只记录真实页面/只读结果，不触发重分析 |
-| 110 | 100 comments，漏水 issue + 耐用 highlight 组合 | Top Issue `Water Leaks Through` count=13，Top Label `Holds Up Well` count=46 | 核对 Top Issue / Top Label 同屏是否符合用户直觉；Representative Evidence 不得使用 broad/internal label 或 cluster-propagated evidence | 不跑上传、QA、aggregate/export smoke |
-| 95 | P2 production DDL/backfill 验收样本，date span 覆盖较新日期 | P2 normalized span `2023-02-07 ~ 2026-07-10`；Top Issue / Top Label 尚未记录在本轮灰度基线 | 可作为第 5 个只读观察候选，补 Top Issue / Top Label、evidence span、date filter 行为 | 未获授权前不新增生产业务 smoke；如进入观察，先说明入口和成本风险 |
-
-灰度观察记录模板：
-
-| 日期 | session | 观察入口 | Top Issue / Top Label | Representative Evidence | `Not Breathable` 口径 | date filter / `review_date` | Amazon 文本日期 | 结论 / 后续 |
-|------|---------|----------|------------------------|--------------------------|------------------------|----------------------------|------------------|-------------|
-| 待记录 | 待记录 | 仅只读页面或已授权入口 | 待记录 | 是否来自真实 evidence span | 只观察，不修改 | 是否持续使用 normalized `review_date` | 是否误过滤 | 待记录 |
-
-灰度观察字段拆解（人工 / 只读核对项）：
-
-| session | Top Issue / Top Label 核对 | Representative Evidence 核对 | date filter 核对 | 异常记录规则 |
-|---------|-----------------------------|-------------------------------|------------------|--------------|
-| 114 | 记录 Top Issue `Not Breathable` 与 Top Label `Comfortable to Wear` 的 display label、count/share、前台文案；只判断是否符合用户直觉，不修改 `Not Breathable` 规则 | 抽查前 3 条 evidence，确认 span 可在原文中定位；不得出现 missing evidence、broad/internal label 或 cluster-propagated evidence | 默认 span 应沿用 `2018-12-05 ~ 2026-07-05`；Amazon `id=26410` 对应 `2026-07-05` 不得被精确日过滤排除；raw `date` 只展示 | 若 evidence 不在原文，记录 comment_id、label、raw evidence、原文片段、是否 propagated |
-| 96 | 记录 `Value for Money` 同时作为 issue/highlight 时的 count/share 与展示上下文，判断正负语义是否能区分 | 抽查 issue 与 highlight 各 2 条 evidence，确认同名标签不会共用错误 span | 默认 span 应沿用 `2024-04-10 ~ 2025-12-01`；任意日期筛选记录 SQL/页面行为是否仍基于 `review_date` | 若同名 issue/highlight 语义混淆，记录 label、sentiment、evidence、筛选条件 |
-| 111 | 记录 `Water Leaks Through` 与 `Keeps Water Out` 的正反向边界，确认否定漏水不污染 issue | 抽查漏水 issue evidence 是否明确表达 leak / wet / water through；抽查防水 highlight 是否明确表达 dry / waterproof / keeps water out | 若页面筛选日期，记录 range、返回评论数、是否排除 Amazon 文本日期误伤 | 若 `no leaks` / `remained dry` 进入 issue，记录原文、label、occurrence source |
-| 110 | 记录 `Water Leaks Through` 与 `Holds Up Well` 同屏展示是否符合用户直觉，观察 count/share 是否异常偏高 | 抽查 Top Issue/Label evidence 是否来自当前产品真实原文 span；不得由 internal aspect 代替前台 label | 记录 date range 展示是否来自 normalized span；raw date 不参与筛选判断 | 若 broad/internal label 进入 Top 或证据过宽，记录 display label、canonical key、aspect |
-| 95 | 首次补齐 Top Issue / Top Label、count/share、前台 evidence 与日期范围 | 抽查 Top Issue/Label 前 3 条 evidence，确认是否可回溯到原文；若缺 Top 数据先只记录缺口 | 默认 span 应沿用 `2023-02-07 ~ 2026-07-10`；如含 Amazon 文本日期，确认 normalized 后不过滤 | 未获授权前不主动请求生产 route；若授权后观察，先记录入口、session 数、ledger/analytics/LLM 风险说明 |
-
-灰度观察通过标准：
-- 3-5 个真实 session 的 Top Issue / Top Label 没有明显语义反转、同名污染或 100% 异常集中。
-- Representative Evidence 均来自真实 evidence span，且能在原评论中定位；missing evidence、cluster-propagated occurrence、broad/internal label 不进入前台代表证据。
-- `Not Breathable` 只做观察和记录，不改标签逻辑。
-- Phase 1-6 Customer Issue / Customer Label 核心算法保持冻结，不做重构。
-- date filter 持续使用 normalized `comments.review_date`；raw `comments.date` 继续只做展示。
-- Amazon 文本日期样本不会因 raw date 格式被日期窗口误过滤。
-
-Phase 7 第一轮灰度入口风险审计（2026-07-27，本地代码审计完成；本轮未请求生产接口）：
-
-| 入口 | 本地代码行为 | 风险等级 | 第一轮灰度决策 |
-|------|--------------|----------|----------------|
-| `GET /analysis/sessions/{session_id}/results` | 按单个 session 读取 comments，默认移除 `embedding`，用本地 heuristic 生成模块；`RESULTS_AI_ENHANCEMENT_ENABLED=true` 时可能异步调用 LLM，但 route 本身不调用 `credit_consume` / `track_event` | 低风险候选，但依赖生产环境开关确认 | 仅在确认 `RESULTS_AI_ENHANCEMENT_ENABLED=false` 且 Erika 明确授权后，按 114/96/111/110/95 逐个只读观察；不从前台 aggregate 页面进入 |
-| `GET /analysis/history`、`GET /analysis/sessions/{id}/history` | 只读 session/history 数据，不跑 insight、QA 或 worker | 低风险 | 可用于定位已有 session；本轮仍只做本地方案整理，未请求生产 |
-| 旧 `GET /analysis/compare` | 读取 comments 并构造 deterministic dataset；当前 route 不走现代 compare cache/AI summary | 低到中风险 | 不作为第一轮必需入口；如要核对 compare date filter，先单独报告入口与影响范围 |
-| `GET /analysis/results` | 聚合 comments 后构造 insights；有结果时直接 `credit_consume(user_id, 6, "insight", product_id)`；AI enhancement 仍可能受环境开关影响 | 高风险 | 本轮禁止，不能把前台 `/analysis/results` 页面打开当成免费只读观察 |
-| `GET /analysis/sessions/{id}/export`、`/export/full` | 执行 quota 检查并各扣 1 credit，生成 XLSX | 高风险 | 本轮禁止；如需 smoke，先报告 ledger/analytics 影响并等待 Erika 授权 |
-| `POST /qa/ask`、`/qa/questions`、`POST /qa/conversations/{id}/messages` | 读取 `include_embedding=true` 的 comments，调用 RAG/LLM，扣 3 credits，并写入 QA conversation/message | 高风险 | 本轮禁止，不做 QA/RAG 验证 |
-| `POST /uploads`、`POST /analysis/jobs`、`POST /analysis/reanalyze` | 创建/重置 job，入队 worker；worker 会写 analysis/cluster/embedding、扣 review_analyze credits、记录 LLM usage/analytics，并可能 push | 最高风险 | 本轮禁止，不上传、不重分析、不启动 worker |
-| `POST /compare/dataset`、`/compare/reports`、`/compare/export` | 现代 compare 会生成/读取 compare cache，部分路径调用 AI summary 并写 DB；export 产生文件 | 高风险 | 本轮禁止，不以 compare 代替 results/filter 观察 |
-
-第一轮灰度观察执行顺序（获得授权后才执行生产部分）：
-
-1. 先记录生产 `RESULTS_AI_ENHANCEMENT_ENABLED`、disabled providers、当前 deploy commit；任一项无法确认则停止。
-2. 只调用已有 session 的 `GET /analysis/sessions/{session_id}/results`，顺序建议为 `114 → 96 → 111 → 110 → 95`；不打开会自动调用 aggregate 的前台 `/analysis/results` 主路径。
-3. 每个 session 记录 status、响应时间、comments count、Top Issue / Top Label、代表证据前 3 条、默认 date span、payload 是否包含 `embedding`、是否出现 SSL/connection error。
-4. 对 114/95 重点核对 Amazon 文本日期；对 111/110 重点核对漏水否定边界；对 96 重点核对同名 issue/highlight 语义；所有 session 都核对 evidence span 是否能回到原评论。
-5. 观察期间不得修改 `Not Breathable`、Phase 1-6 核心算法或 normalized date 口径；异常只记录，不现场修复。
-6. 任何 credit ledger 增量、analytics event、LLM usage/log、worker/job 状态变化、missing/propagated evidence、日期误过滤或 response error，立即停止后续 session 并报告。
-
-当前闭环状态：第一轮生产只读观察已执行并触发停止条件；仅 session 114 被请求，96/111/110/95 未请求。未修改 `Not Breathable`，未重构 Phase 1-6 Customer Issue / Customer Label 核心算法，未现场修复异常。
-
-第一轮灰度 preflight 结果（2026-07-27）：
-
-| 检查项 | 结果 |
-|--------|------|
-| 当前分支 / 远端基线 | 本地 `develop`、本地 `origin/develop`、GitHub `refs/heads/develop` 均为 `35de3897b0d9afa4c25ef6bf59e67d288da05724`；工作树仍有既有未提交用户改动，未触碰、未回滚 |
-| 最新 production deploy | GitHub Actions `Deploy to Production` run `30244595426` completed/success；`head_sha=35de3897b0d9afa4c25ef6bf59e67d288da05724`；2026-07-27 07:02:51 UTC 更新完成；生产 `/opt/clueai` HEAD 同步为 `35de389` |
-| 生产 results AI 开关确认方式 | Erika 授权后 SSH 到 Lightsail SG `ecs`，在 `/opt/clueai/deploy` 只读检查：`deploy/.env` 与 api 容器环境均未显式设置 `RESULTS_AI_*`；api 容器内直接求值 `_results_ai_enabled()` 返回 `False`，`_results_ai_disabled_providers()` 返回 `['deepseek']` |
-| 生产业务观察授权 | Erika 已明确回复“授权执行生产只读观察” |
-| 本轮生产动作 | 仅请求 `GET /analysis/sessions/114/results`；未请求 `/analysis/results`、export、QA、upload、analysis job、reanalyze、modern compare dataset/report/export |
-| 停止状态 | session 114 出现 Representative Evidence 缺口 / cluster-propagated evidence 风险，按停止条件未请求 96/111/110/95 |
-
-第一轮生产只读观察结果（2026-07-27，授权后执行）：
-
-| session | route | status / time | comments | payload embedding | Top Issue | Top Label | Representative Evidence | date / Amazon | delta | 结论 |
-|---------|-------|---------------|----------|-------------------|-----------|-----------|--------------------------|---------------|-------|------|
-| 114 | `GET /analysis/sessions/114/results` | 200 / 0.620s | 92 / DB 92 | false | `Not Breathable` count=77 / share=92.8 | `Comfortable to Wear` count=63 / share=48.5 | FAIL：Issue 与 Label 均只有 1/3 verified evidence；Top rows 标记 `cluster_propagated_row=true` | normalized span `2018-12-05 ~ 2026-07-05`；Amazon 文本 92/92 保留且 `review_date` 92/92；样本 `id=26410` raw=`Reviewed in the United States on July 5, 2026` -> `2026-07-05` | credit ledger +0；analytics +0；LLM +0；upload_jobs unchanged | 触发停止条件 |
-| 96 | 未请求 | - | - | - | 既有基线 `Value for Money` count=6 | 既有基线 `Value for Money` count=135 | 未观察 | 未观察 | 未观察 | 因 114 失败停止 |
-| 111 | 未请求 | - | - | - | 既有基线 `Water Leaks Through` count=13 | 既有基线 `Keeps Water Out` count=17 | 未观察 | 未观察 | 未观察 | 因 114 失败停止 |
-| 110 | 未请求 | - | - | - | 既有基线 `Water Leaks Through` count=13 | 既有基线 `Holds Up Well` count=46 | 未观察 | 未观察 | 未观察 | 因 114 失败停止 |
-| 95 | 未请求 | - | - | - | 未补齐 | 未补齐 | 未观察 | 未观察 | 未观察 | 因 114 失败停止 |
-
-session 114 异常记录（只记录，不现场修复）：
-
-| label | comment_id | evidence | source / propagated | 原文片段 | 结论 |
-|-------|------------|----------|---------------------|----------|------|
-| `Not Breathable` | 26420 | `you will sweat in warm weather` | `llm_canonical_hint` / `cluster_propagated=false` | `I purchased these waders ... These waders are very comfortable ... you will sweat in warm weather...` | verified evidence span，可作为代表证据 |
-| `Not Breathable` | 26501 | `you will sweat in warm weather` | `llm_canonical_hint` / `cluster_propagated=true` | `Ordered size 11, fit great, right to the arm pit, our spring fed pond is very cold...` | evidence 不在该原文中，不能作为 Representative Evidence |
-| `Not Breathable` | 26499 | `you will sweat in warm weather` | `llm_canonical_hint` / `cluster_propagated=true` | `I was somewhat sceptic ... The neoprene does get hot, but other than that they're great...` | evidence 不在该原文中，属于 propagated evidence 风险 |
-| `Not Breathable` | 26498 | `you will sweat in warm weather` | `llm_canonical_hint` / `cluster_propagated=true` | `Me and my buddy bought a pair of these ... You can feel just about every root and rock...` | evidence 不在该原文中，属于 propagated evidence 风险 |
-| `Comfortable to Wear` | 26420 | `These waders are very comfortable` | `llm_canonical_hint` / `cluster_propagated=false` | `I purchased these waders ... These waders are very comfortable...` | verified evidence span，可作为代表证据 |
-| `Comfortable to Wear` | 26501 | `These waders are very comfortable` | `llm_canonical_hint` / `cluster_propagated=true` | `Ordered size 11, fit great, right to the arm pit...` | evidence 不在该原文中，不能作为 Representative Evidence |
-| `Comfortable to Wear` | 26498 | `These waders are very comfortable` | `llm_canonical_hint` / `cluster_propagated=true` | `Me and my buddy bought a pair of these and we love them...` | evidence 不在该原文中，属于 propagated evidence 风险 |
-| `Comfortable to Wear` | 26496 | `These waders are very comfortable` | `llm_canonical_hint` / `cluster_propagated=true` | `Very happy to get these waders! I purchased to take my daughter duck hunting...` | evidence 不在该原文中，属于 propagated evidence 风险 |
-
-第一轮生产只读 delta 核对：
-
-| 项目 | baseline | after session 114 | delta |
-|------|----------|-------------------|-------|
-| `credit_ledger` for user 9 | count=295, max_id=304, delta_sum=15267 | count=295, max_id=304, delta_sum=15267 | 0 |
-| `analytics_events` for user 9 | count=4166, max_id=4726 | count=4166, max_id=4726 | 0 |
-| `llm_usage_log` for user 9 | count=2603, max_id=2653 | count=2603, max_id=2653 | 0 |
-| `upload_jobs` for sessions 95/96/110/111/114 | jobs 75/77/91/92/95 均 `done` | 状态、processed_rows、updated_at、completed_at 均不变 | unchanged |
-
-第一轮结论与后续建议：
-- 结论：FAIL / STOP。session 114 的 response 本身为 200、无 embedding、无 SSL/connection error、无扣费/analytics/LLM/worker 状态变化，date span 与 Amazon 文本日期正常；但 Top Issue / Top Label 的 Representative Evidence 覆盖不足，且高频 occurrence 大量来自 `cluster_propagated=true`，不满足 Phase 7 通过标准。
-- `Not Breathable` 仍保持既有逻辑并作为 Top Issue 出现，但 count=77 / share=92.8 明显受 cluster propagation 放大；本轮仅记录，不修改。
-- 后续建议：暂停扩大生产只读观察；先开独立 P0 修复/验证任务，重点审计 cluster-propagated occurrence 是否应进入 Top 计数、Representative Evidence 是否必须只取 `source_review_allowed=true` / `verified_evidence=true`，并用 session 114 replay/gold sample 在 staging 复核后再申请下一轮生产观察授权。
-- 门禁判断：Phase 7 不应直接收口为通过；不继续观察 96/111/110/95；不执行上传、重分析、QA、aggregate/export smoke。
-
-Phase 7 修复后第二轮生产只读灰度（2026-07-27，授权 A 后执行）：
-
-| 检查项 | 结果 |
-|--------|------|
-| 当前分支 / 远端基线 | 本地 `develop`、HEAD、本地 `origin/develop` 均为 `5d1ae587f5f09b3f00cfdaad6b10d21565e9fefb`；工作树仍有既有未提交用户改动，未触碰、未回滚 |
-| 最新 production deploy | GitHub Actions `Deploy to Production` run `30249258312` completed/success；`head_sha=5d1ae587f5f09b3f00cfdaad6b10d21565e9fefb`；2026-07-27 08:18:30 UTC 更新完成 |
-| 生产业务观察授权 | Erika 明确授权 A：允许使用本地生产 session secret，仅调用 `GET /analysis/sessions/{id}/results` 和数据库 SELECT |
-| TLS / 客户端 | 生产请求使用 `urllib + certifi CA bundle`，证书校验开启；本地 macOS Python 系统 CA 初次出现 local issuer failure，未关闭校验，改用 certifi 后授权请求无 SSL/connection error |
-| 本轮生产动作 | 仅请求 `GET /analysis/sessions/114/results` 与 `GET /analysis/sessions/96/results`；按 session 96 停止条件收口，未请求 111/110/95；未请求 `/analysis/results`、export、QA、upload、analysis job、reanalyze、modern compare dataset/report/export |
-
-第二轮生产只读观察结果：
-
-| session | route | status / time | comments | payload embedding | Top Issue | Top Label | Representative Evidence | propagated / Top 统计 | date / Amazon | 结论 |
-|---------|-------|---------------|----------|-------------------|-----------|-----------|--------------------------|------------------------|---------------|------|
-| 114 | `GET /analysis/sessions/114/results` | 200 / 1.136s | 92 / DB 92 | false | `Water Leaks Through` count=5 / share=83.3 / impact=5.4；raw=5、total=5、propagated=0 | `Comfortable to Wear` count=1 / share=33.3 / impact=1.1；raw=1、total=63、propagated=62 | Issue 3/3 verified span：`Both feet are leaking around where the boot connects to the wader`、`leak at the seams`、`water leaking in`；Label 1/1 verified span：`These waders are very comfortable` | API row 未被 propagated occurrence 放大；`Not Breathable` 不再是 API Top Issue；只读审计发现前端 occurrence recount/export 若现场重算仍可能看到 `Not Breathable` 77/76 propagated、`Comfortable to Wear` 63/62 propagated，本轮未调用 export | `review_date` 92/92；normalized span `2018-12-05 ~ 2026-07-05`；Amazon 文本 92/92 normalized；样本 `id=26410` raw=`Reviewed in the United States on July 5, 2026` -> `2026-07-05` | 114 通过核心 evidence/propagation 观察 |
-| 96 | `GET /analysis/sessions/96/results` | 200 / 1.243s | 661 / DB 661 | false | `Value for Money` count=6 / share=12.2 / impact=0.9；raw=6、total=6、propagated=0；`evidence_verified=false` | `Value for Money` count=135 / share=66.5 / impact=20.4；raw=135、total=135、propagated=0；`evidence_verified=false` | FAIL：Issue 与 Label 均无 `evidence_spans`，Representative Evidence checked_count=0，不可定位 | API row 未被 propagated occurrence 放大；无前端 occurrence propagated recount 风险 | `review_date` 661/661；normalized span `2024-04-10 ~ 2025-12-01`；无 Amazon 文本日期 | 触发停止条件 |
-| 111 | 未请求 | - | - | - | 既有基线 `Water Leaks Through` count=13 | 既有基线 `Keeps Water Out` count=17 | 未观察 | 未观察 | 未观察 | 因 96 失败停止 |
-| 110 | 未请求 | - | - | - | 既有基线 `Water Leaks Through` count=13 | 既有基线 `Holds Up Well` count=46 | 未观察 | 未观察 | 未观察 | 因 96 失败停止 |
-| 95 | 未请求 | - | - | - | 未补齐 | 未补齐 | 未观察 | 未观察 | 未观察 | 因 96 失败停止 |
-
-第二轮生产只读 delta 核对：
-
-| 项目 | baseline | after session 96 stop | delta |
-|------|----------|-----------------------|-------|
-| `credit_ledger` for user 9 | count=295, max_id=304, delta_sum=15267 | count=295, max_id=304, delta_sum=15267 | 0 |
-| `user_credits` for user 9 | balance=14967, monthly_grant=15000 | balance=14967, monthly_grant=15000 | unchanged |
-| `analytics_events` for user 9 | count=4166, max_id=4726 | count=4166, max_id=4726 | 0 |
-| `llm_usage_log` for user 9 | count=2603, max_id=2653, tokens_in=12130086, tokens_out=470608, cost_yuan=15.89495 | unchanged | 0 |
-| `upload_jobs` for sessions 95/96/110/111/114 | jobs 75/77/91/92/95 均 `done` | 状态、processed_rows、updated_at、completed_at 均不变 | unchanged |
-
-第二轮结论与后续建议：
-- 结论：FAIL / STOP at session 96。session 114 的修复后 API Top 统计与 Representative Evidence 已符合核心门禁，payload 无 `embedding`、无 SSL/connection error、date/Amazon 正常、delta 全部为 0；但 session 96 的 Top Issue / Top Label 都缺 Representative Evidence，触发停止条件。
-- `Not Breathable` 保持既有逻辑冻结；修复后 API Top Issue 已从第一轮的 `Not Breathable` 转为真实漏水 `Water Leaks Through`，本轮未改标签逻辑。
-- `cluster_propagated` occurrence 未继续放大 API Top 统计；但前端 `customerLabelOccurrences()` 的 occurrence recount/export 路径仍有传播行重算风险，本轮未触发 export，后续需单独修复或加门禁。
-- 门禁判断：Phase 7 仍不可收口为通过；不进入 5.9.7 50 付费用户 readiness；不执行生产上传、重分析、QA、aggregate/export smoke。
-- 下一步：修复 session 96 `Value for Money` legacy/top row Representative Evidence 缺口，并把前端 occurrence recount/export 的 propagated 过滤纳入回归。
-
-Phase 7 第三轮生产只读灰度 preflight（2026-07-27，部署与 runtime preflight 已确认，授权后已执行）：
-
-| 检查项 | 结果 |
-|--------|------|
-| 当前分支 / 远端基线 | 本地 `develop`、HEAD、本地 `origin/develop` 均为 `ff7e67e256a834c444869b3d809eae7cb1cbbd0d`；commit subject `fix: restore verified legacy evidence for phase 7`；工作树仍有既有未提交用户改动，未触碰、未回滚 |
-| GitHub Actions deploy 状态 | Erika 提供 Actions 页面 URL `https://github.com/erikazzsw-art/review-analyzer/actions/runs/30254814989` 与截图确认：`Deploy to Production #132` completed/success，branch=`develop`，commit=`ff7e67e`，duration=`4m31s`；完整 head sha 按本地/远端基线记录为 `ff7e67e256a834c444869b3d809eae7cb1cbbd0d` |
-| production HEAD | 只读 SSH 到 production `/opt/clueai` 核对：`git rev-parse HEAD=ff7e67e256a834c444869b3d809eae7cb1cbbd0d`，`git status --short --branch` 为 `## develop...origin/develop` |
-| production `RESULTS_AI_ENHANCEMENT_ENABLED` | 只读 SSH 到 `/opt/clueai/deploy` 核对：compose services 为 `api/frontend/nginx/redis/scheduler/worker`；api 容器内 `RESULTS_AI_ENHANCEMENT_ENABLED_ENV=None`、`RESULTS_AI_DISABLED_PROVIDERS_ENV=None`，运行时 `_results_ai_enabled()` 为 `False`，`_results_ai_disabled_providers()` 为 `['deepseek']` |
-| 生产业务观察授权 | Erika 明确回复“授权”：允许按 114 -> 96 -> 111 -> 110 -> 95 顺序仅调用 session-level results，并在每轮前后做生产数据库 SELECT delta |
-| 本轮生产动作 | 仅请求 `GET /analysis/sessions/114/results`、`/analysis/sessions/96/results`、`/analysis/sessions/111/results`、`/analysis/sessions/110/results`、`/analysis/sessions/95/results`；未请求 `/analysis/results`、export、QA、upload、analysis job、reanalyze、modern compare dataset/report/export；另对 session 111 的 comment 26388/26302 做生产 SELECT 诊断 |
-| delta 核对 | 已采样。`credit_ledger`、`analytics_events`、`llm_usage_log`、`upload_jobs` 全程 delta=0 / unchanged |
-
-第三轮 preflight 当前结论与后续建议：
-- 当前结论：production deploy、HEAD 与 results AI effective=false 均已确认；第三轮只读观察已执行并按 session 111 收口为 FAIL / STOP。
-- 门禁判断：Phase 7 仍不可收口为通过；不进入 5.9.7 50 付费用户 readiness；不执行生产上传、重分析、QA、aggregate/export smoke。
-- 下一步：修复 session 111 正向 `no leakage` / 防水 highlight 污染 `Water Leaks Through` issue 的 legacy/aspect 映射问题，并补入 gold/fixture 回归；修复后再申请新一轮生产只读观察授权。
-
-第三轮生产只读观察结果：
-
-| session | route | status / time | comments | payload embedding | Top Issue | Top Label | Representative Evidence | propagated / Top 统计 | date / Amazon | 结论 |
-|---------|-------|---------------|----------|-------------------|-----------|-----------|--------------------------|------------------------|---------------|------|
-| 114 | `GET /analysis/sessions/114/results` | 200 / 0.551s | 92 / DB 92 | false | `Water Leaks Through` count=5 / share=83.3 / impact=5.4；raw=5、total=5、propagated=0 | `Comfortable to Wear` count=1 / share=33.3 / impact=1.1；raw=1、total=63、propagated=62 | Issue 3/3 located：`Both feet are leaking around where the boot connects to the wader` (26483)、`leak at the seams` (26465)、`water leaking in` (26457)；Label 1/1 located：`These waders are very comfortable` (26420) | API Top count 未被 propagated 放大；`Comfortable to Wear` 只展示 source-review evidence，不使用 propagated evidence | `review_date` 92/92；span `2018-12-05 ~ 2026-07-05`；Amazon 文本 92/92 normalized | PASS |
-| 96 | `GET /analysis/sessions/96/results` | 200 / 0.272s | 661 / DB 661 | false | `Value for Money` count=6 / share=12.2 / impact=0.9；raw=6、total=6、propagated=0 | `Value for Money` count=17 / share=23.0 / impact=2.6；raw=17、total=17、propagated=0 | Issue 3/3 located：`not worth the price at all` (25209)、`Not worth the money` (25063/25001)、`It's a $.50 tube sold for $35` (24861)；Label 3/3 located：`It’s a time saver` (25282)、`really affordable` (25256)、`Price point is great` (25230) | 同名 issue/highlight 未共用错误 span；无 propagated amplification | `review_date` 661/661；span `2024-04-10 ~ 2025-12-01`；Amazon 文本 0 | PASS |
-| 111 | `GET /analysis/sessions/111/results` | 200 / 0.323s | 100 / DB 100 | false | `Water Leaks Through` count=10 / share=41.7 / impact=10.0；raw=12、total=18、propagated=6 | `Keeps Water Out` count=14 / share=32.6 / impact=14.0；raw=14、total=17、propagated=3 | FAIL：Issue 第一条 evidence 为正向 `no leakage`，located comment 26388/26302；其余 checked spans `Leaked the first time out`、`leak appeared to be coming from a seam` 可定位；Label 3/3 located：`Stayed perfectly dry`、`Keep you dry`、`keeps me dry in water` | API Top count 未被 propagated occurrence 放大，但正向防水 evidence 污染 issue；diagnostic SELECT：comment 26388 为 5-star positive，`issue_tag=""`、`highlight_tag="Waterproofing,Size & Fit"`、root `cluster_propagated=false`，旧 `aspects[].specific_issue="Water Leaks Through"` + `customer_highlight="Waterproofing Highlight"` 共享 `evidence_span="no leakage"` | `review_date` 100/100；span `2024-09-11 ~ 2024-12-30`；Amazon 文本 0 | FAIL / STOP |
-| 110 | `GET /analysis/sessions/110/results` | 200 / 0.288s | 100 / DB 100 | false | `Water Leaks Through` count=13 / share=76.5 / impact=13.0；raw=13、total=13、propagated=0 | `Holds Up Well` count=5 / share=23.8 / impact=5.0；raw=7、total=50、propagated=43 | Issue 3/3 located：`leak`、`leaking`、`water enters through`；Label 3/3 located：`These have held up great this season`、`Nicer quality than expected at this price point`、`really happy with durability...` | Collected in same authorized batch after 111 before manual semantic stop review；not used to pass gate. Top count not inflated by propagated occurrence | `review_date` 100/100；span `2024-06-10 ~ 2024-09-09`；Amazon 文本 0 | Supplementary only |
-| 95 | `GET /analysis/sessions/95/results` | 200 / 0.110s | 99 / DB 99 | false | `No clear friction` count=N/A / share=0.0；no evidence spans | `Customer Service` count=1 / share=50.0 / impact=1.0；raw=1、total=1、propagated=0 | Issue does not display Representative Evidence；Label 1/1 located：`they reached out to me and made things right` (24613) | Collected in same authorized batch after 111 before manual semantic stop review；not used to pass gate | `review_date` 99/99；span `2023-02-07 ~ 2026-07-10`；Amazon 文本 99/99 normalized | Supplementary only |
-
-第三轮生产只读 delta 核对：
-
-| 项目 | baseline | after authorized requests | delta |
-|------|----------|---------------------------|-------|
-| `credit_ledger` for user 9 | count=295, max_id=304, delta_sum=15267 | count=295, max_id=304, delta_sum=15267 | 0 |
-| `analytics_events` for user 9 | count=4166, max_id=4726 | count=4166, max_id=4726 | 0 |
-| `llm_usage_log` for user 9 | count=2603, max_id=2653, tokens_in=12130086, tokens_out=470608, cost_yuan=15.89495 | unchanged | 0 |
-| `upload_jobs` for sessions 95/96/110/111/114 | jobs 75/77/91/92/95 均 `done` | 状态、processed_rows、updated_at、completed_at 均不变 | unchanged |
-
-第三轮结论与后续建议：
-- 结论：FAIL / STOP at session 111。114 的漏水回归和 96 的 `Value for Money` verified evidence 缺口均已恢复；但 111 的 `Water Leaks Through` issue 仍被正向防水/无漏水短语污染。
-- 失败样本：comment 26388，rating=5，sentiment=positive，content=`Got for my son and he loves him. Is it all the time the fisherman streams no leakage fits great`；comment 26302，rating=5，sentiment=positive，content=`Worked great no leakage even at waist height.  Great price.`；二者 root `cluster_propagated=false`，`issue_tag=""`，旧 aspect 同时带 `specific_issue="Water Leaks Through"` 与 `customer_highlight="Waterproofing Highlight"`，evidence 为 `no leakage`。
-- 本地修复结果：legacy/aspect projection、new occurrence payload、legacy fallback 与 enrich 合并均已阻止 `no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 等正向防水 evidence 进入 `Water Leaks Through` issue；`no leakage` 可进入 `Keeps Water Out` highlight；已补 comment 26388/26302 风格 fixture/gold sample。
-- 后续门禁：本地 focused pytest 57 passed、frontend typecheck passed、`git diff --check` passed；仍需提交/部署后申请下一轮生产只读观察授权，未获授权前不请求生产。
-- `Not Breathable` 标签逻辑保持冻结；本轮未修改 Phase 1-6 Customer Issue / Customer Label 核心算法。
-
-Phase 7 P0 / P1 验证记录：
-
-| 验证项 | 结果 |
-|--------|------|
-| P0 commit | `origin/develop=1d537fd76aa61f8388fef80e84d9d7890e96d8b7` |
-| P0 自动化 | `python3 -m pytest backend_api/tests`：176 passed；目标 ruff passed；`git diff --check` passed |
-| P0 只读 DB smoke | session 3/4/5 compact read 成功，默认不带 `embedding`，未复现 SSL EOF；session 5 从历史 120s+/EOF 降到 31.3s |
-| P1 authenticated route smoke | session results、aggregate results、模块导出、完整导出均 200 |
-| embedding 边界 | 默认 results payload 不返回 `embedding`；QA/RAG 显式 `include_embedding=True` 可读 session 3 的 92/92 embeddings |
-| date span fallback | SQL `MIN/MAX` fallback 为 0.3s 级 |
-| LLM enhancement | 默认关闭，results 首开不依赖 provider |
-| credit / analytics | P1 smoke 进程内 patch `credit_consume` 与 `track_event` 为 no-op，未调用真实 QA/Ask、上传或重分析等扣费动作 |
-| production deploy | GitHub Actions `Deploy to Production` run `30230691101` completed/success for `1d537fd76aa61f8388fef80e84d9d7890e96d8b7` |
-| production read-only smoke | `/analysis/sessions/{id}/results` 生产只读 smoke：114/96/111/110 均 200；最大 session 96（661 comments）0.726s；默认 payload 均无 `embedding`；无 SSL/connection error |
-| P1 write-path commit / automation | `2d8c1a4 perf: batch worker comment writes` 已推送 `origin/develop`；`python3 -m pytest backend_api/tests workers/tests`：200 passed；target ruff passed；fake DB 单测验证 analysis / cluster / embedding batch 写入均为 1 次 values update + 1 次 commit，cache 字段缺失可 fallback |
-| P1 write-path deploy | GitHub Actions `Deploy to Production` run `30236160482` completed/success for `2d8c1a4`；CI gate `frontend-check` / `backend-lint` / `backend-import-check` 全绿；deploy job 2026-07-27 04:07:47 UTC 完成 |
-| P1 staging/dev worker write smoke | clueai-dev 临时 60 条 worker smoke：60/60 processed、embedded、clustered、aspects rows；analysis flush `[50, 10]`；cluster batch `[60]`；embedding batch `[60]`；fake LLM `[2]`；耗时 6.62s；worker 日志 `cache hit=0 miss=60`、`clustering enabled, 60→2 LLM calls`；ledger/analytics 0；临时数据清理后 sessions/upload_jobs/comments 均 0 |
-| P1 staging/dev peak smoke | clueai-dev 临时 300 条 worker smoke：300/300 processed、embedded、clustered、aspects rows；analysis flush `[50, 50, 50, 50, 50, 50]`；cluster batch `[300]`；embedding batch `[300]`；fake LLM `[3]`；耗时 12.47s；DB connection count before/after 均为 7；ledger/analytics 0；临时数据清理后 sessions/upload_jobs/comments 均 0 |
-| P2 date/index read-only plan | dev 库 `comments.date` 分布：1501 total，1409 `YYYY-MM-DD`，92 Amazon `Reviewed in the United States on Month D, YYYY`，blank 0；现有 comments 索引缺 `(user_id, session_id, id DESC)` 与 normalized date range 索引；方案为保留 raw `date` 展示，新增 normalized `review_date DATE` 用于过滤与索引 |
-| P2 code / local regression | `migrations/059_add_comments_review_date.sql`、`review_dates.py`、安全 dry-run backfill 脚本已完成；写入优先填 `review_date`，读取/日期跨度/compare/product 聚合优先 normalized date，旧库无列时 fallback；`python3 -m pytest backend_api/tests workers/tests`：207 passed；target ruff 与 `git diff --check` passed |
-| P2 dev migration/backfill | clueai-dev only：`059` 执行成功；`python3 scripts/backfill_comments_review_date.py --help` OK；`--limit 200` dry-run：`total_seen=200`、`already_normalized=200`、pending/unparsed/updated 均 0；`--apply`：`total_seen=1501`、`already_normalized=1501`、`updated=0`；DB 统计 `total_comments=1501`、`normalized_comments=1501`、`NULL=0`、ISO 1409/1409、Amazon 文本 92/92；`idx_comments_user_session_id_desc`、`idx_comments_user_product_review_date_id_desc`、`idx_comments_user_product_variant_review_date_id_desc` 均存在 |
-| P2 dev behavior smoke | `get_comments` date filter 生成 `review_date >= %s::date` / `review_date <= %s::date`；Amazon 样本 `id=435`（`Reviewed in the United States on July 5, 2026` → `2026-07-05`）在精确日窗口返回 1 条且被包含；default/session fallback 用 normalized span `2018-12-05 ~ 2026-07-05`；history total=1，session results comments=92，aggregate default comments=92，custom day comments=1，module export XLSX 7107 bytes 且 ZIP header OK；验证进程内 patch insights/credit/quota 为 no-op，未触发 LLM、ledger、analytics、上传或重分析 |
-| P2 production pre-confirmation | Erika 于 2026-07-27 确认 production 备份/PITR 已可用、当前为维护窗口、接受 `059 DOWN` + 备份恢复回滚方案、使用 session 95/96/114 作为验收样本；本地无 `psql`/`pg_dump`/`ossutil`，按项目文档的 Python + psycopg2 生产流程执行 |
-| P2 production migration/backfill | production：`059` 执行并 commit，comments 行数 `8340 -> 8340`；`python3 scripts/backfill_comments_review_date.py --database-url-env PROD_DATABASE_URL --allow-prod --limit 200`：`total_seen=200`、`already_normalized=200`、pending/unparsed/updated 均 0；`--apply`：`total_seen=8340`、`already_normalized=8325`、`blank_raw_date=15`、pending/unparsed/updated 均 0；DB 统计 `review_date` 8325/8340、NULL=15、nonblank unparsed=0、ISO 7711/7711、Amazon 文本 614/614；`idx_comments_user_session_id_desc`、`idx_comments_user_product_review_date_id_desc`、`idx_comments_user_product_variant_review_date_id_desc` 均存在 |
-| P2 production behavior smoke | `get_comments` date filter 生成 `review_date >= %s::date` / `review_date <= %s::date`；Amazon 样本 `id=26410`（`Reviewed in the United States on July 5, 2026` → `2026-07-05`）在精确日窗口返回 1 条且被包含；session 95 default span `2023-02-07 ~ 2026-07-10`，session 96 `2024-04-10 ~ 2025-12-01`，session 114 `2018-12-05 ~ 2026-07-05`；compare `date_from/date_to` 同样返回 `id=26410`；未触发上传、重分析、QA、aggregate/export smoke、credit/quota/analytics/LLM 成本路径 |
-| production authorized results/export smoke | session 114：aggregate results 200 / 1.45s、92/92 comments、range fallback `all`，模块/完整导出 200；session 96：aggregate results 200 / 0.56s、661/661 comments、range `2024-04-10 ~ 2025-12-01`，模块/完整导出 200；全部 XLSX 为有效 ZIP header |
-| production credit / analytics delta | 本次 6 个已授权请求新增 6 条 credit ledger：2 条 `insight`、4 条 `export`，总扣减 16 credits；analytics_events +0；未触发上传、重分析、QA 或 push |
-
-#### 5.9.4 相关文档与测试资产
-
-- `docs/Customer_Issue_Label_Phase6验证报告.md`
-- `backend_api/tests/fixtures/customer_label_phase6_validation.json`
-- `backend_api/tests/test_customer_label_phase6_validation.py`
-- `backend_api/tests/test_export_customer_label_phase5.py`
-- `backend_api/tests/test_analysis_results_llm_fallback.py`
-- `backend_api/tests/test_database_read_path.py`
-- `backend_api/tests/test_review_dates.py`
-- `backend_api/tests/test_compare_store_dates.py`
-- `migrations/058_customer_label_catalog_alias_candidates.sql`
-- `migrations/059_add_comments_review_date.sql`
-
-#### 5.9.5 残留风险与下一步
-
-> 本节只保留 Phase 7 收口相关风险与 guardrail。50 付费用户承接能力任务已集中到 [5.9.7](#597-50-付费用户-readinessphase-7-收口后)：生产真实上传 / 重分析 smoke 归入 `50U-T1`，正式 gold sample 与 label stats / 告警归入 `50U-T2`，运营 SOP 与上线门禁归入 `50U-T3`。新品类扩展不作为 Phase 7 或 50U readiness 必需项，后续按类目接入节奏单独排期。
-
-- 已完成生产 live `/analysis/results` 与 export smoke：Erika 授权 session 114/96 后，aggregate results、单模块导出、完整导出均 200；本次真实扣减 16 credits、写入 6 条 ledger，analytics_events +0。
-- P1 worker 写路径优化已完成 staging/dev no-op 写入验证：临时 60 条与 300 条 worker smoke 均通过，确认 analysis 50 条 flush、cluster batch、embedding batch 的真实 DB 写入路径可用；未触发真实 credit、ledger、analytics、review_pool 或 push。
-- P2 date/index 已完成 clueai-dev migration、dry-run/apply backfill 与 history/results/aggregate/export 行为验收；raw `date` 继续保留展示，`review_date` 只作为 normalized filter/index 字段。
-- P2 production DDL/backfill 已执行并验收：production `059` committed，backfill dry-run/apply 通过，ISO/Amazon 文本日期均已归一化，默认/session fallback 使用 normalized span。
-- Phase 7 修复后收口前基线复核（2026-07-27）：本地 `develop`、HEAD、本地 `origin/develop` 均为 `5d1ae587f5f09b3f00cfdaad6b10d21565e9fefb`；GitHub Actions `Deploy to Production` run `30249258312` completed/success；工作树存在既有未提交改动，本轮只允许提交 `PROGRESS_V2.md`。
-- Phase 7 小流量灰度初期继续保持 `RESULTS_AI_ENHANCEMENT_ENABLED=false`：2026-07-27 已通过 ECS `deploy/.env`、api 容器 env 与运行时 `_results_ai_enabled()` 三重只读核验，effective=false。
-- Phase 7 第一轮灰度入口风险审计已完成：确认 session-level results/history 与 aggregate results、export、QA、upload/reanalyze、modern compare 的成本/写入边界。
-- Phase 7 第一轮生产只读观察已执行并按异常停止：仅请求 session 114；未请求 96/111/110/95；未产生 credit / analytics / LLM / worker delta；异常为 Representative Evidence verified 覆盖不足和 cluster-propagated evidence 风险。
-- Phase 7 修复后第二轮生产只读观察已执行并按异常停止：Erika 授权 A 后仅请求 session 114/96；114 核心 evidence/propagation 观察通过，96 因 Top Issue / Top Label Representative Evidence 缺失停止；未请求 111/110/95；未产生 credit / analytics / LLM / worker delta。
-- Phase 7 第二轮正向项：session-level results 114/96 均 200、payload 无 `embedding`、无 SSL/connection error，credit ledger / analytics_events / LLM usage / upload_jobs delta 均为 0，date span / `review_date` / Amazon 文本日期链路正常。
-- Phase 7 第二轮阻塞本地修复已完成并验证：legacy `Value for Money` 可从同条评论 verified span 补 Representative Evidence，missing evidence 行明确为空证据；`cluster_propagated=true` occurrence 不进入前端 Top recount 或 tag download，模块/完整导出不导出 propagated / unverified representative evidence。
-- Phase 7 第三轮生产只读观察已执行并按 session 111 异常停止：114/96 修复项通过；111 的 `Water Leaks Through` Top Issue 出现正向 `no leakage` evidence 污染，已记录 comment 26388/26302；110/95 虽已在同一授权批次脚本中采集，但不改变 111 stop 结论；未产生 credit / analytics / LLM / upload_jobs delta。
-- Phase 7 第三轮阻塞本地修复已完成并验证：`Water Leaks Through` issue 入口新增正向防水/否定漏水 guard，覆盖旧 aspect hint、已成型 occurrence payload、legacy fallback 与 enrich 合并；`no leakage` 可进入 `Keeps Water Out` highlight；focused pytest 57 passed、frontend typecheck passed、`git diff --check` passed；未请求生产。
-- Phase 7 第四轮生产只读观察已执行并通过：`9625a87` deploy / production HEAD / results AI effective=false 均已确认；Erika 授权后仅请求 114/96/111/110/95 的 session-level results 与 DB SELECT；全部 200，payload 无 `embedding`、无 SSL/connection error，Representative Evidence 可定位，credit / analytics / LLM / upload_jobs delta 均为 0。
-- Phase 7 第四轮 session 111 修复项通过：`Water Leaks Through` Top Issue 不再包含 `no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 等正向防水 evidence；comment 26388 / 26302 仍为 5-star positive 且 `issue_tag=""`，未作为 issue Representative Evidence；`Keeps Water Out` Top Label 保留 `Stayed perfectly dry`、`Keep you dry`、`keeps me dry in water` 等正向防水 evidence。
-- **规则**：Phase 7 只读灰度门禁已通过；未获 Erika 新授权前仍不执行生产上传、重分析、QA、aggregate/export smoke 或 modern compare，避免触发 credit/quota/analytics/LLM 成本路径。
-
-Phase 7 guardrail（约束，不作为单独待办）：
-- 口径冻结：不得修改 `Not Breathable` 标签逻辑，不重构 Phase 1-6 Customer Issue / Customer Label 核心算法；发现异常先记录 session、label、evidence、筛选条件和候选修正规则，再决定是否进入后续修复任务。
-- date 口径：本轮已确认前端与后端筛选持续使用 normalized `comments.review_date`，raw `comments.date` 仅用于展示；Amazon 文本日期 `Reviewed in the United States on Month D, YYYY` 已归一化后参与日期窗口，session 114 未出现误过滤。
-- 生产业务 smoke 门禁：任何上传、重分析、QA、aggregate results、模块/完整导出等动作，必须先报告 credit ledger / analytics / LLM 成本风险、说明 session 数量与入口，并等待 Erika 明确授权。
-
-独立 P0 修复/验证任务定义（下一步，不属于继续灰度）：
-- [x] session 114 cluster-propagated occurrence / Representative Evidence 核心修复已通过第二轮生产只读观察：API Top Issue 转为 `Water Leaks Through`，代表证据 3/3 verified，API Top 统计未被 propagated 放大。
-- [x] 修复 session 96 `Value for Money` Top Issue / Top Label 缺 Representative Evidence：legacy/top row 从同条真实评论旧 aspect span 或价格相关原文短语补 verified span；无法验证时 Representative Evidence 为空，不输出不可验证占位。
-- [x] 审计并修复前端 `customerLabelOccurrences()` 及 export/recount 路径：client XLSX 和 tag download 过滤 `cluster_propagated=true` occurrence；导出代表证据只信 verified source-review；后端模块/完整导出同样不信旧 `representative_evidence` 字段。
-- [x] 保持 `Not Breathable` 标签逻辑冻结；本 P0 只处理 Top 统计、Representative Evidence 与前端 recount/export 进入条件，未重构 Phase 1-6 Customer Issue / Customer Label 核心算法。
-- [x] 第三轮生产只读复验确认：session 114 `Water Leaks Through` 3/3 verified，session 96 `Value for Money` issue/label 均恢复 verified/source-review evidence，且 114/96 delta=0。
-- [x] 修复 session 111 正向防水短语污染 `Water Leaks Through`：legacy/aspect projection 中，`no leakage / no leaks / remained dry / kept dry / stayed dry / keep you dry` 不得进入 issue，只能进入正向防水 highlight；已补 comment 26388/26302 fixture/gold sample；本地 focused pytest 57 passed、frontend typecheck passed。
-- [x] P0 修复已提交/部署并完成下一轮生产只读灰度观察授权与执行：`9625a87` deploy / production HEAD / results AI effective=false 已确认；Erika 授权后仅请求 114/96/111/110/95 session-level results 与 DB SELECT，全部通过、delta=0；未执行上传、重分析、QA、aggregate/export smoke。后续生产写路径 smoke 另需新授权。
-
-#### 5.9.6 后续任务拆解与 Erika 参与点
-
-下一阶段任务拆解：
-
-| 优先级 | 任务 | 当前阶段 | 建议步骤 | Erika 参与点 |
-|--------|------|----------|----------|--------------|
-| P0 gate | live `/analysis/results` + export 生产门禁 | 已完成（session 114/96） | 1. 已获授权并完成 aggregate results、模块导出、完整导出；2. 记录响应时间、comments count、XLSX 有效性、credit/analytics delta；3. 未扩展到上传或重分析 | P2 production DDL 前置确认已完成 |
-| P1 | worker 写路径优化 | staging/dev no-op 写入验证通过 | 1. 已审计写路径；2. 已实现 batch update 与小批量事务边界；3. 已补 fake DB/query count 单测并推送 `2d8c1a4`；4. 已完成 clueai-dev 60/300 临时 worker smoke；5. 如要继续，只能在 Erika 授权后跑真实上传/重分析或生产 live/export smoke | 授权任何会扣 credit、写 ledger 或 analytics 的真实业务 smoke 前需明确确认 session 数量/ID |
-| P2 | date text 规范化 + 索引 | production migration/backfill 验收完成 / date 链路通过 | 1. `059`、parser、安全 backfill、读写 fallback 和索引已完成；2. clueai-dev 与 production migration/backfill 均已执行；3. dry-run/apply backfill 已记录 parsed/unparsed 统计；4. production session 95/96/114 date span 与 Amazon 精确日过滤验收通过；5. session 114 第一轮只读观察确认 date/review_date/Amazon 文本日期链路正常；6. 未执行上传、重分析、QA、aggregate/export smoke 或扣费路径 | P2 date 本身不阻塞；当前阻塞来自 Representative Evidence / cluster propagation 质量门禁 |
-| Phase 7 第一轮灰度观察 | 已执行 / FAIL / STOP at session 114 | 1. 观察前已核实 deploy run `30244595426` 成功、部署 commit `35de389`；收口前已复核最新文档 deploy run `30246360986` completed/success for `d8cc2d5`；2. 已从 ECS `.env`、api env 与运行时代码确认 `RESULTS_AI_ENHANCEMENT_ENABLED=false`；3. Erika 授权后仅请求 `GET /analysis/sessions/114/results`；4. 114 返回 200、92 comments、无 embedding、无 SSL error、date/Amazon 正常、ledger/analytics/LLM/upload_jobs delta=0；5. Top Issue / Top Label Representative Evidence 仅 1/3 verified，大量 occurrence 为 cluster-propagated；6. 已停止 96/111/110/95 | 已完成后续 P0 Evidence/Propagation 修复，进入第二轮只读观察 |
-| Phase 7 P0 Evidence/Propagation 修复/验证 | 已完成 / 第二轮 114 通过 | 1. 修复已推送 `5d1ae58` 并由 deploy run `30249258312` 部署成功；2. 第二轮 114 返回 200、92 comments、无 embedding、无 SSL error、date/Amazon 正常、delta=0；3. 114 Top Issue `Water Leaks Through` count=5，Representative Evidence 3/3 verified；4. API Top 统计未被 propagated occurrence 放大；5. 但第二轮继续到 96 后因 Representative Evidence 缺失停止 | 审核第二轮记录；下一步聚焦 session 96 和前端 recount/export 风险 |
-| Phase 7 第二轮灰度观察 | 已执行 / FAIL / STOP at session 96 | 1. Erika 授权 A 后仅请求 session-level results；2. 114 通过核心修复观察；3. 96 返回 200、661 comments、无 embedding、无 SSL error、date 正常、delta=0；4. 96 Top Issue / Top Label 均为 `Value for Money`，但无 `evidence_spans` 且 `evidence_verified=false`；5. 已停止 111/110/95，不进入 50U readiness | 修复 session 96 Representative Evidence 缺口后，再确认是否授权下一轮只读生产观察 |
-| Phase 7 第三轮灰度观察 | 已执行 / FAIL / STOP at session 111 | 1. `ff7e67e` deploy run `30254814989` success，production HEAD 同步且 results AI effective=false；2. Erika 授权后仅请求 session-level results 与 DB SELECT；3. 114/96 通过，payload 无 embedding、无 SSL error、delta=0；4. 111 返回 200、100 comments、delta=0，但 `Water Leaks Through` Top Issue 第一条 evidence 为正向 `no leakage`，comment 26388/26302 均为 5-star positive，root cluster_propagated=false，旧 aspect 同时带 issue 与 waterproofing highlight；5. 110/95 同批已采集但不改变 111 stop 结论；6. 本地已完成正向防水 evidence guard 修复与 focused regression | 修复提交/部署后，再申请下一轮只读生产观察 |
-| Phase 7 第四轮灰度观察 | 已执行 / PASS | 1. `9625a87` deploy run `30319680758` / `#133` success，production HEAD 同步且 results AI effective=false；2. Erika 授权后仅请求 session-level results 与 DB SELECT；3. 114/96/111/110/95 全部 200，payload 无 embedding、无 SSL error、delta=0；4. 111 `Water Leaks Through` Top Issue count=8，代表证据均为负向漏水 span，26388/26302 未作为 issue evidence；5. `Keeps Water Out` 保留正向防水 evidence；6. 未请求 `/analysis/results`、export、QA、upload、analysis job、reanalyze、modern compare | Phase 7 只读门禁通过；下一步进入 5.9.7 readiness 前需另行授权生产写路径 smoke |
-
-后续 Erika 参与点：
-
-| 什么时候 | 需要做什么 | 预计人力 |
-|----------|------------|----------|
-| P2 production DDL 前 | 已确认备份/PITR、维护窗口、回滚方案与验收样本；production `059`/backfill/只读验收完成 | 已完成 |
-| 5.9.7 readiness 启动前 | Phase 7 第四轮只读灰度已通过；`50U-T1` 生产写路径 smoke PASS；`50U-T2` 本地质量基线与 `50U-T3` 运营 runbook / 上线门禁已完成 | 已完成 |
-| 新品类首次接入 | 审核该类目高频候选标签：保留 / 合并 / 改名 / 禁用 | 每个类目 30-60 分钟 |
-| 稳定运行后 | 看异常告警和候选池，只处理高频、前台可见、低置信度或跨品类边界 case | 每周 10-20 分钟 |
-
-#### 5.9.7 50 付费用户 readiness（Phase 7 收口后）
-
-目标：Phase 7 修复和第四轮只读灰度已通过后，把 ClueAI 从“历史结果展示稳定”推进到“可以稳妥承接约 50 个付费用户”的生产准备状态。当前 Phase 7 只读门禁已通过，`50U-T1` 生产写路径 smoke 已 PASS，`50U-T2` 本地质量保障与回归基线已完成，`50U-T3` 运营 runbook 与上线门禁已完成；后续任何新的生产写路径 / 重分析 smoke 仍必须另行获得 Erika 授权。
-
-术语说明：`50U-T2` 指“50 users readiness Task 2”，即质量保障与回归基线任务；它把正式 gold sample、Representative Evidence 回归、label stats / 告警集中处理，用来防止 Top Issue / Top Label 质量在承接 50 个付费用户时静默回退。
-
-| 任务 | 优先级 | 预计工作量 | 目标 | 验收要点 | Erika 参与点 |
-|------|--------|------------|------|----------|--------------|
-| 50U-T1 生产写路径 smoke 闭环 | P0 | 0.5 天（约 2-4 小时，取决于 worker / LLM 响应） | 用受控小样本证明真实新用户上传链路可跑通 | 1. 小样本真实上传成功；2. worker 完整处理完成；3. `upload_jobs` 状态正确；4. comments / analysis / cluster / embedding 写入正常；5. LLM usage 记录正常；6. credit ledger 扣减正确；7. analytics event 正常；8. results 只读展示正常；9. 异常时停止并记录，不扩大 | 授权样本、session 数量、预计 credit / LLM 成本；确认是否允许生产真实上传 |
-| 50U-T2 质量保障与回归基线 | P1 | 1 天 | 防止 Top Issue / Top Label / Representative Evidence 质量静默回退 | 1. 建立 30-50 条正式 gold sample；2. 覆盖 `Not Breathable`、`Water Leaks Through`、`Value for Money`、Amazon 文本日期、missing evidence、cluster-propagated evidence、broad/internal label；3. 接入 pytest 或可重复脚本；4. 增加最小 label stats 检查：单标签 100% 异常、evidence_verified 比例过低、broad/internal label 进入 Top、cluster_propagated 占比异常、long-tail label 异常膨胀 | 审核 gold sample 中的高价值真实样本与期望标签；确认异常阈值是否符合业务直觉 |
-| 50U-T3 运营 runbook 与上线门禁 | P1 | 已完成（文档/SOP） | 让 50 用户期间的问题可定位、可回滚、可补偿、可沟通 | 1. `docs/50u-readiness-runbook.md` 覆盖上传失败、worker stuck、LLM 成本、credit 补偿、analytics/ledger/LLM usage 对账、date filter、label/evidence 异常记录、50 用户前 checklist、每日/每周观察；2. `docs/50u-production-write-smoke-authorization.md` 明确生产写路径 smoke 授权模板、允许/禁止 API、停止条件与补偿口径；3. 未请求生产业务 API，未触发写入或成本 | 确认补偿口径、人工响应时限、50 用户期间观察频率与升级联系人 |
-
-readiness 节奏：
-- Phase 7 第四轮只读灰度观察与结论门禁已完成，结论为 PASS；Phase 7 可按只读灰度通过收口。
-- [x] Phase 7 P0 Evidence/Propagation 修复已通过 session 114 只读观察：Representative Evidence 与 API Top 统计门禁恢复，且冻结 `Not Breathable` 与 Phase 1-6 核心算法。
-- [x] session 96 Representative Evidence 缺口已通过第三轮生产只读复验：`Value for Money` Top Issue / Top Label 均有可定位 verified/source-review evidence，且 propagated recount/export 修复已部署。
-- [x] session 111 正向防水 evidence 污染本地修复/验证已完成：`no leakage / no leaks / remained dry / kept dry` 等不得进入 `Water Leaks Through` issue；已补 comment 26388/26302 fixture/gold sample。
-- [x] session 111 修复提交/部署并通过第四轮只读灰度：`Water Leaks Through` issue 不再接收正向防水 evidence，26388/26302 未作为 issue Representative Evidence，114/96/110/95 回归通过。
-- [x] `50U-T2` 本地质量基线完成：`backend_api/tests/fixtures/customer_label_50u_gold_samples.json` 建立 40 条正式 gold sample；`backend_api/tests/test_customer_label_50u_readiness.py` 接入 pytest 门禁，覆盖 Top Issue / Top Label propagated 不放大、Representative Evidence 可定位、cluster/unverified 不进代表证据、正向防水 evidence guard、Amazon 文本日期、broad/internal label 过滤；`backend_api/app/services/customer_label_quality.py` 提供纯本地 label stats warning helper。
-- [x] `50U-T2` focused 回归通过：新增门禁单跑 6 passed；Phase 7 相关 focused pytest 合计 63 passed、4 warnings（既有 deprecation）。本轮未执行生产上传、重分析、QA、aggregate/export smoke、modern compare，未请求生产业务 API，未 push。
-- [x] `50U-T3` 运营 runbook 与上线门禁完成：`docs/50u-readiness-runbook.md` 与 `docs/50u-production-write-smoke-authorization.md` 已建立；覆盖 SOP、对账 SQL、异常记录、50 用户前 checklist、每日/每周观察、生产写路径 smoke 授权字段、停止条件、回滚/补偿与 API allow/deny；本轮只改文档/进度记录，未请求生产业务 API，未触发写入或成本。
-- [x] `50U-T1` 授权前准备完成：已补强 `docs/50u-production-write-smoke-authorization.md` 的审批前必须确认项，明确 smoke 用户、样本来源/敏感性/去重、product/variant 写入副作用、预计与上限 credit、预计与上限 LLM non-cache calls / RMB 成本、允许 provider 链、API allow/deny、观测指标、停止权与补偿 owner；同步更新 `docs/50u-readiness-runbook.md` 的 50 用户前 checklist。本轮未启动生产 smoke，未请求生产业务 API，未触发 credit/quota/analytics/LLM 成本路径，未 push。
-- [x] `50U-T1` 部分授权字段已确认并记录：环境为 production，smoke 账号为 `[REDACTED_PROD_EMAIL]` / 用户名 `[REDACTED_PROD_USERNAME]`，登录方式为浏览器登录后使用正常 HttpOnly session cookie；密码不写入仓库。当前仍只是授权信息补齐，未启动生产 smoke。
-- [x] `50U-T1` 样本要求已记录：首轮建议新 CSV/XLSX 文件、新评论内容、10-20 行、必含 content/date，推荐 rating/reviewer/source；优先用已知支持类目，不把全新类目混入首轮生产写路径 smoke。当前仍未选择具体样本文件，未启动生产 smoke。
-- [x] `50U-T1` 15 条 smoke 样本已本地派生并验证：原始 100 条文件的正文列为 `body`，直接上传会因 parser 不识别正文列而失败；已派生 15 条 upload-ready xlsx，列为 `content/rating/date/reviewer/source`，本地 `parse_file()` 验证通过。产品为 `MAILESI-充电头-XHD-PD25W`，建议 category=`USB C Charger Block`，credit/LLM/API 建议值已补入授权模板。当前仍未启动生产 smoke。
-- [x] `50U-T1` 审批项 1-4 与第 5 项推荐值已补齐：样本权限/敏感性/未重复上传/API allowlist/停止/补偿/cleanup 已由 Erika 确认；base URL、executor、30 分钟 smoke window 采用推荐口径；deploy run / production HEAD 需在最终 GO 后、执行前只读确认。当前仍未启动生产 smoke。
-- [x] `50U-T1` 第一轮生产写路径已执行并按停止条件收口为 STOP：PGOPTIONS 修复后重试创建 `job_id=96` / `session_id=115`，worker `done`，results 可读且基础 sanity 通过；DB 对账确认 credit delta=-15、LLM non-cache rows=14、cost_yuan=0.089850、`analysis_job_complete` 存在、products/product_variants unchanged、`review_pool` 仅限 approved 15 hashes、push_snapshots/action_items 无新增。但验收项 `analyzed=15/15` 未达成（实际 14/15），且 LLM model_name 记录为 provider `openai` 不符合允许模型名口径，因此最终 STOP。
-- [x] `50U-T1` post-fix 生产写路径 smoke 已最终 PASS：部署 `941320a` 修复 exhausted LLM fallback / cache 排除 / model_id 记录后，新增 `afe761e` 连接池 read/write session 兜底并部署成功（GitHub Actions run `30341505845`）。Erika 新 GO 后使用原始 100 条中的新非重复 15-row postfix 样本，`job_id=97` / `session_id=116`，poll 约 30s 到 `done`；comments=15 / processed=15 / analyzed=15 / review_date_normalized=15；credit balance 14952→14937，唯一 `review_analyze` delta=-15 / ref_id=97；LLM 15 non-cache rows、model_name=`gpt-4o-mini`、cost_yuan=0.084751；`analysis_job_complete` present；products/product_variants unchanged；review_pool approved 15/15 且 start 后 outside rows=0；session-scoped results 无 embedding 泄漏，8/8 evidence-like 字段可定位，无 `cluster_propagated=true` top row / waterproof 正向漏水误证据。未执行 QA、reanalysis、aggregate/export smoke、modern compare 或手动 production SQL 写入。
-- [ ] **单列后续问题（暂不跟进）**：生产 DB role / Supabase pooler / session 默认值为何让新连接默认 read-only，需后续单独定位；当前应用层连接池兜底已覆盖生产写路径，read-only 默认值治理不混入本轮 readiness 收口。
-- **规则**：`50U-T1` 生产真实上传 smoke 已 PASS；后续若要新增生产写路径验证 / 重分析 smoke，仍必须另行申请授权并明确样本、预计 credit / LLM 成本、停止条件与回滚口径；`50U-T2` 后续若要把 warning helper 接入生产 session warnings，也需另行确认阈值与上线边界。
-- **规则**：如后续生产 smoke 暴露 worker / credit / LLM / analytics 问题，另开具体修复任务，不混入 readiness 正常工期。
-
-#### 2026-07-28 补充：50 用户试运行启动前低风险收口
-
-**结论：** 可以进入 50 用户试运行的启动前低风险收口，并具备受控试运行条件。Phase 7 只读灰度已 PASS，`50U-T1` production write-path smoke 已最终 PASS，`50U-T2` 本地质量基线已完成，`50U-T3` runbook / 上线门禁已完成。生产 DB 默认 read-only / Supabase pooler/session 默认值治理已单列为后续问题，当前不阻塞本轮 readiness。
-
-**试运行前 checklist：**
-- [x] Phase 7 第四轮生产只读灰度记录为 PASS。
-- [x] `50U-T1` 最终 PASS 已记录：`job_id=97` / `session_id=116`，15/15 processed/analyzed/review_date normalized，credit `-15`，LLM 15 non-cache，model_name=`gpt-4o-mini`，cost_yuan=`0.084751`。
-- [x] `50U-T2` focused regression / 本地质量基线已完成。
-- [x] `50U-T3` runbook、授权模板、停止条件、补偿规则已完成。
-- [ ] 启动试运行前确认生产服务健康：`api` / `worker` / `scheduler` / `redis` / `frontend` / `nginx`。
-- [ ] 确认 ops alert 渠道是否启用；如暂不启用，明确本轮由人工每日观察替代。
-- [ ] 确认 budget guard 阈值是已配置，或有意禁用并记录。
-- [ ] 确认 credit refund 政策、响应 owner、用户事故沟通时限。
-- [ ] 确认 readiness prep 后未再执行未授权生产上传、重分析、QA、aggregate/export smoke、modern compare 或其他生产业务 API。
-
-**试运行期间每日观察：**
-- 过去 24h `upload_jobs` 状态分布：`queued` / `processing` / `done` / `failed`。
-- stuck job：`queued > 5 分钟`、`processing > 15 分钟无进展`。
-- failed jobs 是否已有 owner、原因、用户影响面和下一步。
-- LLM 日成本、单用户成本集中度、cache hit 情况。
-- `credit_ledger` delta 是否只来自授权/用户真实动作，是否出现异常 `ask` / `export` / `insight` / `translate` / `copywriter` / `competitor`。
-- `analysis_job_complete` 是否缺失，或与 job / LLM / credit 对账不一致。
-- `warnings_json`、Representative Evidence、`cluster_propagated`、`review_date` 是否出现重复异常模式。
-
-**试运行期间每周观察：**
-- 当前分支 / release candidate 跑一次 `50U-T2` focused regression。
-- 复盘 Top failed/stale jobs 与 `trace_json` 阶段耗时。
-- 复盘 LLM cost per analyzed review、cache hit 趋势。
-- 复盘 credit refunds；每笔 refund 必须关联 incident 或 support case。
-- 抽查近期 `warnings_json` 与人工记录的 label/evidence 异常。
-- 抽查 Amazon 文本日期与 `review_date` 归一化 NULL。
-- 汇总用户对 credit、上传状态、标签解释的困惑。
-- 决定异常进入 gold sample、catalog alias 治理，还是单独 fix task。
-
-**必须 Erika 单独授权后才能执行：**
-- 任何新的生产上传、生产写路径 smoke、重分析 smoke。
-- QA / Ask reviews、aggregate results、export smoke、modern compare。
-- 会消耗 credit 或 LLM 成本的生产业务 API。
-- 手动生产 SQL 写入，包括 refund、cleanup、backfill、修数据。
-- 删除或清理 smoke session/job。
-- 把 `50U-T2` warning helper 接入生产 `warnings_json`。
-- 修改 Phase 1-6 核心 label 算法或 `Not Breathable` 语义。
-- 继续调查/治理 Supabase pooler/session 默认 read-only 根因。
-
-**Erika 试运行动作说明：** Erika 接下来会实际上传评论并使用产品；观察点按上述每日/每周清单记录。若试运行中的真实用户操作暴露 worker / credit / LLM / analytics / label evidence 问题，优先记录 incident 与样本，再单独开修复任务，不混入 readiness 正常收口。
-
-#### 5.9.8 MVP 准确性优先二次重构（TIDEWE / waders 基线）
-
-> 触发时间：2026-07-28
-> 触发样本：`/Users/zhangxi/Desktop/TIDEWE-下水服-WD001-人工纠正标签.xlsx`，production 对照链接 `https://www.clueai-reviewlens.com/analysis/results?product_id=TIDEWE-%E4%B8%8B%E6%B0%B4%E6%9C%8D-WD001&range=default&session_id=117`。
-> 结论调整：此前 Phase 7 / 50U readiness 证明了链路、导出、证据审计和生产写路径可运行；TIDEWE 人工标注暴露的是 MVP 核心准确性问题。5.9 在 MVP 前重新进入“准确性优先”状态，展示准确性和 aspect 归类准确性不过门禁，不进入真实用户 MVP。
-
-**人工对照初步发现（100 条 waders）：**
-- Customer Label exact set match `25/100`；人工非空 `74` 条，AI 非空 `58` 条；人工标签总数 `137`，AI 标签总数 `193`。
-- Customer Label 主要问题：AI 对 `36` 条评论批量输出 `尺码合适 / 性价比高 / 耐用可靠 / 防水可靠` 四件套，其中包含负面评分评论和未实际使用评论；人工标注中大量细粒度亮点未覆盖，如场景适用、未实际使用、大码友好、配件实用、轻便、整体满意。
-- Customer Issue exact set match `51/100`；人工非空 `45` 条，AI 非空 `25` 条；漏标标签总数 `59`，误标标签总数 `26`。
-- Customer Issue 主要问题：AI 漏标 `耐用性差 / 防水性差 / 尺码不准 / 气味大 / 小个子不友好` 等；`33` 个 AI issue occurrence 中 `28` 个无 verified evidence，`27` 个为 cluster propagated；`25` 条 AI issue 非空评论中 `22` 条至少有一个无 evidence issue、`21` 条全部无 verified evidence、`21` 条有 propagated issue。
-- 具体 P0 风险：正向或否定漏水表达、旧产品/他牌漏水、配件漏水、未实际使用、泛泛好评、mixed 评论中的一侧标签，都可能影响前台展示、Top10 排序和改进建议。
-
-**Step 1 执行结果（2026-07-28）：**
-- 已完成 TIDEWE / waders 差异基线与口径方案：`docs/5.9.8-step1-tidewe-waders-baseline.md`。
-- 本轮只读取本地 Excel 与仓库内 taxonomy / export 代码；未请求生产写路径，未调用生产业务 API，未触发 credit、LLM 或重分析成本。
-- Step 1 结论：当前最大问题来自 Customer Label 展示污染、Customer Issue evidence/cluster 门禁失效，以及人工细粒度标签漏标；aspect 归类问题主要集中在 phone case/pocket 漏水、boot_fit vs size_fit、material vs grip/comfort/durability。
-- Step 1 已产出：Customer Issue / Customer Label exact match、AI 误报/漏标、空/非空、无 evidence、cluster propagated 基线；Top 误报/漏标；重复扩散组合；28 条代表性错误样例；waders 首批正式标签候选；同义合并建议；`label -> allowed_aspect_keys` 映射草案；边界 case 处理建议；Step 2 实施清单。
-
-**MVP 前目标口径：**
-- 展示准确性第一：单条评论明细只展示这条评论原文可验证的 Customer Issue / Customer Label。
-- 归类准确性第二：每个展示标签必须归到正确 aspect；标签对但 aspect 错，也视为影响业务判断的错误。
-- 学习方式：人工标注不再主要沉淀为每个 sub_category 的生成规则，而是沉淀为 gold set、catalog 定义、边界 guard、LLM few-shot/prompt 示例、候选标签审核记录和自动回归。
-- 泛化方式：通用标签全局复用，大类目标签大类内复用，sub_category 细粒度标签仅在确认范围启用；未确认标签先进入 candidate/audit，不进入前台强展示。
-- 架构方向：LLM 负责语义理解和规范标签选择，输出 `canonical_label + evidence_candidate + confidence`；规则引擎负责 evidence 定位/验证、否定语境、旧产品/他牌/配件边界、aspect 冲突和展示降级。
-- Erika 参与方式：从“逐类目完整标注”调整为“审核高影响候选、Top 异常和边界样本”；不把 3-5 个固定类目的数据积累作为近期上线前提。
-
-**阶段拆解与执行计划：**
-
-执行粒度原则：每次提示词安排一个 `3-5` 个工作日的中型阶段，目标完整、交付物明确、验收门禁清楚；允许在同一对话中分小节推进。如果上下文变长或中途需要换对话，由 Erika 自行开启新对话，并要求加载 `PROGRESS_V2.md` 或上一轮阶段产物继续。每个提示词仍保持单一主目标，避免把无关生产 smoke、人工标注、代码修复和上线授权混在一起。
-
-| 阶段 | 状态 | 目标 | 交付物 | Erika 参与点 |
-|------|------|------|--------|--------------|
-| Step 1 waders 差异基线与口径方案 | ✅ 完成 | 固化 TIDEWE 100 条人工对照，完成错误 taxonomy、首批标签候选、同义合并、aspect 映射和边界 case 方案 | `docs/5.9.8-step1-tidewe-waders-baseline.md` | 确认错误分类、标签命名、合并/拆分、aspect 归类是否符合业务判断 |
-| Step 2 明细展示 gating 与回归实现 | ✅ 完成 | 排除单条明细中的 cluster propagated / 无 evidence / source 不可验证标签，并让导出/前端下载一致 | 后端 occurrence 过滤、导出/前端下载一致、focused tests、waders 回放报告 | 已完成本地回归；真实上传抽查进入 Step 3/4 |
-| Step 3 waders catalog / aspect map / 边界 guard | ✅ 本地修复完成 / 待线上复测 | 建立 waders 细粒度 Customer Issue / Label，落地 aspect 允许范围和关键边界规则；session 119 干净重传确认 L1 cache 风险已解除，Step 4 已修复 `water_leaks_through` 正负语境、旧产品、phone case/pocket 污染、`pocket_not_waterproof` 召回与 raw 导出 propagated/unverified 口径 | catalog/alias/aspect mapping、边界 case fixture、规则测试、人工标签映射表、session 119 acceptance report、Step 4 修复报告 | 审核标签命名、边界规则和归类修正；下一轮由 Erika 手动上传全新样本验收 |
-| Step 4 waders 盲测与真实上传验收 | ✅ PASS：session122 部署后复验 P0=0 | 验证不是“背答案”，用 50 条从未上传过的 waders 样本和真实上传判断标签是否达到用户可用；commit `c38e7ff` 部署后，Top10、单条评论明细、raw review download、single-tag download 四条路径均未发现 `water_leaks_through` / `keeps_water_out` / `pocket_not_waterproof` / `fits_as_expected` / `good_value_for_the_price` / `holds_up_well` P0；frontstage 无 evidence false、cluster propagated、旧产品/他牌/配件漏水污染 | `docs/5.9.8-step4-tidewe-waders-label-correctness-fix.md`、`docs/5.9.8-step4.1-tidewe-waders-session120-recall-fix.md`、`docs/5.9.8-step4-tidewe-waders-session121-blind-acceptance-report.md`、`docs/5.9.8-step4-tidewe-waders-session122-blind-acceptance-report.md`、`tmp/5.9.8-step4-tidewe-waders-prod-20260729/session122-readonly/session122-postdeploy-readonly-acceptance-audit.json`、focused gold fixture、真实上传抽查表 | 已进入 5.9.9 Customer Label System v2 Step 1 |
-| Step 4.5 waders v2 shadow baseline | 已并入 5.9.9 Step 1/2 | 用已完成的 waders gold set 定义新链路 schema：LLM 输出规范标签、`evidence_candidate` 与置信度；规则 verifier 只负责定位/验证/拦截；shadow run 不替换前台 | `docs/5.9.9-customer-label-v2-contract.md`、waders shadow 对比、schema/version、回退策略 | Step 1 契约文档先固化展示/候选/audit 边界；shadow run 进入 5.9.9 Step 2 |
-| Step 5 Customer Label System v2 实现 | ✅ 5.9.9 Step 1-5 已完成 | 已将生成责任从“逐类目手写规则”迁回 LLM evidence-first shadow，把规则改成安全 verifier；新增 candidate pool、低置信降级、未覆盖类目成熟度分级 | LLM 输出 schema、verifier、candidate/audit 字段、maturity level、focused regression、Step 5 artifact | 只审核高影响候选标签、Top 异常和边界样本，不逐类目写完整规则 |
-| Step 5.5 类目轻接入与降级策略 | ✅ Step 5 灰度已完成 / SOP 产品化待后续 | 新增 sub_category 时优先复用通用/大类目标签；只配置轻量 taxonomy/catalog/边界说明；未验证细粒度标签先不强展示 | 类目成熟度规则、通用标签白名单、10 大类 L1/L2 fixture、candidate pool artifact；审核 SOP 可在后续后台产品化时补齐 | 判断类目是否值得升级为高精度支持，而不是一开始就深度标注 |
-| Step 6 50 用户 readiness 回归与上线门禁 | 待启动 | 把标签准确性、生产上传稳定性、未覆盖类目降级和异常闭环合并验收 | readiness 回归报告、生产/准生产 smoke 记录、降级策略验证、回滚与观察清单 | 授权真实上传 smoke，确认是否达到 50 付费用户试运行门槛 |
-
-**验收门禁（MVP 前硬标准）：**
-- 单条明细 Customer Issue / Customer Label 误报率 `<= 10%`。
-- 核心高频标签漏标率 `<= 15-20%`。
-- 单条明细无 evidence 展示率 `= 0`。
-- 单条明细 cluster propagated 展示率 `= 0`。
-- aspect 归类准确率 `>= 85-90%`。
-- Top10 中明显错误标签 `<= 1` 个。
-- 每个已验收 sub_category 至少通过一轮 `30-50` 条盲测。
-- 每个阶段完成后，Erika 真实上传抽查不得出现 P0 错误；如出现，停止进入下一阶段。
-
-**50 付费用户 readiness 最终门禁：**
-- 准确性覆盖：已验收 sub_category 达到高精度门禁；未验收 sub_category 只承诺通用/大类目高置信标签和候选/audit，不承诺细粒度全覆盖。
-- 未覆盖类目降级：未验收 sub_category 不启用未经确认的细粒度标签；只展示通用层/大类目层高置信标签，新标签进入候选池或低置信提示。
-- 生产稳定性：真实上传 smoke 通过，覆盖上传、worker、results、export/download、credit ledger、LLM usage、analytics event、review_pool/cache 对账；不得出现重复扣费、结果空白、worker stuck 或未授权写入。
-- 口径一致性：结果页 Top10、单条评论明细、XLSX 导出、前端标签下载使用同一套 occurrence / evidence / cluster gating 口径。
-- 异常可发现：无 evidence、cluster propagated、低置信、候选标签、Top10 异常、aspect 冲突、LLM fallback、failed/stuck job 都有 warning/log/人工抽查入口。
-- 异常可回滚：label catalog、alias rules、prompt/ruleset version、前端展示 gating、导出字段和 cache key 均有独立回滚边界；任何 P0 标签错误可暂停放量。
-- 可持续修正：用户反馈/Erika 抽查错误能进入待审核样本池，确认后沉淀为 gold set、alias、边界规则或候选标签决策。
-- 试运行结论：达到“50 个付费用户可以放心上传评论，看到的标签大体可信，明显错误可控，异常可发现、可回滚、可持续修正”后，才允许进入 50 用户试运行。
-
-**异常 / 边界 case 处理矩阵：**
-
-| 边界 case | 处理原则 |
-| --- | --- |
-| 无 evidence 标签 | 不进入单条明细展示，不进 Top10；只作为候选/审计 |
-| cluster propagated 标签 | 不当作该评论自己的标签展示；只保留审计字段 |
-| 好评里有真实问题 | 允许展示 Customer Issue，但必须有原文证据 |
-| 差评里有真实亮点 | 允许展示 Customer Label，但必须有原文证据 |
-| 评分和文本矛盾 | sentiment 可按评分；Issue/Label 必须按文本证据 |
-| mixed review | 同一条评论可同时有 Issue 和 Label，不按整体 sentiment 强制单边 |
-| 否定表达 | `no leaks / leak proof / haven’t had leaks` 不得标“防水性差” |
-| 非当前产品问题 | 旧产品、他牌、历史对比中的问题不得算当前产品痛点 |
-| 配件 vs 主产品 | `phone case / pocket` 漏水归配件/收纳，不归整体防水 |
-| aspect 冲突 | label 与 aspect 不匹配时按 evidence 纠正；无法判断则低置信/待人工 |
-| 泛泛好评 | `Great product / Excellent purchase` 可标整体满意，不自动扩展成四件套 |
-| 未实际使用 | 只能标未实际使用/初步印象，不推断耐用、防水、尺码 |
-| 场景适用 | 飞钓、Alaska、pressure washing 等进入场景标签，不误当功能标签 |
-| 尺码细分 | 靴码归 `boot_fit`，裤长/胸围/肩带归 `size_fit`，小个子/大码适配单独映射 |
-| 同义/近义标签 | 合并 canonical，保留稳定展示名，防止长尾乱分裂 |
-| 过细长尾标签 | 先进入候选池，达到频次或人工确认后正式启用 |
-| 多语言/拼写错误 | alias/normalization 处理，但仍要求 evidence 可定位 |
-| 反讽/语义含混 | 低置信，进入人工抽检优先队列 |
-| 礼物/代他人使用 | 明确描述使用体验才标；纯购买目的不标产品表现 |
-| 物流/售后/包装 | 不归产品本体 aspect，分别归 shipping / customer_service / packaging |
-
-**人工工作量安排：**
-- MVP 前集中期：每周约 `1-3` 小时，优先审核 waders 回归、新链路 shadow 差异、Top 异常和高影响候选标签。
-- 新增 sub_category 默认不做 30-50 条完整标注；先用通用标签层 + LLM candidate + evidence verifier 运行，抽检 10-20 条风险样本。
-- 只有付费意向强、上传量高、或 Top 结果明显跑偏的 sub_category，才升级为 30-50 条 gold set 深度验收。
-- 稳定后维护期：每周 `1-2` 小时，审核候选标签、异常 Top10、真实上传抽查结果和用户反馈样本。
-
-**预计工期（到“用户可用”状态）：**
-- 每个任务模块按 `3-5` 个工作日安排，不包含 Erika 人工审核 / 人工标注 / 真实上传抽查等待时间；走到人工确认点时任务自动暂停。
-- `waders` 单一 sub_category 可用：Step 1-4 合计约 `12-20` 个工作日。范围包括差异基线与口径方案、明细展示 gating、首批 waders catalog/aspect map、关键边界 case、一次 Erika 真实上传抽查。
-- 新增普通 sub_category：不再默认排 `3-5` 个工作日深度规则工程；轻接入目标为 `0.5-1` 个工作日，范围是 taxonomy/catalog 检查、通用标签复用、候选池观察和 10-20 条风险抽检。
-- 新增高价值 sub_category：只有确认值得高精度支持时，才进入 `2-4` 个工作日深度验收；重点是 gold set、边界 guard 和 verifier 回归，不再复制 waders 的大规模手写生成规则。
-- 最小 50 用户可用版本：`waders 高精度 + 通用/大类目标签层 + Customer Label System v2 + 未覆盖类目降级 + Step 6 readiness`，不再要求提前锁定另外 2-4 个固定 sub_category。
-- 进入低人工维护状态：以 candidate pool、maturity level、回归测试和阶段抽查机制稳定为准；Erika 工作量目标仍为每周 `1-2` 小时。
-- 不承诺“所有 sub_category 都高准确”：MVP 前只承诺已验收 sub_category 和通用标签层可用；未验收 sub_category 先走通用层 + 风险提示 + 候选标签池。
-
-#### 5.9.9 Customer Label System v2（LLM evidence-first + 候选池 + 类目成熟度）
-
-**状态：** 进行中（Step 1-8 代码、本地 artifact、focused tests、replay、go/no-go acceptance pack 已完成并 push；Step 9 当前为 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`：session124 暴露真实标签质量问题，且 v3-lite 曾随 develop 部署包进入生产；生产 feature flag 仍默认关闭且未开启；v3-lite Part A 已迁出 develop，保存在 `feature/5.9.9-v3-lite-shadow-only`，完整 v3 条件触发）
-
-**调整原因：**
-- 当前没有足够稳定的真实用户流量、跨类目评论量和人工标注产能，近期强行推进 ABSA fine-tune readiness 会让产品被 `3,000-5,000` 条人工确认评论或 `5,000-10,000` 个 occurrence 的数据门槛卡住。
-- 只做几个核心 sub_category 再定向寻找这些类目的客户，获客难度高，不符合一人公司当前资源约束。
-- 5.9.8 waders 证明了“高精度规则工程”可以救单一类目，但也证明每新增 sub_category 手写 `3-5` 天规则不可持续。
-- MVP 更需要的是：没有训练数据时也能安全可用；已验证类目高精度，未验证类目明确降级，不把候选标签伪装成确定结论。
-
-**定位：** 本阶段不训练 ABSA 小模型。目标是把 Customer Issue / Customer Label 从“规则主生成”升级为“LLM 语义生成 + verifier 安全拦截 + candidate pool 人工审核 + maturity level 展示分级”。
-
-**增强版 MVP 边界：**
-- 当前 taxonomy 已覆盖 10 个大类、约 89 个 sub_category；5.9.9 的覆盖目标不是把每个 sub_category 都做成 waders 级 L3，而是让大部分类目先进入“安全可用”的 L1/L2 状态。
-- 50 用户前硬门禁：LLM evidence-first schema、通用 verifier、display/candidate/audit 分流、轻量候选审核入口、类目成熟度、10 个大类 L1/L2 灰度抽检。
-- 50 用户前不硬性要求：复杂审核后台、所有 sub_category 30-50 条 gold、自动标签发布系统、全量主动学习平台、ABSA fine-tune。
-- `vector bad case memory` 可以作为轻量增强加入 shadow 或试运行期，用于检索相似历史错例、候选聚类和审核排序；它不能替代 evidence 门禁，也不作为 50 用户试运行的阻塞项。
-
-**核心方案：**
-- LLM 输出规范结构：`label_type`、`canonical_label_key`、`aspect_key`、`polarity`、`evidence_candidate`、`confidence`、`reason`。
-- Verifier 在当前评论原文中定位 `evidence_candidate`，支持精确匹配、规范化匹配和短窗口模糊匹配；定位失败则降级为 candidate/audit，不进前台。
-- Verifier 继续复用 5.9.8 的安全门禁：无 evidence、cluster propagated、legacy fallback、aspect 冲突、否定语境、旧产品/他牌/配件边界、未实际使用等不进前台。
-- A' 的“规则反向定位 label alias”保留为 fallback，仅用于高频通用标签和少数强边界标签；不再要求每个 label 都维护完整关键词库。
-- 旧 waders content rules 不删除，先作为高置信 fallback、regression baseline 和 safety guard；后续新类目不复制 waders 的规则规模。
-- Candidate pool MVP 先做轻量后台或审核表，支持按 sub_category、label、风险原因、Top 影响、confidence、降级原因筛选；不做复杂权限流和全量人工标注工作台。
-- 10 个大类灰度优先复用通用标签和 category-level aspect/taxonomy；未验证细粒度标签一律进入 candidate/audit，不进入前台确定结论。
-- Vector memory 若进入本阶段，只作为 bad case retrieval / candidate clustering / 审核排序辅助信号；最终是否展示仍由 verifier 的 evidence、上下文和 maturity gate 决定。
-
-**类目成熟度分级：**
-
-| 等级 | 适用范围 | 前台展示策略 | 进入条件 |
-|------|----------|--------------|----------|
-| `L0_unknown` | 未接入或未验证 category/sub_category | 默认不进入 display；候选进入 audit/candidate pool | 未命中 maturity config，或显式降级 |
-| `L1_generic` | 只具备通用安全展示能力的 category | 仅展示 generic-safe highlights；issues 与细粒度标签进入 audit/candidate pool | category 已进入 L1 灰度但未达到 L2 回归 |
-| `L2_category` | category 级边界较稳定 | 展示高置信、强 evidence、低风险 category-safe 基础标签；细粒度标签仍需候选审核 | category 级 taxonomy/catalog 通过 focused regression |
-| `L3_sub_category` | 高价值/高上传量/已验收类目 | 展示细粒度 Customer Issue / Customer Label | 30-50 条 blind gold 或等价真实上传抽查通过 |
-
-**任务拆解：**
-- [x] **Step 1: v2 输出契约与回退策略**
-  - 定义 LLM JSON schema、verifier 输入输出、display/candidate/audit 判定字段、schema/ruleset version。
-  - 输出 `docs/5.9.9-customer-label-v2-contract.md`。
-- [x] **Step 2: LLM evidence-first shadow run**
-  - 已用本地 `mock-v1-display-replay` 生成 v2 `label_candidates`，未发起真实 LLM 调用。
-  - 新增 deterministic verifier 雏形，输出 `verified_occurrences` / `display_occurrences` / `audit_occurrences` / `candidate_pool_items`，并覆盖 invalid JSON、evidence missing/not found、旧产品/他牌/配件漏水、正负防水、泛泛好评四件套抑制。
-  - 用 waders session120 human gold、session121 blind boundary fixture、session122 postdeploy acceptance summary 做 shadow 对比：P0=`0`，evidence locate rate `100%`，focused label FP/FN 均为 `0`。
-  - 输出 `docs/5.9.9-step2-llm-evidence-first-shadow-run.md` 与 `tmp/5.9.9-step2-customer-label-v2-shadow-run/waders-shadow-summary.json`。
-- [x] **Step 3: Verifier 与 safety gate**
-  - 已抽出 verifier context/outcome、display gate、downgrade reason 聚合和 candidate pool minimum item schema。
-  - Verifier 继续覆盖 evidence 定位、source-review 验证、aspect allow-list、context guard、confidence 降级、maturity gate；旧规则只作为 fallback / guard，不再作为未来类目的主生成模板。
-  - 输出 `docs/5.9.9-step3-verifier-safety-gate.md` 与 `tmp/5.9.9-step3-verifier-safety-gate/waders-shadow-summary.json`。
-- [x] **Step 4: Candidate pool MVP + audit export**
-  - 新增本地 collector/helper，支持从 shadow result 收集 candidate pool items、按 contract key 去重、聚合 review/session/product/source IDs、按 downgrade priority / review count / impact / confidence 稳定排序。
-  - 新增本地 JSON/CSV artifact export 与 review action validation contract；审核动作支持 `accept`、`reject`、`correct_label`、`correct_evidence`、`needs_new_label`、`ignore`，本轮仅做 pure validation，不写 DB。
-  - 输出 `docs/5.9.9-step4-candidate-pool-mvp.md`、`tmp/5.9.9-step4-candidate-pool-mvp/waders-shadow-summary.json`、`candidate-pool.json`、`candidate-pool.csv`。
-- [x] **Step 4.5: 轻量 candidate pool 审核入口 MVP**
-  - 已实现本地 review action apply helper，输入 candidate pool artifact/items + review actions，复用 `accept`、`reject`、`correct_label`、`correct_evidence`、`needs_new_label`、`ignore`。
-  - reviewed artifact 保留原 `source_candidate_item`、action、validation errors、review_status、deterministic `reviewed_at`；invalid action 不改变 source item，只进入 audit/error。
-  - 输出 `docs/5.9.9-step4.5-candidate-pool-review-entry-mvp.md`、`tmp/5.9.9-step4.5-candidate-pool-review-entry-mvp/waders-shadow-summary.json`、`candidate-pool.json`、`candidate-pool.csv`、`candidate-pool-reviewed.json`、`candidate-pool-reviewed.csv`。
-  - 当前仍为本地 artifact/action flow，不做复杂后台、不写生产 DB、不替换前台展示。
-- [x] **Step 5: 类目成熟度、v2 shadow 降级与 10 个大类灰度**
-  - 已新增本地 maturity helper，复用现有 taxonomy 静态映射，不新增后台 UI、不写 DB。
-  - 未验证细粒度标签只进 audit/candidate，避免用户误以为系统已经高精度支持该类目。
-  - 已以当前 taxonomy 的 10 个大类为灰度范围建立 20 条 synthetic fixture，证明 L1/L2 通用/大类标签分流可用，不要求所有 sub_category 达到 L3。
-  - frontstage 真实展示路径仍未替换为 v2 shadow；后续切换必须另行 feature flag / 验收。
-- [x] **Step 6: v2 frontstage feature flag / read-path contract**
-  - 已新增本地 frontstage read-path helper，默认 off，支持 session/category/sub_category/category-sub_category scope、L3-only eligibility、fixture gate 与 rollback。
-  - 四条 consumer（Results Top10、single review detail、raw review export、single-tag download）在 contract 中统一绑定 selected `display_occurrences`；`label_candidates`、`audit_occurrences`、`candidate_pool_items` 永不进入 selected frontstage set。
-  - 当前仍不替换 live frontstage、不写 production DB、不调用真实 LLM、不消耗 credit；后续生产接线必须另行配置 kill switch、观测指标和灰度开关。
-  - 输出 `docs/5.9.9-step6-v2-frontstage-feature-flag-read-path.md` 与 `tmp/5.9.9-step6-v2-frontstage-feature-flag-read-path/frontstage-read-path-contract.json`。
-- [x] **Step 7: v2 frontstage read-path actual consumer integration**
-  - 已把 Step 6 selected read model 接入实际 Results Top10、single review detail、raw review export、single-tag download。
-  - 默认仍走 v1/current；只有显式 flag + scope 命中 + shadow fixture gate PASS + `L3_sub_category` + verified v2 `display_occurrences` 才进入 selected v2。
-  - `label_candidates`、`audit_occurrences`、`candidate_pool_items`、maturity blocked、unknown/new label 仍不进入实际前台 consumer；rollback 立即回 v1/current。
-  - 已提交并推送到 `origin/develop`；生产 feature flag 仍保持关闭，仅保留本地/测试环境可控接线。
-  - 输出 `docs/5.9.9-step7-v2-frontstage-read-path-integration.md` 与 `tmp/5.9.9-step7-v2-frontstage-read-path-integration/frontstage-consumer-integration.json`。
-- [x] **Step 7.5: v2 frontstage production readiness / dry-run pack**
-  - 已新增只读 readiness dry-run report helper，输入本地 review payload + feature flag/env config，输出 selected read path preview 与 flag/scope/fixture gate/maturity/stored shadow/rollback 检查结果。
-  - dry-run 强制 `allow_runtime_shadow=False`，只承认可消费 stored shadow/read model；no stored shadow 会回 v1/current 并记录 `blocked_by_no_stored_shadow`。
-  - 新增 observability contract：`v1_selected_count`、`v2_selected_count`、`blocked_by_flag_off`、`blocked_by_scope`、`blocked_by_fixture_gate`、`blocked_by_maturity`、`blocked_by_unknown_label`、`blocked_by_no_stored_shadow`、`rollback_selected_count`、`frontstage_occurrence_count`。
-  - 输出 `docs/5.9.9-step7.5-frontstage-readiness-dry-run.md` 与 `tmp/5.9.9-step7.5-frontstage-readiness-dry-run/frontstage-readiness-dry-run.json`；生产 feature flag 仍未开启。
-- [x] **Step 7.6: production config / kill switch / observability contract**
-  - 已新增 production-safe config resolution helper，集中解析 env/config，支持 enabled、scope、fixture gate、enabled maturity、rollback、global/scoped kill switch；默认全部 off。
-  - invalid config fail closed 到 `v1_current`，并在 read model / readiness report / observability snapshot 中记录 `config_validation_errors`。
-  - 新增 observability snapshot：`read_path_selected`、blocked reason counters、rollback/kill switch counters、selected v2 occurrence count、stored shadow availability、config validation errors。
-  - 输出 `docs/5.9.9-step7.6-frontstage-config-kill-switch-observability.md` 与 `tmp/5.9.9-step7.6-frontstage-config-kill-switch-observability/frontstage-config-kill-switch-observability.json`；生产 feature flag 仍未开启。
-- [x] **Step 7.7: gray-run runbook / rollback drill**
-  - 已新增只读灰度 runbook，定义从 0% 到 scoped session/category/sub_category 的灰度步骤；本轮不执行生产开启。
-  - 已新增本地 rollback drill，覆盖 global rollback、scoped rollback、global kill switch、scoped kill switch、flag off；除 baseline v2 selected 外全部回 `v1_current`。
-  - 明确生产操作必须由 Erika 单独授权；artifact safety 标记 `production_gray_run_executed=false`、`production_feature_flag_enabled=false`。
-  - 输出 `docs/5.9.9-step7.7-frontstage-gray-run-rollback-drill.md` 与 `tmp/5.9.9-step7.7-frontstage-gray-run-rollback-drill/gray-run-rollback-drill.json`。
-- [x] **Step 7.8: go/no-go acceptance pack**
-  - 已汇总 Step 6/7/7.5/7.6/7.7 acceptance criteria，输出灰度前 go/no-go checklist。
-  - Checklist 覆盖 feature flag 默认 off、readiness dry-run PASS、kill switch PASS、rollback drill PASS、stored shadow availability、L3-only gate、unknown/candidate/audit 不进 frontstage、replay P0=0、六个重点标签 FP/FN=0。
-  - 输出 `go_no_go=GO_READY_FOR_ERIKA_AUTHORIZED_GRAY_RUN_ONLY`，并明确生产开启仍需 Erika 单独授权。
-  - 输出 `docs/5.9.9-step7.8-frontstage-go-no-go-acceptance-pack.md` 与 `tmp/5.9.9-step7.8-frontstage-go-no-go-acceptance-pack/go-no-go-acceptance-pack.json`。
-- [x] **Step 8: Vector bad case memory 轻量版（增强项，不阻塞 50 用户）**
-  - 已将 audited bad case、gold regression、candidate pool reviewed result 转成本地 sparse token vector memory，用于检索相似历史错例、candidate 聚类和审核优先级排序。
-  - 明确 vector 结果不能直接决定前台展示；display 仍由 evidence gate、context gate、aspect gate、maturity gate、feature flag/read-path gate 决定。
-  - 新增 display gate probe：no evidence / context blocked 仍不进 frontstage。
-  - 输出 `docs/5.9.9-step8-vector-bad-case-memory-lite.md` 与 `tmp/5.9.9-step8-vector-bad-case-memory-lite/vector-bad-case-memory-lite.json`。
-- [x] **v3-lite Part A: customer_insights shadow projection + catalog backlog draft**
-  - 已新增独立 shadow/read-model helper，从当前 verified source-review `display_occurrences` 单向投影 `customer_insights`；`audit_occurrences`、`candidate_pool_items`、`label_candidates` 只记录为 excluded layers，不进入 `customer_insights` 或 frontstage。
-  - 已从 waders verified display、351-400 `needs_new_label`、candidate pool reviewed artifact 生成 catalog backlog draft；该草稿只用于治理与回归，不作为运行时生成源。
-  - 验收 `PASS`：waders/session120/session121/session122/351-400 replay P0=`0`；customer_insights coverage `216/216=100%`；frontstage exclusion probe `audit_occurrences=2` / `candidate_pool_items=1` 且 projected layers 仅 `display_occurrences`。
-  - 原输出 `docs/5.9.9-v3-lite-customer-insights-shadow.md` 与 `tmp/5.9.9-v3-lite-customer-insights-shadow/`；因 Step 9 发布隔离要求，tracked v3-lite 代码/脚本/测试/报告已从 `develop` cleanup，保存在远端隔离分支 `feature/5.9.9-v3-lite-shadow-only`；不写 production DB、不接前台、不改 prompt、不替换 `specific_issue.py`、不改变 Step 9 验证对象。
-- [ ] **Step 9: Erika-led production truth check**
-  - 当前结论冻结：Step 9 保持 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`。不再尝试判 `PASS`，不再做 gray run、gray expand、production scope、feature flag 开启或灰度扩大准备；当前主线只剩人工验收发现的 Customer Issue / Customer Label 错标、漏标修复。
-  - 定位：Step 1-8 已证明本地安全边界和 read-path contract 齐备；Step 9 验证真实生产数据、真实页面、真实用户路径和 Erika 产品判断下的 Customer Label / Customer Issue 是否可用。
-  - 验收口径：AI 冷灰度、本地 replay、focused tests 只能作为安全网，不能替代 Erika 真实上传/查看页面后的人工验收；Step 9 PASS 必须包含 Erika 对错标、漏标、evidence 是否可信、标签是否符合产品直觉的确认。
-  - 第一轮不默认写业务代码：先做生产健康 baseline、feature flag 当前值确认、stored shadow/read model 可用性确认、受控 scope 设计、observability/rollback/kill switch 确认。若发现缺少生产 stored shadow 或观测数据，再单独拆支持性代码/脚本任务。
-  - 生产边界：Codex 不主动触发 production upload、reanalysis、DB write、credit、真实 LLM、feature flag/scope 开启、rollback 或 kill switch，除非 Erika 对具体动作单独授权。
-  - Erika 可以通过正常产品界面自行上传真实样本并判断页面结果；Codex 负责旁路记录、错标/漏标归因、incident/gold/candidate pool/catalog backlog 整理，以及必要时建议 rollback/kill switch。
-  - 必查用户路径：Results Top10、single review detail、raw review export、single-tag download。
-  - 必查质量问题：Customer Issue FP/FN、Customer Label FP/FN、evidence 不存在/不支持标签、cluster propagated 污染、旧产品/他牌/配件语境、未实际使用、泛泛好评误判、未验证类目细粒度标签误展示。
-  - 输出目标：`docs/5.9.9-step9-erika-led-production-truth-check.md` 与 `tmp/5.9.9-step9-erika-led-production-truth-check/` 观察 artifact；结论只能是 `PASS`、`ROLLBACK_REQUIRED`、`FIX_REQUIRED_BEFORE_GRAY_EXPAND` 或 `BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW`。
-- [ ] **Step 9.1: Review Signal Layer for Customer Label Routing Fix（Step 9 人工验收失败后的上线前修复项）**
-  - 背景：Erika 人工验证 5.9.9 后发现 Customer Issue / Customer Label 仍存在较多错标、漏标；这不是单个 bad case，也不是继续补 `specific_issue.py` 规则就能稳定解决的问题。根因是现有链路把评论直接推向 aspect / issue / label，没有先判断每个片段到底是当前产品优缺点，还是人群、地点、行为、期望、购买动机、竞品/旧产品/配件/物流或泛泛情绪。
-  - 定位：Step 9.1 是 5.9.9 的 routing fix，不是完整 v3。它必须在扩大 v2 frontstage scope 或宣称 Step 9 PASS 前完成；完整 v3 继续暂缓，后续以该 signal layer 为自然演进基础。
-  - 核心原则：按 evidence span 分片段、多路由；不能只按整条评论的星级或整体 sentiment 决定 issue/label。5 星长评里仍可有真实 `product_negative`，低星差评里也可有真实 `product_positive`。
-  - 新增 `review_signals` shadow schema：`signal_type`、`polarity`、`evidence_span`、`current_product_scope`、`route_to`、`confidence`、`reason`。候选 `signal_type` 包括 `product_positive`、`product_negative`、`audience`、`usage_location`、`usage_time`、`behavior`、`expectation`、`purchase_motivation`、`comparison_or_other_product`、`accessory_only`、`shipping_service`、`generic_or_vague`、`audit_only`。
-  - 路由规则：`product_positive` 才能进入 Customer Label；`product_negative` 才能进入 Customer Issue；`audience` / `usage_location` / `usage_time` / `behavior` / `expectation` / `purchase_motivation` 直接流向现有消费者洞察、使用场景、行为、期望、购买动机模块；竞品/旧产品/配件/物流/泛泛情绪默认进入 audit/filter，不进 Customer Issue / Customer Label Top10、单条明细或主导出字段。
-  - 最小验证进展（2026-07-31）：Phase 1 routing contract MVP 已完成，新增 `backend_api/app/services/review_signal_shadow.py`、AirPods 片段 fixture、focused tests 与 `scripts/review_signal_step9_1_shadow_replay.py`；本地 artifact `tmp/5.9.9-step9.1-review-signal-layer-minimal/` 为 `PASS`，`non_product_to_issue_label_leakage_count=0`，Customer Issue candidates 只来自 `product_negative`，Customer Label candidates 只来自 `product_positive`。这仍是 shadow-only，不接 `review_analyzer/insight_engine.py` 聚合入口，不替换前台。
-  - **Phase 状态（2026-07-31）：**
-    - [x] **Phase 1 / shadow-only routing contract**：完成最小 schema、routing table、AirPods 片段 fixture、focused tests 和本地 replay artifact。
-    - [x] **Phase 2 / gold assimilation**：已将 Erika 截图长评、session124 本地只读样本、session120/121/351-400 human gold、waders bad cases、candidate pool reviewed 样本整理为片段级 gold；artifact `review-signal-gold-assimilation.json` 覆盖 `36` 条 review / `145` 个 fragment，并明确区分 `screenshot_derived_gold`、`human_gold_fixture`、`blind_regression_fixture`、`production_readonly_local_copy`、`candidate_pool_reviewed`。
-    - [x] **Phase 3 / routing projection + local FP/FN comparison**：已生成 signal-derived Customer Issue / Customer Label candidates、consumer_profile / purchase_motives / unmet_needs / audit projection，并与 baseline 做 FP/FN 对比；artifact `review-signal-routing-projection.json` / `review-signal-shadow-fp-fn-comparison.json` 显示 routing leakage `0`、routing FN `0`、baseline→shadow Customer Issue FP `9→0` / FN `2→0`、Customer Label FP `6→0` / FN `2→0`，但 unresolved mapping `14`，结论为 `REVIEW_NEEDED`，不能宣称完整 label extraction 已解决。
-    - [x] **Phase 4 / frontstage guarded read path local implementation**：本轮 Erika 仅授权本地/测试实现，不授权生产接入或 Phase 5。
-      - [x] `Phase 4.0 design/readiness`：方案 artifact `review-signal-phase4-guarded-read-path-plan.json` 为 `READY_FOR_ERIKA_REVIEW_DESIGN_ONLY`；readiness checklist artifact `review-signal-phase4-readiness-checklist.json` 为 `READY_FOR_IMPLEMENTATION_AUTHORIZATION`。
-      - [x] `Phase 4.1 mapping safety gate`：Erika 已完成 14 条 unresolved mapping review；`candidate:*` 仍不是正式 canonical、不计 PASS、不进 frontstage。
-      - [x] `Phase 4.2 implementation authorization gate`：Erika 授权本地/测试代码、真实现有四路径测试、artifact、docs/progress 更新；未授权 Phase 5、production feature flag、production frontstage 或用户可见结果变更。
-      - [x] `Phase 4.3 working tree isolation`：已检查既有 dirty `backend_api/app/services/customer_label_v2_frontstage.py`；本轮未修改该文件，Phase 4 放在独立 `review_signal_frontstage.py` helper 与 focused tests。
-      - [x] `Phase 4.4 stored shadow input contract`：guarded read path 只消费 stored shadow/read model；frontstage read 期间 `runtime_shadow_generated_count=0`。
-      - [x] `Phase 4.5 product-derived display selector`：Customer Issue 只消费 `product_negative`；Customer Label 只消费 `product_positive`；candidate、audit、non-product、unresolved mapping、display gate failure 均 fail closed。
-      - [x] `Phase 4.6 non-product route isolation`：`consumer_profile` / `purchase_motives` / `unmet_needs` / `audit.filter_only` 不进入 Customer Issue / Customer Label 主字段。
-      - [x] `Phase 4.7 four frontstage consumers`：Results Top10、single review detail、raw review export、single-tag download 使用同一 selected product-derived display occurrence set；四路径本地测试均 `PASS`。
-      - [x] `Phase 4.8 feature flag / scope / defaults`：默认 `v1_current`；仅显式本地/测试 flag + session/category/sub_category/category_sub_category scope match + stored shadow present 才选择 `review_signal_stored_shadow`。
-      - [x] `Phase 4.9 rollback / kill switch`：invalid config、flag off、scope miss、stored shadow missing、global/scoped rollback、global/scoped kill switch 均 fallback `v1_current`。
-      - [x] `Phase 4.10 observability`：artifact `review-signal-phase4-implementation.json` 输出 required counters，`candidate_key_frontstage_count=0`、`routing_leakage_count=0`、`evidence_not_found_frontstage_count=0`。
-      - [x] `Phase 4.11 local acceptance`：focused pytest `20 passed`；shadow replay `phase4_implementation_status=PASS`；ruff、compileall、`git diff --check` PASS。
-    - [x] **Phase 5 / Erika-led production truth check replay**
-      - [x] `Phase 5.0 authorization gate`：Erika 确认 Phase 4 implementation `PASS`，并授权对 `session_id=123` / `product_id=TIDEWE-下水服-WD001` 仅生成并写入 `review_signal_stored_shadow`；upload、reanalysis、credit、真实 LLM、feature flag/scope/frontstage、rollback、kill switch、push/deploy 均未授权。
-      - [x] `Phase 5.1 preflight`：修正 DB source 后确认根目录 `.env` 的 `PROD_DATABASE_URL` 中 session 123/124 均存在；session 123 有 50 条评论且 50/50 stored shadow 可回读。feature flag 默认 off、scope 未扩大、rollback/kill switch 可用但未执行。Shadow 是 existing verified occurrence compatibility projection，不是 full signal extraction。
-      - [x] `Phase 5.2 Results Top10`：硬 routing safety contract PASS；发现 `not_breathable` evidence 含 `VERY BREATHABLE` 的语义 FP，阶段结果 `FIX_REQUIRED`。
-      - [x] `Phase 5.3 single review detail`：Issue/Label chip 极性、candidate/non-product/audit/evidence safety PASS；selected occurrence 到 detail helper 有 13 条 coverage FN，2 条 canonical mapping drift，阶段结果 `FIX_REQUIRED`。
-      - [x] `Phase 5.4 raw review export`：主导出字段无 candidate/audit/non-product 泄漏，非空主字段均有 evidence；覆盖 FN 和 `not_breathable` 语义 FP 仍存在，阶段结果 `FIX_REQUIRED`。
-      - [x] `Phase 5.5 single-tag download`：approved non-candidate/evidence/signal gate PASS；36/49 selected occurrence 进入等价下载路径，继承语义 FP/drift，阶段结果 `FIX_REQUIRED`。
-      - [x] `Phase 5.6 safety thresholds`：`candidate_key_frontstage_count=0`、`routing_leakage_count=0`、`evidence_not_found_frontstage_count=0`、`runtime_shadow_generated_count=0`；upload/reanalysis/credit/real LLM/push/deploy/user-visible change 均 `false`。唯一例外是 Erika 授权的 `production_db_write=true`，范围仅 `review_signal_stored_shadow`，未修改业务字段。
-      - [x] `Phase 5.7-5.8 decision/docs/progress`：decision artifact 最终结论为 `FIX_REQUIRED_BEFORE_GRAY_EXPAND`；docs/progress 已记录正确 source、shadow write/readback、四路径结果与安全例外。当前不得扩大 gray/frontstage，不需要 rollback/kill switch。
-  - 当前结果页模块核对：
-    - 概览：`total_reviews`、好评率、差评率、评分、用途、warnings；不直接消费标签，只依赖整体 sentiment / rating / session 统计。
-    - 用户画像 `consumer_profile`：当前前端展示 `summary`、`rows[{label, detail}]`、`evidence`；后端现在默认 3 行 `Demographics`、`Interests & Context`、`Purchase Behavior`。Step 9.1 后应接 `audience`、`usage_location`、`usage_time`（若新增）、`behavior`、`purchase_motivation` 的聚合证据；不得接产品优缺点。
-    - 用户体验 `user_experience`：当前前端分 `positive` 产品亮点 TOP 与 `negative` 高频痛点 TOP，并支持单标签下载与行动入口。Step 9.1 后只接 `product_positive` -> `positive` / Customer Label，`product_negative` -> `negative` / Customer Issue。
-    - 消费动机 `purchase_motives`：当前前端有独立模块，但后端 heuristic 仍从 positive Customer Label 填充，AI enhancement 也被限制只能使用 `positive_tags` 名称。Step 9.1 后必须改为只接 `purchase_motivation`，以及明确“因为某卖点而购买”的证据；普通使用后好评不得流入消费动机。
-    - 未满足的需求 `unmet_needs`：当前前端有独立模块，但后端 heuristic 仍从 negative Customer Issue 填充。Step 9.1 后应接 `expectation` 中未被满足的需求、`product_negative` 中可转化为需求缺口的片段、竞品/旧产品对比中体现的机会 gap；普通故障痛点仍可进入用户体验负向，但不必全部重复进未满足需求。
-    - 综合建议 `recommendations`：不直接接原始标签；应从 `product_negative`、`product_positive`、`purchase_motivation`、`expectation/unmet_need`、`audience/context` 汇总生成 Product / Listing / Marketing / Operations / Support 建议。
-    - 转成行动 `CreateActionPanel`：当前候选来自 `user_experience.negative` + `unmet_needs.rows`。Step 9.1 后行动候选只允许来自 verified `product_negative` 或 verified unmet-need signals，避免把人群/地点/行为误推成产品修复任务。
-    - 评论原文 `rawReviews`：当前只展示 Customer Issue / Customer Label chips；Step 9.1 后继续只展示 product-derived issue/label。人群/地点/行为/动机/期望不在评论原文的 issue/label chips 中展示，除非后续另做 context chips。
-    - 导出：raw review 主字段 `Customer Issue` / `Customer Label` 只出 product-derived display occurrences；Label Audit 可追加 `review_signals` audit sheet，保留被分流到用户画像/动机/需求/audit/filter 的证据与 reason；single-tag download 只绑定 Customer Issue / Customer Label，不复用来下载消费动机或用户画像信号。
-  - 当前页面与后端的关键差距：虽然结果页已经有用户画像、消费动机、未满足需求等模块，但 `review_analyzer/insight_engine.py` 目前主要用 `build_customer_highlight_rows` / `build_specific_issue_rows` 填充这些模块；因此 Step 9.1 不能只新增 signal extraction，还必须改 `build_results_insights` 的聚合入口，让非产品信号真正流向对应模块。
-  - 与 5.9.9 现有能力衔接：现有 evidence gate、context gate、aspect gate、maturity gate、frontstage read path、rollback/kill switch/observability 继续保留，作为 signal routing 后的 final display gate。Step 9.1 只补上游“这句话应该流向哪个业务模块”的判定。
-  - 执行阶段：
-    1. `shadow-only`：新增 prompt/schema/helper，本地 replay 输出 `review_signals`，不改变前台、不写 production DB、不消耗生产 credit。
-    2. `gold assimilation`：将 Erika 截图长评、session124 错标/漏标、waders bad cases、351-400 human gold、candidate pool reviewed 样本整理为片段级 gold。
-    3. `routing projection`：从 `review_signals` 投影 Customer Issue / Customer Label 与已有洞察模块输入，保留旧字段兼容。
-    4. `local routing comparison`：在本地 artifact 中对比旧 Customer Issue / Customer Label 与 signal-derived candidates，定位错标、漏标是否下降；不切前台 read path，不开 feature flag。
-    5. `post-fix decision point`：Step 9.1 本地/测试修复通过后，再由 Erika 决定是否恢复 production truth check；在此之前不做 gray run / gray expand。
-  - 验收标准：非产品优缺点进入 Customer Issue / Customer Label 的泄漏率为 `0`；当前产品真实负向片段不因整条评论高星而漏掉；当前产品真实正向片段不因评论含差评句而漏掉；人群/地点/行为/期望/购买动机能流向已有模块；旧产品/竞品/配件/物流/泛泛情绪只能进入 audit/filter；四条用户可见路径与导出字段一致；未通过前不得扩大 v2 gray exposure。
-
-**Step 9 与 v3-lite 并行边界（2026-07-31）：**
-
-- 可以并行：Step 9 是线上当前 5.9.9 v2 read path 的真实验收；v3-lite 是本地 shadow/read model 与 catalog 治理准备，二者目标不同。
-- 必须隔离：Step 9 验证对象必须稳定，不能混入 v3-lite 未验收代码；v3-lite 建议独立分支/独立 artifact，不随 Step 9 部署。
-- v3-lite 不得写 production DB，不得接前台，不得开启 feature flag，不得改变 prompt confidence，不得拆 `category/review_intent`，不得替换 `specific_issue.py`，不得改变用户可见输出。
-- Step 9.1 优先级高于完整 v3：它是当前 Step 9 `FIX_REQUIRED_BEFORE_GRAY_EXPAND` 的上线前质量修复；完整 v3 不作为本轮上线前置，但未来必须复用 Step 9.1 的 `review_signals` 分片段路由思想。
-- v3-lite 拆为 Part A / Part B：Part A 只做 `customer_insights` 兼容投影与 catalog backlog 草稿；Part B 做可执行 catalog applicability gate，让 verifier / v3 shadow 能按标签适用的 category、sub_category、aspect 与反例决定 display/candidate/audit。
-- Part A 完成后只能说明“未来迁移材料已整理好”，不能宣称已真正降低扩品类手写规则；真正减负必须等 Part B 被 shadow/verifier 消费，并通过新增普通 sub_category 接入演练。
-- Step 9 发现的真实错标/漏标，优先沉淀为 incident、gold sample、candidate pool review、catalog backlog 或 anti-example；只有 P0 安全问题才考虑 `specific_issue.py` 窄修补。
-- 若 Step 9 需要 rollback/kill switch，以线上稳定优先；v3-lite 继续本地化，不参与线上应急。
-- 完整 v3 仍按准备度触发：Step 9 至少一轮稳定 + v3-lite Part A/Part B 跑过真实数据 shadow + candidate pool 有真实重复积累后，再评估是否进入完整 v3 selected read path。
-
-**下一轮任务提示词：Step 9**
-
-```text
-加载 PROGRESS_V2.md，继续 5.9.9 Step 9: Erika-led production truth check。
-
-背景：5.9.9 Step 1-8 已完成并 push；Step 7.8 go/no-go 为 GO_READY_FOR_ERIKA_AUTHORIZED_GRAY_RUN_ONLY；生产 feature flag 仍默认关闭。Step 9 的目标不是继续本地冷灰度，而是由 Erika 主导真实生产样本验收 Customer Label / Customer Issue 的准确性，Codex 负责旁路记录、归因、观测、rollback 建议和文档沉淀。
-
-硬边界：
-1. 未经 Erika 对具体动作单独授权，不触发 production upload、reanalysis、DB write、credit、真实 LLM、feature flag/scope 开启、rollback 或 kill switch。
-2. 第一轮先确认生产健康 baseline、当前 feature flag、stored shadow/read model 可用性、observability、rollback/kill switch。
-3. Erika 可以通过正常产品界面自行上传真实样本并判断页面结果；Codex 不替代 Erika 的产品验收。
-4. 必查 Results Top10、single review detail、raw review export、single-tag download。
-5. PASS 必须以 Erika 对错标/漏标、evidence 是否可信、标签是否符合产品直觉的确认作为核心依据；AI 冷灰度不能单独判 PASS。
-
-产出：
-- docs/5.9.9-step9-erika-led-production-truth-check.md
-- tmp/5.9.9-step9-erika-led-production-truth-check/ 下的观察 artifact
-- 结论为 PASS、ROLLBACK_REQUIRED、FIX_REQUIRED_BEFORE_GRAY_EXPAND 或 BLOCKED_NEEDS_AUTH_OR_STORED_SHADOW
-```
-
-**已完成任务提示词归档：v3-lite Part A**
-
-```text
-加载 PROGRESS_V2.md，启动 5.9.9 v3-lite Part A: customer_insights shadow projection + catalog backlog draft。
-
-背景：v3-lite 可以与 Step 9 逻辑并行，但必须发布隔离。Part A 不是完整 v3，也不是生产切换；目标是封顶规则债务，为未来 customer_insights / executable catalog 做兼容投影和治理准备。Part A 做完不能宣称已真正降低扩品类手写规则，只能说明迁移材料和 backlog 已准备好。
-
-硬边界：
-1. 只做本地/独立分支 shadow/read model，不写 production DB、不接前台、不部署到生产、不改变用户可见输出。
-2. 不改变 prompt confidence，不拆 category/review_intent，不替换 specific_issue.py，不影响 Step 9 验证对象。
-3. 新增 customer_insights 兼容投影，从当前 verified source-review display_occurrences 生成新结构。
-4. 对齐 candidate pool 与 catalog backlog 字段：canonical_label_key、label_type、aspect_key、evidence_candidate、downgrade_reasons、maturity_level、review_status、catalog_action。
-5. 从 waders 已验证标签、351-400 needs_new_label、candidate pool reviewed artifact 生成第一版 catalog backlog 草稿；该草稿只用于治理和回归，不作为运行时生成源。
-6. specific_issue.py 后续只允许 P0 安全修补；非 P0 新标签和 recall gap 优先进入 candidate pool / catalog backlog。
-7. 不在 Part A 增加 severity/actionability/L4 自动行动字段；不把 catalog backlog 接入前台或运行时 display 决策。
-
-验收：
-- waders/session120/session121/session122/351-400 replay 继续 P0=0
-- customer_insights 投影覆盖现有 frontstage display occurrences >= 98%
-- candidate/audit 不进入 frontstage 的 contract 不回退
-- 输出 docs/5.9.9-v3-lite-customer-insights-shadow.md 与 tmp/5.9.9-v3-lite-customer-insights-shadow/ artifact
-```
-
-**后续任务提示词：v3-lite Part B**
-
-```text
-加载 PROGRESS_V2.md，启动 5.9.9 v3-lite Part B: executable catalog applicability gate。
-
-背景：Part A 只完成 customer_insights 投影与 catalog backlog 草稿；它不能单独解决扩品类手写规则问题。Part B 的目标是把 backlog/catalog 变成 verifier / v3 shadow 可消费的轻量标签目录，让系统能判断“这个标签在当前 category/sub_category/aspect 下能不能展示”。Part B 仍然 shadow-only，不接生产前台。
-
-硬边界：
-1. 不写 production DB、不接前台、不部署生产、不改变 Step 9 验证对象。
-2. 不替换 specific_issue.py；只允许读取现有 verified display、candidate pool、gold fixture、catalog/backlog artifact，构建本地可执行 gate。
-3. 不新增 severity/actionability/L4 自动行动；本轮只做标签适用范围、反例和 display eligibility。
-4. catalog gate 只能决定 v3 shadow/read-model 的 display/candidate/audit 分流，不得直接改变用户可见输出。
-
-任务：
-1. 定义 catalog applicability 最小字段：canonical_label_key、label_type、display labels、allowed_aspect_keys、applicable_categories、applicable_sub_categories、maturity_level、status、examples、anti_examples。
-2. 从 Part A catalog backlog、waders verified display、351-400 needs_new_label、candidate pool reviewed artifact 生成 executable catalog draft。
-3. 新增 pure helper：输入 label candidate + category/sub_category/aspect/evidence context，输出 allowed / blocked / candidate_pool 与 reason code。
-4. 接入 v3 shadow，不接 frontstage：customer_insights selected display 只来自 evidence/context/aspect/maturity/catalog applicability 全部通过的 occurrence。
-5. 增加 wrong-category probe：如 waders 不能展示 battery/mascara 等外类目标签，3C/beauty 也不能展示 waders-only 细粒度标签。
-6. 增加新增普通 sub_category 接入演练：选择非 waders 的 L1/L2 候选，用 20-30 条样本验证只靠 taxonomy/maturity/catalog/backlog 配置和抽检，不靠新增普通类目专属 Python 规则。
-
-验收：
-- waders/session120/session121/session122/351-400 replay 继续 P0=0
-- wrong-category probe P0=0
-- customer_insights selected display 仍只来自 verified source-review evidence，candidate/audit 不进前台
-- 新增普通 sub_category 演练不得修改 specific_issue.py 普通类目专属规则
-- 记录工程耗时、人工复核耗时、是否只改 catalog/taxonomy/backlog 或通用 engine
-- 若新增普通 sub_category 仍需 2-3 天工程或大量 Python 分支，Part B 判定 REVIEW_NEEDED，不得宣称 v3-lite 已完成减负目标
-```
-
-**标签本体 v3 执行计划（2026-07-30 决策）：**
-
-**定位：**
-- 完整 v3 不作为 5.9.9 立即全量重构项；当前不改 prompt confidence、不拆 `category/review_intent`、不替换 `specific_issue.py`、不改变前台结果。
-- 近期 `v3-lite` 拆成 Part A / Part B：Part A 做 shadow 投影与 catalog backlog 草稿；Part B 做可执行 catalog applicability gate。Part A 只负责治理准备，不能单独宣称已降低扩品类手写规则；Part B 才是减负目标的最小闭环。
-- 完整 v3 的价值是长期减负：统一 `issue_tag` / `highlight_tag` / `customer_label` 为 `customer_insights`，把标签定义、同义词、反例、成熟度和 owner/version 从代码迁入可治理 catalog。
-
-**v3-lite Part A（已完成，shadow-only，不改变任何对外输出）：**
-- 新增 `customer_insights` 兼容投影：从当前 verified source-review `display_occurrences` 生成新结构，仅作为 shadow/read model，不写生产 DB，不接前台。
-- 对齐 candidate pool 与未来 catalog backlog 字段：`canonical_label_key`、`label_type`、`aspect_key`、`evidence_candidate`、`downgrade_reasons`、`maturity_level`、`review_status`、`catalog_action`。
-- 从 waders 已验证标签、351-400 needs_new_label、candidate pool reviewed artifact 生成第一版 catalog backlog 草稿；该草稿只用于治理和回归，不作为运行时生成源。
-- 设定规则膨胀封顶原则：`specific_issue.py` 后续只允许 P0 安全修补；新标签、边界不清标签、非 P0 recall gap 优先进入 candidate pool / catalog backlog；每次 P0 修补同步沉淀为 catalog rule 或 anti-example。
-- Part A 验收：waders/session120/session121/session122/351-400 replay 继续 P0=`0`；`customer_insights` 投影覆盖现有 frontstage display occurrences ≥ `98%`；candidate/audit 不进入 frontstage 的 contract 不回退。
-- Part A 当前结果：`PASS`，P0=`0`，coverage `216/216=100%`，catalog backlog draft `185` items，报告 `docs/5.9.9-v3-lite-customer-insights-shadow.md`，artifact `tmp/5.9.9-v3-lite-customer-insights-shadow/`。
-- Part A 非目标：不新增 `severity` / `actionability` / L4 自动行动；不让 catalog backlog 参与运行时 display 决策；不以 Part A 完成作为“扩品类减负已完成”的证据。
-
-**v3-lite Part B（Part A 后执行，仍不改变任何对外输出）：**
-- 新增 executable catalog applicability gate：把 catalog/backlog 草稿升级为 verifier / v3 shadow 可消费的轻量标签目录。
-- 最小字段：`canonical_label_key`、`label_type`、display labels、`allowed_aspect_keys`、`applicable_categories`、`applicable_sub_categories`、`maturity_level`、`status`、`examples`、`anti_examples`。
-- Gate 输入：label candidate / occurrence + category + sub_category + aspect_key + evidence/context；输出：`display_allowed` / `candidate_pool` / `audit_only` 与稳定 reason code。
-- Gate 行为：标签不适用于当前 category/sub_category/aspect 时，不进入 selected display，只进入 audit/candidate pool；例如 waders-only 细粒度标签不得漂移到 3C/beauty，battery/mascara 类标签不得漂移到 waders。
-- 接入范围：只接 v3 shadow/read model，不接生产 frontstage，不改变 Step 9 验证对象；`specific_issue.py` 仍只允许 P0 安全修补。
-- Part B 验收：waders replay P0=`0`；wrong-category probe P0=`0`；新增一个非 waders 普通 sub_category 接入演练，禁止新增普通类目专属 Python 规则，记录工程耗时、人工审核耗时和改动类型。
-- 减负判定：只有 Part B 通过新增普通 sub_category 演练，才能宣称 v3-lite 初步具备降低扩品类手写规则的能力；若仍需 `2-3` 天工程或大量 Python 分支，判定为 `REVIEW_NEEDED`。
-
-**完整 v3 启动条件（不按日期硬启动，按准备度触发）：**
-- 5.9.9 live frontstage read path 已具备可灰度、可回滚、可观测能力，并在真实使用中稳定至少一轮。
-- v3-lite Part A/Part B 已跑过真实上传数据 shadow，投影覆盖率 ≥ `98%`，wrong-category probe P0=`0`，没有破坏 waders 六个重点标签 P0 门禁。
-- candidate pool 有真实重复积累，能区分高价值新标签、一次性噪音和需要反例治理的边界样本。
-- 新增标签已经默认进入 catalog backlog / applicability review，而不是继续优先写入 `specific_issue.py`。
-- 启动评审时间建议：最快 `2026-08` 下旬评估，更稳妥是 `2026-09` 初；首个完整版对象只选 `outdoor/waders` L3，不做多品类同时切换。
-
-**完整 v3 分阶段实施：**
-- Phase 1：waders catalog engine shadow。基于 v3-lite Part B 的 applicability gate，将 waders 已成熟标签、反例、同义词、maturity gate 迁入 `customer_insight_catalog` 与通用解释器；不替换旧链路，只比较覆盖率、冲突率、FP/FN。
-- Phase 2：waders L3 feature flag 切换。复用 Step 6 read-path contract，只允许 `outdoor/waders` + fixture gate PASS + rollback 可用时选择 v3 `customer_insights`。
-- Phase 3：再处理 aspect confidence、主 aspect 加权、`category/review_intent` 拆分。由于会影响 prompt/schema/cache/回放兼容，这部分必须放在 waders v3 shadow 稳定之后。
-- Phase 4：按 candidate pool ROI 推广高价值 sub_category。每次只推进 1-2 个，不承诺所有 sub_category 都做 L3。
-
-**完整 v3 后新增 sub_category 工作量模型：**
-
-| 新增目标 | 工程量 | 人工/产品复核 | 总工作量 | 默认策略 |
-|----------|--------|---------------|----------|----------|
-| L1 快速接入 / 保守展示 | `0-0.5` 天 | `0.5` 天 | `0.5-1` 天 | 低价值或上传少的小类目默认走 L1 |
-| L2 基础标签展示 / 复用已有标签 | `0.5` 天 | `0.5-1` 天 | `1-1.5` 天 | 大多数普通小类目目标状态 |
-| L3 精细标签 / 小类目深做 | `0.5-1` 天 | `1-2` 天 | `1.5-3` 天 | 仅高价值、客户重点看、上传量足够时启动 |
-| 特殊类目 / 全新语义边界 | `1-2` 天 | `1-2` 天 | `2-4` 天 | 需要新增 aspect/tag/anti-example 边界时才出现 |
-
-**减负判定：**
-- 完整 v3 后，新增普通 sub_category 不应再需要 `2-3` 天工程；如果仍然需要，说明 v3 没有真正减负，只是把规则从 Python 搬到了 YAML。
-- L3 的主要成本应是 gold 样本复核和边界确认，不是继续手写大量规则。
-- 未验证类目默认 L1/L2 保守接入；只有 ROI 明确的类目才进入 L3。
-
-**完整 v3 代码完成后的专项验收流程：**
-- 必须专门做一轮“新增普通 sub_category 接入演练”，不能只靠单元测试、现有 waders replay 或代码 review 宣布完整 v3 完成。
-- 选择一个非 waders、非已深度规则化的普通 sub_category；优先从 `baby`、`pet`、`office` 等 L1/L2 候选中挑选上传量合理、语义边界不过分特殊的小类目。
-- 准备全新评论样本：L1/L2 普通验收使用 `20-30` 条；若要验 L3 精细标签，则使用 `30-50` 条并补人工 gold。
-- 演练期间禁止为了通过验收去 `specific_issue.py` 增加普通类目专属 Python 规则；允许动作仅限 taxonomy 确认、maturity 配置、catalog/backlog 配置、candidate pool 审核和必要的通用 engine bugfix。
-- 上传或本地 replay 后必须检查四条用户可见路径：Results Top10、single review detail、raw review export、single-tag download；四条路径都必须从 v3 `customer_insights` selected display 读取，且旧字段只作为 projection/兼容层。
-- 必须检查 candidate pool：新类目专属、不确定、unknown/new label、低成熟度细粒度标签默认进入 candidate/audit，不得直接进入 frontstage。
-- 必须记录真实工作量和改动类型：工程耗时、人工审核耗时、是否改 Python 业务规则、是否只改 catalog/taxonomy/backlog、是否新增通用 engine bugfix。
-- 若新增普通 sub_category 仍需要 `2-3` 天工程，或需要大量手写 Python 分支/regex，完整 v3 判定为 `NOT COMPLETE`；最多只能标记为“架构迁移完成，减负目标未完成”。
-
-**验收标准：**
-- 前台无 evidence 展示率 `= 0`，cluster propagated 前台展示率 `= 0`。
-- waders gold set 不发生 P0 回退；`water_leaks_through`、`keeps_water_out`、phone case/pocket、旧产品/他牌、未实际使用等边界继续通过。
-- 完整 v3 代码完成后，必须通过新增普通 sub_category 专项验收演练；普通类目接入不得依赖 `specific_issue.py` 专属规则新增。
-- 新增普通 sub_category 工程耗时目标 `≤ 0.5-1` 天，总耗时目标 `≤ 1-1.5` 天；超出时必须复盘是类目确实特殊，还是 v3 没有真正减负。
-- Results Top10、single review detail、raw review export、single-tag download 四条路径都必须读取 v3 selected `customer_insights` display；audit/candidate 不得混入用户前台。
-- 未验证 sub_category 不展示未经确认的细粒度标签；candidate/audit 字段必须能追溯原始 LLM 输出和降级原因。
-- 10 个大类至少完成 L1/L2 灰度抽检；每个大类 10-20 条风险样本中不得出现系统性 P0 错误。
-- 50 用户前可不完成 vector bad case memory，但必须保留 candidate/audit 数据结构，确保后续可接入 bad case retrieval。
-- 新增普通 sub_category 不再默认进入 `3-5` 天深度规则工程；优先轻接入、抽检、候选观察。
-- Erika 人工参与集中在候选池、Top 异常和高价值类目升级决策，目标维持每周 `1-2` 小时维护量。
-
-#### 5.9.10 ABSA 小模型 fine-tune POC（延后/条件触发）
-
-**状态：** 延后，不阻塞 50 用户试运行。
-
-**调整原因：** ABSA fine-tune 仍有长期价值，但当前缺少训练所需的数据规模、类目覆盖、稳定标签定义和人工标注产能。近期强行训练会产生两类风险：一是为了凑数据消耗大量人工时间，二是用不稳定或带规则偏见的标签训练出“更稳定的错误”。
-
-**重新定位：** 5.9.10 只在真实用户数据、candidate pool 审核记录和 gold regression 自然积累到门槛后启动。它不是 5.9.9 的必然下一步，也不是 MVP 上线前置条件。
-
-**启动条件：**
-- 真实上传和候选审核自然累计达到 `3,000-5,000` 条人工确认评论，或 `5,000-10,000` 个高质量 occurrence。
-- 至少有多个高价值类目达到 `L2_category` 或 `L3_sub_category`，且 label 定义稳定。
-- locked test set 已固定，包含正例、负例、边界 case、未覆盖类目降级样本。
-- evidence 可定位率 `>=95%`，且无 evidence、cluster propagated、legacy fallback、未确认 candidate 不进入训练正例。
-- PMF/付费用户信号证明训练能带来明确 ROI，例如降低 LLM 成本、提升召回、缩短延迟或支持高价值客户。
-
-**保留的技术方向：**
-- Create: `ml/absa/`（训练脚本、数据集、模型 checkpoint）
-- Create: `ml/absa/train.py`、`ml/absa/infer.py`
-- Create: `review_analyzer/absa_service.py`（推理服务）
-- Modify: `review_analyzer/analyzer.py` 或 `backend_api/app/services/deep_analyzer.py`（ABSA 走小模型/模型辅助，洞察生成保留 LLM）
-
-**执行原则：**
-- 先用 locked test set 评估 5.9.9 v2 链路，作为小模型必须超过或至少持平的 baseline。
-- 先 shadow inference，再灰度/A-B，不直接替换用户可见结果。
-- 小模型只替代结构化 ABSA 任务；解释、总结、行动建议等生成式任务继续交给 LLM。
-- 灰度失败时回退到 5.9.9 LLM evidence-first + verifier 链路。
-
-
-## Git 分支策略
-
-| 分支 | 用途 |
-|------|------|
-| `main` | 稳定版本（V1） |
-| `develop-v2` | V2 开发主线 |
-| `feature/v2-mX-*` | 各模块独立分支 |
-
-工作流: 模块分支 → 合并到 develop-v2 → 验证通过 → 合并到 main
-
----
+### 5.9 标签准确性：评论片段理解与多模块分流
+
+**当前状态：重新定方向，暂停扩大使用范围。**
+
+5.9.8 和 5.9.9 之前的路线已经归档。它们暴露了真实问题：系统不能只在评论底部堆标签，也不能靠单个类目的规则修补来证明整体准确。
+
+当前有效目标：先把每条评论拆成多个有意义的原文片段，再把每个片段放到正确模块。
+
+| 评论片段说的内容 | 应该流向 |
+|---|---|
+| 产品哪里好 | 用户体验：产品亮点 |
+| 产品哪里不好 | 用户体验：产品问题 |
+| 谁在用 | 消费者画像：人群特征 |
+| 用户怎么用 | 消费者画像：用户行为 |
+| 在哪里、什么时候、什么场景用 | 消费者画像：使用场景 |
+| 为什么买 | 购买动机 |
+| 想解决但没解决的事 | 未满足需求 |
+| 旧产品、竞品、替代品 | 竞品/旧产品对比 |
+| 物流、客服、退换货、配件 | 单独记录，不能混进当前产品亮点或问题 |
+
+**已归档内容：**
+
+- 5.9.8：waders 单类目规则修补路线。
+- 5.9.9：直接围绕 Customer Issue / Customer Label 做前台接入和灰度准备的路线。
+- 5.9.10：小模型训练不作为近期目标，只有真实数据和人工确认样本足够多时再评估。
+
+归档说明见：`docs/历史归档_已废弃模块文档.md`。
+
+**2026-08-03 最新落地口径（OPC 低维护版）：**
+
+不推翻现有上传、分析结果页、导出、问评论、计费、Taxonomy、Golden Set 和 other 告警能力。5.9 只处理一件事：把当前“LLM 自由理解并直接形成前台标签”的风险，收敛成“LLM 读评论 + Taxonomy 限制可选标签 + 原文证据门禁 + candidate/other 承接新问题”。
+
+**核心原则：**
+
+- 不训练小模型，不把 ABSA fine-tune 作为近期前置。
+- 不追求全品类标签库完美，只维护高频问题、高频亮点、会影响商业决策的标签。
+- 不让人工维护变成日常运营；维护只由告警和付费品类触发。
+- 不确定的片段宁可进入 `other` / candidate，也不要硬贴正式标签。
+- 前台 TOP10 / 报告 / 导出只统计高置信、有原文证据、属于当前子品类的正式标签。
+- Pydantic AI 不作为第一优先级；第一阶段先用普通 Pydantic / JSON Schema 校验，等链路稳定后再评估是否引入 Pydantic AI 做 Agent 化输出与重试。
+
+**标签库主线：**
+
+- 主标签库：`category_aspect_taxonomy`，承接 6.1 / 6.2 / 6.3 已完成的 Taxonomy 资产。
+- 早期 `review_analyzer/config.py` 中文预设标签只做 fallback，不作为后期主标签体系。
+- 每个正式标签必须至少满足：来自真实评论、有 3-5 条原文例子、属于当前 `sub_category`、不和已有标签重复、有 `boundary_note` 边界说明。
+- 标签状态后续统一为：`candidate`（候选）/ `approved`（正式）/ `merged`（已合并）/ `deprecated`（废弃）/ `blocked`（禁用）。前台只使用 `approved`。
+
+**一条评论到最终结果的目标链路：**
+
+1. 用户上传评论。
+2. 系统清洗评论，去空、去重、识别评分 / SKU / 产品。
+3. 系统识别产品 `sub_category`。
+4. 系统读取该子品类的 `category_aspect_taxonomy` 白名单。
+5. LLM 把评论拆成片段。
+6. 每个片段判断进入哪个模块：产品问题、产品亮点、消费者画像、购买动机、未满足需求、竞品 / 旧产品、物流售后等。
+7. LLM 只能从当前子品类允许的 taxonomy 里选择标签。
+8. 没有合适标签时进入 `other` / candidate，不进入正式 TOP10。
+9. 系统检查标签是否有原文证据、是否属于当前产品、是否越界。
+10. 通过门禁的高置信标签进入 TOP10 / 报告 / 导出。
+
+**具体执行计划：**
+
+| 阶段 | 目标 | 具体工作 | 工作量 | 验收标准 |
+|---|---|---|---:|---|
+| 5.9.0 旧路线隔离清点 | 让新方向清爽进入，但不冒险大删 | 盘点 5.9.8 / 5.9.9 / waders / `customer_label_v2_*` / `review_signal_*` 的运行入口、feature flag、前台消费路径、测试和文档；分成保留复用 / 冻结隔离 / 归档参考 / 后续删除四类；同时产出“删除/迁移/保留”减负清单 | 1-2 天 | active 上传/分析/结果/导出路径不会无意加载旧 shadow 实验；旧路线默认关闭；新 5.9 实现有明确入口和命名；旧路线不会长期占用主代码阅读成本 |
+| 5.9.1 输出契约 | 先把 AI 输出固定成可检查表格 | 定义片段级字段：`fragment_text`、`module`、`aspect_key`、`polarity`、`evidence_span`、`confidence`、`current_product_scope`、`can_aggregate`、`reject_reason` | 1-2 天 | 同一条评论能输出“片段 -> 模块 -> 标签 -> 证据 -> 是否进统计”的结构化结果 |
+| 5.9.2 Taxonomy 白名单 | 防止 LLM 越界自由打标签 | 分析时按 `sub_category` 读取 `category_aspect_taxonomy`；只允许选择当前子品类标签；越界降级为 `other` / candidate | 2-3 天 | 抽取标签 100% 落在允许列表或 `other` / candidate，不再出现库外标签直接进前台 |
+| 5.9.3 原文证据门禁 | 防止无中生有进入报告 | 每个标签必须带 `evidence_span`；无证据、证据不属于当前产品、物流/售后/旧产品污染时 `can_aggregate=false` | 2-3 天 | 无原文证据的标签不进入 TOP10；导出可追溯到原文片段 |
+| 5.9.4 candidate / other 承接 | 新问题不丢，但不污染正式结果 | 优先复用 `customer_label_v2_candidate_pool` artifact 能力；记录候选标签、出现次数、原文例子、子品类、降级原因；DB 化候选池后置 | 2-3 天 | 未覆盖的新问题进入候选池，候选标签不进入正式 TOP10 |
+| 5.9.5 轻量校验 | 先用低成本方式稳定输出 | 用 Pydantic / JSON Schema 校验必填字段、枚举值、标签白名单、证据字段；失败则重试或降级，不引入大框架重构 | 2-4 天 | JSON/schema 失败不阻塞整批分析；失败项可追踪原因 |
+| 5.9.6 前台轻改 | 不大改结果页，只提升可信度 | TOP10 只统计 `can_aggregate=true`；结果页 / 导出展示代表原文证据、低置信提醒、`other` 占比提示 | 2-4 天 | 用户看到的核心标签都有证据；`other` 过高时有可理解提示 |
+| 5.9.7 小样本验收 | 用小样本证明方向可用 | 选 30-50 条真实评论，检查错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉 | 3-5 天 | 无中生有显著下降；TOP 问题/亮点能被 Erika 认可为可前台试用 |
+| 5.9.8 商业化前补强 | 支撑早期付费用户，不追求全品类完美 | 高价值品类补 50 条 mini Golden Set；接入 other 告警；记录 `prompt_version` + `taxonomy_version` + `model_name` | 1-2 周 | 重点品类有可回归样本；Prompt / Taxonomy 改动可追踪、可回滚 |
+
+**5.9.0 进度摘要（2026-08-03）：**
+
+- 已产出旧路线隔离审计：`docs/5.9.0-old-route-isolation-audit.md`。
+- 已完成 `customer_label_v2_*` / `review_signal_*` / waders / 5.9.8 / 5.9.9 相关文件、测试、脚本、文档的四类清点：保留复用 / 冻结隔离 / 归档参考 / 后续删除。
+- 已确认 `CUSTOMER_LABEL_V2_FRONTSTAGE_*` 和 `REVIEW_SIGNAL_FRONTSTAGE_*` 默认关闭，active worker import 不会加载 `customer_label_v2_shadow` 或 `review_signal_shadow`。
+- 发现一处不能直接绿灯的主线风险：waders 专项规则仍通过 `workers/jobs.py -> specific_issue.enrich_aspects_json()` 默认影响 waders 的分析结果、结果页和导出；`review_signal_frontstage.py` 也会在 active results/export import 时加载 `review_signal_shadow.py` 常量/helper。
+- 结论：5.9.1 可以先做输出契约和样例设计，但 5.9.0 暂不标记完成；需 Erika 先确认 waders 规则短期保留为现有安全补丁，还是优先抽成隔离模块。
+
+**5.9.1 进度摘要（2026-08-03）：**
+
+- 已产出新命名契约文档：`docs/5.9.1-review-fragment-output-contract.md`。
+- 已新增纯 schema / contract 校验模块：`backend_api/app/services/review_fragment_contract.py`；不被 active 上传、worker、results、export 或 frontend 引用。
+- 已准备 5 条片段级评论样例：`backend_api/tests/fixtures/review_fragment_5_9_1_samples.json`，覆盖多模块分流、当前产品/配件/旧产品/物流/未实际使用边界。
+- 片段固定字段为 `fragment_text`、`module`、`aspect_key`、`polarity`、`evidence_span`、`confidence`、`current_product_scope`、`can_aggregate`、`reject_reason`；未复用 `customer_label_v2_*` / `review_signal_*` 作为新主入口。
+- 最小校验测试已通过：`python3 -m pytest backend_api/tests/test_review_fragment_contract.py -q`，结果为 `6 passed`。
+- 当前状态：契约和样例足够进入 Erika 人工验收；尚未接入任何业务逻辑、前台、结果页或导出。
+
+**5.9.1 Erika 样例验收反馈（2026-08-03）：**
+
+- 评论 4 收窄为单一 `product_issue / water_leaks_through`：原文虽提到损坏、退货和笼统差评，但本条人工判断核心只有防水性差，不拆成额外标签。
+- 评论 5 的两个尺寸正向片段合并为一个 `product_highlight / fits_as_expected`，同一评论内重复表达的同一亮点只取一次。
+- Erika 总评：样例标签准确，明显优于旧路径，按该契约继续推进。
+
+**阶段性人工验证闸门（每阶段结束必须做，防止方向跑偏）：**
+
+这不是重运营客户交付，而是产品内部轻量抽检。每个阶段结束后，先给 Erika 看固定格式的样例输出，确认“系统理解方式和前台展示方向”没有偏，再进入下一阶段。
+
+| 阶段 | 人工验证材料 | Erika 检查重点 | 预计耗时 | 通过条件 |
+|---|---|---|---:|---|
+| 5.9.0 | 旧路线隔离清单 + active read path 说明 | 哪些旧代码会继续影响前台；哪些只是历史参考；新方向入口是否清楚 | 15-30 分钟 | Erika 能清楚知道“哪些不再碰、哪些可复用、哪些后面删”，且旧实验不会默认影响用户结果 |
+| 5.9.1 | 3-5 条真实评论的片段级 JSON / 表格 | 片段是否拆得自然；模块是否分对；字段是否能让非技术人看懂 | 10-20 分钟 | Erika 能看懂并认可字段结构，不再出现“只有标签没有原文片段”的输出 |
+| 5.9.2 | 10 条评论的 taxonomy 白名单命中表 | 标签是否属于当前子品类；库外标签是否被降级；`other` 是否合理 | 15-20 分钟 | 正式标签没有明显类目错配；库外标签没有直接进前台 |
+| 5.9.3 | 10 条带证据的标签样例 | 每个标签是否真的能在原文里找到依据；旧产品/竞品/配件/物流是否被拦住 | 20-30 分钟 | 无证据标签不进统计；明显污染样例被 `can_aggregate=false` |
+| 5.9.4 | candidate / other 聚合样例 | 候选标签是不是“值得以后考虑的新问题”；有没有把正式标签误丢到候选池 | 15-20 分钟 | candidate 只承接不确定或未覆盖问题，不污染 TOP10 |
+| 5.9.5 | 校验失败 / 重试 / 降级案例清单 | 失败原因是否可理解；降级是否保守；有没有整批分析被单条坏输出拖垮 | 10-15 分钟 | 坏输出可追踪、可降级，主流程不中断 |
+| 5.9.6 | 结果页 / 导出截图或本地预览 | 用户能否看到标签、占比、原文证据；低置信和 other 提示是否克制 | 20-30 分钟 | 页面不大改但可信度明显提升，核心标签都有证据 |
+| 5.9.7 | 30-50 条小样本验收表 | 错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉 | 45-90 分钟 | Erika 认可可进入早期前台试用；重大错标类型已记录 |
+| 5.9.8 | mini Golden Set 报告 + 版本追踪样例 | 重点品类是否可回归；prompt/taxonomy/model 版本能否追溯和回滚 | 30-60 分钟 | 重点品类有最小质量基线，后续改动不会盲改 |
+
+**人工验证停止规则：**
+
+- 任一阶段出现“标签无原文依据仍进入 TOP10”，必须停下修门禁。
+- 任一阶段出现“物流/售后/旧产品/竞品被算成当前产品亮点或问题”，必须停下补边界。
+- 任一阶段 Erika 无法用样例表理解系统在做什么，必须先改输出说明，而不是继续写后续功能。
+- 人工验证只看样例和关键失败，不要求 Erika 审全量客户数据。
+
+**旧路线清理策略（先隔离，后减负删除）：**
+
+由于 5.9.8 / 5.9.9 走过多轮 shadow、frontstage、waders 专项修补和 review-signal 试验，仓库里确实存在一批不适合继续作为主线的代码和数据。但不建议现在直接大删，原因是其中一部分仍有复用价值：candidate pool 的本地 artifact、bad case、gold fixtures、证据门禁经验、taxonomy 边界样例，都可以服务新的 5.9。
+
+隔离只是短期保护，不是永久保留。5.9.0 完成后必须进入减负收口，避免旧代码长期增加 AI 搜索、理解和修改成本。
+
+| 类型 | 处理方式 | 说明 |
+|---|---|---|
+| 可复用资产 | 保留并改名/收编 | `category_aspect_taxonomy`、Golden Set、other 告警、candidate pool artifact、bad case、waders 边界样例可进入新 5.9 |
+| 旧实验代码 | 冻结隔离 | `customer_label_v2_*`、`review_signal_*` 先保持 feature flag 默认 off；不作为新实现依赖，除非明确收编 |
+| 历史文档/报告 | 归档参考 | 5.9.8 / 5.9.9 文档保留在历史归档中，用于解释为什么旧路线不再继续 |
+| 无运行价值文件 | 后续删除 | 确认无 import、无测试依赖、无归档价值后再删；删除前必须跑 active read path / export / worker import 检查 |
+
+**减负收口规则：**
+
+- `保留复用`：必须改成新 5.9 命名或被新服务显式收编；不能继续以旧实验名作为主入口。
+- `冻结隔离`：最多保留到 5.9.3 原文证据门禁完成；若新链路已有替代测试，旧实验代码进入删除候选。
+- `归档参考`：文档可移动到历史归档目录；不再作为新任务默认阅读材料。
+- `后续删除`：按文件组小批量删除，每批删除后跑最小回归，避免一次大删造成不可控风险。
+- 对 AI 协作友好：保留一个 `5.9-active-readme` 或等价说明，明确当前主线文件、不要默认读取旧 5.9.8 / 5.9.9 实验文件。
+
+**删除前必须满足：**
+
+- `rg` / import 检查确认 active runtime 不再引用。
+- 对应测试不是当前安全门禁的一部分，或已有新测试替代。
+- 历史数据中有需要保留的 bad case / evidence / human gold 已迁入新样例或归档。
+- 删除后 `analysis results`、`export`、`worker upload/analyze`、`frontend typecheck` 不受影响。
+
+**总工作量：**
+
+- 最低可用止血版：2-3 周（含 5.9.0 旧路线隔离清点）。
+- 比较稳的早期商业化版：4-5 周。
+- 若超过 6 周，视为范围失控，需要砍需求而不是继续堆功能。
+
+**触发式维护规则（避免 OPC 重运营）：**
+
+- `other` 占比 > 15%：提示该品类 taxonomy 覆盖不足。
+- 某 candidate 标签出现 >= 10 次：进入待处理清单。
+- 用户反馈同一标签错了 >= 3 次：进入待处理清单。
+- 某品类出现付费用户或占付费用户 > 20%：补 mini Golden Set。
+- 每次维护只处理 Top 3 候选：保留、合并、改名、禁用或补 `boundary_note`。
+
+**停止线：**
+
+- 不继续围绕单个类目无限手写规则。
+- 不让库外标签、无证据标签、低置信标签进入正式 TOP10。
+- 不把“测试流程通过”当成“标签质量通过”。
+- 不把 Pydantic AI、小模型训练、全品类 Golden Set 作为 5.9 止血版前置。
 
 ## 6. 技术优化
 
@@ -1776,11 +835,11 @@ readiness 节奏：
 >
 > 总投入：8 周，与 2.5-3.1 业务功能并行推进。
 >
-> 2026-07-29 口径调整：ABSA 小模型不再作为近期硬目标；5.9.9 先做 Customer Label System v2，5.9.10 仅在数据与 ROI 达标后触发，6.x 保留技术路线背景与数据/成本/反馈能力建设。
+> 2026-08-03 口径调整：复杂标签训练不再作为近期硬目标；5.9 当前先做“评论片段理解与多模块分流”，等 Erika 小样本验收通过后，再评估是否需要更复杂的模型方案。
 
 ### 核心思路（一句话）
 
-近期不再把“ABSA 任务收回到小模型”作为 8 周硬目标；先用 LLM evidence-first、verifier、安全门禁、候选池和类目成熟度分级，让没有足量训练数据的阶段也能安全可用，同时继续沉淀未来可训练的数据资产。
+近期不再把“训练小模型”作为硬目标；先确认 AI 能不能把评论片段读准、分准、标准，再决定后续是否需要训练。
 
 ### 与 Shulex 的差距地图
 
@@ -1789,7 +848,7 @@ readiness 节奏：
 | 分析单元 | 逐条 LLM | Embedding 聚类 + LLM 打标签 | 同 | P0 |
 | 输出格式 | Prompt 约束自由文本 | 强制 JSON Schema | 同 | P0 |
 | Prompt 版本 | 无版本管理 | Git + DB 双层追踪 | LangSmith | P0 |
-| ABSA / 标签任务 | 纯 LLM | 5.9.9 LLM evidence-first + verifier；5.9.10 小模型延后为条件触发 | Shulex 已有模型化能力 | P1 |
+| 标签理解 | 直接吐标签，容易错标 | 先做评论片段理解与多模块分流；小模型训练延后 | Shulex 已有模型化能力 | P1 |
 | 反馈回路 | 无 | 用户纠错 → bad case 库 → few-shot | 同 | P1 |
 | 成本模型 | 线性增长 | 聚类后近似固定 | 同 | P0 |
 | Fallback | 单 DeepSeek | 三级链路 | 多模型 | P1 |
@@ -2424,14 +1483,14 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 
 ### 6.7 ABSA 小模型 fine-tune（已延后）
 
-原 `6.7 ABSA 小模型 fine-tune` 曾迁移到 5.9 标签准确性计划中；2026-07-29 再次调整后，近期主线改为 `5.9.9 Customer Label System v2`，ABSA 小模型 POC 延后为 `5.9.10` 的条件触发项。
+原 `6.7 ABSA 小模型 fine-tune` 曾迁移到 5.9 标签准确性计划中。2026-08-03 再次调整后，近期主线改为“评论片段理解与多模块分流”，小模型训练继续延后。
 
 **调整原因：** ABSA fine-tune 的真实前置条件不是单独的 PMF/付费用户数，而是 Customer Issue / Customer Label 口径稳定、evidence 可追溯、人工确认数据集规模达标、固定测试集可评估。当前一人公司没有稳定流量和足量跨类目标注，强行推进训练会拖慢 MVP，并可能用不稳定标签训练出更稳定的错误。
 
 **后续执行原则：**
 - 不再从 6.x 单独启动 ABSA 训练，也不把 ABSA 作为 50 用户试运行前置条件。
-- 先完成 5.9.8 安全门禁与 waders 回归，再进入 5.9.9 Customer Label System v2。
-- 只有真实上传、candidate pool 审核和 gold regression 自然累计到训练门槛且 ROI 明确后，才评审是否启动 5.9.10 小模型 fine-tune。
+- 先完成 1-3 条真实评论样例和 10-20 条小样本的 Erika 人工验收。
+- 只有真实评论样本、人工确认记录和商业价值都足够明确后，才评审是否启动小模型训练。
 
 ---
 
@@ -2530,28 +1589,29 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
                      ├──► 6.5 (LLM 输出加固)
                      └──► 6.6 (成本优化)
 
-5.9.8 (Customer Issue / Label 口径重构与灰度验证)
-        └──► 5.9.9 (Customer Label System v2: LLM evidence-first + verifier + candidate pool + maturity + 10 大类灰度)
-                 └──► 5.9.10 (ABSA 小模型 fine-tune POC，数据与 ROI 达标后才触发)
+5.9 (评论片段理解与多模块分流)
+        └──► 1-3 条真实评论样例
+                 └──► Erika 验收
+                          └──► 10-20 条小样本验收
+                                   └──► 再决定是否实现和扩大范围
 
-6.8 (用户反馈回路) ──► 5.9.9 candidate pool / gold regression 持续补样
-5.9.9 candidate pool / gold regression ──► vector bad case memory（增强项，不阻塞 50 用户）
-6.9 (Niche 商业化) ──► 决定哪些类目升级到 L2/L3，以及是否值得投入 5.9.10 ABSA
+6.8 (用户反馈回路) ──► 收集真实错标、漏标、无中生有样本
+6.9 (Niche 商业化) ──► 决定哪些类目值得优先做片段级验收
 ```
 
 执行顺序建议：
 1. **Week 1-2:** 6.1（数据资产化）+ 6.4（商业化基建）并行启动 — 这是所有后续工作的地基
 2. **Week 3-4:** 6.5（LLM 输出加固）+ 6.9 启动品类选定与白皮书
-3. **Week 4-6:** 6.6（成本优化）+ 5.9.8 标签口径重构/灰度验证
-4. **Week 5-8:** 6.8（反馈回路）+ 6.9 1对1 跟进 + 5.9.9 Customer Label System v2 增强版 MVP（轻量候选审核 + 10 大类 L1/L2 灰度；vector 可选增强，不作为 50 用户硬门禁）
-5. **数据与 ROI 达标后:** 5.9.10 ABSA 小模型 POC（先 shadow inference，再灰度/A-B）
+3. **当前:** 5.9 先做少量真实评论片段样例，让 Erika 验收口径
+4. **样例通过后:** 扩展到 10-20 条小样本，再决定是否实现
+5. **数据与 ROI 达标后:** 再评估是否需要小模型训练
 
 ### 6 优先级精简版
 
 1. **6.1 数据资产化（Week 1-2）** — 不做这个，后面所有优化都没法度量。零技术风险，纯运营投入。
 2. **6.9 Niche 商业化（Week 4-8）** — 不做这个，技术优化全是沉没成本。商业化决定产品方向。
 3. **6.4 成本优化（Week 4-6）** — 单点技改成本最低、降本最猛，让前 50 个用户的毛利可控。
-4. **5.9.9 Customer Label System v2** — 先解决无足量训练数据时的安全可用、候选审核、类目降级和 10 大类灰度覆盖；vector bad case memory 只作为增强项，5.9.10 ABSA 只有数据与 ROI 达标后才触发。
+4. **5.9 评论片段理解与多模块分流** — 先确认标签理解质量，再决定工程实现和扩大范围。
 
 ### 6 阶段验收标准
 
@@ -3434,7 +2494,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 | Multi-Agent 架构 | 当前无适用场景，任务步骤确定 |
 | Batch Prompt（多条合一次 LLM） | 缓存 98% 命中率下剩余量太小，收益 < 准确率风险 |
 | RQ → Celery 迁移 | 当前无并发瓶颈，等月活 > 50 |
-| ABSA fine-tune 小模型 | 已延后为 5.9.10 条件触发；当前 7.11 不单独启动训练，5.9.9 先做 Customer Label System v2 |
+| ABSA fine-tune 小模型 | 已延后；当前先做评论片段理解与多模块分流，不单独启动训练 |
 
 #### Worker 可靠性补丁（2026-06-17 追加）
 
