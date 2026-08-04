@@ -113,12 +113,12 @@ MODULE_CONTRACT_POLICY = {
     MODULE_ACCESSORY_OR_BUNDLE: {
         "allowed_scopes": {SCOPE_ACCESSORY_ONLY},
         "allowed_polarities": {"neutral", "positive", "negative", "mixed"},
-        "can_aggregate": False,
+        "can_aggregate": True,
     },
     MODULE_LOGISTICS_SUPPORT: {
         "allowed_scopes": {SCOPE_LOGISTICS_SUPPORT},
         "allowed_polarities": {"neutral", "positive", "negative", "mixed"},
-        "can_aggregate": False,
+        "can_aggregate": True,
     },
     MODULE_OTHER_CANDIDATE: {
         "allowed_scopes": {SCOPE_CURRENT_PRODUCT, SCOPE_CURRENT_PRODUCT_CONTEXT},

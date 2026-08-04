@@ -1,0 +1,559 @@
+{
+  "schema_version": "review-fragment-taxonomy-whitelist-samples.5.9.2",
+  "whitelist_version": "review-fragment-taxonomy-whitelist.5.9.2",
+  "taxonomy_source": "category_aspect_taxonomy via taxonomy_loader.resolve_aspects; fixture tests use data/taxonomy/v1.0/outdoor/waders.yaml and data/taxonomy/v1.0/home/床架.yaml as taxonomy assets",
+  "scope": "5.9.2 taxonomy whitelist manual acceptance table. Not connected to active upload, worker, results, export, or frontend paths.",
+  "coverage": [
+    "taxonomy allowed aspect",
+    "out-of-library aspect",
+    "candidate aspect",
+    "other aspect",
+    "taxonomy missing",
+    "accessory taxonomy aggregation",
+    "packaging taxonomy aggregation",
+    "wrong attachment aspect blocked",
+    "old product pollution",
+    "consumer/old-product/non-product modules",
+    "same-review duplicate aspect"
+  ],
+  "samples": [
+    {
+      "id": "row-55-cluster-plus-real-leak",
+      "source_fixture": "backend_api/tests/fixtures/customer_label_waders_step2_gating.json",
+      "source_id": "row-55-cluster-plus-real-leak",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Water leaked through the seam during the first trip.",
+      "fragments": [
+        {
+          "fragment_text": "Water leaked through the seam during the first trip",
+          "module": "product_issue",
+          "aspect_key": "seam_integrity",
+          "polarity": "negative",
+          "evidence_span": "leaked through the seam",
+          "confidence": 0.96,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    },
+    {
+      "id": "row-5-old-product-boundary",
+      "source_fixture": "backend_api/tests/fixtures/customer_label_waders_step2_gating.json",
+      "source_id": "row-5-old-product-boundary",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "My old waders leaked every trip; this pair has a chemical smell and the size runs small.",
+      "fragments": [
+        {
+          "fragment_text": "My old waders leaked every trip",
+          "module": "comparison_or_other_product",
+          "aspect_key": "waterproof",
+          "polarity": "negative",
+          "evidence_span": "old waders leaked",
+          "confidence": 0.92,
+          "current_product_scope": "other_product",
+          "can_aggregate": false,
+          "reject_reason": "other_product_or_competitor"
+        },
+        {
+          "fragment_text": "this pair has a chemical smell",
+          "module": "product_issue",
+          "aspect_key": "material",
+          "polarity": "negative",
+          "evidence_span": "chemical smell",
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the size runs small",
+          "module": "product_issue",
+          "aspect_key": "size_fit",
+          "polarity": "negative",
+          "evidence_span": "size runs small",
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "taxonomy_out_of_scope",
+          "can_aggregate": false,
+          "reject_reason": "other_product_or_competitor",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 1,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 2,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    },
+    {
+      "id": "row-46-phone-case",
+      "source_fixture": "backend_api/tests/fixtures/customer_label_waders_step2_gating.json",
+      "source_id": "row-46-phone-case",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "The phone case leaked, but the waders stayed dry.",
+      "fragments": [
+        {
+          "fragment_text": "The phone case leaked",
+          "module": "accessory_or_bundle",
+          "aspect_key": "accessory_storage",
+          "polarity": "negative",
+          "evidence_span": "phone case leaked",
+          "confidence": 0.93,
+          "current_product_scope": "accessory_only",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the waders stayed dry",
+          "module": "product_highlight",
+          "aspect_key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "waders stayed dry",
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 1,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    },
+    {
+      "id": "row-70-fit-not-used",
+      "source_fixture": "backend_api/tests/fixtures/customer_label_waders_step2_gating.json",
+      "source_id": "row-70-fit-not-used",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "They fit well in the living room, but I have not used them in water.",
+      "fragments": [
+        {
+          "fragment_text": "They fit well in the living room",
+          "module": "product_highlight",
+          "aspect_key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "fit well",
+          "confidence": 0.9,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "I have not used them in water",
+          "module": "audit_filter",
+          "aspect_key": "other",
+          "polarity": "neutral",
+          "evidence_span": "not used them in water",
+          "confidence": 0.91,
+          "current_product_scope": "unclear",
+          "can_aggregate": false,
+          "reject_reason": "not_used_yet"
+        },
+        {
+          "fragment_text": "They fit well in the living room",
+          "module": "other_candidate",
+          "aspect_key": "candidate:living_room_try_on",
+          "polarity": "neutral",
+          "evidence_span": "living room",
+          "confidence": 0.78,
+          "current_product_scope": "current_product_context",
+          "can_aggregate": false,
+          "reject_reason": "candidate_pending_review"
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 1,
+          "status": "taxonomy_out_of_scope",
+          "can_aggregate": false,
+          "reject_reason": "not_used_yet",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 2,
+          "status": "taxonomy_out_of_scope",
+          "can_aggregate": false,
+          "reject_reason": "candidate_pending_review",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    },
+    {
+      "id": "row-18-mixed-fly-fishing",
+      "source_fixture": "backend_api/tests/fixtures/customer_label_waders_step2_gating.json",
+      "source_id": "row-18-mixed-fly-fishing",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Great for light fly fishing, but the soles slipped on rocks after two miles.",
+      "fragments": [
+        {
+          "fragment_text": "Great for light fly fishing",
+          "module": "product_highlight",
+          "aspect_key": "works_well_for_use_case",
+          "polarity": "positive",
+          "evidence_span": "light fly fishing",
+          "confidence": 0.88,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the soles slipped on rocks",
+          "module": "product_issue",
+          "aspect_key": "grip",
+          "polarity": "negative",
+          "evidence_span": "soles slipped on rocks",
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "after two miles",
+          "module": "product_issue",
+          "aspect_key": "comfort",
+          "polarity": "negative",
+          "evidence_span": "after two miles",
+          "confidence": 0.82,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "taxonomy_out_of_scope",
+          "can_aggregate": false,
+          "reject_reason": "taxonomy_out_of_scope",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 1,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 2,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    },
+    {
+      "id": "waders-waterproofing-only",
+      "source_fixture": "backend_api/tests/fixtures/review_fragment_5_9_1_samples.json",
+      "source_id": "waders-waterproofing-only",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Don't buy these. I used them for 1 hour and they leaked like crazy. I couldn't return them since they were destroyed. These are horrible",
+      "fragments": [
+        {
+          "fragment_text": "I used them for 1 hour and they leaked like crazy",
+          "module": "product_issue",
+          "aspect_key": "water_leaks_through",
+          "polarity": "negative",
+          "evidence_span": "leaked like crazy",
+          "confidence": 0.96,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "taxonomy_out_of_scope",
+          "can_aggregate": false,
+          "reject_reason": "taxonomy_out_of_scope",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    },
+    {
+      "id": "row-7-duplicate-size",
+      "source_fixture": "backend_api/tests/fixtures/customer_label_waders_step2_gating.json",
+      "source_id": "row-7-duplicate-size",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "The boot runs too small and the chest fit is tight.",
+      "fragments": [
+        {
+          "fragment_text": "The boot runs too small",
+          "module": "product_issue",
+          "aspect_key": "size_fit",
+          "polarity": "negative",
+          "evidence_span": "boot runs too small",
+          "confidence": 0.9,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the chest fit is tight",
+          "module": "product_issue",
+          "aspect_key": "size_fit",
+          "polarity": "negative",
+          "evidence_span": "chest fit is tight",
+          "confidence": 0.91,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 1,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": true
+        }
+      ]
+    },
+    {
+      "id": "airpods-mixed-positive-and-negative",
+      "source_fixture": "backend_api/tests/fixtures/review_signal_step9_1_airpods_minimal.json",
+      "source_id": "airpods-mixed-positive-and-negative",
+      "category": "electronics",
+      "sub_category": "earbuds",
+      "content": "The sound is crisp and pairing is easy, but the left earbud falls out during workouts.",
+      "fragments": [
+        {
+          "fragment_text": "The sound is crisp",
+          "module": "product_highlight",
+          "aspect_key": "sound_quality",
+          "polarity": "positive",
+          "evidence_span": "sound is crisp",
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "pairing is easy",
+          "module": "product_highlight",
+          "aspect_key": "pairing_setup",
+          "polarity": "positive",
+          "evidence_span": "pairing is easy",
+          "confidence": 0.92,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the left earbud falls out during workouts",
+          "module": "product_issue",
+          "aspect_key": "fit_stability",
+          "polarity": "negative",
+          "evidence_span": "left earbud falls out",
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "taxonomy_missing",
+          "can_aggregate": false,
+          "reject_reason": "taxonomy_missing",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 1,
+          "status": "taxonomy_missing",
+          "can_aggregate": false,
+          "reject_reason": "taxonomy_missing",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 2,
+          "status": "taxonomy_missing",
+          "can_aggregate": false,
+          "reject_reason": "taxonomy_missing",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    },
+    {
+      "id": "airpods-audit-filter-review",
+      "source_fixture": "backend_api/tests/fixtures/review_signal_step9_1_airpods_minimal.json",
+      "source_id": "airpods-audit-filter-review",
+      "category": "electronics",
+      "sub_category": "earbuds",
+      "content": "Shipping was fast and the box arrived intact. My old AirPod 3 battery died quickly. The silicone case cover looks nice. Nice product.",
+      "fragments": [
+        {
+          "fragment_text": "Shipping was fast",
+          "module": "logistics_support",
+          "aspect_key": "delivery_speed",
+          "polarity": "positive",
+          "evidence_span": "Shipping was fast",
+          "confidence": 0.89,
+          "current_product_scope": "logistics_support",
+          "can_aggregate": false,
+          "reject_reason": "logistics_or_service"
+        },
+        {
+          "fragment_text": "My old AirPod 3 battery died quickly",
+          "module": "comparison_or_other_product",
+          "aspect_key": "battery_life",
+          "polarity": "negative",
+          "evidence_span": "old AirPod 3 battery died quickly",
+          "confidence": 0.92,
+          "current_product_scope": "other_product",
+          "can_aggregate": false,
+          "reject_reason": "other_product_or_competitor"
+        },
+        {
+          "fragment_text": "The silicone case cover looks nice",
+          "module": "accessory_or_bundle",
+          "aspect_key": "aesthetics",
+          "polarity": "positive",
+          "evidence_span": "case cover looks nice",
+          "confidence": 0.87,
+          "current_product_scope": "accessory_only",
+          "can_aggregate": false,
+          "reject_reason": "accessory_only"
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "taxonomy_out_of_scope",
+          "can_aggregate": false,
+          "reject_reason": "logistics_or_service",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 1,
+          "status": "taxonomy_out_of_scope",
+          "can_aggregate": false,
+          "reject_reason": "other_product_or_competitor",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        },
+        {
+          "fragment_index": 2,
+          "status": "taxonomy_out_of_scope",
+          "can_aggregate": false,
+          "reject_reason": "accessory_only",
+          "product_aggregate_counted": false,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    },
+    {
+      "id": "bed-frame-box-damage-packaging",
+      "source_fixture": "backend_api/tests/fixtures/customer_label_50u_gold_samples.json",
+      "source_id": "50u-amazon-date-highlight-01",
+      "category": "home",
+      "sub_category": "床架",
+      "content": "Arrived on time and intact with no box damage.",
+      "fragments": [
+        {
+          "fragment_text": "Arrived on time and intact with no box damage",
+          "module": "logistics_support",
+          "aspect_key": "packaging",
+          "polarity": "positive",
+          "evidence_span": "no box damage",
+          "confidence": 0.9,
+          "current_product_scope": "logistics_support",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ],
+      "expected_taxonomy": [
+        {
+          "fragment_index": 0,
+          "status": "allowed",
+          "can_aggregate": true,
+          "reject_reason": null,
+          "product_aggregate_counted": true,
+          "duplicate_aggregate_aspect": false
+        }
+      ]
+    }
+  ]
+}
