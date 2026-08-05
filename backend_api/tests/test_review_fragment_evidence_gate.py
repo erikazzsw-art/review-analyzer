@@ -134,7 +134,7 @@ def test_review_fragment_evidence_fixture_matches_expected_gate_table() -> None:
         "empty evidence span",
         "generic praise hard-split into specific highlights",
         "old product or competitor evidence",
-        "logistics or service pollution",
+        "pure logistics or service pollution",
         "accessory evidence uses corresponding aspect",
         "accessory evidence cannot become main product waterproof issue",
         "packaging and arrival damage evidence can aggregate on corresponding aspect",
@@ -240,7 +240,7 @@ def test_generic_praise_cannot_be_split_into_specific_highlights() -> None:
     assert comfort.reject_reason == "evidence_too_generic"
 
 
-def test_polluted_evidence_does_not_become_current_product_issue_or_highlight() -> None:
+def test_pure_service_pollution_does_not_become_current_product_issue_or_highlight() -> None:
     accessory_as_product = validate_review_fragment_evidence(
         _fragment(
             fragment_text="The phone case leaked",
@@ -255,19 +255,19 @@ def test_polluted_evidence_does_not_become_current_product_issue_or_highlight() 
     assert accessory_as_product.can_aggregate is False
     assert accessory_as_product.reject_reason == "accessory_only"
 
-    shipping_as_durability = validate_review_fragment_evidence(
+    service_as_durability = validate_review_fragment_evidence(
         _fragment(
-            fragment_text="Shipping was late",
+            fragment_text="Customer service refused a refund",
             module=MODULE_PRODUCT_ISSUE,
             aspect_key="durability",
-            evidence_span="Shipping was late",
+            evidence_span="Customer service refused a refund",
         ),
-        review_text="Shipping was late and customer service refused a refund.",
+        review_text="Customer service refused a refund, but the waders were fine.",
         whitelist=_whitelist(),
     )
-    assert shipping_as_durability.evidence_valid is True
-    assert shipping_as_durability.can_aggregate is False
-    assert shipping_as_durability.reject_reason == "logistics_or_service"
+    assert service_as_durability.evidence_valid is True
+    assert service_as_durability.can_aggregate is False
+    assert service_as_durability.reject_reason == "logistics_or_service"
 
     old_product_as_current = validate_review_fragment_evidence(
         _fragment(

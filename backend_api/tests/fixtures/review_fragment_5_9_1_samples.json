@@ -4,6 +4,7 @@
   "scope": "5.9.1 fragment-level output contract samples for Erika manual acceptance",
   "source_notes": [
     "Samples reuse existing AirPods and waders fixture-style reviews as human-readable contract examples.",
+    "The fragment contract keeps taxonomy evidence dimensions in aspect_key; seller-facing issue_key/action_label_key belongs to a later artifact extension.",
     "This fixture is not connected to active upload, results, export, or frontend paths."
   ],
   "samples": [
@@ -279,7 +280,7 @@
         {
           "fragment_text": "I used them for 1 hour and they leaked like crazy",
           "module": "product_issue",
-          "aspect_key": "water_leaks_through",
+          "aspect_key": "seam_integrity",
           "polarity": "negative",
           "evidence_span": "leaked like crazy",
           "confidence": 0.96,

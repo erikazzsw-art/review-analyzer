@@ -25,13 +25,15 @@ def test_review_fragment_5_9_1_fixture_matches_contract() -> None:
     assert len(fixture["samples"]) == 5
 
 
-def test_fragment_records_use_only_the_5_9_1_required_fields() -> None:
+def test_fragment_records_keep_seller_label_artifacts_outside_the_5_9_1_contract() -> None:
     fixture = _load_fixture()
     required_fields = set(REVIEW_FRAGMENT_REQUIRED_FIELDS)
 
     for sample in fixture["samples"]:
         for fragment in sample["fragments"]:
             assert set(fragment) == required_fields
+            assert "issue_key" not in fragment
+            assert "action_label_key" not in fragment
 
 
 def test_aggregatable_fragments_have_evidence_and_no_reject_reason() -> None:
@@ -88,7 +90,7 @@ def test_invalid_fragment_examples_fail_closed() -> None:
     old_product_that_tries_to_aggregate = {
         "fragment_text": "my old waders leaked",
         "module": "comparison_or_other_product",
-        "aspect_key": "water_leaks_through",
+        "aspect_key": "seam_integrity",
         "polarity": "negative",
         "evidence_span": "old waders leaked",
         "confidence": 0.9,

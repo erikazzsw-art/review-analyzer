@@ -1,6 +1,6 @@
 # ClueAI V2 项目进度追踪
 
-> 最后更新：2026-08-03
+> 最后更新：2026-08-05
 > V2 目标：商业化升级，4 项核心功能跑通可运营  
 > 时间窗口：2026-05-26 ~ 2026-06-20（4 周）  
 > 每日投入：7 小时  
@@ -10,7 +10,7 @@
 
 ## 总体进度
 
-> 最后更新：2026-08-04 | 这里只保留整体模块概况；标签准确性以 §5.9 当前计划为准
+> 最后更新：2026-08-05 | 这里只保留整体模块概况；标签准确性以 §5.9 当前计划为准
 
 ### 按模块组
 
@@ -19,7 +19,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 9 | 1 | 2 | 75% | 5.1-5.8 基础迁移完成；5.9.8 / 5.9.9 标签准确性路线已归档，当前改为“评论片段理解与多模块分流”，待 Erika 验收 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 10 | 1 | 1 | 83% | 5.1-5.8 基础迁移完成；5.9.4 初版审批返修中，5.9.4.1-A 标签体系分层定义升级已完成，5.9.4.1-B 正式返修排队 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成；标签训练和复杂模型化延后，先把片段理解与人工验收口径跑通 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -68,7 +68,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9 新方向 | 评论片段理解与多模块分流 | OPC 低维护方案已定：不推翻现有产品目标，只把 LLM 自由标签收进 Taxonomy 白名单、原文证据门禁、candidate/other 候选池。 | 先做 2-3 周止血版：高置信标签才进 TOP10；Pydantic/JSON 校验优先，Pydantic AI 后置评估。 |
+| 5.9 新方向 | 评论片段理解与多模块分流 | OPC 低维护方案已定：不推翻现有产品目标，只把 LLM 自由标签收进 Taxonomy 白名单、原文证据门禁、candidate/other 候选池。 | 先做 2-3 周低风险落地版：高置信标签才进 TOP10；Pydantic/JSON 校验优先，Pydantic AI 后置评估。 |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -596,11 +596,11 @@
 
 ### 5.9 标签准确性：评论片段理解与多模块分流
 
-**当前状态：已完成到 5.9.3 原文证据门禁；5.9.4 是下一步。**
+**当前状态：5.9.4 candidate / other + 多模块承接初版完成，Erika 审批后的 5.9.4.1-A 标签体系分层定义升级已完成；5.9.4.1-B 实验模块正式返修排队，5.9.5 轻量校验顺延。**
 
 注意：5.9.0 已完成旧路线清点，但仍有 waders 专项规则是否隔离的决策点，所以不标记为完成。
 
-5.9.8 和 5.9.9 之前的路线已经归档。它们暴露了真实问题：系统不能只在评论底部堆标签，也不能靠单个类目的规则修补来证明整体准确。
+5.9.8 和 5.9.9 之前的路线已经归档。它们暴露了真实问题：系统不能只在评论底部堆标签，也不能靠单个类目的局部规则调整来证明整体准确。
 
 当前有效目标：先把每条评论拆成多个有意义的原文片段，再把每个片段放到正确模块。
 
@@ -614,9 +614,10 @@
 | 为什么买 | 购买动机 |
 | 想解决但没解决的事 | 未满足需求 |
 | 旧产品、竞品、替代品 | 竞品/旧产品对比 |
-| 物流、客服、退换货、配件 | 单独记录，不能混进当前产品亮点或问题 |
+| 配件、发货、尺码表、详情页信息等卖家可行动负面反馈 | 用户体验：产品问题 |
+| 纯客服售后、旧产品、竞品、无证据或无行动价值背景 | 审计/拦截，不进入正式 TOP10 |
 
-**当前进度与下一步（通俗版）：**
+**当前进度（通俗版）：**
 
 - 已确认旧 5.9.8 / 5.9.9 标签路线不能继续作为当前主线。
 - 已把走偏路线归档到 `docs/历史归档_已废弃模块文档.md`。
@@ -624,11 +625,13 @@
 - 已确定后续必须让 Erika 高频验收，不能用测试结果替代标签质量判断。
 - 5.9.1 输出契约完成✅。
 - 5.9.2 Taxonomy 白名单完成✅。
-- 下一步实现 5.9.4 candidate / other + 多模块承接；5.9.3 原文证据门禁已完成✅。
+- 5.9.3 原文证据门禁完成✅。
+- 5.9.4 candidate / other + 多模块承接初版完成，Erika 审批后需要返修。
+- 5.9.4.1-A 标签体系分层定义升级完成✅；5.9.4.1-B 卖家可行动问题口径正式返修排队；5.9.5 轻量校验顺延。
 
 **已归档内容：**
 
-- 5.9.8：waders 单类目规则修补路线。
+- 5.9.8：waders 单类目专项规则路线。
 - 5.9.9：直接围绕 Customer Issue / Customer Label 做前台接入和灰度准备的路线。
 - 5.9.10：小模型训练不作为近期目标，只有真实数据和人工确认样本足够多时再评估。
 
@@ -643,15 +646,17 @@
 - 不训练小模型，不把 ABSA fine-tune 作为近期前置。
 - 不追求全品类标签库完美，只维护高频问题、高频亮点、会影响商业决策的标签。
 - 不让人工维护变成日常运营；维护只由告警和付费品类触发。
-- 不确定的片段宁可进入 `other` / candidate，也不要硬贴正式标签。
-- 前台 TOP10 / 报告 / 导出只统计高置信、有原文证据、属于当前子品类的正式标签。
+- 不确定的片段宁可进入 `other` / candidate，也不要硬贴正式标签；但 Erika 已审批为“卖家可行动问题”的配件、发货、尺码表、详情页信息等负面反馈，不再视为不确定候选。
+- 前台 TOP10 / 报告 / 导出只统计高置信、有原文证据、可追溯到当前子品类证据维度或 approved seller-action label 的正式标签。
 - Pydantic AI 不作为第一优先级；第一阶段先用普通 Pydantic / JSON Schema 校验，等链路稳定后再评估是否引入 Pydantic AI 做 Agent 化输出与重试。
 
 **标签库主线：**
 
-- 产品问题 / 产品亮点主标签库：`category_aspect_taxonomy`，承接 6.1 / 6.2 / 6.3 已完成的 Taxonomy 资产。
+- 产品问题 / 产品亮点的证据维度：`category_aspect_taxonomy`，承接 6.1 / 6.2 / 6.3 已完成的 Taxonomy 资产。
+- 卖家可读 TOP10 标签需要拆成两层：`aspect_key` 是 taxonomy 证据维度，例如 `seam_integrity`、`accessory_storage`；`issue_key` / `action_label_key` 是卖家看到的正式问题标签，例如 `water_leaks_through`、`accessory_leak`。这样 `water_leaks_through` 不再被误当成 taxonomy aspect。
+- 内部标签只使用英文稳定 key；中文和前台英文展示文本统一通过 display label mapping 生成，不单独输出中文 key。
 - 早期 `review_analyzer/config.py` 中文预设标签只做 fallback，不作为后期主标签体系。
-- 每个正式标签必须至少满足：来自真实评论、有 3-5 条原文例子、属于当前 `sub_category`、不和已有标签重复、有 `boundary_note` 边界说明。
+- 每个正式 `issue_key` / `action_label_key` 必须至少满足：来自真实评论、有 3-5 条原文例子、能追溯到当前 `sub_category` 的证据维度或 approved seller-action label、不和已有标签重复、有 `boundary_note` 边界说明。
 - 标签状态后续统一为：`candidate`（候选）/ `approved`（正式）/ `merged`（已合并）/ `deprecated`（废弃）/ `blocked`（禁用）。前台只使用 `approved`。
 - 消费者画像、使用场景、购买动机不复用产品 taxonomy，后续建立模块级轻量 seed taxonomy。
 - 未满足需求先不强行白名单化，优先进入 candidate-first 发现链路，再从真实 Top candidate 中归并正式标签。
@@ -662,8 +667,8 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 
 | 模块 | 正式标签来源 | 选不上时 | 说明 |
 |---|---|---|---|
-| `product_issue` / `product_highlight` | 当前 `sub_category` 的 `category_aspect_taxonomy` | `other_candidate` / candidate | 严格白名单；`candidate:*`、`other`、taxonomy 缺失都不能进正式聚合 |
-| `accessory` / `packaging` / `shipping_damage` | 当前 taxonomy 中对应 aspect | `other_candidate` / candidate | 可以进入主聚合，但必须使用 `accessory_storage`、`missing_parts`、`packaging`、`shipping_damage` 等正确 aspect，不能错贴成主产品能力 |
+| `product_issue` / `product_highlight` | 当前 `sub_category` 的 `category_aspect_taxonomy` 证据维度 + approved seller-action label | `other_candidate` / candidate | `aspect_key` 严格白名单；正式 TOP10 可额外输出 `issue_key` / `action_label_key` 作为卖家可读标签 |
+| 配件 / 包装 / 到货损坏 / 发货慢 / 尺码表不清 | 当前 taxonomy 证据维度或 approved seller-action label | `other_candidate` / candidate | 卖家可行动的负面反馈进入 `product_issue` TOP10；不得继续藏到 audit 或 candidate |
 | `consumer_profile` | 模块级轻量 seed taxonomy | candidate | 人群、身份、使用者特征，例如 parent、student、pet_owner 等 |
 | `use_case` | 模块级轻量 seed taxonomy | candidate | 场景、时间、地点、用途，例如 travel、outdoor、gift、daily_commute 等 |
 | `purchase_motive` | 模块级轻量 seed taxonomy | candidate | 购买原因，例如 price_value、replacement、brand_trust、feature_driven 等 |
@@ -681,23 +686,25 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 4. 系统读取该子品类的 `category_aspect_taxonomy` 白名单，同时读取后续模块级 seed taxonomy（若已存在）。
 5. LLM 把评论拆成片段。
 6. 每个片段判断进入哪个模块：产品问题、产品亮点、消费者画像、购买动机、未满足需求、竞品 / 旧产品、物流售后等。
-7. 如果片段属于产品问题 / 产品亮点 / 配件 / 包装 / 到货损坏，LLM 只能从当前子品类允许的 taxonomy 里选择正式标签。
+7. 如果片段属于产品问题 / 产品亮点，LLM 先选择当前子品类允许的 taxonomy `aspect_key` 作为证据维度；若是卖家可行动问题，再映射到 approved `issue_key` / `action_label_key` 作为 TOP10 标签。
 8. 如果片段属于消费者画像 / 使用场景 / 购买动机，LLM 只能从对应模块 seed taxonomy 里选择；选不上则进入 candidate。
 9. 如果片段属于未满足需求，先 candidate-first 收集真实表达，不硬贴产品 taxonomy。
-10. 没有合适标签时进入 `other_candidate` / candidate，不进入正式 TOP10。
+10. 没有合适证据维度或 approved seller-action label 时进入 `other_candidate` / candidate，不进入正式 TOP10。
 11. 系统检查标签是否有原文证据、是否属于当前产品、是否越界。
-12. 通过门禁的高置信正式标签进入 TOP10 / 报告 / 导出。
+12. 通过门禁的高置信正式 `issue_key` / `action_label_key` 或亮点标签进入 TOP10 / 报告 / 导出。
 
 **具体执行计划：**
 
 | 阶段 | 状态 | 目标 | 具体工作 | 工作量 | 验收标准 |
 |---|---|---|---|---:|---|
 | 5.9.0 旧路线隔离清点 | 待决策 | 让新方向清爽进入，但不冒险大删 | 盘点 5.9.8 / 5.9.9 / waders / `customer_label_v2_*` / `review_signal_*` 的运行入口、feature flag、前台消费路径、测试和文档；分成保留复用 / 冻结隔离 / 归档参考 / 后续删除四类；同时产出“删除/迁移/保留”减负清单 | 1-2 天 | active 上传/分析/结果/导出路径不会无意加载旧 shadow 实验；旧路线默认关闭；新 5.9 实现有明确入口和命名；旧路线不会长期占用主代码阅读成本 |
-| 5.9.1 输出契约 | 完成✅ | 先把 AI 输出固定成可检查表格 | 定义片段级字段：`fragment_text`、`module`、`aspect_key`、`polarity`、`evidence_span`、`confidence`、`current_product_scope`、`can_aggregate`、`reject_reason` | 1-2 天 | 同一条评论能输出“片段 -> 模块 -> 标签 -> 证据 -> 是否进统计”的结构化结果 |
-| 5.9.2 Taxonomy 白名单 | 完成✅ | 防止 LLM 越界自由打标签 | 分析时按 `sub_category` 读取 `category_aspect_taxonomy`；只允许选择当前子品类标签；越界降级为 `other` / candidate | 2-3 天 | 抽取标签 100% 落在允许列表或 `other` / candidate，不再出现库外标签直接进前台 |
-| 5.9.3 原文证据门禁 | 完成✅ | 防止无中生有进入报告 | 每个标签必须带 `evidence_span`；无证据、证据不属于当前产品、物流/售后/旧产品污染时 `can_aggregate=false` | 2-3 天 | 无原文证据的标签不进入 TOP10；导出可追溯到原文片段 |
-| 5.9.4 candidate / other + 多模块承接 | 下一步 | 新问题不丢，非产品片段也流向正确模块 | 优先复用 `customer_label_v2_candidate_pool` artifact 能力；记录候选标签、出现次数、原文例子、子品类、降级原因；同时定义 `consumer_profile`、`use_case`、`purchase_motive`、`unmet_need`、`other_candidate`、`audit_filter` 的聚合目标；为画像/场景/动机建立轻量 seed taxonomy，未满足需求 candidate-first；DB 化候选池后置 | 2-4 天 | 未覆盖的新问题进入候选池，候选标签不进入正式 TOP10；非产品问题/亮点片段不被硬塞进 customer issue / customer label，而是进入对应模块 |
-| 5.9.5 轻量校验 | 未开始 | 先用低成本方式稳定输出 | 用 Pydantic / JSON Schema 校验必填字段、枚举值、标签白名单、证据字段；失败则重试或降级，不引入大框架重构 | 2-4 天 | JSON/schema 失败不阻塞整批分析；失败项可追踪原因 |
+| 5.9.1 输出契约 | 完成✅ | 先把 AI 输出固定成可检查表格 | 定义片段级基础字段：`fragment_text`、`module`、`aspect_key`、`polarity`、`evidence_span`、`confidence`、`current_product_scope`、`can_aggregate`、`reject_reason`；不加入 `issue_key` / `action_label_key` | 1-2 天 | 同一条评论能输出“片段 -> 模块 -> 证据维度 -> 原文证据 -> 是否继续聚合”的结构化结果 |
+| 5.9.2 Taxonomy 白名单 | 完成✅ | 防止 LLM 越界自由打 aspect | 分析时按 `sub_category` 读取 `category_aspect_taxonomy`；只允许选择当前子品类 `aspect_key`；卖家 `issue_key` / `action_label_key` 由后续 artifact mapping 处理 | 2-3 天 | 抽取的证据维度 100% 落在允许列表或 `other` / candidate，不再把卖家问题 key 当作 taxonomy aspect |
+| 5.9.3 原文证据门禁 | 完成✅ | 防止无中生有进入报告 | 每个片段必须带 `evidence_span`；无证据、证据不属于当前产品、旧产品 / 竞品 / 纯客服售后污染时 `can_aggregate=false`；卖家可行动问题保留给后续 artifact mapping | 2-3 天 | 无原文证据的片段不进入后续 TOP10；可行动问题的原文证据可追溯，正确配件 / 包装证据不被一律丢弃 |
+| 5.9.4 candidate / other + 多模块承接 | 初版完成，审批返修中 | 新问题不丢，非产品片段也流向正确模块 | 已新增独立 5.9.4 实验模块、fixture、测试和文档；输出 `formal_top10_rows`、`module_seed_rows`、`candidate_rows`、`audit_rows`；Erika 审批后确认 TOP10 口径需从“狭义产品本体 taxonomy”修正为“卖家可行动问题 / 亮点” | 2-4 天 | 初版证明 candidate / other 可承接；但已审批为卖家可行动问题的样本不能继续留在 candidate / audit |
+| 5.9.4.1-A 标签体系分层定义升级 | 完成✅ | 把 5.9.1-5.9.3 统一到长期可运营的三层标签框架 | 已更新 5.9.1 / 5.9.2 / 5.9.3 文档、验收 fixture 和必要测试说明：保留 5.9.1 片段级基础契约；明确 `aspect_key` 是 taxonomy 证据维度；明确 evidence gate 继续拦无证据 / 旧产品污染，同时区分纯客服售后与卖家可行动问题 | 0.5-1 天 | 三份前序文档均明确 `module` / `aspect_key` / `issue_key` 三层关系；`issue_key` / `action_label_key` 不进入 5.9.1 基础字段；已审批的可行动问题不被文档规则一律藏到 candidate / audit |
+| 5.9.4.1-B 卖家可行动问题口径实现 | 排队 | 在分层定义升级后，把 TOP10 标签分为证据维度和卖家可读问题 | 在 5.9.4 artifact 新增 `issue_key` / `action_label_key`；保留 `aspect_key` 作为 taxonomy 证据维度；更新 fixture、测试、样本文档和 5.9.4 文档；将 Erika 审批过的配件漏水、配件缺失、尺码表不清、发货晚、漏水归并等样本迁入 `formal_top10_rows` | 1-2 天 | Erika 审批过的 6 个问题进入 `formal_top10_rows`，不再进入 candidate / audit；`water_leaks_through` 不被误当成 taxonomy aspect；active upload / worker / results / export / frontend 仍未接入 |
+| 5.9.5 轻量校验 | 顺延 | 先用低成本方式稳定输出 | 等 5.9.4.1 通过后，用 Pydantic / JSON Schema 校验必填字段、枚举值、标签白名单、证据字段、`issue_key` / `action_label_key`、`can_aggregate` / `reject_reason` 一致性；失败则重试或降级，不引入大框架重构 | 2-4 天 | JSON/schema 失败不阻塞整批分析；失败项可追踪原因 |
 | 5.9.6 前台轻改 | 未开始 | 不大改结果页，只提升可信度 | TOP10 只统计 `can_aggregate=true`；结果页 / 导出展示代表原文证据、低置信提醒、`other` 占比提示 | 2-4 天 | 用户看到的核心标签都有证据；`other` 过高时有可理解提示 |
 | 5.9.7 小样本验收 | 未开始 | 用小样本证明方向可用 | 选 30-50 条真实评论，检查错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉 | 3-5 天 | 无中生有显著下降；TOP 问题/亮点能被 Erika 认可为可前台试用 |
 | 5.9.8 商业化前补强 | 未开始 | 支撑早期付费用户，不追求全品类完美 | 高价值品类补 50 条 mini Golden Set；接入 other 告警；记录 `prompt_version` + `taxonomy_version` + `model_name` | 1-2 周 | 重点品类有可回归样本；Prompt / Taxonomy 改动可追踪、可回滚 |
@@ -708,9 +715,9 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 已完成 `customer_label_v2_*` / `review_signal_*` / waders / 5.9.8 / 5.9.9 相关文件、测试、脚本、文档的四类清点：保留复用 / 冻结隔离 / 归档参考 / 后续删除。
 - 已确认 `CUSTOMER_LABEL_V2_FRONTSTAGE_*` 和 `REVIEW_SIGNAL_FRONTSTAGE_*` 默认关闭，active worker import 不会加载 `customer_label_v2_shadow` 或 `review_signal_shadow`。
 - 发现一处不能直接绿灯的主线风险：waders 专项规则仍通过 `workers/jobs.py -> specific_issue.enrich_aspects_json()` 默认影响 waders 的分析结果、结果页和导出；`review_signal_frontstage.py` 也会在 active results/export import 时加载 `review_signal_shadow.py` 常量/helper。
-- 结论：5.9.1 可以先做输出契约和样例设计，但 5.9.0 暂不标记完成；需 Erika 先确认 waders 规则短期保留为现有安全补丁，还是优先抽成隔离模块。
+- 结论：5.9.1 可以先做输出契约和样例设计，但 5.9.0 暂不标记完成；需 Erika 先确认 waders 规则短期保留为现有前台安全保护，还是优先抽成隔离模块。
 
-**5.9.1 进度摘要（2026-08-03）：完成✅**
+**5.9.1 进度摘要（2026-08-05）：完成✅**
 
 - 已产出新命名契约文档：`docs/5.9.1-review-fragment-output-contract.md`。
 - 已新增纯 schema / contract 校验模块：`backend_api/app/services/review_fragment_contract.py`；不被 active 上传、worker、results、export 或 frontend 引用。
@@ -721,7 +728,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 
 **5.9.1 Erika 样例验收反馈（2026-08-03）：**
 
-- 评论 4 收窄为单一 `product_issue / water_leaks_through`：原文虽提到损坏、退货和笼统差评，但本条人工判断核心只有防水性差，不拆成额外标签。
+- 评论 4 收窄为单一 `product_issue / aspect_key=seam_integrity`：原文虽提到损坏、退货和笼统差评，但本条人工判断核心只有防水性差；卖家可读 `issue_key=water_leaks_through` 留给后续 artifact。
 - 评论 5 的两个尺寸正向片段合并为一个 `product_highlight / fits_as_expected`，同一评论内重复表达的同一亮点只取一次。
 - Erika 总评：样例标签准确，明显优于旧路径，按该契约继续推进。
 
@@ -731,23 +738,51 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 已新增 10 条白名单边界 fixture：`backend_api/tests/fixtures/review_fragment_taxonomy_5_9_2_samples.json`。
 - 已新增单元测试：`backend_api/tests/test_review_fragment_taxonomy_whitelist.py`。
 - 已新增说明文档：`docs/5.9.2-review-fragment-taxonomy-whitelist.md`。
-- 已确认产品问题 / 产品亮点必须命中当前 `sub_category` 的 `category_aspect_taxonomy` 白名单；库外标签、`candidate:*`、`other`、taxonomy 缺失都不能进正式聚合。
+- 已确认产品问题 / 产品亮点必须命中当前 `sub_category` 的 `category_aspect_taxonomy` 白名单；库外 `aspect_key`、`candidate:*`、`other`、taxonomy 缺失都不能进正式聚合。
 - 已确认配件、包装、到货损坏可以进入主聚合，但必须使用当前 taxonomy 里的正确 aspect，例如 `accessory_storage`、`missing_parts`、`packaging`、`shipping_damage`，不能把配件问题错贴成主产品问题。
 - 已确认消费者画像、使用场景、购买动机、未满足需求不走产品问题 / 产品亮点 taxonomy，后续并入 5.9.4 candidate / other + 多模块承接。
+- 5.9.4.1 分层口径说明：5.9.2 不废弃，`category_aspect_taxonomy` 继续负责 `aspect_key` 证据维度；正式 TOP10 可额外输出 `issue_key` / `action_label_key` 作为卖家可读问题标签，避免把 `water_leaks_through` 错当成 taxonomy aspect。
 - 验证已通过：pytest 相关测试、ruff、compileall、git diff --check；active upload / worker / results / export / frontend 未接入新实验模块。
 
-**5.9.3 进度摘要（2026-08-04）：完成✅**
+**5.9.3 进度摘要（2026-08-05）：完成✅**
 
 - 已新增独立原文证据门禁模块：`backend_api/app/services/review_fragment_evidence_gate.py`；组合 5.9.1 contract 与 5.9.2 taxonomy whitelist，但不接入 active 上传、worker、results、export 或 frontend。
-- 已新增 10 组证据边界 fixture：`backend_api/tests/fixtures/review_fragment_evidence_5_9_3_samples.json`，覆盖原文证据、证据不存在、空证据、泛泛好评硬拆、旧产品 / 竞品、物流 / 售后、配件、包装 / 到货损坏、candidate / other 和 raw `review_text` 来源。
-- 每个片段输出 `evidence_valid`、`evidence_source`、`can_aggregate`、`reject_reason`；无证据、原文不存在、泛化总结、旧产品 / 竞品、物流 / 售后污染均 fail closed。
+- 已新增 10 组证据边界 fixture：`backend_api/tests/fixtures/review_fragment_evidence_5_9_3_samples.json`，覆盖原文证据、证据不存在、空证据、泛泛好评硬拆、旧产品 / 竞品、纯客服 / 退款、配件、包装 / 到货损坏、candidate / other 和 raw `review_text` 来源。
+- 每个片段输出 `evidence_valid`、`evidence_source`、`can_aggregate`、`reject_reason`；无证据、原文不存在、泛化总结、旧产品 / 竞品、纯客服 / 售后污染均 fail closed。
 - 配件、包装、到货损坏仅在 evidence 明确指向对应对象且 aspect 正确时允许主聚合；`candidate:*` / `other` 保留 evidence 但不进入正式 TOP10。
+- 5.9.4.1 分层口径说明：5.9.3 不废弃，原文证据门禁仍负责“必须有证据、不能无中生有、不能旧产品污染”；但“物流 / 配件 / 详情页问题是否进入产品问题”要按卖家可行动性重新判断，不再一律拦到 audit。
 - 已新增说明文档：`docs/5.9.3-review-fragment-evidence-gate.md`。
 - focused pytest 已通过：`python3 -m pytest backend_api/tests/test_review_fragment_evidence_gate.py -q`，结果为 `6 passed`。
 
-**下一步任务提示词（5.9.4）：**
+**5.9.4 进度摘要（2026-08-05）：初版完成，审批返修中**
 
-请继续实现 5.9.4 candidate / other + 多模块承接。要求：不要让 LLM 自由生成的标签直接进入正式聚合；产品问题/产品亮点/配件/包装/到货损坏必须从当前 `sub_category` 的 `category_aspect_taxonomy` 中选择正式标签，选不上进入 `other_candidate` / candidate。为 `consumer_profile`、`use_case`、`purchase_motive` 先建立模块级轻量 seed taxonomy；`unmet_need` 采用 candidate-first。每个片段先判断 module，再加载对应标签库或候选承接策略。输出 candidate artifact，记录 `module`、`candidate_label`、`normalized_label`、`evidence_span`、`sub_category`、`reason`、`count`、代表评论。新增 fixture 和测试覆盖：使用场景/人群流向消费者画像，购买原因流向消费动机，期待缺口流向未满足需求，库外产品标签进入 candidate，正式白名单标签不被误丢到 candidate。不要接入 active upload / worker / results / export / frontend。
+- 已新增独立 candidate / other + 多模块承接模块：`backend_api/app/services/review_fragment_candidate_multimodule.py`；组合 5.9.1 contract、5.9.2 taxonomy whitelist 和 5.9.3 evidence gate，但不接入 active 上传、worker、results、export 或 frontend。
+- 已新增 9 组 candidate/multimodule fixture：`backend_api/tests/fixtures/review_fragment_candidate_5_9_4_samples.json`，覆盖使用场景 / 人群流向消费者画像、购买原因流向购买动机、期待缺口流向未满足需求、库外产品标签进入 candidate、正式白名单标签不被误丢到 candidate、candidate / other 保留证据且 `can_aggregate=false`、非产品问题 / 亮点片段不硬塞进 customer issue / customer label。
+- 输出 artifact 分为 `formal_top10_rows`、`module_seed_rows`、`candidate_rows`、`audit_rows`；candidate artifact 记录 `module`、`candidate_label`、`normalized_label`、`evidence_span`、`sub_category`、`reason`、`count`、`representative_comments`。
+- 已为 `consumer_profile`、`use_case`、`purchase_motive` 建立模块级轻量 seed taxonomy；`use_case` 统一承接到消费者画像模块；`unmet_need` 采用 candidate-first。
+- 产品问题 / 产品亮点 / 配件 / 包装 / 到货损坏仍必须命中当前 `sub_category` 的 `category_aspect_taxonomy` 才能进入 `formal_top10_rows`；库外、`candidate:*`、`other` 均不进入正式 TOP10。
+- 已新增说明文档：`docs/5.9.4-review-fragment-candidate-multimodule.md`。
+- 已新增 Erika 样本验收表：`docs/5.9.4-review-fragment-candidate-multimodule-sample-validation.md`，按 9 条 fixture 展开原评论、证据、输入标签、期望输出和是否进入正式 TOP10。
+- Erika 审批后确认初版口径过窄：卖家可行动的配件漏水、配件缺失、尺码表不清、发货晚、漏水归并等问题不能继续停留在 candidate / audit；需要进入 5.9.4.1 返修。
+
+**5.9.4.1 阶段记录（2026-08-05）：A 已完成，B 排队**
+
+- 按长期标签框架升级，不新增独立 5.9.5 / 5.9.6 承接本次返修。
+- 5.9.4.1-A 已完成：系统化更新 5.9.1 / 5.9.2 / 5.9.3 的文档、验收说明和必要测试说明，统一为 `module` / `aspect_key` / `issue_key` 三层框架。
+- 5.9.4.1-B 保持排队：执行实验模块、fixture、测试和样本文档返修。
+- TOP10 业务定义从“狭义产品本体 taxonomy”调整为“卖家可行动问题 / 亮点”。
+- 在 5.9.4 artifact 中新增 `issue_key` / `action_label_key`：`aspect_key` 继续表示 taxonomy 证据维度，`issue_key` / `action_label_key` 表示卖家看到的正式问题标签。
+- 样本 #5 表达为：证据 `aspect_key=seam_integrity`，正式问题 `issue_key=water_leaks_through`，进入 `formal_top10_rows`。
+- 将 Erika 审批过的样本迁入正式行：`water_leaks_through`、`accessory_leak`、`missing_accessory`、`confusing_size_chart`、`late_shipping`；`replaced my old pair` 忽略；`price was right` 保留为购买动机。
+- 更新 5.9.4 fixture、测试、样本文档和说明文档；candidate / audit 不得再包含 Erika 已审批为正式 TOP10 的问题。
+- 继续保持不接入 active upload / worker / results / export / frontend，不改变 5.9.0 waders 隔离决策点。
+
+**5.9.4.1-A 验证摘要（2026-08-05）：完成✅**
+
+- 已更新：`docs/5.9.1-review-fragment-output-contract.md`、`docs/5.9.2-review-fragment-taxonomy-whitelist.md`、`docs/5.9.3-review-fragment-evidence-gate.md`。
+- 已同步验收说明：5.9.1 fixture / contract test 明确不加入 `issue_key` / `action_label_key`；5.9.2 fixture / test 明确卖家问题 key 不能冒充 taxonomy aspect；5.9.3 fixture / test 将负向服务样例收窄为纯客服 / 退款污染。
+- focused tests：`python3 -m pytest backend_api/tests/test_review_fragment_contract.py backend_api/tests/test_review_fragment_taxonomy_whitelist.py backend_api/tests/test_review_fragment_evidence_gate.py -q`，结果为 `18 passed`。
+- 本阶段未接入 active upload、worker、results、export 或 frontend，未修改 5.9.4 实验模块逻辑，也未改变 5.9.0 waders 隔离决策点。
 
 **阶段性人工验证闸门（每阶段结束必须做，防止方向跑偏）：**
 
@@ -770,6 +805,8 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 | 5.9.2 | 10 条评论的 taxonomy 白名单命中表 | 标签是否属于当前子品类；库外标签是否被降级；`other` 是否合理 | 15-20 分钟 | 正式标签没有明显类目错配；库外标签没有直接进前台 |
 | 5.9.3 | 10 条带证据的标签样例 | 每个标签是否真的能在原文里找到依据；旧产品/竞品/配件/物流是否被拦住 | 20-30 分钟 | 无证据标签不进统计；明显污染样例被 `can_aggregate=false` |
 | 5.9.4 | candidate / other + 多模块承接样例 | 候选标签是不是“值得以后考虑的新问题”；使用场景/人群是否进入消费者画像；购买原因是否进入消费动机；期待缺口是否进入未满足需求；有没有把正式标签误丢到候选池 | 20-30 分钟 | candidate 只承接不确定或未覆盖问题，不污染 TOP10；非产品问题/亮点片段进入正确模块 |
+| 5.9.4.1-A | 标签体系分层定义升级 | 5.9.1-5.9.3 是否都清楚表达“没有被推翻，而是统一到 `module` / `aspect_key` / `issue_key` 三层框架”；是否消除了旧口径和新口径冲突 | 10-15 分钟 | Erika 能看懂先升级底层定义，再做 5.9.4.1-B 实现 |
+| 5.9.4.1-B | 卖家可行动问题返修样例 | `aspect_key` 和 `issue_key` 是否分清；配件漏水、配件缺失、尺码表不清、发货晚、漏水归并是否进入正式 TOP10；是否还误留在 candidate / audit | 20-30 分钟 | Erika 审批过的可行动问题进入 `formal_top10_rows`；前序 taxonomy / evidence 规则不被推翻 |
 | 5.9.5 | 校验失败 / 重试 / 降级案例清单 | 失败原因是否可理解；降级是否保守；有没有整批分析被单条坏输出拖垮 | 10-15 分钟 | 坏输出可追踪、可降级，主流程不中断 |
 | 5.9.6 | 结果页 / 导出截图或本地预览 | 用户能否看到标签、占比、原文证据；低置信和 other 提示是否克制 | 20-30 分钟 | 页面不大改但可信度明显提升，核心标签都有证据 |
 | 5.9.7 | 30-50 条小样本验收表 | 错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉 | 45-90 分钟 | Erika 认可可进入早期前台试用；重大错标类型已记录 |
@@ -778,7 +815,8 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 **人工验证停止规则：**
 
 - 任一阶段出现“标签无原文依据仍进入 TOP10”，必须停下修门禁。
-- 任一阶段出现“物流/售后/旧产品/竞品被算成当前产品亮点或问题”，必须停下补边界。
+- 任一阶段出现“旧产品/竞品/无证据内容被算成当前产品亮点或问题”，必须停下补边界。
+- 任一阶段出现“卖家可行动的发货、履约、配件、尺码表、详情页信息问题被藏到 candidate / audit”，必须停下补 TOP10 口径。
 - 任一阶段 Erika 无法用样例表理解系统在做什么，必须先改输出说明，而不是继续写后续功能。
 - 人工验证只看样例和关键失败，不要求 Erika 审全量客户数据。
 
@@ -812,7 +850,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 
 **总工作量：**
 
-- 最低可用止血版：2-3 周（含 5.9.0 旧路线隔离清点）。
+- 最低可用阶段一落地版：2-3 周（含 5.9.0 旧路线隔离清点）。
 - 比较稳的早期商业化版：4-5 周。
 - 若超过 6 周，视为范围失控，需要砍需求而不是继续堆功能。
 
@@ -829,7 +867,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 不继续围绕单个类目无限手写规则。
 - 不让库外标签、无证据标签、低置信标签进入正式 TOP10。
 - 不把“测试流程通过”当成“标签质量通过”。
-- 不把 Pydantic AI、小模型训练、全品类 Golden Set 作为 5.9 止血版前置。
+- 不把 Pydantic AI、小模型训练、全品类 Golden Set 作为 5.9 阶段一落地前置。
 
 ## 6. 技术优化
 
@@ -2500,7 +2538,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 | RQ → Celery 迁移 | 当前无并发瓶颈，等月活 > 50 |
 | ABSA fine-tune 小模型 | 已延后；当前先做评论片段理解与多模块分流，不单独启动训练 |
 
-#### Worker 可靠性补丁（2026-06-17 追加）
+#### Worker 可靠性增强（2026-06-17 追加）
 
 - [x] **OPT-9: Stale Job 卡死检测 + 飞书告警** ✅ 2026-06-17
   - 问题：Worker 进程 crash / OOM 后，`upload_jobs.status='processing'` 的任务永远卡死，前端无限 polling

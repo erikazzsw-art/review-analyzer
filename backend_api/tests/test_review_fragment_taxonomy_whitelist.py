@@ -179,6 +179,8 @@ def test_allowed_product_issue_and_highlight_can_continue() -> None:
 
 
 def test_out_of_scope_candidate_other_and_missing_fail_closed() -> None:
+    """A seller-facing issue key is not a taxonomy aspect at the whitelist boundary."""
+
     whitelist = resolve_review_fragment_taxonomy_whitelist(
         category="outdoor",
         sub_category="waders",
