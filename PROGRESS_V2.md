@@ -596,7 +596,7 @@
 
 ### 5.9 标签准确性：评论片段理解与多模块分流
 
-**当前状态：5.9.0-5.9.5.1 已完成✅；5.9.4 candidate / other + 多模块承接及 5.9.4.1-A/B 返修完成，5.9.5 轻量校验完成；5.9.5.1 字段语义收口已完成：正式标签身份收口为 `aspect_key` + `issue_key` / `highlight_key`，`action_label_key` 已从正式 artifact 删除，formal `normalized_label` 已清理，`shipping_damage` / `late_shipping` 均归入上层 `aspect_key=logistics_issue` 并用具体 `issue_key` 区分；5.9.6 尚未开始。**
+**当前状态：5.9.0-5.9.6-A 已完成✅；5.9.4 candidate / other + 多模块承接及 5.9.4.1-A/B 返修完成，5.9.5 轻量校验完成；5.9.5.1 字段语义收口和 5.9.6-A 标签定义收编已完成：正式标签身份收口为 `aspect_key` + `issue_key` / `highlight_key`，统一 Catalog/resolver 已建立，`action_label_key` 已从正式 artifact 删除，formal `normalized_label` 已清理，`shipping_damage` / `late_shipping` 均归入上层 `aspect_key=logistics_issue` 并用具体 `issue_key` 区分；5.9.6-B active 接入、5.9.6-C 前台提示及 `sync_taxonomy.py` 前置工具尚未开始。**
 
 注意：waders 专项规则不再作为新 5.9 主线扩张，只作为短期前台安全补丁保留；后续在 5.9.6 后做 category-specific compatibility 抽离，在 5.9.7 验收后进入分批删除。
 
@@ -641,6 +641,7 @@
 - 5.9.4 candidate / other + 多模块承接完成✅；5.9.4.1-A 标签体系分层定义升级完成✅；5.9.4.1-B 卖家可行动问题 artifact 返修完成✅。
 - 5.9.5 轻量校验完成✅。
 - 5.9.5.1 字段语义收口完成✅：正式行必须有 `issue_key` 或 `highlight_key`；`action_label_key` 不再进入正式输出；formal `normalized_label` 不再参与正式聚合和展示；`shipping_damage` 作为正式 `issue_key`，与 `late_shipping` 一起归入上层 `aspect_key=logistics_issue`；行动中心不依赖 `recommended_action_key`。
+- 5.9.6-A 标签定义收编完成✅：已建立独立 YAML registry 与统一 Catalog/resolver，收编 approved label、aspect mapping、alias、display mapping；resolver 提供正式 key、类型、品类范围、状态、展示文本、边界说明和版本；人工审核材料已提交并获 Erika 审批，无意见。
 
 **已归档内容：**
 
@@ -691,7 +692,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 
 正式聚合必须稳定，候选发现必须开放。每周或每累计 N 条评论检查各模块 Top 10 candidate，执行合并同义表达、归入已有标签、晋升白名单或标记噪声。
 
-**标签注册中心与行动中心最终口径（5.9.5.1 已确认）：**
+**标签注册中心与行动中心最终口径（5.9.5.1 已确认，5.9.6-A 已落地）：**
 
 - `category_aspect_taxonomy` 继续负责当前 `sub_category` 的 `aspect_key` 白名单和证据维度；它不直接充当卖家正式问题或亮点。
 - 统一 Catalog/resolver 负责正式 `issue_key`、`highlight_key`、alias、适用品类、`boundary_note`、`approved` 状态、中英文 display mapping 和 `registry_version`。
@@ -728,8 +729,8 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 | 5.9.4.1-A 标签体系分层定义升级 | 完成✅ | 把 5.9.1-5.9.3 统一到长期可运营的三层标签框架 | 已更新 5.9.1 / 5.9.2 / 5.9.3 文档、验收 fixture 和必要测试说明：保留 5.9.1 片段级基础契约；明确 `aspect_key` 是 taxonomy 证据维度；明确 evidence gate 继续拦无证据 / 旧产品污染，同时区分纯客服售后与卖家可行动问题 | 0.5-1 天 | 三份前序文档均明确 `module` / `aspect_key` / `issue_key` 三层关系；`issue_key` / `action_label_key` 不进入 5.9.1 基础字段；已审批的可行动问题不被文档规则一律藏到 candidate / audit |
 | 5.9.4.1-B 卖家可行动问题口径实现 | 完成✅ | 在分层定义升级后，把 TOP10 标签分为证据维度和卖家可读问题 | 在 5.9.4 artifact 新增 `issue_key` / `action_label_key`；正式输出 module 归一为六个业务模块；客服正负向分别进入 `product_issue` / `product_highlight`；更新 fixture、测试、样本文档和 5.9.4 文档；active upload / worker / results / export / frontend 仍未接入 | 1-2 天 | 配件漏水、配件缺失、尺码表不清、发货晚、漏水归并和客服正负向均按最新口径进入正确 artifact；正式行不输出旧中间 module |
 | 5.9.5 轻量校验 | 完成✅ | 先用低成本方式稳定输出 | 已新增本地 artifact 校验：六模块枚举、旧 module 兼容输入、`module` / `aspect_key` / `polarity` / `evidence_span` / `issue_key` / `highlight_key` / `action_label_key` / `can_aggregate` / `reject_reason` 一致性；失败本地降级为 `audit_filter/schema_invalid`，不引入第二次 AI 调用，不接 active 路径 | 2-4 天 | JSON/schema 失败不阻塞整批分析；失败项可追踪原因；旧中间 module 不进入正式 artifact；5.9.0 active import / worker import / export read path 小复核已列为后置动作 |
-| 5.9.5.1 字段语义收口 | 完成✅ | 在 5.9.6 接前台前消除 `action_label_key` / `normalized_label` 语义混乱 | 已完成实验 artifact、校验器、fixture、测试、taxonomy 和样本文档收口：核心标签身份只保留 `aspect_key`、`issue_key`、`highlight_key`；正式输出删除 `action_label_key`；formal `normalized_label` 不再作为正式业务字段、formal 聚合 key 或 display 索引；正式行必须有 `issue_key` 或 `highlight_key`；`shipping_damage` 必须映射为正式 `issue_key=shipping_damage`；`late_shipping` / `shipping_damage` 均归入上层 `aspect_key=logistics_issue`；行动中心继续使用 `issue_key`、证据、趋势和 `suggested_action` 文本，不新增 `recommended_action_key` | 0.5-1 天 | 相关测试通过；审批样本文档已补评论原文；5.9.6-A 前置语义完成，但尚未实现统一 Catalog/resolver，active results / export / insight 接入仍留给 5.9.6 |
-| 5.9.6-A 标签定义收编 | 未开始 | 将 5.9.4 实验模块中的 approved label、aspect mapping、alias 和 display mapping 作为 fixture/迁移来源，收编到统一 Catalog/resolver | 将 `review_fragment_candidate_multimodule.py` 中的 `APPROVED_FORMAL_LABELS`、`TAXONOMY_DISPLAY_LABEL_MAPPING`、`WATER_LEAK_LEGACY_ASPECT_ALIASES`、`LOGISTICS_LEGACY_ASPECT_ALIASES` 等硬编码收编到 `customer_label_catalog` + `customer_label_alias_rules` 表；aspect_key 层接入 catalog resolver，让 `taxonomy_loader` 和 `review_fragment_taxonomy_whitelist` 通过同一 resolver 获取标签定义；resolver 返回正式 key、类型、品类范围、状态、展示文本、边界说明和 `registry_version`；active 不得依赖实验模块常量 | 2-3 天 | aspect_key 和 issue/highlight key 均来自统一 resolver；实验模块常量不再被 active 路径引用；resolver 返回 `registry_version` |
+| 5.9.5.1 字段语义收口 | 完成✅ | 在 5.9.6 接前台前消除 `action_label_key` / `normalized_label` 语义混乱 | 已完成实验 artifact、校验器、fixture、测试、taxonomy 和样本文档收口：核心标签身份只保留 `aspect_key`、`issue_key`、`highlight_key`；正式输出删除 `action_label_key`；formal `normalized_label` 不再作为正式业务字段、formal 聚合 key 或 display 索引；正式行必须有 `issue_key` 或 `highlight_key`；`shipping_damage` 必须映射为正式 `issue_key=shipping_damage`；`late_shipping` / `shipping_damage` 均归入上层 `aspect_key=logistics_issue`；行动中心继续使用 `issue_key`、证据、趋势和 `suggested_action` 文本，不新增 `recommended_action_key` | 0.5-1 天 | 相关测试通过；审批样本文档已补评论原文；5.9.6-A 已在此语义基础上完成统一 Catalog/resolver 收编，active results / export / insight 接入仍留给 5.9.6-B/C |
+| 5.9.6-A 标签定义收编 | 完成✅ | 将 5.9.4 实验模块中的 approved label、aspect mapping、alias 和 display mapping 作为 fixture/迁移来源，收编到统一 Catalog/resolver | 新增独立 registry fixture `data/taxonomy/registry/review_fragment_label_registry.yaml` 和 `review_fragment_label_catalog.py`；从实验模块迁移 9 个 approved formal label、aspect alias、display mapping 和物流边界；实验模块改由 resolver 获取正式定义，active 主线不直接依赖实验模块标签常量 | 1 天 | resolver 可解析 `issue_key` / `highlight_key`；alias 可映射 canonical key；`late_shipping` / `shipping_damage` 均归入 `aspect_key=logistics_issue`；registry 核心模型不包含 `action_label_key`、formal `normalized_label`、`recommended_action_key`；相关静态隔离和测试通过 |
 | 5.9.6 前置工具：sync_taxonomy.py | 未开始 | 替换两个旧 YAML→DB 导入脚本，提供安全的 taxonomy 入库工具（5.9.6-B 前置） | 扫描 `data/taxonomy/v1.0/**/*.yaml` → 对比 DB `category_aspect_taxonomy` → 生成 diff（新增/修改/删除）→ 确认后执行。`--dry-run` 先预览；删除需 `--allow-delete` 显式确认；支持 `--category` 逐品类同步；执行后自动刷新 LRU 缓存。替换 `import_taxonomy_to_db.py` 和 `import_v4t1_assets.py`（功能重叠，均只做 UPSERT，无 diff、无删除检测） | 0.5 天 | `--dry-run` 可预览完整 diff；不传 `--allow-delete` 不删任何 DB 行；替换后两个旧脚本归档到 `scratch/`；不影响线上（纯本地开发工具） |
 | 5.9.6-B active 接入 | 未开始 | 把新 artifact 接入 active，提升前台可信度 | 正式 artifact 只使用 `aspect_key` + `issue_key` / `highlight_key`，不再输出 `action_label_key` 或 formal `normalized_label`；结果页 / 导出 / insight 改读新 artifact，TOP10 只统计 `can_aggregate=true`；行动中心以 `canonical_issue_key`、证据和趋势生成现有 `suggested_action`，不要求 `recommended_action_key` | 1-2 天 | active artifact 的 issue/highlight/display/status/version 均来自统一 resolver；`rg` / import 检查确认 active 不依赖实验模块标签常量；正式行都有 `issue_key` 或 `highlight_key`；results/export/insight 读取同一新 artifact；行动中心可用 issue key 创建行动 |
 | 5.9.6-C 前台提示 | 未开始 | 展示原文证据、低置信提醒和 `other` 占比；waders 旧规则冻结 | 展示代表原文证据、低置信提醒和 `other` 占比；waders 旧规则继续作为冻结安全补丁，不新增规则、不删除逻辑 | 0.5-1 天 | 用户可见原文证据片段；低置信标签有明显提示；`other` 占比透明展示；waders 旧补丁未扩大 |
@@ -847,7 +848,19 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 行动中心口径：行动中心不需要 `recommended_action_key`。它继续使用 `issue_key` / `canonical_issue_key`、展示文本、代表性评论、占比和趋势生成现有 `suggested_action` 文本；如果未来要做标准动作模板，应另立行动规则层，不纳入当前标签注册中心。
 - 审批材料：已新增 `docs/5.9.5.1-field-semantics-approval-sample.md`，样本表附评论原文，并按 Erika 反馈修正 sample 6 的物流 aspect 归属。
 - 验证结果：相关 review fragment / action route / read path / export / specific issue 测试通过，ruff、compileall 和 `git diff --check` 通过；实现提交为 `47bb165 Finalize 5.9.5.1 label field semantics`，已推送到 `origin/develop`。
-- 留给 5.9.6-A：把 5.9.4 实验模块中的 approved label、aspect mapping、alias 和 display mapping 收编到统一 Catalog/resolver；active 不得直接依赖实验模块常量。
+- 留给 5.9.6-A 的工作已完成：统一 Catalog/resolver 已建立，active 不得直接依赖实验模块常量。
+
+**5.9.6-A 标签定义收编任务（2026-08-05）：完成✅**
+
+- 任务边界：只完成标签注册中心和 resolver 的定义收编，不实现 5.9.6-B active results / export / insight 接入，也不实现 5.9.6-C 前台提示。
+- 注册中心来源：新增 `data/taxonomy/registry/review_fragment_label_registry.yaml`，将 5.9.4 实验模块中的 approved label、aspect mapping、alias 和 display mapping 作为 fixture / 迁移来源；实验模块与 active 主线保持隔离。
+- 统一 resolver：新增 `backend_api/app/services/review_fragment_label_catalog.py`。解析结果包含正式 key、`label_type`、适用品类 / 子品类、`status`、中英文 display 文本、`boundary_note`、alias、`aspect_keys` 和 `registry_version`；默认只允许 `approved` 标签进入正式候选。
+- 正式定义：registry 当前收编 9 个 approved label，正式身份只保留 `aspect_key`、`issue_key`、`highlight_key`；`action_label_key`、formal `normalized_label`、`recommended_action_key` 不进入 registry 核心模型。
+- 物流边界：`aspect_key=logistics_issue` 是上层物流证据维度；`issue_key=late_shipping` 表示物流时效问题；`issue_key=shipping_damage` 表示运输损坏 / 到货状态问题；`shipping_damage` 不作为正式 artifact 的 `aspect_key`。
+- 实验模块改造：`review_fragment_candidate_multimodule.py` 的 approved label、aspect alias、display mapping 和 highlight mapping 改为通过 resolver 获取；静态检查确认 active 主线不直接导入实验模块标签常量。
+- 人工审核：新增 `docs/5.9.6-A-label-registry-human-review.md`，附 11 条样本评论原文、预期正式 / candidate 结果、alias 和物流口径检查；Erika 已审批通过且无意见。
+- 验证结果：focused pytest `30 passed`；相关回归 pytest `94 passed`；ruff、compileall、`git diff --check` 和静态搜索均通过。实现提交 `15399ba Implement 5.9.6-A label registry resolver` 已推送到 `origin/develop`。
+- 后续边界：`sync_taxonomy.py`、5.9.6-B active 接入、5.9.6-C 前台提示和 5.9.7 小样本验收仍未开始。
 
 **阶段性人工验证闸门（每阶段结束必须做，防止方向跑偏）：**
 
@@ -874,7 +887,8 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 | 5.9.4.1-B | 卖家可行动问题返修样例 | `aspect_key` 和 `issue_key` 是否分清；配件漏水、配件缺失、尺码表不清、发货晚、漏水归并是否进入正式 TOP10；是否还误留在 candidate / audit | 20-30 分钟 | Erika 审批过的可行动问题进入 `formal_top10_rows`；前序 taxonomy / evidence 规则不被推翻 |
 | 5.9.5 | 校验失败 / 重试 / 降级案例清单 | 失败原因是否可理解；降级是否保守；有没有整批分析被单条坏输出拖垮 | 10-15 分钟 | 坏输出可追踪、可降级，主流程不中断 |
 | 5.9.5.1 | 字段语义确认表 + 行动中心输入/输出示例 | 是否确认只保留 `aspect_key`、`issue_key`、`highlight_key`；是否确认删除 `action_label_key` / formal `normalized_label`；行动中心是否能用 issue key、证据和趋势生成 `suggested_action`，且不需要 `recommended_action_key` | 10-15 分钟 | 正式行必须有 issue/highlight 身份；`shipping_damage` 已映射为正式 issue；行动中心字段口径不再依赖动作 key |
-| 5.9.6 | 注册中心 resolver 验证 + 结果页 / 导出截图或本地预览 | approved label、alias、aspect mapping、display mapping 是否来自统一 Catalog/resolver；是否返回状态和 `registry_version`；用户能否看到正式标签、占比、原文证据、低置信和 other 提示；results/export/insight 是否已改读新 artifact；行动中心是否能从 issue key 创建 AI 建议 | 30-45 分钟 | active 不依赖实验模块标签常量；正式行都有 issue/highlight key；页面、导出、insight 使用同一 artifact；行动中心不要求 `recommended_action_key`；waders 旧补丁冻结保留且未扩大 |
+| 5.9.6-A | `docs/5.9.6-A-label-registry-human-review.md` + registry/resolver 测试结果 | approved label、alias、aspect mapping、display mapping 是否来自统一 Catalog/resolver；是否返回状态、边界说明和 `registry_version`；物流两个 issue 是否归入 `logistics_issue`；禁用字段是否未进入 registry 核心模型 | 10-15 分钟 | resolver 可解析 issue/highlight；alias 和物流边界正确；active 不直接依赖实验模块标签常量；Erika 已审批通过 |
+| 5.9.6-B/C | 注册中心 resolver 验证 + 结果页 / 导出截图或本地预览 | approved label、alias、aspect mapping、display mapping 是否来自统一 Catalog/resolver；是否返回状态和 `registry_version`；用户能否看到正式标签、占比、原文证据、低置信和 other 提示；results/export/insight 是否已改读新 artifact；行动中心是否能从 issue key 创建 AI 建议 | 30-45 分钟 | active 不依赖实验模块标签常量；正式行都有 issue/highlight key；页面、导出、insight 使用同一 artifact；行动中心不要求 `recommended_action_key`；waders 旧补丁冻结保留且未扩大 |
 | 5.9.7 | 30-50 条小样本验收表 + waders hard cases + 行动中心 handoff | 错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉；alias、状态、边界、展示和版本是否正确；正式 issue 是否能进入行动中心并完成建议和复盘 | 45-90 分钟 | Erika 认可可进入早期前台试用；重大错标类型已记录；行动中心可以基于 issue key 和证据工作；达到启动旧冗余分批删除的最低门槛 |
 | 5.9.8 | mini Golden Set 报告 + 标签/P​​rompt 版本追踪样例 + 清理清单 | 重点品类是否可回归；`prompt_version` / `taxonomy_version` / `model_name` / `registry_version` 能否追溯和回滚；行动中心历史记录是否不依赖已删除字段；旧 `customer_label_v2_*` / `review_signal_*` / waders 数据和代码是否可分批归档或删除 | 30-60 分钟 | 重点品类有最小质量基线；标签注册变更可追溯；行动建议仍以 AI 文本保存；达到承接 50 名付费用户的商业化稳态门槛 |
 
