@@ -19,7 +19,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 11 | 1 | 0 | 92% | 5.1-5.8 基础迁移完成；5.9.5 轻量校验完成，下一步补 5.9.0 小复核与 waders 去留决策 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 11 | 0 | 1 | 92% | 5.1-5.8 基础迁移完成；5.9.0 waders A/B/C 策略已收口；下一步按 5.9.6-5.9.8 落地新链路与冗余清理 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成；标签训练和复杂模型化延后，先把片段理解与人工验收口径跑通 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -596,9 +596,9 @@
 
 ### 5.9 标签准确性：评论片段理解与多模块分流
 
-**当前状态：5.9.4 candidate / other + 多模块承接初版完成，5.9.4.1-A/B 完成，5.9.5 轻量校验完成；下一步补 5.9.0 active import / worker / export 小复核，并收口 waders 专项规则去留。**
+**当前状态：5.9.4 candidate / other + 多模块承接初版完成，5.9.4.1-A/B 完成，5.9.5 轻量校验完成；5.9.0 active import / worker / export 小复核已完成，waders 专项规则按 A/B/C 三段策略收口。**
 
-注意：5.9.0 已完成旧路线清点，但仍有 waders 专项规则是否隔离的决策点，所以不标记为完成。
+注意：waders 专项规则不再作为新 5.9 主线扩张，只作为短期前台安全补丁保留；后续在 5.9.6 后做 category-specific compatibility 抽离，在 5.9.7 验收后进入分批删除。
 
 5.9.8 和 5.9.9 之前的路线已经归档。它们暴露了真实问题：系统不能只在评论底部堆标签，也不能靠单个类目的局部规则调整来证明整体准确。
 
@@ -636,6 +636,7 @@
 - 5.9.1 输出契约完成✅。
 - 5.9.2 Taxonomy 白名单完成✅。
 - 5.9.3 原文证据门禁完成✅。
+- 5.9.0 旧路线隔离清点 + waders A/B/C 去留策略完成✅。
 - 5.9.4 candidate / other + 多模块承接初版完成，Erika 审批后需要返修。
 - 5.9.4.1-A 标签体系分层定义升级完成✅；5.9.4.1-B 卖家可行动问题 artifact 返修完成✅；5.9.5 轻量校验完成✅。
 
@@ -707,7 +708,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 
 | 阶段 | 状态 | 目标 | 具体工作 | 工作量 | 验收标准 |
 |---|---|---|---|---:|---|
-| 5.9.0 旧路线隔离清点 | 待决策 | 让新方向清爽进入，但不冒险大删 | 盘点 5.9.8 / 5.9.9 / waders / `customer_label_v2_*` / `review_signal_*` 的运行入口、feature flag、前台消费路径、测试和文档；分成保留复用 / 冻结隔离 / 归档参考 / 后续删除四类；同时产出“删除/迁移/保留”减负清单；5.9.5 完成后补一轮 active import / worker import / export read path 小复核 | 1-2 天 | active 上传/分析/结果/导出路径不会无意加载旧 shadow 实验；旧路线默认关闭；新 5.9 实现有明确入口和命名；旧路线不会长期占用主代码阅读成本；waders 专项规则去留在接入 5.9.6 前有明确决策 |
+| 5.9.0 旧路线隔离清点 | 完成✅ | 让新方向清爽进入，但不冒险大删 | 已完成旧路线清点、5.9.5 后 active import / worker import / export read path 小复核，并完成 waders A/B/C 策略收口：A 短期保留为现有前台安全补丁；B 在 5.9.6/5.9.7 做 category-specific compatibility 无行为差异抽离；C 在 5.9.8 商业化补强阶段按前置条件分批删除冗余代码和数据 | 1-2 天 | active 上传/分析/结果/导出路径不会无意加载旧 shadow 实验；旧路线默认关闭；新 5.9 实现有明确入口和命名；waders 规则不再扩张为主线；后续删除条件清楚 |
 | 5.9.1 输出契约 | 完成✅ | 先把 AI 输出固定成可检查表格 | 定义片段级基础字段：`fragment_text`、`module`、`aspect_key`、`polarity`、`evidence_span`、`confidence`、`current_product_scope`、`can_aggregate`、`reject_reason`；不加入 `issue_key` / `action_label_key` | 1-2 天 | 同一条评论能输出“片段 -> 模块 -> 证据维度 -> 原文证据 -> 是否继续聚合”的结构化结果 |
 | 5.9.2 Taxonomy 白名单 | 完成✅ | 防止 LLM 越界自由打 aspect | 分析时按 `sub_category` 读取 `category_aspect_taxonomy`；只允许选择当前子品类 `aspect_key`；卖家 `issue_key` / `action_label_key` 由后续 artifact mapping 处理 | 2-3 天 | 抽取的证据维度 100% 落在允许列表或 `other` / candidate，不再把卖家问题 key 当作 taxonomy aspect |
 | 5.9.3 原文证据门禁 | 完成✅ | 防止无中生有进入报告 | 每个片段必须带 `evidence_span`；无证据、证据不属于当前产品、旧产品 / 竞品 / 纯客服售后污染时 `can_aggregate=false`；卖家可行动问题保留给后续 artifact mapping | 2-3 天 | 无原文证据的片段不进入后续 TOP10；可行动问题的原文证据可追溯，正确配件 / 包装证据不被一律丢弃 |
@@ -715,9 +716,9 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 | 5.9.4.1-A 标签体系分层定义升级 | 完成✅ | 把 5.9.1-5.9.3 统一到长期可运营的三层标签框架 | 已更新 5.9.1 / 5.9.2 / 5.9.3 文档、验收 fixture 和必要测试说明：保留 5.9.1 片段级基础契约；明确 `aspect_key` 是 taxonomy 证据维度；明确 evidence gate 继续拦无证据 / 旧产品污染，同时区分纯客服售后与卖家可行动问题 | 0.5-1 天 | 三份前序文档均明确 `module` / `aspect_key` / `issue_key` 三层关系；`issue_key` / `action_label_key` 不进入 5.9.1 基础字段；已审批的可行动问题不被文档规则一律藏到 candidate / audit |
 | 5.9.4.1-B 卖家可行动问题口径实现 | 完成✅ | 在分层定义升级后，把 TOP10 标签分为证据维度和卖家可读问题 | 在 5.9.4 artifact 新增 `issue_key` / `action_label_key`；正式输出 module 归一为六个业务模块；客服正负向分别进入 `product_issue` / `product_highlight`；更新 fixture、测试、样本文档和 5.9.4 文档；active upload / worker / results / export / frontend 仍未接入 | 1-2 天 | 配件漏水、配件缺失、尺码表不清、发货晚、漏水归并和客服正负向均按最新口径进入正确 artifact；正式行不输出旧中间 module |
 | 5.9.5 轻量校验 | 完成✅ | 先用低成本方式稳定输出 | 已新增本地 artifact 校验：六模块枚举、旧 module 兼容输入、`module` / `aspect_key` / `polarity` / `evidence_span` / `issue_key` / `highlight_key` / `action_label_key` / `can_aggregate` / `reject_reason` 一致性；失败本地降级为 `audit_filter/schema_invalid`，不引入第二次 AI 调用，不接 active 路径 | 2-4 天 | JSON/schema 失败不阻塞整批分析；失败项可追踪原因；旧中间 module 不进入正式 artifact；5.9.0 active import / worker import / export read path 小复核已列为后置动作 |
-| 5.9.6 前台轻改 | 未开始 | 不大改结果页，只提升可信度 | TOP10 只统计 `can_aggregate=true`；结果页 / 导出展示代表原文证据、低置信提醒、`other` 占比提示 | 2-4 天 | 用户看到的核心标签都有证据；`other` 过高时有可理解提示 |
-| 5.9.7 小样本验收 | 未开始 | 用小样本证明方向可用 | 选 30-50 条真实评论，检查错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉 | 3-5 天 | 无中生有显著下降；TOP 问题/亮点能被 Erika 认可为可前台试用 |
-| 5.9.8 商业化前补强 | 未开始 | 支撑早期付费用户，不追求全品类完美 | 高价值品类补 50 条 mini Golden Set；接入 other 告警；记录 `prompt_version` + `taxonomy_version` + `model_name` | 1-2 周 | 重点品类有可回归样本；Prompt / Taxonomy 改动可追踪、可回滚 |
+| 5.9.6 前台轻改 | 未开始 | 不大改结果页，只提升可信度 | TOP10 只统计 `can_aggregate=true`；结果页 / 导出 / insight 改读新 review fragment artifact；展示代表原文证据、低置信提醒、`other` 占比提示；waders 旧规则继续作为冻结的前台安全补丁，不新增规则、不删除逻辑 | 2-4 天 | 用户看到的核心标签都有证据；`other` 过高时有可理解提示；active results/export/insight 已有新 artifact 读路径，且 waders 旧补丁未扩大 |
+| 5.9.7 小样本验收 | 未开始 | 用小样本证明方向可用 | 选 30-50 条真实评论，额外覆盖 waders hard cases；检查错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉；通过后允许启动 waders compatibility 抽离的无行为差异搬迁 | 3-5 天 | 无中生有显著下降；TOP 问题/亮点能被 Erika 认可为可前台试用；waders hard cases 被新 fragment 链路覆盖；达到“可开始分批删除旧冗余”的最低门槛 |
+| 5.9.8 商业化前补强 | 未开始 | 支撑早期付费用户，不追求全品类完美 | 高价值品类补 50 条 mini Golden Set；接入 other 告警；记录 `prompt_version` + `taxonomy_version` + `model_name`；按 active import / worker / export / frontend 检查分批删除或归档旧 `customer_label_v2_*`、`review_signal_*`、waders 专项冗余代码和数据 | 1-2 周 | 重点品类有可回归样本；Prompt / Taxonomy 改动可追踪、可回滚；达到“承接 50 名付费用户”的商业化稳态门槛；旧冗余按小批次清理且不影响 active 结果 |
 
 **5.9.0 进度摘要（2026-08-03）：**
 
@@ -725,9 +726,21 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 已完成 `customer_label_v2_*` / `review_signal_*` / waders / 5.9.8 / 5.9.9 相关文件、测试、脚本、文档的四类清点：保留复用 / 冻结隔离 / 归档参考 / 后续删除。
 - 已确认 `CUSTOMER_LABEL_V2_FRONTSTAGE_*` 和 `REVIEW_SIGNAL_FRONTSTAGE_*` 默认关闭，active worker import 不会加载 `customer_label_v2_shadow` 或 `review_signal_shadow`。
 - 发现一处不能直接绿灯的主线风险：waders 专项规则仍通过 `workers/jobs.py -> specific_issue.enrich_aspects_json()` 默认影响 waders 的分析结果、结果页和导出；`review_signal_frontstage.py` 也会在 active results/export import 时加载 `review_signal_shadow.py` 常量/helper。
-- 结论：5.9.1 可以先做输出契约和样例设计，但 5.9.0 暂不标记完成；需 Erika 先确认 waders 规则短期保留为现有前台安全保护，还是优先抽成隔离模块。
-- 5.9.5 完成后补一轮小型隔离复核：active `analysis` / `export` import、`workers.jobs` import、`review_analyzer.exporter` 导出读路径 smoke，确认旧 shadow 默认不执行、新 `review_fragment_*` 仍未被 active 路径加载。
-- waders 专项规则去留作为 5.9.0 未决项收口：在 5.9.6 前确认是短期保留为现有前台安全补丁、抽成 category-specific compatibility module，还是等新链路替代后分批删除。
+- 2026-08-03 当时结论：5.9.1 可以先做输出契约和样例设计，但需在 5.9.5 后补 active import / worker import / export read path 小复核，并收口 waders 规则去留。
+- 2026-08-05 已完成补充复核：active `analysis` / `export` import、`workers.jobs` import、`review_analyzer.exporter` 导出读路径 smoke 已确认旧 shadow 默认不执行、新 `review_fragment_*` 仍未被 active 路径加载。
+- waders 专项规则去留已收口：短期保留为现有前台安全补丁，中期抽成 category-specific compatibility module，等新链路替代并通过样本验收后分批删除。
+
+**5.9.0 post-5.9.5 小复核摘要（2026-08-05）：审计与决策完成✅**
+
+- 已新增审计文档：`docs/5.9.0-post-5.9.5-active-path-isolation-review.md`。
+- active `analysis` / `export` / `review_analyzer.exporter` import 复核：默认不加载 `customer_label_v2_shadow.py`，不默认执行旧 shadow；会通过 `review_signal_frontstage.py` 顶层 import 间接加载 `review_signal_shadow.py` 常量/helper。
+- `workers.jobs` import 复核：默认不加载 `customer_label_v2_shadow.py` 或 `review_signal_shadow.py`；会加载 `specific_issue.py`，并在 worker 写入时调用 `enrich_aspects_json()`。
+- export read path 复核：`review_analyzer.exporter` 仍依赖旧 frontstage wrapper 做 flag resolution 和可选 read model attach；默认 flag off 时不附加 v2 / review-signal read model，导出实际仍消费 v1 `customer_label_occurrences` / `specific_issue.py` 聚合。
+- 新 `review_fragment_*` 模块复核：仍只被测试、fixture、文档和彼此引用，未被 active upload / worker / results / export / frontend 默认加载。
+- 默认开关状态已复核：`CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED=False`、`CUSTOMER_LABEL_V2_FRONTSTAGE_ALLOW_RUNTIME_SHADOW=False`、`CUSTOMER_LABEL_V2_FRONTSTAGE_SHADOW_FIXTURE_GATE_PASSED=False`、`REVIEW_SIGNAL_FRONTSTAGE_ENABLED=False`、`REVIEW_SIGNAL_FRONTSTAGE_RUNTIME_SHADOW_GENERATION_ALLOWED=False`。
+- waders 专项规则仍默认影响 active waders 分析结果：worker 写入 `customer_label_occurrences` 时会补规则，结果页 / insight / export 读 occurrence 时也会继续消费这些规则；前端仍有 waders context guard。
+- waders 三选一最终决策：短期执行 A，保留为现有前台安全补丁，保证现有用户可见结果稳定；中期执行 B，在 5.9.6/5.9.7 后抽成 category-specific compatibility module，先做无行为差异搬迁；长期执行 C，在 5.9.8 商业化补强阶段，等新 fragment 链路覆盖 waders hard cases、结果页 / export / insight 已改读新 artifact 并通过样本验收后，分批删除旧冗余代码和数据。
+- 口径边界：5.9.7 结束达到“可以开始分批删除”的最低门槛；5.9.8 结束达到“可承接 50 名付费用户”的商业化稳态门槛。waders 旧规则在此之前冻结保留，不再作为新 5.9 主线扩张。
 
 **5.9.1 进度摘要（2026-08-05）：完成✅**
 
@@ -801,7 +814,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 已确认 5.9.1-5.9.3 的旧 module 枚举作为兼容输入保留；5.9.4.1-B artifact 正式输出只允许 `product_issue`、`product_highlight`、`consumer_profile`、`purchase_motive`、`unmet_need`、`audit_filter`。
 - 已校验 `module`、`aspect_key`、`polarity`、`evidence_span`、`issue_key`、`highlight_key`、`action_label_key`、`can_aggregate`、`reject_reason` 的一致性；候选和审计行新增 `reject_reason` 字段并保留 `reason` 兼容摘要。
 - 校验失败时本地降级为 `audit_filter / schema_invalid`，记录 `validation_errors` 和 `degraded_from_bucket`，整批 artifact 构建继续执行；未引入第二次 AI 调用。
-- 仍未接入 active upload、worker、results、export 或 frontend；5.9.5 完成后已把 active import / worker import / export read path 小复核列为 5.9.0 后置动作。
+- 仍未接入 active upload、worker、results、export 或 frontend；5.9.5 后置的 active import / worker import / export read path 小复核已在 5.9.0 post-5.9.5 审计中完成，waders 去留已按 A/B/C 三段策略收口。
 - focused pytest：`python3 -m pytest backend_api/tests/test_review_fragment_contract.py backend_api/tests/test_review_fragment_taxonomy_whitelist.py backend_api/tests/test_review_fragment_evidence_gate.py backend_api/tests/test_review_fragment_candidate_multimodule.py -q`，结果为 `36 passed`。
 - compileall：`python3 -m compileall -q backend_api/app/services/review_fragment_contract.py backend_api/app/services/review_fragment_taxonomy_whitelist.py backend_api/app/services/review_fragment_evidence_gate.py backend_api/app/services/review_fragment_candidate_multimodule.py backend_api/tests/test_review_fragment_contract.py backend_api/tests/test_review_fragment_taxonomy_whitelist.py backend_api/tests/test_review_fragment_evidence_gate.py backend_api/tests/test_review_fragment_candidate_multimodule.py`，结果为 PASS。
 - `git diff --check`：PASS。
@@ -830,9 +843,9 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 | 5.9.4.1-A | 标签体系分层定义升级 | 5.9.1-5.9.3 是否都清楚表达“没有被推翻，而是统一到 `module` / `aspect_key` / `issue_key` 三层框架”；是否消除了旧口径和新口径冲突 | 10-15 分钟 | Erika 能看懂先升级底层定义，再做 5.9.4.1-B 实现 |
 | 5.9.4.1-B | 卖家可行动问题返修样例 | `aspect_key` 和 `issue_key` 是否分清；配件漏水、配件缺失、尺码表不清、发货晚、漏水归并是否进入正式 TOP10；是否还误留在 candidate / audit | 20-30 分钟 | Erika 审批过的可行动问题进入 `formal_top10_rows`；前序 taxonomy / evidence 规则不被推翻 |
 | 5.9.5 | 校验失败 / 重试 / 降级案例清单 | 失败原因是否可理解；降级是否保守；有没有整批分析被单条坏输出拖垮 | 10-15 分钟 | 坏输出可追踪、可降级，主流程不中断 |
-| 5.9.6 | 结果页 / 导出截图或本地预览 | 用户能否看到标签、占比、原文证据；低置信和 other 提示是否克制 | 20-30 分钟 | 页面不大改但可信度明显提升，核心标签都有证据 |
-| 5.9.7 | 30-50 条小样本验收表 | 错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉 | 45-90 分钟 | Erika 认可可进入早期前台试用；重大错标类型已记录 |
-| 5.9.8 | mini Golden Set 报告 + 版本追踪样例 | 重点品类是否可回归；prompt/taxonomy/model 版本能否追溯和回滚 | 30-60 分钟 | 重点品类有最小质量基线，后续改动不会盲改 |
+| 5.9.6 | 结果页 / 导出截图或本地预览 | 用户能否看到标签、占比、原文证据；低置信和 other 提示是否克制；results/export/insight 是否已改读新 artifact | 20-30 分钟 | 页面不大改但可信度明显提升，核心标签都有证据；waders 旧补丁冻结保留且未扩大 |
+| 5.9.7 | 30-50 条小样本验收表 + waders hard cases | 错标、漏标、无中生有、模块分错、TOP10 是否符合产品直觉；waders hard cases 是否被新 fragment 链路覆盖 | 45-90 分钟 | Erika 认可可进入早期前台试用；重大错标类型已记录；达到启动旧冗余分批删除的最低门槛 |
+| 5.9.8 | mini Golden Set 报告 + 版本追踪样例 + 清理清单 | 重点品类是否可回归；prompt/taxonomy/model 版本能否追溯和回滚；旧 `customer_label_v2_*` / `review_signal_*` / waders 数据和代码是否可分批归档或删除 | 30-60 分钟 | 重点品类有最小质量基线，后续改动不会盲改；达到承接 50 名付费用户的商业化稳态门槛 |
 
 **人工验证停止规则：**
 
@@ -858,9 +871,9 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 **减负收口规则：**
 
 - `保留复用`：必须改成新 5.9 命名或被新服务显式收编；不能继续以旧实验名作为主入口。
-- `冻结隔离`：最多保留到 5.9.3 原文证据门禁完成；若新链路已有替代测试，旧实验代码进入删除候选。
+- `冻结隔离`：旧实验保持 feature flag 默认 off，不再作为新实现依赖；waders 旧规则例外短期保留为前台安全补丁，但冻结不扩张。
 - `归档参考`：文档可移动到历史归档目录；不再作为新任务默认阅读材料。
-- `后续删除`：按文件组小批量删除，每批删除后跑最小回归，避免一次大删造成不可控风险。
+- `后续删除`：5.9.7 通过新 fragment 链路和 waders hard cases 验收后，达到启动分批删除的最低门槛；5.9.8 商业化补强阶段按文件组小批量删除，每批删除后跑最小回归，避免一次大删造成不可控风险。
 - 对 AI 协作友好：保留一个 `5.9-active-readme` 或等价说明，明确当前主线文件、不要默认读取旧 5.9.8 / 5.9.9 实验文件。
 
 **删除前必须满足：**
