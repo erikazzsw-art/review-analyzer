@@ -1,0 +1,408 @@
+{
+  "schema_version": "review-fragment-candidate-multimodule-samples.5.9.4",
+  "candidate_version": "review-fragment-candidate-multimodule.5.9.4",
+  "contract_version": "review-fragment-contract.5.9.1",
+  "whitelist_version": "review-fragment-taxonomy-whitelist.5.9.2",
+  "evidence_gate_version": "review-fragment-evidence-gate.5.9.3",
+  "scope": "5.9.4 candidate / other plus multimodule acceptance table. Not connected to active upload, worker, results, export, or frontend paths.",
+  "coverage": [
+    "use case and people signals route to consumer_profile",
+    "purchase reason routes to purchase_motive",
+    "expectation gap routes to unmet_need candidate-first",
+    "approved seller-action labels promote from candidate or legacy routing",
+    "water leak samples aggregate by one issue_key across taxonomy aspects",
+    "formal taxonomy whitelist labels stay out of candidate artifact",
+    "candidate and other retain evidence while can_aggregate=false",
+    "non-product issue/highlight snippets do not become customer issue/customer label",
+    "customer service response promotes from audit routing into formal seller issue",
+    "positive customer service response routes to product_highlight"
+  ],
+  "samples": [
+    {
+      "id": "use-case-and-family-profile",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "My teenage son uses these for fly fishing and the waders stayed dry.",
+      "fragments": [
+        {
+          "fragment_text": "My teenage son uses these",
+          "module": "consumer_profile",
+          "aspect_key": "family_buyer",
+          "polarity": "neutral",
+          "evidence_span": "teenage son",
+          "confidence": 0.91,
+          "current_product_scope": "non_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "uses these for fly fishing",
+          "module": "product_highlight",
+          "aspect_key": "works_well_for_use_case",
+          "polarity": "positive",
+          "evidence_span": "fly fishing",
+          "confidence": 0.86,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the waders stayed dry",
+          "module": "product_highlight",
+          "aspect_key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "waders stayed dry",
+          "confidence": 0.94,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ]
+    },
+    {
+      "id": "purchase-motive-price-and-replacement",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Bought them because the price was right and they replaced my old pair.",
+      "fragments": [
+        {
+          "fragment_text": "Bought them because the price was right",
+          "module": "purchase_motive",
+          "aspect_key": "price_value",
+          "polarity": "positive",
+          "evidence_span": "price was right",
+          "confidence": 0.9,
+          "current_product_scope": "current_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "they replaced my old pair",
+          "module": "purchase_motive",
+          "aspect_key": "replacement",
+          "polarity": "neutral",
+          "evidence_span": "replaced my old pair",
+          "confidence": 0.89,
+          "current_product_scope": "current_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ]
+    },
+    {
+      "id": "unmet-need-candidate-first",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "I wish they had a built-in fish ruler on the strap.",
+      "fragments": [
+        {
+          "fragment_text": "I wish they had a built-in fish ruler",
+          "module": "unmet_need",
+          "aspect_key": "candidate:built_in_fish_ruler",
+          "polarity": "negative",
+          "evidence_span": "built-in fish ruler",
+          "confidence": 0.88,
+          "current_product_scope": "current_product_context",
+          "can_aggregate": false,
+          "reject_reason": "candidate_pending_review"
+        }
+      ]
+    },
+    {
+      "id": "water-leak-merge-first",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Water leaked like crazy after two trips.",
+      "fragments": [
+        {
+          "fragment_text": "Water leaked like crazy after two trips",
+          "module": "product_issue",
+          "aspect_key": "water_leaks_through",
+          "polarity": "negative",
+          "evidence_span": "leaked like crazy",
+          "confidence": 0.9,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ]
+    },
+    {
+      "id": "water-leak-merge-second",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Water entered through the knee after one trip.",
+      "fragments": [
+        {
+          "fragment_text": "Water entered through the knee after one trip",
+          "module": "product_issue",
+          "aspect_key": "water_leaks_through",
+          "polarity": "negative",
+          "evidence_span": "Water entered through the knee",
+          "confidence": 0.96,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ]
+    },
+    {
+      "id": "accessory-and-current-product-separated",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "The phone case leaked but the waders stayed dry.",
+      "fragments": [
+        {
+          "fragment_text": "The phone case leaked",
+          "module": "accessory_or_bundle",
+          "aspect_key": "accessory_storage",
+          "polarity": "negative",
+          "evidence_span": "phone case leaked",
+          "confidence": 0.92,
+          "current_product_scope": "accessory_only",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the waders stayed dry",
+          "module": "product_highlight",
+          "aspect_key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "waders stayed dry",
+          "confidence": 0.93,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ]
+    },
+    {
+      "id": "packaging-arrival-and-accessory-aspects",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "The box arrived crushed and the repair patch was missing.",
+      "fragments": [
+        {
+          "fragment_text": "The box arrived crushed",
+          "module": "logistics_support",
+          "aspect_key": "shipping_damage",
+          "polarity": "negative",
+          "evidence_span": "box arrived crushed",
+          "confidence": 0.9,
+          "current_product_scope": "logistics_support",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "the repair patch was missing",
+          "module": "accessory_or_bundle",
+          "aspect_key": "accessory_storage",
+          "polarity": "negative",
+          "evidence_span": "repair patch was missing",
+          "confidence": 0.89,
+          "current_product_scope": "accessory_only",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ]
+    },
+    {
+      "id": "logistics-not-product-plus-family",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Shipping was late, but I bought these for my daughter.",
+      "fragments": [
+        {
+          "fragment_text": "Shipping was late",
+          "module": "product_issue",
+          "aspect_key": "durability",
+          "polarity": "negative",
+          "evidence_span": "Shipping was late",
+          "confidence": 0.82,
+          "current_product_scope": "current_product",
+          "can_aggregate": true,
+          "reject_reason": null
+        },
+        {
+          "fragment_text": "I bought these for my daughter",
+          "module": "consumer_profile",
+          "aspect_key": "family_buyer",
+          "polarity": "neutral",
+          "evidence_span": "my daughter",
+          "confidence": 0.9,
+          "current_product_scope": "non_product_context",
+          "can_aggregate": true,
+          "reject_reason": null
+        }
+      ]
+    },
+    {
+      "id": "other-candidate-retains-evidence",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Nice product, but the sizing chart was confusing.",
+      "fragments": [
+        {
+          "fragment_text": "the sizing chart was confusing",
+          "module": "other_candidate",
+          "aspect_key": "candidate:sizing_chart_confusion",
+          "polarity": "negative",
+          "evidence_span": "sizing chart was confusing",
+          "confidence": 0.78,
+          "current_product_scope": "current_product_context",
+          "can_aggregate": false,
+          "reject_reason": "candidate_pending_review"
+        }
+      ]
+    },
+    {
+      "id": "customer-service-response-formal",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Customer service never answered my refund request.",
+      "fragments": [
+        {
+          "fragment_text": "Customer service never answered my refund request",
+          "module": "audit_filter",
+          "aspect_key": "customer_service",
+          "polarity": "negative",
+          "evidence_span": "refund request",
+          "confidence": 0.95,
+          "current_product_scope": "logistics_support",
+          "can_aggregate": false,
+          "reject_reason": "logistics_or_service"
+        }
+      ]
+    },
+    {
+      "id": "customer-service-positive-formal",
+      "category": "outdoor",
+      "sub_category": "waders",
+      "content": "Customer service quickly resolved my issue and was very helpful.",
+      "fragments": [
+        {
+          "fragment_text": "Customer service quickly resolved my issue and was very helpful",
+          "module": "audit_filter",
+          "aspect_key": "customer_service",
+          "polarity": "positive",
+          "evidence_span": "very helpful",
+          "confidence": 0.94,
+          "current_product_scope": "logistics_support",
+          "can_aggregate": false,
+          "reject_reason": "logistics_or_service"
+        }
+      ]
+    }
+  ],
+  "expected_artifact_summary": {
+    "formal_top10_rows": [
+      {
+        "module": "product_highlight",
+        "normalized_label": "customer_service_helpful",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      },
+      {
+        "module": "product_highlight",
+        "normalized_label": "keeps_water_out",
+        "count": 2,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      },
+      {
+        "module": "product_issue",
+        "normalized_label": "accessory_leak",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      },
+      {
+        "module": "product_issue",
+        "normalized_label": "confusing_size_chart",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      },
+      {
+        "module": "product_issue",
+        "normalized_label": "customer_service_unresponsive",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      },
+      {
+        "module": "product_issue",
+        "normalized_label": "late_shipping",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      },
+      {
+        "module": "product_issue",
+        "normalized_label": "missing_accessory",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      },
+      {
+        "module": "product_issue",
+        "normalized_label": "shipping_damage",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      },
+      {
+        "module": "product_issue",
+        "normalized_label": "water_leaks_through",
+        "count": 2,
+        "can_aggregate": true,
+        "formal_top10_eligible": true
+      }
+    ],
+    "module_seed_rows": [
+      {
+        "module": "consumer_profile",
+        "seed_module": "consumer_profile",
+        "normalized_label": "family_buyer",
+        "count": 2,
+        "can_aggregate": true,
+        "formal_top10_eligible": false
+      },
+      {
+        "module": "consumer_profile",
+        "seed_module": "use_case",
+        "normalized_label": "fishing",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": false
+      },
+      {
+        "module": "purchase_motive",
+        "seed_module": "purchase_motive",
+        "normalized_label": "price_value",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": false
+      },
+      {
+        "module": "purchase_motive",
+        "seed_module": "purchase_motive",
+        "normalized_label": "replacement",
+        "count": 1,
+        "can_aggregate": true,
+        "formal_top10_eligible": false
+      }
+    ],
+    "candidate_rows": [
+      {
+        "module": "unmet_need",
+        "normalized_label": "built_in_fish_ruler",
+        "reason": "unmet_need_candidate_first",
+        "count": 1,
+        "can_aggregate": false
+      }
+    ],
+    "audit_rows": []
+  }
+}
