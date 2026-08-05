@@ -24,6 +24,13 @@ from backend_api.app.services.review_fragment_evidence_gate import (
     FORMAL_EVIDENCE_GATE_MODULES,
     validate_review_fragment_evidence,
 )
+from backend_api.app.services.review_fragment_label_catalog import (
+    FormalLabelDefinition,
+    get_approved_formal_labels,
+    resolve_formal_label,
+    resolve_formal_label_aspect,
+    resolve_highlight_for_aspect,
+)
 from backend_api.app.services.review_fragment_taxonomy_whitelist import (
     AGGREGATABLE_TAXONOMY_MODULES,
     TAXONOMY_STATUS_ALLOWED,
@@ -109,127 +116,13 @@ class SeedMatch:
     label: SeedLabel
 
 
-@dataclass(frozen=True)
-class FormalLabel:
-    key: str
-    label_type: str
-    formal_module: str
-    aspect_keys: frozenset[str]
-    display_label_en: str
-    display_label_zh: str
-
-
-APPROVED_FORMAL_LABELS: tuple[FormalLabel, ...] = (
-    FormalLabel(
-        key="water_leaks_through",
-        label_type="issue",
-        formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"seam_integrity", "waterproof"}),
-        display_label_en="Water Leaks Through",
-        display_label_zh="容易进水",
-    ),
-    FormalLabel(
-        key="accessory_leak",
-        label_type="issue",
-        formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"accessory_storage"}),
-        display_label_en="Accessory Leaks",
-        display_label_zh="配件漏水",
-    ),
-    FormalLabel(
-        key="missing_accessory",
-        label_type="issue",
-        formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"accessory_storage"}),
-        display_label_en="Missing Accessory",
-        display_label_zh="缺少配件",
-    ),
-    FormalLabel(
-        key="confusing_size_chart",
-        label_type="issue",
-        formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"size_fit"}),
-        display_label_en="Confusing Size Chart",
-        display_label_zh="尺码表不清",
-    ),
-    FormalLabel(
-        key="late_shipping",
-        label_type="issue",
-        formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"logistics_issue"}),
-        display_label_en="Late Shipping",
-        display_label_zh="发货晚",
-    ),
-    FormalLabel(
-        key="shipping_damage",
-        label_type="issue",
-        formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"logistics_issue"}),
-        display_label_en="Arrival Damage",
-        display_label_zh="到货损坏",
-    ),
-    FormalLabel(
-        key="customer_service_unresponsive",
-        label_type="issue",
-        formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"customer_service"}),
-        display_label_en="Customer Service Unresponsive",
-        display_label_zh="客服响应不及时",
-    ),
-    FormalLabel(
-        key="customer_service_helpful",
-        label_type="highlight",
-        formal_module=MODULE_PRODUCT_HIGHLIGHT,
-        aspect_keys=frozenset({"customer_service"}),
-        display_label_en="Helpful Customer Service",
-        display_label_zh="客服服务好",
-    ),
-    FormalLabel(
-        key="keeps_water_out",
-        label_type="highlight",
-        formal_module=MODULE_PRODUCT_HIGHLIGHT,
-        aspect_keys=frozenset({"waterproof"}),
-        display_label_en="Keeps Water Out",
-        display_label_zh="保持干燥",
-    ),
-)
-
-APPROVED_FORMAL_LABEL_BY_KEY = {
-    label.key: label for label in APPROVED_FORMAL_LABELS
-}
+FormalLabel = FormalLabelDefinition
 APPROVED_ISSUE_KEYS = frozenset(
-    label.key for label in APPROVED_FORMAL_LABELS if label.label_type == "issue"
+    label.key for label in get_approved_formal_labels() if label.label_type == "issue"
 )
 APPROVED_HIGHLIGHT_KEYS = frozenset(
-    label.key for label in APPROVED_FORMAL_LABELS if label.label_type == "highlight"
+    label.key for label in get_approved_formal_labels() if label.label_type == "highlight"
 )
-
-WATER_LEAK_ISSUE_KEY = "water_leaks_through"
-WATER_LEAK_LEGACY_ASPECT_ALIASES = {
-    "seam_leaks": "seam_integrity",
-    "water_leaks_through": "waterproof",
-}
-LOGISTICS_LEGACY_ASPECT_ALIASES = {
-    "delivery_speed": "logistics_issue",
-    "durability": "logistics_issue",
-    "shipping_damage": "logistics_issue",
-}
-
-# This mapping is the only source for display text in this isolated artifact.
-# Stable English keys remain the values used for routing and aggregation.
-TAXONOMY_DISPLAY_LABEL_MAPPING: dict[str, tuple[str, str]] = {
-    "accessory_storage": ("Accessory Storage", "配件收纳"),
-    "customer_service": ("Customer Service", "客服"),
-    "logistics_issue": ("Logistics Issue", "物流问题"),
-    "packaging": ("Packaging", "包装"),
-    "seam_integrity": ("Seam Integrity", "接缝密封"),
-    "size_fit": ("Size and Fit", "尺码与版型"),
-    "waterproof": ("Waterproof", "防水性"),
-}
-
-HIGHLIGHT_KEY_BY_ASPECT: dict[str, str] = {
-    "waterproof": "keeps_water_out",
-}
 
 CONSUMER_PROFILE_SEED_TAXONOMY: tuple[SeedLabel, ...] = (
     SeedLabel(
@@ -504,34 +397,16 @@ def _approved_aspect_key(
     label: FormalLabel,
     whitelist: ReviewFragmentTaxonomyWhitelist,
 ) -> str | None:
-    source_aspect = _clean_string(fragment.get("aspect_key"))
+    return resolve_formal_label_aspect(
+        label.key,
+        source_aspect_key=fragment.get("aspect_key"),
+        allowed_aspect_keys=whitelist.allowed_aspect_keys,
+        label_type=label.label_type,
+    )
 
-    if label.key == WATER_LEAK_ISSUE_KEY:
-        if not whitelist.taxonomy_hit:
-            return None
-        if source_aspect in WATER_LEAK_LEGACY_ASPECT_ALIASES:
-            return WATER_LEAK_LEGACY_ASPECT_ALIASES[source_aspect]
 
-    if source_aspect in LOGISTICS_LEGACY_ASPECT_ALIASES:
-        resolved = LOGISTICS_LEGACY_ASPECT_ALIASES[source_aspect]
-        if resolved in label.aspect_keys and resolved in whitelist.allowed_aspect_keys:
-            return resolved
-
-    if source_aspect in label.aspect_keys and source_aspect in whitelist.allowed_aspect_keys:
-        return source_aspect
-
-    # Approved candidate labels can start as `other` or `candidate:*`; the
-    # artifact may promote them only after resolving a real taxonomy aspect.
-    if (
-        source_aspect in {"", "other"}
-        or source_aspect.startswith("candidate:")
-        or source_aspect == "durability"
-    ) and len(label.aspect_keys) == 1:
-        only_aspect = next(iter(label.aspect_keys))
-        if only_aspect in whitelist.allowed_aspect_keys:
-            return only_aspect
-
-    return None
+def _approved_label(key: str, *, label_type: str) -> FormalLabel | None:
+    return resolve_formal_label(key, label_type=label_type)
 
 
 def _approved_formal_label_for_fragment(
@@ -549,8 +424,6 @@ def _approved_formal_label_for_fragment(
     if scope not in {"current_product", "current_product_context", "logistics_support", "accessory_only"}:
         return None
 
-    labels_by_key = APPROVED_FORMAL_LABEL_BY_KEY
-
     service_context = _contains_any_marker(
         context,
         (
@@ -561,16 +434,18 @@ def _approved_formal_label_for_fragment(
         ),
     )
     if service_context and polarity == "positive":
-        label = labels_by_key["customer_service_helpful"]
-        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
-        if aspect_key:
-            return label, aspect_key
+        label = _approved_label("customer_service_helpful", label_type="highlight")
+        if label:
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            if aspect_key:
+                return label, aspect_key
 
     if service_context and polarity in {"negative", "mixed"}:
-        label = labels_by_key["customer_service_unresponsive"]
-        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
-        if aspect_key:
-            return label, aspect_key
+        label = _approved_label("customer_service_unresponsive", label_type="issue")
+        if label:
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            if aspect_key:
+                return label, aspect_key
 
     if polarity not in {"negative", "mixed"}:
         return None
@@ -588,10 +463,11 @@ def _approved_formal_label_for_fragment(
             "shipping damage",
         ),
     ):
-        label = labels_by_key["shipping_damage"]
-        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
-        if aspect_key:
-            return label, aspect_key
+        label = _approved_label("shipping_damage", label_type="issue")
+        if label:
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            if aspect_key:
+                return label, aspect_key
 
     if module in {MODULE_LOGISTICS_SUPPORT, MODULE_PRODUCT_ISSUE, MODULE_OTHER_CANDIDATE} and _contains_any_marker(
         context,
@@ -606,10 +482,11 @@ def _approved_formal_label_for_fragment(
             "arrived late",
         ),
     ):
-        label = labels_by_key["late_shipping"]
-        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
-        if aspect_key:
-            return label, aspect_key
+        label = _approved_label("late_shipping", label_type="issue")
+        if label:
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            if aspect_key:
+                return label, aspect_key
 
     if module in {MODULE_PRODUCT_ISSUE, MODULE_OTHER_CANDIDATE} and _contains_any_marker(
         context,
@@ -631,10 +508,11 @@ def _approved_formal_label_for_fragment(
             "off",
         ),
     ):
-        label = labels_by_key["confusing_size_chart"]
-        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
-        if aspect_key:
-            return label, aspect_key
+        label = _approved_label("confusing_size_chart", label_type="issue")
+        if label:
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            if aspect_key:
+                return label, aspect_key
 
     if module in {MODULE_ACCESSORY_OR_BUNDLE, MODULE_PRODUCT_ISSUE, MODULE_OTHER_CANDIDATE} and _contains_any_marker(
         context,
@@ -662,10 +540,11 @@ def _approved_formal_label_for_fragment(
             "repair",
         ),
     ):
-        label = labels_by_key["missing_accessory"]
-        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
-        if aspect_key:
-            return label, aspect_key
+        label = _approved_label("missing_accessory", label_type="issue")
+        if label:
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            if aspect_key:
+                return label, aspect_key
 
     if module in {MODULE_ACCESSORY_OR_BUNDLE, MODULE_PRODUCT_ISSUE, MODULE_OTHER_CANDIDATE} and _contains_any_marker(
         context,
@@ -678,10 +557,11 @@ def _approved_formal_label_for_fragment(
             "accessory leaks",
         ),
     ):
-        label = labels_by_key["accessory_leak"]
-        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
-        if aspect_key:
-            return label, aspect_key
+        label = _approved_label("accessory_leak", label_type="issue")
+        if label:
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            if aspect_key:
+                return label, aspect_key
 
     if module == MODULE_PRODUCT_ISSUE and _contains_any_marker(
         context,
@@ -693,22 +573,17 @@ def _approved_formal_label_for_fragment(
             "water got in",
         ),
         ):
-        label = labels_by_key["water_leaks_through"]
-        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
-        if aspect_key:
-            return label, aspect_key
+        label = _approved_label("water_leaks_through", label_type="issue")
+        if label:
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            if aspect_key:
+                return label, aspect_key
 
     return None
 
 
 def _approved_highlight_label_for_aspect(aspect_key: str) -> FormalLabel | None:
-    highlight_key = HIGHLIGHT_KEY_BY_ASPECT.get(aspect_key)
-    if not highlight_key:
-        return None
-    label = APPROVED_FORMAL_LABEL_BY_KEY.get(highlight_key)
-    if not label or label.label_type != "highlight":
-        return None
-    return label
+    return resolve_highlight_for_aspect(aspect_key)
 
 
 def _base_occurrence_row(
@@ -858,7 +733,7 @@ def validate_review_fragment_candidate_artifact_row(
         if not issue_key and not highlight_key:
             errors.append("formal_identity_key_required")
         if issue_key:
-            approved_label = APPROVED_FORMAL_LABEL_BY_KEY.get(issue_key)
+            approved_label = resolve_formal_label(issue_key, label_type="issue")
             if not approved_label or approved_label.label_type != "issue":
                 errors.append("issue_key_not_approved")
             else:
@@ -873,7 +748,8 @@ def validate_review_fragment_candidate_artifact_row(
                 errors.append("highlight_key_module_invalid")
             if polarity not in {"positive", "mixed"}:
                 errors.append("highlight_polarity_invalid")
-            if highlight_key not in APPROVED_HIGHLIGHT_KEYS:
+            approved_highlight = resolve_formal_label(highlight_key, label_type="highlight")
+            if not approved_highlight:
                 errors.append("highlight_key_unknown")
     else:
         if issue_key or highlight_key:
@@ -1049,9 +925,10 @@ def _display_label_for_key(
     *,
     approved_label: FormalLabel | None = None,
 ) -> tuple[str, str]:
-    if approved_label:
-        return approved_label.display_label_en, approved_label.display_label_zh
-    return TAXONOMY_DISPLAY_LABEL_MAPPING.get(key, ("", ""))
+    label = approved_label or resolve_formal_label(key)
+    if label:
+        return label.display_label_en, label.display_label_zh
+    return "", ""
 
 
 def _candidate_reason_from_taxonomy(status: str, reject_reason: str | None) -> str:

@@ -1,0 +1,160 @@
+registry_version: "review-fragment-label-registry.5.9.6-A.1"
+source: "5.9.4-approved-label-migration"
+
+# This file is the active-side migration fixture for the labels that were
+# previously embedded in review_fragment_candidate_multimodule.py.
+labels:
+  - key: water_leaks_through
+    label_type: issue
+    formal_module: product_issue
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Water Leaks Through"
+      zh: "容易进水"
+    boundary_note: "Current-product water ingress through the product body or seams; accessory or pocket leaks stay under accessory_leak."
+    aspect_keys: [seam_integrity, waterproof]
+    aliases: ["leaks water", "water gets in", "water entered"]
+
+  - key: accessory_leak
+    label_type: issue
+    formal_module: product_issue
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Accessory Leaks"
+      zh: "配件漏水"
+    boundary_note: "Water enters a product accessory, pocket, phone pouch, or other storage component; do not classify it as overall product waterproofing."
+    aspect_keys: [accessory_storage]
+    aliases: ["phone case leaked", "phone pouch leaked", "pocket leaked", "accessory leaked"]
+
+  - key: missing_accessory
+    label_type: issue
+    formal_module: product_issue
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Missing Accessory"
+      zh: "缺少配件"
+    boundary_note: "An advertised or expected accessory is absent at delivery; general missing parts remain a separate candidate unless approved."
+    aspect_keys: [accessory_storage]
+    aliases: ["missing accessory", "missing accessories", "missing hanger"]
+
+  - key: confusing_size_chart
+    label_type: issue
+    formal_module: product_issue
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Confusing Size Chart"
+      zh: "尺码表不清"
+    boundary_note: "The seller-provided sizing chart or guide is unclear, misleading, or inaccurate; ordinary fit complaints belong to the applicable fit aspect."
+    aspect_keys: [size_fit]
+    aliases: ["confusing size chart", "unclear size chart", "misleading size guide"]
+
+  - key: late_shipping
+    label_type: issue
+    formal_module: product_issue
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Late Shipping"
+      zh: "发货晚"
+    boundary_note: "Shipping or delivery was delayed; use logistics_issue as the evidence dimension and do not classify post-use product failure as logistics."
+    aspect_keys: [logistics_issue]
+    aliases: ["shipping was late", "shipping late", "delivery was late", "late shipping"]
+
+  - key: shipping_damage
+    label_type: issue
+    formal_module: product_issue
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Arrival Damage"
+      zh: "到货损坏"
+    boundary_note: "The product arrived damaged, used, dirty, or otherwise compromised in transit; packaging-only concerns and post-use damage remain distinct."
+    aspect_keys: [logistics_issue]
+    aliases: ["arrived damaged", "damaged on arrival", "shipping damage", "package damaged"]
+
+  - key: customer_service_unresponsive
+    label_type: issue
+    formal_module: product_issue
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Customer Service Unresponsive"
+      zh: "客服响应不及时"
+    boundary_note: "Customer support did not respond or did not follow up on a concrete request such as a refund or replacement."
+    aspect_keys: [customer_service]
+    aliases: ["customer service never answered", "customer support never answered"]
+
+  - key: customer_service_helpful
+    label_type: highlight
+    formal_module: product_highlight
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Helpful Customer Service"
+      zh: "客服服务好"
+    boundary_note: "Customer support provided useful, responsive help for a concrete request; generic service praise without evidence stays out of formal aggregation."
+    aspect_keys: [customer_service]
+    aliases: ["helpful customer service", "customer service was helpful"]
+
+  - key: keeps_water_out
+    label_type: highlight
+    formal_module: product_highlight
+    category_keys: ["*"]
+    sub_category_keys: ["*"]
+    status: approved
+    display:
+      en: "Keeps Water Out"
+      zh: "保持干燥"
+    boundary_note: "The current product kept the user or product contents dry; accessory-only waterproofing belongs to the accessory_storage dimension."
+    aspect_keys: [waterproof]
+    aliases: ["kept dry", "kept me dry", "no leaks"]
+
+# These are taxonomy evidence dimensions, not seller-facing issue/highlight
+# identities. shipping_damage is intentionally only an alias to logistics_issue.
+aspect_display_mapping:
+  accessory_storage:
+    en: "Accessory Storage"
+    zh: "配件收纳"
+  customer_service:
+    en: "Customer Service"
+    zh: "客服"
+  logistics_issue:
+    en: "Logistics Issue"
+    zh: "物流问题"
+  packaging:
+    en: "Packaging"
+    zh: "包装"
+  seam_integrity:
+    en: "Seam Integrity"
+    zh: "接缝密封"
+  size_fit:
+    en: "Size and Fit"
+    zh: "尺码与版型"
+  waterproof:
+    en: "Waterproof"
+    zh: "防水性"
+
+# Compatibility aliases migrated from the 5.9.4 experiment. They normalize
+# incoming legacy aspect values before the taxonomy whitelist is checked.
+aspect_aliases:
+  seam_leaks: seam_integrity
+  water_leaks_through: waterproof
+  delivery_speed: logistics_issue
+  durability: logistics_issue
+  late_shipping: logistics_issue
+  shipping_damage: logistics_issue
+
+highlight_by_aspect:
+  waterproof: keeps_water_out
