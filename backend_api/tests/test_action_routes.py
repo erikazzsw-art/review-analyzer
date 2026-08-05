@@ -147,6 +147,7 @@ def test_create_action_accepts_specific_issue_metadata(monkeypatch):
                 "canonical_issue_key": "water_leaks_through",
                 "specific_issue": "Water Leaks Through",
                 "current_pct": 18.2,
+                "recommended_action_key": "improve_waterproofing",
             },
         )
     finally:
@@ -159,9 +160,11 @@ def test_create_action_accepts_specific_issue_metadata(monkeypatch):
     assert data["aspect_key"] == "waterproof_performance"
     assert data["canonical_issue_key"] == "water_leaks_through"
     assert data["specific_issue"] == "Water Leaks Through"
+    assert "recommended_action_key" not in data
     assert response.json()["aspect_key"] == "waterproof_performance"
     assert response.json()["canonical_issue_key"] == "water_leaks_through"
     assert response.json()["specific_issue"] == "Water Leaks Through"
+    assert "recommended_action_key" not in response.json()
 
 
 def test_create_tracker_from_action_inherits_specific_issue_metadata(monkeypatch):

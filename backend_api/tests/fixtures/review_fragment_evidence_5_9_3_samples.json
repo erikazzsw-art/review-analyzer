@@ -337,7 +337,7 @@
         {
           "fragment_text": "The box arrived crushed",
           "module": "logistics_support",
-          "aspect_key": "shipping_damage",
+          "aspect_key": "logistics_issue",
           "polarity": "negative",
           "evidence_span": "box arrived crushed",
           "confidence": 0.92,

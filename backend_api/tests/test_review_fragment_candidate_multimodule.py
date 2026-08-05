@@ -57,11 +57,21 @@ def _summary(rows: list[dict[str, Any]], fields: tuple[str, ...]) -> list[dict[s
     return [{field: row[field] for field in fields} for row in rows]
 
 
-def _row(rows: list[dict[str, Any]], *, module: str, normalized_label: str) -> dict[str, Any]:
+def _row_key(row: dict[str, Any]) -> str:
+    return str(
+        row.get("issue_key")
+        or row.get("highlight_key")
+        or row.get("label")
+        or row.get("candidate_label_key")
+        or ""
+    )
+
+
+def _row(rows: list[dict[str, Any]], *, module: str, key: str) -> dict[str, Any]:
     for row in rows:
-        if row["module"] == module and row["normalized_label"] == normalized_label:
+        if row["module"] == module and _row_key(row) == key:
             return row
-    raise AssertionError(f"missing row: {module}/{normalized_label}")
+    raise AssertionError(f"missing row: {module}/{key}")
 
 
 def test_review_fragment_candidate_fixture_matches_expected_artifact_summary() -> None:
@@ -77,7 +87,7 @@ def test_review_fragment_candidate_fixture_matches_expected_artifact_summary() -
         "use case and people signals route to consumer_profile",
         "purchase reason routes to purchase_motive",
         "expectation gap routes to unmet_need candidate-first",
-        "approved seller-action labels promote from candidate or legacy routing",
+        "approved formal issue and highlight labels promote from candidate or legacy routing",
         "water leak samples aggregate by one issue_key across taxonomy aspects",
         "formal taxonomy whitelist labels stay out of candidate artifact",
         "candidate and other retain evidence while can_aggregate=false",
@@ -95,19 +105,19 @@ def test_review_fragment_candidate_fixture_matches_expected_artifact_summary() -
     assert artifact["candidate_version"] == REVIEW_FRAGMENT_CANDIDATE_MULTIMODULE_VERSION
     assert _summary(
         artifact["formal_top10_rows"],
-        ("module", "normalized_label", "count", "can_aggregate", "formal_top10_eligible"),
+        ("module", "issue_key", "highlight_key", "count", "can_aggregate", "formal_top10_eligible"),
     ) == expected["formal_top10_rows"]
     assert _summary(
         artifact["module_seed_rows"],
-        ("module", "seed_module", "normalized_label", "count", "can_aggregate", "formal_top10_eligible"),
+        ("module", "seed_module", "label", "count", "can_aggregate", "formal_top10_eligible"),
     ) == expected["module_seed_rows"]
     assert _summary(
         artifact["candidate_rows"],
-        ("module", "normalized_label", "reason", "count", "can_aggregate"),
+        ("module", "candidate_label_key", "reason", "count", "can_aggregate"),
     ) == expected["candidate_rows"]
     assert _summary(
         artifact["audit_rows"],
-        ("module", "normalized_label", "reason", "count", "can_aggregate"),
+        ("module", "candidate_label_key", "reason", "count", "can_aggregate"),
     ) == expected["audit_rows"]
 
 
@@ -141,6 +151,8 @@ def test_artifact_rows_include_reject_reason_and_never_emit_legacy_modules() -> 
         for row in artifact[bucket]:
             assert row["module"] in FINAL_ARTIFACT_MODULES
             assert row["module"] not in legacy_modules
+            assert "action_label_key" not in row
+            assert "normalized_label" not in row
             assert "reject_reason" in row
             if row["can_aggregate"] is True:
                 assert row["reject_reason"] is None
@@ -149,19 +161,38 @@ def test_artifact_rows_include_reject_reason_and_never_emit_legacy_modules() -> 
 
 
 def test_artifact_row_validator_rejects_inconsistent_seller_keys_and_modules() -> None:
-    valid_water_leak = _row(_artifact()["formal_top10_rows"], module="product_issue", normalized_label="water_leaks_through")
+    valid_water_leak = _row(_artifact()["formal_top10_rows"], module="product_issue", key="water_leaks_through")
 
     leaked_module = {**valid_water_leak, "module": "customer_service"}
     assert {"module_invalid", "compatibility_module_leaked"} <= set(
         validate_review_fragment_candidate_artifact_row(leaked_module, bucket="formal")
     )
 
-    highlight_with_action_key = {
-        **_row(_artifact()["formal_top10_rows"], module="product_highlight", normalized_label="keeps_water_out"),
+    highlight_with_deleted_action_key = {
+        **_row(_artifact()["formal_top10_rows"], module="product_highlight", key="keeps_water_out"),
         "action_label_key": "waterproof",
     }
-    assert "action_label_key_without_issue" in validate_review_fragment_candidate_artifact_row(
-        highlight_with_action_key,
+    assert "action_label_key_forbidden" in validate_review_fragment_candidate_artifact_row(
+        highlight_with_deleted_action_key,
+        bucket="formal",
+    )
+
+    formal_without_issue_or_highlight = {
+        key: value
+        for key, value in valid_water_leak.items()
+        if key not in {"issue_key", "highlight_key"}
+    }
+    assert "formal_identity_key_required" in validate_review_fragment_candidate_artifact_row(
+        formal_without_issue_or_highlight,
+        bucket="formal",
+    )
+
+    formal_with_old_normalized_label = {
+        **valid_water_leak,
+        "normalized_label": "water_leaks_through",
+    }
+    assert "normalized_label_forbidden" in validate_review_fragment_candidate_artifact_row(
+        formal_with_old_normalized_label,
         bucket="formal",
     )
 
@@ -209,22 +240,22 @@ def test_use_case_and_people_route_to_consumer_profile_not_product_highlight() -
     formal_rows = artifact["formal_top10_rows"]
     candidate_rows = artifact["candidate_rows"]
 
-    family = _row(module_rows, module="consumer_profile", normalized_label="family_buyer")
-    fishing = _row(module_rows, module="consumer_profile", normalized_label="fishing")
+    family = _row(module_rows, module="consumer_profile", key="family_buyer")
+    fishing = _row(module_rows, module="consumer_profile", key="fishing")
 
     assert family["seed_module"] == "consumer_profile"
     assert family["count"] == 2
     assert fishing["seed_module"] == "use_case"
     assert fishing["evidence_span"] == "fly fishing"
     assert fishing["formal_top10_eligible"] is False
-    assert not any(row["normalized_label"] == "works_well_for_use_case" for row in formal_rows)
-    assert not any(row["normalized_label"] == "works_well_for_use_case" for row in candidate_rows)
+    assert not any(_row_key(row) == "works_well_for_use_case" for row in formal_rows)
+    assert not any(_row_key(row) == "works_well_for_use_case" for row in candidate_rows)
 
 
 def test_purchase_reason_routes_to_purchase_motive_seed_taxonomy() -> None:
     artifact = _artifact()
     motives = [
-        row["normalized_label"]
+        row["label"]
         for row in artifact["module_seed_rows"]
         if row["module"] == "purchase_motive"
     ]
@@ -235,7 +266,7 @@ def test_purchase_reason_routes_to_purchase_motive_seed_taxonomy() -> None:
 
 def test_unmet_need_is_candidate_first_with_evidence() -> None:
     artifact = _artifact()
-    unmet_need = _row(artifact["candidate_rows"], module="unmet_need", normalized_label="built_in_fish_ruler")
+    unmet_need = _row(artifact["candidate_rows"], module="unmet_need", key="built_in_fish_ruler")
 
     assert unmet_need["reason"] == "unmet_need_candidate_first"
     assert unmet_need["evidence_span"] == "built-in fish ruler"
@@ -248,32 +279,33 @@ def test_approved_issue_mapping_keeps_taxonomy_aspect_separate() -> None:
     water_leak = _row(
         artifact["formal_top10_rows"],
         module="product_issue",
-        normalized_label="water_leaks_through",
+        key="water_leaks_through",
     )
 
     assert water_leak["issue_key"] == "water_leaks_through"
     assert water_leak["highlight_key"] is None
-    assert water_leak["action_label_key"] == "improve_waterproofing"
-    assert water_leak["aspect_key"] == "water_leaks_through"
-    assert set(water_leak["aspect_keys"]) == {"water_leaks_through"}
+    assert "action_label_key" not in water_leak
+    assert "normalized_label" not in water_leak
+    assert water_leak["aspect_key"] == "seam_integrity"
+    assert set(water_leak["aspect_keys"]) == {"seam_integrity", "waterproof"}
     assert water_leak["count"] == 2
     assert water_leak["display_label_en"] == "Water Leaks Through"
     assert water_leak["display_label_zh"] == "容易进水"
     assert all(
-        row["aspect_key"] != "water_leaks_through"
+        row.get("aspect_key") != "water_leaks_through"
         for bucket in ("candidate_rows", "audit_rows")
         for row in artifact[bucket]
     )
 
 
-def test_negative_waterproof_aspect_is_not_used_as_leak_identity() -> None:
+def test_negative_waterproof_aspect_is_not_used_as_leak_identity_key() -> None:
     artifact = _artifact()
+    water_leak = _row(artifact["formal_top10_rows"], module="product_issue", key="water_leaks_through")
+
+    assert water_leak["issue_key"] == "water_leaks_through"
+    assert water_leak["aspect_key"] in {"seam_integrity", "waterproof"}
     assert not any(
-        row["polarity"] in {"negative", "mixed"} and row["aspect_key"] == "waterproof"
-        for row in artifact["formal_top10_rows"]
-    )
-    assert not any(
-        row["issue_key"] == "water_leaks_through" and "waterproof" in row["aspect_keys"]
+        row["issue_key"] == "water_leaks_through" and row["aspect_key"] == "water_leaks_through"
         for row in artifact["formal_top10_rows"]
     )
 
@@ -283,13 +315,13 @@ def test_customer_service_response_promotes_to_formal_seller_issue() -> None:
     service = _row(
         artifact["formal_top10_rows"],
         module="product_issue",
-        normalized_label="customer_service_unresponsive",
+        key="customer_service_unresponsive",
     )
 
     assert service["aspect_key"] == "customer_service"
     assert service["issue_key"] == "customer_service_unresponsive"
     assert service["highlight_key"] is None
-    assert service["action_label_key"] == "improve_customer_service_response"
+    assert "action_label_key" not in service
     assert service["formal_top10_eligible"] is True
     assert service["evidence_span"] == "refund request"
     assert service["representative_comments"] == ["Customer service never answered my refund request."]
@@ -301,12 +333,12 @@ def test_positive_customer_service_routes_to_product_highlight() -> None:
     service = _row(
         artifact["formal_top10_rows"],
         module="product_highlight",
-        normalized_label="customer_service_helpful",
+        key="customer_service_helpful",
     )
 
     assert service["highlight_key"] == "customer_service_helpful"
     assert service["issue_key"] is None
-    assert service["action_label_key"] is None
+    assert "action_label_key" not in service
     assert service["aspect_key"] == "customer_service"
     assert service["formal_top10_eligible"] is True
 
@@ -316,12 +348,12 @@ def test_approved_issue_mapping_keeps_taxonomy_aspect_separate_for_existing_issu
     water_leak = _row(
         artifact["formal_top10_rows"],
         module="product_issue",
-        normalized_label="water_leaks_through",
+        key="water_leaks_through",
     )
 
     assert water_leak["issue_key"] == "water_leaks_through"
-    assert water_leak["action_label_key"] == "improve_waterproofing"
-    assert water_leak["aspect_key"] == "water_leaks_through"
+    assert "action_label_key" not in water_leak
+    assert water_leak["aspect_key"] == "seam_integrity"
 
 
 def test_approved_accessory_size_and_shipping_issues_are_formal() -> None:
@@ -336,34 +368,39 @@ def test_approved_accessory_size_and_shipping_issues_are_formal() -> None:
     assert _row(
         artifact["formal_top10_rows"],
         module="product_issue",
-        normalized_label="accessory_leak",
+        key="accessory_leak",
     )["aspect_key"] == "accessory_storage"
     assert _row(
         artifact["formal_top10_rows"],
         module="product_issue",
-        normalized_label="missing_accessory",
+        key="missing_accessory",
     )["aspect_key"] == "accessory_storage"
     assert _row(
         artifact["formal_top10_rows"],
         module="product_issue",
-        normalized_label="confusing_size_chart",
+        key="confusing_size_chart",
     )["aspect_key"] == "size_fit"
     assert _row(
         artifact["formal_top10_rows"],
         module="product_issue",
-        normalized_label="late_shipping",
-    )["aspect_key"] == "shipping_damage"
+        key="late_shipping",
+    )["aspect_key"] == "logistics_issue"
+    assert _row(
+        artifact["formal_top10_rows"],
+        module="product_issue",
+        key="shipping_damage",
+    )["aspect_key"] == "logistics_issue"
 
     for bucket in ("candidate_rows", "audit_rows"):
         assert not {
-            row["issue_key"] or row["action_label_key"] or row["normalized_label"]
+            row["issue_key"] or row["highlight_key"] or row.get("candidate_label_key")
             for row in artifact[bucket]
         } & APPROVED_ISSUE_KEYS
 
 
 def test_candidate_and_other_rows_keep_evidence_but_never_enter_formal_top10() -> None:
     artifact = _artifact()
-    formal_keys = {(row["module"], row["normalized_label"]) for row in artifact["formal_top10_rows"]}
+    formal_keys = {(row["module"], _row_key(row)) for row in artifact["formal_top10_rows"]}
 
     assert artifact["candidate_rows"]
     for row in artifact["candidate_rows"]:
@@ -371,13 +408,15 @@ def test_candidate_and_other_rows_keep_evidence_but_never_enter_formal_top10() -
         assert row["representative_comments"]
         assert row["can_aggregate"] is False
         assert row["issue_key"] is None
-        assert row["action_label_key"] is None
-        assert (row["module"], row["normalized_label"]) not in formal_keys
+        assert row["highlight_key"] is None
+        assert "action_label_key" not in row
+        assert "normalized_label" not in row
+        assert (row["module"], _row_key(row)) not in formal_keys
 
     unmet_need = _row(
         artifact["candidate_rows"],
         module="unmet_need",
-        normalized_label="built_in_fish_ruler",
+        key="built_in_fish_ruler",
     )
     assert unmet_need["evidence_span"] == "built-in fish ruler"
     assert unmet_need["reason"] == "unmet_need_candidate_first"
@@ -387,7 +426,7 @@ def test_non_product_issue_or_highlight_snippets_are_not_forced_into_product_lab
     artifact = _artifact()
     assert any(row["issue_key"] == "late_shipping" for row in artifact["formal_top10_rows"])
     assert any(
-        row["module"] == "product_issue" and row["normalized_label"] == "customer_service_unresponsive"
+        row["module"] == "product_issue" and row["issue_key"] == "customer_service_unresponsive"
         for row in artifact["formal_top10_rows"]
     )
 
@@ -402,13 +441,13 @@ def test_formal_rows_use_only_final_business_modules() -> None:
     assert "customer_service_helpful" in APPROVED_HIGHLIGHT_KEYS
 
 
-def test_formal_highlights_use_action_label_mapping() -> None:
+def test_formal_highlights_use_highlight_key_mapping() -> None:
     artifact = _artifact()
-    waterproof = _row(artifact["formal_top10_rows"], module="product_highlight", normalized_label="keeps_water_out")
+    waterproof = _row(artifact["formal_top10_rows"], module="product_highlight", key="keeps_water_out")
 
     assert waterproof["aspect_key"] == "waterproof"
     assert waterproof["issue_key"] is None
     assert waterproof["highlight_key"] == "keeps_water_out"
-    assert waterproof["action_label_key"] is None
+    assert "action_label_key" not in waterproof
     assert waterproof["display_label_en"] == "Keeps Water Out"
     assert waterproof["display_label_zh"] == "保持干燥"

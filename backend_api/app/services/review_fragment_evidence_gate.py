@@ -186,7 +186,7 @@ def _is_generic_hard_split(fragment: Mapping[str, Any]) -> bool:
 
 
 def _delivery_quality_aspect(aspect_key: str) -> bool:
-    return aspect_key in {"packaging", "shipping_damage"}
+    return aspect_key in {"logistics_issue", "packaging"}
 
 
 def _accessory_quality_aspect(aspect_key: str) -> bool:

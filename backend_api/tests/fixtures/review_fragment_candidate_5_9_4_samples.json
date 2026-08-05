@@ -1,6 +1,6 @@
 {
-  "schema_version": "review-fragment-candidate-multimodule-samples.5.9.4",
-  "candidate_version": "review-fragment-candidate-multimodule.5.9.4",
+  "schema_version": "review-fragment-candidate-multimodule-samples.5.9.5.1",
+  "candidate_version": "review-fragment-candidate-multimodule.5.9.5.1",
   "contract_version": "review-fragment-contract.5.9.1",
   "whitelist_version": "review-fragment-taxonomy-whitelist.5.9.2",
   "evidence_gate_version": "review-fragment-evidence-gate.5.9.3",
@@ -9,7 +9,7 @@
     "use case and people signals route to consumer_profile",
     "purchase reason routes to purchase_motive",
     "expectation gap routes to unmet_need candidate-first",
-    "approved seller-action labels promote from candidate or legacy routing",
+    "approved formal issue and highlight labels promote from candidate or legacy routing",
     "water leak samples aggregate by one issue_key across taxonomy aspects",
     "formal taxonomy whitelist labels stay out of candidate artifact",
     "candidate and other retain evidence while can_aggregate=false",
@@ -117,7 +117,7 @@
         {
           "fragment_text": "Water leaked like crazy after two trips",
           "module": "product_issue",
-          "aspect_key": "water_leaks_through",
+          "aspect_key": "seam_integrity",
           "polarity": "negative",
           "evidence_span": "leaked like crazy",
           "confidence": 0.9,
@@ -136,7 +136,7 @@
         {
           "fragment_text": "Water entered through the knee after one trip",
           "module": "product_issue",
-          "aspect_key": "water_leaks_through",
+          "aspect_key": "waterproof",
           "polarity": "negative",
           "evidence_span": "Water entered through the knee",
           "confidence": 0.96,
@@ -185,7 +185,7 @@
         {
           "fragment_text": "The box arrived crushed",
           "module": "logistics_support",
-          "aspect_key": "shipping_damage",
+          "aspect_key": "logistics_issue",
           "polarity": "negative",
           "evidence_span": "box arrived crushed",
           "confidence": 0.9,
@@ -298,63 +298,72 @@
     "formal_top10_rows": [
       {
         "module": "product_highlight",
-        "normalized_label": "customer_service_helpful",
+        "issue_key": null,
+        "highlight_key": "customer_service_helpful",
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": true
       },
       {
         "module": "product_highlight",
-        "normalized_label": "keeps_water_out",
+        "issue_key": null,
+        "highlight_key": "keeps_water_out",
         "count": 2,
         "can_aggregate": true,
         "formal_top10_eligible": true
       },
       {
         "module": "product_issue",
-        "normalized_label": "accessory_leak",
+        "issue_key": "accessory_leak",
+        "highlight_key": null,
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": true
       },
       {
         "module": "product_issue",
-        "normalized_label": "confusing_size_chart",
+        "issue_key": "confusing_size_chart",
+        "highlight_key": null,
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": true
       },
       {
         "module": "product_issue",
-        "normalized_label": "customer_service_unresponsive",
+        "issue_key": "customer_service_unresponsive",
+        "highlight_key": null,
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": true
       },
       {
         "module": "product_issue",
-        "normalized_label": "late_shipping",
+        "issue_key": "late_shipping",
+        "highlight_key": null,
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": true
       },
       {
         "module": "product_issue",
-        "normalized_label": "missing_accessory",
+        "issue_key": "missing_accessory",
+        "highlight_key": null,
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": true
       },
       {
         "module": "product_issue",
-        "normalized_label": "shipping_damage",
+        "issue_key": "shipping_damage",
+        "highlight_key": null,
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": true
       },
       {
         "module": "product_issue",
-        "normalized_label": "water_leaks_through",
+        "issue_key": "water_leaks_through",
+        "highlight_key": null,
         "count": 2,
         "can_aggregate": true,
         "formal_top10_eligible": true
@@ -364,7 +373,7 @@
       {
         "module": "consumer_profile",
         "seed_module": "consumer_profile",
-        "normalized_label": "family_buyer",
+        "label": "family_buyer",
         "count": 2,
         "can_aggregate": true,
         "formal_top10_eligible": false
@@ -372,7 +381,7 @@
       {
         "module": "consumer_profile",
         "seed_module": "use_case",
-        "normalized_label": "fishing",
+        "label": "fishing",
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": false
@@ -380,7 +389,7 @@
       {
         "module": "purchase_motive",
         "seed_module": "purchase_motive",
-        "normalized_label": "price_value",
+        "label": "price_value",
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": false
@@ -388,7 +397,7 @@
       {
         "module": "purchase_motive",
         "seed_module": "purchase_motive",
-        "normalized_label": "replacement",
+        "label": "replacement",
         "count": 1,
         "can_aggregate": true,
         "formal_top10_eligible": false
@@ -397,7 +406,7 @@
     "candidate_rows": [
       {
         "module": "unmet_need",
-        "normalized_label": "built_in_fish_ruler",
+        "candidate_label_key": "built_in_fish_ruler",
         "reason": "unmet_need_candidate_first",
         "count": 1,
         "can_aggregate": false

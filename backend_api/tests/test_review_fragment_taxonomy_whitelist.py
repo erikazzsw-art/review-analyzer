@@ -136,6 +136,8 @@ def test_resolve_review_fragment_taxonomy_whitelist_uses_taxonomy_hit_only() -> 
     assert whitelist.taxonomy_hit is True
     assert "waterproof" in whitelist.allowed_aspect_keys
     assert "seam_integrity" in whitelist.allowed_aspect_keys
+    assert "logistics_issue" in whitelist.allowed_aspect_keys
+    assert "shipping_damage" not in whitelist.allowed_aspect_keys
     assert "other" not in whitelist.allowed_aspect_keys
 
     missing = resolve_review_fragment_taxonomy_whitelist(
@@ -248,6 +250,19 @@ def test_accessory_and_packaging_aspects_can_aggregate_when_taxonomy_allowed() -
     assert packaging.status == TAXONOMY_STATUS_ALLOWED
     assert packaging.can_aggregate is True
     assert packaging.reject_reason is None
+
+    logistics = validate_review_fragment_taxonomy(
+        _fragment(
+            module=MODULE_LOGISTICS_SUPPORT,
+            aspect_key="logistics_issue",
+            scope=SCOPE_LOGISTICS_SUPPORT,
+            can_aggregate=True,
+        ),
+        whitelist,
+    )
+    assert logistics.status == TAXONOMY_STATUS_ALLOWED
+    assert logistics.can_aggregate is True
+    assert logistics.reject_reason is None
 
     missing_parts = validate_review_fragment_taxonomy(
         _fragment(

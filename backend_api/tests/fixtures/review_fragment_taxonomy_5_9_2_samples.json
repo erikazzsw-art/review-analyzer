@@ -2,7 +2,7 @@
   "schema_version": "review-fragment-taxonomy-whitelist-samples.5.9.2",
   "whitelist_version": "review-fragment-taxonomy-whitelist.5.9.2",
   "taxonomy_source": "category_aspect_taxonomy via taxonomy_loader.resolve_aspects; fixture tests use data/taxonomy/v1.0/outdoor/waders.yaml and data/taxonomy/v1.0/home/床架.yaml as taxonomy assets",
-  "scope": "5.9.2 taxonomy whitelist manual acceptance table. It validates aspect_key evidence dimensions; seller-facing issue_key/action_label_key mapping is downstream. Not connected to active upload, worker, results, export, or frontend paths.",
+  "scope": "5.9.2 taxonomy whitelist manual acceptance table. It validates aspect_key evidence dimensions; seller-facing issue_key/highlight_key mapping is downstream. Not connected to active upload, worker, results, export, or frontend paths.",
   "coverage": [
     "taxonomy allowed aspect",
     "out-of-library aspect",

@@ -315,35 +315,35 @@ def test_accessory_packaging_and_candidate_boundaries() -> None:
     assert accessory_without_object["can_aggregate"] is False
     assert accessory_without_object["reject_reason"] == "accessory_only"
 
-    shipping_damage = apply_review_fragment_evidence_gate(
+    logistics_issue = apply_review_fragment_evidence_gate(
         _fragment(
             fragment_text="The box arrived crushed",
             module=MODULE_LOGISTICS_SUPPORT,
-            aspect_key="shipping_damage",
+            aspect_key="logistics_issue",
             evidence_span="box arrived crushed",
             scope=SCOPE_LOGISTICS_SUPPORT,
         ),
         review_text="The box arrived crushed and one repair patch was missing.",
         whitelist=_whitelist(),
     )
-    assert shipping_damage["evidence_valid"] is True
-    assert shipping_damage["can_aggregate"] is True
-    assert shipping_damage["reject_reason"] is None
+    assert logistics_issue["evidence_valid"] is True
+    assert logistics_issue["can_aggregate"] is True
+    assert logistics_issue["reject_reason"] is None
 
-    shipping_damage_without_object = apply_review_fragment_evidence_gate(
+    logistics_issue_without_object = apply_review_fragment_evidence_gate(
         _fragment(
             fragment_text="The waders stayed dry",
             module=MODULE_LOGISTICS_SUPPORT,
-            aspect_key="shipping_damage",
+            aspect_key="logistics_issue",
             evidence_span="waders stayed dry",
             scope=SCOPE_LOGISTICS_SUPPORT,
         ),
         review_text="The waders stayed dry.",
         whitelist=_whitelist(),
     )
-    assert shipping_damage_without_object["evidence_valid"] is True
-    assert shipping_damage_without_object["can_aggregate"] is False
-    assert shipping_damage_without_object["reject_reason"] == "logistics_or_service"
+    assert logistics_issue_without_object["evidence_valid"] is True
+    assert logistics_issue_without_object["can_aggregate"] is False
+    assert logistics_issue_without_object["reject_reason"] == "logistics_or_service"
 
     candidate = apply_review_fragment_evidence_gate(
         _fragment(

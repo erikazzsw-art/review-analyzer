@@ -34,8 +34,8 @@ from backend_api.app.services.review_fragment_taxonomy_whitelist import (
 )
 from backend_api.app.services.taxonomy_loader import resolve_aspects
 
-REVIEW_FRAGMENT_CANDIDATE_MULTIMODULE_VERSION = "review-fragment-candidate-multimodule.5.9.4"
-REVIEW_FRAGMENT_CANDIDATE_FIXTURE_SCHEMA_VERSION = "review-fragment-candidate-multimodule-samples.5.9.4"
+REVIEW_FRAGMENT_CANDIDATE_MULTIMODULE_VERSION = "review-fragment-candidate-multimodule.5.9.5.1"
+REVIEW_FRAGMENT_CANDIDATE_FIXTURE_SCHEMA_VERSION = "review-fragment-candidate-multimodule-samples.5.9.5.1"
 
 MODULE_USE_CASE_SEED = "use_case"
 MODULE_CUSTOMER_SERVICE = "customer_service"
@@ -110,105 +110,119 @@ class SeedMatch:
 
 
 @dataclass(frozen=True)
-class SellerActionLabel:
+class FormalLabel:
     key: str
     label_type: str
     formal_module: str
     aspect_keys: frozenset[str]
-    action_label_key: str
     display_label_en: str
     display_label_zh: str
 
 
-APPROVED_SELLER_ACTION_LABELS: tuple[SellerActionLabel, ...] = (
-    SellerActionLabel(
+APPROVED_FORMAL_LABELS: tuple[FormalLabel, ...] = (
+    FormalLabel(
         key="water_leaks_through",
         label_type="issue",
         formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"water_leaks_through"}),
-        action_label_key="improve_waterproofing",
+        aspect_keys=frozenset({"seam_integrity", "waterproof"}),
         display_label_en="Water Leaks Through",
         display_label_zh="容易进水",
     ),
-    SellerActionLabel(
+    FormalLabel(
         key="accessory_leak",
         label_type="issue",
         formal_module=MODULE_PRODUCT_ISSUE,
         aspect_keys=frozenset({"accessory_storage"}),
-        action_label_key="improve_accessory_waterproofing",
         display_label_en="Accessory Leaks",
         display_label_zh="配件漏水",
     ),
-    SellerActionLabel(
+    FormalLabel(
         key="missing_accessory",
         label_type="issue",
         formal_module=MODULE_PRODUCT_ISSUE,
         aspect_keys=frozenset({"accessory_storage"}),
-        action_label_key="include_complete_accessories",
         display_label_en="Missing Accessory",
         display_label_zh="缺少配件",
     ),
-    SellerActionLabel(
+    FormalLabel(
         key="confusing_size_chart",
         label_type="issue",
         formal_module=MODULE_PRODUCT_ISSUE,
         aspect_keys=frozenset({"size_fit"}),
-        action_label_key="clarify_size_chart",
         display_label_en="Confusing Size Chart",
         display_label_zh="尺码表不清",
     ),
-    SellerActionLabel(
+    FormalLabel(
         key="late_shipping",
         label_type="issue",
         formal_module=MODULE_PRODUCT_ISSUE,
-        aspect_keys=frozenset({"shipping_damage"}),
-        action_label_key="improve_shipping_timeliness",
+        aspect_keys=frozenset({"logistics_issue"}),
         display_label_en="Late Shipping",
         display_label_zh="发货晚",
     ),
-    SellerActionLabel(
+    FormalLabel(
+        key="shipping_damage",
+        label_type="issue",
+        formal_module=MODULE_PRODUCT_ISSUE,
+        aspect_keys=frozenset({"logistics_issue"}),
+        display_label_en="Arrival Damage",
+        display_label_zh="到货损坏",
+    ),
+    FormalLabel(
         key="customer_service_unresponsive",
         label_type="issue",
         formal_module=MODULE_PRODUCT_ISSUE,
         aspect_keys=frozenset({"customer_service"}),
-        action_label_key="improve_customer_service_response",
         display_label_en="Customer Service Unresponsive",
         display_label_zh="客服响应不及时",
     ),
-    SellerActionLabel(
+    FormalLabel(
         key="customer_service_helpful",
         label_type="highlight",
         formal_module=MODULE_PRODUCT_HIGHLIGHT,
         aspect_keys=frozenset({"customer_service"}),
-        action_label_key="",
         display_label_en="Helpful Customer Service",
         display_label_zh="客服服务好",
     ),
+    FormalLabel(
+        key="keeps_water_out",
+        label_type="highlight",
+        formal_module=MODULE_PRODUCT_HIGHLIGHT,
+        aspect_keys=frozenset({"waterproof"}),
+        display_label_en="Keeps Water Out",
+        display_label_zh="保持干燥",
+    ),
 )
 
-APPROVED_SELLER_ACTION_LABEL_BY_KEY = {
-    label.key: label for label in APPROVED_SELLER_ACTION_LABELS
+APPROVED_FORMAL_LABEL_BY_KEY = {
+    label.key: label for label in APPROVED_FORMAL_LABELS
 }
 APPROVED_ISSUE_KEYS = frozenset(
-    label.key for label in APPROVED_SELLER_ACTION_LABELS if label.label_type == "issue"
+    label.key for label in APPROVED_FORMAL_LABELS if label.label_type == "issue"
 )
 APPROVED_HIGHLIGHT_KEYS = frozenset(
-    label.key for label in APPROVED_SELLER_ACTION_LABELS if label.label_type == "highlight"
+    label.key for label in APPROVED_FORMAL_LABELS if label.label_type == "highlight"
 )
 
-# The waders taxonomy still contains older waterproof/seam dimensions. This
-# isolated artifact uses one canonical negative leakage aspect instead.
-WATER_LEAK_ASPECT_KEY = "water_leaks_through"
-WATER_LEAK_LEGACY_ASPECT_ALIASES = {"seam_leaks": WATER_LEAK_ASPECT_KEY}
+WATER_LEAK_ISSUE_KEY = "water_leaks_through"
+WATER_LEAK_LEGACY_ASPECT_ALIASES = {
+    "seam_leaks": "seam_integrity",
+    "water_leaks_through": "waterproof",
+}
+LOGISTICS_LEGACY_ASPECT_ALIASES = {
+    "delivery_speed": "logistics_issue",
+    "durability": "logistics_issue",
+    "shipping_damage": "logistics_issue",
+}
 
 # This mapping is the only source for display text in this isolated artifact.
 # Stable English keys remain the values used for routing and aggregation.
 TAXONOMY_DISPLAY_LABEL_MAPPING: dict[str, tuple[str, str]] = {
     "accessory_storage": ("Accessory Storage", "配件收纳"),
     "customer_service": ("Customer Service", "客服"),
+    "logistics_issue": ("Logistics Issue", "物流问题"),
     "packaging": ("Packaging", "包装"),
     "seam_integrity": ("Seam Integrity", "接缝密封"),
-    "shipping_damage": ("Arrival Damage", "到货问题"),
     "size_fit": ("Size and Fit", "尺码与版型"),
     "waterproof": ("Waterproof", "防水性"),
 }
@@ -216,11 +230,6 @@ TAXONOMY_DISPLAY_LABEL_MAPPING: dict[str, tuple[str, str]] = {
 HIGHLIGHT_KEY_BY_ASPECT: dict[str, str] = {
     "waterproof": "keeps_water_out",
 }
-
-HIGHLIGHT_DISPLAY_LABEL_MAPPING: dict[str, tuple[str, str]] = {
-    "keeps_water_out": ("Keeps Water Out", "保持干燥"),
-}
-
 
 CONSUMER_PROFILE_SEED_TAXONOMY: tuple[SeedLabel, ...] = (
     SeedLabel(
@@ -492,19 +501,21 @@ def _business_module_for_fragment(fragment: Mapping[str, Any], *, fallback: str 
 def _approved_aspect_key(
     fragment: Mapping[str, Any],
     *,
-    label: SellerActionLabel,
+    label: FormalLabel,
     whitelist: ReviewFragmentTaxonomyWhitelist,
 ) -> str | None:
     source_aspect = _clean_string(fragment.get("aspect_key"))
 
-    if label.key == WATER_LEAK_ASPECT_KEY:
+    if label.key == WATER_LEAK_ISSUE_KEY:
         if not whitelist.taxonomy_hit:
             return None
-        if source_aspect == WATER_LEAK_ASPECT_KEY:
-            return WATER_LEAK_ASPECT_KEY
         if source_aspect in WATER_LEAK_LEGACY_ASPECT_ALIASES:
             return WATER_LEAK_LEGACY_ASPECT_ALIASES[source_aspect]
-        return None
+
+    if source_aspect in LOGISTICS_LEGACY_ASPECT_ALIASES:
+        resolved = LOGISTICS_LEGACY_ASPECT_ALIASES[source_aspect]
+        if resolved in label.aspect_keys and resolved in whitelist.allowed_aspect_keys:
+            return resolved
 
     if source_aspect in label.aspect_keys and source_aspect in whitelist.allowed_aspect_keys:
         return source_aspect
@@ -523,11 +534,11 @@ def _approved_aspect_key(
     return None
 
 
-def _approved_action_label_for_fragment(
+def _approved_formal_label_for_fragment(
     fragment: Mapping[str, Any],
     *,
     whitelist: ReviewFragmentTaxonomyWhitelist,
-) -> tuple[SellerActionLabel, str] | None:
+) -> tuple[FormalLabel, str] | None:
     polarity = _clean_string(fragment.get("polarity"))
     if polarity not in {"positive", "negative", "mixed"}:
         return None
@@ -538,7 +549,7 @@ def _approved_action_label_for_fragment(
     if scope not in {"current_product", "current_product_context", "logistics_support", "accessory_only"}:
         return None
 
-    labels_by_key = APPROVED_SELLER_ACTION_LABEL_BY_KEY
+    labels_by_key = APPROVED_FORMAL_LABEL_BY_KEY
 
     service_context = _contains_any_marker(
         context,
@@ -563,6 +574,24 @@ def _approved_action_label_for_fragment(
 
     if polarity not in {"negative", "mixed"}:
         return None
+
+    if module in {MODULE_LOGISTICS_SUPPORT, MODULE_PRODUCT_ISSUE, MODULE_OTHER_CANDIDATE} and _contains_any_marker(
+        context,
+        (
+            "arrived crushed",
+            "arrived damaged",
+            "arrived used",
+            "box arrived crushed",
+            "box was crushed",
+            "damaged on arrival",
+            "package damaged",
+            "shipping damage",
+        ),
+    ):
+        label = labels_by_key["shipping_damage"]
+        aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+        if aspect_key:
+            return label, aspect_key
 
     if module in {MODULE_LOGISTICS_SUPPORT, MODULE_PRODUCT_ISSUE, MODULE_OTHER_CANDIDATE} and _contains_any_marker(
         context,
@@ -663,13 +692,23 @@ def _approved_action_label_for_fragment(
             "water entered",
             "water got in",
         ),
-    ):
+        ):
         label = labels_by_key["water_leaks_through"]
         aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
         if aspect_key:
             return label, aspect_key
 
     return None
+
+
+def _approved_highlight_label_for_aspect(aspect_key: str) -> FormalLabel | None:
+    highlight_key = HIGHLIGHT_KEY_BY_ASPECT.get(aspect_key)
+    if not highlight_key:
+        return None
+    label = APPROVED_FORMAL_LABEL_BY_KEY.get(highlight_key)
+    if not label or label.label_type != "highlight":
+        return None
+    return label
 
 
 def _base_occurrence_row(
@@ -720,7 +759,7 @@ def _strip_private_fields(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
 
 
 def _formal_identity_key(row: Mapping[str, Any]) -> str:
-    return _clean_string(row.get("issue_key") or row.get("highlight_key") or row.get("aspect_key"))
+    return _clean_string(row.get("issue_key") or row.get("highlight_key"))
 
 
 def validate_review_fragment_module_enum_consistency() -> list[str]:
@@ -776,10 +815,13 @@ def validate_review_fragment_candidate_artifact_row(
     evidence_span = _key_value(row, "evidence_span")
     issue_key = _key_value(row, "issue_key")
     highlight_key = _key_value(row, "highlight_key")
-    action_label_key = _key_value(row, "action_label_key")
-    normalized_label = _key_value(row, "normalized_label")
     reject_reason = _row_reject_reason(row)
     can_aggregate = row.get("can_aggregate")
+
+    if "action_label_key" in row:
+        errors.append("action_label_key_forbidden")
+    if "normalized_label" in row:
+        errors.append("normalized_label_forbidden")
 
     if module not in FINAL_ARTIFACT_MODULES:
         errors.append("module_invalid")
@@ -807,24 +849,21 @@ def validate_review_fragment_candidate_artifact_row(
         errors.append("evidence_span_required")
 
     if bucket == "formal":
-        identity_key = issue_key or highlight_key or action_label_key or aspect_key
         if module not in FORMAL_TOP10_MODULES:
             errors.append("formal_module_invalid")
         if can_aggregate is not True:
             errors.append("formal_can_aggregate_required")
         if sum(bool(value) for value in (issue_key, highlight_key)) > 1:
             errors.append("formal_identity_key_conflict")
-        if action_label_key and not issue_key:
-            errors.append("action_label_key_without_issue")
+        if not issue_key and not highlight_key:
+            errors.append("formal_identity_key_required")
         if issue_key:
-            approved_label = APPROVED_SELLER_ACTION_LABEL_BY_KEY.get(issue_key)
+            approved_label = APPROVED_FORMAL_LABEL_BY_KEY.get(issue_key)
             if not approved_label or approved_label.label_type != "issue":
                 errors.append("issue_key_not_approved")
             else:
                 if module != approved_label.formal_module:
                     errors.append("issue_key_module_mismatch")
-                if action_label_key != approved_label.action_label_key:
-                    errors.append("action_label_key_mismatch")
                 if aspect_key and aspect_key not in approved_label.aspect_keys:
                     errors.append("issue_aspect_key_mismatch")
             if polarity not in {"negative", "mixed"}:
@@ -834,12 +873,10 @@ def validate_review_fragment_candidate_artifact_row(
                 errors.append("highlight_key_module_invalid")
             if polarity not in {"positive", "mixed"}:
                 errors.append("highlight_polarity_invalid")
-            if highlight_key not in APPROVED_HIGHLIGHT_KEYS and highlight_key not in HIGHLIGHT_DISPLAY_LABEL_MAPPING:
+            if highlight_key not in APPROVED_HIGHLIGHT_KEYS:
                 errors.append("highlight_key_unknown")
-        if normalized_label and identity_key and normalized_label != identity_key:
-            errors.append("normalized_label_mismatch")
     else:
-        if issue_key or highlight_key or action_label_key:
+        if issue_key or highlight_key:
             errors.append("non_formal_seller_key_leaked")
         if bucket == "module" and module not in {MODULE_CONSUMER_PROFILE, MODULE_PURCHASE_MOTIVE}:
             errors.append("module_seed_module_invalid")
@@ -884,14 +921,13 @@ def _candidate_row(
     reason: str,
 ) -> dict[str, Any]:
     candidate_label = _candidate_label_from_fragment(fragment)
-    normalized_label = normalize_review_fragment_candidate_label(candidate_label)
+    candidate_label_key = normalize_review_fragment_candidate_label(candidate_label)
     return {
         "module": _business_module_for_fragment(fragment, fallback=module),
         "candidate_label": candidate_label,
-        "normalized_label": normalized_label,
+        "candidate_label_key": candidate_label_key,
         "issue_key": None,
         "highlight_key": None,
-        "action_label_key": None,
         "formal_top10_eligible": False,
         "reason": reason,
         **_base_occurrence_row(
@@ -909,37 +945,39 @@ def _formal_row(
     fragment: Mapping[str, Any],
     review_text: Any,
     sub_category: str,
-    approved_label: SellerActionLabel | None = None,
+    approved_label: FormalLabel | None = None,
     aspect_key: str | None = None,
 ) -> dict[str, Any]:
     resolved_aspect_key = aspect_key or _clean_string(fragment.get("aspect_key"))
     issue_key = approved_label.key if approved_label and approved_label.label_type == "issue" else None
-    highlight_key = (
-        approved_label.key
+    approved_highlight = (
+        approved_label
         if approved_label and approved_label.label_type == "highlight"
-        else HIGHLIGHT_KEY_BY_ASPECT.get(resolved_aspect_key)
+        else _approved_highlight_label_for_aspect(resolved_aspect_key)
         if not issue_key
         and _clean_string(fragment.get("module")) == MODULE_PRODUCT_HIGHLIGHT
         and _clean_string(fragment.get("polarity")) == "positive"
         else None
     )
-    action_label_key = approved_label.action_label_key if issue_key else None
-    label_key = issue_key or highlight_key or resolved_aspect_key
+    highlight_key = (
+        approved_highlight.key
+        if approved_highlight
+        else None
+    )
+    identity_label = approved_label or approved_highlight
+    label_key = issue_key or highlight_key
     display_label_en, display_label_zh = _display_label_for_key(
         label_key,
-        approved_label=approved_label,
+        approved_label=identity_label,
     )
     return {
         "module": (
-            approved_label.formal_module
-            if approved_label
+            identity_label.formal_module
+            if identity_label
             else _business_module_for_fragment(fragment)
         ),
-        "label": label_key,
-        "normalized_label": label_key,
         "issue_key": issue_key,
         "highlight_key": highlight_key,
-        "action_label_key": action_label_key,
         "display_label_en": display_label_en,
         "display_label_zh": display_label_zh,
         "aspect_keys": [resolved_aspect_key] if resolved_aspect_key else [],
@@ -967,10 +1005,8 @@ def _module_seed_row(
         "module": output_module,
         "seed_module": seed_match.module,
         "label": seed_match.label.key,
-        "normalized_label": seed_match.label.key,
         "issue_key": None,
         "highlight_key": None,
-        "action_label_key": None,
         "formal_top10_eligible": False,
         **_base_occurrence_row(
             fragment=fragment,
@@ -993,10 +1029,9 @@ def _audit_row(
     return {
         "module": MODULE_AUDIT_FILTER,
         "label": label,
-        "normalized_label": normalize_review_fragment_candidate_label(label),
+        "candidate_label_key": normalize_review_fragment_candidate_label(label),
         "issue_key": None,
         "highlight_key": None,
-        "action_label_key": None,
         "formal_top10_eligible": False,
         "reason": reason,
         **_base_occurrence_row(
@@ -1012,12 +1047,10 @@ def _audit_row(
 def _display_label_for_key(
     key: str,
     *,
-    approved_label: SellerActionLabel | None = None,
+    approved_label: FormalLabel | None = None,
 ) -> tuple[str, str]:
     if approved_label:
         return approved_label.display_label_en, approved_label.display_label_zh
-    if key in HIGHLIGHT_DISPLAY_LABEL_MAPPING:
-        return HIGHLIGHT_DISPLAY_LABEL_MAPPING[key]
     return TAXONOMY_DISPLAY_LABEL_MAPPING.get(key, ("", ""))
 
 
@@ -1057,7 +1090,7 @@ def _route_fragment(
         "candidate_pending_review",
         "logistics_or_service",
     }:
-        approved_mapping = _approved_action_label_for_fragment(fragment, whitelist=whitelist)
+        approved_mapping = _approved_formal_label_for_fragment(fragment, whitelist=whitelist)
         if approved_mapping:
             approved_label, aspect_key = approved_mapping
             return "formal", _formal_row(
@@ -1248,7 +1281,7 @@ def build_review_fragment_candidate_artifact(
                 key = (
                     row["module"],
                     row["seed_module"],
-                    row["normalized_label"],
+                    row["label"],
                     row["sub_category"],
                     row["polarity"],
                 )
@@ -1256,7 +1289,7 @@ def build_review_fragment_candidate_artifact(
             elif bucket == "candidate":
                 key = (
                     row["module"],
-                    row["normalized_label"],
+                    row["candidate_label_key"],
                     row["sub_category"],
                     row["reason"],
                     row["polarity"],
@@ -1265,7 +1298,7 @@ def build_review_fragment_candidate_artifact(
             else:
                 key = (
                     row["module"],
-                    row["normalized_label"],
+                    row["candidate_label_key"],
                     row["sub_category"],
                     row["reason"],
                     row["polarity"],
@@ -1287,16 +1320,16 @@ def build_review_fragment_candidate_artifact(
         "module_seed_rows": _strip_private_fields(
             sorted(
                 module_rows.values(),
-                key=lambda row: (row["module"], row["seed_module"], row["normalized_label"], row["polarity"]),
+                key=lambda row: (row["module"], row["seed_module"], row["label"], row["polarity"]),
             )
         ),
         "candidate_rows": _strip_private_fields(
             sorted(
                 candidate_rows.values(),
-                key=lambda row: (row["module"], row["normalized_label"], row["reason"], row["polarity"]),
+                key=lambda row: (row["module"], row["candidate_label_key"], row["reason"], row["polarity"]),
             )
         ),
         "audit_rows": _strip_private_fields(
-            sorted(audit_rows.values(), key=lambda row: (row["module"], row["normalized_label"], row["reason"]))
+            sorted(audit_rows.values(), key=lambda row: (row["module"], row["candidate_label_key"], row["reason"]))
         ),
     }

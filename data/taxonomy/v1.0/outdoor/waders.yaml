@@ -175,18 +175,18 @@ aspects:
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "外包装、盒内摆放、开箱状态和包装保护，不含到货错发/已使用（归 shipping_damage）"
+  boundary_note: "外包装、盒内摆放、开箱状态和包装保护，不含到货错发/已使用（归 logistics_issue，并由 issue_key=shipping_damage 细分）"
   top_phrases: []
   sample_reviews: []
 
-- key: shipping_damage
-  label_zh: 运输/到货问题
+- key: logistics_issue
+  label_zh: 物流问题
   total: 0
   positive_count: 0
   negative_count: 0
   neutral_count: 0
   negative_rate: 0.0%
-  boundary_note: "到货时错尺码、错颜色、已使用、脏污、运输损坏等履约问题，不含产品使用后损坏"
+  boundary_note: "物流履约相关问题，包括发货晚、送达晚、到货错发、已使用、脏污、运输损坏等；具体正式问题由 issue_key 区分，例如 late_shipping / shipping_damage；不含产品使用后损坏"
   top_phrases: []
   sample_reviews: []
 
