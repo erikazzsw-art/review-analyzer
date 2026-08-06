@@ -596,7 +596,7 @@
 
 ### 5.9 标签准确性：评论片段理解与多模块分流
 
-**当前状态：5.9.0-5.9.6-A 已完成✅，5.9.6 前置工具 `sync_taxonomy.py` 已完成✅；5.9.4 candidate / other + 多模块承接及 5.9.4.1-A/B 返修完成，5.9.5 轻量校验完成；5.9.5.1 字段语义收口和 5.9.6-A 标签定义收编已完成：正式标签身份收口为 `aspect_key` + `issue_key` / `highlight_key`，统一 Catalog/resolver 已建立，`action_label_key` 已从正式 artifact 删除，formal `normalized_label` 已清理，`shipping_damage` / `late_shipping` 均归入上层 `aspect_key=logistics_issue` 并用具体 `issue_key` 区分；5.9.6-B 已产出 active/read-path 对账与冻结，确认已有部分 frontstage/read-model 接入仍不等同于 5.9.6-A registry/resolver 的完整 active 接入，active 接入尚未完成；5.9.6-C 未开始；新增 5.9.6-D 标签治理与 Registrar 重构，必须在 5.9.7 小样本验收前完成；2026-08-06 补充架构复核后新增 5.9.6-B.1 缓存语义版本化与 L2 下线（已完成✅）；5.9.6-D 工作包 3 降级为 scope 校验脚本、工作包 8 增加内部审核页，5.9.8 增加 TOP10 证据来源分级。**
+**当前状态：5.9.0-5.9.6-A 已完成✅，5.9.6 前置工具 `sync_taxonomy.py` 已完成✅；5.9.4 candidate / other + 多模块承接及 5.9.4.1-A/B 返修完成，5.9.5 轻量校验完成；5.9.5.1 字段语义收口和 5.9.6-A 标签定义收编已完成：正式标签身份收口为 `aspect_key` + `issue_key` / `highlight_key`，统一 Catalog/resolver 已建立，`action_label_key` 已从正式 artifact 删除，formal `normalized_label` 已清理，`shipping_damage` / `late_shipping` 均归入上层 `aspect_key=logistics_issue` 并用具体 `issue_key` 区分；5.9.6-B 已产出 active/read-path 对账与冻结，确认已有部分 frontstage/read-model 接入仍不等同于 5.9.6-A registry/resolver 的完整 active 接入，active 接入尚未完成；5.9.6-C 未开始；新增 5.9.6-D 标签治理与 Registrar 重构，必须在 5.9.7 小样本验收前完成；2026-08-06 补充架构复核后新增 5.9.6-B.1 缓存语义版本化与 L2 下线，**已完成✅并部署**（L1 命中判定纳入 `prompt_version` + `taxonomy_version` + `registry_version` + `model_name` 四个语义版本，走 `aspects_json->>` JSONB 过滤、无 migration；L2 短文本默认结果分支已删除，`apply_cache` 链路为 L1→L3）——5.9.7 验收可信度前提已就位，5.9.6-D 改 `registry_version` 即可让旧缓存全量失效；5.9.6-D 工作包 1/2/3 已完成✅（零 active 行为变更），工作包 4-9 待执行；工作包 3 降级为 scope 校验脚本、工作包 8 增加内部审核页，5.9.8 增加 TOP10 证据来源分级。**
 
 注意：waders 专项规则不再作为新 5.9 主线扩张，只作为短期前台安全补丁保留；后续在 5.9.6 后做 category-specific compatibility 抽离，在 5.9.7 验收后进入分批删除。
 
@@ -746,7 +746,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 | 5.9.6-A 标签定义收编 | 完成✅ | 将 5.9.4 实验模块中的 approved label、aspect mapping、alias 和 display mapping 作为 fixture/迁移来源，收编到统一 Catalog/resolver | 新增独立 registry fixture `data/taxonomy/registry/review_fragment_label_registry.yaml` 和 `review_fragment_label_catalog.py`；从实验模块迁移 9 个 approved formal label、aspect alias、display mapping 和物流边界；实验模块改由 resolver 获取正式定义，active 主线不直接依赖实验模块标签常量 | 1 天 | resolver 可解析 `issue_key` / `highlight_key`；alias 可映射 canonical key；`late_shipping` / `shipping_damage` 均归入 `aspect_key=logistics_issue`；registry 核心模型不包含 `action_label_key`、formal `normalized_label`、`recommended_action_key`；相关静态隔离和测试通过 |
 | 5.9.6 前置工具：sync_taxonomy.py | 完成✅ | 替换两个旧 YAML→DB 导入脚本，提供安全的 taxonomy 入库工具（5.9.6-B 前置） | 新增 `scripts/sync_taxonomy.py`：扫描 `data/taxonomy/v1.0/**/*.yaml`，严格解析/校验 taxonomy YAML，按 `category_aspect_taxonomy` 的 `(sub_category, aspect_key, taxonomy_version)` 唯一身份生成新增/修改/删除候选/无变化 diff；支持 `--dry-run`、`--category <category_key>`、`--allow-delete`；不传 `--allow-delete` 只报告删除候选，不删 DB；写入成功后调用 `taxonomy_loader.clear_cache()`；旧 `import_taxonomy_to_db.py` / `import_v4t1_assets.py` 当前保留不移动、不删除，新工具作为后续首选同步入口；旧脚本删除时机标记为 5.9.6-B/C 完成、全量 dry-run/sync 通过、active/worker/export 无依赖确认且 `bad_cases` 导入替代口径明确后，再作为 5.9.8 小批次清理/归档项处理；已治理 `data/taxonomy/v1.0/kitchen/保温杯.yaml` 重复 `ease_of_use`，将特有“开盖便捷性”改为 `lid_operation`，保留通用 `ease_of_use / 易用性` | 0.5 天 | focused tests 9 passed；5.9.2/5.9.6-A 相关回归 12 passed；ruff、compileall、`git diff --check` 通过；静态搜索确认 active path 不 import `sync_taxonomy.py`；真实资产全量 parser 预检通过：89 个 YAML / 1541 行 / 89 个 sub_category |
 | 5.9.6-B active 接入对账与冻结 | 已对账/冻结；active 接入未完成 | 先弄清已写代码和目标 active 接入的差异，避免在错误基础上继续扩张 | 已输出 [active/read-path inventory](docs/5.9.6-B-active-read-path-inventory.md)：盘点 `analysis` / `export` / `specific_issue.py` / frontstage read model / `database.py` / worker / periodic / frontend；确认默认开关、session guard、`waders` guard、stored shadow slim read 行为；旧 frontstage/read-model 已冻结为兼容层；所有绕过 registry/resolver/scope gate 的 active display/action 路径已登记为 5.9.6-D blocker | 0.5-1.5 天 | PROGRESS 与代码对账一致；已存在部分不再被误记为“未开始”；旧 read-model 默认关闭或受 guard 保护；5.9.6-B 不宣告 active 接入完成；后续 active 接入必须通过新 Registrar / resolver / scope gate |
-| 5.9.6-B.1 缓存语义版本化与 L2 下线 | 完成✅ | 让 taxonomy / registry / prompt 变更能真正生效，保证 5.9.7 验收结果可信 | 1. `analysis_cache.py`: 删除 L2 分支（`_check_l2` + `L2_MAX_CONTENT_LENGTH`），`apply_cache` 链路简化为 L1→L3；2. `database.py`: `get_analyzed_by_content_hash()` 增加 `prompt_version` / `taxonomy_version` / `registry_version` / `model_name` 四个参数，通过 `aspects_json->>'字段'` 做 PostgreSQL JSONB 版本过滤；3. `workers/jobs.py`: 导入 `FORMAL_LABEL_REGISTRY_VERSION` + `get_taxonomy_version()`，L1 查询时解析四版本并传入，write 侧三新字段写入 `aspects_json`；4. `taxonomy_loader.py`: 新增 `get_taxonomy_version(sub_category)` 函数；5. 新增 14 个测试（`test_cache_semantic_versioning.py`）：SQL 版本过滤构造验证 × 5、L2 已删除验证 × 4、observability × 2、taxonomy 解析 × 2、向后兼容验证 × 1；6. 无需 migration：四版本均写入已有 `aspects_json` JSONB 列，查询用 `->>` 操作符过滤；旧数据缺少新字段 → `NULL = 'v1.0'` 为 NULL（非 TRUE）→ 自动 miss | 0.5 天 | 改 taxonomy / registry / prompt 后旧缓存自动失效；不再有未读原文即产出标签的 L2 分支；5.9.7 验收拿到的是新链路结果而不是历史缓存；ruff + 55 现有测试 + 14 新测试全绿 |
+| 5.9.6-B.1 缓存语义版本化与 L2 下线 | 完成✅ | 让 taxonomy / registry / prompt 变更能真正生效，保证 5.9.7 验收结果可信 | 1. `analysis_cache.py`: 删除 L2 分支（`_check_l2` + `L2_MAX_CONTENT_LENGTH`），`apply_cache` 链路简化为 L1→L3；2. `database.py`: `get_analyzed_by_content_hash()` 增加 `prompt_version` / `taxonomy_version` / `registry_version` / `model_name` 四个参数，通过 `aspects_json->>'字段'` 做 PostgreSQL JSONB 版本过滤；3. `workers/jobs.py`: 导入 `FORMAL_LABEL_REGISTRY_VERSION` + `get_taxonomy_version()`，L1 查询时解析四版本并传入，write 侧三新字段写入 `aspects_json`；4. `taxonomy_loader.py`: 新增 `get_taxonomy_version(sub_category)` 函数；5. 新增 14 个测试（`test_cache_semantic_versioning.py`）：SQL 版本过滤构造验证 × 5、L2 已删除验证 × 4、observability × 2、taxonomy 解析 × 2、向后兼容验证 × 1；6. 无需 migration：四版本均写入已有 `aspects_json` JSONB 列，查询用 `->>` 操作符过滤；旧数据缺少新字段 → `NULL = 'v1.0'` 为 NULL（非 TRUE）→ 自动 miss | 0.5 天（实际） | 改 taxonomy / registry / prompt 后旧缓存自动失效；不再有未读原文即产出标签的 L2 分支；5.9.7 验收拿到的是新链路结果而不是历史缓存；ruff 通过（仅 1 处已存在的无关 lint）；新增 14 测试全绿；现有回归 41 全绿（`test_global_cache` 10 + `test_observability_p3_metrics` 3 + `test_v5t3_e2e` 8 + `test_v5t3_phase1` 20）；commit `03200bb` 已 push develop 并部署 api + worker（2026-08-06）；线上功能验证未执行（Erika 决定跳过），验证留待 5.9.7 小样本验收一并覆盖 |
 | 5.9.6-C 前台提示 | 未开始/待 5.9.6-D 后执行 | 展示原文证据、低置信提醒和 `other` 占比；waders 旧规则冻结 | 展示代表原文证据、低置信提醒和 `other` 占比；waders 旧规则继续作为冻结安全补丁，不新增规则、不删除逻辑；不得在 Registrar scope gate 完成前新增正式标签展示入口 | 0.5-1 天 | 用户可见原文证据片段；低置信标签有明显提示；`other` 占比透明展示；waders 旧补丁未扩大；前台展示不能绕过 scope gate |
 | 5.9.6-D 标签治理与 Registrar 重构 | 新增/未开始 | 用长期可维护机制修复 formal label scope，防止 `["*"]` 类错误再次出现 | 0. 完成 5.9.6-B 部分代码对账；1. 写入 scope/global 判定 DoD；2. 扩展 registry schema：`scope_policy`、`scope_reason`、`allowed_aspect_keys`、`required_capabilities`、`blocked_contexts`、正负例、审核状态；3. scope 校验脚本（替代完整 Scope Compiler，见降级说明）；4. resolver 改为必须传 category/sub_category，缺失或不匹配 fail-closed；5. 重标 9 个 approved label，waterproof、seam_integrity、accessory_storage 不得默认全品类；6. 改造 active/read/export/insight 入口，只能消费 resolver 通过的正式标签；7. 新增 audit event + registry proposal 回流；8. CI 加负例门禁和 scope diff + 新增内部审核页 `/settings/label-review`；9. 输出 Erika 人工验收包 | 8-12 天 | registry 中无理由的 `["*"]` 被拒绝；resolver 缺少当前品类时报错或降级，不再默认全局；每个正式标签能解释“适用/不适用类目”；负例证明 waterproof、seam_integrity、accessory_storage 不会在不适用品类显示；错标可进入 proposal 回流；active/display/export 均受同一 scope gate 约束 |
 | 5.9.7 小样本验收 | 未开始/被 5.9.6-D 阻塞 | 用真实样本验证标签注册中心、active 链路和行动中心衔接 | 5.9.6-D 通过后再选 30-50 条真实评论，额外覆盖 waders hard cases 和跨类目负例；检查错标、漏标、无中生有、模块分错、正式 issue/highlight 是否符合产品直觉；检查 alias、effective scope、boundary_note、approved/candidate/deprecated/blocked 状态、display mapping 和 `registry_version`；从一个正式 issue 创建行动，确认行动中心只依赖 issue key、证据、趋势和 AI `suggested_action` | 3-5 天 | 无中生有显著下降；所有正式 TOP10 行都有正式 issue/highlight 身份且 scope 通过；实验常量不影响 active；alias 和边界没有明显错配；行动中心能正确创建、展示和复盘 issue 对应行动；waders hard cases 被新 fragment 链路覆盖；达到可开始分批删除旧冗余的最低门槛 |
@@ -905,9 +905,9 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 对 5.9.1 的影响：不回滚、不重写 5.9.1。5.9.1 是片段理解契约，仍然正确；需要补的是 5.9.6 之后的正式标签治理层。后续代码可在 5.9.1 输出旁路增加 category/sub_category context，但不能把 formal label 是否全局适用的责任塞回 LLM 输出契约。
 - 反思：这次失误不是知识不足，而是任务执行时把“能跑通迁移/测试”错当成“长期商业可落地”。一人公司不能靠未来人工记忆补洞，必须把“不允许默认全局”“必须有负例”“resolver 必须带 scope”“错标必须回流”写成项目规则、代码门禁和验收材料。
 - 工作包 0：5.9.6-B partial inventory/freeze，0.5-1.5 天。已输出 active/read/export/worker/read-model 入口表、flag 默认值、guard 说明、可复用/需改造/需删除清单；不代表 active 接入完成。
-- 工作包 1：Scope Governance DoD，0.5-1 天。定义通用标签、类目标签、子类目标签、capability-derived 标签、blocked 标签的判定标准；规定 `*` 必须有 `scope_reason`、正例、负例和人工审核记录。
-- 工作包 2：Registry schema 升级，1-1.5 天。新增或扩展 `scope_policy`、`scope_reason`、`allowed_aspect_keys`、`required_capabilities`、`blocked_contexts`、`global_allowed`、`positive_examples`、`negative_examples`、`review_status`、`owner_note`。
-- 工作包 3：Scope Compiler，2-3 天。基于 taxonomy/capability 编译 `effective_scope_matrix`，生成 scope diff，能解释每个 formal label 为什么适用或不适用某个 category/sub_category。
+- 工作包 1：Scope Governance DoD，0.5-1 天。✅ 已完成（2026-08-06）。产出 `notes/scope-governance-dod.md`：定义交易层/产品层二分、三档 scope_policy、transaction_universal 封闭枚举护栏、capability_derived any-of 语义、负例规范、9 个现有 label 的 scope_policy 落位判断。稳定后 git mv 到 docs/。
+- 工作包 2：Registry schema 升级，1-1.5 天。✅ 已完成（2026-08-06）。产出 `data/taxonomy/shared/transaction_aspects.yaml`（3 个交易层维度）+ 扩展 registry YAML schema（9 个 label 各补 scope_policy/required_transaction_dimension/scope_reason/positive_examples/negative_examples/review_status/blocked_contexts/owner_note，review_status 一律 pending）+ 扩展 `FormalLabelDefinition` dataclass + 实现 effective scope 计算（内存算，带 lru_cache，不落盘）+ transaction_universal 封闭枚举校验。registry_version 保持 5.9.6-A.1 不变（决策 f）。
+- 工作包 3：scope 校验脚本（从完整 Scope Compiler 降级），0.5 天。✅ 已完成（2026-08-06）。产出 `scripts/validate_label_scope.py`：6 项校验（禁止 wildcard / transaction 维度枚举校验 / capability 命中 taxonomy / 正例 / 负例政策最低 + out_of_scope 反查矩阵验证 / explicit 子类目存在性），支持 --dry-run（失败非零退出码）和 --print-matrix。
 - 工作包 4：Resolver fail-closed 改造，2-3 天。`resolve_formal_label*` 必须接收当前 category/sub_category；缺失 scope、scope 不匹配、taxonomy 不支持、evidence 不足时不返回正式展示标签，只允许进入 candidate/audit。
 - 工作包 5：9 个 approved label 重标和回归，1-1.5 天。把真正通用标签与类目相关标签分开；waterproof、seam_integrity、accessory_storage 先按 taxonomy 证据范围收窄；补正例和负例。
 - 工作包 6：active/read/export/insight 接口改造，1-2 天。结果页、导出、insight、行动中心 handoff 只能消费 resolver 通过的 formal label；旧 frontstage/read-model 只能作为兼容层，不能绕过 scope gate。
@@ -931,17 +931,19 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 
 **补充项 1（bug，新增 5.9.6-B.1）：缓存不感知语义版本，会让 5.9.6-D 的成果在 5.9.7 验收时看不见**
 
-- 现状：L1 缓存 key = `sha256(内容 + 评分 + sub_category)`（`analysis_cache.compute_content_hash`），命中时只额外校验 `analyzer_version="v4_deep"`（`workers/jobs.py:84`）。该值是静态字符串，从未随 prompt / taxonomy / registry 变更而变化。
+- 现状（修复前）：L1 缓存 key = `sha256(内容 + 评分 + sub_category)`（`analysis_cache.compute_content_hash`），命中时只额外校验 `analyzer_version="v4_deep"`（当时 `workers/jobs.py:84`，修复后为 `workers/jobs.py:88`）。该值是静态字符串，从未随 prompt / taxonomy / registry 变更而变化。
 - 后果：5.9.6-D 收窄 scope、补 `boundary_note` 之后，所有 L1 命中的评论仍返回收窄前的标签。5.9.7 若选到历史已分析过的评论，验的是旧结果，会得出"改了没生效"或"改了还是错"的错误结论。
 - 与 5.9.8 的区别：5.9.8 已列"记录 `prompt_version` + `taxonomy_version` + `model_name` + `registry_version`"，但记录 ≠ 参与缓存失效。这四个版本必须进 cache key 与命中校验，不只是写进 artifact。
 - 另 L1 跨用户复用（`get_analyzed_by_content_hash(include_global=True)`），污染会跨账号扩散。
 - 定位：新增为 5.9.6-B.1，排在 5.9.6-B 之后、5.9.6-D 之前。0.5-1 天。
+- **已修复✅（2026-08-06，commit `03200bb`）**：选定"改查询条件"而非"改 hash"——改 hash 会让 `comments.content_hash` 与 `review_pool` 唯一约束 `(platform, product_key, marketplace, content_hash)` 全部失效，影响面远超缓存层。实现：`get_analyzed_by_content_hash()` 增加 `prompt_version` / `taxonomy_version` / `registry_version` / `model_name` 四个参数，用 `aspects_json->>'字段' = %s` 在 SQL 层过滤；user 历史查询和全局 pool 查询共用同一套过滤子句，跨用户污染同样受版本门约束。取值来源：`prompt_version` = `DEFAULT_ANNOTATE_VERSION`；`taxonomy_version` = 新增 `taxonomy_loader.get_taxonomy_version(sub_category)` 查 `category_aspect_taxonomy`（MAX 聚合，未命中回退 `v1.0`）；`registry_version` = `FORMAL_LABEL_REGISTRY_VERSION`（选新 registry 而非旧 `CUSTOMER_LABEL_SCHEMA_VERSION="1.0"`，因后者是静态常量、不随 5.9.6-D 治理变化）；`model_name` = 新增常量 `CACHE_MODEL_NAME="deepseek"`（查询时 LLM 尚未调用、router 会动态选模型，故用常量，模型升级时改常量即可全量失效）。无需 migration：四字段写入已有 `aspects_json` JSONB 列，旧数据缺字段 → `NULL = 'v1.0'` 结果为 NULL（非 TRUE）→ 自动 miss。
 
 **补充项 2（bug，并入 5.9.6-B.1）：L2 缓存分支与 5.9.3 证据门直接冲突**
 
 - 现状：`analysis_cache._check_l2` 对内容 ≤10 字且评分为 1-2 或 5 的评论，不调 LLM 直接给默认结果。
 - 后果：`"Leaks."`（6 字，1 星）含明确产品问题信号，但系统未读它即产出标签，且该标签从未经过 5.9.3 证据门。这属于计划里明确要消除的"无中生有"。
 - 决策：删除 L2 分支。50 用户量级下节省的 LLM 成本不值这个准确性风险。
+- **已修复✅（2026-08-06，commit `03200bb`）**：删除 `_check_l2()` 函数、`L2_MAX_CONTENT_LENGTH` 常量、`apply_cache` 中的 L2 调用、`CacheResult.stats()` 的 L2 计数、`_cache_observability_summary()` 的 `short_text_rating_rule` 来源；`CacheHit.level` 注释收窄为 `"L1" | "L3"`。`apply_cache` 链路由 L1→L2→L3 简化为 L1→L3，`after_l1` 直接传给 L3（无 embedding 时直接作为 remaining）。L3 保留不动，其降级仍归 5.9.8。原 L2 命中的输入（如 `"Leaks."`）现进入 LLM 或 L3。
 
 **补充项 3（并入 5.9.8）：TOP10 占比未区分证据来源**
 
@@ -982,10 +984,10 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 ```
 5.9.6-B    active 接入对账与冻结              0.5-1.5 天
    ↓
-5.9.6-B.1  缓存语义版本化 + 删 L2  ★新增       0.5-1 天   ← 阻塞 5.9.7 可信度
+5.9.6-B.1  缓存语义版本化 + 删 L2  完成✅      0.5 天(实际)  ← 5.9.7 可信度前提已就位
    ↓
-5.9.6-D    工作包 1/2  scope DoD + schema     1.5-2.5 天
-           工作包 3    scope 校验脚本(降级)     0.5 天
+5.9.6-D    工作包 1/2  scope DoD + schema     1.5-2.5 天 ✅ 已完成（2026-08-06）
+           工作包 3    scope 校验脚本(降级)     0.5 天   ✅ 已完成（2026-08-06）
            工作包 4/5  resolver fail-closed
                        + 9 标签重标            3-4.5 天
            工作包 6/7  active 接入 + 错标回流   2-4 天
@@ -1000,6 +1002,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 
 - 总量与原计划基本持平（compiler 省 2 天，补到审核页面），但 5.9.7 的验收结果从"可能验的是旧缓存"变为可信。
 - 5.9.6-B.1 不依赖 5.9.6-B 的对账结论，两者可并行；若要严格串行，也只增加 0.5 天。
+- 2026-08-06 更新：5.9.6-B.1 已完成✅并部署（实际 0.5 天，落在估期下限）。5.9.6-D 完成后改 `registry_version` 即可让全部旧缓存自动失效，5.9.7 不再需要人工清缓存或挑"没分析过的评论"。部署后首轮分析预期 L1 命中率接近 0（旧 `aspects_json` 缺三个新字段），属预期行为，重跑一轮后恢复复用。
 
 **阶段性人工验证闸门（每阶段结束必须做，防止方向跑偏）：**
 

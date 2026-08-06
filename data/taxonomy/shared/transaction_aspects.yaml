@@ -1,0 +1,37 @@
+# Transaction-layer aspect dimensions
+#
+# These dimensions describe the purchase/fulfillment experience rather than
+# product capabilities. They apply to every online physical-goods sub_category,
+# regardless of product type, and are appended to the taxonomy whitelist at
+# resolve_aspects() time (work package 4/6).
+#
+# This file is the closed enumeration for transaction_universal labels.
+# A label that declares scope_policy=transaction_universal MUST reference a
+# required_transaction_dimension that exists in this file; otherwise validation
+# fails.
+#
+# Design decision (2026-08-06): logistics_issue is defined here as a shared
+# transaction dimension rather than being backfilled into 89 individual taxonomy
+# YAML files. Adding it as a shared definition means one code change in
+# taxonomy_loader.resolve_aspects() (work package 4/6), zero YAML changes, and
+# the 90th sub_category inherits it automatically.
+#
+# When a sub_category taxonomy YAML already declares one of these dimensions
+# (e.g. waders.yaml has logistics_issue, packaging, customer_service), the
+# loader deduplicates by key. Do NOT delete the existing declarations from
+# individual YAML files – they reflect the extract_taxonomy.py sampling reality
+# and may contain sub_category-specific boundary_notes that the shared
+# definition does not override.
+
+dimensions:
+  - key: logistics_issue
+    label_zh: "物流问题"
+    boundary_note: "物流履约相关问题：发货晚、送达晚、到货错发、已使用/脏污、运输损坏等。具体正式问题由 issue_key 区分（如 late_shipping / shipping_damage）。不含产品使用后损坏。"
+
+  - key: customer_service
+    label_zh: "客服"
+    boundary_note: "售后响应、退款、换货、质保注册与卖家沟通体验。客服质量由 formal label type（issue/highlight）区分。"
+
+  - key: packaging
+    label_zh: "包装"
+    boundary_note: "外包装质量、盒内摆放、开箱状态和包装保护。不含到货错发/运输损坏（归 logistics_issue）。"

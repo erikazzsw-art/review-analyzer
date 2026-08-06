@@ -1903,6 +1903,32 @@ M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 X
 
 ## 2026-08-06
 
+### 5.9.6-D 工作包 1/2/3：Scope Governance DoD + Registry Schema 升级 + Scope 校验脚本
+
+- **标题**：正式标签 scope 治理基础设施（零 active 行为变更）
+- **工作量**：2.5 天
+- **需求描述**：
+  - 工作包 1（Scope Governance DoD）：定义交易层/产品层二分模型，三档 scope_policy（transaction_universal / capability_derived / explicit）判定标准，transaction_universal 封闭枚举护栏，capability_derived any-of 语义，负例两种形状及政策最低要求，9 个现有 label 的 scope_policy 落位判断（4 个 transaction_universal + 5 个 capability_derived，0 个 explicit），新增品类/标签零 registry 改动保证机制。产出 `notes/scope-governance-dod.md`（稳定后 git mv 到 docs/）。
+  - 工作包 2（Registry schema 升级）：新建 `data/taxonomy/shared/transaction_aspects.yaml`（3 个交易层维度：logistics_issue / customer_service / packaging）+ 解析与校验；扩展 `review_fragment_label_registry.yaml` schema（9 label 各补 scope_policy / required_transaction_dimension / scope_reason / positive_examples / negative_examples / review_status / blocked_contexts / owner_note，review_status 一律 pending）；扩展 `FormalLabelDefinition` dataclass 与 `_load_label()` 解析（fail-closed：缺必填字段 → ValueError 不进 registry）；实现 effective scope 计算（`compute_effective_scope()` + `compute_effective_scope_matrix()`，基于 89 个 taxonomy YAML 构建 sub_category→aspects 索引，lru_cache 缓存，transaction_universal → 89 子类目，capability_derived → any-of 语义，explicit → 空集）。registry_version 保持 5.9.6-A.1 不 bump（决策 f：bump 会使全量 L1 缓存失效，而 active 路径尚未消费 resolver）。
+  - 工作包 3（scope 校验脚本）：`scripts/validate_label_scope.py`，6 项校验：禁止 wildcard `*`（硬失败）、transaction_universal 维度枚举校验、capability_derived 命中 taxonomy（永不生效标签→失败）、正例最低要求、负例政策最低 + out_of_scope 反查矩阵验证、explicit 子类目存在性。支持 `--dry-run`（失败非零退出码）和 `--print-matrix`（人验收材料）。解析/输出风格对齐 `scripts/sync_taxonomy.py`。
+  - 零 active 行为变更：不改 `resolve_formal_label()` / `_scope_matches()`（工作包 4）、不改 9 个 label 的 `category_keys`/`sub_category_keys` 实际值（工作包 5）、不改 `taxonomy_loader.resolve_aspects()`（工作包 4/6）、不碰 active 路径。
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 后端开发（Python） | 12.0h |
+  | 测试（单元测试，25 新增 + 6 回归 + 9 sync_taxonomy 回归） | 4.0h |
+  | 文档（DoD + PROGRESS + TEST_LOG + CHANGELOG） | 4.0h |
+
+**变更文件（8 个）**：
+- `notes/scope-governance-dod.md`（新增：Scope Governance DoD 规范文档）
+- `data/taxonomy/shared/transaction_aspects.yaml`（新增：3 个交易层维度定义）
+- `data/taxonomy/registry/review_fragment_label_registry.yaml`（扩展：9 label × 8 新字段）
+- `backend_api/app/services/review_fragment_label_catalog.py`（+200 行：TransactionDimension/PositiveExample/NegativeExample dataclass、transaction_aspects.yaml 解析、effective scope 计算）
+- `scripts/validate_label_scope.py`（新增：6 项校验 + --print-matrix）
+- `backend_api/tests/test_review_fragment_label_catalog.py`（6→31 测试：+25 新增）
+- `PROGRESS_V2.md`（工作包 1/2/3 状态更新）
+- `TEST_LOG.md`（+1 修复记录）
+
 ### 5.9.6-B.1 缓存语义版本化与 L2 下线
 
 - **标题**：L1 缓存命中校验纳入语义版本 + 删除 L2 短文本默认结果分支

@@ -3,6 +3,12 @@ source: "5.9.4-approved-label-migration"
 
 # This file is the active-side migration fixture for the labels that were
 # previously embedded in review_fragment_candidate_multimodule.py.
+#
+# Schema version: 5.9.6-D-wp2 (2026-08-06)
+# New fields added: scope_policy, required_transaction_dimension, scope_reason,
+#   positive_examples, negative_examples, review_status, blocked_contexts, owner_note.
+# Retained as-is: category_keys, sub_category_keys (actual scope narrowing is work package 5).
+# registry_version intentionally NOT bumped (decision f: would invalidate all L1 cache).
 labels:
   - key: water_leaks_through
     label_type: issue
@@ -16,6 +22,21 @@ labels:
     boundary_note: "Current-product water ingress through the product body or seams; accessory or pocket leaks stay under accessory_leak."
     aspect_keys: [seam_integrity, waterproof]
     aliases: ["leaks water", "water gets in", "water entered"]
+    scope_policy: capability_derived
+    required_transaction_dimension: null
+    scope_reason: "防水/接缝是产品能力维度，仅对 taxonomy 声明了 waterproof 或 seam_integrity 的 sub_category 生效"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: waders
+        review_text: "My waders leaked at the seam after the first use in the river."
+        expected_key: water_leaks_through
+    negative_examples:
+      - type: out_of_scope
+        sub_category: 保温杯
+        review_text: "The cup leaks when I turn it upside down."
+        why_not: "保温杯漏水是密封性问题，不是产品进水；保温杯 taxonomy 没有 waterproof 或 seam_integrity"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
   - key: accessory_leak
     label_type: issue
@@ -29,6 +50,21 @@ labels:
     boundary_note: "Water enters a product accessory, pocket, phone pouch, or other storage component; do not classify it as overall product waterproofing."
     aspect_keys: [accessory_storage]
     aliases: ["phone case leaked", "phone pouch leaked", "pocket leaked", "accessory leaked"]
+    scope_policy: capability_derived
+    required_transaction_dimension: null
+    scope_reason: "配件收纳/防水是产品能力维度，仅对 taxonomy 声明了 accessory_storage 的 sub_category 生效"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: waders
+        review_text: "The phone pocket on my waders lets water in and my phone got wet."
+        expected_key: accessory_leak
+    negative_examples:
+      - type: out_of_scope
+        sub_category: 保温杯
+        review_text: "The lid doesn't seal properly and water leaks out."
+        why_not: "保温杯没有 accessory_storage 维度，杯盖漏水是密封性问题而非配件进水"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
   - key: missing_accessory
     label_type: issue
@@ -42,6 +78,21 @@ labels:
     boundary_note: "An advertised or expected accessory is absent at delivery; general missing parts remain a separate candidate unless approved."
     aspect_keys: [accessory_storage]
     aliases: ["missing accessory", "missing accessories", "missing hanger"]
+    scope_policy: capability_derived
+    required_transaction_dimension: null
+    scope_reason: "配件完整性是产品能力维度，仅对 taxonomy 声明了 accessory_storage 的 sub_category 生效"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: waders
+        review_text: "The hanger shown in the product pictures wasn't in the box."
+        expected_key: missing_accessory
+    negative_examples:
+      - type: out_of_scope
+        sub_category: 保温杯
+        review_text: "Missing the cleaning brush that was supposed to come with it."
+        why_not: "保温杯没有 accessory_storage 维度，缺少清洁刷是通用缺件而非配件收纳类问题"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
   - key: confusing_size_chart
     label_type: issue
@@ -55,6 +106,21 @@ labels:
     boundary_note: "The seller-provided sizing chart or guide is unclear, misleading, or inaccurate; ordinary fit complaints belong to the applicable fit aspect."
     aspect_keys: [size_fit]
     aliases: ["confusing size chart", "unclear size chart", "misleading size guide"]
+    scope_policy: capability_derived
+    required_transaction_dimension: null
+    scope_reason: "尺码表只对服装/鞋类等需要 fit 的品类有意义，仅对 taxonomy 声明了 size_fit 的 sub_category 生效"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: waders
+        review_text: "The size chart said I needed a medium based on my measurements but it's way too small."
+        expected_key: confusing_size_chart
+    negative_examples:
+      - type: out_of_scope
+        sub_category: 保温杯
+        review_text: "The cup is smaller than I expected from the photos."
+        why_not: "保温杯没有 size_fit 维度，容量预期偏差不是尺码表问题"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
   - key: late_shipping
     label_type: issue
@@ -68,6 +134,21 @@ labels:
     boundary_note: "Shipping or delivery was delayed; use logistics_issue as the evidence dimension and do not classify post-use product failure as logistics."
     aspect_keys: [logistics_issue]
     aliases: ["shipping was late", "shipping late", "delivery was late", "late shipping"]
+    scope_policy: transaction_universal
+    required_transaction_dimension: logistics_issue
+    scope_reason: "发货速度是交易层体验，所有线上实物商品品类均适用"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: waders
+        review_text: "Ordered two weeks ago and it still hasn't shipped. No tracking update."
+        expected_key: late_shipping
+    negative_examples:
+      - type: out_of_boundary
+        sub_category: waders
+        review_text: "The waders started leaking after 3 months of regular use."
+        why_not: "使用后损坏不是物流问题，是产品耐用性问题；发货/物流都没有延误"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
   - key: shipping_damage
     label_type: issue
@@ -81,6 +162,21 @@ labels:
     boundary_note: "The product arrived damaged, used, dirty, or otherwise compromised in transit; packaging-only concerns and post-use damage remain distinct."
     aspect_keys: [logistics_issue]
     aliases: ["arrived damaged", "damaged on arrival", "shipping damage", "package damaged"]
+    scope_policy: transaction_universal
+    required_transaction_dimension: logistics_issue
+    scope_reason: "运输损坏是交易层体验，所有线上实物商品品类均适用"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: 保温杯
+        review_text: "The box arrived crushed and the cup has a big dent in it."
+        expected_key: shipping_damage
+    negative_examples:
+      - type: out_of_boundary
+        sub_category: waders
+        review_text: "The seam came apart after my third fishing trip. Clearly poor quality."
+        why_not: "使用后接缝开裂是产品质量问题（durability/seam_integrity），不是运输损坏"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
   - key: customer_service_unresponsive
     label_type: issue
@@ -94,6 +190,21 @@ labels:
     boundary_note: "Customer support did not respond or did not follow up on a concrete request such as a refund or replacement."
     aspect_keys: [customer_service]
     aliases: ["customer service never answered", "customer support never answered"]
+    scope_policy: transaction_universal
+    required_transaction_dimension: customer_service
+    scope_reason: "客服响应是交易层体验，所有线上实物商品品类均适用"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: waders
+        review_text: "I've emailed the seller three times about a return and no one has replied in two weeks."
+        expected_key: customer_service_unresponsive
+    negative_examples:
+      - type: out_of_boundary
+        sub_category: waders
+        review_text: "The seller sent the wrong size but I decided to keep it anyway since it kind of fits."
+        why_not: "买家没有尝试联系客服解决，不能推断客服不响应"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
   - key: customer_service_helpful
     label_type: highlight
@@ -107,6 +218,21 @@ labels:
     boundary_note: "Customer support provided useful, responsive help for a concrete request; generic service praise without evidence stays out of formal aggregation."
     aspect_keys: [customer_service]
     aliases: ["helpful customer service", "customer service was helpful"]
+    scope_policy: transaction_universal
+    required_transaction_dimension: customer_service
+    scope_reason: "客服质量是交易层体验，所有线上实物商品品类均适用"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: waders
+        review_text: "Customer support quickly sent a replacement pair when mine arrived with a broken buckle. Great service!"
+        expected_key: customer_service_helpful
+    negative_examples:
+      - type: out_of_boundary
+        sub_category: waders
+        review_text: "The product arrived on time and is great quality. Very happy with my purchase."
+        why_not: "赞扬产品和物流体验，没有提及任何客服互动；不能推断客服服务好"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
   - key: keeps_water_out
     label_type: highlight
@@ -120,6 +246,21 @@ labels:
     boundary_note: "The current product kept the user or product contents dry; accessory-only waterproofing belongs to the accessory_storage dimension."
     aspect_keys: [waterproof]
     aliases: ["kept dry", "kept me dry", "no leaks"]
+    scope_policy: capability_derived
+    required_transaction_dimension: null
+    scope_reason: "防水是产品能力维度，仅对 taxonomy 声明了 waterproof 的 sub_category 生效"
+    blocked_contexts: []
+    positive_examples:
+      - sub_category: waders
+        review_text: "Stayed completely dry during a full day of fishing in the rain and wading in the river."
+        expected_key: keeps_water_out
+    negative_examples:
+      - type: out_of_scope
+        sub_category: 保温杯
+        review_text: "Keeps my coffee hot for 8 hours and doesn't leak at all."
+        why_not: "保温杯没有 waterproof 维度，保温/不漏是保温杯自有 aspect（insulation_performance/seal）而非产品防水"
+    review_status: pending
+    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
 
 # These are taxonomy evidence dimensions, not seller-facing issue/highlight
 # identities. shipping_damage is intentionally only an alias to logistics_issue.
