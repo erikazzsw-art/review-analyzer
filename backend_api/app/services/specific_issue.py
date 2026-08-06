@@ -4338,6 +4338,92 @@ def customer_highlight_tags_from_aspects(
     return ",".join(customer_highlight_tags_for_comment(comment, locale=locale)[:limit])
 
 
+# ---------------------------------------------------------------------------
+# 5.9.6-D WP6: resolver shadow pass (decision m)
+# ---------------------------------------------------------------------------
+
+
+def _run_label_registry_shadow_pass(
+    decorated: dict[str, Any],
+    flag: Any | None,
+) -> None:
+    """Run the resolver against decorated labels in shadow mode.
+
+    When flag is None or mode=off, this is a no-op.
+    When flag is shadow/enforce, call the resolver for each occurrence's
+    canonical key and record differences. The decorated comment is NOT
+    modified — this is observation only per decision m.
+    """
+    if flag is None:
+        return
+
+    try:
+        resolver_active = getattr(flag, "resolver_active", False)
+    except Exception:
+        return
+    if not resolver_active:
+        return
+
+    # Extract context from the decorated comment
+    aj = coerce_aspects_json(decorated.get("aspects_json"))
+    category = ""
+    sub_category = ""
+    if aj:
+        category = str(aj.get("category") or decorated.get("category") or "")
+        sub_category = str(aj.get("sub_category") or decorated.get("sub_category") or "")
+        if not sub_category:
+            sub_category = str(decorated.get("sub_category") or "")
+
+    if not sub_category:
+        # Without context we can't run the resolver meaningfully
+        return
+
+    from backend_api.app.services.label_registry_frontstage import (
+        ResolverShadowDiff,
+        record_shadow_diff,
+    )
+    from backend_api.app.services.review_fragment_label_catalog import (
+        ResolutionRejectReason,
+        resolve_formal_label,
+    )
+
+    # Collect all canonical keys from issue and highlight occurrences
+    seen_keys: set[tuple[str, str]] = set()  # (key, label_type)
+
+    for occurrence in iter_specific_issue_occurrences(decorated):
+        canonical = str(occurrence.get("canonical_issue_key") or "").strip()
+        if canonical:
+            seen_keys.add((canonical, "issue"))
+
+    for occurrence in iter_customer_highlight_occurrences(decorated):
+        canonical = str(occurrence.get("canonical_highlight_key") or "").strip()
+        if canonical:
+            seen_keys.add((canonical, "highlight"))
+
+    for label_key, label_type in seen_keys:
+        result = resolve_formal_label(
+            label_key,
+            category_key=category,
+            sub_category_key=sub_category,
+            label_type=label_type,
+        )
+        if not result.is_resolved and result.reject_reason:
+            # Only record as diff if the resolver explicitly rejects.
+            # unknown_key is expected for old-catalog labels not yet in
+            # the registry — skip those to avoid noise.
+            if result.reject_reason == ResolutionRejectReason.UNKNOWN_KEY.value:
+                continue
+            record_shadow_diff(
+                ResolverShadowDiff(
+                    label_key=label_key,
+                    sub_category=sub_category,
+                    category=category,
+                    reject_reason=result.reject_reason,
+                    context=f"would be rejected in enforce mode ({result.reject_reason})",
+                )
+            )
+
+
 def decorate_comment_customer_labels(
     comment: dict[str, Any],
     locale: str = "en",
@@ -4348,6 +4434,7 @@ def decorate_comment_customer_labels(
     v2_llm_output: str | dict[str, Any] | list[dict[str, Any]] | None = None,
     review_signal_frontstage_flag: Any | None = None,
     review_signal_stored_shadow: dict[str, Any] | None = None,
+    label_registry_flag: Any | None = None,
 ) -> dict[str, Any]:
     decorated = dict(comment)
     aj = coerce_aspects_json(decorated.get("aspects_json"))
@@ -4412,4 +4499,8 @@ def decorate_comment_customer_labels(
     decorated["customer_issue_tags"] = ", ".join(customer_issue_tags_for_comment(decorated, locale=locale))
     decorated["customer_highlight_tags"] = ", ".join(customer_highlight_tags_for_comment(decorated, locale=locale))
     decorated["customer_label_schema_version"] = CUSTOMER_LABEL_SCHEMA_VERSION
+
+    # --- 5.9.6-D WP6: resolver shadow pass (decision m) ---
+    _run_label_registry_shadow_pass(decorated, label_registry_flag)
+
     return decorated

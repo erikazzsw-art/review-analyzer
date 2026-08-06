@@ -59,8 +59,13 @@ REVIEW_STATUSES = frozenset({REVIEW_STATUS_PENDING, REVIEW_STATUS_APPROVED, REVI
 class ResolutionRejectReason(enum.Enum):
     """Structured reason for resolver rejection.
 
-    Gate ordering (fixed, cheapest-first):
-      unknown_key → not_approved → out_of_scope → blocked_context → insufficient_evidence
+    Gate ordering inside the resolver (fixed, cheapest-first):
+      unknown_key → not_approved → out_of_scope → blocked_context
+
+    INSUFFICIENT_EVIDENCE is NOT produced by the resolver. It is produced by
+    callers that apply the 5.9.3 evidence gate BEFORE calling the resolver.
+    The resolver resolves identity and scope only; evidence quality is the
+    caller's responsibility.
 
     These values are the input contract for work package 7 (mislabel reflux).
     Do not rename or reorder without updating the reflux pipeline.
@@ -635,8 +640,6 @@ def _resolve_formal_label_impl(
     sub_category_key: str,
     label_type: str | None = None,
     approved_only: bool = True,
-    evidence_span: str | None = None,
-    review_text: str | None = None,
 ) -> LabelResolutionResult:
     """Core resolution logic with structured reject reasons.
 
@@ -645,7 +648,16 @@ def _resolve_formal_label_impl(
       2. not_approved     — label found but status != approved
       3. out_of_scope     — label approved but sub_category not in effective scope
       4. blocked_context  — in scope but sub_category explicitly blocked
-      5. insufficient_evidence — evidence gate (deferred to WP6; always passes for now)
+
+    Contract:
+      Callers MUST pass evidence gate (5.9.3 validate_review_fragment_evidence)
+      BEFORE calling this function. This function resolves identity and scope
+      only; it does NOT judge evidence quality. The INSUFFICIENT_EVIDENCE
+      reject reason is produced by callers, not by the resolver.
+
+      Passing evidence_span or review_text to this function is a TypeError —
+      the resolver has no use for them and accepting them would encourage
+      callers to skip the upstream evidence gate.
     """
     requested = _clean(key_or_alias)
     if not requested:
@@ -734,14 +746,6 @@ def _resolve_formal_label_impl(
             label=None,
             reject_reason=ResolutionRejectReason.BLOCKED_CONTEXT.value,
         )
-
-    # --- Gate 5: insufficient_evidence ---
-    # Deferred to WP6: the resolver currently lacks fragment/review context.
-    # When wired into the active read path (WP6), callers will pass
-    # evidence_span + review_text, and the 5.9.3 evidence gate
-    # (review_fragment_evidence_gate.py) will be applied here.
-    # For now, this gate always passes.
-    _ = (evidence_span, review_text)  # reserved for WP6
 
     resolved = (
         replace(matched_label, matched_alias=matched_alias)

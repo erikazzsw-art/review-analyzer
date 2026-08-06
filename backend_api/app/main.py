@@ -22,6 +22,7 @@ from backend_api.app.routes.downloads import router as downloads_router
 from backend_api.app.routes.export import router as export_router
 from backend_api.app.routes.feedback import router as feedback_router
 from backend_api.app.routes.golden_set import router as golden_set_router
+from backend_api.app.routes.label_review import router as label_review_router
 from backend_api.app.routes.me import router as me_router
 from backend_api.app.routes.products import router as products_router
 from backend_api.app.routes.qa import router as qa_router
@@ -89,6 +90,7 @@ app.include_router(calibration_router)
 app.include_router(analytics_router)
 app.include_router(feedback_router)
 app.include_router(golden_set_router)
+app.include_router(label_review_router)
 app.include_router(asin_watchlist_router)
 app.include_router(copywriter_router)
 app.include_router(downloads_router)

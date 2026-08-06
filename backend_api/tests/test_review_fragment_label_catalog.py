@@ -796,3 +796,42 @@ def test_resolver_transaction_universal_in_scope() -> None:
     assert result.is_resolved
     assert result.label is not None
     assert result.label.key == "late_shipping"
+
+
+# ---------------------------------------------------------------------------
+# Decision l: resolver must not accept evidence_span / review_text
+# ---------------------------------------------------------------------------
+
+
+def test_resolver_rejects_evidence_span_param() -> None:
+    """Decision l: resolver accepts no evidence_span kwarg → TypeError."""
+    with pytest.raises(TypeError):
+        resolve_formal_label(  # type: ignore[call-arg]
+            "water_leaks_through",
+            category_key="outdoor",
+            sub_category_key="waders",
+            evidence_span="leaks",
+        )
+
+
+def test_resolver_rejects_review_text_param() -> None:
+    """Decision l: resolver accepts no review_text kwarg → TypeError."""
+    with pytest.raises(TypeError):
+        resolve_formal_label(  # type: ignore[call-arg]
+            "water_leaks_through",
+            category_key="outdoor",
+            sub_category_key="waders",
+            review_text="Boots leaked on first use.",
+        )
+
+
+def test_resolver_rejects_both_evidence_params() -> None:
+    """Decision l: resolver accepts neither evidence param → TypeError."""
+    with pytest.raises(TypeError):
+        resolve_formal_label(  # type: ignore[call-arg]
+            "water_leaks_through",
+            category_key="outdoor",
+            sub_category_key="waders",
+            evidence_span="leaks",
+            review_text="Boots leaked.",
+        )

@@ -25,6 +25,10 @@ from backend_api.app.services.customer_label_v2_frontstage import (
     customer_label_v2_frontstage_cache_key,
     customer_label_v2_frontstage_flag_from_env,
 )
+from backend_api.app.services.label_registry_frontstage import (
+    label_registry_frontstage_cache_key,
+    label_registry_frontstage_flag_from_env,
+)
 from backend_api.app.services.locale import get_analysis_locale
 from backend_api.app.services.review_signal_frontstage import (
     review_signal_frontstage_cache_key,
@@ -66,10 +70,12 @@ def _frontstage_read_path_cache_key(
     *,
     customer_label_v2_flag: Any,
     review_signal_flag: Any,
+    label_registry_flag: Any | None = None,
 ) -> str:
     return (
         f"customer_label_v2={customer_label_v2_frontstage_cache_key(customer_label_v2_flag)}|"
-        f"review_signal={review_signal_frontstage_cache_key(review_signal_flag)}"
+        f"review_signal={review_signal_frontstage_cache_key(review_signal_flag)}|"
+        f"label_registry={label_registry_frontstage_cache_key(label_registry_flag)}"
     )
 
 
@@ -131,6 +137,7 @@ def get_session_results(
     locale = get_analysis_locale(request)
     v2_frontstage_flag = customer_label_v2_frontstage_flag_from_env()
     review_signal_frontstage_flag = review_signal_frontstage_flag_from_env()
+    label_registry_flag = label_registry_frontstage_flag_from_env()
     comments = get_comments(user_id, session_id=session_id)
     for c in comments:
         c.pop("embedding", None)
@@ -140,6 +147,7 @@ def get_session_results(
             locale=locale,
             v2_frontstage_flag=v2_frontstage_flag,
             review_signal_frontstage_flag=review_signal_frontstage_flag,
+            label_registry_flag=label_registry_flag,
         )
         for c in comments
     ]
@@ -187,6 +195,7 @@ def get_aggregated_results(
     locale = get_analysis_locale(request)
     v2_frontstage_flag = customer_label_v2_frontstage_flag_from_env()
     review_signal_frontstage_flag = review_signal_frontstage_flag_from_env()
+    label_registry_flag = label_registry_frontstage_flag_from_env()
     comments = get_comments(
         user_id,
         product_id=product_id,
@@ -204,6 +213,7 @@ def get_aggregated_results(
             locale=locale,
             v2_frontstage_flag=v2_frontstage_flag,
             review_signal_frontstage_flag=review_signal_frontstage_flag,
+            label_registry_flag=label_registry_flag,
         )
         for c in comments
     ]
@@ -226,6 +236,7 @@ def get_aggregated_results(
             frontstage_read_path_key=_frontstage_read_path_cache_key(
                 customer_label_v2_flag=v2_frontstage_flag,
                 review_signal_flag=review_signal_frontstage_flag,
+                label_registry_flag=label_registry_flag,
             ),
         )
         if modules_raw:

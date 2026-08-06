@@ -43,6 +43,74 @@ jobs:
       - name: Verify worker jobs load
         run: python -c "from workers.jobs import process_upload_job; print('Worker jobs loaded OK')"
 
+  label-scope-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Validate label scope (dry-run, must pass)
+        run: python3 scripts/validate_label_scope.py --dry-run
+
+  resolver-gate-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml pytest
+
+      - name: Wildcard禁止 — category_keys/sub_category_keys must not exist
+        run: |
+          python3 -c "
+          from backend_api.app.services.review_fragment_label_catalog import FormalLabelDefinition
+          assert not hasattr(FormalLabelDefinition, 'category_keys'), 'category_keys field must not exist'
+          assert not hasattr(FormalLabelDefinition, 'sub_category_keys'), 'sub_category_keys field must not exist'
+          print('OK: no wildcard fields on FormalLabelDefinition')
+          "
+
+      - name: Resolver缺category/sub_category → TypeError
+        run: |
+          python3 -m pytest backend_api/tests/test_review_fragment_label_catalog.py \
+            -k "test_resolver_missing_category_key_raises_typeerror or test_resolver_missing_sub_category_key_raises_typeerror" \
+            -v
+
+      - name: ResolutionRejectReason 各有触发用例
+        run: |
+          python3 -m pytest backend_api/tests/test_review_fragment_label_catalog.py \
+            -k "test_resolver_unknown_key_rejection or test_resolver_not_approved_rejection or test_resolver_out_of_scope_rejection or test_resolver_blocked_context_rejection" \
+            -v
+
+      - name: Effective scope 数量断言 (16/5/5/1/1/89×4)
+        run: |
+          python3 -m pytest backend_api/tests/test_review_fragment_label_catalog.py \
+            -k "test_effective_scope_confusing_size_chart_gives_16 or test_effective_scope_waterproof_gives_5 or test_effective_scope_accessory_storage_gives_1 or test_effective_scope_transaction_universal_covers_all" \
+            -v
+
+      - name: 跨类目负例 — confusing_size_chart in pet health, water_leaks_through in non-outdoor
+        run: |
+          python3 -m pytest backend_api/tests/test_review_fragment_label_catalog.py \
+            -k "test_resolver_out_of_scope_rejection" \
+            -v
+
+      - name: Resolver rejects evidence params → TypeError (decision l)
+        run: |
+          python3 -m pytest backend_api/tests/test_review_fragment_label_catalog.py \
+            -k "test_resolver_rejects" \
+            -v
+
   frontend-check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
