@@ -36,7 +36,7 @@ aspects:
   top_phrases: []
   sample_reviews: []
 
-- key: ease_of_use
+- key: lid_operation
   label_zh: 开盖便捷性
   total: 0
   positive_count: 0

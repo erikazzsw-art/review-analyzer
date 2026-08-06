@@ -596,7 +596,7 @@
 
 ### 5.9 标签准确性：评论片段理解与多模块分流
 
-**当前状态：5.9.0-5.9.6-A 已完成✅；5.9.4 candidate / other + 多模块承接及 5.9.4.1-A/B 返修完成，5.9.5 轻量校验完成；5.9.5.1 字段语义收口和 5.9.6-A 标签定义收编已完成：正式标签身份收口为 `aspect_key` + `issue_key` / `highlight_key`，统一 Catalog/resolver 已建立，`action_label_key` 已从正式 artifact 删除，formal `normalized_label` 已清理，`shipping_damage` / `late_shipping` 均归入上层 `aspect_key=logistics_issue` 并用具体 `issue_key` 区分；5.9.6-B active 接入、5.9.6-C 前台提示及 `sync_taxonomy.py` 前置工具尚未开始。**
+**当前状态：5.9.0-5.9.6-A 已完成✅，5.9.6 前置工具 `sync_taxonomy.py` 已完成✅；5.9.4 candidate / other + 多模块承接及 5.9.4.1-A/B 返修完成，5.9.5 轻量校验完成；5.9.5.1 字段语义收口和 5.9.6-A 标签定义收编已完成：正式标签身份收口为 `aspect_key` + `issue_key` / `highlight_key`，统一 Catalog/resolver 已建立，`action_label_key` 已从正式 artifact 删除，formal `normalized_label` 已清理，`shipping_damage` / `late_shipping` 均归入上层 `aspect_key=logistics_issue` 并用具体 `issue_key` 区分；5.9.6-B active 接入和 5.9.6-C 前台提示尚未开始。**
 
 注意：waders 专项规则不再作为新 5.9 主线扩张，只作为短期前台安全补丁保留；后续在 5.9.6 后做 category-specific compatibility 抽离，在 5.9.7 验收后进入分批删除。
 
@@ -642,6 +642,7 @@
 - 5.9.5 轻量校验完成✅。
 - 5.9.5.1 字段语义收口完成✅：正式行必须有 `issue_key` 或 `highlight_key`；`action_label_key` 不再进入正式输出；formal `normalized_label` 不再参与正式聚合和展示；`shipping_damage` 作为正式 `issue_key`，与 `late_shipping` 一起归入上层 `aspect_key=logistics_issue`；行动中心不依赖 `recommended_action_key`。
 - 5.9.6-A 标签定义收编完成✅：已建立独立 YAML registry 与统一 Catalog/resolver，收编 approved label、aspect mapping、alias、display mapping；resolver 提供正式 key、类型、品类范围、状态、展示文本、边界说明和版本；人工审核材料已提交并获 Erika 审批，无意见。
+- 5.9.6 前置工具 `sync_taxonomy.py` 完成✅：已新增安全 YAML→DB diff/sync CLI，支持 dry-run、按 category 同步、删除候选默认拦截、`--allow-delete` 显式删除和写入成功后清理 taxonomy loader cache；旧 UPSERT 导入脚本保留不归档。
 
 **已归档内容：**
 
@@ -731,7 +732,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 | 5.9.5 轻量校验 | 完成✅ | 先用低成本方式稳定输出 | 已新增本地 artifact 校验：六模块枚举、旧 module 兼容输入、`module` / `aspect_key` / `polarity` / `evidence_span` / `issue_key` / `highlight_key` / `action_label_key` / `can_aggregate` / `reject_reason` 一致性；失败本地降级为 `audit_filter/schema_invalid`，不引入第二次 AI 调用，不接 active 路径 | 2-4 天 | JSON/schema 失败不阻塞整批分析；失败项可追踪原因；旧中间 module 不进入正式 artifact；5.9.0 active import / worker import / export read path 小复核已列为后置动作 |
 | 5.9.5.1 字段语义收口 | 完成✅ | 在 5.9.6 接前台前消除 `action_label_key` / `normalized_label` 语义混乱 | 已完成实验 artifact、校验器、fixture、测试、taxonomy 和样本文档收口：核心标签身份只保留 `aspect_key`、`issue_key`、`highlight_key`；正式输出删除 `action_label_key`；formal `normalized_label` 不再作为正式业务字段、formal 聚合 key 或 display 索引；正式行必须有 `issue_key` 或 `highlight_key`；`shipping_damage` 必须映射为正式 `issue_key=shipping_damage`；`late_shipping` / `shipping_damage` 均归入上层 `aspect_key=logistics_issue`；行动中心继续使用 `issue_key`、证据、趋势和 `suggested_action` 文本，不新增 `recommended_action_key` | 0.5-1 天 | 相关测试通过；审批样本文档已补评论原文；5.9.6-A 已在此语义基础上完成统一 Catalog/resolver 收编，active results / export / insight 接入仍留给 5.9.6-B/C |
 | 5.9.6-A 标签定义收编 | 完成✅ | 将 5.9.4 实验模块中的 approved label、aspect mapping、alias 和 display mapping 作为 fixture/迁移来源，收编到统一 Catalog/resolver | 新增独立 registry fixture `data/taxonomy/registry/review_fragment_label_registry.yaml` 和 `review_fragment_label_catalog.py`；从实验模块迁移 9 个 approved formal label、aspect alias、display mapping 和物流边界；实验模块改由 resolver 获取正式定义，active 主线不直接依赖实验模块标签常量 | 1 天 | resolver 可解析 `issue_key` / `highlight_key`；alias 可映射 canonical key；`late_shipping` / `shipping_damage` 均归入 `aspect_key=logistics_issue`；registry 核心模型不包含 `action_label_key`、formal `normalized_label`、`recommended_action_key`；相关静态隔离和测试通过 |
-| 5.9.6 前置工具：sync_taxonomy.py | 未开始 | 替换两个旧 YAML→DB 导入脚本，提供安全的 taxonomy 入库工具（5.9.6-B 前置） | 扫描 `data/taxonomy/v1.0/**/*.yaml` → 对比 DB `category_aspect_taxonomy` → 生成 diff（新增/修改/删除）→ 确认后执行。`--dry-run` 先预览；删除需 `--allow-delete` 显式确认；支持 `--category` 逐品类同步；执行后自动刷新 LRU 缓存。替换 `import_taxonomy_to_db.py` 和 `import_v4t1_assets.py`（功能重叠，均只做 UPSERT，无 diff、无删除检测） | 0.5 天 | `--dry-run` 可预览完整 diff；不传 `--allow-delete` 不删任何 DB 行；替换后两个旧脚本归档到 `scratch/`；不影响线上（纯本地开发工具） |
+| 5.9.6 前置工具：sync_taxonomy.py | 完成✅ | 替换两个旧 YAML→DB 导入脚本，提供安全的 taxonomy 入库工具（5.9.6-B 前置） | 新增 `scripts/sync_taxonomy.py`：扫描 `data/taxonomy/v1.0/**/*.yaml`，严格解析/校验 taxonomy YAML，按 `category_aspect_taxonomy` 的 `(sub_category, aspect_key, taxonomy_version)` 唯一身份生成新增/修改/删除候选/无变化 diff；支持 `--dry-run`、`--category <category_key>`、`--allow-delete`；不传 `--allow-delete` 只报告删除候选，不删 DB；写入成功后调用 `taxonomy_loader.clear_cache()`；旧 `import_taxonomy_to_db.py` / `import_v4t1_assets.py` 当前保留不移动、不删除，新工具作为后续首选同步入口；旧脚本删除时机标记为 5.9.6-B/C 完成、全量 dry-run/sync 通过、active/worker/export 无依赖确认且 `bad_cases` 导入替代口径明确后，再作为 5.9.8 小批次清理/归档项处理；已治理 `data/taxonomy/v1.0/kitchen/保温杯.yaml` 重复 `ease_of_use`，将特有“开盖便捷性”改为 `lid_operation`，保留通用 `ease_of_use / 易用性` | 0.5 天 | focused tests 9 passed；5.9.2/5.9.6-A 相关回归 12 passed；ruff、compileall、`git diff --check` 通过；静态搜索确认 active path 不 import `sync_taxonomy.py`；真实资产全量 parser 预检通过：89 个 YAML / 1541 行 / 89 个 sub_category |
 | 5.9.6-B active 接入 | 未开始 | 把新 artifact 接入 active，提升前台可信度 | 正式 artifact 只使用 `aspect_key` + `issue_key` / `highlight_key`，不再输出 `action_label_key` 或 formal `normalized_label`；结果页 / 导出 / insight 改读新 artifact，TOP10 只统计 `can_aggregate=true`；行动中心以 `canonical_issue_key`、证据和趋势生成现有 `suggested_action`，不要求 `recommended_action_key` | 1-2 天 | active artifact 的 issue/highlight/display/status/version 均来自统一 resolver；`rg` / import 检查确认 active 不依赖实验模块标签常量；正式行都有 `issue_key` 或 `highlight_key`；results/export/insight 读取同一新 artifact；行动中心可用 issue key 创建行动 |
 | 5.9.6-C 前台提示 | 未开始 | 展示原文证据、低置信提醒和 `other` 占比；waders 旧规则冻结 | 展示代表原文证据、低置信提醒和 `other` 占比；waders 旧规则继续作为冻结安全补丁，不新增规则、不删除逻辑 | 0.5-1 天 | 用户可见原文证据片段；低置信标签有明显提示；`other` 占比透明展示；waders 旧补丁未扩大 |
 | 5.9.7 小样本验收 | 未开始 | 用真实样本验证标签注册中心、active 链路和行动中心衔接 | 选 30-50 条真实评论，额外覆盖 waders hard cases；检查错标、漏标、无中生有、模块分错、正式 issue/highlight 是否符合产品直觉；检查 alias、品类范围、boundary_note、approved/candidate/deprecated/blocked 状态、display mapping 和 `registry_version`；从一个正式 issue 创建行动，确认行动中心只依赖 issue key、证据、趋势和 AI `suggested_action` | 3-5 天 | 无中生有显著下降；所有正式 TOP10 行都有正式 issue/highlight 身份；实验常量不影响 active；alias 和边界没有明显错配；行动中心能正确创建、展示和复盘 issue 对应行动；waders hard cases 被新 fragment 链路覆盖；达到可开始分批删除旧冗余的最低门槛 |
@@ -860,7 +861,21 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 实验模块改造：`review_fragment_candidate_multimodule.py` 的 approved label、aspect alias、display mapping 和 highlight mapping 改为通过 resolver 获取；静态检查确认 active 主线不直接导入实验模块标签常量。
 - 人工审核：新增 `docs/5.9.6-A-label-registry-human-review.md`，附 11 条样本评论原文、预期正式 / candidate 结果、alias 和物流口径检查；Erika 已审批通过且无意见。
 - 验证结果：focused pytest `30 passed`；相关回归 pytest `94 passed`；ruff、compileall、`git diff --check` 和静态搜索均通过。实现提交 `15399ba Implement 5.9.6-A label registry resolver` 已推送到 `origin/develop`。
-- 后续边界：`sync_taxonomy.py`、5.9.6-B active 接入、5.9.6-C 前台提示和 5.9.7 小样本验收仍未开始。
+- 后续边界：5.9.6-B active 接入、5.9.6-C 前台提示和 5.9.7 小样本验收仍未开始。
+
+**5.9.6 前置工具：sync_taxonomy.py（2026-08-06）：完成✅**
+
+- 任务边界：只实现 taxonomy YAML → `category_aspect_taxonomy` 的安全同步工具，不实现 5.9.6-B active results / export / insight 接入，也不实现 5.9.6-C 前台提示。
+- 新增工具：`scripts/sync_taxonomy.py`。默认扫描 `data/taxonomy/v1.0/**/*.yaml`，从路径目录推导 `category_key`，读取 `sub_category`、`version` / `taxonomy_version`（缺省为 `v1.0`）和 `aspects`，并映射到 DB 字段 `sub_category`、`aspect_key`、`label_zh`、`boundary_note`、统计计数、`negative_rate`、`top_phrases`、`sample_review_ids`、`taxonomy_version`。
+- Diff 能力：按表唯一身份 `(sub_category, aspect_key, taxonomy_version)` 对比 YAML 与 DB，输出新增、修改、删除候选和无变化；修改 diff 会列出变更字段。
+- 安全边界：`--dry-run` 只读取并输出 diff，不调用写库函数；非 dry-run 会先打印写入统计摘要；删除候选默认只报告，只有同时存在删除候选且显式传入 `--allow-delete` 时才执行 `DELETE`；YAML 解析失败、字段缺失、字段类型非法、重复 aspect key 或 `aspect_count` 不一致都会 fail closed，且在连接 / 写库前停止。
+- `--category <category_key>`：只扫描指定目录，并用静态 `sub_category_to_category` 映射加本次 YAML sub_category 限定 DB 对比范围，避免跨品类误删。
+- Cache refresh：成功产生 DB 写入后调用现有 `backend_api.app.services.taxonomy_loader.clear_cache()`，清理 5.9.2 whitelist 依赖的 LRU 读取缓存；dry-run、无实际写入或 fail-closed 时不刷新。
+- 旧脚本处理：已检查 `data/taxonomy/import_taxonomy_to_db.py` 与 `scripts/import_v4t1_assets.py`，二者都是 UPSERT 型旧入口；本次不移动、不删除、不改写旧脚本，只在新工具 docstring 明确后续 taxonomy DB sync 应优先使用 `sync_taxonomy.py`。当前不删的原因：`scripts/import_v4t1_assets.py` 仍含 `bad_cases` CSV 导入，`data/taxonomy/import_taxonomy_to_db.py` 仍有历史 `--env dev|prod` 手动流程，立刻删除会扩大 5.9.6 前置任务风险。
+- 旧脚本删除触发条件：5.9.6-B active 接入和 5.9.6-C 前台提示完成后，先用 `sync_taxonomy.py` 完成全量 dry-run / 必要同步并确认 active upload、worker、results、export 均无旧脚本依赖；同时明确 `bad_cases` 导入继续保留、迁移或废弃的替代口径。满足这些条件后，再在 5.9.8 商业化前补强的“小批次旧冗余清理”中单独归档或删除旧 taxonomy 导入入口。
+- 真实资产预检：已治理 `data/taxonomy/v1.0/kitchen/保温杯.yaml` 里重复 `ease_of_use`，将特有“开盖便捷性”改为 `lid_operation`，保留通用 `ease_of_use / 易用性`；全量 parser 预检通过，当前 `data/taxonomy/v1.0` 共 89 个 YAML / 1541 行 / 89 个 sub_category，版本均为 `v1.0`。
+- 验证结果：`backend_api/tests/test_sync_taxonomy.py` focused tests `9 passed`；`backend_api/tests/test_review_fragment_taxonomy_whitelist.py` + `backend_api/tests/test_review_fragment_label_catalog.py` 回归 `12 passed`；ruff、compileall、`git diff --check` 和静态搜索通过；确认 active path 未默认 import `sync_taxonomy.py`。
+- 后续边界：5.9.6-B active 接入、5.9.6-C 前台提示、行动中心接入和前台 UI 均未处理。
 
 **阶段性人工验证闸门（每阶段结束必须做，防止方向跑偏）：**
 
