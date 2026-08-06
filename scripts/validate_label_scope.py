@@ -84,29 +84,26 @@ def _check_no_wildcard_in_scope(
     report: ValidationReport,
     labels: tuple[FormalLabelDefinition, ...],
 ) -> None:
-    """Check 1: data model must not contain "*" wildcard.
+    """Check 1: category_keys / sub_category_keys must NOT exist on label definitions.
 
-    While category_keys/sub_category_keys still contain ["*"] in the current
-    YAML (to be fixed in work package 5), we validate that no NEW wildcard
-    patterns are introduced. This check explicitly flags all occurrences of
-    "*" in scope-related fields as failures.
+    Per decision h: these fields were deleted from FormalLabelDefinition in WP5.
+    Scope is now governed entirely by scope_policy + taxonomy. If a label
+    definition somehow still carries these fields, it's a failure.
     """
     for label in labels:
-        if "*" in label.category_keys:
+        if hasattr(label, "category_keys"):
             report.fail(
                 "no-wildcard",
                 label.key,
-                f"category_keys contains '*' wildcard: {list(label.category_keys)}. "
-                f"scope_policy={label.scope_policy} — scope is now governed by "
-                f"scope_policy + taxonomy, not by wildcard lists.",
+                "category_keys field still exists on label definition. "
+                "Per decision h, scope is governed by scope_policy + taxonomy.",
             )
-        if "*" in label.sub_category_keys:
+        if hasattr(label, "sub_category_keys"):
             report.fail(
                 "no-wildcard",
                 label.key,
-                f"sub_category_keys contains '*' wildcard: {list(label.sub_category_keys)}. "
-                f"scope_policy={label.scope_policy} — scope is now governed by "
-                f"scope_policy + taxonomy, not by wildcard lists.",
+                "sub_category_keys field still exists on label definition. "
+                "Per decision h, scope is governed by scope_policy + taxonomy.",
             )
 
 

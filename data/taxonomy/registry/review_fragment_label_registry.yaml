@@ -1,4 +1,4 @@
-registry_version: "review-fragment-label-registry.5.9.6-A.1"
+registry_version: "review-fragment-label-registry.5.9.6-D.1"
 source: "5.9.4-approved-label-migration"
 
 # This file is the active-side migration fixture for the labels that were
@@ -7,14 +7,12 @@ source: "5.9.4-approved-label-migration"
 # Schema version: 5.9.6-D-wp2 (2026-08-06)
 # New fields added: scope_policy, required_transaction_dimension, scope_reason,
 #   positive_examples, negative_examples, review_status, blocked_contexts, owner_note.
-# Retained as-is: category_keys, sub_category_keys (actual scope narrowing is work package 5).
-# registry_version intentionally NOT bumped (decision f: would invalidate all L1 cache).
+# category_keys and sub_category_keys removed (WP5): scope is now governed by scope_policy + taxonomy.
+# registry_version bumped to 5.9.6-D.1 (decision j): cache invalidation is expected; see PROGRESS_V2.
 labels:
   - key: water_leaks_through
     label_type: issue
     formal_module: product_issue
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Water Leaks Through"
@@ -36,13 +34,11 @@ labels:
         review_text: "The cup leaks when I turn it upside down."
         why_not: "保温杯漏水是密封性问题，不是产品进水；保温杯 taxonomy 没有 waterproof 或 seam_integrity"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys；scope 由 scope_policy + taxonomy 计算"
 
   - key: accessory_leak
     label_type: issue
     formal_module: product_issue
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Accessory Leaks"
@@ -64,13 +60,11 @@ labels:
         review_text: "The lid doesn't seal properly and water leaks out."
         why_not: "保温杯没有 accessory_storage 维度，杯盖漏水是密封性问题而非配件进水"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys；scope 由 scope_policy + taxonomy 计算"
 
   - key: missing_accessory
     label_type: issue
     formal_module: product_issue
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Missing Accessory"
@@ -92,23 +86,21 @@ labels:
         review_text: "Missing the cleaning brush that was supposed to come with it."
         why_not: "保温杯没有 accessory_storage 维度，缺少清洁刷是通用缺件而非配件收纳类问题"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys；scope 由 scope_policy + taxonomy 计算"
 
   - key: confusing_size_chart
     label_type: issue
     formal_module: product_issue
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Confusing Size Chart"
       zh: "尺码表不清"
-    boundary_note: "The seller-provided sizing chart or guide is unclear, misleading, or inaccurate; ordinary fit complaints belong to the applicable fit aspect."
-    aspect_keys: [size_fit]
+    boundary_note: "The seller-provided sizing chart or guide is unclear, misleading, or inaccurate; only applies to products sold in discrete sizes (S/M/L or numeric) where the buyer must choose among sizes; ordinary fit complaints belong to size_fit."
+    aspect_keys: [size_chart]
     aliases: ["confusing size chart", "unclear size chart", "misleading size guide"]
     scope_policy: capability_derived
     required_transaction_dimension: null
-    scope_reason: "尺码表只对服装/鞋类等需要 fit 的品类有意义，仅对 taxonomy 声明了 size_fit 的 sub_category 生效"
+    scope_reason: "尺码表仅对按离散码数售卖的品类有意义（约16个sub_category声明了size_chart），区别于size_fit（通用尺寸匹配）"
     blocked_contexts: []
     positive_examples:
       - sub_category: waders
@@ -116,17 +108,15 @@ labels:
         expected_key: confusing_size_chart
     negative_examples:
       - type: out_of_scope
-        sub_category: 保温杯
-        review_text: "The cup is smaller than I expected from the photos."
-        why_not: "保温杯没有 size_fit 维度，容量预期偏差不是尺码表问题"
+        sub_category: Cosequin for Dogs
+        review_text: "The tablets are too big for my small dog to swallow comfortably."
+        why_not: "宠物保健品（Cosequin）不按离散码数售卖，没有 size_chart 维度；药片大小是 size_fit（剂量/颗粒适配），不是尺码表问题"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys，aspect_keys 从 size_fit 改为 size_chart；scope 由 scope_policy + size_chart taxonomy 计算"
 
   - key: late_shipping
     label_type: issue
     formal_module: product_issue
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Late Shipping"
@@ -148,13 +138,11 @@ labels:
         review_text: "The waders started leaking after 3 months of regular use."
         why_not: "使用后损坏不是物流问题，是产品耐用性问题；发货/物流都没有延误"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys；scope 由 scope_policy + taxonomy 计算"
 
   - key: shipping_damage
     label_type: issue
     formal_module: product_issue
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Arrival Damage"
@@ -176,13 +164,11 @@ labels:
         review_text: "The seam came apart after my third fishing trip. Clearly poor quality."
         why_not: "使用后接缝开裂是产品质量问题（durability/seam_integrity），不是运输损坏"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys；scope 由 scope_policy + taxonomy 计算"
 
   - key: customer_service_unresponsive
     label_type: issue
     formal_module: product_issue
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Customer Service Unresponsive"
@@ -204,13 +190,11 @@ labels:
         review_text: "The seller sent the wrong size but I decided to keep it anyway since it kind of fits."
         why_not: "买家没有尝试联系客服解决，不能推断客服不响应"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys；scope 由 scope_policy + taxonomy 计算"
 
   - key: customer_service_helpful
     label_type: highlight
     formal_module: product_highlight
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Helpful Customer Service"
@@ -232,13 +216,11 @@ labels:
         review_text: "The product arrived on time and is great quality. Very happy with my purchase."
         why_not: "赞扬产品和物流体验，没有提及任何客服互动；不能推断客服服务好"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys；scope 由 scope_policy + taxonomy 计算"
 
   - key: keeps_water_out
     label_type: highlight
     formal_module: product_highlight
-    category_keys: ["*"]
-    sub_category_keys: ["*"]
     status: approved
     display:
       en: "Keeps Water Out"
@@ -260,7 +242,7 @@ labels:
         review_text: "Keeps my coffee hot for 8 hours and doesn't leak at all."
         why_not: "保温杯没有 waterproof 维度，保温/不漏是保温杯自有 aspect（insulation_performance/seal）而非产品防水"
     review_status: pending
-    owner_note: "工作包 5 收窄 scope，当前 category_keys/sub_category_keys 仍为 [*]"
+    owner_note: "工作包 5 已删除 category_keys/sub_category_keys；scope 由 scope_policy + taxonomy 计算"
 
 # These are taxonomy evidence dimensions, not seller-facing issue/highlight
 # identities. shipping_damage is intentionally only an alias to logistics_issue.
@@ -280,6 +262,9 @@ aspect_display_mapping:
   seam_integrity:
     en: "Seam Integrity"
     zh: "接缝密封"
+  size_chart:
+    en: "Size Chart"
+    zh: "尺码表"
   size_fit:
     en: "Size and Fit"
     zh: "尺码与版型"

@@ -14,6 +14,7 @@ delta_aspects:
   - {key: temperature_rating, label_zh: 保暖等级}
   # 适配类
   - {key: size_fit, label_zh: 尺寸匹配}
+  - {key: size_chart, label_zh: 尺码表}              # 服装/鞋尺码表
   # 便携性
   - {key: portability, label_zh: 便携性}
   # 望远镜专属

@@ -396,17 +396,26 @@ def _approved_aspect_key(
     *,
     label: FormalLabel,
     whitelist: ReviewFragmentTaxonomyWhitelist,
+    category_key: str = "",
 ) -> str | None:
     return resolve_formal_label_aspect(
         label.key,
         source_aspect_key=fragment.get("aspect_key"),
         allowed_aspect_keys=whitelist.allowed_aspect_keys,
         label_type=label.label_type,
+        category_key=category_key,
+        sub_category_key=whitelist.sub_category,
     )
 
 
-def _approved_label(key: str, *, label_type: str) -> FormalLabel | None:
-    return resolve_formal_label(key, label_type=label_type)
+def _approved_label(key: str, *, label_type: str, category_key: str, sub_category_key: str) -> FormalLabel | None:
+    result = resolve_formal_label(
+        key,
+        label_type=label_type,
+        category_key=category_key,
+        sub_category_key=sub_category_key,
+    )
+    return result.label
 
 
 def _approved_formal_label_for_fragment(
@@ -424,6 +433,9 @@ def _approved_formal_label_for_fragment(
     if scope not in {"current_product", "current_product_context", "logistics_support", "accessory_only"}:
         return None
 
+    category_key = whitelist.category
+    sub_category_key = whitelist.sub_category
+
     service_context = _contains_any_marker(
         context,
         (
@@ -434,16 +446,16 @@ def _approved_formal_label_for_fragment(
         ),
     )
     if service_context and polarity == "positive":
-        label = _approved_label("customer_service_helpful", label_type="highlight")
+        label = _approved_label("customer_service_helpful", label_type="highlight", category_key=category_key, sub_category_key=sub_category_key)
         if label:
-            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist, category_key=category_key)
             if aspect_key:
                 return label, aspect_key
 
     if service_context and polarity in {"negative", "mixed"}:
-        label = _approved_label("customer_service_unresponsive", label_type="issue")
+        label = _approved_label("customer_service_unresponsive", label_type="issue", category_key=category_key, sub_category_key=sub_category_key)
         if label:
-            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist, category_key=category_key)
             if aspect_key:
                 return label, aspect_key
 
@@ -463,9 +475,9 @@ def _approved_formal_label_for_fragment(
             "shipping damage",
         ),
     ):
-        label = _approved_label("shipping_damage", label_type="issue")
+        label = _approved_label("shipping_damage", label_type="issue", category_key=category_key, sub_category_key=sub_category_key)
         if label:
-            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist, category_key=category_key)
             if aspect_key:
                 return label, aspect_key
 
@@ -482,9 +494,9 @@ def _approved_formal_label_for_fragment(
             "arrived late",
         ),
     ):
-        label = _approved_label("late_shipping", label_type="issue")
+        label = _approved_label("late_shipping", label_type="issue", category_key=category_key, sub_category_key=sub_category_key)
         if label:
-            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist, category_key=category_key)
             if aspect_key:
                 return label, aspect_key
 
@@ -508,9 +520,9 @@ def _approved_formal_label_for_fragment(
             "off",
         ),
     ):
-        label = _approved_label("confusing_size_chart", label_type="issue")
+        label = _approved_label("confusing_size_chart", label_type="issue", category_key=category_key, sub_category_key=sub_category_key)
         if label:
-            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist, category_key=category_key)
             if aspect_key:
                 return label, aspect_key
 
@@ -540,9 +552,9 @@ def _approved_formal_label_for_fragment(
             "repair",
         ),
     ):
-        label = _approved_label("missing_accessory", label_type="issue")
+        label = _approved_label("missing_accessory", label_type="issue", category_key=category_key, sub_category_key=sub_category_key)
         if label:
-            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist, category_key=category_key)
             if aspect_key:
                 return label, aspect_key
 
@@ -557,9 +569,9 @@ def _approved_formal_label_for_fragment(
             "accessory leaks",
         ),
     ):
-        label = _approved_label("accessory_leak", label_type="issue")
+        label = _approved_label("accessory_leak", label_type="issue", category_key=category_key, sub_category_key=sub_category_key)
         if label:
-            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist, category_key=category_key)
             if aspect_key:
                 return label, aspect_key
 
@@ -573,17 +585,18 @@ def _approved_formal_label_for_fragment(
             "water got in",
         ),
         ):
-        label = _approved_label("water_leaks_through", label_type="issue")
+        label = _approved_label("water_leaks_through", label_type="issue", category_key=category_key, sub_category_key=sub_category_key)
         if label:
-            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist)
+            aspect_key = _approved_aspect_key(fragment, label=label, whitelist=whitelist, category_key=category_key)
             if aspect_key:
                 return label, aspect_key
 
     return None
 
 
-def _approved_highlight_label_for_aspect(aspect_key: str) -> FormalLabel | None:
-    return resolve_highlight_for_aspect(aspect_key)
+def _approved_highlight_label_for_aspect(aspect_key: str, *, category_key: str, sub_category_key: str) -> FormalLabel | None:
+    result = resolve_highlight_for_aspect(aspect_key, category_key=category_key, sub_category_key=sub_category_key)
+    return result.label
 
 
 def _base_occurrence_row(
@@ -732,14 +745,21 @@ def validate_review_fragment_candidate_artifact_row(
             errors.append("formal_identity_key_conflict")
         if not issue_key and not highlight_key:
             errors.append("formal_identity_key_required")
+        row_category = _key_value(row, "category")
+        row_sub_category = _key_value(row, "sub_category")
         if issue_key:
-            approved_label = resolve_formal_label(issue_key, label_type="issue")
-            if not approved_label or approved_label.label_type != "issue":
+            approved_result = resolve_formal_label(
+                issue_key,
+                label_type="issue",
+                category_key=row_category,
+                sub_category_key=row_sub_category,
+            )
+            if not approved_result.label or approved_result.label.label_type != "issue":
                 errors.append("issue_key_not_approved")
             else:
-                if module != approved_label.formal_module:
+                if module != approved_result.label.formal_module:
                     errors.append("issue_key_module_mismatch")
-                if aspect_key and aspect_key not in approved_label.aspect_keys:
+                if aspect_key and aspect_key not in approved_result.label.aspect_keys:
                     errors.append("issue_aspect_key_mismatch")
             if polarity not in {"negative", "mixed"}:
                 errors.append("issue_polarity_invalid")
@@ -748,8 +768,13 @@ def validate_review_fragment_candidate_artifact_row(
                 errors.append("highlight_key_module_invalid")
             if polarity not in {"positive", "mixed"}:
                 errors.append("highlight_polarity_invalid")
-            approved_highlight = resolve_formal_label(highlight_key, label_type="highlight")
-            if not approved_highlight:
+            approved_hl_result = resolve_formal_label(
+                highlight_key,
+                label_type="highlight",
+                category_key=row_category,
+                sub_category_key=row_sub_category,
+            )
+            if not approved_hl_result.label:
                 errors.append("highlight_key_unknown")
     else:
         if issue_key or highlight_key:
@@ -823,13 +848,14 @@ def _formal_row(
     sub_category: str,
     approved_label: FormalLabel | None = None,
     aspect_key: str | None = None,
+    category_key: str = "",
 ) -> dict[str, Any]:
     resolved_aspect_key = aspect_key or _clean_string(fragment.get("aspect_key"))
     issue_key = approved_label.key if approved_label and approved_label.label_type == "issue" else None
     approved_highlight = (
         approved_label
         if approved_label and approved_label.label_type == "highlight"
-        else _approved_highlight_label_for_aspect(resolved_aspect_key)
+        else _approved_highlight_label_for_aspect(resolved_aspect_key, category_key=category_key, sub_category_key=sub_category)
         if not issue_key
         and _clean_string(fragment.get("module")) == MODULE_PRODUCT_HIGHLIGHT
         and _clean_string(fragment.get("polarity")) == "positive"
@@ -845,6 +871,8 @@ def _formal_row(
     display_label_en, display_label_zh = _display_label_for_key(
         label_key,
         approved_label=identity_label,
+        category_key=category_key,
+        sub_category_key=sub_category,
     )
     return {
         "module": (
@@ -924,10 +952,14 @@ def _display_label_for_key(
     key: str,
     *,
     approved_label: FormalLabel | None = None,
+    category_key: str = "",
+    sub_category_key: str = "",
 ) -> tuple[str, str]:
-    label = approved_label or resolve_formal_label(key)
-    if label:
-        return label.display_label_en, label.display_label_zh
+    if approved_label:
+        return approved_label.display_label_en, approved_label.display_label_zh
+    result = resolve_formal_label(key, category_key=category_key, sub_category_key=sub_category_key)
+    if result.label:
+        return result.label.display_label_en, result.label.display_label_zh
     return "", ""
 
 
@@ -976,6 +1008,7 @@ def _route_fragment(
                 sub_category=sub_category,
                 approved_label=approved_label,
                 aspect_key=aspect_key,
+                category_key=whitelist.category,
             )
 
     if module in AGGREGATABLE_TAXONOMY_MODULES:

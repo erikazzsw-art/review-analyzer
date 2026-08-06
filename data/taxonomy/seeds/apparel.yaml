@@ -9,6 +9,7 @@ category_label: 服装
 delta_aspects:
   # 尺寸 / 版型类(服装核心)
   - {key: size_fit, label_zh: 尺寸匹配}              # 偏大/偏小/正合适
+  - {key: size_chart, label_zh: 尺码表}              # 尺码表清晰度/准确性
   - {key: cut_fit, label_zh: 版型}                   # 修身/宽松/oversize
   - {key: length, label_zh: 长度}                    # 衣长/裤长
   # 面料 / 触感类

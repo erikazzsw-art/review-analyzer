@@ -18,5 +18,6 @@ delta_aspects:
   - {key: instructions, label_zh: 说明书}
   # 适配类
   - {key: size_fit, label_zh: 尺寸匹配}              # 衣服/座椅
+  - {key: size_chart, label_zh: 尺码表}              # 衣服/鞋尺码表
   - {key: weight_capacity, label_zh: 承重}            # 童车/座椅
   - {key: age_appropriate, label_zh: 适用年龄}        # 母婴特有

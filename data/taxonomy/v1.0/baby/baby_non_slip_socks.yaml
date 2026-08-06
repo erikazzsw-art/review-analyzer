@@ -1,7 +1,7 @@
 # Baby Non Slip Socks Aspect Taxonomy v1.0
 # 生成时间: 2026-06-09 16:42:45
 sub_category: Baby Non Slip Socks
-aspect_count: 15
+aspect_count: 16
 aspects:
   - key: size_fit
     label_zh: 尺寸匹配
@@ -23,6 +23,17 @@ aspects:
       - {phrase: "great fit", count: 2}
     sample_reviews: ['BABY-000063', 'BABY-003355', 'BABY-002169', 'BABY-002087', 'BABY-002319']
 
+
+  - key: size_chart
+    label_zh: 尺码表
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "该商品按离散码数（S/M/L或数字码）售卖且卖家提供公开尺码表；买家下单需在多个码数间选择才有尺码表问题；单一规格商品不适用。仅尺码表清晰度/准确性归此维度，不含版型偏好或一般合身度（归 size_fit）"
+    top_phrases: []
+    sample_reviews: []
   - key: durability
     label_zh: 耐用性
     total: 132

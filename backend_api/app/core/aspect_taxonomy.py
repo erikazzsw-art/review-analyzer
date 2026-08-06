@@ -6,7 +6,7 @@
 - 详见 docs/competitor-research-2026-06-05.md
 
 设计原则：
-- 闭合 19 类 + other 兜底（V1.1 新增 safety）
+- 闭合 20 类 + other 兜底（V1.1 新增 safety；5.9.6-D 新增 size_chart）
 - 英文 canonical key（全系统底层一致）
 - 中文 label 仅用于 UI 显示（i18n 由前端处理）
 """
@@ -22,6 +22,7 @@ FURNITURE_ASPECTS: dict[str, str] = {
     # 使用体验类（4 类）
     "comfort": "舒适度",
     "size_fit": "尺寸匹配",
+    "size_chart": "尺码表",
     "weight_capacity": "承重",
     "ease_of_use": "易用性",
     # 外观类（2 类）

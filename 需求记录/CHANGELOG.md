@@ -1929,6 +1929,31 @@ M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 X
 - `PROGRESS_V2.md`（工作包 1/2/3 状态更新）
 - `TEST_LOG.md`（+1 修复记录）
 
+### 5.9.6-D 工作包 4/5：Resolver fail-closed + 9 标签重标与回归
+
+- **标题**：正式标签 resolver 改为 fail-closed + 现有标签 scope 收窄 + size_chart 维度新增
+- **工作量**：3.5 天
+- **需求描述**：
+  - 工作包 4（Resolver fail-closed）：`resolutionRejectReason` enum（5 值，固定 gate 顺序：unknown_key → not_approved → out_of_scope → blocked_context → insufficient_evidence）；`LabelResolutionResult` dataclass 包装 `label | None + reject_reason | None + is_resolved`；删除 `_scope_matches()` 占位方法；`resolve_formal_label()` 改为 keyword-only 必传 `category_key`/`sub_category_key`，缺失任一 → TypeError；`resolve_formal_label_aspect()` / `resolve_highlight_for_aspect()` 同样必传品类信息；所有实验模块调用方（`_approved_label` / `_approved_formal_label_for_fragment` / `_approved_aspect_key` / `_approved_highlight_label_for_aspect` / `_display_label_for_key` / `_formal_row` / `_route_fragment` / `validate_review_fragment_candidate_artifact_row`）均已更新传递 category/sub_category。新增 14 个 WP4 测试（TypeError/各 reject reason/gate 顺序/empty category/is_resolved/transaction_universal in scope）。evidence gate 推迟到 WP6。
+  - 工作包 5（9 标签重标）：16 个 taxonomy YAML（7 apparel + 6 baby + 3 outdoor）新增 `size_chart` aspect（总/正/负/中=0，top_phrases/sample_reviews 空，boundary_note 明确离散码数 + 尺码表定义）；seed 文件 `delta_aspects` 新增 `{key: size_chart, label_zh: 尺码表}`；`confusing_size_chart` 标签 `aspect_keys` 从 `[size_fit]` 改为 `[size_chart]`，boundary_note/scope_reason/negative_examples/owner_note 同步更新，effective scope 从 63 子类目收窄到 16；`category_keys`/`sub_category_keys` 从 registry YAML（9 label）、`FormalLabelDefinition` dataclass、`_load_label()` 构造函数三处删除；validator `_check_no_wildcard_in_scope` 从 `"*" in label.category_keys` 改为 `hasattr(label, "category_keys")`（字段必须不存在）；`registry_version` 升至 `5.9.6-D.1`（decision j，预期 L1 缓存全量失效，旧缓存通过 5.9.6-B.1 语义版本过滤自动 miss）；`backend_api/app/core/aspect_taxonomy.py` FURNITURE_ASPECTS 新增 `size_chart: 尺码表`；修复 confusing_size_chart 负例 sub_category `cosequin for dogs` → `Cosequin for Dogs`（大小写匹配 taxonomy key）。
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 后端开发（Python） | 20.0h |
+  | 测试（单元测试，14 新增 WP4 + 1 新增 WP5 + 44 回归 + 14 cache 回归 + 9 sync 回归） | 6.0h |
+  | 文档（PROGRESS + TEST_LOG + CHANGELOG + acceptance package） | 4.0h |
+
+**变更文件（13 个）**：
+- `backend_api/app/services/review_fragment_label_catalog.py`（+~120 行：enum/dataclass/resolver fail-closed/category_keys 删除）
+- `backend_api/app/services/review_fragment_candidate_multimodule.py`（8 个 call site 更新）
+- `backend_api/app/core/aspect_taxonomy.py`（+size_chart，闭合 19→20 类）
+- `data/taxonomy/registry/review_fragment_label_registry.yaml`（9 label 删 category_keys/sub_category_keys、confusing_size_chart 改 aspect_keys、registry_version bump、cosequin→Cosequin）
+- `data/taxonomy/categories/*/` 16 个 YAML（+size_chart aspect）
+- `data/taxonomy/seeds/apparel.yaml`、`baby.yaml`、`outdoor.yaml`（+size_chart delta_aspects）
+- `scripts/validate_label_scope.py`（hasattr 替换 list 检查）
+- `backend_api/tests/test_review_fragment_label_catalog.py`（+15 测试，45 total）
+- `PROGRESS_V2.md`、`TEST_LOG.md`、`需求记录/CHANGELOG.md`（文档更新）
+
 ### 5.9.6-B.1 缓存语义版本化与 L2 下线
 
 - **标题**：L1 缓存命中校验纳入语义版本 + 删除 L2 短文本默认结果分支

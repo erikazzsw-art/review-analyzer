@@ -1,7 +1,7 @@
 # Bras for Women Aspect Taxonomy v1.0
 # 生成时间: 2026-06-09 17:32:54
 sub_category: Bras for Women
-aspect_count: 21
+aspect_count: 22
 aspects:
   - key: comfort
     label_zh: 舒适度
@@ -43,6 +43,17 @@ aspects:
       - {phrase: "Fits well", count: 15}
     sample_reviews: ['APP-018360', 'APP-016576', 'APP-016972', 'APP-003979', 'APP-014770']
 
+
+  - key: size_chart
+    label_zh: 尺码表
+    total: 0
+    positive_count: 0
+    negative_count: 0
+    neutral_count: 0
+    negative_rate: 0.0%
+    boundary_note: "该商品按离散码数（S/M/L或数字码）售卖且卖家提供公开尺码表；买家下单需在多个码数间选择才有尺码表问题；单一规格商品不适用。仅尺码表清晰度/准确性归此维度，不含版型偏好或一般合身度（归 size_fit）"
+    top_phrases: []
+    sample_reviews: []
   - key: cut_fit
     label_zh: 版型
     total: 1245

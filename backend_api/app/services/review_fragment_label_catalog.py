@@ -9,9 +9,14 @@ experiment module.
 required_transaction_dimension, scope_reason, positive_examples, negative_examples,
 review_status, blocked_contexts, and owner_note. Added transaction_aspects.yaml
 loading and effective scope computation.
+
+5.9.6-D-wp4 (2026-08-06): resolver fail-closed refactoring. category_key and
+sub_category_key are now required; _scope_matches() deleted; scope gating via
+compute_effective_scope(); structured reject reasons; blocked_contexts wired.
 """
 from __future__ import annotations
 
+import enum
 import logging
 import re
 from collections.abc import Collection, Mapping
@@ -24,7 +29,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-FORMAL_LABEL_REGISTRY_VERSION = "review-fragment-label-registry.5.9.6-A.1"
+FORMAL_LABEL_REGISTRY_VERSION = "review-fragment-label-registry.5.9.6-D.1"
 FORMAL_LABEL_TYPES = frozenset({"issue", "highlight"})
 FORMAL_LABEL_STATUSES = frozenset({"candidate", "approved", "merged", "deprecated", "blocked"})
 APPROVED_LABEL_STATUS = "approved"
@@ -49,6 +54,39 @@ REVIEW_STATUS_PENDING = "pending"
 REVIEW_STATUS_APPROVED = "approved"
 REVIEW_STATUS_REJECTED = "rejected"
 REVIEW_STATUSES = frozenset({REVIEW_STATUS_PENDING, REVIEW_STATUS_APPROVED, REVIEW_STATUS_REJECTED})
+
+
+class ResolutionRejectReason(enum.Enum):
+    """Structured reason for resolver rejection.
+
+    Gate ordering (fixed, cheapest-first):
+      unknown_key → not_approved → out_of_scope → blocked_context → insufficient_evidence
+
+    These values are the input contract for work package 7 (mislabel reflux).
+    Do not rename or reorder without updating the reflux pipeline.
+    """
+
+    UNKNOWN_KEY = "unknown_key"
+    NOT_APPROVED = "not_approved"
+    OUT_OF_SCOPE = "out_of_scope"
+    BLOCKED_CONTEXT = "blocked_context"
+    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
+
+
+@dataclass(frozen=True)
+class LabelResolutionResult:
+    """Result of a formal label resolution with structured reject reason.
+
+    When ``label`` is None, ``reject_reason`` explains why.
+    When ``label`` is not None, ``reject_reason`` is always None.
+    """
+
+    label: FormalLabelDefinition | None
+    reject_reason: str | None = None
+
+    @property
+    def is_resolved(self) -> bool:
+        return self.label is not None
 
 _REGISTRY_PATH = (
     Path(__file__).resolve().parents[3]
@@ -99,8 +137,6 @@ class FormalLabelDefinition:
 
     key: str
     label_type: str
-    category_keys: tuple[str, ...]
-    sub_category_keys: tuple[str, ...]
     status: str
     display_label_en: str
     display_label_zh: str
@@ -325,8 +361,6 @@ def _load_label(raw: Mapping[str, Any], *, registry_version: str, source: str) -
     return FormalLabelDefinition(
         key=_clean(raw.get("key")),
         label_type=label_type,
-        category_keys=_string_tuple(raw.get("category_keys"), default=("*",)),
-        sub_category_keys=_string_tuple(raw.get("sub_category_keys"), default=("*",)),
         status=status,
         display_label_en=_clean(display.get("en")),
         display_label_zh=_clean(display.get("zh")),
@@ -590,59 +624,162 @@ def compute_effective_scope_matrix(
 
 
 # ---------------------------------------------------------------------------
-# Resolver (unchanged from 5.9.6-A; scope gate is work package 4)
+# Resolver (5.9.6-D-wp4: fail-closed with structured reasons)
 # ---------------------------------------------------------------------------
 
 
-def _scope_matches(allowed_values: Collection[str], requested_value: str) -> bool:
-    allowed = {value for value in (_clean(item) for item in allowed_values) if value}
-    requested = _clean(requested_value)
-    if "*" in allowed:
-        return True
-    return bool(requested and requested in allowed)
+def _resolve_formal_label_impl(
+    key_or_alias: Any,
+    *,
+    category_key: str,
+    sub_category_key: str,
+    label_type: str | None = None,
+    approved_only: bool = True,
+    evidence_span: str | None = None,
+    review_text: str | None = None,
+) -> LabelResolutionResult:
+    """Core resolution logic with structured reject reasons.
+
+    Gate sequence (fixed order, cheapest-first):
+      1. unknown_key      — key/alias not found in registry
+      2. not_approved     — label found but status != approved
+      3. out_of_scope     — label approved but sub_category not in effective scope
+      4. blocked_context  — in scope but sub_category explicitly blocked
+      5. insufficient_evidence — evidence gate (deferred to WP6; always passes for now)
+    """
+    requested = _clean(key_or_alias)
+    if not requested:
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.UNKNOWN_KEY.value,
+        )
+
+    requested_type = _clean(label_type).lower() or None
+    if requested_type and requested_type not in FORMAL_LABEL_TYPES:
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.UNKNOWN_KEY.value,
+        )
+
+    requested_lookup = _lookup_text(requested)
+    requested_category = _clean(category_key)
+    requested_sub_category = _clean(sub_category_key)
+
+    if not requested_category:
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.UNKNOWN_KEY.value,
+        )
+    if not requested_sub_category:
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.UNKNOWN_KEY.value,
+        )
+
+    # --- Gate 1: unknown_key ---
+    matches: list[tuple[FormalLabelDefinition, str | None]] = []
+    for label in get_label_registry_state().labels:
+        if requested_type and label.label_type != requested_type:
+            continue
+        if requested == label.key:
+            matches.append((label, None))
+            continue
+        if requested_lookup and requested_lookup in {
+            _lookup_text(alias) for alias in label.aliases
+        }:
+            matches.append((label, requested))
+
+    if not matches:
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.UNKNOWN_KEY.value,
+        )
+
+    distinct_keys = {label.key for label, _ in matches}
+    if len(distinct_keys) > 1:
+        logger.warning(
+            "review_fragment_label_catalog: ambiguous alias=%r keys=%s",
+            requested,
+            sorted(distinct_keys),
+        )
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.UNKNOWN_KEY.value,
+        )
+
+    matched_label, matched_alias = matches[0]
+
+    # --- Gate 2: not_approved ---
+    if approved_only and matched_label.status != APPROVED_LABEL_STATUS:
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.NOT_APPROVED.value,
+        )
+
+    # --- Gate 3: out_of_scope ---
+    effective_scope = compute_effective_scope(matched_label)
+    if (
+        matched_label.scope_policy != SCOPE_POLICY_EXPLICIT
+        and effective_scope
+        and requested_sub_category not in effective_scope
+    ):
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.OUT_OF_SCOPE.value,
+        )
+
+    # --- Gate 4: blocked_context ---
+    if requested_sub_category in matched_label.blocked_contexts:
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.BLOCKED_CONTEXT.value,
+        )
+
+    # --- Gate 5: insufficient_evidence ---
+    # Deferred to WP6: the resolver currently lacks fragment/review context.
+    # When wired into the active read path (WP6), callers will pass
+    # evidence_span + review_text, and the 5.9.3 evidence gate
+    # (review_fragment_evidence_gate.py) will be applied here.
+    # For now, this gate always passes.
+    _ = (evidence_span, review_text)  # reserved for WP6
+
+    resolved = (
+        replace(matched_label, matched_alias=matched_alias)
+        if matched_alias
+        else matched_label
+    )
+    return LabelResolutionResult(label=resolved, reject_reason=None)
 
 
 def resolve_formal_label(
     key_or_alias: Any,
     *,
+    category_key: str,
+    sub_category_key: str,
     label_type: str | None = None,
-    category_key: str = "",
-    sub_category_key: str = "",
     approved_only: bool = True,
-) -> LabelResolution | None:
-    """Resolve a canonical key or alias to an approved formal definition."""
+) -> LabelResolutionResult:
+    """Resolve a canonical key or alias to a formal label definition.
 
-    requested = _clean(key_or_alias)
-    if not requested:
-        return None
-    requested_type = _clean(label_type).lower() or None
-    if requested_type and requested_type not in FORMAL_LABEL_TYPES:
-        return None
-    requested_lookup = _lookup_text(requested)
-    matches: list[tuple[FormalLabelDefinition, str | None]] = []
-    for label in get_label_registry_state().labels:
-        if requested_type and label.label_type != requested_type:
-            continue
-        if approved_only and label.status != APPROVED_LABEL_STATUS:
-            continue
-        if not _scope_matches(label.category_keys, category_key):
-            continue
-        if not _scope_matches(label.sub_category_keys, sub_category_key):
-            continue
-        if requested == label.key:
-            matches.append((label, None))
-            continue
-        if requested_lookup and requested_lookup in {_lookup_text(alias) for alias in label.aliases}:
-            matches.append((label, requested))
+    Args:
+        key_or_alias: Canonical label key or alias string.
+        category_key: Required. The category of the current product context.
+        sub_category_key: Required. The sub_category of the current product context.
+        label_type: Optional filter (``"issue"`` or ``"highlight"``).
+        approved_only: If True (default), only approved labels are returned.
 
-    if not matches:
-        return None
-    distinct_keys = {label.key for label, _ in matches}
-    if len(distinct_keys) > 1:
-        logger.warning("review_fragment_label_catalog: ambiguous alias=%r keys=%s", requested, sorted(distinct_keys))
-        return None
-    label, matched_alias = matches[0]
-    return replace(label, matched_alias=matched_alias)
+    Returns:
+        ``LabelResolutionResult`` with ``.label`` set to the resolved definition
+        and ``.reject_reason`` = None, or ``.label`` = None with a structured
+        ``.reject_reason`` explaining why resolution failed.
+    """
+    return _resolve_formal_label_impl(
+        key_or_alias,
+        category_key=category_key,
+        sub_category_key=sub_category_key,
+        label_type=label_type,
+        approved_only=approved_only,
+    )
 
 
 def resolve_aspect_alias(aspect_key: Any) -> str:
@@ -662,18 +799,19 @@ def resolve_formal_label_aspect(
     *,
     source_aspect_key: Any,
     allowed_aspect_keys: Collection[str],
+    category_key: str,
+    sub_category_key: str,
     label_type: str | None = None,
-    category_key: str = "",
-    sub_category_key: str = "",
 ) -> str | None:
     """Resolve a formal label's taxonomy aspect without changing its identity."""
 
-    label = resolve_formal_label(
+    result = resolve_formal_label(
         label_key_or_alias,
-        label_type=label_type,
         category_key=category_key,
         sub_category_key=sub_category_key,
+        label_type=label_type,
     )
+    label = result.label
     if label is None:
         return None
 
@@ -697,18 +835,21 @@ def resolve_formal_label_aspect(
 def resolve_highlight_for_aspect(
     aspect_key: Any,
     *,
-    category_key: str = "",
-    sub_category_key: str = "",
-) -> LabelResolution | None:
+    category_key: str,
+    sub_category_key: str,
+) -> LabelResolutionResult:
     canonical_aspect = resolve_aspect_alias(aspect_key)
     label_key = get_label_registry_state().highlight_by_aspect.get(canonical_aspect)
     if not label_key:
-        return None
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.UNKNOWN_KEY.value,
+        )
     return resolve_formal_label(
         label_key,
-        label_type="highlight",
         category_key=category_key,
         sub_category_key=sub_category_key,
+        label_type="highlight",
     )
 
 

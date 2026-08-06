@@ -908,8 +908,8 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 - 工作包 1：Scope Governance DoD，0.5-1 天。✅ 已完成（2026-08-06）。产出 `notes/scope-governance-dod.md`：定义交易层/产品层二分、三档 scope_policy、transaction_universal 封闭枚举护栏、capability_derived any-of 语义、负例规范、9 个现有 label 的 scope_policy 落位判断。稳定后 git mv 到 docs/。
 - 工作包 2：Registry schema 升级，1-1.5 天。✅ 已完成（2026-08-06）。产出 `data/taxonomy/shared/transaction_aspects.yaml`（3 个交易层维度）+ 扩展 registry YAML schema（9 个 label 各补 scope_policy/required_transaction_dimension/scope_reason/positive_examples/negative_examples/review_status/blocked_contexts/owner_note，review_status 一律 pending）+ 扩展 `FormalLabelDefinition` dataclass + 实现 effective scope 计算（内存算，带 lru_cache，不落盘）+ transaction_universal 封闭枚举校验。registry_version 保持 5.9.6-A.1 不变（决策 f）。
 - 工作包 3：scope 校验脚本（从完整 Scope Compiler 降级），0.5 天。✅ 已完成（2026-08-06）。产出 `scripts/validate_label_scope.py`：6 项校验（禁止 wildcard / transaction 维度枚举校验 / capability 命中 taxonomy / 正例 / 负例政策最低 + out_of_scope 反查矩阵验证 / explicit 子类目存在性），支持 --dry-run（失败非零退出码）和 --print-matrix。
-- 工作包 4：Resolver fail-closed 改造，2-3 天。`resolve_formal_label*` 必须接收当前 category/sub_category；缺失 scope、scope 不匹配、taxonomy 不支持、evidence 不足时不返回正式展示标签，只允许进入 candidate/audit。
-- 工作包 5：9 个 approved label 重标和回归，1-1.5 天。把真正通用标签与类目相关标签分开；waterproof、seam_integrity、accessory_storage 先按 taxonomy 证据范围收窄；补正例和负例。
+- 工作包 4：Resolver fail-closed 改造，2-3 天。✅ 已完成（2026-08-06）。产出：`ResolutionRejectReason` enum（5 值，固定 gate 顺序：unknown_key→not_approved→out_of_scope→blocked_context→insufficient_evidence）+ `LabelResolutionResult` dataclass + 删除 `_scope_matches()` + `resolve_formal_label()` 改为 keyword-only 必传 `category_key`/`sub_category_key` + 所有实验模块调用方已更新传递 category/sub_category + 新增 14 个 WP4 测试（TypeError/各 reject reason/gate 顺序/empty category/is_resolved/transaction_universal in scope）。evidence gate 推迟到 WP6。
+- 工作包 5：9 个 approved label 重标和回归，1-1.5 天。✅ 已完成（2026-08-06）。产出：16 个 taxonomy YAML 新增 `size_chart` aspect（7 apparel + 6 baby + 3 outdoor）+ seed 文件 `delta_aspects` 新增 `size_chart` + `confusing_size_chart` 的 `aspect_keys` 从 `size_fit` 改为 `size_chart`（effective scope 从 63 收窄到 16）+ `category_keys`/`sub_category_keys` 从 YAML+dataclass+validator 三处删除 + `registry_version` 升至 `5.9.6-D.1`（decision j）+ `aspect_taxonomy.py` 新增 `size_chart` + validator 0 failure + 45 catalog tests pass。
 - 工作包 6：active/read/export/insight 接口改造，1-2 天。结果页、导出、insight、行动中心 handoff 只能消费 resolver 通过的 formal label；旧 frontstage/read-model 只能作为兼容层，不能绕过 scope gate。
 - 工作包 7：审核判错回流，1-2 天。新增错标 audit event、candidate/proposal artifact、人工确认字段和 registry proposal 流程；每个错标要能回流成 scope 调整、alias 合并、blocked rule 或负例。
 - 工作包 8：CI/人工验收包，1 天。新增 wildcard 禁止测试、resolver 缺 scope 失败测试、跨类目负例、effective scope diff、Erika 人工验收表。
@@ -989,7 +989,7 @@ LLM 打正式标签时必须“在白名单内选择”，不能先自由输出�
 5.9.6-D    工作包 1/2  scope DoD + schema     1.5-2.5 天 ✅ 已完成（2026-08-06）
            工作包 3    scope 校验脚本(降级)     0.5 天   ✅ 已完成（2026-08-06）
            工作包 4/5  resolver fail-closed
-                       + 9 标签重标            3-4.5 天
+                       + 9 标签重标 ✅已完成    3-4.5 天
            工作包 6/7  active 接入 + 错标回流   2-4 天
            工作包 8    CI 门禁 + 审核页 ★       2-2.5 天
    ↓
