@@ -2,7 +2,7 @@
 
 支持平台：
 - Amazon: woot.com 免费 API（~50 条/ASIN）
-- AliExpress: Apify CrowdPull → feedback API → Playwright 浏览器
+- AliExpress: Apify CrowdPull → feedback API
 - eBay: Apify scrapier/ebay-review-scraper
 - Walmart: Apify webscrapewizard/walmart-review-crawler
 - Shopee: Apify zen-studio → 公开 Ratings API v2

@@ -1,8 +1,7 @@
-"""AliExpress 评论抓取 — 三级数据源自动 fallback。
+"""AliExpress 评论抓取 — 双数据源自动 fallback。
 
 主数据源：Apify CrowdPull AliExpress Reviews Scraper（付费，稳定）
-备用数据源 1：feedback.aliexpress.com AJAX API（免费，可能被反爬封锁）
-备用数据源 2：Playwright 无头浏览器抓取（最后兜底）
+备用数据源：feedback.aliexpress.com AJAX API（免费，可能被反爬封锁）
 """
 from __future__ import annotations
 
@@ -254,176 +253,15 @@ async def _fetch_via_api(
     return all_reviews
 
 
-async def _fetch_via_browser(
-    item_id: str,
-    *,
-    max_pages: int = 5,
-    max_years: int = 2,
-) -> list[dict[str, Any]]:
-    """通过 Playwright 无头浏览器抓取评论（fallback）。"""
-    try:
-        from playwright.async_api import async_playwright
-    except ImportError:
-        logger.error("playwright not installed, cannot use browser fallback")
-        return []
-
-    seen: set[tuple[str, str]] = set()
-    all_reviews: list[dict[str, Any]] = []
-    product_title: str = ""
-
-    try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context(
-                user_agent=random.choice(USER_AGENTS),
-                locale="en-US",
-            )
-            page = await context.new_page()
-
-            url = f"https://www.aliexpress.com/item/{item_id}.html"
-            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-            await asyncio.sleep(2)
-
-            # 尝试获取产品标题
-            try:
-                title_el = await page.query_selector("h1[data-pl='product-title']")
-                if title_el:
-                    product_title = (await title_el.inner_text()).strip()
-            except Exception:
-                pass
-
-            # 点击 Reviews tab
-            try:
-                reviews_tab = await page.query_selector("[data-pl='product-reviewer']")
-                if reviews_tab:
-                    await reviews_tab.click()
-                    await asyncio.sleep(2)
-            except Exception:
-                pass
-
-            for _page_num in range(max_pages):
-                try:
-                    await page.wait_for_selector(
-                        ".feedback-item, .review-item, [class*='review']",
-                        timeout=10000,
-                    )
-                except Exception:
-                    break
-
-                review_els = await page.query_selector_all(
-                    ".feedback-item, .review-item, [class*='reviewItem']"
-                )
-
-                if not review_els:
-                    break
-
-                for el in review_els:
-                    try:
-                        content_el = await el.query_selector(
-                            ".buyer-feedback, .review-content, [class*='content']"
-                        )
-                        content = (await content_el.inner_text()).strip() if content_el else ""
-
-                        if not content or not _is_english(content):
-                            continue
-
-                        rating = 5
-                        star_els = await el.query_selector_all(
-                            ".star-view .star-icon, [class*='starFilled'], svg[class*='star']"
-                        )
-                        if star_els:
-                            rating = len(star_els)
-
-                        reviewer = ""
-                        reviewer_el = await el.query_selector(
-                            ".user-name, [class*='userName'], [class*='reviewer']"
-                        )
-                        if reviewer_el:
-                            reviewer = (await reviewer_el.inner_text()).strip()
-
-                        date_str = ""
-                        date_el = await el.query_selector(
-                            ".r-time, [class*='time'], [class*='date']"
-                        )
-                        if date_el:
-                            raw_date = (await date_el.inner_text()).strip()
-                            match = re.search(r"\d{4}-\d{2}-\d{2}", raw_date)
-                            if match:
-                                date_str = match.group(0)
-                            else:
-                                match = re.search(r"(\d{2}\s\w+\s\d{4})", raw_date)
-                                if match:
-                                    try:
-                                        date_str = datetime.strptime(
-                                            match.group(1), "%d %b %Y"
-                                        ).strftime("%Y-%m-%d")
-                                    except ValueError:
-                                        pass
-
-                        sku_info = ""
-                        sku_el = await el.query_selector(
-                            ".sku-info, [class*='skuInfo'], [class*='variant']"
-                        )
-                        if sku_el:
-                            sku_info = (await sku_el.inner_text()).strip()
-
-                        dedup_key = (content[:80], reviewer)
-                        if dedup_key in seen:
-                            continue
-                        seen.add(dedup_key)
-
-                        if not _is_within_years(date_str, max_years):
-                            continue
-
-                        all_reviews.append({
-                            "content": content,
-                            "rating": min(max(rating, 1), 5),
-                            "date": date_str,
-                            "reviewer": reviewer,
-                            "title": "",
-                            "verified_purchase": True,
-                            "reviewer_id": "",
-                            "review_id": "",
-                            "sku_info": sku_info,
-                        })
-                    except Exception:
-                        continue
-
-                # 翻页
-                try:
-                    next_btn = await page.query_selector(
-                        "button.next-btn, [class*='pagination'] button:last-child, "
-                        "a[class*='next']"
-                    )
-                    if next_btn and await next_btn.is_enabled():
-                        await next_btn.click()
-                        await asyncio.sleep(random.uniform(2.0, 4.0))
-                    else:
-                        break
-                except Exception:
-                    break
-
-            await browser.close()
-
-    except Exception as exc:
-        logger.error("Playwright browser scraping failed for item %s: %s", item_id, exc)
-
-    logger.info(
-        "AliExpress browser: fetched %d reviews for item %s (title=%s)",
-        len(all_reviews), item_id, product_title[:50],
-    )
-    return all_reviews
-
-
 async def fetch_aliexpress_reviews(
     item_id: str,
     *,
     max_pages: int = 10,
     max_years: int = 2,
 ) -> list[dict[str, Any]]:
-    """AliExpress 评论抓取统一入口 — 三级 fallback。
+    """AliExpress 评论抓取统一入口 — 双数据源 fallback。
 
-    优先级：Apify CrowdPull → feedback API → Playwright 浏览器
+    优先级：Apify CrowdPull → feedback API
     """
     reviews = await _fetch_via_apify(item_id, max_reviews=200, max_years=max_years)
     if reviews:
@@ -436,10 +274,5 @@ async def fetch_aliexpress_reviews(
         logger.info("Using feedback API source: %d reviews for %s", len(reviews), item_id)
         return reviews
 
-    logger.info("Feedback API returned 0 reviews for %s, falling back to browser", item_id)
-    reviews = await _fetch_via_browser(item_id, max_pages=max_pages, max_years=max_years)
-
-    if not reviews:
-        logger.warning("No reviews found for AliExpress item %s via any source", item_id)
-
-    return reviews
+    logger.warning("No reviews found for AliExpress item %s via any source", item_id)
+    return []
