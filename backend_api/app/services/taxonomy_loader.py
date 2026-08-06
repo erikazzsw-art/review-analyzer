@@ -132,6 +132,55 @@ def resolve_aspects(sub_category: str) -> tuple[list[dict[str, str]], bool]:
     return aspects, True
 
 
+def get_taxonomy_version(sub_category: str) -> str:
+    """获取指定 sub_category 的 taxonomy 版本号.
+
+    从 category_aspect_taxonomy 表查该 sub_category 的 taxonomy_version，
+    取 MAX 值（正常情况同一 sub_category 的所有行版本一致）。
+    未命中或 DB 异常 → 返回 'v1.0'（与 fallback base aspects 版本对齐）。
+
+    Note: 该函数不走 lru_cache（调用频率低，且 resolve_aspects 已有缓存），
+    如需缓存可后续加上。
+    """
+    if not sub_category:
+        return "v1.0"
+
+    try:
+        from review_analyzer.database import get_connection
+    except Exception:
+        return "v1.0"
+
+    try:
+        conn = get_connection()
+    except Exception:
+        return "v1.0"
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT MAX(taxonomy_version) AS version
+                   FROM category_aspect_taxonomy
+                   WHERE sub_category = %s""",
+                (sub_category,),
+            )
+            row = cur.fetchone()
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return "v1.0"
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    if row and row[0]:
+        return str(row[0])
+    return "v1.0"
+
+
 def clear_cache() -> None:
     """清空进程级缓存（测试 / taxonomy 表更新后调用）."""
     _load_aspects_from_db.cache_clear()

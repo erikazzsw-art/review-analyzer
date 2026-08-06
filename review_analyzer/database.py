@@ -17,7 +17,13 @@ from review_analyzer.review_dates import review_date_for_comment
 
 logger = logging.getLogger(__name__)
 
-load_dotenv(Path(__file__).resolve().parent / ".env")
+_PACKAGE_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _PACKAGE_DIR.parent
+
+# Keep package-local values first, then fill any missing local-dev values
+# from the project root .env (for example DATABASE_URL).
+load_dotenv(_PACKAGE_DIR / ".env")
+load_dotenv(_PROJECT_ROOT / ".env")
 
 
 class DatabaseConnectionUnavailable(RuntimeError):
@@ -99,6 +105,7 @@ CASE
              'highlight_ruleset_version', aspects_json->'highlight_ruleset_version',
              'sub_category', aspects_json->'sub_category',
              'cluster_propagated', aspects_json->'cluster_propagated',
+             'review_signal_stored_shadow', aspects_json->'review_signal_stored_shadow',
              'customer_label_occurrences', aspects_json->'customer_label_occurrences'
          ))
     ELSE aspects_json
@@ -1142,9 +1149,9 @@ def _execute_comment_analysis_values(cur, rows: list[tuple], *, include_cache_fi
                    highlight_tag = v.highlight_tag,
                    aspects_json = v.aspects_json::jsonb,
                    analyzer_version = v.analyzer_version,
-                   cache_hit_level = v.cache_hit_level,
-                   cache_source_id = v.cache_source_id,
-                   cache_hit_source = v.cache_hit_source,
+                   cache_hit_level = v.cache_hit_level::varchar,
+                   cache_source_id = v.cache_source_id::integer,
+                   cache_hit_source = v.cache_hit_source::varchar,
                    is_processed = 1
                FROM (VALUES %s) AS v(user_id, comment_id, sentiment, content_sentiment, category, priority,
                                       reason, improvement, issue_tag, highlight_tag, aspects_json, analyzer_version,
@@ -1209,6 +1216,11 @@ def update_comment_analysis_batch(
                 try:
                     updated = _execute_comment_analysis_values(cur, rows, include_cache_fields=True)
                 except Exception:
+                    logger.warning(
+                        "update_comment_analysis_batch cache fields update failed; "
+                        "falling back without cache metadata",
+                        exc_info=True,
+                    )
                     conn.rollback()
                     fallback_rows = [
                         _comment_analysis_update_row(user_id, comment_id, analysis, include_cache_fields=False)
@@ -1449,6 +1461,10 @@ def get_analyzed_by_content_hash(
     content_hashes: list[str],
     include_global: bool = True,
     analyzer_version: str | None = None,
+    prompt_version: str | None = None,
+    taxonomy_version: str | None = None,
+    registry_version: str | None = None,
+    model_name: str | None = None,
 ) -> dict[str, dict]:
     """批量按 content_hash 查找已有分析结果（L1 缓存用）.
 
@@ -1457,11 +1473,19 @@ def get_analyzed_by_content_hash(
     2) 未命中的 content_hash 再查全局 review_pool（cache_hit_source='global'）
        —— 支持跨用户 A/B/C 上传重叠评论时复用（migration 043）
 
+    5.9.6-B.1: 增加语义版本校验（prompt_version + taxonomy_version + registry_version + model_name），
+    四个版本均存储在 aspects_json JSONB 中，通过 ->> 操作符过滤。
+    任一版本不匹配 → L1 miss，确保 prompt/taxonomy/registry/model 变更后缓存自动失效。
+
     Args:
         user_id: 当前用户 ID
         content_hashes: 待查 hash 列表
         include_global: 是否查全局 review_pool（默认 True，可关灰度）
         analyzer_version: 全局池查询时校验的分析器版本，None 不校验
+        prompt_version: annotate prompt 版本（如 "v2.4"），参与 L1 命中判定
+        taxonomy_version: 该 sub_category 的 taxonomy 版本，参与 L1 命中判定
+        registry_version: formal label registry 版本，参与 L1 命中判定
+        model_name: 产出结果的模型名（如 "deepseek"），参与 L1 命中判定
 
     Returns:
         content_hash → {aspects_json, sentiment, source_id, cache_hit_source} 映射
@@ -1473,22 +1497,41 @@ def get_analyzed_by_content_hash(
     """
     if not content_hashes:
         return {}
+
+    # 构建版本过滤子句（两个查询共用）
+    version_clauses: list[str] = []
+    version_params: list[str] = []
+    if prompt_version:
+        version_clauses.append("aspects_json->>'prompt_version' = %s")
+        version_params.append(prompt_version)
+    if taxonomy_version:
+        version_clauses.append("aspects_json->>'taxonomy_version' = %s")
+        version_params.append(taxonomy_version)
+    if registry_version:
+        version_clauses.append("aspects_json->>'registry_version' = %s")
+        version_params.append(registry_version)
+    if model_name:
+        version_clauses.append("aspects_json->>'model_name' = %s")
+        version_params.append(model_name)
+    _version_filter = " AND " + " AND ".join(version_clauses) if version_clauses else ""
+
     conn = get_connection()
     result: dict[str, dict] = {}
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            # ── 第一步：查用户自己历史（沿用原逻辑） ──
-            cur.execute(
+            # ── 第一步：查用户自己历史（沿用原逻辑 + 语义版本校验）──
+            _user_sql = (
                 """SELECT id, content_hash, sentiment, aspects_json
                    FROM comments
                    WHERE user_id = %s
                      AND content_hash = ANY(%s)
                      AND is_processed = 1
                      AND aspects_json IS NOT NULL
-                     AND NOT (aspects_json ? 'analysis_error')
-                   ORDER BY id DESC""",
-                (user_id, content_hashes),
+                     AND NOT (aspects_json ? 'analysis_error')"""
+                + _version_filter
+                + """ ORDER BY id DESC"""
             )
+            cur.execute(_user_sql, (user_id, content_hashes, *version_params))
             for row in cur.fetchall():
                 h = row["content_hash"]
                 if h not in result:
@@ -1506,28 +1549,34 @@ def get_analyzed_by_content_hash(
             if include_global:
                 missing = [h for h in content_hashes if h not in result]
                 if missing:
+                    _pool_base = (
+                        """SELECT id, content_hash, sentiment, aspects_json
+                           FROM review_pool
+                           WHERE content_hash = ANY(%s)
+                             AND analyzed_at IS NOT NULL
+                             AND aspects_json IS NOT NULL
+                             AND NOT (aspects_json ? 'analysis_error')"""
+                    )
                     if analyzer_version:
+                        _pool_sql = (
+                            _pool_base
+                            + """ AND analyzer_version = %s"""
+                            + _version_filter
+                            + """ ORDER BY analyzed_at DESC"""
+                        )
                         cur.execute(
-                            """SELECT id, content_hash, sentiment, aspects_json
-                               FROM review_pool
-                               WHERE content_hash = ANY(%s)
-                                 AND analyzed_at IS NOT NULL
-                                 AND aspects_json IS NOT NULL
-                                 AND NOT (aspects_json ? 'analysis_error')
-                                 AND analyzer_version = %s
-                               ORDER BY analyzed_at DESC""",
-                            (missing, analyzer_version),
+                            _pool_sql,
+                            (missing, analyzer_version, *version_params),
                         )
                     else:
+                        _pool_sql = (
+                            _pool_base
+                            + _version_filter
+                            + """ ORDER BY analyzed_at DESC"""
+                        )
                         cur.execute(
-                            """SELECT id, content_hash, sentiment, aspects_json
-                               FROM review_pool
-                               WHERE content_hash = ANY(%s)
-                                 AND analyzed_at IS NOT NULL
-                                 AND aspects_json IS NOT NULL
-                                 AND NOT (aspects_json ? 'analysis_error')
-                               ORDER BY analyzed_at DESC""",
-                            (missing,),
+                            _pool_sql,
+                            (missing, *version_params),
                         )
                     for row in cur.fetchall():
                         h = row["content_hash"]

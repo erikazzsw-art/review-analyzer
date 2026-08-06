@@ -23,6 +23,9 @@ from backend_api.app.services.clustering import (
 from backend_api.app.services.deep_analyzer import analyze_batch as deep_analyze_batch
 from backend_api.app.services.job_trace import JobTrace
 from backend_api.app.services.prompt_registry import DEFAULT_ANNOTATE_VERSION
+from backend_api.app.services.review_fragment_label_catalog import (
+    FORMAL_LABEL_REGISTRY_VERSION,
+)
 from backend_api.app.services.review_pool import (
     pool_backfill_analysis,
     pool_has_enough,
@@ -45,6 +48,7 @@ from backend_api.app.services.taxonomy_coverage_monitor import (
     format_ops_alert,
 )
 from backend_api.app.services.taxonomy_loader import (
+    get_taxonomy_version,
     render_aspects_block,
     resolve_aspects,
 )
@@ -80,8 +84,12 @@ from .queue import get_queue
 
 # V4-T3 集成：worker 现在使用 backend_api/app/services/deep_analyzer (annotate v2.1, 92.1% 准确率)
 # 旧 review_analyzer.analyzer.analyze_batch 仍保留供 Streamlit 直接调用，不在 worker 通道使用
-PROMPT_VERSION = DEFAULT_ANNOTATE_VERSION  # "v2.1"
+PROMPT_VERSION = DEFAULT_ANNOTATE_VERSION  # "v2.4"（当前生产 annotate prompt 版本）
 ANALYZER_VERSION = "v4_deep"
+# 5.9.6-B.1: L1 缓存版本校验用的模型名。
+# 与 llm_router 的默认 zh 主链第一顺位 DeepSeek 对齐。
+# 模型升级时改此常量，旧缓存自动失效。
+CACHE_MODEL_NAME = "deepseek"
 COMMENT_ANALYSIS_WRITE_BATCH_SIZE = 50
 
 logger = logging.getLogger(__name__)
@@ -124,8 +132,6 @@ def _cache_observability_summary(
                 source = "global_review_pool"
             else:
                 source = "exact_hash"
-        elif hit.level == "L2":
-            source = "short_text_rating_rule"
         elif hit.level == "L3":
             source = "semantic_similar"
         else:
@@ -223,6 +229,9 @@ def _fallback_aspects_json_for_error(
     *,
     sub_category: str,
     prompt_version: str,
+    taxonomy_version: str = "v1.0",
+    registry_version: str = "",
+    model_name: str = "",
 ) -> dict[str, Any]:
     """Build a structured, non-cacheable fallback for exhausted LLM analysis."""
     return {
@@ -236,6 +245,10 @@ def _fallback_aspects_json_for_error(
         "analysis_error": str(v4_result.get("error") or "analysis_failed")[:200],
         "analysis_fallback": True,
         "sub_category": sub_category,
+        # 5.9.6-B.1: 语义版本字段，用于 L1 缓存命中校验
+        "taxonomy_version": taxonomy_version,
+        "registry_version": registry_version,
+        "model_name": model_name,
         "specific_issue_schema_version": SPECIFIC_ISSUE_SCHEMA_VERSION,
         "customer_label_schema_version": CUSTOMER_LABEL_SCHEMA_VERSION,
         "customer_label_occurrence_schema_version": CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
@@ -528,11 +541,18 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                 or compute_content_hash(c.get("content", ""), c.get("rating"), sub_category)
                 for c in unprocessed
             ]
+            # 5.9.6-B.1: 解析语义版本用于 L1 命中校验
+            _taxonomy_version = get_taxonomy_version(sub_category)
+            _registry_version = FORMAL_LABEL_REGISTRY_VERSION
             existing_analyses = get_analyzed_by_content_hash(
                 user_id,
                 content_hashes,
                 include_global=True,
                 analyzer_version=ANALYZER_VERSION,
+                prompt_version=PROMPT_VERSION,
+                taxonomy_version=_taxonomy_version,
+                registry_version=_registry_version,
+                model_name=CACHE_MODEL_NAME,
             )
 
             # L3 准备：查询同产品已分析+有 embedding 的历史评论
@@ -943,6 +963,9 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                         v4,
                         sub_category=sub_category,
                         prompt_version=PROMPT_VERSION,
+                        taxonomy_version=_taxonomy_version,
+                        registry_version=_registry_version,
+                        model_name=CACHE_MODEL_NAME,
                     ),
                     "analyzer_version": ANALYZER_VERSION,
                     "cache_hit_level": v4.get("cache_hit_level"),
@@ -966,6 +989,10 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "evidence_level_overall": v4.get("evidence_level_overall"),
                     "prompt_version": v4.get("prompt_version", PROMPT_VERSION),
                     "cluster_propagated": v4.get("cluster_propagated", False),
+                    # 5.9.6-B.1: 语义版本字段，参与 L1 缓存命中校验
+                    "taxonomy_version": _taxonomy_version,
+                    "registry_version": _registry_version,
+                    "model_name": v4.get("model_used", CACHE_MODEL_NAME),
                 }
                 result["aspects_json"] = enrich_aspects_json(
                     result["aspects_json"],
@@ -1310,7 +1337,7 @@ def _post_analysis_smart_push(
     escalation_actions: list[dict] = []
     if escalation_results:
         from backend_api.app.services.action_advisor import create_escalation_action
-        from review_analyzer.aspect_taxonomy import get_aspect_label_zh
+        from backend_api.app.core.aspect_taxonomy import get_aspect_label_zh
         from review_analyzer.push_snapshot_store import get_recent_snapshots, mark_escalated
 
         for esc in escalation_results:
@@ -1357,7 +1384,7 @@ def _post_analysis_smart_push(
 
     dept_issues = route_issues_by_department(top_issues, user_dept_mapping)
 
-    from review_analyzer.aspect_taxonomy import get_aspect_label_zh
+    from backend_api.app.core.aspect_taxonomy import get_aspect_label_zh
     for dept_list in dept_issues.values():
         for issue in dept_list:
             issue["tag_label"] = get_aspect_label_zh(issue.get("tag", ""))

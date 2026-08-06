@@ -1,9 +1,11 @@
 """V4-T4 Step 3: 多级缓存.
 
-三层缓存减少 LLM 调用：
-- L1: content_hash 精确命中 — 同一条评论内容已有分析结果，直接复用（省 100%）
-- L2: 短文本 + 明确评分 — 内容 ≤ 10 字且评分明确（1-2 或 5），跳过 LLM 给默认结果
+两层缓存减少 LLM 调用：
+- L1: content_hash 精确命中（+ 语义版本校验）— 同一条评论内容已有分析结果，直接复用
 - L3: embedding 余弦相似度 > 0.95 — 复用最近邻的分析结果
+
+L2（短文本默认结果）已在 5.9.6-B.1 删除：该分支对 ≤10 字 + 极端评分评论
+跳过 LLM 直接给默认结果，与 5.9.3 证据门冲突。
 
 返回 CacheResult 列表，标记每条评论是否命中缓存及命中层级。
 未命中的评论继续走 LLM 管道。
@@ -19,14 +21,13 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-L2_MAX_CONTENT_LENGTH = 10
 L3_SIMILARITY_THRESHOLD = 0.95
 
 
 @dataclass
 class CacheHit:
     comment_id: int
-    level: str  # "L1" | "L2" | "L3"
+    level: str  # "L1" | "L3"
     result: dict[str, Any]
     source_comment_id: int | None = None
 
@@ -45,7 +46,7 @@ class CacheResult:
         return len(self.misses)
 
     def stats(self) -> dict[str, int]:
-        levels = {"L1": 0, "L2": 0, "L3": 0}
+        levels = {"L1": 0, "L3": 0}
         for hit in self.hits.values():
             levels[hit.level] += 1
         return {**levels, "miss": self.miss_count, "total": self.hit_count + self.miss_count}
@@ -99,46 +100,6 @@ def _check_l1(
                 result=cached,
                 source_comment_id=cached.get("source_id"),
             ))
-        else:
-            remaining.append(c)
-
-    return hits, remaining
-
-
-def _check_l2(
-    comments: list[dict[str, Any]],
-) -> tuple[list[CacheHit], list[dict[str, Any]]]:
-    """L2: 短文本 + 极端评分 — 内容过短无法提取有价值的 aspect，直接生成最小结果."""
-    hits: list[CacheHit] = []
-    remaining: list[dict[str, Any]] = []
-
-    for c in comments:
-        content = (c.get("content") or "").strip()
-        rating = c.get("rating")
-
-        if len(content) <= L2_MAX_CONTENT_LENGTH and rating is not None:
-            try:
-                rating_val = int(float(rating))
-            except (TypeError, ValueError):
-                remaining.append(c)
-                continue
-
-            if rating_val <= 2 or rating_val >= 5:
-                sentiment = "negative" if rating_val <= 2 else "positive"
-                hits.append(CacheHit(
-                    comment_id=c["id"],
-                    level="L2",
-                    result={
-                        "sentiment": sentiment,
-                        "aspects": [],
-                        "pain_points": [content] if sentiment == "negative" and content else [],
-                        "highlights": [content] if sentiment == "positive" and content else [],
-                        "evidence_level_overall": "low",
-                        "prompt_version": "cache_l2",
-                    },
-                ))
-            else:
-                remaining.append(c)
         else:
             remaining.append(c)
 
@@ -209,7 +170,9 @@ def apply_cache(
     reference_ids: list[int] | None = None,
     reference_results: dict[int, dict[str, Any]] | None = None,
 ) -> CacheResult:
-    """依次执行 L1→L2→L3 缓存检查.
+    """依次执行 L1→L3 缓存检查.
+
+    L2（短文本默认结果）已在 5.9.6-B.1 删除。
 
     Args:
         comments: 待分析评论列表，每条需含 id, content, rating, embedding(可选)
@@ -227,13 +190,9 @@ def apply_cache(
     for hit in l1_hits:
         result.hits[hit.comment_id] = hit
 
-    l2_hits, after_l2 = _check_l2(after_l1)
-    for hit in l2_hits:
-        result.hits[hit.comment_id] = hit
-
     if reference_embeddings and reference_ids and reference_results:
         l3_hits, after_l3 = _check_l3(
-            after_l2,
+            after_l1,
             reference_embeddings,
             reference_ids,
             reference_results,
@@ -242,14 +201,14 @@ def apply_cache(
             result.hits[hit.comment_id] = hit
         remaining = after_l3
     else:
-        remaining = after_l2
+        remaining = after_l1
 
     result.misses = [c["id"] for c in remaining]
 
     stats = result.stats()
     logger.info(
-        "analysis_cache: L1=%d L2=%d L3=%d miss=%d total=%d (hit_rate=%.1f%%)",
-        stats["L1"], stats["L2"], stats["L3"], stats["miss"], stats["total"],
+        "analysis_cache: L1=%d L3=%d miss=%d total=%d (hit_rate=%.1f%%)",
+        stats["L1"], stats["L3"], stats["miss"], stats["total"],
         (result.hit_count / stats["total"] * 100) if stats["total"] > 0 else 0,
     )
 

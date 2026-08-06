@@ -1898,3 +1898,31 @@ M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 X
 **变更文件（2 个）**：
 - `backend_api/app/services/woot_scraper.py`（+22 行：helpful_count/image_urls 映射 + docstring 数据质量说明）
 - `TEST_LOG.md`（+1 行修复记录）
+
+---
+
+## 2026-08-06
+
+### 5.9.6-B.1 缓存语义版本化与 L2 下线
+
+- **标题**：L1 缓存命中校验纳入语义版本 + 删除 L2 短文本默认结果分支
+- **工作量**：0.5 天
+- **需求描述**：
+  - Bug 修复：L1 缓存 key 仅校验静态 `ANALYZER_VERSION="v4_deep"`，prompt/taxonomy/registry/model 变更后旧缓存仍命中，导致 5.9.6-D scope 治理成果在 5.9.7 验收时不可见。修复：`get_analyzed_by_content_hash()` 增加 `prompt_version` / `taxonomy_version` / `registry_version` / `model_name` 四个参数，通过 PostgreSQL JSONB `->>` 操作符做 SQL 层版本过滤；写入侧 `aspects_json` 同步补全三个新字段（`prompt_version` 已存在）；无需 migration（复用已有 JSONB 列）。
+  - Bug 修复：删除 L2 短文本默认结果分支（`_check_l2` + `L2_MAX_CONTENT_LENGTH`）。L2 对 ≤10 字 + 评分 1-2/5 的评论跳过 LLM 直接给空结果，与 5.9.3 证据门冲突。例如 `"Leaks."` 6 字 1 星含明确产品问题信号，但系统未读原文即产出标签。`apply_cache` 链路从 L1→L2→L3 简化为 L1→L3。
+  - 新增 `taxonomy_loader.get_taxonomy_version()` 函数，按 sub_category 查 `category_aspect_taxonomy.taxonomy_version`
+  - 新增 14 个单元测试（SQL 版本过滤构造 + L2 已删除 + observability + taxonomy 解析）
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 后端开发（Python） | 3.5h |
+  | 测试（单元测试） | 1.0h |
+  | 文档更新（PROGRESS + TEST_LOG + CHANGELOG） | 0.5h |
+
+**变更文件（6 个）**：
+- `backend_api/app/services/analysis_cache.py`（-55 行：删除 L2 分支/常量/stats，L1→L3 直连）
+- `backend_api/app/services/taxonomy_loader.py`（+45 行：新增 `get_taxonomy_version()`）
+- `review_analyzer/database.py`（+50 行：`get_analyzed_by_content_hash` 增加 4 个版本参数 + JSONB 过滤）
+- `workers/jobs.py`（+30 行：导入 registry/taxonomy version，L1 查询传入四版本，write 侧写入三新字段）
+- `backend_api/tests/test_cache_semantic_versioning.py`（新增 14 个测试）
+- `TEST_LOG.md`（追加修复记录）

@@ -657,3 +657,14 @@ File "database.py", line 13, in get_connection
 |------|---------|------|---------|
 | 2026-07-08 | feat | 参考 Shulex 方案，五个法律页（terms/privacy/refund/cookies/dpa）从并排中英双列改为 next-intl locale 单语切换。文案抽到 `messages/{zh,en}.json` `legal.*` 命名空间（`paragraph`/`bullets`/`ordered` 三段类型 + 4-tag 富文本 marker `<b>` / `<mail>` / `<link>` / `<ext>`）。新建 `frontend/src/components/legal/legal-article.tsx` server component + 五个 `page.tsx` 统一 `async` + `getTranslations` + `generateMetadata`。cookies 补 6 段 GDPR/CCPA/PIPL 合规分析，dpa 补 12 段 GDPR Art. 28 + SCC 2021/914 Module 2 + UK IDTA 全文 | ✅ 本地 tsc + build 通过；Playwright MCP 双 locale E2E：/privacy /terms /refund /cookies /dpa 五页 zh/en 各验证一次，语言切换器 `aria-label="切换语言"` 菜单 中文/English 切换正常，5 en 页均无 CJK 污染 |
 | 2026-07-08 | bug-发现 | 所有 marketing 页（法律五页 + pricing）`<title>` 出现 `X \| ClueAI \| ClueAI` 重复：`app/layout.tsx` 定义 `title.template: "%s \| ClueAI"` 会自动追加 " \| ClueAI"，但各 `page.tsx` 的 `buildMarketingMetadata({ title })` 已经手写了 " \| ClueAI"，两处叠加。属项目历史约定不一致，非本次任务引入的回归。Erika 决定新开会话独立修复，本任务不改 | 记录待办 |
+
+---
+
+### 2026-08-06 5.9.6-B.1 缓存语义版本化与 L2 下线
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-08-06 | fix | Bug 1（PROGRESS 补充项 1）：L1 缓存命中校验仅检查静态 `ANALYZER_VERSION="v4_deep"`，从不随 prompt/taxonomy/registry/model 变更而失效。修复：`database.py` `get_analyzed_by_content_hash()` 新增 `prompt_version` / `taxonomy_version` / `registry_version` / `model_name` 四个参数，通过 `aspects_json->>'字段'` JSONB 操作符在 SQL 层过滤；`workers/jobs.py` 写入方面 `aspects_json` 同步补全三个新字段（`prompt_version` 已存在）；`taxonomy_loader.py` 新增 `get_taxonomy_version()` 函数按 sub_category 查 `category_aspect_taxonomy.taxonomy_version`。改动范围：`analysis_cache.py` + `database.py` + `workers/jobs.py` + `taxonomy_loader.py`。无需 migration（复用已有 JSONB 列） | ruff PASS；55 现有测试 + 14 新测试全绿 |
+| 2026-08-06 | fix | Bug 2（PROGRESS 补充项 2）：删除 L2 短文本默认结果分支。`analysis_cache._check_l2()` 对 ≤10 字 + 评分 1-2/5 的评论跳过 LLM 直接给空 aspect + 默认 sentiment 结果，与 5.9.3 证据门冲突（如 `"Leaks."` 6 字 1 星含明确产品问题信号但系统未读原文即产出标签）。修复：删除 `_check_l2()` 函数 + `L2_MAX_CONTENT_LENGTH` 常量 + `apply_cache` 中 L2 调用 + `CacheResult.stats()` L2 计数 + `_cache_observability_summary()` 中 `short_text_rating_rule` 来源。`apply_cache` 链路从 L1→L2→L3 简化为 L1→L3 | ruff PASS；14 新测试覆盖 L2 不存在 + short text 应进 miss |
+| 2026-08-06 | verify | 【测试】`test_cache_semantic_versioning.py`（14 tests）：SQL 版本过滤构造验证 × 5（四版本全传含 ->> / 不传不含 / 单参数单过滤 / pool 查询也含过滤 / 向后兼容）、L2 已删除验证 × 4（函数/常量不存在 / Leaks miss / stats 无 L2 / 链 L1→L3）、observability × 2（无 short_text_rating_rule / miss reason）、taxonomy 解析 × 2（fallback / empty）、向后兼容 × 1。全部 PASS | ✅ 14/14 |
+| 2026-08-06 | verify | 【回归】`test_global_cache.py`（10 tests）+ `test_observability_p3_metrics.py`（3 tests）+ `test_v5t3_e2e.py`（8 tests）+ `test_v5t3_phase1.py`（20 tests）= 41 个现有测试全绿 | ✅ 41/41 |

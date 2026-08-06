@@ -161,7 +161,7 @@ def periodic_digest_job(user_id: int) -> dict[str, Any]:
 
                 if action_id:
                     mark_escalated(user_id, product_id, esc.tag_name, action_id)
-                    from review_analyzer.aspect_taxonomy import get_aspect_label_zh
+                    from backend_api.app.core.aspect_taxonomy import get_aspect_label_zh
                     escalation_actions.append({
                         "tag_name": esc.tag_name,
                         "tag_label": get_aspect_label_zh(esc.tag_name),
@@ -173,7 +173,7 @@ def periodic_digest_job(user_id: int) -> dict[str, Any]:
 
         dept_issues = route_issues_by_department(top_issues[:10], user_dept_mapping)
 
-        from review_analyzer.aspect_taxonomy import get_aspect_label_zh
+        from backend_api.app.core.aspect_taxonomy import get_aspect_label_zh
         for dept_list in dept_issues.values():
             for issue in dept_list:
                 issue["tag_label"] = get_aspect_label_zh(issue.get("tag", ""))
