@@ -151,7 +151,7 @@
     "googleSignUp": "使用 Google 注册",
     "googleLogin": "使用 Google 登录",
     "rememberMe": "记住我",
-    "loginEmailPlaceholder": "请输入邮箱地址",
+    "loginEmailPlaceholder": "请输入邮箱或用户名",
     "orDivider": "或",
     "confirmPassword": "确认密码",
     "confirmPasswordPlaceholder": "请再次输入密码",

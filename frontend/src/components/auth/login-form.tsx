@@ -97,14 +97,14 @@ export function LoginForm() {
         <div className="h-px flex-1 bg-[rgba(0,0,0,0.08)]" />
       </div>
 
-      {/* Email */}
+      {/* Email / Username — API 同时支持邮箱和用户名登录，前端不做 email 格式校验 */}
       <div>
         <label htmlFor="login-email" className="block text-sm font-medium text-[#25212a]">
           {t("email")}
         </label>
         <Input
           id="login-email"
-          type="email"
+          type="text"
           required
           maxLength={255}
           value={email}

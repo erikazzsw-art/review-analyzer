@@ -151,7 +151,7 @@
         "googleSignUp": "Sign up with Google",
         "googleLogin": "Log in with Google",
         "rememberMe": "Remember me",
-        "loginEmailPlaceholder": "Enter your email address",
+        "loginEmailPlaceholder": "Enter email or username",
         "orDivider": "or",
         "confirmPassword": "Confirm password",
         "confirmPasswordPlaceholder": "Re-enter your password",
