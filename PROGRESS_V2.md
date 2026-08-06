@@ -3453,7 +3453,7 @@ CREATE TABLE workspace_invitations (
 - 状态: ✅ 已完成 | 已部署线上验证通过
 - 分支: `develop`（commit `9cd4771`、`c97ae74`）
 - 任务:
-  - [x] 新建 AliExpress 抓取器（双数据源：feedback API + Playwright 浏览器 fallback）
+  - [x] 新建 AliExpress 抓取器（双数据源：Apify CrowdPull + feedback API；Playwright 浏览器 fallback 已于 2026-08-06 移除）
   - [x] 更新 review_scraper 路由层按 platform 分派
   - [x] 更新 API Schema（platform 字段 + 按平台动态校验产品编码格式）
   - [x] 更新 API 路由（传递 platform 到 payload）
@@ -3462,7 +3462,7 @@ CREATE TABLE workspace_invitations (
   - [x] 产品管理页新增平台 Tab 过滤 + 平台 badge
   - [x] 移除非英文 Amazon 站点（仅保留 US/UK/CA/AU）
   - [x] 接入 Apify CrowdPull 作为主数据源（解决 feedback API 反爬封锁）
-  - [x] 三级 fallback 策略：Apify → feedback API → Playwright
+  - [x] 二级 fallback 策略：Apify → feedback API（原三级 Apify → feedback API → Playwright，2026-08-06 移除浏览器第三级）
   - [x] 修复 Product ID 验证范围（12-16 位，支持 16 位 ID）
   - [x] 修复 Apify HTTP 201 状态码被错误丢弃问题
   - 线上验证（2026-06-30）：product ID 1005009259589970 成功抓取 131 条评论，session_id=75，好评率 82.4%，差评率 17.6%
@@ -3471,7 +3471,7 @@ CREATE TABLE workspace_invitations (
   - 当前状态：使用 $5 免费平台积分（约 3,000 条），未绑定信用卡
   - 当前上限：每次抓取 max_reviews=200（含定时自动抓取）
   - 后续计划：等有付费用户后再绑卡 + 提升 max_reviews 上限（改 `aliexpress_scraper.py:428` 即可）
-  - 注意：免费积分耗尽后 Apify 返回 402，代码会 fallback 到 feedback API / Playwright（但目前两者均不稳定）
+  - 注意：免费积分耗尽后 Apify 返回 402，代码会 fallback 到 feedback API；2026-08-06 移除了 Playwright 浏览器第三级（已被验证码拦截且未声明依赖）
 - [x] eBay 评论抓取接入（2026-07-01）
   - Actor: scrapier/ebay-review-scraper，$5.99/1,000 条
   - eBay 仅 Positive/Neutral/Negative 三档 → 映射为 5/3/1 星
