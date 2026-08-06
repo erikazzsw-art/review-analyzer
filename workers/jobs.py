@@ -1336,8 +1336,8 @@ def _post_analysis_smart_push(
 
     escalation_actions: list[dict] = []
     if escalation_results:
-        from backend_api.app.services.action_advisor import create_escalation_action
         from backend_api.app.core.aspect_taxonomy import get_aspect_label_zh
+        from backend_api.app.services.action_advisor import create_escalation_action
         from review_analyzer.push_snapshot_store import get_recent_snapshots, mark_escalated
 
         for esc in escalation_results:

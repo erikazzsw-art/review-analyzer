@@ -669,3 +669,13 @@ File "database.py", line 13, in get_connection
 | 2026-08-06 | fix | Bug 2（PROGRESS 补充项 2）：删除 L2 短文本默认结果分支。`analysis_cache._check_l2()` 对 ≤10 字 + 评分 1-2/5 的评论跳过 LLM 直接给空 aspect + 默认 sentiment 结果，与 5.9.3 证据门冲突（如 `"Leaks."` 6 字 1 星含明确产品问题信号但系统未读原文即产出标签）。修复：删除 `_check_l2()` 函数 + `L2_MAX_CONTENT_LENGTH` 常量 + `apply_cache` 中 L2 调用 + `CacheResult.stats()` L2 计数 + `_cache_observability_summary()` 中 `short_text_rating_rule` 来源。`apply_cache` 链路从 L1→L2→L3 简化为 L1→L3 | ruff PASS；14 新测试覆盖 L2 不存在 + short text 应进 miss |
 | 2026-08-06 | verify | 【测试】`test_cache_semantic_versioning.py`（14 tests）：SQL 版本过滤构造验证 × 5（四版本全传含 ->> / 不传不含 / 单参数单过滤 / pool 查询也含过滤 / 向后兼容）、L2 已删除验证 × 4（函数/常量不存在 / Leaks miss / stats 无 L2 / 链 L1→L3）、observability × 2（无 short_text_rating_rule / miss reason）、taxonomy 解析 × 2（fallback / empty）、向后兼容 × 1。全部 PASS | ✅ 14/14 |
 | 2026-08-06 | verify | 【回归】`test_global_cache.py`（10 tests）+ `test_observability_p3_metrics.py`（3 tests）+ `test_v5t3_e2e.py`（8 tests）+ `test_v5t3_phase1.py`（20 tests）= 41 个现有测试全绿 | ✅ 41/41 |
+
+---
+
+### 2026-08-06 CI 修复（commit ca9042c 后 ci-gate 失败）
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-08-06 | fix | `ci-gate / backend-lint` 失败（ruff 3 errors）：① `test_cache_semantic_versioning.py` F401 `unittest.mock.ANY` 导入未使用 + I001 import 块未排序；② `workers/jobs.py:1339` I001 函数内延迟导入顺序错误，`backend_api.app.services.action_advisor` 排在 `backend_api.app.core.aspect_taxonomy` 之前。修复：删除未用的 `ANY`；将 `core.aspect_taxonomy` 提到 `services.action_advisor` 之前 | `ruff check backend_api/ workers/ review_analyzer/ scripts/` → All checks passed! |
+| 2026-08-06 | fix | `ci-gate / backend-import-check` 失败（`ModuleNotFoundError: No module named 'yaml'`）：`review_fragment_label_catalog.py:23` 引入 `yaml`，但 `requirements.txt` 未声明该依赖，CI 走 `pip install -r requirements.txt` 装不到。修复：`requirements.txt` 补 `PyYAML>=6.0.0`。影响范围：仅依赖声明，无代码逻辑变更 | `from backend_api.app.main import app` → OK；`from workers.jobs import process_upload_job` → OK |
+| 2026-08-06 | verify | 【回归】`test_cache_semantic_versioning.py` 14 tests 全绿（确认删除 `ANY` 未破坏断言） | ✅ 14/14 |
