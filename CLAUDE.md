@@ -282,7 +282,7 @@ git diff --cached | grep -E "sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{20,}|ghp_[A-Z
 4. **线上验证** — 使用测试账号登录线上网站，验证本次变更是否按沟通确认的方案落实
 5. **报告验证结果** — 告知 Erika 验证通过/失败 + 具体截图或问题描述
 
-**测试账号**：惜_clueai / test123456
+**测试账号**：erikazz@foxmail.com / test123456
 **线上地址**：https://www.clueai-reviewlens.com
 
 **注意事项**：
