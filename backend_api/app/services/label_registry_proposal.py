@@ -76,6 +76,43 @@ def _validate_proposal_data(action_type: str, data: dict[str, Any]) -> list[str]
             errors.append("alias_merge: missing target_key")
         if not data.get("source_keys"):
             errors.append("alias_merge: missing source_keys")
+        else:
+            # Repair batch 1a (Bug from audit §5.4): cross-label_type
+            # alias_merge would silently merge a highlight into an issue,
+            # permanently losing the positive/negative distinction.
+            # Hard-reject at the code layer; UI warning is the second layer.
+            from backend_api.app.services.review_fragment_label_catalog import (
+                get_label_registry_state,
+            )
+
+            state = get_label_registry_state()
+            label_map = {lb.key: lb for lb in state.labels}
+
+            target_key = str(data.get("target_key", ""))
+            target_label = label_map.get(target_key)
+            if target_label is None:
+                errors.append(
+                    f"alias_merge: target_key={target_key!r} not found in registry"
+                )
+            else:
+                target_type = target_label.label_type
+                for sk in data["source_keys"]:
+                    sk_str = str(sk)
+                    src_label = label_map.get(sk_str)
+                    if src_label is None:
+                        errors.append(
+                            f"alias_merge: source_key={sk_str!r} not found in registry"
+                        )
+                    elif src_label.label_type != target_type:
+                        errors.append(
+                            f"alias_merge: source_key={sk_str!r} has "
+                            f"label_type={src_label.label_type!r} but "
+                            f"target_key={target_key!r} has "
+                            f"label_type={target_type!r}. Cross-type merge "
+                            f"is forbidden — merging a highlight into an "
+                            f"issue would permanently lose the "
+                            f"positive/negative distinction."
+                        )
     elif action_type == PROPOSAL_ACTION_BLOCKED_RULE:
         if not data.get("sub_categories"):
             errors.append("blocked_rule: missing sub_categories")
@@ -186,6 +223,36 @@ def query_proposals(
     except Exception:
         logger.exception("label_registry_proposal: query failed")
         return []
+
+
+def get_proposal_by_id(proposal_id: int) -> dict[str, Any] | None:
+    """Fetch a single proposal by its primary key.
+
+    Returns the proposal dict or None if not found.
+    Repair batch 1a (Bug 3): replaces the limit=1 scan that could only find
+    the most recent proposal.
+    """
+    try:
+        conn = get_connection()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, label_key, action_type, proposal_data,
+                       evidence_summary, proposal_status, reviewer_note,
+                       reviewed_by, reviewed_at, created_at
+                FROM label_registry_proposals
+                WHERE id = %s
+                """,
+                (proposal_id,),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
+    except Exception:
+        logger.exception(
+            "label_registry_proposal: failed to fetch proposal id=%d",
+            proposal_id,
+        )
+        return None
 
 
 def update_proposal_status(

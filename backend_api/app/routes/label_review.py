@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/settings/label-review", tags=["label-review"])
 
 _REGISTRY_PATH = (
-    Path(__file__).resolve().parents[4]
+    Path(__file__).resolve().parents[3]
     / "data"
     / "taxonomy"
     / "registry"
@@ -35,7 +35,7 @@ _REGISTRY_PATH = (
 )
 
 _VALIDATE_SCRIPT = (
-    Path(__file__).resolve().parents[4]
+    Path(__file__).resolve().parents[3]
     / "scripts"
     / "validate_label_scope.py"
 )
@@ -117,10 +117,9 @@ def review_proposal(
       - Generates negative example regression test
     """
     from backend_api.app.services.label_registry_proposal import (
-        PROPOSAL_STATUS_APPLIED,
         PROPOSAL_STATUS_APPROVED,
         PROPOSAL_STATUS_REJECTED,
-        query_proposals,
+        get_proposal_by_id,
         update_proposal_status,
     )
 
@@ -131,12 +130,11 @@ def review_proposal(
         )
 
     user_id = str(current_user.get("id", "unknown"))
-    proposals = query_proposals(limit=1, offset=0)
-    target = None
-    for p in proposals:
-        if p.get("id") == body.proposal_id:
-            target = p
-            break
+
+    # Repair batch 1a (Bug 3): use get_proposal_by_id instead of scanning
+    # the most recent proposal. The old limit=1 scan meant only the newest
+    # proposal could be approved/rejected/merged — all others returned 404.
+    target = get_proposal_by_id(body.proposal_id)
 
     if target is None:
         raise HTTPException(
@@ -168,51 +166,32 @@ def review_proposal(
             message="Proposal approved." if ok else "Failed to update proposal status.",
         )
 
-    # --- merge: write back to YAML ---
-    action_type = target.get("action_type", "")
-    proposal_data = target.get("proposal_data") or {}
-    if isinstance(proposal_data, str):
-        import json
-        proposal_data = json.loads(proposal_data)
-    label_key = target.get("label_key", "")
-
-    try:
-        _apply_proposal_to_yaml(label_key, action_type, proposal_data)
-    except Exception as exc:
-        logger.exception("Failed to apply proposal %d to YAML", body.proposal_id)
-        return ReviewActionResult(
-            success=False,
-            message=f"Failed to write YAML: {exc}",
+    # --- merge: not implemented (decision q, repair batch 1a) ---
+    # Registry changes must go through PR workflow, not in-container YAML
+    # write-back. The _apply_proposal_to_yaml / _run_validation /
+    # _restore_yaml_backup / _generate_negative_test helpers are preserved
+    # below but no longer called. They will be reworked when the patch
+    # generation architecture lands (batch 2-1).
+    if body.action == "merge":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail=(
+                "Merge is not available. Registry changes must go through the "
+                "PR workflow: generate a patch from the proposal, submit a PR "
+                "against the taxonomy/registry YAML, and run "
+                "validate_label_scope.py in CI. See batch 2-1 for the patch "
+                "generation tooling."
+            ),
         )
-
-    # Run validation
-    validation_ok, validation_output = _run_validation()
-    if not validation_ok:
-        _restore_yaml_backup()
-        return ReviewActionResult(
-            success=False,
-            message="Validation failed after YAML write. Changes rolled back.",
-            validation_output=validation_output,
-        )
-
-    # Generate negative example regression test
-    test_generated = _generate_negative_test(label_key, action_type, proposal_data)
-
-    ok = update_proposal_status(
-        body.proposal_id,
-        new_status=PROPOSAL_STATUS_APPLIED,
-        reviewer_note=body.reviewer_note,
-        reviewed_by=user_id,
-    )
-    return ReviewActionResult(
-        success=ok,
-        message=f"Proposal merged. YAML updated. Test generated: {test_generated}",
-        validation_output=validation_output,
-    )
 
 
 # ---------------------------------------------------------------------------
-# YAML write-back helpers (decision o)
+# YAML write-back helpers (decision o → decision q, repair batch 1a)
+#
+# These functions are preserved but NO LONGER CALLED. Merge was disabled
+# in batch 1a (decision q): registry changes must go through PR workflow,
+# not in-container YAML write-back. The helpers will be reworked when the
+# patch generation architecture lands (batch 2-1).
 # ---------------------------------------------------------------------------
 
 
@@ -325,7 +304,7 @@ def _generate_negative_test(
     )
 
     test_file = (
-        Path(__file__).resolve().parents[4]
+        Path(__file__).resolve().parents[3]
         / "backend_api"
         / "tests"
         / "test_review_fragment_label_catalog.py"
