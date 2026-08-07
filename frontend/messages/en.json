@@ -399,7 +399,9 @@
             "upgrade": "Upgrade to Pro"
         },
         "goldenSet": {
+            "pageTitle": "Label Calibration",
             "title": "Label Calibration (Golden Set)",
+            "tabRegistryReview": "Label Registry Review",
             "description": "Upload human-labeled data, track accuracy by label, and curate few-shot examples to improve model tagging quality.",
             "totalEntries": "Total Entries",
             "aspectCount": "Covered Labels",

@@ -680,3 +680,14 @@ File "database.py", line 13, in get_connection
 | 2026-08-06 | fix | `ci-gate / backend-lint` 失败（ruff 3 errors）：① `test_cache_semantic_versioning.py` F401 `unittest.mock.ANY` 导入未使用 + I001 import 块未排序；② `workers/jobs.py:1339` I001 函数内延迟导入顺序错误，`backend_api.app.services.action_advisor` 排在 `backend_api.app.core.aspect_taxonomy` 之前。修复：删除未用的 `ANY`；将 `core.aspect_taxonomy` 提到 `services.action_advisor` 之前 | `ruff check backend_api/ workers/ review_analyzer/ scripts/` → All checks passed! |
 | 2026-08-06 | fix | `ci-gate / backend-import-check` 失败（`ModuleNotFoundError: No module named 'yaml'`）：`review_fragment_label_catalog.py:23` 引入 `yaml`，但 `requirements.txt` 未声明该依赖，CI 走 `pip install -r requirements.txt` 装不到。修复：`requirements.txt` 补 `PyYAML>=6.0.0`。影响范围：仅依赖声明，无代码逻辑变更 | `from backend_api.app.main import app` → OK；`from workers.jobs import process_upload_job` → OK |
 | 2026-08-06 | verify | 【回归】`test_cache_semantic_versioning.py` 14 tests 全绿（确认删除 `ANY` 未破坏断言） | ✅ 14/14 |
+
+---
+
+### 2026-08-07 Label Registry Review 并入 Label Calibration + 权限收紧
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-08-07 | feat | `/settings/label-review` 收进 `/settings/golden-set` 做 tab 排版（Tab 1: Golden Set + Tab 2: Registry Review）；旧 URL 改 server redirect | frontend tsc PASS; next build PASS |
+| 2026-08-07 | security | `backend_api/app/routes/label_review.py` 两个 endpoint 权限从 `get_current_user` 收紧为 `get_admin_user`（仅 admin 可调） | ruff PASS; pytest 2 new 403 tests PASS |
+| 2026-08-07 | verify | 【回归】全量 backend test suite：459 passed, 11 pre-existing failures（无关联） | ✅ 459/470 |
+| 2026-08-07 | verify | 【回归】frontend next build PASS，无新增 error/warning | ✅ |

@@ -1977,3 +1977,61 @@ M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 X
 - `workers/jobs.py`（+30 行：导入 registry/taxonomy version，L1 查询传入四版本，write 侧写入三新字段）
 - `backend_api/tests/test_cache_semantic_versioning.py`（新增 14 个测试）
 - `TEST_LOG.md`（追加修复记录）
+
+### 5.9.6-D 工作包 6/7/8：Active 入口 resolver shadow 接线 + 审核回流 + CI 门禁 + 审核页
+
+- **标题**：完成 5.9.6-D 全部工作包（零 active 行为变更 + 基础设施就位）
+- **工作量**：5.5 天
+- **需求描述**：
+  - **决策 l（删除 Gate 5）**：删除 `_resolve_formal_label_impl()` 的 `evidence_span`/`review_text` 参数和 Gate 5 代码块，docstring 写入「调用方先过 5.9.3 证据门再调 resolver」契约。保留 `INSUFFICIENT_EVIDENCE` 枚举（调用方产出）。3 个新测试断言传 evidence 参数 → TypeError。
+  - **决策 m（三态 Feature Flag）**：新建 `label_registry_frontstage.py`，三态 off（默认）/shadow（旧路径决定展示、resolver 并行记录差异）/enforce（5.9.7 交付）。遵循现有 flag 惯例（frozen dataclass + `_from_env()` + `cache_key()`），fail-closed 校验。`LABEL_REGISTRY_FRONTSTAGE_MODE` 环境变量控制，默认 off。
+  - **WP6（Active 入口 shadow 接线）**：`specific_issue.py` 的 `decorate_comment_customer_labels()` 新增 `label_registry_flag` 参数 + `_run_label_registry_shadow_pass()` 后处理（遍历 canonical issue/highlight key 调 resolver、记录 `ResolverShadowDiff`、跳过 UNKNOWN_KEY 拒绝）；`analysis.py` session + aggregated results 两处 handler 创建 flag 传入 decorator + 缓存 key 纳入 flag；`export.py` module export handler 同样接入。flag off 时为零开销 no-op。
+  - **WP7（审核回流）**：新建 `label_registry_audit.py`（`AuditEvent` dataclass，3 种 event_type：resolver_reject/shadow_diff/human_flag，DB 读写 + 批量写入，fail-open）；新建 `label_registry_proposal.py`（`RegistryProposal` dataclass，4 种封闭 action_type：scope_adjust/alias_merge/blocked_rule/negative_example，DB 读写 + 状态更新 + 4 个生成助手）；新建 migration SQL `060_label_registry_audit_and_proposal.sql`（两张表：`label_registry_audit_events` + `label_registry_proposals`，待 Erika 批准执行）。
+  - **WP8（CI 门禁 + 审核页）**：`ci.yml` 新增 `label-scope-validate` + `resolver-gate-tests` 两个 job（scope 校验 dry-run、wildcard 禁止、resolver TypeError、各 reject reason 触发、effective scope 数量断言、evidence 参数拒绝）；新建 `/settings/label-review` 后端 API（GET proposals 列表 + POST review approve/reject/merge，merge 时写回 YAML → 验证 → 失败回滚 → 生成负例回归测试）+ `main.py` 注册 router；新建前端页面（状态筛选 tabs、approve/reject/merge 三按钮、proposal_data JSON 展示、reviewer note）；输出验收包文档 `docs/5.9.6-D-wp6-8-acceptance-package.md`（变更清单、权限约束、部署检查清单、预期行为、已知限制、验收步骤）。
+- **涉及岗位及工时**：
+  | 岗位 | 工时 |
+  |------|------|
+  | 后端开发（Python） | 28.0h |
+  | 前端开发（Next.js） | 4.0h |
+  | DevOps（CI） | 2.0h |
+  | 测试（单元测试，48 resolver tests all pass） | 4.0h |
+  | 文档（PROGRESS + CHANGELOG + 验收包） | 4.0h |
+
+**变更文件（14 个）**：
+- `backend_api/app/services/review_fragment_label_catalog.py`（删除 Gate 5 + docstring 契约）
+- `backend_api/app/services/label_registry_frontstage.py`（新增：三态 flag + ResolverShadowDiff + 日志 flush）
+- `backend_api/app/services/specific_issue.py`（decorator 接入 shadow pass + _run_label_registry_shadow_pass）
+- `backend_api/app/routes/analysis.py`（session + aggregated handler 创建 flag + 缓存 key 纳入）
+- `backend_api/app/routes/export.py`（module export handler 创建 flag）
+- `backend_api/app/services/label_registry_audit.py`（新增：AuditEvent + DB 读写 + 批量）
+- `backend_api/app/services/label_registry_proposal.py`（新增：RegistryProposal + 4 种 action_type + 生成助手）
+- `migrations/060_label_registry_audit_and_proposal.sql`（新增：2 张表，待执行）
+- `.github/workflows/ci.yml`（+2 job：label-scope-validate + resolver-gate-tests）
+- `backend_api/app/routes/label_review.py`（新增：审核页 API + YAML write-back + rollback）
+- `backend_api/app/main.py`（注册 label_review_router）
+- `frontend/src/app/settings/label-review/page.tsx`（新增：审核页前端）
+- `backend_api/tests/test_review_fragment_label_catalog.py`（+3 测试，48 total）
+- `docs/5.9.6-D-wp6-8-acceptance-package.md`（新增：验收包）
+
+### 2026-08-07 Label Registry Review 并入 Label Calibration + 权限收紧为 admin-only
+
+**变更摘要**：将独立的 `/settings/label-review` 审核页并入 `/settings/golden-set` 做成 tab 排版（Tab 1: Label Calibration Golden Set + Tab 2: Label Registry Review），后端两个审核 endpoint 从 `get_current_user` 收紧为 `get_admin_user`，旧 URL 保留 redirect。
+
+- **前端**：
+  - 新建 `frontend/src/components/label-calibration/golden-set-tab.tsx`（从 golden-set page 抽出 body，~260 行）
+  - 新建 `frontend/src/components/label-calibration/registry-review-tab.tsx`（从 label-review page 抽出 body，~220 行，逻辑不变）
+  - 重写 `frontend/src/app/settings/golden-set/page.tsx` 为 admin-gated 外壳（~50 行）：admin 校验 + h1 + `PageTabs` 两个 tab
+  - 替换 `frontend/src/app/settings/label-review/page.tsx` 为 server component `redirect("/settings/golden-set")`
+  - i18n `messages/{en,zh}.json` `settings.goldenSet` 下新增 2 键：`pageTitle`、`tabRegistryReview`
+
+- **后端**：
+  - `backend_api/app/routes/label_review.py`：import `get_admin_user` 替换 `get_current_user`，两个 endpoint 的 `Depends` 改为 `Depends(get_admin_user)`
+  - 新增 `backend_api/tests/test_label_review_admin_only.py`：2 个 403 测试（GET proposals + POST review 以非 admin 身份请求均返回 403）
+
+- **影响范围**：侧边栏入口不变（本就是 `adminOnly: true`）；review tab 保持英文硬编码（admin-only 内部页，本批次不做双语）；旧 URL 自动 redirect 不破坏书签/文档引用
+
+- **验证**：
+  - ruff check PASS（2 文件）
+  - pytest 459 passed（含新 2 tests），11 pre-existing failures（无关联）
+  - frontend tsc typecheck PASS
+  - frontend next build PASS

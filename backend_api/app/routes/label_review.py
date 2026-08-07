@@ -20,7 +20,7 @@ import yaml
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
-from backend_api.app.deps import get_current_user
+from backend_api.app.deps import get_admin_user
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ def list_proposals(
     status_filter: str = Query(default="pending", alias="status"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_admin_user),
 ) -> ProposalListResponse:
     """List registry proposals with optional status filter."""
     from backend_api.app.services.label_registry_proposal import query_proposals
@@ -102,7 +102,7 @@ def list_proposals(
 @router.post("/review", response_model=ReviewActionResult)
 def review_proposal(
     body: ReviewAction,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_admin_user),
 ) -> ReviewActionResult:
     """Approve, reject, or merge a registry proposal.
 

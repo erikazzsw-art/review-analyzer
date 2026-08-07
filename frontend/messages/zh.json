@@ -396,7 +396,9 @@
       "upgrade": "升级到 Pro"
     },
     "goldenSet": {
+      "pageTitle": "标签校准",
       "title": "标签校准（Golden Set）",
+      "tabRegistryReview": "标签注册表审核",
       "description": "上传人工标注数据，追踪各标签准确率，精选 few-shot 示例提升模型标签质量",
       "totalEntries": "总条目",
       "aspectCount": "覆盖标签数",
