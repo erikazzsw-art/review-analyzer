@@ -2035,3 +2035,42 @@ M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 X
   - pytest 459 passed（含新 2 tests），11 pre-existing failures（无关联）
   - frontend tsc typecheck PASS
   - frontend next build PASS
+
+### 2026-08-07 5.9.6-D WP9 验收裁决返修（4 批次 · 7 bugs + P0 gate + reflux pipeline + 10 文档修正）
+
+**变更摘要**：根据 WP9 验收裁决中的工程侧独立核验结果，执行 4 批次返修，修复 7 个实现 bug（Bug 1-6 + Bug 5b）、修复 P0 门禁静默失效、恢复中断的回流链路、修正验收包 10 项文档问题。4 个独立 commit（`c5bf769` `c09f751` `8f9b849` `54602c3`），不包含批次 2 和 registry_version 升版。
+
+**需求描述**：
+- 批次 0（P0 门禁，commit `c5bf769`）：新增 `SCOPE_UNAVAILABLE` 枚举值 + Gate 3a/3b 拆分 + `assert_taxonomy_index_healthy()` 启动自检 + CI Check 7（exact 89 sub_category）+ 8 个新测试（48→56）
+- 批次 1a（route + 校验层，commit `c09f751`）：`get_proposal_by_id()` 精确查询 + merge 返回 501 禁用 + `alias_merge` 跨 `label_type` 硬阻断 + 路径 `parents[4]→parents[3]` 修复
+- 批次 1b（shadow 落库，commit `8f9b849`）：`_shadow_diffs` ContextVar 隔离（Bug 6）+ audit persist 中间件 + `generate_label_proposals.py`（Bug 5b）+ `LABEL_REGISTRY_AUDIT_PERSIST` 独立开关
+- 批次 3（文档修正，commit `54602c3`）：验收包 10 项修正（URL/tab 路径、测试数、migration 状态、摘要注解、fiction 声明、CI lock、7+2 修正、formal_module 定义、checklist 裁决）
+
+**涉及岗位及工时**：
+
+| 岗位 | 工作内容 | 工时 |
+|------|---------|------|
+| 后端（catalog resolver） | Bug 1 P0 gate + Bug 0-3 启动自检 + new tests (8) | 3.0h |
+| 后端（label review route） | Bug 3/4 + proposal CRUD + alias_merge guard | 2.0h |
+| 后端（frontstage middleware） | Bug 5/6 ContextVar + audit persist + proposal generator | 3.0h |
+| DevOps（CI + validate） | CI Check 7 + validate_label_scope.py 扩展 | 0.5h |
+| 文档（验收包修正） | 10 项文档修正 | 0.5h |
+| 测试（回归验证） | 56 tests + ruff + validate --dry-run + repro | 1.5h |
+| 文档（TEST_LOG + PROGRESS + CHANGELOG） | 3 文档更新 | 1.5h |
+
+**变更文件（10 个）**：
+- `backend_api/app/services/review_fragment_label_catalog.py`（SCOPE_UNAVAILABLE + Gate 3a/3b + assert_taxonomy_index_healthy + EXPECTED_TAXONOMY_SUB_CATEGORY_COUNT）
+- `backend_api/app/main.py`（startup health check + /health 暴露 + shadow middleware 注册）
+- `scripts/validate_label_scope.py`（Check 7: exact 89 sub_category 断言）
+- `.github/workflows/ci.yml`（scope_unavailable 覆盖率条目）
+- `backend_api/tests/test_review_fragment_label_catalog.py`（8 new tests, 48→56, 删除 unused import）
+- `backend_api/app/routes/label_review.py`（get_proposal_by_id + merge 501 + parents fix）
+- `backend_api/app/services/label_registry_proposal.py`（新增 get_proposal_by_id + alias_merge 跨类型阻断）
+- `backend_api/app/services/label_registry_frontstage.py`（ContextVar 隔离 + audit persist + shadow middleware）
+- `scripts/generate_label_proposals.py`（新增：audit → proposal 聚合脚本）
+- `docs/5.9.6-D-wp9-erika-acceptance-package.md`（新增：10 项修正后的验收包）
+
+**验证结果**：
+- 56 tests PASS, ruff clean, validate_label_scope.py --dry-run 0 failures
+- scope matrix unchanged: 89/89/89/89/5/5/16/1/1
+- Bug 1 repro: 空 taxonomy → all 9 labels return SCOPE_UNAVAILABLE (was: OUT_OF_SCOPE)

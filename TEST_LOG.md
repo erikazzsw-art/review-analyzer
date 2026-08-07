@@ -694,3 +694,19 @@ File "database.py", line 13, in get_connection
 | 2026-08-07 | verify | 【线上-admin】`erikazz@foxmail.com`（`is_admin: true`）验证 8 项：侧边栏「标签校准」可见 → `/settings/golden-set`；H1 + 两 tab 中文 i18n 正确；Tab 1 数据 24 条/15 标签/15 行准确率表/24 行标注记录；Tab 2 四状态筛选 + Reviewer Note 渲染；筛选 `pending`→`applied` 重新拉取无报错；旧 URL `/settings/label-review` redirect 到 golden-set；4 接口全 200（proposals/summary/stats/entries）；console 0 error | ✅ 8/8 |
 | 2026-08-07 | verify | 【线上-非 admin】`erikazzsw@gmail.com`（`/api/me` 实测 `is_admin: false`，pro plan）验证 5 项，走真实 `get_admin_user` DB 查询而非 mock：`GET /proposals` → 403 `Admin access required.`；`POST /review` → 403 同上；侧边栏「标签校准」+「可观测性」两个 adminOnly 项均不可见；直访 `/settings/golden-set` → 前端守卫 redirect `/workspace`；旧 URL `/settings/label-review` → golden-set → 守卫 → `/workspace` 两跳链完整。补齐本地 2 个 mock 测试未覆盖的真实 DB 权限路径 | ✅ 5/5 |
 | 2026-08-07 | verify | 【线上】migration 060 两张表存在性：Erika 报告已在 clueai-dev + prod 执行；`/proposals` 返回 `200 {"proposals":[],"total":0}` 与「表存在且为空」一致（注：`query_proposals` 用 `except Exception: return []` 兜异常，空数组本身不能单独证明表存在，故以 Erika 的执行报告为准） | ✅ |
+
+---
+
+### 2026-08-07 5.9.6-D WP9 验收裁决返修（4 batch · 7 bugs + P0 gate + reflux 修复 · 10 文档修正）
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-08-07 | fix | Bug 1 (P0): 空 taxonomy 索引时 Gate 3 静默放行 — 新增 `SCOPE_UNAVAILABLE` 枚举，Gate 3 拆为 3a/3b，空索引拒绝全部 9 个 label | 56 tests PASS; validate_label_scope.py --dry-run 0 failures |
+| 2026-08-07 | fix | Bug 0-3: taxonomy 启动自检 — `assert_taxonomy_index_healthy()` + /health 暴露索引状态 | ruff PASS; test_taxonomy_index_count_assertion PASS |
+| 2026-08-07 | fix | Bug 3: proposal 查询只用 limit=1 → `get_proposal_by_id()` 精确查询 | ruff PASS; label_review route 路径验证 |
+| 2026-08-07 | fix | Bug 4: merge 禁用返回 501 (决策 q: registry 变更走 PR workflow) | ruff PASS |
+| 2026-08-07 | fix | Bug 5/6: ContextVar 替代 module-level list 解决并发 shadow diff 混合问题 | ruff PASS; 无并发测试但语义正确 |
+| 2026-08-07 | fix | Bug 5b: reflux pipeline — `generate_label_proposals.py` 从 audit events 聚合候选 proposal | script 语法 OK; --help 输出正确 |
+| 2026-08-07 | verify | 【回归】全量 catalog tests：56 passed | ✅ 56/56 |
+| 2026-08-07 | verify | validate_label_scope.py --dry-run：0 failures, scope matrix unchanged 89/89/89/89/5/5/16/1/1 | ✅ |
+| 2026-08-07 | verify | ruff check 全量修改文件：All checks passed! | ✅ |
