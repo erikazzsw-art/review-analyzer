@@ -12,6 +12,7 @@ customer_label_v2_frontstage.py and review_signal_frontstage.py.
 """
 from __future__ import annotations
 
+import contextvars
 import json
 import logging
 import os
@@ -31,6 +32,19 @@ VALID_MODES = frozenset({MODE_OFF, MODE_SHADOW, MODE_ENFORCE})
 _ENV_PREFIX = "LABEL_REGISTRY_FRONTSTAGE_"
 _TRUTHY_CONFIG_VALUES = {"1", "true", "yes", "on", "enabled"}
 _FALSY_CONFIG_VALUES = {"0", "false", "no", "off", "disabled"}
+
+# Repair batch 1b (Bug 5/6): independent env switch for audit event persistence.
+# Default OFF — shadow diffs are logged but NOT written to the DB until this
+# is explicitly enabled. Writing to a table on the user read path (results page
+# / export) must be opt-in so latency impact can be assessed first.
+_AUDIT_PERSIST_ENV = "LABEL_REGISTRY_AUDIT_PERSIST"
+
+
+def _is_audit_persist_enabled(env: Mapping[str, str] | None = None) -> bool:
+    """Check whether audit event persistence is enabled."""
+    env = env or os.environ
+    raw = env.get(_AUDIT_PERSIST_ENV, "")
+    return str(raw).strip().lower() in _TRUTHY_CONFIG_VALUES
 
 
 @dataclass(frozen=True)
@@ -160,37 +174,55 @@ class ResolverShadowDiff:
     context: str = ""  # free-text note (e.g. "would be removed from TOP10")
 
 
-# Module-level accumulator for shadow diffs within a single request.
-# Cleared at request start. This is intentionally not thread-safe for
-# simplicity — the FastAPI async model means one request per coroutine.
-_shadow_diffs: list[ResolverShadowDiff] = []
+# Per-request shadow diff accumulator (repair batch 1b / Bug 6).
+# ContextVar ensures isolation between concurrent requests. The previous
+# module-level list mixed diffs from different tenants under concurrency.
+_shadow_diffs: contextvars.ContextVar[list[ResolverShadowDiff] | None] = (
+    contextvars.ContextVar("label_registry_shadow_diffs", default=None)
+)
+
+
+def _get_diffs() -> list[ResolverShadowDiff]:
+    """Return the current request's diff list, initializing if needed."""
+    diffs = _shadow_diffs.get()
+    if diffs is None:
+        diffs = []
+        _shadow_diffs.set(diffs)
+    return diffs
 
 
 def record_shadow_diff(diff: ResolverShadowDiff) -> None:
     """Record a shadow diff for later inspection/logging."""
-    _shadow_diffs.append(diff)
+    _get_diffs().append(diff)
 
 
 def collect_shadow_diffs() -> list[ResolverShadowDiff]:
     """Return all recorded shadow diffs for the current request."""
-    return list(_shadow_diffs)
+    diffs = _shadow_diffs.get()
+    return list(diffs) if diffs else []
 
 
 def clear_shadow_diffs() -> None:
     """Clear the shadow diff accumulator (call at request start)."""
-    _shadow_diffs.clear()
+    _shadow_diffs.set([])
 
 
-def flush_shadow_diffs_to_log() -> None:
-    """Log all accumulated shadow diffs and clear the accumulator.
+def flush_shadow_diffs_to_log() -> list[ResolverShadowDiff]:
+    """Log all accumulated shadow diffs, clear the accumulator, return diffs.
 
-    Called at the end of a request to emit structured log entries
-    that WP7 reflux can consume.
+    Called at the end of a request to emit structured log entries that WP7
+    reflux can consume. Returns the flushed diffs so callers can persist them
+    to the audit table without a second read.
+
+    Repair batch 1b (Bug 6): the return value is new. Previous version
+    returned None, so callers had no way to get the diffs for audit
+    persistence without re-reading the (now-cleared) accumulator.
     """
-    if not _shadow_diffs:
-        return
+    diffs = _shadow_diffs.get()
+    if not diffs:
+        return []
     by_reason: dict[str, list[dict[str, str]]] = {}
-    for diff in _shadow_diffs:
+    for diff in diffs:
         entry = {
             "label_key": diff.label_key,
             "sub_category": diff.sub_category,
@@ -202,7 +234,7 @@ def flush_shadow_diffs_to_log() -> None:
 
     logger.info(
         "label_registry_frontstage: shadow diffs count=%d breakdown=%s",
-        len(_shadow_diffs),
+        len(diffs),
         {reason: len(items) for reason, items in by_reason.items()},
     )
     for reason, items in by_reason.items():
@@ -213,4 +245,86 @@ def flush_shadow_diffs_to_log() -> None:
                 item["label_key"],
                 item["sub_category"],
             )
-    _shadow_diffs.clear()
+    _shadow_diffs.set([])
+    return diffs
+
+
+# ---------------------------------------------------------------------------
+# Repair batch 1b: shadow → audit persistence middleware
+# ---------------------------------------------------------------------------
+
+
+def _persist_shadow_diffs_to_audit(
+    diffs: list[ResolverShadowDiff],
+) -> int:
+    """Persist shadow diffs to label_registry_audit_events.
+
+    Fail-open: DB errors are logged, never raised. Audit persistence is
+    observational — losing a batch should not break the user request.
+
+    Returns the number of successfully inserted rows.
+    """
+    if not diffs or not _is_audit_persist_enabled():
+        return 0
+
+    try:
+        from backend_api.app.services.label_registry_audit import (
+            AUDIT_EVENT_SHADOW_DIFF,
+            AuditEvent,
+            record_audit_events_batch,
+        )
+
+        events: list[AuditEvent] = []
+        for diff in diffs:
+            events.append(
+                AuditEvent(
+                    event_type=AUDIT_EVENT_SHADOW_DIFF,
+                    label_key=diff.label_key,
+                    sub_category=diff.sub_category,
+                    category=diff.category,
+                    reject_reason=diff.reject_reason,
+                    existing_display_label=diff.existing_display_label,
+                    context=diff.context,
+                    source="shadow_middleware",
+                )
+            )
+        inserted = record_audit_events_batch(events)
+        if inserted < len(events):
+            logger.warning(
+                "label_registry_frontstage: audit persist batch: %d/%d inserted",
+                inserted,
+                len(events),
+            )
+        return inserted
+    except Exception:
+        logger.exception(
+            "label_registry_frontstage: audit persist failed (%d diffs dropped)",
+            len(diffs),
+        )
+        return 0
+
+
+async def label_registry_shadow_middleware(request, call_next):
+    """FastAPI middleware: clear shadow diffs at start, flush+persist at end.
+
+    Only active when the frontstage mode is not 'off'. When mode='off',
+    the resolver is never called so there are no diffs to flush, and we
+    skip the overhead entirely.
+    """
+    flag = label_registry_frontstage_flag_from_env()
+    if not flag.resolver_active:
+        return await call_next(request)
+
+    clear_shadow_diffs()
+    try:
+        response = await call_next(request)
+    except Exception:
+        # Flush even on error — diffs collected before the failure are
+        # still valuable for debugging.
+        diffs = flush_shadow_diffs_to_log()
+        _persist_shadow_diffs_to_audit(diffs)
+        raise
+
+    diffs = flush_shadow_diffs_to_log()
+    _persist_shadow_diffs_to_audit(diffs)
+    return response

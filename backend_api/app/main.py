@@ -35,6 +35,9 @@ from backend_api.app.routes.translate import router as translate_router
 from backend_api.app.routes.unsubscribe import router as unsubscribe_router
 from backend_api.app.routes.uploads import router as uploads_router
 from backend_api.app.routes.workspace import router as workspace_router
+from backend_api.app.services.label_registry_frontstage import (
+    label_registry_shadow_middleware,
+)
 
 settings = get_settings()
 
@@ -66,6 +69,11 @@ app.add_middleware(
 )
 app.add_middleware(GeoBlockMiddleware)
 app.add_middleware(AnalyticsMiddleware)
+
+# 5.9.6-D repair batch 1b: shadow → audit persistence.
+# Activated only when LABEL_REGISTRY_FRONTSTAGE_MODE is shadow/enforce.
+# Audit DB writes are gated by LABEL_REGISTRY_AUDIT_PERSIST (default off).
+app.middleware("http")(label_registry_shadow_middleware)
 
 logger = logging.getLogger(__name__)
 
