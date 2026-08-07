@@ -711,3 +711,19 @@ File "database.py", line 13, in get_connection
 | 2026-08-07 | verify | validate_label_scope.py --dry-run：0 failures, scope matrix unchanged 89/89/89/89/5/5/16/1/1 | ✅ |
 | 2026-08-07 | verify | ruff check 全量修改文件：All checks passed! | ✅ |
 | 2026-08-07 | verify | 【线上】部署后 7 项验证（测试账号 `erikazz@foxmail.com`）：① `/api/health` → `{"taxonomy_index":"healthy","taxonomy_index_detail":"89 sub_categories"}` — 启动自检生效且可观测（部署前该字段不存在）；② `GET /proposals?status=all` → 200 `{"proposals":[],"total":0}`；③ `POST /review` `{proposal_id:1, action:"merge"}` → 404 `Proposal 1 not found.` — 先查存在性再判 action，`get_proposal_by_id()` 精确查询已生效（Bug 3 修复已验证）；④ `/settings/golden-set` 两 Tab 正常渲染（Golden Set 24 条/15 标签 + 标签注册表审核）；⑤ Registry Review tab 四状态筛选按钮 + Reviewer Note textarea + `No pending proposals found.` 空态；⑥ 旧 URL `/settings/label-review` → `/settings/golden-set` redirect；⑦ console 0 error / 0 warning | ✅ 7/7 |
+
+### 2026-08-07 5.9.7 小样本验收（45 条评论 · 离线 resolver 验证）
+
+| 日期 | 变更类型 | 描述 | 验证结果 |
+|------|---------|------|---------|
+| 2026-08-07 | verify | Scope gating: 45 条评论 × 9 标签 = 405 次 resolve，360 次 in-scope/out-of-scope 判定全部与 taxonomy aspect 匹配 | ✅ 0 scope 级别错标 |
+| 2026-08-07 | verify | scope_unavailable=0：离线验收中 0 次触发 scope_unavailable，确认 Bug 1 修复效果 | ✅ |
+| 2026-08-07 | verify | 跨类目负例：上衣/床架 两个不同 taxonomy profile（30 条）确认 capability_derived 标签正确拒绝 | ✅ 165 out_of_scope 全部正确 |
+| 2026-08-07 | verify | Alias 解析：16/16 别名正确解析到 canonical key，含跨 scope 拒绝验证 | ✅ |
+| 2026-08-07 | verify | Metadata：registry_version=5.9.6-D.1、review_status=pending、formal_module 路由正确、boundary_note 一致 | ✅ |
+| 2026-08-07 | verify | Waders 配件标签：accessory_leak/missing_accessory scope=1（仅 waders），生效正确；15 条评论覆盖，不降级 | ✅ |
+| 2026-08-07 | finding | **⚠️ 原"证据门禁缺失"P0 已撤回（2026-08-07 修正）**：离线脚本无条件调全部 label key 造成假象；生产 TOP10 门禁已通过 `_is_frontstage_countable_occurrence` 校验 evidence + cluster_propagated + evidence_span，无证据标签不进 TOP10。**真实发现：cluster 传播污染** — waders 96% occurrence 的 evidence_span 不出现在对应评论原文中（来自 cluster 0 代表 id=479 传播），TOP10 被掏空（漏标）。案例 id=508（真实漏水投诉）拿到反向证据、漏标 `water_leaks_through`。 | ⚠️ 阻塞 5.9.7 剩余出口条件，需关传播重新分析 |
+| 2026-08-07 | verify | 离线脚本硬约束遵守：① 5 个 capability_derived 标签 effective_scope 启动断言 ✅；② 同一 resolver 入口 + approved_only=True ✅；③ 无 shadow 依赖 ✅ | ✅ |
+| 2026-08-07 | doc | 产出 `docs/5.9.7-small-sample-acceptance-report.md`（45 条逐条判定 + scope/证据/alias/metadata/waders 5 维分析） | ✅ |
+| 2026-08-07 | fix | **5.9.7-T2: cluster 传播污染修复 — 评分守卫**。`propagate_cluster_results()` 新增 rating guard：成员与代表评分绝对差值 ≥ 2.0 时不传播 aspects/pain_points/highlights，退回 needs_llm。模块级常量 `RATING_GUARD_THRESHOLD=2.0`，可通过 `CLUSTER_RATING_GUARD_ENABLED=false` 全局关闭或 `CLUSTER_RATING_GUARD_THRESHOLD` 调整阈值。新增 14 个 focused tests（`test_clustering_rating_guard.py`）覆盖：好评代表+差评成员不传播、同档评分正常传播、代表缺失、阈值边界、守卫关闭、多簇独立、与 similarity gate 交互。回归：481 passed / 0 新增失败；ruff 通过。 | ✅ |
+| 2026-08-07 | estimate | 成本影响估算（clueai-dev waders cluster 0: 78 成员，rep=479 rating=5）：阈值 2.0 下 9/78（11.5%）被评分守卫拦截退回 needs_llm，69/78 仍通过传播节省 LLM。全局影响：生产全库传播 20.2%，传播证据污染率 99.3%，修复后 LLM 调用预估增加 ~10-15%（约 20% 的传播成员 x ~50% 聚合类目受影响）。**修复只对新分析生效，DB 已有脏数据不变**。 | ✅ |

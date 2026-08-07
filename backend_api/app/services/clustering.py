@@ -8,10 +8,13 @@
 - noise 点（HDBSCAN label=-1）单独走 LLM
 - 代表选取：cluster centroid 最近邻
 - 聚类本身为纯 CPU numpy 运算，100 条耗时 < 200ms
+- 5.9.7 新增 rating guard：代表与成员评分差距 ≥ RATING_GUARD_THRESHOLD 时不传播
+  标签+证据，防止好评代表的标签误传播到差评成员（cluster 传播污染）
 """
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -23,6 +26,13 @@ logger = logging.getLogger(__name__)
 MIN_BATCH_FOR_CLUSTERING = 10
 DEFAULT_MIN_CLUSTER_SIZE = 3
 PROPAGATION_SIMILARITY_THRESHOLD = 0.88
+
+# 评分守卫：代表与成员评分绝对差值 >= 此阈值时，拒绝传播标签+证据
+# 5 星制下：|5-3|=2 为边界（好评 vs 中性），|5-2|=3 / |5-1|=4 为明显冲突
+# 阈值=2.0 表示差 ≥2 星的评论不共享标签+证据
+# 可通过环境变量 CLUSTER_RATING_GUARD_THRESHOLD 覆盖
+# 设 CLUSTER_RATING_GUARD_ENABLED=false 可完全关闭守卫（紧急回退）
+RATING_GUARD_THRESHOLD = 2.0
 
 
 @dataclass
@@ -142,6 +152,7 @@ def propagate_cluster_results(
     all_comments: list[dict[str, Any]],
     embeddings: list[list[float]] | None = None,
     similarity_threshold: float = PROPAGATION_SIMILARITY_THRESHOLD,
+    rating_guard_threshold: float | None = RATING_GUARD_THRESHOLD,
 ) -> list[dict[str, Any]]:
     """将 LLM 分析结果从代表评论传播到同簇成员.
 
@@ -149,16 +160,25 @@ def propagate_cluster_results(
     aspects/pain_points/highlights/evidence_level_overall，
     但 sentiment 独立由 rating 决定（在 caller 侧覆写）。
 
-    质量门控：若提供 embeddings 且簇内平均余弦相似度 < threshold，
-    该簇成员不传播，标记为需要独立 LLM 分析。
+    质量门控：
+    - 余弦相似度门控：若提供 embeddings 且簇内平均余弦相似度 < threshold，
+      该簇成员不传播，标记为 needs_llm
+    - 评分守卫（5.9.7）：若成员与代表的 rating 绝对差值 >= rating_guard_threshold，
+      该成员不传播，标记为 needs_llm（防止好评代表标签+证据误传播到差评成员）
+
+    可通过环境变量关闭评分守卫（紧急回退）：
+      CLUSTER_RATING_GUARD_ENABLED=false
+    或调整阈值：
+      CLUSTER_RATING_GUARD_THRESHOLD=1.5
 
     Args:
         cluster_result: 聚类结果
         llm_comments: 送入 LLM 的评论列表（代表 + 噪声）
         llm_results: LLM 返回结果列表（与 llm_comments 一一对应）
-        all_comments: 全部评论列表（含未送入 LLM 的成员）
+        all_comments: 全部评论列表（含未送入 LLM 的成员），每条需含 rating 字段
         embeddings: 与 all_comments 一一对应的向量（用于质量门控）
         similarity_threshold: 簇内传播的最低余弦相似度阈值
+        rating_guard_threshold: 评分守卫阈值（None 关闭评分守卫）
 
     Returns:
         与 all_comments 一一对应的结果列表
@@ -169,6 +189,42 @@ def propagate_cluster_results(
 
     if cluster_result.skipped:
         return llm_results
+
+    # 评分守卫：可通过环境变量全局关闭（紧急回退），或调整阈值
+    if rating_guard_threshold is not None:
+        _enabled = os.getenv("CLUSTER_RATING_GUARD_ENABLED", "true").lower() != "false"
+        if not _enabled:
+            rating_guard_threshold = None
+            logger.info("cluster rating guard: disabled via CLUSTER_RATING_GUARD_ENABLED=false")
+        else:
+            _env_threshold = os.getenv("CLUSTER_RATING_GUARD_THRESHOLD")
+            if _env_threshold is not None:
+                try:
+                    rating_guard_threshold = float(_env_threshold)
+                    logger.info(
+                        "cluster rating guard: threshold overridden via env to %.1f",
+                        rating_guard_threshold,
+                    )
+                except ValueError:
+                    logger.warning(
+                        "cluster rating guard: invalid CLUSTER_RATING_GUARD_THRESHOLD=%s, "
+                        "using default %.1f",
+                        _env_threshold,
+                        RATING_GUARD_THRESHOLD,
+                    )
+
+    # 构建 comment_id → rating 映射（用于评分守卫）
+    id_to_rating: dict[int, float | None] = {}
+    for comment in all_comments:
+        cid = int(comment["id"])
+        rating_raw = comment.get("rating")
+        if rating_raw is not None:
+            try:
+                id_to_rating[cid] = float(rating_raw)
+            except (TypeError, ValueError):
+                id_to_rating[cid] = None
+        else:
+            id_to_rating[cid] = None
 
     # 构建 comment_id → index 映射（用于质量门控）
     id_to_idx: dict[int, int] = {}
@@ -218,18 +274,39 @@ def propagate_cluster_results(
                 else:
                     rep_id = cluster_to_rep.get(cluster_label)
                     if rep_id and rep_id in id_to_result:
-                        rep_result = id_to_result[rep_id]
-                        propagated = {
-                            "sentiment": rep_result.get("sentiment"),
-                            "aspects": rep_result.get("aspects", []),
-                            "pain_points": rep_result.get("pain_points", []),
-                            "highlights": rep_result.get("highlights", []),
-                            "evidence_level_overall": rep_result.get("evidence_level_overall"),
-                            "prompt_version": rep_result.get("prompt_version"),
-                            "cluster_propagated": True,
-                            "cluster_representative_id": rep_id,
-                        }
-                        final_results.append(propagated)
+                        # 评分守卫：成员与代表评分差距过大时不传播标签+证据
+                        rating_mismatch = False
+                        if rating_guard_threshold is not None:
+                            member_rating = id_to_rating.get(cid)
+                            rep_rating = id_to_rating.get(rep_id)
+                            if member_rating is not None and rep_rating is not None:
+                                diff = abs(member_rating - rep_rating)
+                                if diff >= rating_guard_threshold:
+                                    rating_mismatch = True
+                                    logger.info(
+                                        "cluster rating guard: member %d (rating=%.0f) vs "
+                                        "rep %d (rating=%.0f) diff=%.0f >= %.1f, "
+                                        "skipping propagation",
+                                        cid, member_rating, rep_id, rep_rating,
+                                        diff, rating_guard_threshold,
+                                    )
+                        if rating_mismatch:
+                            final_results.append(
+                                {"needs_llm": True, "reason": "rating_mismatch"}
+                            )
+                        else:
+                            rep_result = id_to_result[rep_id]
+                            propagated = {
+                                "sentiment": rep_result.get("sentiment"),
+                                "aspects": rep_result.get("aspects", []),
+                                "pain_points": rep_result.get("pain_points", []),
+                                "highlights": rep_result.get("highlights", []),
+                                "evidence_level_overall": rep_result.get("evidence_level_overall"),
+                                "prompt_version": rep_result.get("prompt_version"),
+                                "cluster_propagated": True,
+                                "cluster_representative_id": rep_id,
+                            }
+                            final_results.append(propagated)
                     else:
                         final_results.append({"error": "cluster_rep_missing"})
             else:
