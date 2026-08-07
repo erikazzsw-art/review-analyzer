@@ -2074,3 +2074,81 @@ M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 X
 - 56 tests PASS, ruff clean, validate_label_scope.py --dry-run 0 failures
 - scope matrix unchanged: 89/89/89/89/5/5/16/1/1
 - Bug 1 repro: 空 taxonomy → all 9 labels return SCOPE_UNAVAILABLE (was: OUT_OF_SCOPE)
+
+---
+
+## 2026-08-07 5.9.7 小样本验收（离线 resolver · 45 条真实评论）【2026-08-07 修正：撤回错 P0】
+
+**工作量**：2-3 小时（脚本编写 + 执行 + 深度分析 + 报告撰写 + 修正）
+
+**需求描述**：
+执行 5.9.7 小样本验收任务：从 clueai-dev 取 45 条真实评论（waders 15 + 上衣 15 + 床架 15），走离线 resolver 验证 9 个正式标签的 scope gating、跨类目负例、alias 解析、元数据一致性、waders 配件标签治理，以及行动中心 handoff 预检。
+
+**验收结果**：
+- Scope gating ✅：全部 5 个 capability_derived 标签在非适用类目正确拒绝（165 out_of_scope，0 scope_unavailable）
+- 跨类目负例 ✅：上衣/床架 两个 taxonomy profile 确认防水/配件/尺码表标签正确 out_of_scope
+- Alias 解析 ✅：16/16 正确解析
+- Metadata ✅：registry_version=5.9.6-D.1、review_status=pending、formal_module 路由正确
+- Waders 配件标签 ✅：保持 approved，不降级
+- **原"证据门禁缺失"P0 已撤回**（2026-08-07 修正）：离线脚本无条件调全部 label key 造成假象，生产 TOP10 门禁已有 evidence 校验
+- **真实发现 ⚠️**：cluster 传播污染 — waders 96% occurrence 的 evidence_span 来自 cluster 代表而非自身原文（案例 id=508 真实漏水投诉拿到反向证据、漏标），TOP10 被掏空
+
+**涉及岗位及工时**：
+- 后端/验收：2-3 小时
+
+**产出物**：
+- `docs/5.9.7-small-sample-acceptance-report.md`（验收报告）
+- `scripts/5.9.7_offline_resolver_acceptance.py`（离线验收脚本）
+- `scratch/5.9.7_acceptance_verdicts.csv`（逐条判定表）
+- 更新 `PROGRESS_V2.md` / `TEST_LOG.md` / `需求记录/CHANGELOG.md`
+
+---
+
+## 2026-08-07 5.9.7-T1 生产 cluster 传播占比统计
+
+**工作量**：0.5 天（脚本编写 + 本地验证 + 生产执行 + 数据分析 + 定级建议）
+
+**需求描述**：
+5.9.7 小样本验收发现 waders 96% occurrence 的 evidence_span 来自 cluster 传播而非自身原文（cluster 传播污染），需在生产数据上量出真实传播占比以决定问题定级（P0/P1/P2）。编写纯只读统计脚本 `scripts/measure_cluster_propagation.py`，在 dev 和生产分别执行，统计全库 cluster_propagated 占比、按 sub_category 分组传播占比、evidence_span 交叉验证。
+
+**生产结果**：
+- 全库传播占比：20.2%（542/2,680），远低于 dev 的 84.1%
+- 传播证据污染率：99.3%（2,071/2,086 条 evidence_span 不在目标评论原文中）
+- 直接 LLM 证据不匹配率：仅 3.7%（157/4,249），正常误差
+- waders 传播占比 52.5%（受灾最重），USB C Charger Block 和 家具家居 均为 0%
+- **定级：P1**。不构成 P0（全局仅 20.2%、门禁正确拦截污染数据），不降 P2（waders 52.5% 传播导致 TOP10 代表性不足）
+
+**修复方向**：收紧 `PROPAGATION_SIMILARITY_THRESHOLD`（0.88→0.92/0.95）或对传播结果加 evidence 回退校验（evidence_span 不在原文中则降级为 needs_llm）
+
+**涉及岗位及工时**：
+- 后端/数据分析：0.5 天
+
+**产出物**：
+- `scripts/measure_cluster_propagation.py`（只读统计脚本，commit `44a889e`）
+- 更新 `PROGRESS_V2.md`
+
+## 2026-08-07 5.9.7-T2 cluster 传播污染修复 — 评分守卫
+
+**工作量**：S（0.5 天 · 单一服务三个文件 · 逻辑简单 · 无新接口/表结构）
+
+**需求描述**：
+5.9.7 验收发现 waders 96% occurrence 的 evidence_span 来自 cluster 0 代表 id=479（好评）传播，导致 id=508（真实漏水投诉）拿到反向证据「stayed warm, dry and comfortable」、漏标 `water_leaks_through`。根因：`propagate_cluster_results()` 只检查簇内余弦相似度 ≥ 0.88，无评分/情感一致性检查，好评差评混入同一簇后标签+证据被无条件传播。
+
+**修复方案**：
+1. `clustering.py` 新增模块级常量 `RATING_GUARD_THRESHOLD = 2.0`（5 星制，|5-3|=2 为边界），可通过 `CLUSTER_RATING_GUARD_ENABLED=false` 全局关闭紧急回退
+2. `propagate_cluster_results()` 新增 `rating_guard_threshold` 参数（默认 2.0，None 关闭）
+3. 传播前比较成员与代表 rating：绝对差值 ≥ 阈值时不传播 aspects/pain_points/highlights，退回 needs_llm（复用现有 low_cluster_similarity 机制）
+4. 新增 `test_clustering_rating_guard.py`（14 个 focused tests）
+
+**成本影响**（clueai-dev waders cluster 0 数据）：
+- 阈值 2.0：9/78（11.5%）成员被拦截退回 needs_llm，69/78 仍通过传播节省 LLM
+- 生产全局预估：LLM 调用增加 ~10-15%（全库传播 20.2% × 约 50% 含评分冲突）
+- 修复只对新分析生效，数据库已有脏数据不变
+
+**涉及岗位及工时**：
+- 后端开发/算法工程师：0.5 天
+
+**产出物**：
+- `backend_api/app/services/clustering.py`（新增 RATING_GUARD_THRESHOLD + id_to_rating 映射 + 评分守卫逻辑 + 环境变量开关）
+- `backend_api/tests/test_clustering_rating_guard.py`（14 个 focused tests）
+- 更新 `TEST_LOG.md` + `PROGRESS_V2.md`
