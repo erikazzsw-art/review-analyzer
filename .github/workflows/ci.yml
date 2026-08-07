@@ -90,7 +90,7 @@ jobs:
       - name: ResolutionRejectReason 各有触发用例
         run: |
           python3 -m pytest backend_api/tests/test_review_fragment_label_catalog.py \
-            -k "test_resolver_unknown_key_rejection or test_resolver_not_approved_rejection or test_resolver_out_of_scope_rejection or test_resolver_blocked_context_rejection" \
+            -k "test_resolver_unknown_key_rejection or test_resolver_not_approved_rejection or test_resolver_out_of_scope_rejection or test_resolver_blocked_context_rejection or test_empty_scope_rejects_instead_of_passing" \
             -v
 
       - name: Effective scope 数量断言 (16/5/5/1/1/89×4)

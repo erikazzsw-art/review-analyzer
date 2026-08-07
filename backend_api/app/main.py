@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 
 from fastapi import FastAPI
@@ -66,10 +67,51 @@ app.add_middleware(
 app.add_middleware(GeoBlockMiddleware)
 app.add_middleware(AnalyticsMiddleware)
 
+logger = logging.getLogger(__name__)
+
+# 5.9.6-D repair batch 0 (0-3): taxonomy index self-check.
+# Must run at startup — _load_taxonomy_aspect_index is lru_cached, so a
+# transient failure on first access would be pinned for the process lifetime.
+# Logged rather than raised: a taxonomy problem must not take down auth,
+# uploads and billing with it. The status is surfaced on /health so the failure
+# is visible instead of silent.
+_taxonomy_health: dict[str, object] = {"status": "unknown", "detail": ""}
+
+
+@app.on_event("startup")
+def _check_taxonomy_index_health() -> None:
+    from backend_api.app.services.review_fragment_label_catalog import (
+        TaxonomyIndexUnhealthy,
+        assert_taxonomy_index_healthy,
+    )
+
+    try:
+        count = assert_taxonomy_index_healthy()
+    except TaxonomyIndexUnhealthy as exc:
+        _taxonomy_health["status"] = "unhealthy"
+        _taxonomy_health["detail"] = str(exc)
+        logger.error(
+            "STARTUP CHECK FAILED: taxonomy index unhealthy — formal labels "
+            "will be rejected with scope_unavailable. %s",
+            exc,
+        )
+    except Exception as exc:  # noqa: BLE001 - startup must not crash the app
+        _taxonomy_health["status"] = "error"
+        _taxonomy_health["detail"] = str(exc)
+        logger.exception("STARTUP CHECK ERRORED: taxonomy index check failed")
+    else:
+        _taxonomy_health["status"] = "healthy"
+        _taxonomy_health["detail"] = f"{count} sub_categories"
+
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "backend_api"}
+    return {
+        "status": "ok",
+        "service": "backend_api",
+        "taxonomy_index": str(_taxonomy_health["status"]),
+        "taxonomy_index_detail": str(_taxonomy_health["detail"]),
+    }
 
 
 app.include_router(auth_router)

@@ -60,12 +60,25 @@ class ResolutionRejectReason(enum.Enum):
     """Structured reason for resolver rejection.
 
     Gate ordering inside the resolver (fixed, cheapest-first):
-      unknown_key → not_approved → out_of_scope → blocked_context
+      unknown_key → not_approved → scope_unavailable → out_of_scope → blocked_context
 
     INSUFFICIENT_EVIDENCE is NOT produced by the resolver. It is produced by
     callers that apply the 5.9.3 evidence gate BEFORE calling the resolver.
     The resolver resolves identity and scope only; evidence quality is the
     caller's responsibility.
+
+    SCOPE_UNAVAILABLE vs OUT_OF_SCOPE (decision r, 5.9.6-D repair batch 0):
+      OUT_OF_SCOPE      — the label genuinely does not apply to this
+                          sub_category. A normal, expected business outcome.
+      SCOPE_UNAVAILABLE — we cannot tell whether it applies; the scope
+                          computation produced nothing usable (taxonomy failed
+                          to load, aspect renamed without registry sync, empty
+                          aspect_keys, or an explicit label with no stored
+                          scope). This is a FAULT, not a business outcome.
+
+    Keeping them separate is deliberate: if a taxonomy load failure surfaced as
+    OUT_OF_SCOPE, a spike in rejections would read as "the scope gate is working
+    well" — exactly backwards. Alert on SCOPE_UNAVAILABLE separately.
 
     These values are the input contract for work package 7 (mislabel reflux).
     Do not rename or reorder without updating the reflux pipeline.
@@ -73,6 +86,7 @@ class ResolutionRejectReason(enum.Enum):
 
     UNKNOWN_KEY = "unknown_key"
     NOT_APPROVED = "not_approved"
+    SCOPE_UNAVAILABLE = "scope_unavailable"
     OUT_OF_SCOPE = "out_of_scope"
     BLOCKED_CONTEXT = "blocked_context"
     INSUFFICIENT_EVIDENCE = "insufficient_evidence"
@@ -522,7 +536,18 @@ def _load_taxonomy_aspect_index() -> dict[str, frozenset[str]]:
     foundation for capability_derived effective scope calculation.
 
     Fail-closed: if the taxonomy root doesn't exist or no YAML files are found,
-    returns an empty dict (no sub_category matches any capability_derived label).
+    returns an empty dict. Since repair batch 0 an empty index makes the
+    resolver reject EVERY label with SCOPE_UNAVAILABLE — including the four
+    transaction_universal ones, whose "all sub_categories" set is derived from
+    this same index. Before batch 0 the opposite was true (empty index meant
+    every capability_derived label passed for all 89 sub_categories).
+
+    Partial degradation is the dangerous case and is NOT covered by fail-closed:
+    the per-file loop below skips unreadable or malformed files with a warning
+    and continues, so 40 broken files out of 89 yields a smaller-but-non-empty
+    index and a silently narrowed scope. assert_taxonomy_index_healthy() exists
+    to catch that; call it at startup, because lru_cache would otherwise pin a
+    transient failure for the life of the process.
     """
     index: dict[str, frozenset[str]] = {}
     taxonomy_root = _TAXONOMY_V1_ROOT
@@ -579,6 +604,68 @@ def get_all_sub_categories() -> frozenset[str]:
     return frozenset(get_taxonomy_aspect_index().keys())
 
 
+# Expected taxonomy sub_category count. Bump together with taxonomy assets.
+# A floor rather than an equality check so that adding a sub_category does not
+# break startup, while losing a chunk of the taxonomy does.
+TAXONOMY_SUB_CATEGORY_FLOOR = 89
+
+# Exact expected count for CI / validate_label_scope.py (decision u, batch 0).
+# CI uses equality (== EXPECTED) rather than floor (>= FLOOR) because:
+#   - CI equality failure costs zero (no production impact)
+#   - CI equality forces "change taxonomy → update the constant" as a single step
+#   - Floor would drift: taxonomy grows to 200, then 100 files break → 100 >= 89
+#     still passes, and the silent narrowing that batch 0 exists to catch is back
+# Must stay in sync with TAXONOMY_SUB_CATEGORY_FLOOR. When adding sub_categories,
+# bump both constants together.
+EXPECTED_TAXONOMY_SUB_CATEGORY_COUNT = 89
+
+
+class TaxonomyIndexUnhealthy(RuntimeError):
+    """Raised at startup when the taxonomy index is empty or short."""
+
+
+def assert_taxonomy_index_healthy(*, floor: int | None = None) -> int:
+    """Fail loudly if the taxonomy index is empty or smaller than expected.
+
+    Repair batch 0 items 0-2 / 0-3. Two failure shapes need catching:
+
+    - Total failure (index empty). The resolver now fails closed on this, so
+      every label would be rejected. Fail-closed is the right default but it is
+      still silent: the visible symptom is "all labels vanished", with no
+      indication why.
+    - Partial degradation (index non-empty but short). Neither fail-open nor
+      fail-closed catches this, because the index looks usable. Some
+      sub_categories simply lose their scope. This is the more likely and more
+      insidious failure, hence a count floor rather than a non-empty check.
+
+    Call this during application startup. _load_taxonomy_aspect_index is
+    lru_cached, so a transient filesystem failure on first access would
+    otherwise be pinned for the lifetime of the process.
+
+    Returns the observed count on success. Raises TaxonomyIndexUnhealthy
+    otherwise.
+    """
+    expected = TAXONOMY_SUB_CATEGORY_FLOOR if floor is None else floor
+    index = get_taxonomy_aspect_index()
+    count = len(index)
+
+    if count == 0:
+        raise TaxonomyIndexUnhealthy(
+            f"taxonomy aspect index is EMPTY (expected >= {expected}). "
+            f"Every formal label will be rejected with scope_unavailable. "
+            f"Check that the taxonomy assets are present at {_TAXONOMY_V1_ROOT}."
+        )
+    if count < expected:
+        raise TaxonomyIndexUnhealthy(
+            f"taxonomy aspect index has {count} sub_categories, expected at "
+            f"least {expected}. Scope is silently narrowed for the missing "
+            f"ones. Check for unreadable or malformed taxonomy YAML files."
+        )
+
+    logger.info("taxonomy aspect index healthy: %d sub_categories", count)
+    return count
+
+
 def compute_effective_scope(label: FormalLabelDefinition) -> frozenset[str]:
     """Compute the set of sub_categories where this label is in scope.
 
@@ -591,9 +678,15 @@ def compute_effective_scope(label: FormalLabelDefinition) -> frozenset[str]:
     - capability_derived: sub_categories whose taxonomy declares at least one
       of the label's aspect_keys (any-of semantic).
 
-    - explicit: returns an empty set (explicit labels don't have computed scope;
-      their scope is hand-maintained). Callers should treat this as a signal
-      that scope is externally defined.
+    - explicit: returns an empty set. WP5 deleted category_keys /
+      sub_category_keys, so there is no field left in which a hand-maintained
+      scope could live. Since batch 0, an empty scope makes the resolver reject
+      with SCOPE_UNAVAILABLE rather than pass — so explicit labels currently
+      resolve for nothing. This is intentional until explicit scope storage is
+      designed; it prevents a new explicit label from silently going global.
+
+    An empty return value from this function is ALWAYS a fail-closed signal to
+    the resolver. It never means "applies everywhere" (see Gate 3a).
 
     The result is a frozenset; blocked_contexts are NOT subtracted here.
     Subtraction happens at resolve time (work package 4).
@@ -644,10 +737,11 @@ def _resolve_formal_label_impl(
     """Core resolution logic with structured reject reasons.
 
     Gate sequence (fixed order, cheapest-first):
-      1. unknown_key      — key/alias not found in registry
-      2. not_approved     — label found but status != approved
-      3. out_of_scope     — label approved but sub_category not in effective scope
-      4. blocked_context  — in scope but sub_category explicitly blocked
+      1. unknown_key        — key/alias not found in registry
+      2. not_approved       — label found but status != approved
+      3a. scope_unavailable — computed scope is empty (fault, fail-closed)
+      3b. out_of_scope      — label approved but sub_category not in scope
+      4. blocked_context    — in scope but sub_category explicitly blocked
 
     Contract:
       Callers MUST pass evidence gate (5.9.3 validate_review_fragment_evidence)
@@ -728,13 +822,50 @@ def _resolve_formal_label_impl(
             reject_reason=ResolutionRejectReason.NOT_APPROVED.value,
         )
 
-    # --- Gate 3: out_of_scope ---
+    # --- Gate 3a: scope_unavailable (fail-closed) ---
+    #
+    # 5.9.6-D repair batch 0 / Bug 1. This block previously read:
+    #
+    #     if (policy != EXPLICIT and effective_scope
+    #         and requested_sub_category not in effective_scope):
+    #
+    # The `and effective_scope` term short-circuited the whole gate whenever the
+    # computed scope was empty, so an empty scope meant "applies everywhere" —
+    # a silent return of the `["*"]` behaviour that 5.9.6-D exists to remove.
+    # An empty scope now fails CLOSED for every policy.
+    #
+    # Decision t (2026-08-07): when the taxonomy index is empty, ALL nine labels
+    # — including transaction_universal and explicit — return SCOPE_UNAVAILABLE.
+    #
+    # transaction_universal: its "all sub_categories" set is derived from the
+    # taxonomy index via get_all_sub_categories(), so a total load failure means
+    # we cannot even confirm the sub_category exists. Passing a label at that
+    # point is the same fail-open logic Bug 1 is about. A single aspect drift
+    # (one file broken) does NOT affect transaction_universal — it does not
+    # depend on aspect_keys.
+    #
+    # explicit: WP5 deleted category_keys / sub_category_keys, so there is
+    # currently no field in which an explicit scope could be stored. Skipping
+    # the gate for explicit would leave the same hole open by a different door.
+    # The side effect is that explicit is temporarily unusable — whoever needs
+    # it must first design the storage mechanism.
     effective_scope = compute_effective_scope(matched_label)
-    if (
-        matched_label.scope_policy != SCOPE_POLICY_EXPLICIT
-        and effective_scope
-        and requested_sub_category not in effective_scope
-    ):
+    if not effective_scope:
+        logger.warning(
+            "review_fragment_label_catalog: scope_unavailable label=%r "
+            "policy=%r aspect_keys=%s — computed scope is empty, rejecting "
+            "fail-closed. Check taxonomy load and registry/taxonomy aspect sync.",
+            matched_label.key,
+            matched_label.scope_policy,
+            sorted(matched_label.aspect_keys),
+        )
+        return LabelResolutionResult(
+            label=None,
+            reject_reason=ResolutionRejectReason.SCOPE_UNAVAILABLE.value,
+        )
+
+    # --- Gate 3b: out_of_scope ---
+    if requested_sub_category not in effective_scope:
         return LabelResolutionResult(
             label=None,
             reject_reason=ResolutionRejectReason.OUT_OF_SCOPE.value,

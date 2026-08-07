@@ -13,6 +13,8 @@ Checks (fail-closed, non-zero exit on any failure):
   5. Negative examples must meet policy minimums; out_of_scope negatives must
      be verified against the computed effective scope matrix
   6. explicit label sub_category lists must exist in taxonomy assets
+  7. Taxonomy sub_category count must EXACTLY match the expected constant
+     (CI gate — catches silent file degradation; decision u, repair batch 0)
 
 Usage:
   python scripts/validate_label_scope.py           # run all checks
@@ -34,12 +36,14 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from backend_api.app.services.review_fragment_label_catalog import (
+    EXPECTED_TAXONOMY_SUB_CATEGORY_COUNT,
     NEGATIVE_EXAMPLE_TYPE_OUT_OF_BOUNDARY,
     NEGATIVE_EXAMPLE_TYPE_OUT_OF_SCOPE,
     REVIEW_STATUS_APPROVED,
     SCOPE_POLICY_CAPABILITY_DERIVED,
     SCOPE_POLICY_EXPLICIT,
     SCOPE_POLICY_TRANSACTION_UNIVERSAL,
+    TAXONOMY_SUB_CATEGORY_FLOOR,
     FormalLabelDefinition,
     compute_effective_scope_matrix,
     get_all_sub_categories,
@@ -264,6 +268,34 @@ def _check_explicit_sub_categories(
         )
 
 
+def _check_taxonomy_sub_category_count(
+    report: ValidationReport,
+    all_sub_categories: frozenset[str],
+) -> None:
+    """Check 7: taxonomy sub_category count must EXACTLY match the expected constant.
+
+    Decision u (repair batch 0): CI / validate_label_scope.py uses exact equality.
+    This catches silent file degradation: if 40 of 89 YAML files are silently
+    skipped, the count drops below EXPECTED even though the index is non-empty.
+
+    The runtime startup check uses a floor (>= TAXONOMY_SUB_CATEGORY_FLOOR)
+    instead, so adding sub_categories does not break production. CI equality
+    forces "change taxonomy → update the constant" as a single atomic step.
+    """
+    count = len(all_sub_categories)
+    expected = EXPECTED_TAXONOMY_SUB_CATEGORY_COUNT
+
+    if count != expected:
+        report.fail(
+            "taxonomy-count",
+            "(global)",
+            f"taxonomy sub_category count is {count}, expected exactly "
+            f"{expected}. If you added or removed sub_category YAML files, "
+            f"update EXPECTED_TAXONOMY_SUB_CATEGORY_COUNT in "
+            f"review_fragment_label_catalog.py to match.",
+        )
+
+
 # ---------------------------------------------------------------------------
 # Matrix printing
 # ---------------------------------------------------------------------------
@@ -388,6 +420,7 @@ def validate(
     _check_positive_examples(report, labels)
     _check_negative_examples(report, labels, scope_matrix, all_sub_categories)
     _check_explicit_sub_categories(report, labels, all_sub_categories)
+    _check_taxonomy_sub_category_count(report, all_sub_categories)
 
     if print_matrix:
         print_effective_scope_matrix(scope_matrix, labels, stdout=stdout)
