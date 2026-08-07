@@ -29,7 +29,7 @@ def _version_aspects_json(overrides: dict | None = None) -> dict:
         "prompt_version": "v2.4",
         "taxonomy_version": "v1.0",
         "registry_version": "review-fragment-label-registry.5.9.6-A.1",
-        "model_name": "deepseek",
+        "model_name": "gpt-4o-mini",
     }
     if overrides:
         base.update(overrides)
@@ -73,7 +73,7 @@ def test_l1_version_filter_in_sql_when_all_four_provided():
             prompt_version="v2.4",
             taxonomy_version="v1.0",
             registry_version="review-fragment-label-registry.5.9.6-A.1",
-            model_name="deepseek",
+            model_name="gpt-4o-mini",
         )
 
     # 验证 execute 被调用的 SQL 含版本过滤
@@ -88,7 +88,7 @@ def test_l1_version_filter_in_sql_when_all_four_provided():
     assert "v2.4" in user_params
     assert "v1.0" in user_params
     assert "review-fragment-label-registry.5.9.6-A.1" in user_params
-    assert "deepseek" in user_params
+    assert "gpt-4o-mini" in user_params
 
 
 def test_l1_no_version_filter_when_no_version_params():
@@ -175,7 +175,7 @@ def test_l1_pool_query_includes_version_filter():
             prompt_version="v2.4",
             taxonomy_version="v1.0",
             registry_version="review-fragment-label-registry.5.9.6-A.1",
-            model_name="deepseek",
+            model_name="gpt-4o-mini",
         )
 
     # pool 命中

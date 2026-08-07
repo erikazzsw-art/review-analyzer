@@ -1,8 +1,9 @@
 """V4-T4 Step 4: 多模型 Fallback 链路（locale-aware）.
 
-模型优先级按 locale 切换：
-- locale="en"（海外）：GPT-4o-mini → DeepSeek → Qwen
-- locale="zh"（国内）：DeepSeek → GPT-4o-mini → Qwen
+模型优先级（2026-08 更新）：
+- 双模型链：GPT-4o-mini → Gemini 2.0 Flash
+- 海外合规：OpenAI + Google 双云，互不依赖
+- DeepSeek / Qwen 已移除（中国厂商，海外合规不可用）
 
 熔断机制（V4-出海-M4.3 硬化）：
 - 每模型独立配置：threshold / cooldown（ModelConfig 字段）
@@ -80,12 +81,12 @@ class ModelConfig:
     circuit_cooldown: float = 60.0
 
 
-_DEEPSEEK = ModelConfig(
-    name="deepseek",
-    model_id="deepseek-chat",
-    base_url="https://api.deepseek.com",
-    api_key_env="DEEPSEEK_API_KEY",
-    circuit_threshold=5,
+_GEMINI = ModelConfig(
+    name="gemini",
+    model_id="gemini-2.0-flash",
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    api_key_env="Gemini_API_KEY",
+    circuit_threshold=3,
     circuit_cooldown=60.0,
 )
 _OPENAI = ModelConfig(
@@ -96,20 +97,12 @@ _OPENAI = ModelConfig(
     circuit_threshold=3,
     circuit_cooldown=30.0,
 )
-_QWEN = ModelConfig(
-    name="qwen",
-    model_id="qwen-plus",
-    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-    api_key_env="Qwen_API_KEY",
-    circuit_threshold=3,
-    circuit_cooldown=120.0,
-)
 
-MODELS_EN: list[ModelConfig] = [_OPENAI, _DEEPSEEK, _QWEN]
-MODELS_ZH: list[ModelConfig] = [_DEEPSEEK, _OPENAI, _QWEN]
+MODELS_EN: list[ModelConfig] = [_OPENAI, _GEMINI]
+MODELS_ZH: list[ModelConfig] = [_OPENAI, _GEMINI]
 
-# 向后兼容：默认列表（国内优先）
-MODELS: list[ModelConfig] = MODELS_ZH
+# 向后兼容：默认列表
+MODELS: list[ModelConfig] = MODELS_EN
 
 
 def _models_for_locale(locale: str) -> list[ModelConfig]:
@@ -134,7 +127,7 @@ class LLMRouter:
     实际每次 completion 用哪个链路由 locale 决定，见 _models_for_locale.
     """
 
-    models: list[ModelConfig] = field(default_factory=lambda: [_DEEPSEEK, _OPENAI, _QWEN])
+    models: list[ModelConfig] = field(default_factory=lambda: [_OPENAI, _GEMINI])
     threshold: int = CIRCUIT_BREAK_THRESHOLD
     cooldown: float = COOLDOWN_SECONDS
     _states: dict[str, _CircuitState] = field(default_factory=dict)
@@ -254,8 +247,8 @@ class LLMRouter:
         """调用 LLM，自动 fallback.
 
         Args:
-            locale: "en" 走 GPT-4o-mini 优先链，其它（含 "zh"）走 DeepSeek 优先链.
-            disabled_providers: 本次调用要跳过的 provider name，例如 {"deepseek"}。
+            locale: 当前 "en"/"zh" 均走 GPT-4o-mini → Gemini 双模型链.
+            disabled_providers: 本次调用要跳过的 provider name，例如 {"gemini"}。
             request_timeout: 本次调用传给 OpenAI-compatible client 的 per-request timeout。
             max_model_attempts: 本次调用最多实际请求多少个 provider；None 表示完整 fallback 链。
 
@@ -523,7 +516,7 @@ def router_completion(
     """便捷函数：调用全局路由器的 completion.
 
     Args:
-        locale: "en" 走 GPT-4o-mini 优先链，其它（含 "zh"）走 DeepSeek 优先链.
+        locale: "en"/"zh" 均走 GPT-4o-mini → Gemini 双模型链.
     """
     return get_router().completion(
         messages=messages,

@@ -10,15 +10,14 @@
 - 与现有 review_analyzer.analyzer.analyze_batch 接口对齐
 - 不映射回中文 11 类 category（由 category_grouper 完成）
 
-模型选型（V4-T4 Step 4: 多模型 Fallback 链路）：
-- 主：DeepSeek-V3（deepseek-chat）— 中文优势 + 成本最低
-- 备 1：OpenAI gpt-4o-mini — API 稳定性最高
-- 备 2：Qwen-Plus — 国内可用性兜底
+模型选型（V4-T4 Step 4: 多模型 Fallback 链路 · 2026-08 更新）：
+- 主：OpenAI gpt-4o-mini — API 稳定性最高
+- 备：Gemini 2.0 Flash — 海外合规 + 成本更低
 - 路由：llm_router.py 自动熔断切换，业务无感知
 
-成本（DeepSeek 价格: ¥1/M input + ¥8/M output）:
-- 100 条评论: ~¥0.03
-- 10000 条评论: ~¥3
+成本（Gemini 2.0 Flash 价格: $0.10/M input + $0.40/M output ≈ ¥0.7/M input + ¥2.9/M output）:
+- 100 条评论: ~$0.005
+- 10000 条评论: ~$0.50
 """
 from __future__ import annotations
 
@@ -45,10 +44,9 @@ DEFAULT_MAX_WORKERS = 2
 
 def _estimate_cost(model: str, tokens_in: int, tokens_out: int) -> float:
     """Rough cost estimation in yuan."""
-    rates = {
-        "deepseek-chat": (1.0, 8.0),
-        "gpt-4o-mini": (1.05, 4.2),
-        "qwen-plus": (0.8, 2.0),
+    rates: dict[str, tuple[float, float]] = {
+        "gemini-2.0-flash": (0.7, 2.9),      # $0.10/$0.40 → ¥0.70/¥2.90 per M
+        "gpt-4o-mini": (1.05, 4.2),           # $0.15/$0.60 per M
     }
     r_in, r_out = rates.get(model, (1.0, 4.0))
     return (tokens_in * r_in + tokens_out * r_out) / 1_000_000
@@ -185,7 +183,7 @@ def analyze_one(
 
     client 参数仅用于单元测试注入 mock，生产代码不传。
     user_id 非空时自动调用 track_llm_call 记录到 analytics_events。
-    locale: "en" 走 GPT-4o-mini 优先链，"zh" 走 DeepSeek 优先链（默认 en，海外优先）。
+    locale: "en"/"zh" 均走 GPT-4o-mini → Gemini 双模型链（默认 en，海外优先）。
     """
     p = load_prompt("annotate", prompt_version)
     system_prompt = p.system_prompt
@@ -454,7 +452,7 @@ def analyze_batch(
 ) -> list[dict[str, Any]]:
     """批量分析评论（通过 llm_router 自动 fallback）.
 
-    locale: "en" 走 GPT-4o-mini 优先链，"zh" 走 DeepSeek 优先链（默认 en，海外优先）。
+    locale: "en"/"zh" 均走 GPT-4o-mini → Gemini 双模型链（默认 en，海外优先）。
     """
     results: list[dict[str, Any] | None] = [None] * len(comments)
 

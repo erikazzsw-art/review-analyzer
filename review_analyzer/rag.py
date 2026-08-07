@@ -16,6 +16,7 @@ from openai import OpenAI
 from review_analyzer.analyzer import get_api_key
 from review_analyzer.database import (
     get_comments_missing_embeddings,
+    get_comments_missing_embeddings_by_ids,
     get_setting,
     search_comments_by_embedding,
     search_comments_by_fulltext,
@@ -36,7 +37,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 if not EMBEDDING_API_KEY and not OPENAI_API_KEY:
     logger.warning(
         "No embedding API key found (EMBEDDING_API_KEY / OPENAI_API_KEY both empty). "
-        "Embedding calls will fall back to per-user key or DeepSeek key — "
+        "Embedding calls will fall back to per-user key or system key — "
         "RAG/Q&A may be unavailable if those are also absent."
     )
 
@@ -158,24 +159,32 @@ def embed_session_comments(user_id: int, session_id: int) -> dict:
 
 def ensure_comment_embeddings(user_id: int, comments: list[dict]) -> int:
     """为当前问答范围内缺失 embedding 的评论按需补齐向量。"""
+    if comments and all("embedding" not in comment for comment in comments):
+        comment_ids = [int(comment["id"]) for comment in comments if comment.get("id")]
+        targets = get_comments_missing_embeddings_by_ids(user_id, comment_ids)
+    else:
+        targets = [
+            comment
+            for comment in comments
+            if comment.get("embedding") is None and comment.get("id")
+        ]
+
     texts: list[str] = []
-    targets: list[dict] = []
-    for comment in comments:
-        if comment.get("embedding") is not None:
-            continue
+    valid_targets: list[dict] = []
+    for comment in targets:
         content = str(comment.get("content", "")).strip()
         comment_id = comment.get("id")
         if not content or not comment_id:
             continue
         texts.append(content)
-        targets.append(comment)
+        valid_targets.append(comment)
 
     if not texts:
         return 0
 
     embeddings = generate_embeddings_batch(texts, user_id)
     embedding_updates = []
-    for comment, embedding in zip(targets, embeddings):
+    for comment, embedding in zip(valid_targets, embeddings):
         if embedding:
             embedding_updates.append({"comment_id": int(comment["id"]), "embedding": embedding})
     return update_comment_embeddings_batch(user_id, embedding_updates)

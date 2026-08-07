@@ -196,7 +196,7 @@ def build_prompt(
 def _call_llm(system_prompt: str, user_prompt: str, locale: str = "en") -> dict:
     """通过 LLM Router 调用分析，带 markdown fence 抢救逻辑。
 
-    locale="en" 走 GPT-4o-mini 优先链，"zh" 走 DeepSeek 优先链。
+    locale="en"/"zh" 均走 GPT-4o-mini → Gemini 双模型链。
     GPT-4o-mini 偶尔在 JSON 外加 markdown fence，用正则兜底提取。
     """
     from backend_api.app.services.llm_router import router_completion
@@ -498,7 +498,7 @@ def get_api_key(user_id: int | None = None) -> str:
         except Exception:
             pass
 
-    env_key = os.getenv("DEEPSEEK_API_KEY", "")
+    env_key = os.getenv("OPENAI_API_KEY", "")
     if not env_key:
-        raise ValueError("未配置 API Key，请在设置页面填写您的 DeepSeek API Key")
+        raise ValueError("未配置 API Key，请在设置页面填写您的 OpenAI API Key")
     return env_key

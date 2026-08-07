@@ -60,7 +60,7 @@
 | 7.9 | 首页改造 | Phase 1布局与组件架构重构完成 |
 | 7.10 | 登录/注册改造 | 独立全屏双栏布局+全站营销文案中文化 |
 | 7.12 | 可观测性体系 | 5-Tab管理后台(概览/成本/任务/缓存/告警)+时间范围选择器+trace timeline |
-| 8.4 | LLM路由locale切换 | QA/Compare路由复用get_analysis_locale；locale=en→GPT-4o-mini→DeepSeek→Qwen |
+| 8.4 | LLM路由locale切换 | QA/Compare路由复用get_analysis_locale；2026-08-07 起双模型链 GPT-4o-mini→Gemini 2.0 Flash（DeepSeek/Qwen 已下架，海外合规） |
 | 8.7 | Credit定价体系 | 海外4档套餐+统一credit池，已部署上线 |
 | 9.3 | 智能推送 | 设置页拆分为3子页+推送内容增强(B1-B6)+飞书Webhook推送 |
 
@@ -3965,6 +3965,20 @@ CREATE TABLE workspace_invitations (
 - [x] JSON messages 校验：en / zh 的 categoryLabels key 集合一致
 - [x] 2026-07-23 Review Q&A Router 迁移验证：`python3 -m pytest backend_api/tests/test_qa_llm_router.py -q` 3 passed；核心 runtime 文件 ruff PASS；本次 runtime + 已跟踪 scripts `python3 -m py_compile` PASS
 - [ ] 部署到 prod 后线上验证：以 en cookie 上传评论 → 日志显示 model_used=gpt-4o-mini（如 OPENAI_API_KEY 已配置且 SG IP 可达）
+
+**2026-08-07 补充：海外合规模型链路改造（DeepSeek/Qwen 下架）**
+
+- 背景: 8.4 当时在"现有 DeepSeek/OpenAI/Qwen 三家"内换优先级，但 DeepSeek（深度求索）与 Qwen（阿里云）均为中国厂商，海外用户数据流向中国不满足合规要求。本次彻底下架两家，改为 OpenAI + Google 双云。
+- [x] `llm_router.py` — 新增 `_GEMINI`（`gemini-2.0-flash` / `generativelanguage.googleapis.com/v1beta/openai/` / `Gemini_API_KEY` / threshold=3 / cooldown=60s）；删除 `_QWEN` 与 `_DEEPSEEK`；`MODELS_EN` = `MODELS_ZH` = `[_OPENAI, _GEMINI]`；`MODELS` 默认指向 `MODELS_EN`
+- [x] `deep_analyzer.py` `_estimate_cost()` + `database.py` `MODEL_COST_PER_MILLION` — 追加 `gemini-2.0-flash`=(0.7, 2.9)（$0.10/$0.40 per M）；保留 deepseek/qwen 条目供历史 llm_usage 行查询
+- [x] `database.py` `_provider_from_model_name()` — 新增 gemini 分支
+- [x] `insight_engine.py` — 默认 `RESULTS_AI_DISABLED_PROVIDERS` 从 `"deepseek"` 改 `"gemini"`（结果页 AI 增强默认只用主模型）
+- [x] `analyzer.py` `get_api_key()` — 兜底 env 从 `DEEPSEEK_API_KEY` 改 `OPENAI_API_KEY`，错误文案同步
+- [x] `workers/jobs.py` — `CACHE_MODEL_NAME` `"deepseek"` → `"gpt-4o-mini"`（修 L1 缓存 model 门永不命中的真 bug，详见下条）；`llm_usage` 兜底 model 从 `deepseek-chat` 改 `gpt-4o-mini`
+- [x] **附带修复 L1 缓存 model 门**：写入侧存 model_id（`gpt-4o-mini`），读取侧却传 provider 名（`deepseek`），`aspects_json->>'model_name' = %s` 等值比较永假 → 该门自 5.9.6-B.1 起一直把 L1 缓存判死。改为同构后缓存真正生效
+- [x] 回归：`backend_api/tests/` 487 passed；11 项失败经 HEAD 干净 worktree 基线确认为既有失败，非本次引入
+- [ ] **阻塞项**：Gemini API key 已验证认证通过但返回 429 `limit: 0`（免费层输入配额为 0）→ 需在 [Google AI Studio](https://aistudio.google.com/apikey) 开通付费，否则 fallback 链实际退化为 OpenAI 单模型
+- [ ] 部署到 prod 后线上验证：日志 `llm_provider_success` 的 provider 只应出现 openai / gemini
 
 ---
 

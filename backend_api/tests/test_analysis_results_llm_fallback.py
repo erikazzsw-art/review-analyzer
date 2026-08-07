@@ -153,7 +153,7 @@ def _enable_failing_results_ai(monkeypatch: Any) -> None:
     monkeypatch.setenv("RESULTS_AI_ENHANCEMENT_TIMEOUT_SECONDS", "0.5")
     monkeypatch.setenv("RESULTS_AI_PROVIDER_TIMEOUT_SECONDS", "0.5")
     monkeypatch.setenv("RESULTS_AI_MAX_MODEL_ATTEMPTS", "1")
-    monkeypatch.setenv("RESULTS_AI_DISABLED_PROVIDERS", "deepseek")
+    monkeypatch.setenv("RESULTS_AI_DISABLED_PROVIDERS", "gemini")
 
     def failing_router_completion(**_kwargs: Any) -> tuple[Any, str]:
         raise RuntimeError("provider unavailable")

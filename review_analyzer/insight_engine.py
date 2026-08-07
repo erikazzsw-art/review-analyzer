@@ -72,7 +72,7 @@ def _results_ai_cache_ttl_seconds(payload: dict[str, Any] | None) -> float:
 
 
 def _results_ai_disabled_providers() -> set[str]:
-    raw = os.getenv("RESULTS_AI_DISABLED_PROVIDERS", "deepseek")
+    raw = os.getenv("RESULTS_AI_DISABLED_PROVIDERS", "gemini")
     return {item.strip().lower() for item in raw.split(",") if item.strip()}
 
 

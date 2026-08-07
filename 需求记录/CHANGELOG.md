@@ -2202,3 +2202,57 @@ WP7/WP8 的回流链路只覆盖 scope 治理那一半——`generate_label_prop
 - `backend_api/app/routes/analysis.py`（`_session_payload()` 单点过滤）
 - `backend_api/tests/test_taxonomy_coverage_customer_visibility.py`（6 个 focused tests）
 - 更新 `PROGRESS_V2.md`（C1/C2 任务行拆分 + 受众拆分决策段 + 验收表两行）+ `TEST_LOG.md`
+
+---
+
+## 2026-08-07 海外合规模型链路改造（DeepSeek/Qwen 下架 → Gemini）
+
+### 需求：LLM fallback 链去中国厂商化 + 附带修复 L1 缓存 model 门
+
+- **工作量**: S（7 个后端文件 + 2 个测试文件改动，无 migration，约 0.5 人天）
+- **状态**: ✅ 代码完成，回归 0 新增失败；⚠️ Gemini 付费未开通，兜底链暂不可用
+
+**需求描述**：
+Erika 提出替换 DeepSeek 与删除 Qwen，改为两层模型链。原因是这两家（深度求索 / 阿里云）都是中国厂商，海外用户的评论数据流向中国不满足合规要求 —— 8.4 当时只在这三家里换 locale 优先级，实际的 provider 地理分散只有 OpenAI 一家。
+
+**选型结论**：Gemini 2.0 Flash 作为唯一兜底
+
+| 维度 | 值 |
+|------|-----|
+| 定价 | $0.10/M input + $0.40/M output（比 DeepSeek ¥1/¥8 与 GPT-4o-mini $0.15/$0.60 都便宜） |
+| 接入成本 | 零代码改动 —— Google 提供 OpenAI 兼容端点 `generativelanguage.googleapis.com/v1beta/openai/`，只需新增一个 `ModelConfig` |
+| JSON 模式 | 原生支持 `response_format: {"type": "json_object"}`，满足 annotate v2.4 的结构化输出要求 |
+| 合规 | Google 基础设施，与 OpenAI 互为独立云，构成真正的双 provider 容灾 |
+
+未选 Claude Haiku 4.5：JSON 可靠性最好但 Anthropic API 非 OpenAI 兼容，需引入 OpenRouter 中间层，增加依赖与延迟。
+
+**改动内容**：
+1. `llm_router.py` — 新增 `_GEMINI`（threshold=3 / cooldown=60s），删除 `_QWEN` 与 `_DEEPSEEK`，`MODELS_EN` = `MODELS_ZH` = `[_OPENAI, _GEMINI]`
+2. 费率表两处（`deep_analyzer._estimate_cost` + `database.MODEL_COST_PER_MILLION`）追加 gemini 条目；**保留 deepseek/qwen 费率**供历史 `llm_usage` 行的成本查询不失真
+3. `database._provider_from_model_name()` 新增 gemini 分支
+4. `insight_engine` 默认 `RESULTS_AI_DISABLED_PROVIDERS` 从 `deepseek` 改 `gemini`（结果页 AI 增强默认只用主模型，语义等价迁移）
+5. `analyzer.get_api_key()` 兜底 env 从 `DEEPSEEK_API_KEY` 改 `OPENAI_API_KEY`
+
+**附带修复的真 bug（L1 缓存 model 门永不命中）**：
+排查 `CACHE_MODEL_NAME` 时发现写入侧与读取侧不同构 —— 写入侧 `jobs.py:995` 存的是 `router_completion()` 返回的 **model_id**（`llm_router.py:390` `return resp, model.model_id` → `"gpt-4o-mini"`），读取侧 `database.py:1571` 却用 provider 名 `"deepseek"` 做 `aspects_json->>'model_name' = %s` 等值比较，结果恒为假。该门自 5.9.6-B.1 上线起一直把 L1 缓存判死，另 3 个版本门（prompt / taxonomy / registry）正常工作。改为 `CACHE_MODEL_NAME = "gpt-4o-mini"` 后 L1 缓存真正生效。Gemini 兜底期间产出的结果按语义判 miss（不跨模型复用分析结果），符合预期。
+
+**验证结果**：
+- Gemini API key 连通性：认证通过，返回 429 `limit: 0` → key 有效但**免费层输入配额为 0（未开付费）**
+- `backend_api/tests/` 487 passed / 11 failed；11 项失败经 HEAD 干净 worktree 基线比对确认为改动前既有失败（waders taxonomy aspect_count 22≠21 + review_fragment_candidate 10 项），与本次无关
+- 受影响的 focused tests：`test_cache_semantic_versioning` + `test_analysis_results_llm_fallback` + `test_global_cache` 共 23 passed
+- ruff check 全部改动文件 clean
+
+**遗留阻塞**：
+Gemini 需在 Google AI Studio 绑卡开通付费，否则 fallback 链实际退化为 OpenAI 单模型，容灾能力弱于改造前的三模型链。
+
+**涉及岗位及工时**：
+- 算法工程师：0.2 天（模型选型对比 + 费率核算 + API 连通性验证）
+- 后端开发：0.25 天（router 改造 + 缓存门 bug 排查修复 + 测试适配）
+- DevOps：0.05 天（`deploy/.env` 注入 `Gemini_API_KEY`，确认 docker-compose `env_file` 已覆盖 api/worker 两个容器）
+
+**产出物**：
+- `backend_api/app/services/llm_router.py`（`_GEMINI` 新增 + `_QWEN`/`_DEEPSEEK` 删除 + 双模型链）
+- `backend_api/app/services/deep_analyzer.py`、`review_analyzer/database.py`（费率 + provider 识别）
+- `review_analyzer/insight_engine.py`、`review_analyzer/analyzer.py`、`review_analyzer/rag.py`（默认值与文案迁移）
+- `workers/jobs.py`（`CACHE_MODEL_NAME` 同构修复）
+- `backend_api/tests/test_cache_semantic_versioning.py`、`test_analysis_results_llm_fallback.py`（断言同步）

@@ -785,6 +785,33 @@ def get_comments_missing_embeddings(user_id: int, session_id: int) -> list[dict]
         conn.close()
 
 
+def get_comments_missing_embeddings_by_ids(user_id: int, comment_ids: list[int]) -> list[dict]:
+    """Fetch id/content only for comments in scope that still need embeddings."""
+    ids = sorted({int(comment_id) for comment_id in comment_ids if comment_id})
+    if not ids:
+        return []
+
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT id, content
+                   FROM comments
+                   WHERE user_id = %s
+                     AND id = ANY(%s)
+                     AND embedding IS NULL
+                     AND COALESCE(content, '') <> ''
+                   ORDER BY id ASC""",
+                (user_id, ids),
+            )
+            return [dict(r) for r in cur.fetchall()]
+    except psycopg2.errors.UndefinedColumn:
+        conn.rollback()
+        return []
+    finally:
+        conn.close()
+
+
 def search_comments_by_embedding(
     user_id: int,
     embedding: list[float],
@@ -795,7 +822,8 @@ def search_comments_by_embedding(
     if comment_ids is not None and not comment_ids:
         return []
 
-    query = "SELECT * FROM comments WHERE user_id = %s AND embedding IS NOT NULL"
+    columns = _comment_read_select_columns(include_embedding=False, compact_aspects_json=True)
+    query = f"SELECT {', '.join(columns)} FROM comments WHERE user_id = %s AND embedding IS NOT NULL"
     params: list = [user_id]
     if comment_ids is not None:
         query += " AND id = ANY(%s)"
@@ -829,8 +857,10 @@ def search_comments_by_fulltext(
 
     tsquery = " | ".join(query_text.strip().split())
 
+    columns = _comment_read_select_columns(include_embedding=False, compact_aspects_json=True)
     sql = (
-        "SELECT *, ts_rank(content_tsv, to_tsquery('simple', %s)) AS ft_rank "
+        f"SELECT {', '.join(columns)}, "
+        "ts_rank(content_tsv, to_tsquery('simple', %s)) AS ft_rank "
         "FROM comments WHERE user_id = %s AND content_tsv @@ to_tsquery('simple', %s)"
     )
     params: list = [tsquery, user_id, tsquery]
@@ -922,13 +952,11 @@ def _build_get_comments_query(
     compact_aspects_json: bool = True,
     use_review_date: bool = True,
 ) -> tuple[str, list[Any]]:
-    columns = list(_COMMENT_READ_COLUMNS if use_review_date else _COMMENT_READ_COLUMNS_LEGACY)
-    if compact_aspects_json:
-        columns.append(_COMPACT_ASPECTS_JSON_SQL)
-    else:
-        columns.append("aspects_json")
-    if include_embedding:
-        columns.append(_COMMENT_EMBEDDING_COLUMN)
+    columns = _comment_read_select_columns(
+        include_embedding=include_embedding,
+        compact_aspects_json=compact_aspects_json,
+        use_review_date=use_review_date,
+    )
     where, params = _build_comments_where_clause(
         user_id,
         product_id=product_id,
@@ -941,6 +969,31 @@ def _build_get_comments_query(
     )
     query = f"SELECT {', '.join(columns)} FROM comments WHERE {where} ORDER BY id DESC"
     return query, params
+
+
+def _comment_read_select_columns(
+    *,
+    include_embedding: bool = False,
+    compact_aspects_json: bool = True,
+    use_review_date: bool = True,
+) -> list[str]:
+    columns = list(_COMMENT_READ_COLUMNS if use_review_date else _COMMENT_READ_COLUMNS_LEGACY)
+    columns.append(_COMPACT_ASPECTS_JSON_SQL if compact_aspects_json else "aspects_json")
+    if include_embedding:
+        columns.append(_COMMENT_EMBEDDING_COLUMN)
+    return columns
+
+
+def _comment_output_column_names(
+    *,
+    include_embedding: bool = False,
+    use_review_date: bool = True,
+) -> list[str]:
+    columns = list(_COMMENT_READ_COLUMNS if use_review_date else _COMMENT_READ_COLUMNS_LEGACY)
+    columns.append("aspects_json")
+    if include_embedding:
+        columns.append(_COMMENT_EMBEDDING_COLUMN)
+    return columns
 
 
 def _execute_comment_read_query(
@@ -1321,9 +1374,12 @@ def get_product_stats_deduped(user_id: int, product_id: str) -> dict:
 
 def get_comments_deduped(user_id: int, product_id: str) -> list[dict]:
     """按 content_hash 去重，保留最新一条记录。"""
-    sql = """
-        SELECT * FROM (
-            SELECT *,
+    inner_columns = _comment_read_select_columns(include_embedding=False, compact_aspects_json=True)
+    outer_columns = _comment_output_column_names(include_embedding=False)
+    sql = f"""
+        SELECT {', '.join(outer_columns)}
+        FROM (
+            SELECT {', '.join(inner_columns)},
                    ROW_NUMBER() OVER (PARTITION BY content_hash ORDER BY id DESC) AS rn
             FROM comments
             WHERE user_id = %s AND product_id = %s AND content_hash IS NOT NULL
@@ -1341,11 +1397,12 @@ def get_comments_deduped(user_id: int, product_id: str) -> list[dict]:
 
 
 def get_unprocessed_comments(user_id: int, session_id: int) -> list[dict]:
+    columns = _comment_read_select_columns(include_embedding=False, compact_aspects_json=True)
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                "SELECT * FROM comments WHERE user_id = %s AND session_id = %s AND is_processed = 0",
+                f"SELECT {', '.join(columns)} FROM comments WHERE user_id = %s AND session_id = %s AND is_processed = 0",
                 (user_id, session_id),
             )
             return [dict(r) for r in cur.fetchall()]
@@ -2307,8 +2364,10 @@ def _row_to_jsonable(row: dict) -> dict:
 # ---------- V4-T4 Step 5: LLM 用量日志 ----------
 
 MODEL_COST_PER_MILLION: dict[str, tuple[float, float]] = {
+    "gemini-2.0-flash": (0.7, 2.9),          # $0.10/$0.40 → ¥0.70/¥2.90 per M
+    "gpt-4o-mini": (1.05, 4.2),               # $0.15/$0.60 per M
+    # backward compat — historical data may still reference these
     "deepseek-chat": (1.0, 8.0),
-    "gpt-4o-mini": (1.05, 4.2),
     "qwen-plus": (0.8, 2.0),
 }
 
@@ -2318,10 +2377,12 @@ def _provider_from_model_name(model_name: str) -> str:
     if not model_name:
         return "unknown"
     name = model_name.lower()
-    if "deepseek" in name:
-        return "deepseek"
+    if "gemini" in name:
+        return "gemini"
     if "gpt" in name or "openai" in name:
         return "openai"
+    if "deepseek" in name:
+        return "deepseek"
     if "qwen" in name:
         return "qwen"
     return name

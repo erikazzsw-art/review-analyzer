@@ -87,9 +87,11 @@ from .queue import get_queue
 PROMPT_VERSION = DEFAULT_ANNOTATE_VERSION  # "v2.4"（当前生产 annotate prompt 版本）
 ANALYZER_VERSION = "v4_deep"
 # 5.9.6-B.1: L1 缓存版本校验用的模型名。
-# 与 llm_router 的默认 zh 主链第一顺位 DeepSeek 对齐。
+# 必须与写入侧存进 aspects_json.model_name 的值同构：
+# 写入侧存的是 llm_router 返回的 model_id（如 "gpt-4o-mini"），不是 provider 名。
+# 取主链第一顺位的 model_id；fallback 到 Gemini 产出的结果按语义判 miss（不跨模型复用）。
 # 模型升级时改此常量，旧缓存自动失效。
-CACHE_MODEL_NAME = "deepseek"
+CACHE_MODEL_NAME = "gpt-4o-mini"
 COMMENT_ANALYSIS_WRITE_BATCH_SIZE = 50
 
 logger = logging.getLogger(__name__)
@@ -1056,11 +1058,11 @@ def process_upload_job(user_id: int, job_id: int) -> None:
                     "user_id": user_id,
                     "session_id": session_id,
                     "comment_id": comment["id"],
-                    "model_name": v4.get("model_used", "deepseek-chat"),
+                    "model_name": v4.get("model_used", "gpt-4o-mini"),
                     "tokens_in": v4.get("tokens_in", 0),
                     "tokens_out": v4.get("tokens_out", 0),
                     "cost_yuan": _estimate_cost_yuan(
-                        v4.get("model_used", "deepseek-chat"),
+                        v4.get("model_used", "gpt-4o-mini"),
                         v4.get("tokens_in", 0),
                         v4.get("tokens_out", 0),
                     ),
