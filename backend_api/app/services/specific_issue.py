@@ -4347,41 +4347,69 @@ def _run_label_registry_shadow_pass(
     decorated: dict[str, Any],
     flag: Any | None,
 ) -> None:
-    """Run the resolver against decorated labels in shadow mode.
+    """Run the resolver against decorated labels.
 
-    When flag is None or mode=off, this is a no-op.
-    When flag is shadow/enforce, call the resolver for each occurrence's
-    canonical key and record differences. The decorated comment is NOT
-    modified — this is observation only per decision m.
+    Shadow mode:  record diffs only, no display change (observation only).
+    Enforce mode: resolver rejects → label removed from display;
+                  old path is fallback; fail-closed on resolver exception.
+
+    5.9.7-T3.A: per-review scope matching via effective_mode_for().
+    5.9.7-T3.B: enforce mode now filters rejected labels from aspects list.
     """
     if flag is None:
-        return
-
-    try:
-        resolver_active = getattr(flag, "resolver_active", False)
-    except Exception:
-        return
-    if not resolver_active:
         return
 
     # Extract context from the decorated comment
     aj = coerce_aspects_json(decorated.get("aspects_json"))
     category = ""
     sub_category = ""
+    session_id = ""
     if aj:
         category = str(aj.get("category") or decorated.get("category") or "")
         sub_category = str(aj.get("sub_category") or decorated.get("sub_category") or "")
         if not sub_category:
             sub_category = str(decorated.get("sub_category") or "")
+        session_id = str(aj.get("session_id") or decorated.get("session_id") or "")
 
     if not sub_category:
         # Without context we can't run the resolver meaningfully
         return
 
     from backend_api.app.services.label_registry_frontstage import (
+        MODE_ENFORCE,
+        MODE_OFF,
         ResolverShadowDiff,
+        effective_mode_for,
         record_shadow_diff,
     )
+
+    # 5.9.7-T3.A: per-review scope-aware mode check
+    norm_category = ""
+    norm_sub_category = ""
+    try:
+        # Import locally to avoid circular dependency at module level
+        from backend_api.app.services.label_registry_frontstage import (
+            _normalize_key,
+        )
+        norm_category = _normalize_key(category)
+        norm_sub_category = _normalize_key(sub_category)
+    except ImportError:
+        norm_category = category
+        norm_sub_category = sub_category
+
+    effective = effective_mode_for(
+        flag,
+        session_id=session_id,
+        category=norm_category,
+        sub_category=norm_sub_category,
+    )
+    if effective == MODE_OFF:
+        return
+
+    import logging
+
+    _logger = logging.getLogger(__name__)
+
     from backend_api.app.services.review_fragment_label_catalog import (
         ResolutionRejectReason,
         resolve_formal_label,
@@ -4400,28 +4428,109 @@ def _run_label_registry_shadow_pass(
         if canonical:
             seen_keys.add((canonical, "highlight"))
 
+    # Resolve each label and collect rejected keys
+    rejected_keys: set[str] = set()
     for label_key, label_type in seen_keys:
-        result = resolve_formal_label(
-            label_key,
-            category_key=category,
-            sub_category_key=sub_category,
-            label_type=label_type,
-        )
+        try:
+            result = resolve_formal_label(
+                label_key,
+                category_key=category,
+                sub_category_key=sub_category,
+                label_type=label_type,
+            )
+        except Exception:
+            _logger.exception(
+                "label_registry_frontstage: resolver exception for %s/%s — "
+                "fail-closed: keeping label in display",
+                label_key,
+                sub_category,
+            )
+            # fail-closed: resolver exception → keep the label
+            continue
+
         if not result.is_resolved and result.reject_reason:
             # Only record as diff if the resolver explicitly rejects.
             # unknown_key is expected for old-catalog labels not yet in
             # the registry — skip those to avoid noise.
             if result.reject_reason == ResolutionRejectReason.UNKNOWN_KEY.value:
                 continue
+            rejected_keys.add(label_key)
             record_shadow_diff(
                 ResolverShadowDiff(
                     label_key=label_key,
                     sub_category=sub_category,
                     category=category,
                     reject_reason=result.reject_reason,
-                    context=f"would be rejected in enforce mode ({result.reject_reason})",
+                    context=(
+                        "removed from display (enforce)"
+                        if effective == MODE_ENFORCE
+                        else f"would be rejected in enforce mode ({result.reject_reason})"
+                    ),
                 )
             )
+
+    # 5.9.7-T3.B: enforce mode — filter rejected labels from the aspects list
+    if effective == MODE_ENFORCE and rejected_keys and aj:
+        _apply_enforce_filter(decorated, aj, rejected_keys, sub_category)
+
+
+def _apply_enforce_filter(
+    decorated: dict[str, Any],
+    aj: dict[str, Any],
+    rejected_keys: set[str],
+    sub_category: str,
+) -> None:
+    """Filter rejected labels from aspects list in enforce mode.
+
+    Fail-closed: exceptions are logged and all labels are kept.
+    Mutates `decorated` in place by replacing aspects_json with a filtered copy.
+    """
+    import copy
+    import logging
+
+    _logger = logging.getLogger(__name__)
+
+    try:
+        # Deep copy to avoid mutating shared references
+        new_aj = copy.deepcopy(aj)
+        aspects: list[dict[str, Any]] = [
+            a for a in new_aj.get("aspects") or [] if isinstance(a, dict)
+        ]
+        filtered: list[dict[str, Any]] = []
+        removed_count = 0
+
+        for aspect in aspects:
+            issue_key = str(aspect.get("canonical_issue_key") or "").strip()
+            highlight_key = str(aspect.get("canonical_highlight_key") or "").strip()
+
+            if (issue_key and issue_key in rejected_keys) or (
+                highlight_key and highlight_key in rejected_keys
+            ):
+                # Mark as rejected rather than deleting — preserves audit trail
+                aspect["display_allowed"] = False
+                aspect["registry_rejected"] = True
+                aspect["registry_reject_sub_category"] = sub_category
+                removed_count += 1
+
+            filtered.append(aspect)
+
+        if removed_count > 0:
+            new_aj["aspects"] = filtered
+            new_aj["registry_enforce_filtered"] = removed_count
+            decorated["aspects_json"] = new_aj
+            _logger.info(
+                "label_registry_frontstage: enforce filter removed %d labels "
+                "from display for sub_category=%s",
+                removed_count,
+                sub_category,
+            )
+    except Exception:
+        _logger.exception(
+            "label_registry_frontstage: enforce filter failed — "
+            "fail-closed: keeping all labels for sub_category=%s",
+            sub_category,
+        )
+        # fail-closed: don't modify decorated, keep all labels
 
 
 def decorate_comment_customer_labels(
