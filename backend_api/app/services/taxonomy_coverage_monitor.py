@@ -2,6 +2,10 @@
 
 分析完成后统计 `other` aspect 占比，超过阈值时生成告警。
 告警写入 trace_json + 飞书推送，帮助发现 taxonomy 覆盖盲区。
+
+5.9.6-C1（2026-08-07）：`other` 占比是我方 taxonomy 资产债务，不是客户可行动信息。
+告警继续写 DB / trace / 飞书（内部信号不减弱），但读路径对客户过滤，
+见 `INTERNAL_ONLY_WARNING_TYPES` 与 `filter_customer_visible_warnings()`。
 """
 from __future__ import annotations
 
@@ -11,6 +15,11 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 OTHER_RATIO_THRESHOLD = 0.15
+
+WARNING_TYPE_TAXONOMY_COVERAGE_LOW = "taxonomy_coverage_low"
+
+# 只给内部看的告警类型：暴露给客户等于自曝分类覆盖不足，且客户无法据此行动。
+INTERNAL_ONLY_WARNING_TYPES = frozenset({WARNING_TYPE_TAXONOMY_COVERAGE_LOW})
 
 
 def compute_taxonomy_coverage(
@@ -67,7 +76,7 @@ def build_coverage_warning(coverage: dict[str, Any]) -> dict[str, Any] | None:
     sub_cat = coverage["sub_category"] or "未知品类"
 
     return {
-        "type": "taxonomy_coverage_low",
+        "type": WARNING_TYPE_TAXONOMY_COVERAGE_LOW,
         "severity": "warning",
         "message": (
             f"品类「{sub_cat}」的 aspect 维度覆盖不足："
@@ -76,6 +85,34 @@ def build_coverage_warning(coverage: dict[str, Any]) -> dict[str, Any] | None:
         ),
         "data": coverage,
     }
+
+
+def filter_customer_visible_warnings(
+    warnings: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]] | None:
+    """剔除只给内部看的告警，用于客户前台读路径（5.9.6-C1）.
+
+    fail-closed：无法判定 `type` 的条目按内部处理直接丢弃，
+    避免未来新增内部告警类型时忘记登记就默认泄漏给客户。
+
+    Args:
+        warnings: `sessions.warnings_json` 原始内容
+
+    Returns:
+        客户可见的告警列表；过滤后为空时返回 None，让前台不渲染横幅
+    """
+    if not warnings:
+        return None
+
+    visible = [
+        w
+        for w in warnings
+        if isinstance(w, dict)
+        and isinstance(w.get("type"), str)
+        and w["type"]
+        and w["type"] not in INTERNAL_ONLY_WARNING_TYPES
+    ]
+    return visible or None
 
 
 def format_ops_alert(warning: dict[str, Any], session_id: int, user_id: int) -> str:

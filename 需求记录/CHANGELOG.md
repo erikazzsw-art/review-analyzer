@@ -2152,3 +2152,53 @@ M2-2.2.C 类别标签 i18n 化上线后跑 prod 验收，点击「原始评论 X
 - `backend_api/app/services/clustering.py`（新增 RATING_GUARD_THRESHOLD + id_to_rating 映射 + 评分守卫逻辑 + 环境变量开关）
 - `backend_api/tests/test_clustering_rating_guard.py`（14 个 focused tests）
 - 更新 `TEST_LOG.md` + `PROGRESS_V2.md`
+
+---
+
+## 2026-08-07 5.9.6-C 受众拆分 + `other` 占比告警下架
+
+### Bug 修复：taxonomy 覆盖率告警泄漏给客户 + 5.9.6-C 按受众拆为 C1/C2
+
+- **工作量**: S（2 个后端文件 + 1 个新测试文件 + 3 个文档，约 0.5 人天）
+- **状态**: ✅ 内部告警已下架，9 测试通过；C2 内部校准链路已排期未开始
+
+**需求描述**：
+Erika 质疑 5.9.6-C 任务描述「展示原文证据、低置信提醒和 `other` 占比」——认为 `other` 和置信度不该给客户看，应该通过 label calibration 页给她审批后回流成正确标签。复核确认该读法正确，原描述把三个受众不同的信息混为一句话。
+
+**定性**：
+- **原文证据** → 客户价值。客户看到标签下挂真实评论才信这个标签，该展示。
+- **低置信提醒** → 模型内部状态。客户只会读成「你们的产品不准」，无法据此行动，不该展示。
+- **`other` 占比** → 我方 taxonomy 资产债务。客户看到等于自曝分类覆盖不足，不该展示。
+
+**发现的线上问题**：
+`other` 占比此前已对客户可见——`taxonomy_coverage_monitor` 把「品类 X 的 aspect 覆盖不足：'other' 占比 23.4%（阈值 15%）」写入 `sessions.warnings_json`，结果页无条件把 `warnings_json` 全量渲染成黄色横幅。该横幅由 Step 3 监控链路引入，早于 5.9.6-C，一直在线。
+
+**修复方案**：
+1. `taxonomy_coverage_monitor.py` 新增 `WARNING_TYPE_TAXONOMY_COVERAGE_LOW` 常量 + `INTERNAL_ONLY_WARNING_TYPES` frozenset + `filter_customer_visible_warnings()`
+2. fail-closed 设计：非 dict / 缺 `type` / `type` 为空的条目一律按内部丢弃，防止未来新增内部告警类型时忘记登记就默认泄漏
+3. `analysis.py` 的 `_session_payload()` 单点过滤。**选后端单点而非改前端渲染**：前端改法只挡住页面，导出和其他 payload 消费方仍会泄漏
+4. **内部信号未减弱**：DB `warnings_json` 写入、`trace.record_warning`、飞书推送三条链路全部保持原样，只有客户读路径隐藏
+
+**核实结论**：置信度本来就未出现在客户 UI，只在导出文件的 audit sheet 列（`Audit Issue Confidence` / `Audit Highlight Confidence`），这一半无需改动。
+
+**任务拆分与排期**：
+- **5.9.6-C1 客户前台证据展示**（留在 5.9.7-T3 第三块，0.5 天）：只做原文证据，TOP10 每行可展开代表性评论。本次已完成其中「内部告警下架」部分。
+- **5.9.6-C2 内部校准信号接入**（单独排，1.5-2 天）：不并入 T3，因需新增 `new_aspect` 提案动作，并入会让 enforce 灰度被校准页开发阻塞。
+
+**C2 的实际工作量来源（本次发现的实现缺口）**：
+WP7/WP8 的回流链路只覆盖 scope 治理那一半——`generate_label_proposals.py` 只读 `resolver_reject` / `shadow_diff`；`human_flag` 事件类型已定义但**全仓库零个生产者**；`other` 占比走完全独立的 `taxonomy_coverage_monitor` → `sessions.warnings_json` + 飞书链路，从未进 audit / proposal 表。即「other → Erika 审批 → 回流成正确标签」这条路在 C2 之前是断的。现有 4 种提案动作（scope_adjust / alias_merge / blocked_rule / negative_example）都只治已有标签的 scope，没有「新建 aspect」这条路径，而 `other` 高占比恰恰指向「这个品类缺维度」。
+
+**验证结果**：
+- 新增 `test_taxonomy_coverage_customer_visibility.py` 6 测试全绿
+- 回归 `test_analysis_results_llm_fallback` + `test_taxonomy_routes` 3 测试通过
+- ruff check clean，`git diff --check` 通过
+
+**涉及岗位及工时**：
+- 后端开发：0.3 天（告警过滤 + 测试）
+- 产品经理：0.2 天（受众拆分定性 + 排期决策）
+
+**产出物**：
+- `backend_api/app/services/taxonomy_coverage_monitor.py`（内部告警类型登记 + fail-closed 过滤函数）
+- `backend_api/app/routes/analysis.py`（`_session_payload()` 单点过滤）
+- `backend_api/tests/test_taxonomy_coverage_customer_visibility.py`（6 个 focused tests）
+- 更新 `PROGRESS_V2.md`（C1/C2 任务行拆分 + 受众拆分决策段 + 验收表两行）+ `TEST_LOG.md`

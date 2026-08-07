@@ -39,6 +39,9 @@ from backend_api.app.services.specific_issue import (
     CUSTOMER_LABEL_RULESET_VERSION,
     decorate_comment_customer_labels,
 )
+from backend_api.app.services.taxonomy_coverage_monitor import (
+    filter_customer_visible_warnings,
+)
 from review_analyzer.compare_store import build_compare_group_specs, get_comparison_dataset
 from review_analyzer.database import (
     delete_session,
@@ -417,7 +420,14 @@ def _invalidate_insights_cache(user_id: int, product_id: str) -> None:
 
 
 def _session_payload(session: dict[str, Any]) -> AnalysisSessionPayload:
-    return AnalysisSessionPayload(**session)
+    """构造前台 session payload；内部告警在此剔除（5.9.6-C1）。
+
+    `other` 占比等 taxonomy 覆盖告警继续保留在 DB / trace / 飞书，
+    只在客户读路径隐藏 —— 这类信息由内部校准页消费，不是客户可行动信息。
+    """
+    payload = dict(session)
+    payload["warnings_json"] = filter_customer_visible_warnings(payload.get("warnings_json"))
+    return AnalysisSessionPayload(**payload)
 
 
 def _build_results_context(session: dict[str, Any]) -> dict[str, Any]:
