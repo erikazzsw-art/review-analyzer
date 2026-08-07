@@ -710,3 +710,4 @@ File "database.py", line 13, in get_connection
 | 2026-08-07 | verify | 【回归】全量 catalog tests：56 passed | ✅ 56/56 |
 | 2026-08-07 | verify | validate_label_scope.py --dry-run：0 failures, scope matrix unchanged 89/89/89/89/5/5/16/1/1 | ✅ |
 | 2026-08-07 | verify | ruff check 全量修改文件：All checks passed! | ✅ |
+| 2026-08-07 | verify | 【线上】部署后 7 项验证（测试账号 `erikazz@foxmail.com`）：① `/api/health` → `{"taxonomy_index":"healthy","taxonomy_index_detail":"89 sub_categories"}` — 启动自检生效且可观测（部署前该字段不存在）；② `GET /proposals?status=all` → 200 `{"proposals":[],"total":0}`；③ `POST /review` `{proposal_id:1, action:"merge"}` → 404 `Proposal 1 not found.` — 先查存在性再判 action，`get_proposal_by_id()` 精确查询已生效（Bug 3 修复已验证）；④ `/settings/golden-set` 两 Tab 正常渲染（Golden Set 24 条/15 标签 + 标签注册表审核）；⑤ Registry Review tab 四状态筛选按钮 + Reviewer Note textarea + `No pending proposals found.` 空态；⑥ 旧 URL `/settings/label-review` → `/settings/golden-set` redirect；⑦ console 0 error / 0 warning | ✅ 7/7 |
