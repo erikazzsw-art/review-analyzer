@@ -34,7 +34,7 @@
 |------|------|---------|
 | 2.1 | 多产品仪表盘 | 总览页路由+表格UI+点击跳转 |
 | 2.2 | 版本对比视图 | 环比分析统一区块 |
-| 2.3 | RAG 问评论 | pgvector检索+DeepSeek回答+引用评论+Pro计费墙；2026-07-02 P0升级：意图路由+结构化聚合 |
+| 2.3 | RAG 问评论 | pgvector检索+LLM回答（router_completion）+引用评论+Pro计费墙；2026-07-02 P0升级：意图路由+结构化聚合；2026-07-23 迁移至统一Router |
 | 2.4 | Paddle 计费 | plan字段+Checkout+Webhook+第二产品限制 |
 | 3.x | ASIN多变体抓取 | 变体发现+产品信息保存+Worker重构+scraped_title |
 | 4.x | 本地收口 | 导航/工作台/AppShell/闭环流程（产品→行动→复盘） |
@@ -60,7 +60,7 @@
 | 7.9 | 首页改造 | Phase 1布局与组件架构重构完成 |
 | 7.10 | 登录/注册改造 | 独立全屏双栏布局+全站营销文案中文化 |
 | 7.12 | 可观测性体系 | 5-Tab管理后台(概览/成本/任务/缓存/告警)+时间范围选择器+trace timeline |
-| 8.4 | LLM路由locale切换 | QA/Compare路由复用get_analysis_locale；2026-08-07 起双模型链 GPT-4o-mini→Gemini 2.0 Flash（DeepSeek/Qwen 已下架，海外合规） |
+| 8.4 | LLM路由locale切换 | QA/Compare路由复用get_analysis_locale；2026-08-10 起双模型链 GPT-4o-mini → Gemini Flash (latest)（DeepSeek/Qwen 已下架，海外合规） |
 | 8.7 | Credit定价体系 | 海外4档套餐+统一credit池，已部署上线 |
 | 9.3 | 智能推送 | 设置页拆分为3子页+推送内容增强(B1-B6)+飞书Webhook推送 |
 
@@ -1268,6 +1268,8 @@ Bug 1 优先于全部 merge 路径修复：merge 坏了是功能用不了（会�
 | 10 万条月分析成本 | ¥20-40 | ¥3-6 | SaaS 毛利可控 |
 | Vendor 依赖 | 单 DeepSeek | 三级 fallback | SLA 可承诺 |
 
+> **2026-08 现状**：上表为 V4 初期设计目标。经海外合规改造（2026-08-07）后，当前链路为 **GPT-4o-mini → Gemini Flash (latest)** 双模型，DeepSeek/Qwen 已下架。router 骨架仍支持扩展新 provider（Bedrock 等）。
+
 ---
 
 ### 6.1 数据资产化
@@ -1852,12 +1854,13 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - 线程安全（Lock 保护熔断状态），可通过 `router.status()` 查询各模型健康状态
   - 环境变量：`DEEPSEEK_API_KEY`（必需）、`OPENAI_API_KEY`（可选备 1）、`QWEN_API_KEY`（可选备 2）
   - **2026-07-07 hotfix**：`workers/jobs.py` 上线后传 `locale=locale` 给 `deep_analyze_batch`，但 `deep_analyzer.py` / `llm_router.py` 未同步更新签名，导致生产 `TypeError: unexpected keyword argument 'locale'`，所有分析任务崩溃。修复：`analyze_one` / `analyze_batch` / `router_completion` 全链路补齐 `locale` 参数；引入 `MODELS_EN`（GPT-4o-mini 优先）/ `MODELS_ZH`（DeepSeek 优先）双链路切换
+  - > **⚠️ 2026-08 已迁移**：上述 DeepSeek/Qwen 三模型链已于 2026-08-07 下线，替换为 GPT-4o-mini → Gemini Flash (latest) 双模型链。`MODELS_EN` = `MODELS_ZH` = `[_OPENAI, _GEMINI]`，不再区分 locale。环境变量仅需 `OPENAI_API_KEY`（必需）+ `Gemini_API_KEY`（兜底）。详见下方「海外合规模型链路改造」条目。
 
 - [x] **Step 5: Token 成本看板** ✅ 2026-06-12
   - 新建 `llm_usage_log` 表（migration 015），记录每次 LLM 调用的 model/tokens/cost
   - `database.py` 新增 `log_llm_usage_batch` + `get_llm_usage_stats`（批量写入 + 聚合查询）
   - Worker 每次 job 完成后自动批量写入用量（含缓存命中标记）
-  - 成本估算内置模型定价：DeepSeek ¥1/8M，gpt-4o-mini ¥1.05/4.2M，Qwen-Plus ¥0.8/2M
+  - 成本估算内置模型定价：DeepSeek ¥1/8M，gpt-4o-mini ¥1.05/4.2M，Qwen-Plus ¥0.8/2M（2026-08 更新：当前链路为 gpt-4o-mini ¥1.05/4.2M + gemini-flash-latest ¥0.7/2.9M；DeepSeek/Qwen 条目保留供历史 llm_usage 成本查询）
   - API 端点 `GET /analytics/llm-costs?days=30` 返回汇总 + 按日明细
   - 指标：总成本、总调用、缓存命中率、单次均价
 
@@ -1879,7 +1882,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
   - **单元测试**：`backend_api/tests/test_global_cache.py` 覆盖用户命中/全局命中/用户优先屏蔽 pool/空输入 4 个分支
   - **验收标准**：
     - [ ] 验证：用户 A 上传 → 用户 B 上传相同 CSV → 观察 worker 日志 `analysis_cache: L1=N` + `cache_hit_source='global'`（migration 043 已于 2026-07-07 在 ECS 执行，功能验证待进行）
-    - [ ] 线上：热门 ASIN 场景下 DeepSeek 调用量下降 30%+ （待观察 llm_usage_log 汇总）
+    - [ ] 线上：热门 ASIN 场景下 LLM 调用量下降 30%+ （待观察 llm_usage_log 汇总；当前链路 GPT-4o-mini → Gemini Flash）
   - **计费影响**：无 —— quota 仍在上传时按条数扣减，缓存命中不影响用户额度
   - **隐私披露**：privacy.tsx 第四条已明示"匿名化分析输出可跨用户复用，不涉及身份/账号/上传时间共享"
 
@@ -2024,7 +2027,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 - [ ] 有 ≥ 5 个付费用户（任一档位）
 - [ ] 单用户月毛利 ≥ ¥80（按 ¥99 入门版计算）
 - [ ] Prompt 改动不再造成历史口径漂移（版本管理生效）
-- [ ] DeepSeek 故障 5 分钟内自动切换备用模型
+- [ ] 主模型故障 5 分钟内自动切换备用模型（当前：GPT-4o-mini → Gemini Flash，熔断 threshold=3 / cooldown=60s）
 - [ ] 至少 1 个垂直品类白皮书发布并产生留资
 
 ---
@@ -3208,7 +3211,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 **负面影响评估：**
 - Phase 1（UI 双语化）：纯前端改动，不影响后端逻辑，零 API 风险
 - Phase 2（翻译功能）：新增 API 端点 + DB 表，不改动现有分析管道
-- 翻译调用 DeepSeek：成本可控（按需翻译 + 缓存，非每次分析都翻译）
+- 翻译走 router_completion（当前 GPT-4o-mini → Gemini Flash）：成本可控（按需翻译 + 缓存，非每次分析都翻译）
 - 整体：渐进式，Phase 1 独立可部署，不依赖 Phase 2
 
 ---
@@ -3279,7 +3282,7 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 #### Phase 2: 分析结果模块级翻译功能
 
 **技术方案：**
-- 翻译后端：新增 `/api/translate/module` 端点，调 DeepSeek 翻译 + 缓存
+- 翻译后端：新增 `/api/translate/module` 端点，调 router_completion 翻译 + 缓存
 - DB 缓存表：`translation_cache`（session_id + module_key + target_lang → 翻译 JSON）
 - 前端交互：模块顶部"翻译 / 原文"切换按钮，点击后调 API，loading 态，缓存命中秒切
 
@@ -3288,10 +3291,10 @@ Step 1-3 已全部实现并通过验证。关键实施细节：
 - [ ] **Step 1: 后端翻译 API + DB 缓存表**
   - 新增 migration：`translation_cache` 表（session_id INT, module_key TEXT, target_lang TEXT, content_json JSONB, created_at TIMESTAMPTZ, UNIQUE(session_id, module_key, target_lang)）
   - 新增路由：`backend_api/app/routers/translate.py`
-    - `POST /api/translate/module`：接收 session_id + module_key → 调 DeepSeek 翻译 → 写缓存 → 返回翻译结果
+    - `POST /api/translate/module`：接收 session_id + module_key → 调 router_completion 翻译 → 写缓存 → 返回翻译结果
     - `GET /api/translate/module?session_id=X&module_key=Y&lang=zh`：优先读缓存，无缓存返回 404
   - 翻译 prompt 设计：保持专业术语准确性，输出结构与原文 JSON 一致
-  - 复用 `review_analyzer/` 中的 DeepSeek 调用逻辑
+  - 复用 `review_analyzer/` 中通过 router_completion 的 LLM 调用逻辑
 
 - [ ] **Step 2: 前端翻译按钮交互**
   - 分析结果页每个模块（消费者画像/用户体验/购买动机/未满足需求/综合建议）顶部加"翻译"按钮
@@ -3637,7 +3640,7 @@ CREATE TABLE workspace_invitations (
 |------|------|
 | 业务主体 | 个人 + Wise 收款（MRR $4,000 时启动香港/新加坡公司注册） |
 | 目标市场 | 排除 EU/UK/EEA 的全球英语市场 |
-| LLM 服务商 | **AWS Bedrock Claude Haiku 4.5（主）+ DeepSeek fallback**（原 Anthropic 直连方案因 HK IP 封锁 + 中方持股 ownership 封禁弃用；已有 `backend_api/app/services/llm_router.py` 三级 fallback 骨架，扩展 `provider="bedrock"` 分支即可） |
+| LLM 服务商 | **AWS Bedrock Claude Haiku 4.5（主）+ Gemini Flash (latest) fallback**（原 Anthropic 直连方案因 HK IP 封锁 + 中方持股 ownership 封禁弃用；当前 router 骨架为 GPT-4o-mini → Gemini Flash (latest) 双模型链，扩展 `provider="bedrock"` 分支即可替换主模型为 Claude） |
 | Amazon 数据源 | DataForSEO（主）+ Rainforest（fallback），woot.com 出海禁用 |
 | 多语言方案 | next-intl + 子域名路由（`app.` 出海英文 / `cn.` 未来国内中文） |
 
@@ -3813,7 +3816,7 @@ CREATE TABLE workspace_invitations (
 - [ ] 中国用户看中文体验的实现路径 —— 待展示层翻译方案设计（见新增 8.2.7）
 
 **2.7 展示层翻译（中国用户看英文分析结果） 🆕**
-- [ ] 决策：DeepSeek 翻译 API（复用现有）vs 前端 i18n key 化 vs 缓存表
+- [ ] 决策：LLM 翻译 API（复用现有 router_completion）vs 前端 i18n key 化 vs 缓存表
 - [ ] 落地：analyses / issues / highlights 等表新增 `title_zh` / `description_zh` 字段 或 独立 `translations` 缓存表
 - [ ] 触发：分析完成后异步生成 zh 翻译（不阻塞主流程）
 - [ ] 展示：locale=zh 时读中文字段，为空则 fallback 英文原文
@@ -3940,8 +3943,9 @@ CREATE TABLE workspace_invitations (
 ### 8.4 LLM 路由 locale 切换（前置准备）
 
 - 状态: ✅ 完成 | 分支: `develop`
-- 依赖: 无（不阻塞 8.5 决策；不接触 Bedrock/OpenRouter，仅在现有 DeepSeek/OpenAI/Qwen 三家里按 locale 换 fallback 优先级）
+- 依赖: 无（不阻塞 8.5 决策；不接触 Bedrock/OpenRouter，仅在当时 DeepSeek/OpenAI/Qwen 三家里按 locale 换 fallback 优先级）
 - 背景: 海外用户默认走 GPT-4o-mini 优先链（英文能力 + 品牌信任），国内用户保持 DeepSeek 优先。**统一英文 prompt**，不做中英双 prompt。
+- > **⚠️ 2026-08 已变更**：上述 locale 双链已合并为单一双模型链 GPT-4o-mini → Gemini Flash (latest)，不再区分中英文用户。详见「海外合规模型链路改造」条目。
 
 **改动清单**
 - [x] `backend_api/app/services/llm_router.py` — `_DEEPSEEK` / `_OPENAI` / `_QWEN` 拆常量 + `MODELS_EN` / `MODELS_ZH` + `_models_for_locale()`；`LLMRouter.completion()` 与 `router_completion()` 新增 `locale` 参数（默认 "zh" 向后兼容）；`__post_init__` 种子所有可能模型的熔断态；`status()` 汇总两条链的模型状态
@@ -3993,7 +3997,7 @@ CREATE TABLE workspace_invitations (
 > - 选 C（OpenRouter 中转）→ 8.5 改为"OpenRouter 集成"，新增 `provider="openrouter"` 分支代替 `provider="bedrock"`
 > - 拍板前**不启动 8.5 任何编码任务**
 
-> **技术背景**:项目已有 `backend_api/app/services/llm_router.py`(6.4 三级 fallback: DeepSeek/OpenAI/Qwen + 熔断)。本 Milestone **扩展现有 router 支持 Bedrock provider**,不新建 llm_client 抽象层。
+> **技术背景**:项目已有 `backend_api/app/services/llm_router.py`（当前为 GPT-4o-mini → Gemini Flash (latest) 双模型链 + 熔断；历史上曾支持 DeepSeek/OpenAI/Qwen 三级 fallback，已于 2026-08 下架中国厂商）。本 Milestone **扩展现有 router 支持 Bedrock provider**，不新建 llm_client 抽象层。
 
 **4.1 LLMRouter 扩展 Bedrock 支持(1.5 天)**
 - [ ] `backend_api/app/services/llm_router.py` — `ModelConfig` 新增 `provider: str = "openai_compat"` + `aws_region: str = "ap-southeast-1"` 字段
@@ -4011,14 +4015,14 @@ CREATE TABLE workspace_invitations (
 - [ ] `LLMRouter._get_bedrock_client()` — 用 `boto3.client('bedrock-runtime', ...)` 从 `AWS_BEDROCK_ACCESS_KEY_ID` / `AWS_BEDROCK_SECRET_ACCESS_KEY` 初始化
 - [ ] 新增 `completion_text(messages, ..., user_id=None) -> tuple[str, str, dict]`:
   - Bedrock 分支:抽出 system message + 打 `cache_control={"type":"ephemeral"}` → 构造 InvokeModel 请求体(anthropic_version="bedrock-2023-05-31")
-  - OpenAI 兼容分支(DeepSeek/OpenAI/Qwen):保留 BYOK 逻辑(user_id → get_api_key)
+  - OpenAI 兼容分支（当前 GPT-4o-mini / Gemini Flash (latest)）:保留 BYOK 逻辑(user_id → get_api_key)
   - 复用现有熔断/fallback/日志骨架
 - [ ] 新增便捷函数 `router_completion_text(messages, ..., user_id=None)`
 - [ ] `requirements.txt` / `pyproject.toml` 增加 `boto3>=1.35.0`
 
 **4.2 analyzer.py 接入 Router + JSON 输出保证(1 天)**
 - [ ] `review_analyzer/analyzer.py` — `SYSTEM_PROMPT` 末尾追加英文强化:`"Respond with raw JSON only. No markdown fences, no explanation outside the JSON object."`
-- [ ] `_call_deepseek_api()` → `_call_llm()`,走 `router_completion_text()`,不传 `response_format`
+- [ ] 统一 LLM 调用入口：走 `router_completion()` 或新增 `router_completion_text()`，不传 `response_format`（当前 router 已为 GPT-4o-mini → Gemini Flash 双模型链）
 - [ ] 抢救逻辑:Claude 偶尔加 markdown fence,用 `re.search(r'\{.*\}', text, re.DOTALL)` 提取
 - [ ] `analyze_comment()` 签名保持兼容 or 改为 `(comment, category, user_id, rating)`,同步改 `workers/jobs.py`
 
@@ -4051,10 +4055,10 @@ CREATE TABLE workspace_invitations (
 **验收标准**
 - Bedrock 连通性 smoke test 通过(`boto3.invoke_model` 返回 200)
 - 单条评论分析成本:Haiku(cache 命中)≈ $0.00145,与预期一致
-- 观察 3 天 Bedrock 调用成功率 ≥ 99%(未触发熔断切 DeepSeek)
+- 观察 3 天 Bedrock 调用成功率 ≥ 99%（未触发熔断切 Gemini Flash）
 - DataForSEO 抓取 3-5 个热门 ASIN 对比 Rainforest 数据一致性
 - 断开 DataForSEO 后 Rainforest fallback 生效
-- 临时错误 AWS AK 触发熔断,自动切 DeepSeek 成功
+- 临时错误 AWS AK 触发熔断，自动切 Gemini Flash 成功
 - prod 日志确认 woot 代码不被调用
 - 分析结果 UI 显示 AI 标签
 
@@ -4629,7 +4633,7 @@ CREATE TABLE workspace_invitations (
   - ✅ `review_analyzer/escalation.py` + 18 个单元测试通过（2026-06-14）
 
 - [x] **Step 4: LLM 行动建议生成**
-  - 升级触发时调用 DeepSeek 生成行动建议
+  - 升级触发时调用 LLM（router_completion）生成行动建议
   - Prompt 输入：问题标签 + 近 N 期占比趋势 + 责任部门 + 产品信息 + TOP 5 代表性评论原文
   - Prompt 输出（structured JSON）：action_title / suggested_action / expected_timeline / priority
   - 自动调用 `create_action_item()` 写入行动中心，status="todo"，owner_role=对应部门
@@ -4787,9 +4791,9 @@ CREATE TABLE workspace_invitations (
 
 ### 9.5 自研评论标注模型
 
-> **背景**：当前架构每条评论都需实时调用 DeepSeek API（~1-3 秒/条），432 条评论需 Worker 运行数分钟。
+> **背景**：当前架构每条评论都需实时调用 LLM API（~1-3 秒/条），432 条评论需 Worker 运行数分钟。
 > 竞品 Shulex 采用「自研 tagging model + 预标注入库」模式，用户请求时只做聚合统计，10 秒出结果。
-> 本任务通过知识蒸馏将 DeepSeek 的标注能力迁移到自研轻量模型，实现毫秒级推理 + 离线预标注。
+> 本任务通过知识蒸馏将 LLM（当前 GPT-4o-mini / Gemini Flash）的标注能力迁移到自研轻量模型，实现毫秒级推理 + 离线预标注。
 
 #### 阶段一：数据积累与标注质量监控（2-4 周，无额外开发成本）
 
@@ -4822,10 +4826,10 @@ CREATE TABLE workspace_invitations (
   └── config.yaml        # 模型配置
   ```
 - [ ] 训练 PoC 模型，在 Golden Set 上评测：
-  - sentiment accuracy ≥ 92%（对标 DeepSeek 的 ~95%）
+  - sentiment accuracy ≥ 92%（对标当前 LLM 链路的 ~95%）
   - aspect top-1 key accuracy ≥ 88%
   - issue_tag / highlight_tag 提取 F1 ≥ 0.85
-- [ ] 成本对比文档：自研模型 vs DeepSeek API（推理速度、成本/条、准确率）
+- [ ] 成本对比文档：自研模型 vs 当前 LLM API（推理速度、成本/条、准确率）
 
 #### 阶段三：双轨运行 — Shadow Mode（2 周）
 
@@ -4833,7 +4837,7 @@ CREATE TABLE workspace_invitations (
 
 - [ ] 部署自研模型为独立服务（Docker container，GPU 可选 / CPU ONNX 推理）
 - [ ] Worker 新增 Shadow Mode 配置：`USE_LOCAL_MODEL_SHADOW=true`
-  - 每条评论同时调 DeepSeek + 本地模型
+  - 每条评论同时调 LLM API（router_completion）+ 本地模型
   - 本地模型结果不写入 `comments` 表，写入独立的 `ml_shadow_results` 表
   - 对比两者的 sentiment / aspect 一致率
 - [ ] 建立自动化对比 dashboard（或定期脚本）：
@@ -4845,13 +4849,13 @@ CREATE TABLE workspace_invitations (
 
 **启动条件**：Shadow Mode 一致率 ≥ 95% 持续 7 天
 
-- [ ] `workers/jobs.py` 新增模型路由开关：`ANALYSIS_ENGINE=local|deepseek|hybrid`
+- [ ] `workers/jobs.py` 新增模型路由开关：`ANALYSIS_ENGINE=local|llm|hybrid`
   - `local`：全量走自研模型（毫秒级，无 API 成本）
-  - `deepseek`：保持现状（兜底）
-  - `hybrid`：自研模型主 + DeepSeek 对低置信度样本做二次确认
+  - `llm`：保持现状走 router_completion（GPT-4o-mini → Gemini Flash 兜底）
+  - `hybrid`：自研模型主 + LLM 对低置信度样本做二次确认
 - [ ] 压测：1000 条评论批量分析，确认 < 30 秒完成（对比当前 ~10 分钟）
 - [ ] 灰度切换：先 10% 流量 → 50% → 100%，每阶段观察 3 天
-- [ ] 切换后 DeepSeek API 降级为 fallback（置信度 < 0.8 时触发）
+- [ ] 切换后 LLM API 降级为 fallback（置信度 < 0.8 时触发）
 
 #### 阶段五：预标注模式（长期方向）
 
@@ -4873,20 +4877,20 @@ CREATE TABLE workspace_invitations (
 
 #### 成本收益预估
 
-| 维度 | 当前（DeepSeek API） | 目标（自研模型） |
+| 维度 | 当前（LLM API，GPT-4o-mini/Gemini Flash） | 目标（自研模型） |
 |------|---------------------|-----------------|
 | 推理速度 | 1-3 秒/条 | 3-50 毫秒/条 |
 | 432 条分析耗时 | 3-10 分钟 | < 30 秒 |
-| 成本/千条 | ¥0.3（API 费用） | ¥0.01（GPU 算力分摊） |
+| 成本/千条 | ¥0.3-1.0（API 费用） | ¥0.01（GPU 算力分摊） |
 | Worker 崩溃风险 | 高（长时间进程） | 极低（秒级完成） |
-| 依赖外部 API | 是（DeepSeek 宕机=全挂） | 否（自主可控） |
+| 依赖外部 API | 是（双模型 fallback 降低单点风险） | 否（自主可控） |
 
 #### 风险与应对
 
 | 风险 | 应对措施 |
 |------|---------|
-| 标注数据不足 | 阶段一期间优先积累数据；必要时用 DeepSeek 对历史未标注评论补标 |
-| 模型准确率不达标 | 保持 DeepSeek fallback，hybrid 模式不影响用户体验 |
+| 标注数据不足 | 阶段一期间优先积累数据；必要时用 LLM API（router_completion）对历史未标注评论补标 |
+| 模型准确率不达标 | 保持 LLM fallback 链路（GPT-4o-mini → Gemini Flash），hybrid 模式不影响用户体验 |
 | GPU 成本 | ONNX 量化后可用 CPU 推理；阿里云 GPU 实例按需开 |
 | 新品类泛化差 | 持续收集用户反馈样本 + 定期 fine-tune |
 
@@ -4947,7 +4951,7 @@ CREATE TABLE workspace_invitations (
 | 需求 | 脚本 | 说明 |
 |------|------|------|
 | 预处理原始评论 | `scripts/preprocess_reviews.py` | 按品类 YAML 配置清洗 |
-| Taxonomy 抽取 | `scripts/extract_taxonomy_generic.py` | 支持 seed extends，DeepSeek API |
+| Taxonomy 抽取 | `scripts/extract_taxonomy_generic.py` | 支持 seed extends，LLM API（router_completion） |
 | 人工 Review 表 | `scripts/build_taxonomy_review_sheet.py` | 生成 Excel，标注保留/合并/删除 |
 | Review 决策应用 | `scripts/apply_taxonomy_review.py` | 把 review 决策写回 YAML |
 | 入库 | `scripts/import_v4t1_assets.py` | rglob YAML → PG 表，带 keepalive |
