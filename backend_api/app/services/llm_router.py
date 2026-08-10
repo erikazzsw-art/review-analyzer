@@ -1,7 +1,7 @@
 """V4-T4 Step 4: 多模型 Fallback 链路（locale-aware）.
 
 模型优先级（2026-08 更新）：
-- 双模型链：GPT-4o-mini → Gemini 2.0 Flash
+- 双模型链：GPT-4o-mini → Gemini Flash (latest)
 - 海外合规：OpenAI + Google 双云，互不依赖
 - DeepSeek / Qwen 已移除（中国厂商，海外合规不可用）
 
@@ -83,7 +83,7 @@ class ModelConfig:
 
 _GEMINI = ModelConfig(
     name="gemini",
-    model_id="gemini-2.0-flash",
+    model_id="gemini-flash-latest",
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
     api_key_env="Gemini_API_KEY",
     circuit_threshold=3,

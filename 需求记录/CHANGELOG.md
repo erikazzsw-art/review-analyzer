@@ -2256,3 +2256,35 @@ Gemini 需在 Google AI Studio 绑卡开通付费，否则 fallback 链实际退
 - `review_analyzer/insight_engine.py`、`review_analyzer/analyzer.py`、`review_analyzer/rag.py`（默认值与文案迁移）
 - `workers/jobs.py`（`CACHE_MODEL_NAME` 同构修复）
 - `backend_api/tests/test_cache_semantic_versioning.py`、`test_analysis_results_llm_fallback.py`（断言同步）
+
+---
+
+## 2026-08-10 Gemini 模型 ID 更新（gemini-2.0-flash → gemini-flash-latest）
+
+### 需求：Google 下线旧模型后更新模型 ID + 重新验证 API key
+
+- **工作量**: S（3 个文件改动，无 migration，约 0.1 人天）
+- **状态**: ✅ 完成待部署
+
+**需求描述**：
+2026-08 测试 Gemini API key 时发现 `gemini-2.0-flash` 在 OpenAI 兼容端点返回 404 "no longer available"，`gemini-2.5-flash` / `gemini-2.5-pro` 同样 404，仅 `gemini-flash-latest`（Google 的 latest 别名）可用。同时候 Erika 重新提供了已开通付费的 API key。
+
+**改动内容**：
+1. `llm_router.py` — `_GEMINI.model_id` 从 `gemini-2.0-flash` 改为 `gemini-flash-latest`
+2. `deep_analyzer._estimate_cost()` + `database.MODEL_COST_PER_MILLION` — key 同步更新
+
+**为什么使用 `gemini-flash-latest`（别名而非固定版本）**：
+Google 的 OpenAI 兼容端点模型生命周期较短，固定版本（如 `gemini-2.0-flash`）可能随时被下线。`-latest` 别名始终解析为最新稳定 Flash 模型，避免未来再次出现 404。作为 fallback 模型，行为微小变化可接受。
+
+**验证结果**：
+- Gemini API 连通性：认证通过，JSON 模式/中文/结构化输出均正常
+- `backend_api/tests/` focused tests：23 passed（test_cache_semantic_versioning + test_analysis_results_llm_fallback + test_global_cache）
+- ruff check 全部改动文件 clean
+
+**涉及岗位及工时**：
+- 后端开发：0.1 天（模型 ID 更新 + 测试适配 + API 验证）
+
+**产出物**：
+- `backend_api/app/services/llm_router.py`（model_id）
+- `backend_api/app/services/deep_analyzer.py`（费率 key）
+- `review_analyzer/database.py`（费率 key）

@@ -2364,7 +2364,7 @@ def _row_to_jsonable(row: dict) -> dict:
 # ---------- V4-T4 Step 5: LLM 用量日志 ----------
 
 MODEL_COST_PER_MILLION: dict[str, tuple[float, float]] = {
-    "gemini-2.0-flash": (0.7, 2.9),          # $0.10/$0.40 → ¥0.70/¥2.90 per M
+    "gemini-flash-latest": (0.7, 2.9),       # $0.10/$0.40 → ¥0.70/¥2.90 per M (pricing may vary by resolved version)
     "gpt-4o-mini": (1.05, 4.2),               # $0.15/$0.60 per M
     # backward compat — historical data may still reference these
     "deepseek-chat": (1.0, 8.0),
