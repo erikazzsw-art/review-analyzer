@@ -10,7 +10,7 @@
 
 ## 总体进度
 
-> 最后更新：2026-08-05 | 这里只保留整体模块概况；标签准确性以 §5.9 当前计划为准
+> 最后更新：2026-08-10 | 这里只保留整体模块概况；标签准确性以 §5.9 当前计划为准，口径以 [`docs/核心目标与验收基线.md`](docs/核心目标与验收基线.md) 为准
 
 ### 按模块组
 
@@ -19,7 +19,7 @@
 | 2. 核心模块 | 4 | 4 | 0 | 0 | 100% | 仪表盘/版本对比/RAG问评论/Paddle计费，全部部署上线 |
 | 3. ASIN 多变体抓取 | 1 | 1 | 0 | 0 | 100% | 变体发现+产品信息保存+Worker重构，已部署上线 |
 | 4. 本地收口 | 1 | 1 | 0 | 0 | 100% | 导航/工作台/AppShell/闭环流程全部完成 |
-| 5. Next.js 迁移 + 标签准确性 | 12 | 11 | 0 | 1 | 92% | 5.1-5.8 基础迁移完成；5.9.0 waders A/B/C 策略已收口；下一步按 5.9.6-5.9.8 落地新链路与冗余清理 |
+| 5. Next.js 迁移 + 标签准确性 | 12 | 11 | 1 | 0 | 92% | 5.1-5.8 基础迁移完成；5.9 于 2026-08-10 重新定线为「让五个输出真的正确」，按 A→C→D1/D2→D3→E→B 执行 |
 | 6. 技术优化 | 8 | 6 | 0 | 2 | 75% | 6.1-6.6 完成；标签训练和复杂模型化延后，先把片段理解与人工验收口径跑通 |
 | 7. 运维基建 | 15 | 7 | 5 | 3 | ~63% | 7.1/7.5/7.6/7.8/7.9/7.10/7.12 完成；7.2/7.7/7.11/7.14/7.15 进行中；7.3/7.4/7.13 待启动 |
 | 8. 出海合规 | 7 | 2 | 2 | 3 | ~50% | 8.4/8.7 完成；8.1/8.3 进行中；8.2/8.6 待启动；8.5 冻结 |
@@ -68,7 +68,7 @@
 
 | 编号 | 名称 | 当前进度 | 剩余工作 |
 |------|------|---------|---------|
-| 5.9 新方向 | 评论片段理解与多模块分流 | OPC 低维护方案已定：不推翻现有产品目标，只把 LLM 自由标签收进 Taxonomy 白名单、原文证据门禁、candidate/other 候选池。 | 先做 2-3 周低风险落地版：高置信标签才进 TOP10；Pydantic/JSON 校验优先，Pydantic AI 后置评估。 |
+| 5.9 标签准确性 | 让五个输出真的正确（产品问题/亮点/画像/动机/需求） | 2026-08-10 重新定线。5.9.0-5.9.7 部分交付但存在三项"以为做好了其实没生效"；画像/动机/需求当前是假数据 | 按 A→C→D1/D2→D3→E→B 执行，见 §5.9。强制前置读 `docs/核心目标与验收基线.md` |
 | 7.2 | CD持续部署 | GitHub Actions deploy.yml已写 | ECS自动部署触发+健康检查回滚 |
 | 7.7 | 中国大陆访问优化 | Phase A Cloudflare CDN ✅ | Phase B ICP备案+国内节点（付费用户≥10触发） |
 | 7.11 | AI分析链路优化 | 部分完成 | worker写路径优化+批量upsert+事务边界 |
@@ -224,7 +224,7 @@
 | `5.6` 问评论/行动/复盘迁移 | 已完成 | 迁移闭环能力与 RAG 页面 | 仅回滚闭环相关模块 |
 | `5.7` 文案/设置/计费迁移 | 已完成 | 迁移低频高级页与 Paddle | 仅回滚商业化协同页 |
 | `5.8` 部署与 Streamlit 下线路径 | 已完成（ECS 生产环境运行中） | ECS + Nginx + 容器化部署，明确下线条件 | 仅回滚部署配置 |
-| `5.9` 标签准确性 | 旧路线已归档；当前改为评论片段理解与多模块分流 | 先让每段评论进正确模块，再决定展示和聚合 | 暂停扩大标签使用范围，先由 Erika 验收样例 |
+| `5.9` 标签准确性 | 2026-08-10 重新定线：让五个输出真的正确 | 六指标过线才算完成；三道闸门每次改动都过 | 达不到核心目标不交付真实用户 |
 
 ### 执行顺序
 
@@ -594,643 +594,56 @@
   - 需要为所有 color token 增加 dark 变体
 
 
-### 5.9 标签准确性：评论片段理解与多模块分流
+### 5.9 标签准确性：让五个输出真的正确
 
-**当前状态：5.9.0-5.9.6-A 已完成✅，5.9.6 前置工具 `sync_taxonomy.py` 已完成✅；5.9.4 candidate / other + 多模块承接及 5.9.4.1-A/B 返修完成，5.9.5 轻量校验完成；5.9.5.1 字段语义收口和 5.9.6-A 标签定义收编已完成：正式标签身份收口为 `aspect_key` + `issue_key` / `highlight_key`，统一 Catalog/resolver 已建立，`action_label_key` 已从正式 artifact 删除，formal `normalized_label` 已清理，`shipping_damage` / `late_shipping` 均归入上层 `aspect_key=logistics_issue` 并用具体 `issue_key` 区分；5.9.6-B 已产出 active/read-path 对账与冻结，确认已有部分 frontstage/read-model 接入仍不等同于 5.9.6-A registry/resolver 的完整 active 接入，active 接入尚未完成；5.9.6-C 已于 2026-08-07 按受众拆为 C1（客户前台证据展示，内部告警下架部分已完成✅）+ C2（内部校准信号接入，未开始）；新增 5.9.6-D 标签治理与 Registrar 重构，必须在 5.9.7 小样本验收前完成；2026-08-06 补充架构复核后新增 5.9.6-B.1 缓存语义版本化与 L2 下线，**已完成✅并部署**（L1 命中判定纳入 `prompt_version` + `taxonomy_version` + `registry_version` + `model_name` 四个语义版本，走 `aspects_json->>` JSONB 过滤、无 migration；L2 短文本默认结果分支已删除，`apply_cache` 链路为 L1→L3）——5.9.7 验收可信度前提已就位，5.9.6-D 改 `registry_version` 即可让旧缓存全量失效；5.9.6-D 工作包 1-8 代码已交付（commit `9cde21d`，2026-08-06）；工作包 3 降级为 scope 校验脚本、工作包 8 增加内部审核页，5.9.8 增加 TOP10 证据来源分级；**2026-08-07 工作包 9 验收裁决：材料 1/2/3（scope diff / effective scope matrix / 正负例回归）签收，材料 4（错标回流链路）打回 WP7/WP8 返修，5.9.6-D 状态由「已完成」回退为「返修中」**——工程侧独立核验发现 7 个实现 bug（Bug 1-6 + Bug 5b），其中 Bug 1（Gate 3 空 scope 短路导致 `["*"]` 静默复现）为 P0，是唯一影响 5.9.7 结论有效性的项；5.9.7 改为仅被返修批次 0 阻塞，可与回流链路修复并行启动（决策 s）。**2026-08-07 返修批次 0/1a/1b/3 全部交付并部署（4 commits `c5bf769` `c09f751` `8f9b849` `54602c3`），线上验证 7/7 通过（`/api/health` 确认 `taxonomy_index: healthy / 89 sub_categories`），条件 1 ✅（Bug 1 已修、正向路径 CI 锁），条件 5 ✅（reflux pipeline 已修复），5.9.6-D 状态转回「已完成」；5.9.7 唯一硬阻塞已解除，可启动。条件 4（enforce 运行时生效）仍待批次 2-5。****
+> **强制前置阅读**：[`docs/核心目标与验收基线.md`](docs/核心目标与验收基线.md)
+> 目标定义、片段流向表、标签三层身份、AI/规则分工、九层质量、六指标通过线、三道闸门、停止规则全在那份文档，本节不重复。
+> 5.9.0-5.9.7 的过程记录、逐任务验收细节、返修批次、架构复核已搬到 [`docs/历史归档_已废弃模块文档.md`](docs/历史归档_已废弃模块文档.md) §A-E，无需再读。
 
-注意：waders 专项规则不再作为新 5.9 主线扩张，只作为短期前台安全补丁保留；后续在 5.9.6 后做 category-specific compatibility 抽离，在 5.9.7 验收后进入分批删除。
+**当前状态（2026-08-10 Erika 与 Claude Code 重新定线）**
 
-5.9.8 和 5.9.9 之前的路线已经归档。它们暴露了真实问题：系统不能只在评论底部堆标签，也不能靠单个类目的局部规则调整来证明整体准确。
+系统只有测试账号，没有真实用户。核心目标是：对真实评论输出**正确的产品问题、产品亮点、消费者画像、购买动机、未满足需求**，不错标不漏标。**达不到就不交付真实用户**，这条优先于任何其它排期。
 
-当前有效目标：先把每条评论拆成多个有意义的原文片段，再把每个片段放到正确模块。
+2026-08-10 全链路调研的结论，比原进度记录严重：
 
-**2026-08-05 最新模块决策：**
-
-- 正式 `module` 只保留：`product_issue`、`product_highlight`、`consumer_profile`、`purchase_motive`、`unmet_need`、`audit_filter`。
-- `customer_service` 不再是独立 module：客服正向进入 `product_highlight`，客服负向进入 `product_issue`。
-- 配件、包装、发货和尺码表等卖家可行动反馈进入 `product_issue`；正向反馈进入 `product_highlight`。
-- 旧产品、竞品、无证据和无法划分的内容进入 `audit_filter`。
-- `aspect_key` 是 taxonomy 证据维度；`issue_key` / `highlight_key` 是正式 TOP10 聚合身份。
-- 5.9.5.1 字段语义收口已完成：核心标签身份收口为 `aspect_key + issue_key + highlight_key`；已删除 `action_label_key`，它不作为 AI 输出字段、正式聚合 key、亮点稳定 key 或展示文本索引；formal `normalized_label` 不再作为正式业务字段、正式聚合 key 或展示索引。行动中心不新增 `recommended_action_key`：它使用正式 `issue_key`、展示文本、代表性证据、占比/趋势和现有 `suggested_action` 文本，由 AI 生成具体建议；未来若要建立标准动作模板，另行设计行动规则层，不纳入当前标签注册中心。
-
-| 评论片段说的内容 | 应该流向 |
+| 输出 | 真实状态 |
 |---|---|
-| 产品哪里好 | 用户体验：产品亮点 |
-| 产品哪里不好 | 用户体验：产品问题 |
-| 谁在用 | 消费者画像：人群特征 |
-| 用户怎么用 | 消费者画像：用户行为 |
-| 在哪里、什么时候、什么场景用 | 消费者画像：使用场景 |
-| 为什么买 | 购买动机 |
-| 想解决但没解决的事 | 未满足需求 |
-| 旧产品、竞品、替代品 | 审计/拦截，归 `audit_filter` |
-| 配件、发货、尺码表、详情页信息等卖家可行动负面反馈 | 用户体验：产品问题 |
-| 客服服务好 | 用户体验：产品亮点 |
-| 客服服务差 | 用户体验：产品问题 |
-| 无法划分、无证据或无行动价值内容 | 审计/拦截，不进入正式 TOP10 |
+| 产品问题 / 产品亮点 | ✅ 有真链路（AI 逐条读原文 + 证据门禁 + 聚合）。但真正决定 waders TOP10 的是 `specific_issue.py` 里一批硬编码关键词规则，**换类目就没有** |
+| 消费者画像 | ❌ 是写死的英语关键词计数（出现 `kid` 就 +1），不看语义、不带原文证据 |
+| 购买动机 | ❌ **就是产品亮点标签的前 10 名换了个标题**，一个字没变 |
+| 未满足需求 | ❌ **就是产品问题标签的前 10 名换了个标题** |
 
-**当前进度（通俗版）：**
+即"为什么买"这件事系统从来没真的提取过。三个软模块的 AI 版本开关默认关闭且超时仅 0.25 秒，等于永远退回关键词计数。
 
-- 已确认旧 5.9.8 / 5.9.9 标签路线不能继续作为当前主线。
-- 已把走偏路线归档到 `docs/历史归档_已废弃模块文档.md`。
-- 已新增当前计划文档：`docs/当前标签系统计划_通俗版.md`。
-- 已确定后续必须让 Erika 高频验收，不能用测试结果替代标签质量判断。
-- 5.9.0 旧路线隔离清点 + waders A/B/C 去留策略完成✅。
-- 5.9.1 输出契约完成✅。
-- 5.9.2 Taxonomy 白名单完成✅。
-- 5.9.3 原文证据门禁完成✅。
-- 5.9.4 candidate / other + 多模块承接完成✅；5.9.4.1-A 标签体系分层定义升级完成✅；5.9.4.1-B 卖家可行动问题 artifact 返修完成✅。
-- 5.9.5 轻量校验完成✅。
-- 5.9.5.1 字段语义收口完成✅：正式行必须有 `issue_key` 或 `highlight_key`；`action_label_key` 不再进入正式输出；formal `normalized_label` 不再参与正式聚合和展示；`shipping_damage` 作为正式 `issue_key`，与 `late_shipping` 一起归入上层 `aspect_key=logistics_issue`；行动中心不依赖 `recommended_action_key`。
-- 5.9.6-A 标签定义收编完成✅：已建立独立 YAML registry 与统一 Catalog/resolver，收编 approved label、aspect mapping、alias、display mapping；resolver 提供正式 key、类型、品类范围、状态、展示文本、边界说明和版本；人工审核材料已提交并获 Erika 审批，无意见。
-- 5.9.6 前置工具 `sync_taxonomy.py` 完成✅：已新增安全 YAML→DB diff/sync CLI，支持 dry-run、按 category 同步、删除候选默认拦截、`--allow-delete` 显式删除和写入成功后清理 taxonomy loader cache；旧 UPSERT 导入脚本保留不归档。
-- 5.9.6-B active/read-path 对账已完成并冻结：`analysis` / `export` 已通过 `decorate_comment_customer_labels()` 装饰前台读模型；`specific_issue.py` 会按 read model 选择 `review_signal_stored_shadow` / `v2_shadow` / v1 occurrences；`review_signal_frontstage.py` 有 session + `waders` 子品类生产保护；`database.py` compact read path 已保留 `review_signal_stored_shadow`。这些仍属于旧/并行 frontstage read-model 基础设施，不是 5.9.6-A 新 registry/resolver 的完整 active 接入；详见 [`docs/5.9.6-B-active-read-path-inventory.md`](docs/5.9.6-B-active-read-path-inventory.md)，后续 active 改造受 5.9.6-D blocker 约束。
-- 5.9.6-D 新增为 5.9.6-A `category_keys/sub_category_keys=["*"]` 失误的系统性返修：不能只改 9 个标签 YAML，必须补 Registrar 标准、Scope Compiler、fail-closed resolver、负例回归和人工审核回流。
+同时确认三项"以为做好了其实没生效"（详见归档 §E）：类目范围门禁默认 `MODE_OFF`；`RESULTS_AI_ENHANCEMENT_ENABLED` 默认 false；`review_fragment_*` 五个模块和 candidate pool **运行时零调用**——5.9.1-5.9.4 的"完成✅"指模块与测试交付，不等于生产链路接入。
 
-**已归档内容：**
+**三项挡在核心目标前的缺口：** ① 片段拆分未接生产（第 3 层）② 漏标率完全无度量（第 9 层）③ 画像/动机/需求无真提取（第 4 层一半）。
 
-- 5.9.8：waders 单类目专项规则路线。
-- 5.9.9：直接围绕 Customer Issue / Customer Label 做前台接入和灰度准备的路线。
-- 5.9.10：小模型训练不作为近期目标，只有真实数据和人工确认样本足够多时再评估。
+**执行计划（2026-08-10 Erika 确认顺序：A → C → D1/D2 → D3 → E → B）**
 
-归档说明见：`docs/历史归档_已废弃模块文档.md`。
+| 阶段 | 状态 | 目标 | 具体工作 | Erika 投入 | 出口条件 |
+|---|---|---|---|---|---|
+| **A 验收基线** | 未开始 | 先让"完成"可判定，不再重复缓存层那次的坑 | 1. waders 50 条人工标注入库（已有，`docs/5.9.9-step4.6-*`，Erika 2026-08-10 确认桌面标注即该批）；2. 写验收脚本：跑**生产同一条链路**、输出六指标改动前后对比表；3. 接进 CI 成为闸门 1；4. 跑一次拿到**今天的真实基线数字**（此前从未测过） | 已有标注，0 | 一条命令出六指标表；Erika 看得懂每一格；waders 基线数字落库 |
+| **C 片段拆分 + 漏标度量** | 未开始 | 一条评论说了三件事要拆三段；让漏标从无法判定变成有数字 | 1. 把已写好零调用的 `review_fragment_*` 契约/白名单/证据门禁接进 `workers/jobs.py` 生产链路；2. 实现漏标率度量（人工标注的片段 vs 系统输出片段做召回对比）；3. 六指标补齐漏标率一列 | 15 分钟抽检 | 一条多话题评论能拆成多段分别处理；漏标率有数字且 ≤ 20%；错标率不倒退 |
+| **D1 语义陷阱库** | 未开始 | 通用守卫全类目共享，做一次全类目受益 | 把第 1 类守卫（否定句、正向反例、后段推翻前段、用户自己买错码）从 waders 专用函数提取为全类目共享模块。T2 rating guard、T4 极性对撞已是该形态，补齐其余 | 15 分钟抽检 | 守卫在非 waders 类目同样生效；waders 六指标不倒退；零 token 增量 |
+| **D2 打开范围门禁** | 未开始 | 机制做完了但线上默认关闭，等于没做 | 1. `LABEL_REGISTRY_FRONTSTAGE_MODE` 从 `off` → waders `shadow` 观察 diff → `enforce`；2. registry 登记标签从 9 个扩到覆盖在用类目；3. TOP10 占比按证据来源分级（`verified_count` / `propagated_count` 拆分，L3 embedding 复用不计入占比） | 15 分钟抽检 | 门禁线上真实生效（闸门 3 验证）；标签不串类目；kill switch 可一键回退 |
+| **D3 硬编码规则退役** | 未开始（依赖 A 有数字） | 证明"不靠手写规则，通用链路在 waders 上不比现在差" | 第 3 类硬编码类目关键词（`wader hanger`、`pocket not waterproof`、`traction`、`flimsy` 等）**立即停止新增**，分批删除，每批删完跑一次六指标 | 每批 15 分钟抽检 | 每批删除后 waders 六指标不倒退；删完后新类目上线不需要写规则 |
+| **E 维护体系** | 未开始 | 一人公司撑不起定期巡检，系统必须主动把该决策的事推到面前 | 校准页 `/settings/golden-set` 四个 tab：① 候选池（新说法排行 + 3-5 句原文，点晋升/合并/忽略）② other 明细（不只百分比，给具体片段）③ 待审提案（异常自动排队）④ 类目健康度（每类目六指标现值）。含：接上零调用的 candidate pool、新增 `new_aspect` 提案动作、`other` 高占比与低置信写 `human_flag` audit event、修基准集上传写死"家具家居"的 bug | 30 分钟/周 | Erika 从"发现 other 偏高"到"新标签进正式库"全程页面完成，不需改代码 |
+| **B 画像/动机/需求真提取** | 未开始（Erika 2026-08-10 定为后置） | 占核心目标五分之三，但当前是假数据 | AI 逐条读评论时同时判断"这段是不是在说谁在用 / 为什么买 / 想要什么没得到"，每条带原文证据，走与产品标签同一套证据门禁；建立三个模块的轻量 seed taxonomy；删除关键词计数 fallback 与 0.25 秒超时的假 AI 开关 | 15 分钟抽检 | 三模块错标率 ≤ 5%；每行可点开看原文出处；不再出现"动机=亮点换标题" |
 
-**2026-08-03 最新落地口径（OPC 低维护版）：**
+**分水岭：D3 跑完** — 那时证明了"新类目不需要写规则"，才敢接第 4 个、第 10 个类目。
 
-不推翻现有上传、分析结果页、导出、问评论、计费、Taxonomy、Golden Set 和 other 告警能力。5.9 只处理一件事：把当前“LLM 自由理解并直接形成前台标签”的风险，收敛成“LLM 读评论 + Taxonomy 限制可选标签 + 原文证据门禁 + candidate/other 承接新问题”。
+**已完成（细节见归档 §A/§B，不再展开）**
 
-**核心原则：**
+5.9.0 旧路线隔离 ✅ / 5.9.1 输出契约 ✅ / 5.9.2 Taxonomy 白名单 ✅ / 5.9.3 原文证据门禁 ✅ / 5.9.4 candidate+多模块承接 ✅ / 5.9.4.1-A/B 标签分层+卖家可行动口径 ✅ / 5.9.5 轻量校验 ✅ / 5.9.5.1 字段语义收口 ✅ / 5.9.6-A 标签定义收编 ✅ / `sync_taxonomy.py` ✅ / 5.9.6-B active 对账与冻结 ✅ / 5.9.6-B.1 缓存语义版本化+删 L2 ✅ / 5.9.6-C1 客户前台证据展示 ✅ / 5.9.6-D 标签治理与 Registrar 重构 ✅（含 WP9 裁决 + 返修批次 0/1a/1b/3）/ 5.9.7 阶段 1 scope gating ✅ / T1 传播占比统计 ✅ / T2 rating guard ✅ / T4 极性对撞守卫 ✅
 
-- 不训练小模型，不把 ABSA fine-tune 作为近期前置。
-- 不追求全品类标签库完美，只维护高频问题、高频亮点、会影响商业决策的标签。
-- 不让人工维护变成日常运营；维护只由告警和付费品类触发。
-- 不确定的片段宁可进入 `other` / candidate，也不要硬贴正式标签；但 Erika 已审批为“卖家可行动问题”的配件、发货、尺码表、详情页信息等负面反馈，不再视为不确定候选。
-- 前台 TOP10 / 报告 / 导出只统计高置信、有原文证据、可追溯到当前子品类证据维度或 approved issue / highlight label 的正式标签。
-- Pydantic AI 不作为第一优先级；第一阶段先用普通 Pydantic / JSON Schema 校验，等链路稳定后再评估是否引入 Pydantic AI 做 Agent 化输出与重试。
+⚠️ **注意**：5.9.1-5.9.4 的"完成✅"指模块与测试交付，**运行时零调用**，生产接入在阶段 C。
 
-**标签库主线：**
+**移除的旧任务**：5.9.7-T3（剩余灰度并入 D2）、5.9.7-T5（拆入 A/D2/D3）、5.9.8 商业化前补强（整条吸收）、5.9.6-C2（并入 E）、旧分期口径与工作量估算。原因见归档 §E。
 
-- 产品问题 / 产品亮点的证据维度：`category_aspect_taxonomy`，承接 6.1 / 6.2 / 6.3 已完成的 Taxonomy 资产。
-- 卖家可读 TOP10 标签需要拆成两层：`aspect_key` 是 taxonomy 证据维度，例如 `seam_integrity`、`accessory_storage`、`logistics_issue`；正式聚合身份收口为负向 `issue_key` 和正向 `highlight_key`，例如 `water_leaks_through`、`accessory_leak`、`shipping_damage`、`late_shipping`、`keeps_water_out`。`action_label_key` 已从核心 artifact 字段中删除；`normalized_label` 不再作为正式业务字段或 formal 聚合身份。行动中心沿用 `issue_key` / `canonical_issue_key`、证据和趋势生成 `suggested_action` 文本，不要求 `recommended_action_key`；未来标准动作模板另行设计。
-- 内部标签只使用英文稳定 key；中文和前台英文展示文本统一通过 display label mapping 生成，不单独输出中文 key。
-- 早期 `review_analyzer/config.py` 中文预设标签只做 fallback，不作为后期主标签体系。
-- 每个正式 `issue_key` / `highlight_key` 必须至少满足：来自真实评论、有 3-5 条原文例子、能追溯到当前 `sub_category` 的证据维度或 approved customer label、不和已有标签重复、有 `boundary_note` 边界说明。
-- 标签状态后续统一为：`candidate`（候选）/ `approved`（正式）/ `merged`（已合并）/ `deprecated`（废弃）/ `blocked`（禁用）。前台只使用 `approved`。
-- 消费者画像、使用场景、购买动机不复用产品 taxonomy，后续建立模块级轻量 seed taxonomy。
-- 未满足需求先不强行白名单化，优先进入 candidate-first 发现链路，再从真实 Top candidate 中归并正式标签。
+**waders 规则处理口径（2026-08-10 讨论确认）**
 
-**2026-08-03 白名单打标补充决策：**
-
-LLM 打正式标签时必须“在白名单内选择”，不能先自由输出多个近义标签再事后匹配；后者会导致同一含义在同一类目下出现多种表达，最终漏匹配或重复聚合。
-
-| 模块 | 正式标签来源 | 选不上时 | 说明 |
-|---|---|---|---|
-| `product_issue` / `product_highlight` | 当前 `sub_category` 的 `category_aspect_taxonomy` 证据维度 + approved issue / highlight label | `audit_filter` / candidate | `aspect_key` 严格白名单；正式 TOP10 使用 `issue_key` / `highlight_key` 作为稳定聚合身份；`action_label_key` 已确认删除，动作建议后续由系统派生；`normalized_label` 不再作为 formal key |
-| 配件 / 包装 / 到货损坏 / 发货慢 / 尺码表不清 | 当前 taxonomy 证据维度或 approved issue label | `audit_filter` / candidate | 卖家可行动的负面反馈进入 `product_issue` TOP10；不得继续藏到 audit 或 candidate |
-| `consumer_profile` | 模块级轻量 seed taxonomy | candidate | 人群、身份、使用者特征，例如 parent、student、pet_owner 等 |
-| 使用场景 | `consumer_profile` 模块级轻量 seed taxonomy | candidate | 场景、时间、地点、用途，例如 travel、outdoor、gift、daily_commute 等 |
-| `purchase_motive` | 模块级轻量 seed taxonomy | candidate | 购买原因，例如 price_value、replacement、brand_trust、feature_driven 等 |
-| `unmet_need` | 暂不强白名单，candidate-first | candidate | 更像需求发现，先收集真实表达，再定期治理 |
-| `audit_filter` | 审计规则 + 未归类候选池 | 待人工治理 | 承接无法划分、白名单未覆盖或需要人工确认的内容 |
-| `audit_filter` | 审计规则 | 拦截 | 噪声、证据不足、无关内容、明显越界内容 |
-
-正式聚合必须稳定，候选发现必须开放。每周或每累计 N 条评论检查各模块 Top 10 candidate，执行合并同义表达、归入已有标签、晋升白名单或标记噪声。
-
-**标签注册中心与行动中心最终口径（5.9.5.1 已确认，5.9.6-A 已落地）：**
-
-- `category_aspect_taxonomy` 继续负责当前 `sub_category` 的 `aspect_key` 白名单和证据维度；它不直接充当卖家正式问题或亮点。
-- 统一 Catalog/resolver 负责正式 `issue_key`、`highlight_key`、alias、适用品类、`boundary_note`、`approved` 状态、中英文 display mapping 和 `registry_version`。
-- `review_fragment_candidate_multimodule.py` 中的 approved label、aspect mapping、alias 和 display mapping 只能作为测试 fixture 或迁移来源，不得作为 active 主线来源。
-- active artifact 必须通过统一 Catalog/resolver 获取正式 key、展示文本、状态和版本；正式 `formal_top10_rows` 必须有 `issue_key` 或 `highlight_key`，不能只依赖 `aspect_key`、`normalized_label` 或实验模块常量。
-- `shipping_damage` 这类卖家可行动反馈必须映射为正式 `issue_key=shipping_damage`，不能只以 `aspect_key=shipping_damage` 进入正式聚合；物流类上层证据维度统一使用 `aspect_key=logistics_issue`，由 `issue_key=late_shipping` / `issue_key=shipping_damage` 等具体问题区分物流时效、运输损坏和到货状态问题。
-- 行动中心不是标签注册中心的下游动作标签库。它接收 `issue_key` / `canonical_issue_key`、展示文本、代表性评论、占比和趋势，由 AI 生成现有 `suggested_action`、标题、验证时间和优先级；`recommended_action_key` 不作为当前 AI 输出、artifact、TOP10、行动创建或复盘的必需字段。
-- 物理数据表可以分阶段复用现有 `category_aspect_taxonomy` 和 `customer_label_catalog`，但对上层必须提供一个统一 resolver 接口，避免实验模块、前端和行动中心各自定义标签。
-
-**2026-08-06 标签治理返修决策（长期商业化版本）：**
-
-- 本次 `category_keys=["*"]` / `sub_category_keys=["*"]` 问题定性为架构治理缺口，不是单个 YAML 字段填错：5.9.6-A 迁移时把“approved label 身份收编”误当成“全局可用标签收编”，resolver 默认缺失 scope 为 `*`，测试还固化了 `("*",)`，导致 waterproof、seam_integrity、accessory_storage 这类明显依赖类目的标签也能被视为全品类。
-- 5.9.1 不推倒重做。它的职责仍是片段级基础契约：`fragment_text`、`module`、`aspect_key`、证据、置信度和聚合门禁。真正需要返修的是 5.9.6-A 之后的 Registrar / resolver / active read path：正式 `issue_key` / `highlight_key` 不能因为 5.9.1 没有给出品类治理字段，就默认全局可用。
-- 做任何 5.9 任务都必须按“一人公司 + AI 协作 + 长期商业化产品”执行：低维护、可审计、可回滚、能支撑付费客户长期使用。不能为了推进阶段而留下隐性人工运营债、默认全局、测试只测正例、或让旧实验路径绕过新主线。
-- Registrar 正确标 scope 的标准：默认禁止全局；只有跨品类语义稳定、与具体产品能力无强绑定、有 `scope_reason`、有正例和负例回归、有人工审核记录的标签，才允许 `global_allowed=true` 并编译为 `*`。凡是依赖具体类目能力、材料、结构、使用场景或配件形态的标签，必须映射到具体 `category_key` / `sub_category_key` 或由 taxonomy capability 推导有效范围。
-- `aspect_key` 是 taxonomy 证据维度，`issue_key` / `highlight_key` 是卖家可读正式标签，二者不能互相替代。正式标签能否展示，必须同时满足：当前评论有原文证据、当前产品 scope 已知、当前 taxonomy 或 capability 支持该语义、registry 状态为 approved、resolver 在当前 category/sub_category 下通过。
-- 现有 `customer_label_v2_frontstage` / `review_signal_frontstage` 先冻结为兼容读模型基础设施：只允许继续保留默认关闭、session/子品类 guard、stored shadow 读取等既有安全能力；不得在 5.9.6-D 完成前扩大 scope 或作为新 5.9 active 主线绕过 Registrar。
-- 错标必须回流，而不是靠记忆修补：错标样本进入 audit event / candidate review，产出 registry proposal、正例、负例、blocked rule 或 scope 调整；每次 scope 调整必须生成 diff 和回归清单，能回答“为什么这个标签能在这些类目显示，为什么不能在那些类目显示”。
-
-**一条评论到最终结果的目标链路：**
-
-1. 用户上传评论。
-2. 系统清洗评论，去空、去重、识别评分 / SKU / 产品。
-3. 系统识别产品 `sub_category`。
-4. 系统读取该子品类的 `category_aspect_taxonomy` 白名单，同时读取后续模块级 seed taxonomy（若已存在）。
-5. LLM 把评论拆成片段。
-6. 每个片段判断进入哪个模块：产品问题、产品亮点、消费者画像、购买动机、未满足需求或审计拦截。
-7. 如果片段属于产品问题 / 产品亮点，LLM 先选择当前子品类允许的 taxonomy `aspect_key` 作为证据维度；若是正式卖家可读标签，再映射到 approved `issue_key` / `highlight_key` 作为 TOP10 聚合身份。
-8. 如果片段属于消费者画像 / 使用场景 / 购买动机，LLM 只能从对应模块 seed taxonomy 里选择；选不上则进入 candidate。
-9. 如果片段属于未满足需求，先 candidate-first 收集真实表达，不硬贴产品 taxonomy。
-10. 没有合适证据维度或 approved issue / highlight label 时进入 `audit_filter` / candidate，不进入正式 TOP10。
-11. 系统检查标签是否有原文证据、是否属于当前产品、是否越界。
-12. 通过门禁的高置信正式 `issue_key` / `highlight_key` 进入 TOP10 / 报告 / 导出；行动中心使用正式 `issue_key` 加证据和趋势生成 `suggested_action` 文本，不要求额外动作 key。
-
-**具体执行计划：**
-
-| 阶段 | 状态 | 目标 | 具体工作 | 工作量 | 验收标准 |
-|---|---|---|---|---:|---|
-| 5.9.0 旧路线隔离清点 | 完成✅ | 让新方向清爽进入，但不冒险大删 | 已完成旧路线清点、5.9.5 后 active import / worker import / export read path 小复核，并完成 waders A/B/C 策略收口：A 短期保留为现有前台安全补丁；B 在 5.9.6/5.9.7 做 category-specific compatibility 无行为差异抽离；C 在 5.9.8 商业化补强阶段按前置条件分批删除冗余代码和数据 | 1-2 天 | active 上传/分析/结果/导出路径不会无意加载旧 shadow 实验；旧路线默认关闭；新 5.9 实现有明确入口和命名；waders 规则不再扩张为主线；后续删除条件清楚 |
-| 5.9.1 输出契约 | 完成✅ | 先把 AI 输出固定成可检查表格 | 定义片段级基础字段：`fragment_text`、`module`、`aspect_key`、`polarity`、`evidence_span`、`confidence`、`current_product_scope`、`can_aggregate`、`reject_reason`；不加入 `issue_key` / `action_label_key` | 1-2 天 | 同一条评论能输出“片段 -> 模块 -> 证据维度 -> 原文证据 -> 是否继续聚合”的结构化结果 |
-| 5.9.2 Taxonomy 白名单 | 完成✅ | 防止 LLM 越界自由打 aspect | 分析时按 `sub_category` 读取 `category_aspect_taxonomy`；只允许选择当前子品类 `aspect_key`；卖家 `issue_key` / `action_label_key` 由后续 artifact mapping 处理 | 2-3 天 | 抽取的证据维度 100% 落在允许列表或 `other` / candidate，不再把卖家问题 key 当作 taxonomy aspect |
-| 5.9.3 原文证据门禁 | 完成✅ | 防止无中生有进入报告 | 每个片段必须带 `evidence_span`；无证据、证据不属于当前产品、旧产品 / 竞品 / 纯客服售后污染时 `can_aggregate=false`；卖家可行动问题保留给后续 artifact mapping | 2-3 天 | 无原文证据的片段不进入后续 TOP10；可行动问题的原文证据可追溯，正确配件 / 包装证据不被一律丢弃 |
-| 5.9.4 candidate / other + 多模块承接 | 完成✅ | 新问题不丢，非产品片段也流向正确模块 | 已新增独立 5.9.4 实验模块、fixture、测试和文档；输出 `formal_top10_rows`、`module_seed_rows`、`candidate_rows`、`audit_rows`；Erika 审批后确认 TOP10 口径需从“狭义产品本体 taxonomy”修正为“卖家可行动问题 / 亮点”，并已由 5.9.4.1-A/B 承接返修 | 2-4 天 | candidate / other 承接能力已验证；已审批为卖家可行动问题的样本由 5.9.4.1-B 迁入正式 artifact，不再留在 candidate / audit |
-| 5.9.4.1-A 标签体系分层定义升级 | 完成✅ | 把 5.9.1-5.9.3 统一到长期可运营的三层标签框架 | 已更新 5.9.1 / 5.9.2 / 5.9.3 文档、验收 fixture 和必要测试说明：保留 5.9.1 片段级基础契约；明确 `aspect_key` 是 taxonomy 证据维度；明确 evidence gate 继续拦无证据 / 旧产品污染，同时区分纯客服售后与卖家可行动问题 | 0.5-1 天 | 三份前序文档均明确 `module` / `aspect_key` / `issue_key` 三层关系；`issue_key` / `action_label_key` 不进入 5.9.1 基础字段；已审批的可行动问题不被文档规则一律藏到 candidate / audit |
-| 5.9.4.1-B 卖家可行动问题口径实现 | 完成✅ | 在分层定义升级后，把 TOP10 标签分为证据维度和卖家可读问题 | 在 5.9.4 artifact 新增 `issue_key` / `action_label_key`；正式输出 module 归一为六个业务模块；客服正负向分别进入 `product_issue` / `product_highlight`；更新 fixture、测试、样本文档和 5.9.4 文档；active upload / worker / results / export / frontend 仍未接入 | 1-2 天 | 配件漏水、配件缺失、尺码表不清、发货晚、漏水归并和客服正负向均按最新口径进入正确 artifact；正式行不输出旧中间 module |
-| 5.9.5 轻量校验 | 完成✅ | 先用低成本方式稳定输出 | 已新增本地 artifact 校验：六模块枚举、旧 module 兼容输入、`module` / `aspect_key` / `polarity` / `evidence_span` / `issue_key` / `highlight_key` / `action_label_key` / `can_aggregate` / `reject_reason` 一致性；失败本地降级为 `audit_filter/schema_invalid`，不引入第二次 AI 调用，不接 active 路径 | 2-4 天 | JSON/schema 失败不阻塞整批分析；失败项可追踪原因；旧中间 module 不进入正式 artifact；5.9.0 active import / worker import / export read path 小复核已列为后置动作 |
-| 5.9.5.1 字段语义收口 | 完成✅ | 在 5.9.6 接前台前消除 `action_label_key` / `normalized_label` 语义混乱 | 已完成实验 artifact、校验器、fixture、测试、taxonomy 和样本文档收口：核心标签身份只保留 `aspect_key`、`issue_key`、`highlight_key`；正式输出删除 `action_label_key`；formal `normalized_label` 不再作为正式业务字段、formal 聚合 key 或 display 索引；正式行必须有 `issue_key` 或 `highlight_key`；`shipping_damage` 必须映射为正式 `issue_key=shipping_damage`；`late_shipping` / `shipping_damage` 均归入上层 `aspect_key=logistics_issue`；行动中心继续使用 `issue_key`、证据、趋势和 `suggested_action` 文本，不新增 `recommended_action_key` | 0.5-1 天 | 相关测试通过；审批样本文档已补评论原文；5.9.6-A 已在此语义基础上完成统一 Catalog/resolver 收编，active results / export / insight 接入仍留给 5.9.6-B/C |
-| 5.9.6-A 标签定义收编 | 完成✅ | 将 5.9.4 实验模块中的 approved label、aspect mapping、alias 和 display mapping 作为 fixture/迁移来源，收编到统一 Catalog/resolver | 新增独立 registry fixture `data/taxonomy/registry/review_fragment_label_registry.yaml` 和 `review_fragment_label_catalog.py`；从实验模块迁移 9 个 approved formal label、aspect alias、display mapping 和物流边界；实验模块改由 resolver 获取正式定义，active 主线不直接依赖实验模块标签常量 | 1 天 | resolver 可解析 `issue_key` / `highlight_key`；alias 可映射 canonical key；`late_shipping` / `shipping_damage` 均归入 `aspect_key=logistics_issue`；registry 核心模型不包含 `action_label_key`、formal `normalized_label`、`recommended_action_key`；相关静态隔离和测试通过 |
-| 5.9.6 前置工具：sync_taxonomy.py | 完成✅ | 替换两个旧 YAML→DB 导入脚本，提供安全的 taxonomy 入库工具（5.9.6-B 前置） | 新增 `scripts/sync_taxonomy.py`：扫描 `data/taxonomy/v1.0/**/*.yaml`，严格解析/校验 taxonomy YAML，按 `category_aspect_taxonomy` 的 `(sub_category, aspect_key, taxonomy_version)` 唯一身份生成新增/修改/删除候选/无变化 diff；支持 `--dry-run`、`--category <category_key>`、`--allow-delete`；不传 `--allow-delete` 只报告删除候选，不删 DB；写入成功后调用 `taxonomy_loader.clear_cache()`；旧 `import_taxonomy_to_db.py` / `import_v4t1_assets.py` 当前保留不移动、不删除，新工具作为后续首选同步入口；旧脚本删除时机标记为 5.9.6-B/C 完成、全量 dry-run/sync 通过、active/worker/export 无依赖确认且 `bad_cases` 导入替代口径明确后，再作为 5.9.8 小批次清理/归档项处理；已治理 `data/taxonomy/v1.0/kitchen/保温杯.yaml` 重复 `ease_of_use`，将特有“开盖便捷性”改为 `lid_operation`，保留通用 `ease_of_use / 易用性` | 0.5 天 | focused tests 9 passed；5.9.2/5.9.6-A 相关回归 12 passed；ruff、compileall、`git diff --check` 通过；静态搜索确认 active path 不 import `sync_taxonomy.py`；真实资产全量 parser 预检通过：89 个 YAML / 1541 行 / 89 个 sub_category |
-| 5.9.6-B active 接入对账与冻结 | 已对账/冻结；active 接入未完成 | 先弄清已写代码和目标 active 接入的差异，避免在错误基础上继续扩张 | 已输出 [active/read-path inventory](docs/5.9.6-B-active-read-path-inventory.md)：盘点 `analysis` / `export` / `specific_issue.py` / frontstage read model / `database.py` / worker / periodic / frontend；确认默认开关、session guard、`waders` guard、stored shadow slim read 行为；旧 frontstage/read-model 已冻结为兼容层；所有绕过 registry/resolver/scope gate 的 active display/action 路径已登记为 5.9.6-D blocker | 0.5-1.5 天 | PROGRESS 与代码对账一致；已存在部分不再被误记为“未开始”；旧 read-model 默认关闭或受 guard 保护；5.9.6-B 不宣告 active 接入完成；后续 active 接入必须通过新 Registrar / resolver / scope gate |
-| 5.9.6-B.1 缓存语义版本化与 L2 下线 | 完成✅ | 让 taxonomy / registry / prompt 变更能真正生效，保证 5.9.7 验收结果可信 | 1. `analysis_cache.py`: 删除 L2 分支（`_check_l2` + `L2_MAX_CONTENT_LENGTH`），`apply_cache` 链路简化为 L1→L3；2. `database.py`: `get_analyzed_by_content_hash()` 增加 `prompt_version` / `taxonomy_version` / `registry_version` / `model_name` 四个参数，通过 `aspects_json->>'字段'` 做 PostgreSQL JSONB 版本过滤；3. `workers/jobs.py`: 导入 `FORMAL_LABEL_REGISTRY_VERSION` + `get_taxonomy_version()`，L1 查询时解析四版本并传入，write 侧三新字段写入 `aspects_json`；4. `taxonomy_loader.py`: 新增 `get_taxonomy_version(sub_category)` 函数；5. 新增 14 个测试（`test_cache_semantic_versioning.py`）：SQL 版本过滤构造验证 × 5、L2 已删除验证 × 4、observability × 2、taxonomy 解析 × 2、向后兼容验证 × 1；6. 无需 migration：四版本均写入已有 `aspects_json` JSONB 列，查询用 `->>` 操作符过滤；旧数据缺少新字段 → `NULL = 'v1.0'` 为 NULL（非 TRUE）→ 自动 miss | 0.5 天（实际） | 改 taxonomy / registry / prompt 后旧缓存自动失效；不再有未读原文即产出标签的 L2 分支；5.9.7 验收拿到的是新链路结果而不是历史缓存；ruff 通过（仅 1 处已存在的无关 lint）；新增 14 测试全绿；现有回归 41 全绿（`test_global_cache` 10 + `test_observability_p3_metrics` 3 + `test_v5t3_e2e` 8 + `test_v5t3_phase1` 20）；commit `03200bb` 已 push develop 并部署 api + worker（2026-08-06）；线上功能验证未执行（Erika 决定跳过），验证留待 5.9.7 小样本验收一并覆盖 |
-| ~~5.9.6-C 前台提示~~ | 已拆分（2026-08-07） | 原描述把三个不同受众的信息混为一句 | 已按受众拆成 5.9.6-C1（客户前台）+ 5.9.6-C2（内部校准），见下两行与「5.9.6-C 受众拆分」决策段 | — | — |
-| 5.9.6-C1 客户前台证据展示 | 前台展示就绪，灰度验证中（2026-08-10） | 客户要的是"凭什么这么判"，不是我们的模型内部状态 | 三件事全部不需要新 UI 代码：(1) 原文证据：`RepresentativeEvidenceList` 已有可展开原文片段展示，无需新增组件；(2) 置信度与 `other` 不进客户 UI：`filter_customer_visible_warnings()` 已过滤 `taxonomy_coverage_low` 告警，confidence 只在 XLSX 导出、前台表格不显示；(3) scope gate 绑定：A+B 已交付 `_apply_enforce_filter()` → `display_allowed=False`，前端 `customer-labels.ts` L607/753 已检查 `display_allowed !== false`。**C1 剩余工作是灰度验证**：waders shadow 观察 → enforce 前台确认 TOP10 标签+证据来自 scope gate 通过的正式标签 → 行动中心 handoff 端到端。waders 旧规则继续作为冻结安全补丁，不新增规则、不删除逻辑；不得在 Registrar scope gate 完成前新增正式标签展示入口 | 0.5 天 | 用户可见原文证据片段；客户 UI 无置信度、无 `other` 占比；waders 旧补丁未扩大；前台展示不能绕过 scope gate |
-| 5.9.6-C2 内部校准信号接入 | 未开始（依赖 C1 之外无硬阻塞） | 让 `other` 与低置信真正回流到 registry/taxonomy，而不是只发一条飞书 | 1. `other` 高占比批次 + 低置信标签写 `human_flag` audit event（该事件类型已定义但当前零生产者）；2. `generate_label_proposals.py` 增加这两类来源；3. 新增 `new_aspect` 提案动作（现有 4 种 scope_adjust/alias_merge/blocked_rule/negative_example 都只治已有标签的 scope，没有"新建 aspect"）；4. 接入现有 `/settings/golden-set` 的 label-calibration 审批页；5. 审批通过后回流 registry YAML 或 taxonomy YAML | 1.5-2 天 | `other` 高占比能在审批页看到具体片段而不只是一个百分比；低置信标签可标记为待校准；审批通过后能落到 YAML 并 bump 版本；不引入自动阈值提案（notes/scope-governance-dod.md §1 已否决阈值） |
-| 5.9.6-D 标签治理与 Registrar 重构 | ✅ 已完成（WP1-8 代码已交付 commit `9cde21d`；WP9 验收裁决 + 返修批次 0/1a/1b/3 已完成（4 commits: `c5bf769` `c09f751` `8f9b849` `54602c3`），7 bugs 已修 + P0 gate 已修 + reflux pipeline 已修复 + 10 文档修正；5.9.7 可启动；批次 2 不再阻塞） | 用长期可维护机制修复 formal label scope，防止 `[“*”]` 类错误再次出现 | 0. 完成 5.9.6-B 部分代码对账；1. 写入 scope/global 判定 DoD；2. 扩展 registry schema：`scope_policy`、`scope_reason`、`allowed_aspect_keys`、`required_capabilities`、`blocked_contexts`、正负例、审核状态；3. scope 校验脚本（替代完整 Scope Compiler，见降级说明）；4. resolver 改为必须传 category/sub_category，缺失或不匹配 fail-closed；5. 重标 9 个 approved label，waterproof、seam_integrity、accessory_storage 不得默认全品类；6. 改造 active/read/export/insight 入口，只能消费 resolver 通过的正式标签；7. 新增 audit event + registry proposal 回流；8. CI 加负例门禁和 scope diff + 新增内部审核页 `/settings/label-review`（2026-08-07 并入 `/settings/golden-set` 做 tab 排版，后端收紧为 `get_admin_user`）；9. 输出 Erika 人工验收包 | 8-12 天 | registry 中无理由的 `[“*”]` 被拒绝；resolver 缺少当前品类时报错或降级，不再默认全局；每个正式标签能解释”适用/不适用类目”；负例证明 waterproof、seam_integrity、accessory_storage 不会在不适用品类显示；错标可进入 proposal 回流；active/display/export 均受同一 scope gate 约束；审核页 admin-only 权限已收紧 |
-| 5.9.7 小样本验收 | **🔵 进行中（2026-08-07：scope gating ✅ / T1 生产传播统计 ✅ / T2 ✅ / T3 🔵 / T4 ✅ / T5 未开始）** | 用真实样本验证标签注册中心、active 链路和行动中心衔接 | 阶段 1 ✅：离线脚本调 resolver，45 条评论 × 9 标签，scope gating 通过（165 out_of_scope，0 scope_unavailable），alias 16/16，跨类目负例通过，metadata 正确。T1 ✅：生产 cluster 传播占比已量出（全库 20.2%，waders 52.5%，传播证据污染率 99.3%），定级 P1。T2 ✅：rating guard 已交付部署。T3 🔵：registry 前台灰度待执行。T4 ✅：Layer 0 极性对撞守卫已交付（commit `cc76e42`），覆盖所有品类，零 token 增量成本。→ 剩余 T3 灰度验证 + T5 出口条件解锁 | 3-5 天（阶段 1 已用 2-3h，T1 已用 0.5 天） | 无中生有显著下降；所有正式 TOP10 行都有正式 issue/highlight 身份且 scope 通过；行动中心端到端可用；达到可开始分批删除旧冗余的最低门槛 |
-| 5.9.7-T1 生产 cluster 传播占比统计 | ✅ 完成（2026-08-07，commit `44a889e`） | 量出生产 cluster_propagated 真实占比，决定问题定级（P0/P1/P2） | 脚本 `scripts/measure_cluster_propagation.py` 已交付。dev 验证通过（全库 84.1% 传播 / 96.9% 污染），生产实测结果：① 全库传播占比 20.2%（542/2,680），远低于 dev 的 84%，门禁剔除后 80% 评论正常参与 TOP10；② 传播证据污染率 99.3%——门禁正确拦截；③ waders 传播占比 52.5%——该品类 TOP10 受影响最重；④ 其他品类几乎不受影响（USB C Charger Block 0%、家具家居 0%）。**结论：P1**。不构成 P0（全局仅 20.2%、门禁正确工作），不降 P2（waders 52.5% 传播导致 TOP10 代表性不足）。修复方向：收紧 PROPAGATION_SIMILARITY_THRESHOLD 或加 evidence 回退校验 | 0.5 天 | 生产传播占比已知（全库 20.2%、waders 52.5%）；定级 P1；脚本可复用；T2 成本估算已有生产数据支撑 |
-| 5.9.7-T2 修复 cluster 传播污染 | **✅ 完成（2026-08-07，rating guard 已交付）** | clustering.py 加评分守卫，阻止好评代表向差评成员传播标签+证据 | 在 `propagate_cluster_results()` 传播前加 rating 差异守卫：`RATING_GUARD_THRESHOLD=2.0`（5 星制，|5-3|=2 为边界），可通过 `CLUSTER_RATING_GUARD_ENABLED=false` 关闭或 `CLUSTER_RATING_GUARD_THRESHOLD` 调整。新增 14 个 focused tests（`test_clustering_rating_guard.py`），覆盖好评代表+差评成员不传播、同档正常传播、代表缺失、阈值边界、守卫关闭、多簇独立、与 similarity gate 交互。clueai-dev waders 数据：cluster 0 中 9/78（11.5%）被守卫拦截。生产预估：LLM 调用增加 ~10-15%。修复只对新分析生效，DB 已有脏数据不变。需部署 api + worker。 | 0.5 天（实际） | 差评不再拿到反向证据；真实 hard case 不再漏标；成本影响已量化；回退开关可用（`CLUSTER_RATING_GUARD_ENABLED=false` 即可关闭） |
-| 5.9.7-T3 label registry 前台灰度 + enforce 交付 | **🔵 进行中**（A+B ✅ 已交付 `c5cac70` 并部署；C ⏸️ 灰度验证待执行） | 让 registry scope gate 从 off 走到单类目 enforce，用户真正受益 | 分三块：A. 给 `label_registry_frontstage.py` 的 flag 加 scope 支持 ✅ — 照抄 `customer_label_v2_frontstage.py` 的 session/category/sub_category scope + kill switch + rollback + fail-closed 范式，默认全部 off，commit `c5cac70`；B. 真正交付 enforce ✅ — 删掉 118-124 行 fallback-to-shadow，resolver 决定展示、`_apply_enforce_filter()` 设置 `display_allowed=False`，resolver 异常时 fail-closed 保留标签，kill switch 一条环境变量回 off，commit `c5cac70`；C. 5.9.6-C1 灰度验证 ⏸️ — 不做新 UI 代码：原文证据 `RepresentativeEvidenceList` 已有、置信度/other 已过滤、scope gate 绑定已前后端贯通。灰度步骤：waders off→shadow 观察 diff→确认无异常后 enforce→前台验证 TOP10+行动中心。**5.9.6-C2 内部校准信号接入不并入 T3，单独排**（2026-08-07 决策）。灰度开关：`LABEL_REGISTRY_FRONTSTAGE_MODE=shadow|enforce` + `LABEL_REGISTRY_FRONTSTAGE_SUB_CATEGORIES=waders`；紧急回退：`LABEL_REGISTRY_FRONTSTAGE_KILL_SWITCH_SUB_CATEGORIES=waders` | 2-3 天 | registry 治理在 waders 类目对用户可见；shadow diff 无异常；enforce 后 TOP10 只展示 scope gate 通过的标签；kill switch 可一键回退；waders 旧补丁未扩大 |
-| 5.9.7-T4 Layer 0 极性对撞守卫 | **✅ 完成（2026-08-10，commit `cc76e42`）** | 规则层 regex 无法理解否定/转折，Layer 0 用 LLM 已有极性对撞过滤错标 | T2 线上验证发现第二条独立污染路径：规则引擎独立 regex 匹配（非 cluster 传播）导致差评拿到极性错误的标签（"aren't waterproof"→"Keeps Water Out"、"wanted these to fit **but**..."→"Fits as Expected"）。不是 blocked_patterns 缺图案，是 regex 根本上无法理解语义。根治疗案：在 `_append_waders_content_rule_occurrences()` 中（规则引擎唯一收口点，读写两条路径同时生效）对撞 LLM 已判定的 aspect polarity：highlight candidate 撞 negative → 否决；issue candidate 撞 positive → 否决；neutral / LLM 未提该 aspect → 放行。cluster 传播来的极性不作为对撞依据。通过 `CONTENT_RULE_POLARITY_GUARD_ENABLED` env（默认 true）可紧急关闭。复用了 LLM 已有判断，零 token 增量成本，覆盖所有品类，历史 session 打开时自动纠正（读路径实时对撞）。新增 `test_content_rule_polarity_guard.py` 23 测试全绿（含 session 126 两条差评回归 + 读路径不复活 + guard 关闭降级） | 0.5 天（实际） | 差评不再拿到极性错误的规则标签；零新增 LLM 成本；全覆盖所有品类；历史数据自动纠正；env 紧急回退可用 |
-| 5.9.7-T5 出口条件验证 + 全类目开放 | 未开始（依赖 T3 完成） | 完成 5.9.7 剩余两条出口条件，灰度验证通过后全类目开放 | 在 waders enforce 生效后验证：① TOP10 是否符合产品直觉（标签+证据+占比是否合理）；② 行动中心 handoff 端到端（从 issue key 创建行动→AI suggested_action→行动详情）。全类目开放需 Erika 单独授权，不自行全开。通过后更新 5.9.7 状态为完成 | 1-2 天 | 5.9.7 章程全部出口条件满足；waders TOP10 符合产品直觉；行动中心端到端可用；全类目开放由 Erika 授权执行 |
-| 5.9.8 商业化前补强 | 未开始 | 建立可回归、可追踪、可回滚的标签运营基线 | 高价值品类补 50 条 mini Golden Set；接入 other 告警；记录 `prompt_version` + `taxonomy_version` + `model_name` + `registry_version`；TOP10 占比按证据来源分级（`verified_count` / `propagated_count` 拆分展示，L3 embedding 复用不计入占比只作辅助信号）；记录 issue/highlight 的合并、废弃、禁用和 alias 变更；行动中心继续保存 AI `suggested_action` 文本，不把动作建议 key 变成标签核心字段；按 active import / worker / export / frontend 检查分批删除或归档旧 `customer_label_v2_*`、`review_signal_*`、waders 专项冗余代码和数据 | 1-2 周 | 重点品类有可回归样本；标签和 Prompt / Taxonomy / Model 改动可追踪、可回滚；行动中心历史行动不依赖已删除字段；TOP10 每行能说明"多少条是直接读取、多少条是相似归纳"；达到“承接 50 名付费用户”的商业化稳态门槛；旧冗余按小批次清理且不影响 active 结果 |
-
-**5.9.0 进度摘要（2026-08-03）：完成✅**
-
-- 已产出旧路线隔离审计：`docs/5.9.0-old-route-isolation-audit.md`。
-- 已完成 `customer_label_v2_*` / `review_signal_*` / waders / 5.9.8 / 5.9.9 相关文件、测试、脚本、文档的四类清点：保留复用 / 冻结隔离 / 归档参考 / 后续删除。
-- 已确认 `CUSTOMER_LABEL_V2_FRONTSTAGE_*` 和 `REVIEW_SIGNAL_FRONTSTAGE_*` 默认关闭，active worker import 不会加载 `customer_label_v2_shadow` 或 `review_signal_shadow`。
-- 发现一处不能直接绿灯的主线风险：waders 专项规则仍通过 `workers/jobs.py -> specific_issue.enrich_aspects_json()` 默认影响 waders 的分析结果、结果页和导出；`review_signal_frontstage.py` 也会在 active results/export import 时加载 `review_signal_shadow.py` 常量/helper。
-- 2026-08-03 当时结论：5.9.1 可以先做输出契约和样例设计，但需在 5.9.5 后补 active import / worker import / export read path 小复核，并收口 waders 规则去留。
-- 2026-08-05 已完成补充复核：active `analysis` / `export` import、`workers.jobs` import、`review_analyzer.exporter` 导出读路径 smoke 已确认旧 shadow 默认不执行、新 `review_fragment_*` 仍未被 active 路径加载。
-- waders 专项规则去留已收口：短期保留为现有前台安全补丁，中期抽成 category-specific compatibility module，等新链路替代并通过样本验收后分批删除。
-
-**5.9.0 post-5.9.5 小复核摘要（2026-08-05）：审计与决策完成✅**
-
-- 已新增审计文档：`docs/5.9.0-post-5.9.5-active-path-isolation-review.md`。
-- active `analysis` / `export` / `review_analyzer.exporter` import 复核：默认不加载 `customer_label_v2_shadow.py`，不默认执行旧 shadow；会通过 `review_signal_frontstage.py` 顶层 import 间接加载 `review_signal_shadow.py` 常量/helper。
-- `workers.jobs` import 复核：默认不加载 `customer_label_v2_shadow.py` 或 `review_signal_shadow.py`；会加载 `specific_issue.py`，并在 worker 写入时调用 `enrich_aspects_json()`。
-- export read path 复核：`review_analyzer.exporter` 仍依赖旧 frontstage wrapper 做 flag resolution 和可选 read model attach；默认 flag off 时不附加 v2 / review-signal read model，导出实际仍消费 v1 `customer_label_occurrences` / `specific_issue.py` 聚合。
-- 新 `review_fragment_*` 模块复核：仍只被测试、fixture、文档和彼此引用，未被 active upload / worker / results / export / frontend 默认加载。
-- 默认开关状态已复核：`CUSTOMER_LABEL_V2_FRONTSTAGE_ENABLED=False`、`CUSTOMER_LABEL_V2_FRONTSTAGE_ALLOW_RUNTIME_SHADOW=False`、`CUSTOMER_LABEL_V2_FRONTSTAGE_SHADOW_FIXTURE_GATE_PASSED=False`、`REVIEW_SIGNAL_FRONTSTAGE_ENABLED=False`、`REVIEW_SIGNAL_FRONTSTAGE_RUNTIME_SHADOW_GENERATION_ALLOWED=False`。
-- waders 专项规则仍默认影响 active waders 分析结果：worker 写入 `customer_label_occurrences` 时会补规则，结果页 / insight / export 读 occurrence 时也会继续消费这些规则；前端仍有 waders context guard。
-- waders 三选一最终决策：短期执行 A，保留为现有前台安全补丁，保证现有用户可见结果稳定；中期执行 B，在 5.9.6/5.9.7 后抽成 category-specific compatibility module，先做无行为差异搬迁；长期执行 C，在 5.9.8 商业化补强阶段，等新 fragment 链路覆盖 waders hard cases、结果页 / export / insight 已改读新 artifact 并通过样本验收后，分批删除旧冗余代码和数据。
-- 口径边界：5.9.7 结束达到“可以开始分批删除”的最低门槛；5.9.8 结束达到“可承接 50 名付费用户”的商业化稳态门槛。waders 旧规则在此之前冻结保留，不再作为新 5.9 主线扩张。
-
-**5.9.1 进度摘要（2026-08-05）：完成✅**
-
-- 已产出新命名契约文档：`docs/5.9.1-review-fragment-output-contract.md`。
-- 已新增纯 schema / contract 校验模块：`backend_api/app/services/review_fragment_contract.py`；不被 active 上传、worker、results、export 或 frontend 引用。
-- 已准备 5 条片段级评论样例：`backend_api/tests/fixtures/review_fragment_5_9_1_samples.json`，覆盖多模块分流、当前产品/配件/旧产品/物流/未实际使用边界。
-- 片段固定字段为 `fragment_text`、`module`、`aspect_key`、`polarity`、`evidence_span`、`confidence`、`current_product_scope`、`can_aggregate`、`reject_reason`；未复用 `customer_label_v2_*` / `review_signal_*` 作为新主入口。
-- 最小校验测试已通过：`python3 -m pytest backend_api/tests/test_review_fragment_contract.py -q`，结果为 `6 passed`。
-- 当前状态：契约和样例足够进入 Erika 人工验收；尚未接入任何业务逻辑、前台、结果页或导出。
-
-**5.9.1 Erika 样例验收反馈（2026-08-03）：**
-
-- 评论 4 收窄为单一 `product_issue / aspect_key=seam_integrity`：原文虽提到损坏、退货和笼统差评，但本条人工判断核心只有防水性差；卖家可读 `issue_key=water_leaks_through` 留给后续 artifact。
-- 评论 5 的两个尺寸正向片段合并为一个 `product_highlight / fits_as_expected`，同一评论内重复表达的同一亮点只取一次。
-- Erika 总评：样例标签准确，明显优于旧路径，按该契约继续推进。
-
-**5.9.2 进度摘要（2026-08-03）：完成✅**
-
-- 已新增 taxonomy 白名单校验模块：`backend_api/app/services/review_fragment_taxonomy_whitelist.py`。
-- 已新增 10 条白名单边界 fixture：`backend_api/tests/fixtures/review_fragment_taxonomy_5_9_2_samples.json`。
-- 已新增单元测试：`backend_api/tests/test_review_fragment_taxonomy_whitelist.py`。
-- 已新增说明文档：`docs/5.9.2-review-fragment-taxonomy-whitelist.md`。
-- 已确认产品问题 / 产品亮点必须命中当前 `sub_category` 的 `category_aspect_taxonomy` 白名单；库外 `aspect_key`、`candidate:*`、`other`、taxonomy 缺失都不能进正式聚合。
-- 已确认配件、包装、到货损坏可以进入主聚合，但必须使用当前 taxonomy 里的正确 aspect，例如 `accessory_storage`、`missing_parts`、`packaging`；其中早期示例里的 `shipping_damage` 已在 5.9.5.1 收口为正式 `issue_key=shipping_damage`，上层证据维度改为 `aspect_key=logistics_issue`，不能把配件问题错贴成主产品问题。
-- 已确认消费者画像、使用场景、购买动机、未满足需求不走产品问题 / 产品亮点 taxonomy，后续并入 5.9.4 candidate / other + 多模块承接。
-- 5.9.4.1 分层口径说明：5.9.2 不废弃，`category_aspect_taxonomy` 继续负责 `aspect_key` 证据维度；当时正式 TOP10 可额外输出 `issue_key` / `action_label_key` 作为卖家可读问题标签，避免把 `water_leaks_through` 错当成 taxonomy aspect；该历史口径已由 5.9.5.1 修正为 `aspect_key + issue_key + highlight_key`，并确认删除 `action_label_key`。
-- 验证已通过：pytest 相关测试、ruff、compileall、git diff --check；active upload / worker / results / export / frontend 未接入新实验模块。
-
-**5.9.3 进度摘要（2026-08-05）：完成✅**
-
-- 已新增独立原文证据门禁模块：`backend_api/app/services/review_fragment_evidence_gate.py`；组合 5.9.1 contract 与 5.9.2 taxonomy whitelist，但不接入 active 上传、worker、results、export 或 frontend。
-- 已新增 10 组证据边界 fixture：`backend_api/tests/fixtures/review_fragment_evidence_5_9_3_samples.json`，覆盖原文证据、证据不存在、空证据、泛泛好评硬拆、旧产品 / 竞品、纯客服 / 退款、配件、包装 / 到货损坏、candidate / other 和 raw `review_text` 来源。
-- 每个片段输出 `evidence_valid`、`evidence_source`、`can_aggregate`、`reject_reason`；无证据、原文不存在、泛化总结、旧产品 / 竞品、纯客服 / 售后污染均 fail closed。
-- 配件、包装、到货损坏仅在 evidence 明确指向对应对象且 aspect 正确时允许主聚合；`candidate:*` / `other` 保留 evidence 但不进入正式 TOP10。
-- 5.9.4.1 分层口径说明：5.9.3 不废弃，原文证据门禁仍负责“必须有证据、不能无中生有、不能旧产品污染”；但“物流 / 配件 / 详情页问题是否进入产品问题”要按卖家可行动性重新判断，不再一律拦到 audit。
-- 已新增说明文档：`docs/5.9.3-review-fragment-evidence-gate.md`。
-- focused pytest 已通过：`python3 -m pytest backend_api/tests/test_review_fragment_evidence_gate.py -q`，结果为 `6 passed`。
-
-**5.9.4 进度摘要（2026-08-05）：完成✅（初版完成，返修已由 5.9.4.1-A/B 承接）**
-
-- 已新增独立 candidate / other + 多模块承接模块：`backend_api/app/services/review_fragment_candidate_multimodule.py`；组合 5.9.1 contract、5.9.2 taxonomy whitelist 和 5.9.3 evidence gate，但不接入 active 上传、worker、results、export 或 frontend。
-- 已新增 9 组 candidate/multimodule fixture：`backend_api/tests/fixtures/review_fragment_candidate_5_9_4_samples.json`，覆盖使用场景 / 人群流向消费者画像、购买原因流向购买动机、期待缺口流向未满足需求、库外产品标签进入 candidate、正式白名单标签不被误丢到 candidate、candidate / other 保留证据且 `can_aggregate=false`、非产品问题 / 亮点片段不硬塞进 customer issue / customer label。
-- 输出 artifact 分为 `formal_top10_rows`、`module_seed_rows`、`candidate_rows`、`audit_rows`；candidate artifact 当时记录 `module`、`candidate_label`、`normalized_label`、`evidence_span`、`sub_category`、`reason`、`count`、`representative_comments`；其中 `normalized_label` 已在 5.9.5.1 确认为历史通用字段，后续不再作为正式业务字段使用。
-- 已为 `consumer_profile`、`use_case`、`purchase_motive` 建立模块级轻量 seed taxonomy；`use_case` 统一承接到消费者画像模块；`unmet_need` 采用 candidate-first。
-- 产品问题 / 产品亮点 / 配件 / 包装 / 到货损坏仍必须命中当前 `sub_category` 的 `category_aspect_taxonomy` 才能进入 `formal_top10_rows`；库外、`candidate:*`、`other` 均不进入正式 TOP10。
-- 已新增说明文档：`docs/5.9.4-review-fragment-candidate-multimodule.md`。
-- 已新增 Erika 样本验收表：`docs/5.9.4-review-fragment-candidate-multimodule-sample-validation.md`，按 9 条 fixture 展开原评论、证据、输入标签、期望输出和是否进入正式 TOP10。
-- Erika 审批后确认初版口径过窄：卖家可行动的配件漏水、配件缺失、尺码表不清、发货晚、漏水归并等问题不能继续停留在 candidate / audit；需要进入 5.9.4.1 返修。
-
-**5.9.4.1 阶段记录（2026-08-05）：A/B 已完成✅**
-
-- 按长期标签框架升级，不新增独立 5.9.5 / 5.9.6 承接本次返修。
-- 5.9.4.1-A 已完成：系统化更新 5.9.1 / 5.9.2 / 5.9.3 的文档、验收说明和必要测试说明，统一为 `module` / `aspect_key` / `issue_key` 三层框架。
-- 5.9.4.1-B 已完成：执行实验模块、fixture、测试和样本文档返修，正式 artifact 输出归一到六个业务 module。
-- TOP10 业务定义从“狭义产品本体 taxonomy”调整为“卖家可行动问题 / 亮点”。
-- 在 5.9.4 artifact 中新增 `issue_key` / `highlight_key` / `action_label_key`：`aspect_key` 继续表示 taxonomy 证据维度；其中 `action_label_key` 已在 5.9.5.1 确认删除，正式核心身份不合并为 `aspect_key`，而是收口为 `aspect_key + issue_key + highlight_key`。
-- 将 Erika 审批过的样本迁入正式行：`water_leaks_through`、`accessory_leak`、`missing_accessory`、`confusing_size_chart`、`late_shipping`、`customer_service_unresponsive`、`customer_service_helpful`；`replaced my old pair` 忽略；`price was right` 保留为购买动机。
-- 更新 5.9.4 fixture、测试、样本文档和说明文档；candidate / audit 不得再包含 Erika 已审批为正式 TOP10 的问题。
-- 继续保持不接入 active upload / worker / results / export / frontend，不改变 5.9.0 waders 隔离决策点。
-
-**5.9.4.1-A 验证摘要（2026-08-05）：完成✅**
-
-- 已更新：`docs/5.9.1-review-fragment-output-contract.md`、`docs/5.9.2-review-fragment-taxonomy-whitelist.md`、`docs/5.9.3-review-fragment-evidence-gate.md`。
-- 已同步验收说明：5.9.1 fixture / contract test 明确不加入 `issue_key` / `action_label_key`；5.9.2 fixture / test 明确卖家问题 key 不能冒充 taxonomy aspect；5.9.3 fixture / test 将负向服务样例收窄为纯客服 / 退款污染。
-- focused tests：`python3 -m pytest backend_api/tests/test_review_fragment_contract.py backend_api/tests/test_review_fragment_taxonomy_whitelist.py backend_api/tests/test_review_fragment_evidence_gate.py -q`，结果为 `18 passed`。
-- 本阶段未接入 active upload、worker、results、export 或 frontend，未修改 5.9.4 实验模块逻辑，也未改变 5.9.0 waders 隔离决策点。
-
-**5.9.5 进度摘要（2026-08-05）：完成✅**
-
-- 已在 `backend_api/app/services/review_fragment_candidate_multimodule.py` 增加轻量一致性校验：`validate_review_fragment_module_enum_consistency()`、`review_fragment_module_enum_matrix()`、`validate_review_fragment_candidate_artifact_row()`、`validate_review_fragment_candidate_artifact()`。
-- 已确认 5.9.1-5.9.3 的旧 module 枚举作为兼容输入保留；5.9.4.1-B artifact 正式输出只允许 `product_issue`、`product_highlight`、`consumer_profile`、`purchase_motive`、`unmet_need`、`audit_filter`。
-- 已校验 `module`、`aspect_key`、`polarity`、`evidence_span`、`issue_key`、`highlight_key`、`action_label_key`、`can_aggregate`、`reject_reason` 的一致性；候选和审计行新增 `reject_reason` 字段并保留 `reason` 兼容摘要；其中 `action_label_key` 校验属于 5.9.5 历史实现，已在 5.9.5.1 删除并同步更新校验。
-- 校验失败时本地降级为 `audit_filter / schema_invalid`，记录 `validation_errors` 和 `degraded_from_bucket`，整批 artifact 构建继续执行；未引入第二次 AI 调用。
-- 仍未接入 active upload、worker、results、export 或 frontend；5.9.5 后置的 active import / worker import / export read path 小复核已在 5.9.0 post-5.9.5 审计中完成，waders 去留已按 A/B/C 三段策略收口。
-- focused pytest：`python3 -m pytest backend_api/tests/test_review_fragment_contract.py backend_api/tests/test_review_fragment_taxonomy_whitelist.py backend_api/tests/test_review_fragment_evidence_gate.py backend_api/tests/test_review_fragment_candidate_multimodule.py -q`，结果为 `36 passed`。
-- compileall：`python3 -m compileall -q backend_api/app/services/review_fragment_contract.py backend_api/app/services/review_fragment_taxonomy_whitelist.py backend_api/app/services/review_fragment_evidence_gate.py backend_api/app/services/review_fragment_candidate_multimodule.py backend_api/tests/test_review_fragment_contract.py backend_api/tests/test_review_fragment_taxonomy_whitelist.py backend_api/tests/test_review_fragment_evidence_gate.py backend_api/tests/test_review_fragment_candidate_multimodule.py`，结果为 PASS。
-- `git diff --check`：PASS。
-
-**5.9.5.1 字段语义收口任务（2026-08-05）：完成✅**
-
-- 任务性质：5.9.6 前置的字段语义收口任务；不新增独立业务阶段，`normalized_label` 清理和 `action_label_key` 删除归入本 5.9.5.1 一起处理。
-- 已实现范围：更新 5.9.4 candidate/multimodule 实验 artifact、5.9.5 validator、taxonomy / evidence gate 物流口径、fixture、测试和相关说明文档；仍未把完整 Catalog/resolver 接入 active 主线。
-- 核心字段口径：`aspect_key` 回答“原文证据属于哪类表现维度”；`issue_key` 回答“用户遇到什么正式问题”；`highlight_key` 回答“用户认可什么正式亮点”。
-- formal 行口径：`formal_top10_rows` 必须有正式身份；负向使用 `issue_key`，正向使用 `highlight_key`，不得靠 `aspect_key`、`action_label_key` 或 `normalized_label` 充当正式 label key。
-- `action_label_key` 已从正式 artifact 输出、TOP10 聚合 key、亮点稳定 key、展示文本索引和标签注册中心核心类型中删除；校验器会拒绝正式 artifact 中继续出现该字段。
-- formal `normalized_label` 已清理；候选 / 审计兼容场景如需归一化表达，使用更明确的内部字段 `candidate_label_key`，不得进入正式 artifact 或 display mapping。
-- 物流字段口径：`shipping_damage` 是正式 `issue_key=shipping_damage`；`late_shipping` 是正式 `issue_key=late_shipping`；二者均归入上层证据维度 `aspect_key=logistics_issue`，避免把“物流问题”与“运输损坏”混成同一个 aspect。
-- 行动中心口径：行动中心不需要 `recommended_action_key`。它继续使用 `issue_key` / `canonical_issue_key`、展示文本、代表性评论、占比和趋势生成现有 `suggested_action` 文本；如果未来要做标准动作模板，应另立行动规则层，不纳入当前标签注册中心。
-- 审批材料：已新增 `docs/5.9.5.1-field-semantics-approval-sample.md`，样本表附评论原文，并按 Erika 反馈修正 sample 6 的物流 aspect 归属。
-- 验证结果：相关 review fragment / action route / read path / export / specific issue 测试通过，ruff、compileall 和 `git diff --check` 通过；实现提交为 `47bb165 Finalize 5.9.5.1 label field semantics`，已推送到 `origin/develop`。
-- 留给 5.9.6-A 的工作已完成：统一 Catalog/resolver 已建立，active 不得直接依赖实验模块常量。
-
-**5.9.6-A 标签定义收编任务（2026-08-05）：完成✅**
-
-- 任务边界：只完成标签注册中心和 resolver 的定义收编，不实现 5.9.6-B active results / export / insight 接入，也不实现 5.9.6-C 前台提示。
-- 注册中心来源：新增 `data/taxonomy/registry/review_fragment_label_registry.yaml`，将 5.9.4 实验模块中的 approved label、aspect mapping、alias 和 display mapping 作为 fixture / 迁移来源；实验模块与 active 主线保持隔离。
-- 统一 resolver：新增 `backend_api/app/services/review_fragment_label_catalog.py`。解析结果包含正式 key、`label_type`、适用品类 / 子品类、`status`、中英文 display 文本、`boundary_note`、alias、`aspect_keys` 和 `registry_version`；默认只允许 `approved` 标签进入正式候选。
-- 正式定义：registry 当前收编 9 个 approved label，正式身份只保留 `aspect_key`、`issue_key`、`highlight_key`；`action_label_key`、formal `normalized_label`、`recommended_action_key` 不进入 registry 核心模型。
-- 物流边界：`aspect_key=logistics_issue` 是上层物流证据维度；`issue_key=late_shipping` 表示物流时效问题；`issue_key=shipping_damage` 表示运输损坏 / 到货状态问题；`shipping_damage` 不作为正式 artifact 的 `aspect_key`。
-- 实验模块改造：`review_fragment_candidate_multimodule.py` 的 approved label、aspect alias、display mapping 和 highlight mapping 改为通过 resolver 获取；静态检查确认 active 主线不直接导入实验模块标签常量。
-- 人工审核：新增 `docs/5.9.6-A-label-registry-human-review.md`，附 11 条样本评论原文、预期正式 / candidate 结果、alias 和物流口径检查；Erika 已审批通过且无意见。
-- 验证结果：focused pytest `30 passed`；相关回归 pytest `94 passed`；ruff、compileall、`git diff --check` 和静态搜索均通过。实现提交 `15399ba Implement 5.9.6-A label registry resolver` 已推送到 `origin/develop`。
-- 后续边界（2026-08-05 当时）：5.9.6-B active 接入、5.9.6-C 前台提示和 5.9.7 小样本验收未纳入 5.9.6-A 提交；2026-08-06 复核已发现 5.9.6-B 相关 read-path/frontstage 代码存在一部分，需按 5.9.6-B 对账处理。
-
-**5.9.6 前置工具：sync_taxonomy.py（2026-08-06）：完成✅**
-
-- 任务边界：只实现 taxonomy YAML → `category_aspect_taxonomy` 的安全同步工具，不实现 5.9.6-B active results / export / insight 接入，也不实现 5.9.6-C 前台提示。
-- 新增工具：`scripts/sync_taxonomy.py`。默认扫描 `data/taxonomy/v1.0/**/*.yaml`，从路径目录推导 `category_key`，读取 `sub_category`、`version` / `taxonomy_version`（缺省为 `v1.0`）和 `aspects`，并映射到 DB 字段 `sub_category`、`aspect_key`、`label_zh`、`boundary_note`、统计计数、`negative_rate`、`top_phrases`、`sample_review_ids`、`taxonomy_version`。
-- Diff 能力：按表唯一身份 `(sub_category, aspect_key, taxonomy_version)` 对比 YAML 与 DB，输出新增、修改、删除候选和无变化；修改 diff 会列出变更字段。
-- 安全边界：`--dry-run` 只读取并输出 diff，不调用写库函数；非 dry-run 会先打印写入统计摘要；删除候选默认只报告，只有同时存在删除候选且显式传入 `--allow-delete` 时才执行 `DELETE`；YAML 解析失败、字段缺失、字段类型非法、重复 aspect key 或 `aspect_count` 不一致都会 fail closed，且在连接 / 写库前停止。
-- `--category <category_key>`：只扫描指定目录，并用静态 `sub_category_to_category` 映射加本次 YAML sub_category 限定 DB 对比范围，避免跨品类误删。
-- Cache refresh：成功产生 DB 写入后调用现有 `backend_api.app.services.taxonomy_loader.clear_cache()`，清理 5.9.2 whitelist 依赖的 LRU 读取缓存；dry-run、无实际写入或 fail-closed 时不刷新。
-- 旧脚本处理：已检查 `data/taxonomy/import_taxonomy_to_db.py` 与 `scripts/import_v4t1_assets.py`，二者都是 UPSERT 型旧入口；本次不移动、不删除、不改写旧脚本，只在新工具 docstring 明确后续 taxonomy DB sync 应优先使用 `sync_taxonomy.py`。当前不删的原因：`scripts/import_v4t1_assets.py` 仍含 `bad_cases` CSV 导入，`data/taxonomy/import_taxonomy_to_db.py` 仍有历史 `--env dev|prod` 手动流程，立刻删除会扩大 5.9.6 前置任务风险。
-- 旧脚本删除触发条件：5.9.6-B active 接入和 5.9.6-C 前台提示完成后，先用 `sync_taxonomy.py` 完成全量 dry-run / 必要同步并确认 active upload、worker、results、export 均无旧脚本依赖；同时明确 `bad_cases` 导入继续保留、迁移或废弃的替代口径。满足这些条件后，再在 5.9.8 商业化前补强的“小批次旧冗余清理”中单独归档或删除旧 taxonomy 导入入口。
-- 真实资产预检：已治理 `data/taxonomy/v1.0/kitchen/保温杯.yaml` 里重复 `ease_of_use`，将特有“开盖便捷性”改为 `lid_operation`，保留通用 `ease_of_use / 易用性`；全量 parser 预检通过，当前 `data/taxonomy/v1.0` 共 89 个 YAML / 1541 行 / 89 个 sub_category，版本均为 `v1.0`。
-- 验证结果：`backend_api/tests/test_sync_taxonomy.py` focused tests `9 passed`；`backend_api/tests/test_review_fragment_taxonomy_whitelist.py` + `backend_api/tests/test_review_fragment_label_catalog.py` 回归 `12 passed`；ruff、compileall、`git diff --check` 和静态搜索通过；确认 active path 未默认 import `sync_taxonomy.py`。
-- 后续边界：`sync_taxonomy.py` 本身不处理 active 接入、前台提示、行动中心接入或前台 UI；2026-08-06 复核已发现 5.9.6-B 相关 read-path/frontstage 代码存在一部分，需先对账再继续。
-
-**5.9.6-B active/read-path 对账与冻结（2026-08-06）：已对账/冻结，active 接入未完成**
-
-- 完整 inventory：[`docs/5.9.6-B-active-read-path-inventory.md`](docs/5.9.6-B-active-read-path-inventory.md)。它覆盖 results、export、worker、smart push、periodic digest、`specific_issue`、v2/review-signal frontstage、compact DB read 与 frontend/client export。
-- 已确认 active results/export 会调用 `decorate_comment_customer_labels()`，但其下游是旧 `specific_issue.py -> customer_label_catalog` / occurrence/read-model selector，不是 5.9.6-A `review_fragment_label_catalog` resolver；worker 默认仍写 `customer_label_occurrences`。
-- 已确认 v2/review-signal read model 默认 fail-closed；review-signal production 另有 configured `session_id` + `sub_category=waders` guard；`database.py` compact read 保留 `review_signal_stored_shadow`，不保留 `customer_label_v2_shadow_result`，后者会在 slim read 静默回落 v1。
-- 已冻结：不扩 v2/review-signal scope、session allowlist、`waders` 规则或旧 catalog label；不在本阶段修 9 个 registry label 的 `["*"]` scope。
-- 5.9.6-D blocker 已明确：results、export、frontend、specific issue selector、worker smart push、periodic digest/action 及 frontstage shadow selector 均绕过 registry/resolver/scope gate。5.9.6-B 的对账完成不等于 active 接入完成，后续只能由 Registrar/resolver/scope gate 收口。
-
-**5.9.6-D 标签治理与 Registrar 重构执行计划（2026-08-06 新增）：**
-
-- 触发原因：5.9.6-A registry 中 9 个 approved label 全部写成 `category_keys=["*"]` / `sub_category_keys=["*"]`，其中 waterproof、seam_integrity、accessory_storage 至少明显不应默认全品类。这说明当前 Registrar 缺少 scope 判定标准、resolver 缺少当前品类强约束、测试缺少“不该出现”的负例。
-- 对 5.9.1 的影响：不回滚、不重写 5.9.1。5.9.1 是片段理解契约，仍然正确；需要补的是 5.9.6 之后的正式标签治理层。后续代码可在 5.9.1 输出旁路增加 category/sub_category context，但不能把 formal label 是否全局适用的责任塞回 LLM 输出契约。
-- 反思：这次失误不是知识不足，而是任务执行时把“能跑通迁移/测试”错当成“长期商业可落地”。一人公司不能靠未来人工记忆补洞，必须把“不允许默认全局”“必须有负例”“resolver 必须带 scope”“错标必须回流”写成项目规则、代码门禁和验收材料。
-- 工作包 0：5.9.6-B partial inventory/freeze，0.5-1.5 天。已输出 active/read/export/worker/read-model 入口表、flag 默认值、guard 说明、可复用/需改造/需删除清单；不代表 active 接入完成。
-- 工作包 1：Scope Governance DoD，0.5-1 天。✅ 已完成（2026-08-06）。产出 `notes/scope-governance-dod.md`：定义交易层/产品层二分、三档 scope_policy、transaction_universal 封闭枚举护栏、capability_derived any-of 语义、负例规范、9 个现有 label 的 scope_policy 落位判断。稳定后 git mv 到 docs/。
-- 工作包 2：Registry schema 升级，1-1.5 天。✅ 已完成（2026-08-06）。产出 `data/taxonomy/shared/transaction_aspects.yaml`（3 个交易层维度）+ 扩展 registry YAML schema（9 个 label 各补 scope_policy/required_transaction_dimension/scope_reason/positive_examples/negative_examples/review_status/blocked_contexts/owner_note，review_status 一律 pending）+ 扩展 `FormalLabelDefinition` dataclass + 实现 effective scope 计算（内存算，带 lru_cache，不落盘）+ transaction_universal 封闭枚举校验。registry_version 保持 5.9.6-A.1 不变（决策 f）。
-- 工作包 3：scope 校验脚本（从完整 Scope Compiler 降级），0.5 天。✅ 已完成（2026-08-06）。产出 `scripts/validate_label_scope.py`：6 项校验（禁止 wildcard / transaction 维度枚举校验 / capability 命中 taxonomy / 正例 / 负例政策最低 + out_of_scope 反查矩阵验证 / explicit 子类目存在性），支持 --dry-run（失败非零退出码）和 --print-matrix。
-- 工作包 4：Resolver fail-closed 改造，2-3 天。✅ 已完成（2026-08-06）。产出：`ResolutionRejectReason` enum（5 值，固定 gate 顺序：unknown_key→not_approved→out_of_scope→blocked_context→insufficient_evidence）+ `LabelResolutionResult` dataclass + 删除 `_scope_matches()` + `resolve_formal_label()` 改为 keyword-only 必传 `category_key`/`sub_category_key` + 所有实验模块调用方已更新传递 category/sub_category + 新增 14 个 WP4 测试（TypeError/各 reject reason/gate 顺序/empty category/is_resolved/transaction_universal in scope）。evidence gate 推迟到 WP6。
-- 工作包 5：9 个 approved label 重标和回归，1-1.5 天。✅ 已完成（2026-08-06）。产出：16 个 taxonomy YAML 新增 `size_chart` aspect（7 apparel + 6 baby + 3 outdoor）+ seed 文件 `delta_aspects` 新增 `size_chart` + `confusing_size_chart` 的 `aspect_keys` 从 `size_fit` 改为 `size_chart`（effective scope 从 63 收窄到 16）+ `category_keys`/`sub_category_keys` 从 YAML+dataclass+validator 三处删除 + `registry_version` 升至 `5.9.6-D.1`（decision j）+ `aspect_taxonomy.py` 新增 `size_chart` + validator 0 failure + 45 catalog tests pass。
-- 工作包 6：active/read/export/insight 接口改造，1-2 天。✅ 代码已交付（WP9 核验确认 `analysis.py` / `export.py` / `specific_issue.py` 三处 read path 均有集成）；**shadow 观测链路已于批次 1b 接通**（`label_registry_shadow_middleware` + ContextVar 隔离 + 批量落库）。⚠️ 仍默认 `mode=off`、enforce 未交付，scope gate 目前不在运行时生效 —— 留给批次 2-5。
-- 工作包 7：审核判错回流，1-2 天。~~❌ WP9 裁决打回~~ → **✅ 批次 1a/1b 返修完成（2026-08-07）**：audit 落库已接线（Bug 5/6）、proposal 按 id 精确查询（Bug 3）、merge 按决策 q 改 501（Bug 2/4 作废）、`alias_merge` 跨 `label_type` 硬阻断已补、`generate_label_proposals.py` 补齐 audit→proposal 一跳（Bug 5b）。
-- 工作包 8：CI/人工验收包，1 天。CI 门禁（`label-scope-validate` + `resolver-gate-tests`）已生效并有效；审核页已从 `/settings/label-review` 并入 `/settings/golden-set` tab 且收紧为 `get_admin_user`。~~⚠️ 但 CI 只锁了拒绝路径~~ → **✅ 批次 0 已补**：新增 Check 7（exact 89 断言）+ `test_all_capability_labels_resolve_on_waders` 正向路径锁 + 配置漂移场景锁（Bug 1 漏检根因已封）。
-- 工作包 9：Erika 人工验收包，1 天。✅ 材料已交付并完成裁决，详见「WP9 验收裁决与返修计划」节。
-- 总工作量：完整长期可商业版本约 9-13 人日；若只做最低阻断版约 4-6 人日，但最低版只能保证“不再默认全局 + active 不绕过 scope gate”，不具备完整审核回流能力。当前选择完整版本，避免止血包。
-
-**5.9.6-D 工作包 9 验收裁决与返修计划（2026-08-07 新增）：**
-
-- 工作包 9：Erika 人工验收包，1 天。已产出 [`docs/5.9.6-D-wp9-erika-acceptance-package.md`](docs/5.9.6-D-wp9-erika-acceptance-package.md)（scope diff + effective scope matrix + 正负例回归 + 4 类 proposal 样例）。
-- 工程侧独立核验：[`docs/5.9.6-D-wp9-technical-audit.md`](docs/5.9.6-D-wp9-technical-audit.md)。核验方式为逐条实跑对照代码，非文档自审。
-- 返修计划：[`docs/5.9.6-D-wp9-adjustment-plan.md`](docs/5.9.6-D-wp9-adjustment-plan.md)。
-- **裁决：验收材料 1/2/3 签收；材料 4（错标回流链路）打回 WP7/WP8 返修。5.9.6-D 状态由「✅ 已完成」回退为「返修中」，5.9.7 启动条件随之修订。**
-
-验收包自评 5 条通过条件全 ✅，实际裁决：
-
-| # | 通过条件 | 裁决 | 依据 |
-|---|---------|------|------|
-| 1 | 无理由 `["*"]` 不再通过 | ~~⚠️ 有条件通过~~ → **✅ 通过（2026-08-07 批次 0 完成）** | 数据模型已删干净；运行时静默复现路径（Bug 1）已修：空 scope → `SCOPE_UNAVAILABLE`，正向路径 + 配置漂移场景均有 CI 锁（56 tests） |
-| 2 | resolver 缺 category/sub_category 时 fail closed | ✅ 通过 | 8 个 fail-closed 测试实跑通过 |
-| 3 | 每个正式标签有适用/不适用解释 | ✅ 通过 | 9 个 `scope_reason` 齐备 |
-| 4 | 负例不会进入 TOP10 | ⚠️ 已具备能力，未在运行时生效 | 默认 `mode=off`，enforce 未交付；验收包 §3.4 正文已说清，检查清单仍打 ✅，两处自相矛盾 |
-| 5 | 错标回流链路可执行 | ~~❌ 不通过~~ → **✅ 通过（2026-08-07 批次 1a/1b 完成）** | shadow → audit → proposal 已接通（middleware + 批量落库 + `generate_label_proposals.py`）；approve/reject 可用（Bug 3 已修）；merge → YAML → test 按决策 q 改为 501 + PR 流程，不再是断链而是设计选择 |
-
-WP1-8 实现 bug 共 6 个（验收包自述「未发现」），全部实跑复现：
-
-| Bug | 级别 | 位置 | 现象 |
-|---|---|---|---|
-| 1 | **P0** | `review_fragment_label_catalog.py:731-740` | Gate 3 的 `and effective_scope` 短路：scope 算成空集时整个 Gate 3 被跳过，标签对全部 89 品类放行。模拟 aspect 漂移后 `water_leaks_through` 在保温杯/Cosequin/Baby Bibs/Dog Treats/Screen Protector 全部 `resolved=True`。**`["*"]` 从后门静默复现，且同文件 §524-525 docstring 声明 fail-closed、实现是 fail-open** |
-| 2 | P1（降级为可选） | `label_review.py:29-41` + `:328` | 路径算错一层，`parents[4]` 应为 `parents[3]`，本地与容器内 registry / validate script 均 `exists=False`。merge 禁用后该常量成死代码，仍建议改：同目录 `review_fragment_label_catalog.py:97/105/113` 用的是正确的 `parents[3]`，留一个错的在旁边会被照抄 |
-| 3 | P1 | `label_review.py:134` | `query_proposals(limit=1)` 硬传 limit，除最新 1 条外全部 404。**该查询在 approve(159) / reject(147) / merge(180) 三个分支之前，不随 merge 禁用而消失，是 approve/reject 唯一阻断项** |
-| 4 | 作废 | `label_review.py:352` | 生成的负例测试传 `category_key=""` → Gate 0 返回 `unknown_key`，断言只接受 `out_of_scope`/`blocked_context`，生成即挂。随 merge 禁用一并停用 |
-| 5 | P1 | `label_registry_audit.py` | `record_audit_event` / `record_audit_events_batch` 无外部调用者（仅同模块互调），审计表永远为空，proposal 无数据源 |
-| 5b | P1（2026-08-07 补充发现） | `label_registry_proposal.py:94/242/267/290/315` | **`create_proposal` 与 4 个 `generate_*_proposal` 助手同样零调用者**。审核意见 §4 Bug 5 只点了 audit 侧，proposal 侧同样断开：即使批次 1 把 shadow → audit 接通，audit event 也不会变成 proposal，链路仍在"audit 表有数据、proposal 表永远为空"处断掉。验收包「已知限制 2」把这一跳记为"需要外部调用，目前无自动触发机制"，属已知设计选择而非隐藏 bug，但它使通过条件 5 在批次 1 完成后仍不成立 —— 故批次 1 增加 1-7（proposal 生成脚本，人工触发） |
-| 6 | P1 | `label_registry_frontstage.py:169-181` | `flush_shadow_diffs_to_log` / `clear_shadow_diffs` 零调用者，`_shadow_diffs` 只 append 不清空。后果三重：shadow 跑再久收集不到证据、进程级内存累积、模块级全局在并发下混淆不同租户的 diff（数据正确性问题，不只是泄漏） |
-
-Bug 1 优先于全部 merge 路径修复：merge 坏了是功能用不了（会报错、有人发现）；Bug 1 是门禁静默失效（不报错、无人知道），且一旦 5.9.7 把 mode 切到 enforce，就从潜在风险变成线上正在错标。
-
-**三项已定决策（2026-08-07，不再需要重新选择）：**
-
-- **决策 q：merge 动作禁用，返 501，registry 变更走 PR 流程。** 不修路径保留容器内写回。理由不只是"改动随 rebuild 蒸发"：merge 成功会把 proposal 状态写成 `applied` 落 DB，而 YAML 改动随 rebuild 消失 —— DB 说"已应用"、YAML 说"没这回事"，是真的数据不一致，比干净失败坏一个量级。当前 `_apply_proposal_to_yaml` 第一步读 `_REGISTRY_PATH` 就抛 `FileNotFoundError`，写入前就死，反而安全。连带：`_generate_negative_test` 一并停用（往仓库测试文件追加代码，与 YAML 写回同类问题）；501 响应体必须写明替代路径（生成 patch → 人工提 PR），否则审核页上是个哑按钮。
-- **决策 r：新增 `SCOPE_UNAVAILABLE` 枚举值，不复用 `OUT_OF_SCOPE`。** 两者语义不同：`OUT_OF_SCOPE` = 这个标签对这个品类确实不适用（正常、预期的业务结果）；`SCOPE_UNAVAILABLE` = 不知道适不适用，配置坏了（故障）。复用会让故障隐形 —— taxonomy 加载失败时会看到 `out_of_scope` 激增，而这个信号最容易被读成"scope 门禁工作良好"，恰好读反。改动风险已核：resolver 的 `reject_reason` 目前无穷举匹配的消费者（`review_fragment_taxonomy_whitelist.py` 里的 `reject_reason` 是 fragment 级的另一概念，不同源），`record_audit_event` 零调用（Bug 5），无活的下游会被新值打到。
-- **决策 s：5.9.7 小样本验收与回流链路修复并行，不等 P1。** 验收标的是标签质量判断，不是回流管道，离线调 resolver 足够。Bug 1 不影响离线跑 —— 只要 taxonomy 正常加载、`effective_scope` 非空，Gate 3 就正常工作，所以并行也不需要等 P0。前置是下面那条断言。
-
-**返修批次 0（P0，1.2 天）：门禁静默失效 —— 唯一影响 5.9.7 结论有效性的批次** — ✅ **已完成并部署（2026-08-07，commit `c5bf769`）**
-
-- [x] 0-1 Gate 3 空 scope fail-closed + `SCOPE_UNAVAILABLE` 枚举（决策 r/t）
-- [x] 0-2 taxonomy 加载自检断言数量（`EXPECTED_TAXONOMY_SUB_CATEGORY_COUNT = 89`）
-- [x] 0-3 双口径：运行时 floor（`>= 89`）+ CI/validate exact（`== 89`）；启动只 `logger.error` + `/health` 暴露，不 crash（决策 u）
-- [x] 0-4 docstring 修正（fail-closed 声明与实现一致 + 空索引后果说明）
-- [x] 0-5 补 8 个测试（48→56）：正向路径锁、空 scope 拒绝、数量断言、单 drift 隔离、全空拒绝、explicit、Baby Sun Hat / Cosequin 拒绝锁
-- **线上验证（2026-08-07 部署后）**：`/api/health` 返回 `taxonomy_index: healthy`、`89 sub_categories` — 启动自检生效且可观测
-
-- 0-1 Gate 3 空 scope 改 fail-closed：去掉 `and effective_scope` 短路，空 scope → 返回新增的 `SCOPE_UNAVAILABLE`（决策 r）。**决策 t（2026-08-07）：空 scope 时不给任何 scope_policy 特判，9 个标签一律拒绝。**
-  - 首版计划写「`transaction_universal` 不受影响（scope 恒为全集）」+「`explicit` 保持跳过」，两条都被推翻。实跑：索引为空时 `get_all_sub_categories()` 返回空集，`transaction_universal` 的「全集」也是 0 —— 所谓「恒为全集」在来源 3（taxonomy 整体加载失败）下不成立，与 0-2 的场景直接互斥。
-  - 定性理由（比「无法验证 sub_category 是否存在」更强）：**失败形态不对称**。给交易层特判跳过，则 taxonomy 全挂时用户看到「发货晚 ✓ 到货损坏 ✓ 客服不响应 ✓ 客服服务好 ✓、产品问题零条」—— 对评论分析产品这是一个具体且错误的商业结论（"这个产品没有质量问题"），且看起来完全正常。一律拒绝则 TOP10 直接空，有人立刻发现。补充：`transaction_universal` 声称「对所有线上实物商品恒真」，而定义该全集的 taxonomy 资产加载失败时，这个 claim 变成不可验证 —— 不可验证的 claim 不该当 true 用，这正是 5.9.6-D 的立论。
-  - `explicit` **删掉跳过分支，不是加特判**：WP5 删掉 `sub_category_keys` 后没有任何字段能存 explicit 的手工 scope，`compute_effective_scope` 对 explicit 恒返空集，所以做法 B 下它天然返回 `SCOPE_UNAVAILABLE`。现存的「explicit 保持跳过」是删掉短路后**唯一还能造出「零 Gate 3 标签」的路径**，与 Bug 1 的 `["*"]` 同类（`validate_label_scope.py` 的 check 6 注释已自认「scope is hand-maintained in sub_category_keys」，而该字段已不存在）。副作用是 `explicit` 档位暂时完全不可用 —— 这是对的，谁要用谁先设计存储机制，fail closed 到「不可用」优于 fail open 到「全局生效」。
-- 0-2 taxonomy 加载自检**断言数量而非仅非空**：这是本批最容易被做浅的一项。空 scope 有 4 种来源，前 3 种（`aspect_keys` 写空 / aspect 在 taxonomy 改名未同步 / taxonomy 目录整体读不到）靠 fail-closed 能盖住；**第 4 种盖不住** —— `_load_taxonomy_aspect_index` 对单文件失败是 `logger.warning` + `continue`，且静默 continue 的分支不止 YAMLError 一处，还有非 Mapping、缺 `sub_category`、`aspects` 非 list、`aspect_keys` 为空共 5 处。89 个文件坏 40 个时 index 剩 49 条，scope 静默收窄，fail-open 和 fail-closed 两条路都拦不住，因为 index 非空。现状零防线：测试文件搜 `89` 零命中。
-- 0-3 自检的**口径与失败行为**（决策 u，2026-08-07；首版计划两处都没写清，是缺口）：
-  - **两处用不同口径，不是二选一**。运行时用 **floor**（`len(index) >= 下限`）—— 等值会让新增第 90 个品类直接启动失败，运行时必须容忍增长。CI 与 `validate_label_scope.py` 用 **exact**（`== 89`）—— floor 会随增长稀释：taxonomy 长到 200 个、某天坏 100 个文件时 `100 >= 89` 仍然通过，正是本条要防的静默收窄，只是延后发生。CI 里等值挂掉零成本，且强制「改 taxonomy 必须同步改常量」，与 `transaction_universal` 的封闭枚举是同一手法。
-  - **失败行为分两处**：`validate_label_scope.py` 第 7 项校验失败 → 非零退出（致命）；**运行时启动只 `logger.error` + 固定 marker + 在 `/health` 暴露状态，不 crash 进程**。理由：taxonomy 资产出问题不该连带 auth / uploads / billing 一起挂 —— 标签门禁故障的爆炸半径不该是整站 502。「要炸出来」的目的是可观测，不是停服；运行时兜底交给 0-1 的 `SCOPE_UNAVAILABLE`（标签被拒绝，保守正确，站点还在）。
-  - 放启动期是为规避 `@lru_cache(maxsize=1)` 把首次失败的空结果缓存到进程结束（瞬时故障变永久故障）。
-- 0-4 修正 `review_fragment_label_catalog.py:524-525` docstring：现注释声明 fail-closed 而实现是 fail-open，修实现后注释才成立；同时写明"空索引 = 全部 capability_derived 标签拒绝"这一后果。
-- 0-5 补 false negative 测试（审核 §3.5 指出的盲区，也是 Erika 意见 #3 的落点）：① `test_all_capability_labels_resolve_on_waders` —— waders 上 5 个 capability_derived 标签必须全部解析成功（当前无任何测试锁定正向路径，只测了拒绝路径，这是 Bug 1 漏检的根因）；② `test_empty_scope_rejects_instead_of_passing` —— aspect 漂移 / `aspect_keys` 为空时必须返回 `SCOPE_UNAVAILABLE`，Bug 1 的回归锁；③ `test_taxonomy_index_count_assertion` —— 索引数量低于 floor 时运行时自检报错、CI exact 校验失败，盖住第 4 种来源；**④ 按来源拆两条**（首版把两种情形混成一条，是错的）：④a 单 aspect 漂移 / `aspect_keys` 为空 → 只影响该 capability_derived 标签，4 个 transaction_universal **不受影响**（保留原意：防止修复过度扩大到交易层，交易层不依赖 `aspect_keys`）；④b 索引整体为空 → **9 个标签全部返回 `SCOPE_UNAVAILABLE`**（决策 t）；⑤ 补 `water_leaks_through` 在 Baby Sun Hat / Cosequin 的拒绝用例（审核 §6.7：当前 grep 命中 0，行为实测正确但无 CI 锁定）；⑥ `explicit` 标签返回 `SCOPE_UNAVAILABLE`（锁住决策 t 删掉的跳过分支不会被复活）。
-
-**返修批次 1（P1，1.3-1.5 天）：回流链路 —— 阻塞 proposal 积累，不阻塞小样本验收** — ✅ **已完成并部署（2026-08-07，拆为 1a `c09f751` + 1b `8f9b849`）**
-
-- [x] 1-1 Bug 3 → `get_proposal_by_id()` 精确查询（批次 1a）
-- [x] 1-2 merge 返 501 + 替代路径文案；write-back helpers 保留加注释（批次 1a）
-- [x] 1-3 Bug 5 + Bug 6 接线：ContextVar 隔离 + `label_registry_shadow_middleware` + `record_audit_events_batch` 批量落库 + `LABEL_REGISTRY_AUDIT_PERSIST` 独立开关默认 off（批次 1b）
-- [x] 1-7 Bug 5b → `scripts/generate_label_proposals.py`（audit → proposal 人工触发聚合，`--write` 才落库）（批次 1b）
-- [x] 追加 `alias_merge` 跨 `label_type` 硬阻断（批次 1a，审核意见未列但同类风险）
-- **线上验证（2026-08-07 部署后）**：`GET /proposals?status=all` → 200；`POST /review` merge → 先查 proposal 存在性（404 for id=1），gate 顺序正确；Registry Review tab 四状态筛选正常、console 0 error
-
-- 1-1 Bug 3 改按 id 精确查询（`get_proposal_by_id()` 或给 `query_proposals` 加 id 过滤）。**必须留在本批**：它是 approve/reject 的唯一阻断项，而 approve/reject 恰好是禁用 merge 后唯一还能用的功能。
-- 1-2 merge 分支返 501 + 替代路径文案；`_apply_proposal_to_yaml` / `_generate_negative_test` / `_restore_yaml_backup` 保留但不再调用，加注释标注"待 patch 架构落地后重写"（决策 q）。
-- 1-3 Bug 5 + Bug 6 合并为一次接线（是同一个问题：shadow 观测到不了持久层）：请求开始 `clear_shadow_diffs()`、结束 `flush_shadow_diffs_to_log()` + 写 `label_registry_audit_events`；挂 middleware 或 dependency，仅 `mode != off` 时生效。**落库必须批量 + 有独立开关**：shadow 跑在结果页/导出两个用户读路径上，逐条 insert 会把写压力压到读路径，用 `record_audit_events_batch()` 单次批量写，加 env 开关默认 off，确认延迟影响后再开；落库失败包 try/except，只记日志，不影响用户请求。
-- 1-4 Bug 6 的累加器改 `contextvars` per-request 隔离（模块级全局在并发下混淆租户 diff）。
-- **middleware 覆盖范围已论证（2026-08-07，结论对 1-3 有利，记录以免重复论证）**：`_run_label_registry_shadow_pass` 只在 `specific_issue.py:4504` 一处被调用；`decorate_comment_customer_labels` 的生产调用者是 `analysis.py:145/211`、`export.py:50`、`review_analyzer/exporter.py:270`。前三处都是 HTTP 路由，middleware 覆盖得到；worker 只 import `enrich_aspects_json` 与版本常量，到不了 shadow pass，**不会漏 flush、不会累积 diff**。
-  - 第四处 `exporter.py:270`（`_decorate_comments_for_export`，被 :474 / :619 调用）生产入口也是 `export.py` 走 HTTP，结论不变，但**依据不同**：它根本不传 `label_registry_flag`，而 shadow pass 在 `flag is None` 时直接 return —— 这条路径连 shadow 都进不去。
-  - ★ **由此发现一处待登记的不一致（不在本次返修范围，不改行为）**：`export.py:50` 传了 flag、`exporter.py:270` 没传，同一个导出功能两条路径行为不一致，**xlsx 导出路径当前完全没有 shadow 观测**。验收包 §WP6 声称「3 个 read path 已接入」在这一点上偏乐观。留待批次 2 或 5.9.7 处理。
-  - 残留一条小项：`scripts/customer_label_v2_waders_shadow_replay.py:516/578` 直接调 decorate。若 5.9.7 离线脚本开 shadow，结束时须显式 flush 一次，否则 diff 静默堆内存（短命进程，危害小，但离线脚本正是决策 s 依赖的东西）。已加为离线脚本第 ③ 条硬约束。
-- 1-5 `alias_merge` 跨 `label_type` 硬拦截：`_validate_proposal_data` 增加 `source_keys` 与 `target_key` 的 `label_type` 一致性校验，不一致直接拒绝创建。回应 Erika #4 —— UI 警告是软提示，把 highlight 合进 issue 会永久丢失正负面区分，必须代码层拦。
-- 1-6 Bug 2 路径常量顺带改（可选，0.1 天，理由是防照抄而非功能需要）。
-- 1-7 **proposal 生成脚本（2026-08-07 新增，因 Bug 5b）**：`scripts/generate_label_proposals.py`，读 `label_registry_audit_events` → 按 `(label_key, sub_category, reject_reason)` 聚合 → 打印候选 proposal 供人工判断，`--write` 才落 `label_registry_proposals`。**刻意不做自动触发**：自动生成会用阈值决定"多少条算频繁"，而 `notes/scope-governance-dod.md` 第 1 节已明确否决阈值（"阈值会让 scope 随 taxonomy 增长悄悄漂移，是比 `["*"]` 更隐蔽的同类故障"）；且初期审核预算是每周 2 小时（见「初期 0 → 50」阶段口径），自动灌候选池会直接挤爆。脚本形态保持人在环内、显式触发。
-- **批次 1 拆分建议（2026-08-07）**：1a = 1-1/1-2/1-5/1-6（纯 route + 校验层，不写库、不碰请求生命周期，可独立部署回滚）；1b = 1-3/1-4/1-7（shadow 落库 + contextvars + 生成脚本，含唯一的高风险项：在用户读路径上新增 DB 写）。拆开的理由：1b 若需回滚，不应连带回滚 1a 修好的 approve/reject —— 而 approve/reject 恰好是禁用 merge 后审核页唯一还能用的功能。
-- **批次 1 工作量上修**：1.3-1.5 → **1.6-2.0 人日**（1-7 增加 0.3-0.5 天）。返修小计 3-3.2 → **3.3-3.7 人日**。
-
-**返修批次 2（P2，不阻塞 5.9.7，约 3-3.8 天）**
-
-- 2-1 merge 改为生成 patch：不在容器内改 YAML，产出 unified diff + PR 描述供人工提 PR；validate 对"应用 patch 的结果"跑一次，不落盘。等 501 落地、走 PR 流程确认后再估更准 —— patch 生成比容器内写文件简单，可能低于原估 1.5 天。
-- 2-2 `review_status` 写入端点：当前 `backend_api/app/routes/` 与 `frontend/src/` 搜 `review_status` 均零命中，没有任何代码路径能写它。新增端点必须与 merge 完全隔离（审批标签状态 ≠ 改 registry 内容，回应 Erika #2）。
-- 2-3 `review_status` 接入 Gate 2。**严格排在 2-2 之后**：9 个标签当前全 `pending`，先让 Gate 2 读它会导致正式标签瞬间清零。唯一正确顺序是 建写入端点 → Erika 审批 9 个为 approved → 再让 Gate 2 读。顺序颠倒造成一次全量功能中断。
-- 2-4 `alias_merge` / `blocked_rule` 的 UI 高亮 + 二次确认，作为 1-5 硬拦截之外的第二层。
-- 2-5 enforce 模式交付。**两个前置，缺任一都不能开**：① 批次 0 全部完成 —— 在 Gate 3 fail-closed 之前开 enforce 等于把静默错标变成线上错标；② **必须 bump `registry_version`**（2026-08-07 补，首版漏了）。理由：5.9.6-B.1 把 L1 缓存命中门控在四个语义版本上，`workers/jobs.py:546` 用 `FORMAL_LABEL_REGISTRY_VERSION` 做过滤值。enforce 改变的正是「哪些标签会展示」，不 bump 则用户看到的仍是 enforce 前的缓存标签，会重演 5.9.6-B.1 修过的那个坑（验的是旧结果，得出「改了没生效」）。连带项：`test_review_fragment_label_catalog.py:544` 把 `registry_version` 字符串写死（`review-fragment-label-registry.5.9.6-D.1`），任何 bump 都要同步改该断言。批次 0 **不需要** bump —— taxonomy 正常加载时行为完全不变，旧缓存仍有效。
-
-**返修批次 3（0.5 天）：验收包文档修正 10 项** — ✅ **已完成（2026-08-07，commit `54602c3`）**：10 项全部修正，含 `formal_module` 定义（Erika 已确认「= 前台模块路由」读法，仅补文不改代码）。
-
-裁决行 5 条按上表更正（删掉"未发现实现 bug"，文首加指针指向 audit）；另 9 项：失效的 `/settings/label-review` 路径改为 `/settings/golden-set` 的 Registry Review tab；"10 个负例"改为"7 个拒绝 + 3 个正向对照"并去重；§3.1 表格加总 47 补齐为 48；migration 60 状态待查库后统一；§2.4/§3.6 的伪终端输出换真实报告体；§4.3/§4.5/§4.6 补虚构样例标注（仅 §4.4 标了，"15 天 23 条"、"41 条中 15/20 误标"会被当成真实发现）；Baby Sun Hat / Cosequin 补测试后改口径；"7+1+1" 笔误改 7+2；`formal_module` 性质补文（见下）。
-
-**`formal_module` 性质定性（2026-08-07）**：`git log -S "formal_module"` 在 registry YAML 与 catalog 服务上只命中 `15399ba`（Implement 5.9.6-A label registry resolver），确认是 5.9.6-A 主动引入，**不是 5.9.4 迁移遗留漂移**。读法：`formal_module` 是前台模块路由（这条标签渲染到哪个区块），不是问题归因分类（这条标签属于哪一层）。在此读法下 `late_shipping` / `shipping_damage` / `customer_service_unresponsive` 归 `product_issue` 是对的 —— 卖家视角下发货晚和漏水都是"待解决问题"，都该进同一个问题列表。**待 Erika 确认此读法**：确认则补文一句定义 + 一句举例，不改代码；若实际非此意，则属 5.9.6-A 字段语义需澄清，是比文档修正更大的事。
-
-**返修工作量小计：批次 0/1/3 共 3-3.2 人日**（P0 1.2 天含数量断言与新枚举 + P1 1.3-1.5 天 + 文档 0.5 天）。批次 2 另计约 3-3.8 天。
-
-**5.9.6-C 受众拆分（2026-08-07 决策，Erika 确认）：**
-
-- 触发：Erika 质疑"`other` 和置信度不应该展示给客户，应该通过 label calibration 页给我审批回流"。复核确认该读法正确，5.9.6-C 原描述"展示原文证据、低置信提醒和 `other` 占比"把三个受众不同的信息混为一句。
-- 定性：**原文证据**是客户价值（客户看到标签下挂真实评论才信）；**低置信提醒**是模型内部状态（客户只会读成"你们不准"，无法据此行动）；**`other` 占比**是我方 taxonomy 资产债务（客户看到等于自曝分类覆盖不足）。后两者归内部。
-- 拆分结果：5.9.6-C1 客户前台只做证据展示；5.9.6-C2 内部校准把 `other` / 低置信接入既有 audit → proposal → label-calibration 审批链路。
-- 排期决策：C1 留在 5.9.7-T3 第三块；**C2 单独排，不并入 T3** —— C2 需新增 `new_aspect` 提案动作（现有 4 种动作都只治已有标签 scope），并入会让 enforce 灰度被校准页开发阻塞。
-- 已发现的实现缺口（C2 的实际工作量来源）：WP7/WP8 的回流链路只覆盖 scope 治理那一半 —— `generate_label_proposals.py` 只读 `resolver_reject` / `shadow_diff`；`human_flag` 事件类型已定义但**全仓库零个生产者**；`other` 占比走的是完全独立的 `taxonomy_coverage_monitor` → `sessions.warnings_json` + 飞书链路，从未进 audit / proposal 表。即"other → Erika 审批 → 回流成正确标签"这条路在 C2 之前是断的。
-- **C1 内部告警下架已完成✅（2026-08-07）**：`other` 占比横幅此前已在线（Step 3 监控链路引入，早于 5.9.6-C，不是 C 引入的）。本次在 `taxonomy_coverage_monitor.py` 新增 `INTERNAL_ONLY_WARNING_TYPES` + `filter_customer_visible_warnings()`（fail-closed：无法判定 `type` 的条目按内部丢弃），并在 `analysis.py` 的 `_session_payload()` 统一过滤。**内部信号未减弱** —— DB `sessions.warnings_json`、`trace.record_warning`、飞书推送三条链路全部保持原样，只有客户读路径隐藏。选在 `_session_payload()` 单点过滤而非改前端渲染：前端改法只挡住页面，导出和其他 payload 消费方仍会泄漏。新增 6 个测试。
-- 置信度现状核实：置信度**未**出现在客户 UI，只在导出文件的 `Audit Issue Confidence` / `Audit Highlight Confidence` 等列（`analysis-results-sections.tsx` 的 audit sheet）。这一半本来就符合预期，C1 无需改动。
-
-**5.9.7 启动前置条件（2026-08-07 修订）：**
-
-| # | 前置条件 | 状态 |
-|---|---------|------|
-| 1 | ~~批次 0 全部修完并有 CI 锁定~~ | **✅ 已解除（2026-08-07 commit `c5bf769` + 部署 + 线上验证）**。56 tests 全绿、CI Check 7 exact 断言已加、`/api/health` 线上确认 `taxonomy_index: healthy / 89 sub_categories`。**5.9.7 唯一硬阻塞已消除，可启动** |
-| 2 | waders 配件评论验证：≥10 条真实评论确认 `accessory_leak` / `missing_accessory` 是否正确触发，不通过则降回 `candidate` | 保留。回应 Erika #1 —— scope=1 的标签配不配拿 approved 是治理判断，不是数字核对 |
-| 3 | ~~确认 migration 60 在 dev / prod 的真实执行状态~~ | **✅ 已解除（2026-08-07 Erika 确认）**：`label_registry_audit_events` + `label_registry_proposals` 两张表在 clueai-dev 与 prod 均已执行。原三处矛盾记录（验收包第 10 行 / 第 617 行 / SQL 文件头 `PENDING ERIKA APPROVAL`）已统一订正，SQL 文件头改为 `EXECUTED on clueai-dev + prod`。表结构与 `AuditEvent` dataclass 字段对齐，批次 1 无需改 schema |
-| 4 | ~~shadow 数据链路可用后再开 shadow~~ | **降级**：从"启动 5.9.7 的前置"改为"开 shadow 的前置"。小样本验收走离线脚本，不需要这条链路（决策 s） |
-| 5 | ~~`review_status` 批量审批~~ | **移除**：功能不存在（无写入路径），且即使做出来当前也没有 gate 读它。挂到批次 2-2 |
-
-小样本验收离线脚本的三条硬约束（很便宜，但缺了整批数据作废）：① 启动时断言 5 个 capability_derived 标签的 `effective_scope` 全部非空 —— 不加这条，万一脚本环境 taxonomy 路径不对，跑出来的 30-50 条全是 fail-open 结果，且看起来一切正常（批次 0 完成后此断言等价于「未触发 `SCOPE_UNAVAILABLE`」）；② 必须走与线上同一个 resolver 入口、同一个 `approved_only` 默认值，否则验的是另一套东西；③ **若脚本开 shadow，结束时须显式 `flush_shadow_diffs_to_log()`** —— 离线脚本不经过 middleware（`customer_label_v2_waders_shadow_replay.py:516/578` 直接调 decorate），不显式 flush 则 diff 静默堆内存且一条都不落库。
-
-推荐排期（决策 s）：Day 1 批次 0 + CI 验证 → Day 1.5 批次 3 文档修正 → Day 2-3.5 批次 1，与 5.9.7 小样本验收并行启动（Day 2 起）→ Day 4+ 批次 2 按优先级插入。
-
-**方法论落项（2026-08-07）：** ① 验收包不由交付方单方签收 —— 声明"已验证"的每一条要附实跑命令与原始输出，且需一次独立核验才能进 Erika 审核队列。本次 Bug 1 的发现路径值得记录：分类体系侧凭直觉提出"测试覆盖不完整"（方向猜反，以为是错误拒绝，实际是错误放行），工程侧实跑后定位为 fail-open —— 单独任何一方都不会得出这个结论。② 每个新门禁必须同时有正向锁和反向锁 —— Bug 1 的根因不是代码写错，是测试只锁了"该拒的拒了"，没锁"该过的过了"和"配置坏了要拒"。
-
-**2026-08-06 架构复核补充（读代码全链路后对账 5.9 计划的结果）：**
-
-复核范围：Growth analysis 页面「用户体验 → 产品亮点 / 产品问题」的完整链路，从上传、缓存、LLM 标注、写库，到读路径装饰、TOP10 聚合、前端渲染。
-
-复核结论：5.9 现有路线方向正确，不推翻、不改序。5.9.1 片段契约、5.9.2 taxonomy 白名单、5.9.3 证据门、5.9.6-D scope 治理已覆盖架构上的主要缺口。本次只补 4 项计划中缺失的内容，其中 2 项是 bug。
-
-复核发现的现有链路事实（截至 2026-08-06 代码）：
-
-- 写路径：`workers/jobs.py` → `taxonomy_loader.resolve_aspects()`（命中 `category_aspect_taxonomy`，未命中回退 10 个通用 aspect）→ 三层缓存 → HDBSCAN 聚类只挑代表调 LLM → `annotate_v2.4`（`{{ASPECTS_BLOCK}}` 注入）→ 写 `comments.aspects_json`。
-- 读路径：`decorate_comment_customer_labels()` → `enrich_aspects_json()` 查 `customer_label_catalog`（50 个种子标签，`scope_level` 全为 `global`）+ alias 规则 → 可选附加 v2 / review-signal read model（默认关闭）。
-- 聚合：`_build_customer_label_rows()` 按 `(sub_category, canonical_key)` 分组计数，取前 10。
-- 展示：`insight_engine._build_heuristic_results()` 把 highlight rows 给 `user_experience.positive` 和 `purchase_motives.rows`，issue rows 给 `user_experience.negative` 和 `unmet_needs.rows`。AI 增强层只改 summary 文本，不改 tag 数组。
-- 标签真相源现有三处并存：`customer_label_catalog` 表（50 条，全 global）、`review_fragment_label_registry.yaml`（9 条，全 `["*"]`）、`comments.highlight_tag` / `issue_tag` 遗留字段（legacy fallback）。三处互不知晓，是 5.9.6-D 要收口的对象。
-
-**补充项 1（bug，新增 5.9.6-B.1）：缓存不感知语义版本，会让 5.9.6-D 的成果在 5.9.7 验收时看不见**
-
-- 现状（修复前）：L1 缓存 key = `sha256(内容 + 评分 + sub_category)`（`analysis_cache.compute_content_hash`），命中时只额外校验 `analyzer_version="v4_deep"`（当时 `workers/jobs.py:84`，修复后为 `workers/jobs.py:88`）。该值是静态字符串，从未随 prompt / taxonomy / registry 变更而变化。
-- 后果：5.9.6-D 收窄 scope、补 `boundary_note` 之后，所有 L1 命中的评论仍返回收窄前的标签。5.9.7 若选到历史已分析过的评论，验的是旧结果，会得出"改了没生效"或"改了还是错"的错误结论。
-- 与 5.9.8 的区别：5.9.8 已列"记录 `prompt_version` + `taxonomy_version` + `model_name` + `registry_version`"，但记录 ≠ 参与缓存失效。这四个版本必须进 cache key 与命中校验，不只是写进 artifact。
-- 另 L1 跨用户复用（`get_analyzed_by_content_hash(include_global=True)`），污染会跨账号扩散。
-- 定位：新增为 5.9.6-B.1，排在 5.9.6-B 之后、5.9.6-D 之前。0.5-1 天。
-- **已修复✅（2026-08-06，commit `03200bb`）**：选定"改查询条件"而非"改 hash"——改 hash 会让 `comments.content_hash` 与 `review_pool` 唯一约束 `(platform, product_key, marketplace, content_hash)` 全部失效，影响面远超缓存层。实现：`get_analyzed_by_content_hash()` 增加 `prompt_version` / `taxonomy_version` / `registry_version` / `model_name` 四个参数，用 `aspects_json->>'字段' = %s` 在 SQL 层过滤；user 历史查询和全局 pool 查询共用同一套过滤子句，跨用户污染同样受版本门约束。取值来源：`prompt_version` = `DEFAULT_ANNOTATE_VERSION`；`taxonomy_version` = 新增 `taxonomy_loader.get_taxonomy_version(sub_category)` 查 `category_aspect_taxonomy`（MAX 聚合，未命中回退 `v1.0`）；`registry_version` = `FORMAL_LABEL_REGISTRY_VERSION`（选新 registry 而非旧 `CUSTOMER_LABEL_SCHEMA_VERSION="1.0"`，因后者是静态常量、不随 5.9.6-D 治理变化）；`model_name` = 新增常量 `CACHE_MODEL_NAME="deepseek"`（查询时 LLM 尚未调用、router 会动态选模型，故用常量，模型升级时改常量即可全量失效）。无需 migration：四字段写入已有 `aspects_json` JSONB 列，旧数据缺字段 → `NULL = 'v1.0'` 结果为 NULL（非 TRUE）→ 自动 miss。
-
-**补充项 2（bug，并入 5.9.6-B.1）：L2 缓存分支与 5.9.3 证据门直接冲突**
-
-- 现状：`analysis_cache._check_l2` 对内容 ≤10 字且评分为 1-2 或 5 的评论，不调 LLM 直接给默认结果。
-- 后果：`"Leaks."`（6 字，1 星）含明确产品问题信号，但系统未读它即产出标签，且该标签从未经过 5.9.3 证据门。这属于计划里明确要消除的"无中生有"。
-- 决策：删除 L2 分支。50 用户量级下节省的 LLM 成本不值这个准确性风险。
-- **已修复✅（2026-08-06，commit `03200bb`）**：删除 `_check_l2()` 函数、`L2_MAX_CONTENT_LENGTH` 常量、`apply_cache` 中的 L2 调用、`CacheResult.stats()` 的 L2 计数、`_cache_observability_summary()` 的 `short_text_rating_rule` 来源；`CacheHit.level` 注释收窄为 `"L1" | "L3"`。`apply_cache` 链路由 L1→L2→L3 简化为 L1→L3，`after_l1` 直接传给 L3（无 embedding 时直接作为 remaining）。L3 保留不动，其降级仍归 5.9.8。原 L2 命中的输入（如 `"Leaks."`）现进入 LLM 或 L3。
-
-**补充项 3（并入 5.9.8）：TOP10 占比未区分证据来源**
-
-- 现状：L3（余弦 > 0.95 整份复用邻居结果）+ 聚类传播（一簇只读 1 条，其余继承并标 `cluster_propagated=True`）叠加后，一批 500 条评论可能只有几十条真被 LLM 读过；这些 occurrence 仍进入 TOP10 计数。
-- 后果：传播来的标签是最隐蔽的一种无中生有——单条评论上看合理，只在占比数字上失真。用户看到"32% 的人说防水好"时，该比例可能大部分由推断产生。
-- 决策：TOP10 行拆分 `verified_count`（LLM 直接读过）/ `propagated_count`（聚类传播），L3 来源不计入占比只作辅助信号。`_build_customer_label_rows` 已有 `propagated_occurrence_counter`，具备实现基础。
-- 附带价值：前台明示"多少条直接读取、多少条相似归纳"，是可对外讲的差异点，竞品普遍不披露。
-
-**补充项 4（并入 5.9.6-D 工作包 8）：审核页面提前，降低验收摩擦**
-
-- 现状：候选标签走 `scripts/*.py` 生成 CSV / JSON / XLSX artifact，靠本地跑脚本 + 看表格 + 手改 YAML，无 UI。
-- 后果：5.9.6-D 是 8-12 人日，若中途验收摩擦不降，"连续写很多天代码后才让 Erika 看结果"的问题会再犯一次——这正是 5.9.8 / 5.9.9 走偏的机制之一。
-- 决策：工作包 8 增加最简内部页 `/settings/label-review`，只做三件事：候选队列列表、approve / reject / merge、写回 YAML 并自动生成负例回归用例。1-1.5 天。
-- 验收目标：一个新类目的 TOP20 候选能在 20 分钟内审完。
-
-**5.9.6-D 工作包 3 降级说明（Scope Compiler → scope 校验脚本）**
-
-- 原计划：完整 Scope Compiler，从 taxonomy / capability 编译 `effective_scope_matrix` + scope diff，2-3 天。
-- 降级理由：Compiler 的复利来自标签库规模。当前只有 9 个 approved label、3-5 个真正精做的子类目，手写 scope + 校验脚本已足够；等标签库超过 50 条、类目超过 20 个再补，届时对 compiler 该怎么写也更清楚。
-- 降级后范围（0.5 天）：脚本校验三件事 —— 禁止无 `scope_reason` 的 `*`；`allowed_aspect_keys` 必须存在于该 sub_category 的 taxonomy 白名单；每个 approved label 必须至少各有一条正例和负例。
-- 省下的 2 天转入工作包 7（错标回流）和工作包 8（审核页面）—— 这两项随标签库增长持续产生复利。
-- 5.9.6-D 总量由 9-13 天调整为 8-12 天（compiler 省 2 天，审核页加 1-1.5 天）。
-- 完整 Scope Compiler 挂到 5.9.9 或中期（50 → 500 用户阶段），触发条件：标签库 > 50 条或精做子类目 > 20 个。
-
-**长期分期口径（本次复核确认，与 5.9.8 的 50 用户门槛对齐）**
-
-| 期 | 用户规模 | 核心目标 | 对应阶段 |
-|---|---|---|---|
-| 初期 | 0 → 50 | 3-5 个子类目做到"展示的都是对的"，不追覆盖率；候选池不展示、不做 fallback；审核成本控制在每周 2 小时内 | 5.9.6-B → 5.9.6-B.1 → 5.9.6-D → 5.9.7 → 5.9.8 |
-| 中期 | 50 → 500 | 高置信候选自动转正；跨类目 scope 升级机制；黄金集回归门禁；用户端错标反馈自动回流；标签健康度看板；完整 Scope Compiler；品类扩到 30-50 个 | 5.9.9 及后续 |
-| 长期 | 500+ | 用户私有标签；行业标签包产品化；主动学习挑高信息量样本；黄金集微调小模型降本；招标注运营接管审核队列 | 待规划 |
-
-- 初期关键取舍：新品类前几批分析覆盖率会低（多数片段落候选池不展示），但展示出来的一定对。对付费用户而言，10 个准确洞察的价值高于 30 个里混 8 个错的，后者直接摧毁信任。
-- 中期核心指标：新品类从零到可上线的时间，从初期 2-3 天压到半天以内；不达标则不继续扩品类。
-
-**补充后的执行顺序（2026-08-06 确认）**
-
-```
-5.9.6-B    active 接入对账与冻结              0.5-1.5 天
-   ↓
-5.9.6-B.1  缓存语义版本化 + 删 L2  完成✅      0.5 天(实际)  ← 5.9.7 可信度前提已就位
-   ↓
-5.9.6-D    工作包 1/2  scope DoD + schema     1.5-2.5 天 ✅ 已完成（2026-08-06）
-           工作包 3    scope 校验脚本(降级)     0.5 天   ✅ 已完成（2026-08-06）
-           工作包 4/5  resolver fail-closed
-                       + 9 标签重标 ✅已完成    3-4.5 天
-           工作包 6/7  active 接入 + 错标回流   2-4 天   ✅ 已完成（2026-08-06）
-           工作包 8    CI 门禁 + 审核页 ★       2-2.5 天 ✅ 已完成（2026-08-06）
-   ↓
-5.9.6-C    前台提示                           0.5-1 天
-   ↓
-5.9.7      小样本验收                          3-5 天
-   ↓
-5.9.8      商业化前补强（含 TOP10 来源分级 ★）  1-2 周
-```
-
-- 总量与原计划基本持平（compiler 省 2 天，补到审核页面），但 5.9.7 的验收结果从"可能验的是旧缓存"变为可信。
-- 5.9.6-B.1 不依赖 5.9.6-B 的对账结论，两者可并行；若要严格串行，也只增加 0.5 天。
-- 2026-08-06 更新：5.9.6-B.1 已完成✅并部署（实际 0.5 天，落在估期下限）。5.9.6-D 完成后改 `registry_version` 即可让全部旧缓存自动失效，5.9.7 不再需要人工清缓存或挑"没分析过的评论"。部署后首轮分析预期 L1 命中率接近 0（旧 `aspects_json` 缺三个新字段），属预期行为，重跑一轮后恢复复用。
-
-**阶段性人工验证闸门（每阶段结束必须做，防止方向跑偏）：**
-
-这不是重运营客户交付，而是产品内部轻量抽检。每个阶段结束后，先给 Erika 看固定格式的样例输出，确认“系统理解方式和前台展示方向”没有偏，再进入下一阶段。
-
-**Erika 必须验收的点：**
-
-- 标签有没有对应原文。
-- 标签是不是原文真实表达的意思。
-- 有没有错标、漏标、重复、无中生有。
-- 片段有没有流错模块。
-- 旧产品、竞品、配件、物流、售后有没有被误当成当前产品亮点或问题。
-- 泛泛好评有没有被硬扩展成多个具体亮点。
-- 正负向有没有标反。
-
-| 阶段 | 人工验证材料 | Erika 检查重点 | 预计耗时 | 通过条件 |
-|---|---|---|---:|---|
-| 5.9.0 | 旧路线隔离清单 + active read path 说明 | 哪些旧代码会继续影响前台；哪些只是历史参考；新方向入口是否清楚 | 15-30 分钟 | Erika 能清楚知道“哪些不再碰、哪些可复用、哪些后面删”，且旧实验不会默认影响用户结果 |
-| 5.9.1 | 3-5 条真实评论的片段级 JSON / 表格 | 片段是否拆得自然；模块是否分对；字段是否能让非技术人看懂 | 10-20 分钟 | Erika 能看懂并认可字段结构，不再出现“只有标签没有原文片段”的输出 |
-| 5.9.2 | 10 条评论的 taxonomy 白名单命中表 | 标签是否属于当前子品类；库外标签是否被降级；`other` 是否合理 | 15-20 分钟 | 正式标签没有明显类目错配；库外标签没有直接进前台 |
-| 5.9.3 | 10 条带证据的标签样例 | 每个标签是否真的能在原文里找到依据；旧产品/竞品/配件/物流是否被拦住 | 20-30 分钟 | 无证据标签不进统计；明显污染样例被 `can_aggregate=false` |
-| 5.9.4 | candidate / other + 多模块承接样例 | 候选标签是不是“值得以后考虑的新问题”；使用场景/人群是否进入消费者画像；购买原因是否进入消费动机；期待缺口是否进入未满足需求；有没有把正式标签误丢到候选池 | 20-30 分钟 | candidate 只承接不确定或未覆盖问题，不污染 TOP10；非产品问题/亮点片段进入正确模块 |
-| 5.9.4.1-A | 标签体系分层定义升级 | 5.9.1-5.9.3 是否都清楚表达“没有被推翻，而是统一到 `module` / `aspect_key` / `issue_key` 三层框架”；是否消除了旧口径和新口径冲突 | 10-15 分钟 | Erika 能看懂先升级底层定义，再做 5.9.4.1-B 实现 |
-| 5.9.4.1-B | 卖家可行动问题返修样例 | `aspect_key` 和 `issue_key` 是否分清；配件漏水、配件缺失、尺码表不清、发货晚、漏水归并是否进入正式 TOP10；是否还误留在 candidate / audit | 20-30 分钟 | Erika 审批过的可行动问题进入 `formal_top10_rows`；前序 taxonomy / evidence 规则不被推翻 |
-| 5.9.5 | 校验失败 / 重试 / 降级案例清单 | 失败原因是否可理解；降级是否保守；有没有整批分析被单条坏输出拖垮 | 10-15 分钟 | 坏输出可追踪、可降级，主流程不中断 |
-| 5.9.5.1 | 字段语义确认表 + 行动中心输入/输出示例 | 是否确认只保留 `aspect_key`、`issue_key`、`highlight_key`；是否确认删除 `action_label_key` / formal `normalized_label`；行动中心是否能用 issue key、证据和趋势生成 `suggested_action`，且不需要 `recommended_action_key` | 10-15 分钟 | 正式行必须有 issue/highlight 身份；`shipping_damage` 已映射为正式 issue；行动中心字段口径不再依赖动作 key |
-| 5.9.6-A | `docs/5.9.6-A-label-registry-human-review.md` + registry/resolver 测试结果 | approved label、alias、aspect mapping、display mapping 是否来自统一 Catalog/resolver；是否返回状态、边界说明和 `registry_version`；物流两个 issue 是否归入 `logistics_issue`；禁用字段是否未进入 registry 核心模型 | 10-15 分钟 | resolver 可解析 issue/highlight；alias 和物流边界正确；active 不直接依赖实验模块标签常量；Erika 已审批通过 |
-| 5.9.6-B | active/read-path inventory + flag/guard 表 | 已存在的 `customer_label_v2_frontstage` / `review_signal_frontstage` / `specific_issue.py` / results/export read path 分别做了什么；哪些是兼容层，哪些必须改造接入 Registrar；有没有默认打开或绕过 scope gate 的入口 | 20-40 分钟 | Erika 能清楚知道 5.9.6-B 不是“未开始”也不是“已完成”；旧 read-model 被冻结；继续实现前先有可复用/需改造/需删除清单 |
-| 5.9.6-D | scope diff + effective scope matrix + 正负例回归 + registry proposal 样例 | 哪些标签被判定为通用，为什么；waterproof、seam_integrity、accessory_storage 为什么只适用特定类目；不适用品类的负例是否会被拦住；错标如何回流成 proposal / blocked rule / 负例 | 45-90 分钟 | 无理由 `["*"]` 不再通过；resolver 缺 category/sub_category 时 fail closed；每个正式标签有适用/不适用解释；负例不会进入 TOP10；错标回流链路可执行 |
-| 5.9.6-D WP9 裁决 | 2026-08-07 已完成材料 1-4 + 工程侧独立核验 + 返修计划 | 已裁决：材料 1/2/3 签收（条件 2、3 ✅）；条件 1 ⚠️ 有条件通过（Bug 1 可静默复现 `["*"]`）；条件 4 ⚠️ 已具备能力未在运行时生效（默认 off、enforce 未交付）；条件 5 ❌ 不通过（回流链路每一跳都断）。三份文档：[验收包](docs/5.9.6-D-wp9-erika-acceptance-package.md) / [技术审核](docs/5.9.6-D-wp9-technical-audit.md) / [调整计划](docs/5.9.6-D-wp9-adjustment-plan.md) | 已完成 | 返修批次 0/1/3 共 3-3.2 人日完成后条件 1、5 转 ✅；条件 4 待批次 2-5 交付 enforce |
-| 5.9.6-D WP9 返修 | 2026-08-07 批次 0/1a/1b/3 已交付并部署（4 commits: `c5bf769` `c09f751` `8f9b849` `54602c3` + 文档 `efd8122`） | 批次 0（P0 门禁）：SCOPE_UNAVAILABLE + 启动自检 + CI Check 7 + 8 tests (48→56)。批次 1a（route 层）：Bug 3 get_proposal_by_id + Bug 4 merge 501 + alias_merge 跨类型阻断。批次 1b（shadow 落库）：Bug 5/6 ContextVar 隔离 + audit persist 中间件 + Bug 5b generate_label_proposals.py。批次 3（文档）：10 项验收包修正。全部 56 tests PASS、ruff clean、validate_label_scope.py --dry-run 0 failures、scope matrix 89/89/89/89/5/5/16/1/1 不变 | ✅ 已完成并部署 + 线上验证 7/7 通过 | 条件 1 ✅（Bug 1 已修，正向路径 + 配置漂移均 CI 锁）；条件 5 ✅（reflux pipeline 已修复）；条件 4 仍 ⚠️（默认 `mode=off`、enforce 未交付，待批次 2-5）；批次 2（patch generation，不阻塞 5.9.7）转入后续迭代 |
-| 5.9.6-D WP9 线上验证 | 2026-08-07 部署后 7 项验证 | ① `/api/health` → `taxonomy_index: healthy` / `89 sub_categories`（启动自检生效且可观测）；② `GET /proposals?status=all` → 200 `{"proposals":[],"total":0}`；③ `POST /review` merge → 404 先查 proposal 存在性（gate 顺序正确，Bug 3 修复已验证）；④ `/settings/golden-set` 两 Tab 正常渲染；⑤ Registry Review tab 四状态筛选 + Reviewer Note + 空态文案；⑥ 旧 URL `/settings/label-review` redirect 正常；⑦ console 0 error / 0 warning | ✅ 7/7 | `LABEL_REGISTRY_AUDIT_PERSIST` 保持默认 off，生产暂不开启 audit 落库；待 staging 验证延迟影响后再决定 |
-| 5.9.6-C1 | 结果页 / 导出截图或本地预览 | 用户能否看到正式标签、占比、原文证据；**客户 UI 是否已无置信度、无 `other` 占比横幅**；前台展示是否只使用 scope gate 通过的正式标签；行动中心是否能从 issue key 创建 AI 建议 | 30-45 分钟 | 页面、导出、insight 使用同一 artifact；正式行都有 issue/highlight key 且 scope 通过；客户 UI 无内部告警；行动中心不要求 `recommended_action_key`；waders 旧补丁冻结保留且未扩大 |
-| 5.9.6-C2 | `/settings/golden-set` label-calibration tab | `other` 高占比批次能否看到具体片段而非只有百分比；低置信标签能否标记待校准；`new_aspect` 提案审批通过后能否落到 YAML | 30-45 分钟 | 审批页能看到 `human_flag` 来源的提案；审批动作能回流 registry / taxonomy YAML 并 bump 版本；内部信号（飞书 + DB）仍保留 |
-| 5.9.7 | 45 条小样本验收（阶段 1 ✅ scope gating；阶段 2 ⏸️ TOP10+行动中心，拆为 T1-T4） | Scope gating 通过（165 out_of_scope/0 scope_unavailable/alias 16:16/跨类目负例 ✅）。原"证据门禁缺失"P0 已撤回。真实阻断：cluster 传播污染。→ 解锁路径：T1 统计生产占比 → T2 修复传播 → T3 前台灰度+enforce → T4 出口验证+全类目开放 | 2-3h（阶段 1）+ 4-6 天（T1-T4） | 全部出口条件满足；TOP10 符合产品直觉；行动中心端到端可用；全类目开放 |
-| 5.9.8 | mini Golden Set 报告 + 标签/P​​rompt 版本追踪样例 + 清理清单 | 重点品类是否可回归；`prompt_version` / `taxonomy_version` / `model_name` / `registry_version` 能否追溯和回滚；行动中心历史记录是否不依赖已删除字段；旧 `customer_label_v2_*` / `review_signal_*` / waders 数据和代码是否可分批归档或删除 | 30-60 分钟 | 重点品类有最小质量基线；标签注册变更可追溯；行动建议仍以 AI 文本保存；达到承接 50 名付费用户的商业化稳态门槛 |
-
-**人工验证停止规则：**
-
-- 任一阶段出现“标签无原文依据仍进入 TOP10”，必须停下修门禁。
-- 任一阶段出现“旧产品/竞品/无证据内容被算成当前产品亮点或问题”，必须停下补边界。
-- 任一阶段出现“卖家可行动的发货、履约、配件、尺码表、详情页信息问题被藏到 candidate / audit”，必须停下补 TOP10 口径。
-- 任一阶段出现“formal label 在 resolver 未收到当前 category/sub_category 时仍进入展示或 TOP10”，必须停下改为 fail closed。
-- 任一阶段出现“`category_keys` / `sub_category_keys` 使用 `["*"]` 但没有 `scope_reason`、正例、负例和人工审核记录”，必须停下补 Registrar 证据或收窄 scope。
-- 任一阶段出现“active results / export / insight / action handoff 绕过统一 Registrar / resolver / scope gate 直接消费旧实验标签或 read model”，必须停下改入口。
-- 任一阶段出现“waterproof、seam_integrity、accessory_storage 这类依赖类目能力的标签在不适用类目展示”，必须停下补 scope compiler、负例和回流规则。
-- 任一阶段 Erika 无法用样例表理解系统在做什么，必须先改输出说明，而不是继续写后续功能。
-- 人工验证只看样例和关键失败，不要求 Erika 审全量客户数据。
-
-**旧路线清理策略（先隔离，后减负删除）：**
-
-由于 5.9.8 / 5.9.9 走过多轮 shadow、frontstage、waders 专项修补和 review-signal 试验，仓库里确实存在一批不适合继续作为主线的代码和数据。但不建议现在直接大删，原因是其中一部分仍有复用价值：candidate pool 的本地 artifact、bad case、gold fixtures、证据门禁经验、taxonomy 边界样例，都可以服务新的 5.9。
-
-隔离只是短期保护，不是永久保留。5.9.0 完成后必须进入减负收口，避免旧代码长期增加 AI 搜索、理解和修改成本。
-
-| 类型 | 处理方式 | 说明 |
-|---|---|---|
-| 可复用资产 | 保留并改名/收编 | `category_aspect_taxonomy`、Golden Set、other 告警、candidate pool artifact、bad case、waders 边界样例可进入新 5.9 |
-| 旧实验代码 | 冻结隔离 | `customer_label_v2_*`、`review_signal_*` 先保持 feature flag 默认 off；不作为新实现依赖，除非明确收编 |
-| 历史文档/报告 | 归档参考 | 5.9.8 / 5.9.9 文档保留在历史归档中，用于解释为什么旧路线不再继续 |
-| 无运行价值文件 | 后续删除 | 确认无 import、无测试依赖、无归档价值后再删；删除前必须跑 active read path / export / worker import 检查 |
-
-**减负收口规则：**
-
-- `保留复用`：必须改成新 5.9 命名或被新服务显式收编；不能继续以旧实验名作为主入口。
-- `冻结隔离`：旧实验保持 feature flag 默认 off，不再作为新实现依赖；waders 旧规则例外短期保留为前台安全补丁，但冻结不扩张。
-- `归档参考`：文档可移动到历史归档目录；不再作为新任务默认阅读材料。
-- `后续删除`：5.9.7 通过新 fragment 链路和 waders hard cases 验收后，达到启动分批删除的最低门槛；5.9.8 商业化补强阶段按文件组小批量删除，每批删除后跑最小回归，避免一次大删造成不可控风险。
-- 对 AI 协作友好：保留一个 `5.9-active-readme` 或等价说明，明确当前主线文件、不要默认读取旧 5.9.8 / 5.9.9 实验文件。
-
-**删除前必须满足：**
-
-- `rg` / import 检查确认 active runtime 不再引用。
-- 对应测试不是当前安全门禁的一部分，或已有新测试替代。
-- 历史数据中有需要保留的 bad case / evidence / human gold 已迁入新样例或归档。
-- 删除后 `analysis results`、`export`、`worker upload/analyze`、`frontend typecheck` 不受影响。
-
-**总工作量：**
-
-- 最低可用阶段一落地版：2-3 周（含 5.9.0 旧路线隔离清点）。
-- 比较稳的早期商业化版：4-5 周。
-- 若超过 6 周，视为范围失控，需要砍需求而不是继续堆功能。
-
-**触发式维护规则（避免 OPC 重运营）：**
-
-- `other` 占比 > 15%：提示该品类 taxonomy 覆盖不足。
-- 某 candidate 标签出现 >= 10 次：进入待处理清单。
-- 用户反馈同一标签错了 >= 3 次：进入待处理清单。
-- 某品类出现付费用户或占付费用户 > 20%：补 mini Golden Set。
-- 每次维护只处理 Top 3 候选：保留、合并、改名、禁用或补 `boundary_note`。
-
-**停止线：**
-
-- 不继续围绕单个类目无限手写规则。
-- 不让库外标签、无证据标签、低置信标签进入正式 TOP10。
-- 不把“测试流程通过”当成“标签质量通过”。
-- 不把 Pydantic AI、小模型训练、全品类 Golden Set 作为 5.9 阶段一落地前置。
+不是"每个新类目都写规则"。三类分开：第 1 类语义陷阱守卫 → 提取共享（D1）；第 2 类类目能力维度 → 新类目填表声明，系统自动推导；第 3 类硬编码关键词 → 停止新增 + 分批退役（D3）。判定标准：只对一个类目成立的是债，对所有类目成立且只做否决的是资产。完整论证见基线文档第 4 节。
 
 ## 6. 技术优化
 
