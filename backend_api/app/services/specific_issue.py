@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
+import os
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -16,6 +18,24 @@ ISSUE_RULESET_VERSION = "2026-07-24-customer-label-system"
 HIGHLIGHT_RULESET_VERSION = "2026-07-24-customer-label-system"
 CUSTOMER_LABEL_RULESET_VERSION = f"{ISSUE_RULESET_VERSION}+{HIGHLIGHT_RULESET_VERSION}"
 CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION = "2026-07-28-phase7-waterproof-positive-guard"
+
+logger = logging.getLogger(__name__)
+
+# 5.9.7-T4 Layer 0：content rule candidate 极性对撞守卫
+# 规则层 regex 只看孤立关键词，无法理解否定/转折/反讽（"aren't waterproof" 被当成正向）。
+# LLM 在 deep_analyzer 阶段已逐 aspect 标好 polarity，且已随 aspects_json 落库。
+# 本守卫在 content rule candidate 落地前，拿它的 aspect_key 去对撞 LLM 已有极性：
+#   highlight candidate 撞 negative → 否决
+#   issue     candidate 撞 positive → 否决
+#   neutral / LLM 未提该 aspect     → 放行（不是冲突，是没表态）
+# 设 CONTENT_RULE_POLARITY_GUARD_ENABLED=false 可紧急关闭。
+_POLARITY_GUARD_ENV = "CONTENT_RULE_POLARITY_GUARD_ENABLED"
+
+# label_type → 与该类型冲突的 LLM 极性
+_CONFLICTING_POLARITY_BY_LABEL_TYPE: dict[str, str] = {
+    "highlight": "negative",
+    "issue": "positive",
+}
 
 _OCCURRENCE_SOURCES = {"llm", "rule", "human", "legacy"}
 
@@ -2169,6 +2189,74 @@ def _has_frontstage_key(
     return False
 
 
+def _is_polarity_guard_enabled() -> bool:
+    """Layer 0 极性对撞守卫总开关（默认开，设 env=false 紧急关闭）."""
+    return os.getenv(_POLARITY_GUARD_ENV, "true").strip().lower() != "false"
+
+
+def _llm_polarity_by_aspect_key(aspects_json: dict[str, Any] | None) -> dict[str, set[str]]:
+    """从 aspects_json 提取 aspect_key → LLM 已判定极性集合.
+
+    只采信本条评论自身的 LLM 判断：cluster 传播来的 aspect 极性属于"从别人那里抄来的"，
+    不能用来否决本条评论的规则 candidate，故整体或单条 cluster_propagated 的一律跳过。
+    """
+    if not isinstance(aspects_json, dict):
+        return {}
+    if aspects_json.get("cluster_propagated"):
+        return {}
+    aspects = aspects_json.get("aspects")
+    if not isinstance(aspects, list):
+        return {}
+    polarity_map: dict[str, set[str]] = {}
+    for aspect in aspects:
+        if not isinstance(aspect, dict):
+            continue
+        if aspect.get("cluster_propagated"):
+            continue
+        key = str(aspect.get("key") or "").strip()
+        polarity = str(aspect.get("polarity") or "").strip().lower()
+        if not key or polarity not in {"positive", "negative", "neutral"}:
+            continue
+        polarity_map.setdefault(key, set()).add(polarity)
+    return polarity_map
+
+
+def _polarity_guard_rejects_candidate(
+    candidate: dict[str, Any],
+    *,
+    label_type: str,
+    polarity_by_aspect_key: dict[str, set[str]],
+) -> bool:
+    """判断 content rule candidate 是否与 LLM 已有极性冲突.
+
+    匹配范围 = candidate 自身 aspect_key + 该 canonical label 的别名 aspect_key 集合，
+    因为规则写死的 aspect_key 与 LLM 实际使用的同义维度可能不同
+    （如 keeps_water_out 规则写 waterproof，LLM 可能给 waterproof_performance）。
+
+    裁决：同一 label 相关维度上，只要存在任一"支持"极性即放行（评论可能同时夸又骂，
+    规则匹到的正向证据可能是真的）；仅当相关维度全部指向冲突极性时才否决。
+    """
+    conflicting = _CONFLICTING_POLARITY_BY_LABEL_TYPE.get(label_type)
+    if not conflicting:
+        return False
+    supporting = "positive" if conflicting == "negative" else "negative"
+
+    canonical = str(candidate.get("canonical_label_key") or "").strip()
+    aspect_keys: set[str] = set(_ALLOWED_ASPECT_KEYS_BY_LABEL.get(label_type, {}).get(canonical) or set())
+    candidate_aspect_key = str(candidate.get("aspect_key") or "").strip()
+    if candidate_aspect_key:
+        aspect_keys.add(candidate_aspect_key)
+    if not aspect_keys:
+        return False
+
+    observed: set[str] = set()
+    for key in aspect_keys:
+        observed |= polarity_by_aspect_key.get(key, set())
+    if supporting in observed:
+        return False
+    return conflicting in observed
+
+
 def _append_waders_content_rule_occurrences(
     comment: dict[str, Any],
     occurrences: list[dict[str, Any]],
@@ -2194,10 +2282,26 @@ def _append_waders_content_rule_occurrences(
             content=content,
             sub_category=sub_category,
         )
+    polarity_by_aspect_key: dict[str, set[str]] = {}
+    if candidates and _is_polarity_guard_enabled():
+        polarity_by_aspect_key = _llm_polarity_by_aspect_key(aspects_json)
+
     result = list(occurrences)
     for candidate in candidates:
         canonical = str(candidate.get("canonical_label_key") or "")
         if not canonical:
+            continue
+        if polarity_by_aspect_key and _polarity_guard_rejects_candidate(
+            candidate,
+            label_type=label_type,
+            polarity_by_aspect_key=polarity_by_aspect_key,
+        ):
+            logger.debug(
+                "content rule polarity guard: rejected %s/%s on comment_id=%s (LLM polarity conflict)",
+                label_type,
+                canonical,
+                comment.get("id"),
+            )
             continue
         if _has_frontstage_key(comment, result, label_type=label_type, canonical_label_key=canonical, locale=locale):
             continue
@@ -4480,10 +4584,17 @@ def _apply_enforce_filter(
     rejected_keys: set[str],
     sub_category: str,
 ) -> None:
-    """Filter rejected labels from aspects list in enforce mode.
+    """Filter rejected labels in enforce mode.
+
+    .. rubric:: 5.9.6-C1 fix (2026-08-10)
+
+    Also filters ``aspects_json.customer_label_occurrences`` (the V2 data
+    path actually used by ``_project_customer_label_occurrence``).  The
+    old ``aspects`` array filtering is kept for backward compatibility.
 
     Fail-closed: exceptions are logged and all labels are kept.
-    Mutates `decorated` in place by replacing aspects_json with a filtered copy.
+    Mutates ``decorated`` in place by replacing ``aspects_json`` with a
+    filtered copy.
     """
     import copy
     import logging
@@ -4493,11 +4604,14 @@ def _apply_enforce_filter(
     try:
         # Deep copy to avoid mutating shared references
         new_aj = copy.deepcopy(aj)
+        total_removed = 0
+        aspect_removed = 0
+        occ_removed = 0
+
+        # --- V3 legacy: aspects array ---
         aspects: list[dict[str, Any]] = [
             a for a in new_aj.get("aspects") or [] if isinstance(a, dict)
         ]
-        filtered: list[dict[str, Any]] = []
-        removed_count = 0
 
         for aspect in aspects:
             issue_key = str(aspect.get("canonical_issue_key") or "").strip()
@@ -4510,18 +4624,36 @@ def _apply_enforce_filter(
                 aspect["display_allowed"] = False
                 aspect["registry_rejected"] = True
                 aspect["registry_reject_sub_category"] = sub_category
-                removed_count += 1
+                aspect_removed += 1
 
-            filtered.append(aspect)
+        # --- V2 current: customer_label_occurrences ---
+        occs: list[dict[str, Any]] = [
+            o
+            for o in new_aj.get("customer_label_occurrences") or []
+            if isinstance(o, dict)
+        ]
 
-        if removed_count > 0:
-            new_aj["aspects"] = filtered
-            new_aj["registry_enforce_filtered"] = removed_count
+        for occ in occs:
+            label_key = str(occ.get("canonical_label_key") or "").strip()
+            if label_key and label_key in rejected_keys:
+                occ["display_allowed"] = False
+                occ["registry_rejected"] = True
+                occ["registry_reject_sub_category"] = sub_category
+                occ_removed += 1
+
+        total_removed = aspect_removed + occ_removed
+
+        if total_removed > 0:
+            new_aj["aspects"] = aspects
+            new_aj["customer_label_occurrences"] = occs
+            new_aj["registry_enforce_filtered"] = total_removed
             decorated["aspects_json"] = new_aj
             _logger.info(
                 "label_registry_frontstage: enforce filter removed %d labels "
-                "from display for sub_category=%s",
-                removed_count,
+                "(aspects=%d, occurrences=%d) for sub_category=%s",
+                total_removed,
+                aspect_removed,
+                occ_removed,
                 sub_category,
             )
     except Exception:
