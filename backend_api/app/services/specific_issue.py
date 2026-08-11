@@ -3676,6 +3676,13 @@ def enrich_aspects_json(
     enriched["customer_label_occurrence_schema_version"] = CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION
     enriched["customer_label_occurrence_ruleset_version"] = CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION
     enriched["customer_label_occurrences"] = occurrences
+    # other 片段计数 —— 供验收基线六指标使用
+    _other_count = sum(
+        1 for occ in occurrences
+        if str(occ.get("aspect_key") or "").strip() == "other"
+    )
+    enriched["_other_fragment_count"] = _other_count
+    enriched["_total_fragment_count"] = len(occurrences)
     enriched["issue_ruleset_version"] = ISSUE_RULESET_VERSION
     enriched["highlight_ruleset_version"] = HIGHLIGHT_RULESET_VERSION
     if normalized_sub_category:
