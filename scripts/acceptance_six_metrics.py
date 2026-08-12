@@ -42,6 +42,7 @@ sys.path.insert(0, str(ROOT))
 # 生产链路函数（与 workers/jobs.py 同一条）
 # ---------------------------------------------------------------------------
 from backend_api.app.services.deep_analyzer import analyze_batch as deep_analyze_batch
+from backend_api.app.services.prompt_registry import DEFAULT_ANNOTATE_VERSION
 from backend_api.app.services.specific_issue import (
     CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
     HIGHLIGHT_RULESET_VERSION,
@@ -51,7 +52,6 @@ from backend_api.app.services.specific_issue import (
     iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
 )
-from backend_api.app.services.prompt_registry import DEFAULT_ANNOTATE_VERSION
 from backend_api.app.services.taxonomy_loader import (
     get_fallback_aspects,
     get_taxonomy_version,
@@ -323,7 +323,7 @@ def _serial_violation_count(
 ) -> int:
     """数串台：已知串台类 canonical key 出现在系统输出里的条数."""
     count = 0
-    for sample, sys_out in zip(samples, system_outputs):
+    for _sample, sys_out in zip(samples, system_outputs):
         all_keys = sys_out["issue"] | sys_out["highlight"]
         if all_keys & serial_keys:
             count += 1
@@ -634,12 +634,14 @@ def print_report(
     print(f"| 串台数 | {sv} | 必须 = 0 | {sv_pass} | 已知串台label出现在系统输出中的条数（{', '.join(metrics['serial_keys_checked'])}） |")
 
     mfr = metrics["module_flow_rate"]
+    mfr_display = "—" if mfr is None else f"{mfr:.1f}%"
     mf_pass = "✅" if (mfr is not None and mfr >= 90.0) else ("❌" if mfr is not None else "⚠️")
-    print(f"| 模块流向正确率 | {"—" if mfr is None else f'{mfr:.1f}%'} | ≥ 90% | {mf_pass} | {metrics['module_flow_note']} |")
+    print(f"| 模块流向正确率 | {mfr_display} | ≥ 90% | {mf_pass} | {metrics['module_flow_note']} |")
 
     oth = metrics["other_rate"]
+    oth_display = "—" if oth is None else f"{oth:.1f}%"
     oth_pass = "✅" if (oth is not None and oth <= 15.0) else ("❌" if oth is not None else "⚠️ 无法测量")
-    print(f"| other 占比 | {"—" if oth is None else f'{oth:.1f}%'} | ≤ 15% | {oth_pass} | {metrics['other_note']} |")
+    print(f"| other 占比 | {oth_display} | ≤ 15% | {oth_pass} | {metrics['other_note']} |")
 
     print()
     print(f"**汇总**：系统输出标签 {metrics['total_system']} 个，gold 标签 {metrics['total_gold']} 个")

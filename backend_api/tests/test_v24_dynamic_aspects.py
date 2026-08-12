@@ -417,7 +417,7 @@ def test_schema_retry_exhausted_returns_error() -> tuple[int, int]:
     schema_errors = r.get("schema_errors", [])
     if len(schema_errors) == 2:
         p += 1
-        print(f"[OK]   schema_errors 记录 2 次失败明细")
+        print("[OK]   schema_errors 记录 2 次失败明细")
     else:
         f += 1
         print(f"[FAIL] schema_errors 数量={len(schema_errors)} expected=2")
@@ -444,7 +444,7 @@ def test_schema_retry_exhausted_returns_error() -> tuple[int, int]:
             print("[FAIL] 重试消息缺少错误反馈")
     else:
         f += 1
-        print(f"[FAIL] captured messages 不足")
+        print("[FAIL] captured messages 不足")
 
     return p, f
 
@@ -496,7 +496,7 @@ def test_schema_retry_different_taxonomy_allowed_keys() -> tuple[int, int]:
         print("[OK]   反馈的 allowed keys 仅含当前 taxonomy（size_fit/material/aesthetics/other）")
     else:
         f += 1
-        print(f"[FAIL] captured messages 不足")
+        print("[FAIL] captured messages 不足")
 
     return p, f
 
