@@ -70,15 +70,16 @@ class EvalResult:
 
 
 def _get_api_key() -> str:
-    api_key = os.getenv("DEEPSEEK_API_KEY")
+    """读取 llm_router 实际使用的 OPENAI_API_KEY（2026-08 已从 DeepSeek 迁移到 OpenAI+Gemini 双模型链）."""
+    api_key = os.getenv("OPENAI_API_KEY")
     if api_key:
         return api_key
     env_path = Path(__file__).resolve().parent.parent.parent / ".env"
     if env_path.exists():
         for line in env_path.read_text().splitlines():
-            if line.startswith("DEEPSEEK_API_KEY="):
+            if line.startswith("OPENAI_API_KEY="):
                 return line.split("=", 1)[1].strip().strip('"').strip("'")
-    raise RuntimeError("DEEPSEEK_API_KEY 未配置")
+    raise RuntimeError("OPENAI_API_KEY 未配置（llm_router 需要此环境变量）")
 
 
 def _resolve_system_prompt(base_prompt: str, sub_category: str) -> str:

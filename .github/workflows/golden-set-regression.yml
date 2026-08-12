@@ -49,17 +49,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas openai python-dotenv
 
-      - name: Check DEEPSEEK_API_KEY 配置
+      - name: Check OPENAI_API_KEY 配置
         run: |
-          if [ -z "${{ secrets.DEEPSEEK_API_KEY }}" ]; then
-            echo "❌ 仓库未配置 DEEPSEEK_API_KEY secret，跳过本次评测"
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "❌ 仓库未配置 OPENAI_API_KEY secret，跳过本次评测"
             echo "在 Settings → Secrets and variables → Actions 添加该 secret"
             exit 1
           fi
 
       - name: 运行 Golden Set v1.0 评测（家具家居基线）
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PROMPT_VERSION: ${{ github.event.inputs.prompt_version || 'v2.3' }}
           MIN_ACCURACY: ${{ github.event.inputs.min_accuracy || '0.93' }}
         run: |
@@ -73,7 +73,7 @@ jobs:
       - name: 运行 Golden Set v1.1 多品类评测
         if: hashFiles('data/golden_set/v1.1/**/ai_annotated_*.csv') != ''
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PROMPT_VERSION: ${{ github.event.inputs.prompt_version || 'v2.3' }}
         run: |
           python3 -m review_analyzer.eval.run \
