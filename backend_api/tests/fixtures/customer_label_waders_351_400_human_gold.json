@@ -269,17 +269,6 @@
       ],
       "annotated_review_labels": [
         {
-          "raw_span": "Great product",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "Great product",
-          "evidence_start": 0,
-          "evidence_end": 13,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": []
-        },
-        {
           "raw_span": "and keeps ou dry",
           "raw_label_zh": "防水性好",
           "source_column": 3,
@@ -471,7 +460,7 @@
           "locatable": true,
           "canonical_key": "looks_good",
           "module_routing": [
-            "audit_filter"
+            "product_highlight"
           ]
         }
       ],
@@ -507,11 +496,11 @@
       "notes": [],
       "module_routing_summary": {
         "product_issue": 0,
-        "product_highlight": 0,
+        "product_highlight": 1,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -622,21 +611,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "Un buen producto",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "Un buen producto",
-          "evidence_start": 0,
-          "evidence_end": 16,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -674,7 +649,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -820,19 +795,6 @@
           "module_routing": [
             "product_highlight"
           ]
-        },
-        {
-          "raw_span": "Not certain of the longevity of the product. Made from thin material. So not certain of durability. Used two time this far. Worked well during thise two outings. Everything is as described.",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "Not certain of the longevity of the product.  Made from thin material.  So not certain of durability.  Used two time this far.  Worked well during thise two outings.  Everything is as described.",
-          "evidence_start": 55,
-          "evidence_end": 249,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
         }
       ],
       "expected_issue_keys": [],
@@ -892,7 +854,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -906,21 +868,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "quality, better than I expected.",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "quality, better than I expected.",
-          "evidence_start": 5,
-          "evidence_end": 37,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "product_highlight"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -959,7 +907,7 @@
       "notes": [],
       "module_routing_summary": {
         "product_issue": 0,
-        "product_highlight": 1,
+        "product_highlight": 0,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
@@ -979,19 +927,6 @@
         "尺码合适"
       ],
       "annotated_review_labels": [
-        {
-          "raw_span": "product",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "product",
-          "evidence_start": 5,
-          "evidence_end": 12,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "product_highlight"
-          ]
-        },
         {
           "raw_span": "fits good",
           "raw_label_zh": "尺码合适",
@@ -1050,7 +985,7 @@
       "notes": [],
       "module_routing_summary": {
         "product_issue": 0,
-        "product_highlight": 2,
+        "product_highlight": 1,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
@@ -1068,21 +1003,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "They're nice waders.",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "They're nice waders.",
-          "evidence_start": 0,
-          "evidence_end": 20,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -1117,7 +1038,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -1617,7 +1538,7 @@
       "notes": [],
       "module_routing_summary": {
         "product_issue": 2,
-        "product_highlight": 3,
+        "product_highlight": 2,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
@@ -1639,19 +1560,6 @@
       ],
       "annotated_review_labels": [
         {
-          "raw_span": "So far so good.",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "So far so good.",
-          "evidence_start": 0,
-          "evidence_end": 15,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        },
-        {
           "raw_span": "Wish it got a female body a little more snug, but, overall perfect for the pond cleaning I have to do.“ I should have got one more size up for shoes,",
           "raw_label_zh": "尺码不准",
           "source_column": 3,
@@ -1661,23 +1569,10 @@
           "locatable": true,
           "canonical_key": "runs_too_small",
           "module_routing": [
-            "consumer_profile"
+            "product_issue"
           ],
           "_replaced_by_fine_grained": true,
           "_replacement_reason": "Wish it got a female body a little more snug indicates boot/body fit too small"
-        },
-        {
-          "raw_span": "but it is good enough.",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "but it is good enough.",
-          "evidence_start": 165,
-          "evidence_end": 187,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
         }
       ],
       "expected_issue_keys": [
@@ -1736,12 +1631,12 @@
       },
       "notes": [],
       "module_routing_summary": {
-        "product_issue": 0,
+        "product_issue": 1,
         "product_highlight": 0,
-        "consumer_profile": 1,
+        "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 2
+        "audit_filter": 0
       }
     },
     {
@@ -1874,7 +1769,7 @@
       "notes": [],
       "module_routing_summary": {
         "product_issue": 0,
-        "product_highlight": 1,
+        "product_highlight": 0,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
@@ -1892,21 +1787,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "Work great",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "Work great",
-          "evidence_start": 0,
-          "evidence_end": 10,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -1941,7 +1822,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -1958,19 +1839,6 @@
         "整体满意"
       ],
       "annotated_review_labels": [
-        {
-          "raw_span": "Waders are great and work well",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "Waders are great and work well",
-          "evidence_start": 0,
-          "evidence_end": 30,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "product_highlight"
-          ]
-        },
         {
           "raw_span": "…except, the boots are terrible. You feel every rock you step on and the water pressure squeezes down on your toes that hurt after a while. There is zero foot support and walking downhill? Forget about it. My feet were killing me after an evening of fishing in Yellowstone. I’ll need to find a water shoe that will fit inside or a thick insole to make them more comfortable. I would not recommend buying these",
           "raw_label_zh": "舒适度差",
@@ -2029,7 +1897,7 @@
       "notes": [],
       "module_routing_summary": {
         "product_issue": 1,
-        "product_highlight": 1,
+        "product_highlight": 0,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
@@ -2051,19 +1919,6 @@
       ],
       "annotated_review_labels": [
         {
-          "raw_span": "Wader is good",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "Wader is good",
-          "evidence_start": 0,
-          "evidence_end": 13,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        },
-        {
           "raw_span": "it keeps me dry just like what it says,",
           "raw_label_zh": "防水可靠",
           "source_column": 2,
@@ -2074,19 +1929,6 @@
           "canonical_key": "keeps_water_out",
           "module_routing": [
             "product_highlight"
-          ]
-        },
-        {
-          "raw_span": "I bought another one for my wife and same review and she she loves it.",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "I bought another one for my wife and same review and she she loves it.",
-          "evidence_start": 54,
-          "evidence_end": 124,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "consumer_profile"
           ]
         }
       ],
@@ -2148,10 +1990,10 @@
       "module_routing_summary": {
         "product_issue": 0,
         "product_highlight": 1,
-        "consumer_profile": 1,
+        "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -2288,7 +2130,7 @@
         "manual column label `舒适度好` ignored because no locatable evidence was available"
       ],
       "module_routing_summary": {
-        "product_issue": 1,
+        "product_issue": 0,
         "product_highlight": 2,
         "consumer_profile": 1,
         "purchase_motive": 0,
@@ -2415,19 +2257,6 @@
           "evidence_end": 134,
           "locatable": true,
           "canonical_key": "good_value_for_the_price",
-          "module_routing": [
-            "product_highlight"
-          ]
-        },
-        {
-          "raw_span": "They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:",
-          "evidence_start": 134,
-          "evidence_end": 299,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
           "module_routing": [
             "product_highlight"
           ]
@@ -2599,7 +2428,7 @@
         "manual column label `尺码合适(拍大一码)` supplemented by fallback evidence pattern"
       ],
       "module_routing_summary": {
-        "product_issue": 2,
+        "product_issue": 1,
         "product_highlight": 3,
         "consumer_profile": 0,
         "purchase_motive": 0,
@@ -2652,7 +2481,7 @@
         "manual column label `收到像二手商品` supplemented by fallback evidence pattern"
       ],
       "module_routing_summary": {
-        "product_issue": 0,
+        "product_issue": 1,
         "product_highlight": 0,
         "consumer_profile": 0,
         "purchase_motive": 0,
@@ -2678,19 +2507,6 @@
         "赠送附件"
       ],
       "annotated_review_labels": [
-        {
-          "raw_span": "functions as it should!",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "functions as it should!",
-          "evidence_start": 0,
-          "evidence_end": 23,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        },
         {
           "raw_span": "the fitment is spot on!",
           "raw_label_zh": "尺码合适",
@@ -2889,7 +2705,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -2903,21 +2719,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "For good",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "For good",
-          "evidence_start": 0,
-          "evidence_end": 8,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -2952,7 +2754,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -3184,21 +2986,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "Awesome suit!",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "Awesome suit!",
-          "evidence_start": 0,
-          "evidence_end": 13,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -3233,7 +3021,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -3247,34 +3035,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
-          "evidence_start": 0,
-          "evidence_end": 97,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "consumer_profile"
-          ]
-        },
-        {
-          "raw_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
-          "raw_label_zh": "整体满意",
-          "source_column": 3,
-          "evidence_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
-          "evidence_start": 0,
-          "evidence_end": 97,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "consumer_profile"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -3306,7 +3067,7 @@
       "module_routing_summary": {
         "product_issue": 0,
         "product_highlight": 0,
-        "consumer_profile": 2,
+        "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
         "audit_filter": 0
@@ -3323,21 +3084,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "Seem to be working out well so far",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "Seem to be working out well so far",
-          "evidence_start": 0,
-          "evidence_end": 34,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -3372,7 +3119,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -3386,21 +3133,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "As advertised !",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "As advertised !",
-          "evidence_start": 0,
-          "evidence_end": 15,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -3435,7 +3168,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -3578,19 +3311,6 @@
           "module_routing": [
             "product_highlight"
           ]
-        },
-        {
-          "raw_span": "I would absolutely buy this again.",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "I would absolutely buy this again.",
-          "evidence_start": 86,
-          "evidence_end": 120,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
         }
       ],
       "expected_issue_keys": [],
@@ -3672,7 +3392,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -3716,8 +3436,7 @@
           "locatable": true,
           "canonical_key": "not_breathable",
           "module_routing": [
-            "product_issue",
-            "product_highlight"
+            "product_issue"
           ]
         },
         {
@@ -3729,7 +3448,9 @@
           "evidence_end": 272,
           "locatable": true,
           "canonical_key": "good_material_quality",
-          "module_routing": []
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
@@ -3741,8 +3462,7 @@
           "locatable": true,
           "canonical_key": "runs_too_small",
           "module_routing": [
-            "product_issue",
-            "consumer_profile"
+            "product_issue"
           ],
           "_replaced_by_fine_grained": true,
           "_replacement_reason": "BOOTS RUN SMALL evidence clearly indicates boot/shoe size issue"
@@ -3845,9 +3565,9 @@
         "manual column label `舒适度好` supplemented by fallback evidence pattern"
       ],
       "module_routing_summary": {
-        "product_issue": 3,
-        "product_highlight": 1,
-        "consumer_profile": 1,
+        "product_issue": 2,
+        "product_highlight": 2,
+        "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
         "audit_filter": 0
@@ -3965,7 +3685,7 @@
       ],
       "module_routing_summary": {
         "product_issue": 0,
-        "product_highlight": 2,
+        "product_highlight": 3,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
@@ -3996,7 +3716,7 @@
           "locatable": true,
           "canonical_key": "works_well_for_use_case",
           "module_routing": [
-            "consumer_profile"
+            "product_highlight"
           ]
         }
       ],
@@ -4047,9 +3767,9 @@
         "manual column label `容易被刺破` supplemented by fallback evidence pattern"
       ],
       "module_routing_summary": {
-        "product_issue": 0,
-        "product_highlight": 0,
-        "consumer_profile": 1,
+        "product_issue": 1,
+        "product_highlight": 1,
+        "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
         "audit_filter": 0
@@ -4109,7 +3829,7 @@
         "manual column label `耐用性差` supplemented by fallback evidence pattern"
       ],
       "module_routing_summary": {
-        "product_issue": 0,
+        "product_issue": 1,
         "product_highlight": 0,
         "consumer_profile": 0,
         "purchase_motive": 0,
@@ -4130,19 +3850,6 @@
         "性价比高"
       ],
       "annotated_review_labels": [
-        {
-          "raw_span": "Amazing waders!! Definitely recommend. Worked as intended,",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "Amazing waders!! Definitely recommend. Worked as intended,",
-          "evidence_start": 0,
-          "evidence_end": 58,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        },
         {
           "raw_span": "great quality and price point!",
           "raw_label_zh": "性价比高",
@@ -4216,7 +3923,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -4321,7 +4028,7 @@
           "locatable": true,
           "canonical_key": "pocket_too_small",
           "module_routing": [
-            "unmet_need"
+            "product_issue"
           ]
         }
       ],
@@ -4385,11 +4092,11 @@
       },
       "notes": [],
       "module_routing_summary": {
-        "product_issue": 0,
+        "product_issue": 1,
         "product_highlight": 1,
         "consumer_profile": 0,
         "purchase_motive": 0,
-        "unmet_need": 1,
+        "unmet_need": 0,
         "audit_filter": 0
       }
     },
@@ -4620,8 +4327,7 @@
           "locatable": true,
           "canonical_key": "size_fit_problem",
           "module_routing": [
-            "product_issue",
-            "product_highlight"
+            "product_issue"
           ]
         }
       ],
@@ -4681,7 +4387,7 @@
       "notes": [],
       "module_routing_summary": {
         "product_issue": 1,
-        "product_highlight": 1,
+        "product_highlight": 0,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
@@ -4713,8 +4419,7 @@
           "locatable": true,
           "canonical_key": "good_material_quality",
           "module_routing": [
-            "product_highlight",
-            "consumer_profile"
+            "product_highlight"
           ]
         },
         {
@@ -4817,7 +4522,7 @@
       "module_routing_summary": {
         "product_issue": 0,
         "product_highlight": 2,
-        "consumer_profile": 2,
+        "consumer_profile": 1,
         "purchase_motive": 0,
         "unmet_need": 0,
         "audit_filter": 0
@@ -4834,21 +4539,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "Excellent",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "Excellent",
-          "evidence_start": 0,
-          "evidence_end": 9,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "audit_filter"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -4883,7 +4574,7 @@
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
-        "audit_filter": 1
+        "audit_filter": 0
       }
     },
     {
@@ -4897,21 +4588,7 @@
       "human_highlight_labels_zh": [
         "整体满意"
       ],
-      "annotated_review_labels": [
-        {
-          "raw_span": "for work or fishing in lakes",
-          "raw_label_zh": "整体满意",
-          "source_column": 2,
-          "evidence_span": "for work or fishing in lakes",
-          "evidence_start": 5,
-          "evidence_end": 33,
-          "locatable": true,
-          "canonical_key": "overall_satisfied",
-          "module_routing": [
-            "consumer_profile"
-          ]
-        }
-      ],
+      "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -4943,7 +4620,7 @@
       "module_routing_summary": {
         "product_issue": 0,
         "product_highlight": 0,
-        "consumer_profile": 1,
+        "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
         "audit_filter": 0
