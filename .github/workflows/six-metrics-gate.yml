@@ -62,12 +62,14 @@ jobs:
       - name: 运行六指标验收（waders 50 条，用缓存不调 LLM）
         id: metrics
         run: |
+          set +e
           python scripts/acceptance_six_metrics.py \
             --fixture backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json \
             --cached-llm backend_api/tests/fixtures/acceptance_waders_llm_cache.json \
             --category waders \
             > six_metrics_output.txt 2>&1
           EXIT_CODE=$?
+          set -e
           # 提取关键指标
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
           # 打印摘要行
