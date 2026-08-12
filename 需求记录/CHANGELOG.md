@@ -2288,3 +2288,46 @@ Google 的 OpenAI 兼容端点模型生命周期较短，固定版本（如 `gem
 - `backend_api/app/services/llm_router.py`（model_id）
 - `backend_api/app/services/deep_analyzer.py`（费率 key）
 - `review_analyzer/database.py`（费率 key）
+
+## 2026-08-12 5.9 阶段 A 收尾 A-1 + A-2：闸门 1 生效 + Gold 三字段对齐
+
+### 需求：审计发现闸门 1 从未运行 + gold fixture 内部矛盾，修复后产出真实基线
+
+- **工作量**: M（CI workflow + gold 50样本修复 + 脚本 + 4 文档更新，约 0.5 人天）
+- **状态**: ✅ 完成
+
+**需求描述**：
+复跑六指标脚本发现 exit=1（极性反标=3 破红线），但 PROGRESS 写"阶段 A 完成可进阶段 C"。审计发现两个根因：
+
+1. **闸门 1 从未运行**：`six-metrics-gate.yml` 2026-08-10 创建但从未 commit，CI 没有六指标检查
+2. **Gold fixture 内部矛盾**：`expected_*_keys` / `annotated_review_labels[].module_routing` / `module_routing_summary` 三字段各说各话，模块流向 92.5% 是假数
+
+**改动内容**：
+
+A-1 闸门 1 生效：
+- `.github/workflows/six-metrics-gate.yml` — 首次入 git + 修复 EXIT_CODE 捕获 bug（`set +e` 包裹）
+- 验证：CI 在 PR push 时正确触发、红线破时输出诊断信息并 exit 1
+
+A-2 Gold 三字段对齐：
+- `customer_label_waders_351_400_human_gold.json` — 以 `expected_*_keys` 为单一事实源，删除 24 条 overall_satisfied 残留，修正 9 条路由错误，重算 16 个 summary
+- `docs/核心目标与验收基线.md` §7 — 新增冻结规则
+- `docs/5.9-阶段A-验收基线首次测量.md` — 新增第 6 次测量记录
+
+**六指标新基线**：
+| 指标 | 旧（第 5 次） | 新（第 6 次） |
+|------|-------------|-------------|
+| 错标率 | 19.2% | 19.2%（不变） |
+| 漏标率 | 16.9% | 16.9%（不变） |
+| 极性反标 | 3 | 3（不变，A-3 修复） |
+| 模块流向 | 92.5% | **100.0%** |
+
+**涉及岗位及工时**：
+- 后端/DevOps：0.3 天（CI workflow + EXIT_CODE bug 修复）
+- 算法工程师：0.2 天（gold fixture 修复 + 基线重跑 + 文档更新）
+
+**产出物**：
+- `.github/workflows/six-metrics-gate.yml`（新增）
+- `backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json`（修复）
+- `docs/核心目标与验收基线.md`（冻结规则）
+- `docs/5.9-阶段A-验收基线首次测量.md`（第 6 次测量）
+- `PROGRESS_V2.md`（A-1/A-2 标记完成）
