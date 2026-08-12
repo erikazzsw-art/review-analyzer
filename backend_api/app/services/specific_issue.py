@@ -10,6 +10,11 @@ from pathlib import Path
 from typing import Any
 
 from backend_api.app.services.customer_label_catalog import resolve_customer_label
+from backend_api.app.services.label_deduplication import (
+    DEDUP_RULESET_VERSION,
+    SEMANTIC_GUARD_RULESET_VERSION,
+    apply_label_postprocessing,
+)
 
 SPECIFIC_ISSUE_SCHEMA_VERSION = "1.0"
 CUSTOMER_LABEL_SCHEMA_VERSION = "1.0"
@@ -17,7 +22,7 @@ CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION = "1.0"
 ISSUE_RULESET_VERSION = "2026-07-24-customer-label-system"
 HIGHLIGHT_RULESET_VERSION = "2026-07-24-customer-label-system"
 CUSTOMER_LABEL_RULESET_VERSION = f"{ISSUE_RULESET_VERSION}+{HIGHLIGHT_RULESET_VERSION}"
-CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION = "2026-07-28-phase7-waterproof-positive-guard"
+CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION = f"{DEDUP_RULESET_VERSION}+{SEMANTIC_GUARD_RULESET_VERSION}"
 
 logger = logging.getLogger(__name__)
 
@@ -3996,10 +4001,22 @@ def _selected_customer_label_v2_occurrences(
     return selected
 
 
+def _apply_label_postprocessing(
+    occurrences: list[dict[str, Any]],
+    comment: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """对 occurrence 列表统一应用 A-3 去重与语义守卫."""
+    if not occurrences:
+        return occurrences
+    content = str(comment.get("content") or "").strip()
+    deduped, _audit = apply_label_postprocessing(occurrences, content)
+    return deduped
+
+
 def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en") -> list[dict[str, Any]]:
     selected_v2 = _selected_customer_label_v2_occurrences(comment, label_type="issue", locale=locale)
     if selected_v2 is not None:
-        return selected_v2
+        return _apply_label_postprocessing(selected_v2, comment)
 
     content = str(comment.get("content") or "").strip()
     aj = coerce_aspects_json(comment.get("aspects_json"))
@@ -4017,12 +4034,13 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
                 locale=locale,
                 aspects_json=aj,
             )
-            return _append_content_rule_issue_occurrences(
+            merged = _append_content_rule_issue_occurrences(
                 comment,
                 projected,
                 locale=locale,
                 aspects_json=aj,
             )
+            return _apply_label_postprocessing(merged, comment)
         sub_category = str(aj.get("sub_category") or comment.get("sub_category") or "")
         aspects = [aspect for aspect in aj.get("aspects") or [] if isinstance(aspect, dict)]
         has_specific_issue_payload = any(
@@ -4030,7 +4048,9 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
             for aspect in aspects
         )
         if schema_version != SPECIFIC_ISSUE_SCHEMA_VERSION and not has_specific_issue_payload:
-            return _legacy_issue_occurrences(comment, locale)
+            return _apply_label_postprocessing(
+                _legacy_issue_occurrences(comment, locale), comment,
+            )
         for aspect in aspects:
             if not isinstance(aspect, dict):
                 continue
@@ -4066,8 +4086,10 @@ def iter_specific_issue_occurrences(comment: dict[str, Any], locale: str = "en")
             locale=locale,
             aspects_json=aj,
         )
-        return occurrences
-    return _legacy_issue_occurrences(comment, locale)
+        return _apply_label_postprocessing(occurrences, comment)
+    return _apply_label_postprocessing(
+        _legacy_issue_occurrences(comment, locale), comment,
+    )
 
 
 def _build_customer_label_rows(
@@ -4315,7 +4337,7 @@ def _legacy_highlight_occurrences(comment: dict[str, Any], locale: str) -> list[
 def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "en") -> list[dict[str, Any]]:
     selected_v2 = _selected_customer_label_v2_occurrences(comment, label_type="highlight", locale=locale)
     if selected_v2 is not None:
-        return selected_v2
+        return _apply_label_postprocessing(selected_v2, comment)
 
     content = str(comment.get("content") or "").strip()
     aj = coerce_aspects_json(comment.get("aspects_json"))
@@ -4335,7 +4357,7 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
                 locale=locale,
                 aspects_json=aj,
             )
-            return _append_waders_content_rule_occurrences(
+            merged = _append_waders_content_rule_occurrences(
                 comment,
                 projected,
                 label_type="highlight",
@@ -4343,6 +4365,7 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
                 aspects_json=aj,
                 project=True,
             )
+            return _apply_label_postprocessing(merged, comment)
         sub_category = str(aj.get("sub_category") or comment.get("sub_category") or "")
         aspects = [aspect for aspect in aj.get("aspects") or [] if isinstance(aspect, dict)]
         has_highlight_payload = any(
@@ -4363,7 +4386,9 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
             or has_highlight_payload
         )
         if not can_derive_from_aspects:
-            return _legacy_highlight_occurrences(comment, locale)
+            return _apply_label_postprocessing(
+                _legacy_highlight_occurrences(comment, locale), comment,
+            )
         for aspect in aspects:
             highlight = _normalize_aspect_highlight(
                 aspect,
@@ -4390,7 +4415,7 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
             if projected:
                 occurrences.append(projected)
     if occurrences or customer_schema_version == CUSTOMER_LABEL_SCHEMA_VERSION or has_highlight_payload:
-        return _append_waders_content_rule_occurrences(
+        merged = _append_waders_content_rule_occurrences(
             comment,
             occurrences,
             label_type="highlight",
@@ -4398,7 +4423,10 @@ def iter_customer_highlight_occurrences(comment: dict[str, Any], locale: str = "
             aspects_json=aj,
             project=True,
         )
-    return _legacy_highlight_occurrences(comment, locale)
+        return _apply_label_postprocessing(merged, comment)
+    return _apply_label_postprocessing(
+        _legacy_highlight_occurrences(comment, locale), comment,
+    )
 
 
 def build_customer_highlight_rows(

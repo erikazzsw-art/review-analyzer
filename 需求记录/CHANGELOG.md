@@ -25,6 +25,38 @@
 
 ---
 
+## 2026-08-12
+
+### 阶段 A Task A-3：证据感知粗细标签去重 + D1 语义守卫
+
+- **工作量**: M（新建 `label_deduplication.py` ~400 行纯函数模块 + `specific_issue.py` 10 个接入点 + 36 单元测试 + 三场景验收对比 + 文档更新，约 2 人天）
+- **状态**: ✅ A-3.1/A-3.2/A-3.3/A-3.4 全部完成，待 push 和闸门 3 线上验证
+- **涉及岗位**: 后端开发、算法工程师
+
+**需求描述**：
+基于 A-2 验收基线（错标率 19.2%、漏标率 16.9%、极性反标 3），处理三条极性反标的根因：
+
+1. **粗细标签去重**：LLM aspect 投影路径和 content-rule 路径独立产生 `fit` 标签，无跨路径去重。row-366/386 同时输出 `size_fit_problem`（粗）+ `runs_too_small`（细），gold 只期望细标签。
+2. **D1 语义守卫**：row-378 `not_breathable` 由规则引擎 sweat 关键词触发，但实际出汗来自厨房/烤箱环境高温，非产品透气性差。
+
+**交付内容**：
+- 新建 `backend_api/app/services/label_deduplication.py`：证据感知粗/细去重（5 条件 + aspect_key 兼容家族 + 来源权威性检查）+ D1 通用语义守卫（环境高温出汗否决 `not_breathable`，不做 row ID 硬编码）
+- `specific_issue.py` 10 个 return 语句接入 `_apply_label_postprocessing()` 统一后处理（先 guard 再 dedup）
+- bump `CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION` + kill switch 双环境变量
+- CI `six-metrics-gate.yml` 新增触发路径
+- 三场景验收对比：FP 14→13、total_system 73→71、FN 不变、极性反标 3、串台 0、模块流向 100%、other 9.9%
+- 36 单元测试 + 13 现存回归全绿，ruff clean
+
+**A-2 → A-3 六指标对比**：
+| 指标 | A-2 Baseline | A-3 Full (Dedup+Guard) | 变化 |
+|---|---:|---:|---|
+| 错标率 | 19.2% (FP=14/73) | 18.3% (FP=13/71) | FP -1 |
+| 漏标率 | 16.9% (FN=12/71) | 18.3% (FN=13/71) | FN +1（#395 同源保留） |
+| 极性反标 | 3 | 3 | 不变（非重叠 evidence 保留属正确） |
+| 串台 | 0 | 0 | 不变 |
+| 模块流向正确率 | 100.0% (53/53) | 100.0% (52/52) | 不变 |
+| other 占比 | 9.9% (14/141) | 9.9% | 不变 |
+
 ---
 
 ## 2026-07-15
