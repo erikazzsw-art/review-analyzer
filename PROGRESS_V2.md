@@ -623,11 +623,12 @@
 
 | 阶段 | 状态 | 目标 | 具体工作 | Erika 投入 | 出口条件 |
 |---|---|---|---|---|---|
-| **A 验收基线** | 未开始 | 先让"完成"可判定，不再重复缓存层那次的坑 | 1. waders 50 条人工标注入库（已有，`docs/5.9.9-step4.6-*`，Erika 2026-08-10 确认桌面标注即该批）；2. 写验收脚本：跑**生产同一条链路**、输出六指标改动前后对比表；3. 接进 CI 成为闸门 1；4. 跑一次拿到**今天的真实基线数字**（此前从未测过） | 已有标注，0 | 一条命令出六指标表；Erika 看得懂每一格；waders 基线数字落库 |
+| **A 验收基线** | ⚠️ 部分完成（2026-08-11 v2.4 重测；2026-08-12 审计降级） | 先让"完成"可判定，不再重复缓存层那次的坑 | 1. ✅ waders 50 条人工标注入库；2. ✅ 验收脚本与六指标 CI 已建立；3. ✅ Prompt v2.1→v2.4 对齐，旧 cache（家具 prompt + waders 校验错配）作废；4. ✅ Cache 增加版本校验（prompt_version + model_name + taxonomy_version）；5. ✅ overall_satisfied 不进前台 product_highlight；6. ✅ gold fixture 细粒度替换：runs_too_small 替换同证据 size_fit_problem；7. ✅ schema retry 增加可解释错误反馈；8. ✅ 新基线六指标：漏标率 16.9%（首次 ≤20%）、模块流向正确率 92.5%（首次 ≥90%）、other 占比 9.9%（≤15%）、错标率 19.2%（❌）、极性反标 3（❌）、串台 0（✅）；9. ✅ 缺口 1（waders 专属维度=0）已消除——v2.4 对齐后 waterproof:12 / boot_fit:6 / grip:4 / breathability:3 / mobility:5 / seam_integrity:1 / temperature_rating:1；10. ⚠️ 剩余问题：FP 19.2% 待继续优化、极性反标 #366/#386 源于粗细标签并存、2/50 schema_invalid（retry feedback 未能修复） | 0 | ⚠️ 4/6 过线，**红线未清（极性反标=3）**；闸门 1 未真正生效（CI 文件未入 git）；闸门 2/3 无执行痕迹；gold fixture 内部不一致。收尾工作见下方「A 收尾（A-1~A-5）」 |
+| **A 收尾** | 未开始（阻塞 C） | 让阶段 A 的"完成"真的可判定：闸门跑起来 + gold 自洽 + 红线清零 | A-1 六指标 CI 入 git 并修 `EXIT_CODE` bug；A-2 gold fixture 三处内部矛盾对齐后重跑基线；A-3 同证据粗细标签去重（同时降极性反标与错标率）；A-4 闸门 2（Erika 10 条抽检）；A-5 闸门 3（线上真实上传验证） | 10 条抽检 + 线上确认 | 极性反标=0；六指标其余不倒退；CI 在 PR 上真的拦得住；gold 三个口径互相一致 |
 | **C 片段拆分 + 漏标度量** | 未开始 | 一条评论说了三件事要拆三段；让漏标从无法判定变成有数字 | 1. 把已写好零调用的 `review_fragment_*` 契约/白名单/证据门禁接进 `workers/jobs.py` 生产链路；2. 实现漏标率度量（人工标注的片段 vs 系统输出片段做召回对比）；3. 六指标补齐漏标率一列 | 15 分钟抽检 | 一条多话题评论能拆成多段分别处理；漏标率有数字且 ≤ 20%；错标率不倒退 |
 | **D1 语义陷阱库** | 未开始 | 通用守卫全类目共享，做一次全类目受益 | 把第 1 类守卫（否定句、正向反例、后段推翻前段、用户自己买错码）从 waders 专用函数提取为全类目共享模块。T2 rating guard、T4 极性对撞已是该形态，补齐其余 | 15 分钟抽检 | 守卫在非 waders 类目同样生效；waders 六指标不倒退；零 token 增量 |
 | **D2 打开范围门禁** | 未开始 | 机制做完了但线上默认关闭，等于没做 | 1. `LABEL_REGISTRY_FRONTSTAGE_MODE` 从 `off` → waders `shadow` 观察 diff → `enforce`；2. registry 登记标签从 9 个扩到覆盖在用类目；3. TOP10 占比按证据来源分级（`verified_count` / `propagated_count` 拆分，L3 embedding 复用不计入占比） | 15 分钟抽检 | 门禁线上真实生效（闸门 3 验证）；标签不串类目；kill switch 可一键回退 |
-| **D3 硬编码规则退役** | 未开始（依赖 A 有数字） | 证明"不靠手写规则，通用链路在 waders 上不比现在差" | 第 3 类硬编码类目关键词（`wader hanger`、`pocket not waterproof`、`traction`、`flimsy` 等）**立即停止新增**，分批删除，每批删完跑一次六指标 | 每批 15 分钟抽检 | 每批删除后 waders 六指标不倒退；删完后新类目上线不需要写规则 |
+| **D3 硬编码规则退役** | 未开始（基线已出，但需等 A-2 重跑后的新基线为准） | 证明"不靠手写规则，通用链路在 waders 上不比现在差" | 第 3 类硬编码类目关键词（`wader hanger`、`pocket not waterproof`、`traction`、`flimsy` 等）**立即停止新增**，分批删除，每批删完跑一次六指标 | 每批 15 分钟抽检 | 每批删除后 waders 六指标不倒退；删完后新类目上线不需要写规则 |
 | **E 维护体系** | 未开始 | 一人公司撑不起定期巡检，系统必须主动把该决策的事推到面前 | 校准页 `/settings/golden-set` 四个 tab：① 候选池（新说法排行 + 3-5 句原文，点晋升/合并/忽略）② other 明细（不只百分比，给具体片段）③ 待审提案（异常自动排队）④ 类目健康度（每类目六指标现值）。含：接上零调用的 candidate pool、新增 `new_aspect` 提案动作、`other` 高占比与低置信写 `human_flag` audit event、修基准集上传写死"家具家居"的 bug | 30 分钟/周 | Erika 从"发现 other 偏高"到"新标签进正式库"全程页面完成，不需改代码 |
 | **B 画像/动机/需求真提取** | 未开始（Erika 2026-08-10 定为后置） | 占核心目标五分之三，但当前是假数据 | AI 逐条读评论时同时判断"这段是不是在说谁在用 / 为什么买 / 想要什么没得到"，每条带原文证据，走与产品标签同一套证据门禁；建立三个模块的轻量 seed taxonomy；删除关键词计数 fallback 与 0.25 秒超时的假 AI 开关 | 15 分钟抽检 | 三模块错标率 ≤ 5%；每行可点开看原文出处；不再出现"动机=亮点换标题" |
 
@@ -644,6 +645,176 @@
 **waders 规则处理口径（2026-08-10 讨论确认）**
 
 不是"每个新类目都写规则"。三类分开：第 1 类语义陷阱守卫 → 提取共享（D1）；第 2 类类目能力维度 → 新类目填表声明，系统自动推导；第 3 类硬编码关键词 → 停止新增 + 分批退役（D3）。判定标准：只对一个类目成立的是债，对所有类目成立且只做否决的是资产。完整论证见基线文档第 4 节。
+
+**5.9 阶段 A 重开：缺口 1-3 修复决策（Erika 2026-08-11 确认 → 2026-08-11 完成）** ✅
+
+旧基线已作废并重测。验收脚本已对齐生产 `v2.4`，新 cache 已生成且版本绑定。重测结果：六指标 4/6 过线（漏标率 16.9% ≤20%、模块流向 92.5% ≥90%、other 占比 9.9% ≤15%、串台 0）。两个未过线项：错标率 19.2%（>5%）、极性反标 3（红线破）。
+
+| 缺口 | 结论 | 状态 |
+|------|------|------|
+| 1. waders 专属维度为 0 | v2.4 对齐后全量命中（waterproof:12, boot_fit:6, grip:4, breathability:3, mobility:5, seam_integrity:1, temperature_rating:1）。**缺口为版本错配伪缺陷，无需额外 prompt 调整。** | ✅ 关闭 |
+| 2. `stability` schema_invalid | v2.4 对齐后 stability=0 不再出现。Retry 已注入可解释错误反馈。仍存 2/50 schema_invalid（polarity_invalid + key_invalid_'fit'），temperature=0 下反馈未能纠正，需后续调整。 | ⚠️ 部分关闭 |
+| 3. 低信息密度好评前台流向 | `overall_satisfied` 不进前台（代码层 gating），gold 已调整。模块流向正确率 92.5% 首次过线。阶段 C 接入通用 audit_filter。 | ✅ 关闭 |
+
+**阶段 A 出口条件**：✅ prompt 版本与生产一致（v2.4）；✅ 新 cache 与版本绑定；✅ 六指标可解释；⚠️ gold 粒度口径冻结（只改了 `expected_*_keys`，`annotated_review_labels` / `module_routing_summary` 未同步 → 见 A-2）。~~阶段 A 完成，可进入阶段 C。~~ **2026-08-12 审计推翻：红线未清 + 闸门 1/2/3 均未真正执行，阶段 A 降级为「部分完成」，收尾项见下。**
+
+**阶段 A 重开验收**：每次都重新运行六指标脚本，并保留改动前后表；旧 cache 在 prompt、taxonomy 或模型变化后不可复用。除脚本结果外，必须人工查看 19 个 FN、相关 FP、2 条历史 schema 失败、10 条 audit_filter 违规及新增边界样本；通过 Erika 10 条抽检，并最终进行线上真实上传验证。测试通过不等于标签质量通过。
+
+<!-- A-AUDIT-PLAN-START -->
+
+### 5.9 阶段 A 收尾执行计划（2026-08-12 审计产出 · 阻塞阶段 C）
+
+**审计触发原因**：复跑六指标脚本 `EXIT=1`（极性反标=3 破红线），但 PROGRESS 写「阶段 A 完成，可进入阶段 C」。这与基线文档第 6 节「任何红线破 → 拒绝合并」直接冲突。同时发现第 4 次「以为做好了其实没生效」。
+
+**实测复现（`--cached-llm` + `--category waders`，与 `docs/5.9-阶段A-验收基线首次测量.md` 数字一致）**
+
+| 指标 | 实测 | 通过线 | 判定 |
+|---|---|---|---|
+| 错标率 | 19.2%（FP=14/73） | ≤5% | ❌ |
+| 漏标率 | 16.9%（FN=12/71） | ≤20% | ✅ |
+| 极性反标 | 3 | =0 | ❌ **红线** |
+| 串台 | 0 | =0 | ✅ |
+| 模块流向正确率 | 92.5%（49/53） | ≥90% | ✅ |
+| other 占比 | 9.9%（14/141） | ≤15% | ✅ |
+
+测量本身可信（数字可复现）；问题在出口判定与支撑数据。
+
+#### A-1 闸门 1 真正生效：六指标 CI 入 git + 修 EXIT_CODE bug 🔴
+
+- [x] **A-1.1** `git add .github/workflows/six-metrics-gate.yml` ✅ 2026-08-12
+  - 现状：文件存在于工作区（2026-08-10 创建）但**从未 commit**，`git ls-files .github/workflows/` 只有 `ci.yml` / `deploy.yml` / `golden-set-regression.yml`
+  - 后果：PROGRESS_V2.md:626 写「✅ 验收脚本与六指标 CI 已建立」，实际脚本建立了、CI 没有。从 2026-08-11 至今**闸门 1 一次都没跑过**
+  - 另需确认 `ci.yml` / `golden-set-regression.yml` 里也没有六指标调用（已确认无）
+- [x] **A-1.2** 修 `six-metrics-gate.yml:65-72` 的 `EXIT_CODE` 捕获 bug ✅ 2026-08-12
+  - 问题：`EXIT_CODE=$?` 写在 python 命令之后，而 Actions 默认 `bash -e`，脚本 `exit 1` 会让 step 直接终止，`exit_code` output 永远写不进 `$GITHUB_OUTPUT`，导致 `if: steps.metrics.outputs.exit_code != '0'` 的「检查红线」step 被跳过
+  - 影响：job 仍会 fail（闸门功能性有效），但**红线诊断信息不打印**，等于闸门没有解释能力
+  - 修法：给运行 step 加 `continue-on-error: true`，或改成 `set +e` 包裹 / `python ... || EXIT_CODE=$?` 显式捕获
+  - 已修：`set +e` → python → `EXIT_CODE=$?` → `set -e`。CI 验证通过（PR #218，见 Actions 运行记录）
+- [x] **A-1.3** 在一个故意破红线的分支上验证 CI 真的 fail 且红线信息可见（不能只看"文件加了"） ✅ 2026-08-12
+  - 验证结果：develop push 触发 six-metrics-gate job，红线破时输出「❌ 六指标红线被破！」+ 完整诊断信息，job 红 (exit 1)
+
+**出口**：PR 上能看到六指标 job 运行；红线破时 job 红且输出命中哪条红线。
+
+#### A-2 gold fixture 内部矛盾对齐 + 重跑基线 🔴
+
+改动只动了 `expected_*_keys`，`annotated_review_labels` 与 `module_routing_summary` 原样保留（TEST_LOG.md:744 记为故意）。但**模块流向正确率读的恰恰是 `annotated_review_labels[].module_routing`**（`scripts/acceptance_six_metrics.py:182-191`），所以 92.5% 与 16.9% 建立在没同步的数据上。
+
+已核实的矛盾（fixture = `backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json`，50 样本 / 96 条 annotated label）：
+
+| # | 矛盾 | 实测 |
+|---|---|---|
+| 1 | `annotated_review_labels` 仍含 `overall_satisfied` | 21 个样本 / 24 条 label 实例 |
+| 2 | `row-366` 的 `runs_too_small` → `module_routing: ['consumer_profile']`，但 `expected_issue_keys` 声明它是 issue。系统正确输出 issue 反而被判路由错 | 1 条 |
+| 3 | 同一 key 同时挂 `product_issue` + `product_highlight` | 2 条（`row-386` `not_breathable`、`row-386` `runs_too_small`） |
+| 4 | `module_routing` 为空数组 | 2 条（`row-351` `overall_satisfied`、`row-386` `good_material_quality`） |
+| 5 | `expected_issue_keys` 非空但 `module_routing_summary.product_issue=0` | 5 个：`row-366` / `row-375` / `row-388` / `row-389` / `row-392` |
+
+- [x] **A-2.1** 定 gold 单一事实源口径：`expected_*_keys` 为准，`annotated_review_labels[].module_routing` 与 `module_routing_summary` 由它推导（或明确反过来），**不允许三份各说各话** ✅ 2026-08-12
+- [x] **A-2.2** 按口径同步三处字段，逐条修上表 5 类矛盾 ✅ 2026-08-12（实际修复 9 条路由 + 24 条 overall_satisfied 删除 + 16 个 summary 重算 + 3 条同 key 双模块去重）
+- [x] **A-2.3** 重跑六指标，出「改动前 vs 改动后」对比表。**预期 92.5% 会变动，变动后的才是真数** ✅ 2026-08-12（模块流向 92.5% → 100.0%，其余 5 项不变）
+- [x] **A-2.4** 基线文档第 7 节写「标完冻结」，当前是"改了一半冻结"——补一条冻结规则：任何 gold 改动必须三字段同步 + 重跑基线，否则不算冻结 ✅ 2026-08-12
+
+**出口**：三个字段互相自洽；重跑后的六指标为新基线；`docs/5.9-阶段A-验收基线首次测量.md` 同步更新。
+
+#### A-3 同证据粗细标签去重（一次性降两个指标）🟡
+
+3 条极性反标里只有 1 条是真反标：
+
+| 样本 | 反标 label | gold 标注 | 性质 |
+|---|---|---|---|
+| `row-366` | `size_fit_problem` | `runs_too_small` ✓ | 粗细标签并存，非极性错 |
+| `row-386` | `size_fit_problem` | `runs_too_small` ✓ | 同上 |
+| `row-378` | `not_breathable`、`runs_too_large` | 无（gold 仅 `fits_as_expected`） | 真误标 |
+
+`row-366` / `row-386` 系统同时输出了对的细标签和多余的粗标签，且 gold 也认为这两条有 issue。**真实红线是 1**。
+
+- [ ] **A-3.1** 实现同证据去重后处理：同一 `evidence_span` 命中父子/粗细关系的两个标签时，只保留细粒度标签（走"只否决不创造"的规则口径，不改极性判断）
+- [ ] **A-3.2** 复核 14 个 FP，确认其中至少 2 个属同一成因，去重后一并消除
+- [ ] **A-3.3** 单独处理 `row-378` 的真误标（属语义守卫范畴，与 D1 同源，判断是否并入 D1）
+- [ ] **A-3.4** 重跑六指标：极性反标 3→目标 0；错标率 19.2%→期望下降
+
+**出口**：极性反标=0（红线清零）；错标率有可解释的下降；其余四指标不倒退。
+
+#### A-4 闸门 2：Erika 10 条抽检 🟡
+
+PROGRESS_V2.md:661 要求「通过 Erika 10 条抽检」，但同表「Erika 投入 = 0」，`TEST_LOG.md` 与 `docs/` 均搜不到阶段 A 抽检记录。
+
+- [ ] **A-4.1** 抽样组成：3 条 FP + 3 条 FN + 2 条极性反标 + 2 条 audit_filter 边界
+- [ ] **A-4.2** 输出抽检单（原文 + 系统输出 + gold + 分歧点），交 Erika 判定
+- [ ] **A-4.3** 抽检结论落 `TEST_LOG.md`，含 Erika 判 gold 错 / 系统错的分布
+
+**出口**：10 条逐条有 Erika 判定；分歧回写 gold 或转成 issue。
+
+#### A-5 闸门 3：线上真实上传验证 🟡
+
+基线文档第 8 节写「闸门 3 不可省」，历史三次事故（缓存层 model 门、类目范围门禁默认 off、画像模块 AI 开关默认 false + 0.25s 超时）全部只有闸门 3 能发现。A-1 的 CI 未入 git 是第 4 次同类事故。
+
+- [ ] **A-5.1** 用测试账号在 https://www.clueai-reviewlens.com 真实上传 waders 样本
+- [ ] **A-5.2** 逐项确认阶段 A 的代码层改动线上真的生效：`overall_satisfied` 不进前台 `product_highlight`、cache 版本校验（`prompt_version` + `model_name` + `taxonomy_version`）、prompt 为 v2.4、A-3 去重逻辑
+- [ ] **A-5.3** 线上抽 3 条与本地 fixture 同源评论，比对输出是否一致（不一致 = 又一次"没生效"）
+- [ ] **A-5.4** 验证记录落 `TEST_LOG.md`
+
+**出口**：线上输出与本地基线一致；四项改动逐项有线上证据。
+
+#### 口径澄清（不是任务，是记账修正）🟡
+
+两个"首次过线"的成因是**分母变了，不是系统变好了**，PROGRESS 现有写法会让人误判链路变好：
+
+| 指标 | 变化 | 真实成因 |
+|---|---|---|
+| 漏标率 | 20.7% → 16.9% | gold 总数 92→71（删掉 21 条 `overall_satisfied`）。分子 FN 也降了，但主因是分母 |
+| 模块流向正确率 | 75.0% → 92.5% | 10 条 `audit_filter` 违规清零，因为系统不再输出 `overall_satisfied` + gold 也删了它。违规检查遍历的是**系统输出的 key**，key 消失则违规必然为 0——**audit 审核层一行代码都没改** |
+
+- [ ] **A-6.1** `overall_satisfied` 对卖家无行动价值，这个口径决策保留（判断正确）；但要在文档标明它是**口径重定义**，不是质量提升
+- [ ] **A-6.2** 通用 `audit_filter` 仍在阶段 C 待做，不能因 92.5% 过线就认为已解决
+
+#### 阶段 C 前置盘点（A 收尾完成后立即可开）
+
+**C 任务 1（片段拆分接生产）前置干净，可以开始。** 零生产调用盘点：
+
+| 模块 | 生产调用状态 |
+|---|---|
+| `review_fragment_candidate_multimodule` | 零调用（编排器，串起 contract / whitelist / evidence_gate） |
+| `review_fragment_contract` | 仅被上面编排器内部引用 |
+| `review_fragment_taxonomy_whitelist` | 同上 |
+| `review_fragment_evidence_gate` | 同上 |
+| `review_fragment_label_catalog` | ✅ 已接入（`workers/jobs.py:26` + `main.py:91`） |
+| `customer_label_v2_candidate_pool` | 零调用（只有 shadow replay 脚本） |
+
+即真正要接的是 **`review_fragment_candidate_multimodule` 这一个编排入口**，不是五个模块各接一遍。
+
+**C 任务 2（漏标率度量）现在做不了，需 Erika 先定口径。** 任务描述是「人工标注的片段 vs 系统输出片段做召回对比」，但 gold **没有片段级标注**——`sample` 字段只有 `annotated_review_labels` / `evidence_spans`（96 条），**无 `fragments` 字段**（已核实 50/50 样本均无）。当前 16.9% 是 **label 级召回**，不是片段级。
+
+| 方案 | 成本 | 测到的东西 |
+|---|---|---|
+| (a) Erika 补 50 条片段级标注 | 约 2-3 小时 | 真正的片段召回（一条评论该拆几段、拆对没有） |
+| (b) 用现有 96 个 `evidence_span` 近似，口径改为「证据 span 召回」 | 0 | 仍不测"一条评论拆成几段" |
+
+- [ ] **C-0 决策**：建议先 (b) 跑通链路拿数字，C 任务 1 上线后再评估是否值得投 (a)。**等 Erika 定。**
+
+#### 阶段 B 前置坑（不阻塞当前，开 B 前必须补）
+
+gold 三个软模块标注量严重不足（已核实）：`purchase_motive` = **0**、`unmet_need` = **1**、`consumer_profile` = **10**。阶段 B 出口条件「三模块错标率 ≤5%」在现有 gold 上**分母为零，无法判定**。
+
+- [ ] **B-0**：开 B 之前先补三模块 gold 标注，否则出口条件不可测
+
+#### 执行顺序
+
+```
+A-1（CI 入 git + 修 bug）
+  └→ A-2（gold 对齐 + 重跑基线）        ← 92.5% 可能变动，变动后才是真数
+       └→ A-3（同证据去重）             ← 同时降极性反标 3→1→0 和错标率
+            └→ A-4（Erika 10 条抽检）
+                 └→ A-5（闸门 3 线上验证）
+                      └→ 阶段 A 真正关闭 → C 任务 1 开工
+                                          C 任务 2 等 C-0 口径决策
+```
+
+A-1/A-2/A-3 三项预计半天内可完成，均为阻塞 C 的前置。
+
+<!-- A-AUDIT-PLAN-END -->
+
+---
 
 ## 6. 技术优化
 
