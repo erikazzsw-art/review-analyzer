@@ -1,0 +1,90 @@
+name: Six Metrics Gate (闸门 1)
+
+# 触发条件：
+# 1. PR / push 修改了标签相关文件（specific_issue、frontstage、catalog 等）
+# 2. 修改了验收脚本本身
+# 3. 修改了 gold fixture 或 LLM 缓存
+# 4. 手动触发（workflow_dispatch）
+#
+# 红线（极性反标 ≠ 0、串台 ≠ 0）破了 → CI 直接 fail
+# CI 内不调真实 LLM，用预缓存的 fixture
+
+on:
+  pull_request:
+    paths:
+      - 'backend_api/app/services/specific_issue.py'
+      - 'backend_api/app/services/customer_label_v2_frontstage.py'
+      - 'backend_api/app/services/customer_label_v2_shadow.py'
+      - 'backend_api/app/services/customer_label_catalog.py'
+      - 'backend_api/app/services/customer_label_v2_candidate_pool.py'
+      - 'backend_api/app/services/review_fragment_label_catalog.py'
+      - 'backend_api/app/services/review_fragment_*.py'
+      - 'backend_api/app/services/label_registry_*.py'
+      - 'scripts/acceptance_six_metrics.py'
+      - 'backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json'
+      - 'backend_api/tests/fixtures/acceptance_waders_llm_cache.json'
+      - '.github/workflows/six-metrics-gate.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend_api/app/services/specific_issue.py'
+      - 'backend_api/app/services/customer_label_v2_frontstage.py'
+      - 'backend_api/app/services/customer_label_v2_shadow.py'
+      - 'backend_api/app/services/customer_label_catalog.py'
+      - 'backend_api/app/services/customer_label_v2_candidate_pool.py'
+      - 'backend_api/app/services/review_fragment_label_catalog.py'
+      - 'backend_api/app/services/label_registry_*.py'
+      - 'scripts/acceptance_six_metrics.py'
+      - 'backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json'
+      - 'backend_api/tests/fixtures/acceptance_waders_llm_cache.json'
+      - '.github/workflows/six-metrics-gate.yml'
+  workflow_dispatch:
+
+jobs:
+  six-metrics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 运行六指标验收（waders 50 条，用缓存不调 LLM）
+        id: metrics
+        run: |
+          python scripts/acceptance_six_metrics.py \
+            --fixture backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json \
+            --cached-llm backend_api/tests/fixtures/acceptance_waders_llm_cache.json \
+            --category waders \
+            > six_metrics_output.txt 2>&1
+          EXIT_CODE=$?
+          # 提取关键指标
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          # 打印摘要行
+          grep -E "错标率|漏标率|极性反标|串台|汇总|红线" six_metrics_output.txt || true
+
+      - name: 检查红线
+        if: steps.metrics.outputs.exit_code != '0'
+        run: |
+          echo "❌ 六指标红线被破！"
+          echo "完整输出："
+          cat six_metrics_output.txt
+          exit 1
+
+      - name: 上传验收报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: six-metrics-report
+          path: six_metrics_output.txt
+          retention-days: 30
