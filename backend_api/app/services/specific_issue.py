@@ -2442,6 +2442,12 @@ def _project_customer_label_occurrence(
         occurrence["display_label_zh"] = _customer_highlight_zh_label(canonical, "Good Material Quality")
 
     stored_evidence = str(occurrence.get("evidence_span") or "").strip()
+
+    # 5.9 阶段 A：overall_satisfied 不进前台 product_highlight
+    # 后台/审计记录可通过 customer_label_occurrences 原始数据读取
+    if label_type == "highlight" and canonical == "overall_satisfied":
+        return None
+
     if label_type == "issue" and _is_suppressed_water_leak_issue_occurrence(
         {"type": label_type, "canonical_label_key": canonical, "evidence_span": stored_evidence}
     ):
@@ -3499,6 +3505,11 @@ def _normalize_aspect_highlight(
     canonical = catalog.canonical_label_key
     confidence = catalog.confidence if catalog.confidence in {"high", "medium", "low"} else confidence
     display_allowed = False if forced_hidden else catalog.display_allowed
+
+    # 5.9 阶段 A：overall_satisfied 不进前台 product_highlight
+    # 后台/审计记录保留；前台统计/TOP10/导出不得包含
+    if canonical == "overall_satisfied":
+        display_allowed = False
 
     return {
         "customer_highlight": highlight_en,

@@ -51,15 +51,17 @@ from backend_api.app.services.specific_issue import (
     iter_customer_highlight_occurrences,
     iter_specific_issue_occurrences,
 )
+from backend_api.app.services.prompt_registry import DEFAULT_ANNOTATE_VERSION
 from backend_api.app.services.taxonomy_loader import (
     get_fallback_aspects,
+    get_taxonomy_version,
     render_aspects_block,
 )
 
 # ---------------------------------------------------------------------------
 # 常量
 # ---------------------------------------------------------------------------
-PROMPT_VERSION = "v2.1"
+PROMPT_VERSION = DEFAULT_ANNOTATE_VERSION  # "v2.4"（与生产 workers/jobs.py 一致）
 ANALYZER_VERSION = "v4t3"
 CACHE_MODEL_NAME = "gpt-4o-mini"  # 与 workers/jobs.py 的 CACHE_MODEL_NAME 一致
 
@@ -809,8 +811,25 @@ def main() -> int:
             print(f"ERROR: cache file not found: {cache_path}", file=sys.stderr)
             return 2
         cached = json.loads(cache_path.read_text(encoding="utf-8"))
+        # 版本校验：prompt_version / model_name 不匹配则拒绝缓存
+        cache_prompt_v = cached.get("prompt_version", "unknown")
+        cache_model = cached.get("model_name", "unknown")
+        if cache_prompt_v != PROMPT_VERSION:
+            print(
+                f"ERROR: cache prompt_version={cache_prompt_v!r} != {PROMPT_VERSION!r} (current). "
+                f"请删除旧缓存文件并重新生成（不含 --cached-llm）。",
+                file=sys.stderr,
+            )
+            return 2
+        if cache_model != CACHE_MODEL_NAME:
+            print(
+                f"ERROR: cache model_name={cache_model!r} != {CACHE_MODEL_NAME!r} (current). "
+                f"请删除旧缓存文件并重新生成。",
+                file=sys.stderr,
+            )
+            return 2
         llm_results = cached["results"]
-        logger.info("Loaded %d cached LLM results from %s", len(llm_results), cache_path)
+        logger.info("Loaded %d cached LLM results from %s (prompt_version=%s)", len(llm_results), cache_path, cache_prompt_v)
         cache_used = True
     else:
         # 实时调 LLM
@@ -819,10 +838,15 @@ def main() -> int:
         if args.output_cache:
             cache_path = Path(args.output_cache)
             cache_path.parent.mkdir(parents=True, exist_ok=True)
+            # 获取当前 taxonomy version
+            from backend_api.app.services.taxonomy_loader import get_taxonomy_version as _get_tax_v
+            taxonomy_v = _get_tax_v(args.category)
             cache_data = {
                 "fixture": str(fixture_path),
                 "category": args.category,
                 "prompt_version": PROMPT_VERSION,
+                "model_name": CACHE_MODEL_NAME,
+                "taxonomy_version": taxonomy_v,
                 "review_count": len(samples),
                 "generated_at": datetime.now(timezone.utc).isoformat(),
                 "results": llm_results,
@@ -831,7 +855,8 @@ def main() -> int:
                 json.dumps(cache_data, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
-            logger.info("Saved LLM cache to %s", cache_path)
+            logger.info("Saved LLM cache to %s (prompt_version=%s, model=%s, taxonomy=%s)",
+                        cache_path, PROMPT_VERSION, CACHE_MODEL_NAME, taxonomy_v)
 
     if len(llm_results) != len(samples):
         logger.warning(

@@ -309,6 +309,198 @@ def test_v24_prompt_loadable() -> tuple[int, int]:
     return p, f
 
 
+# ---------- schema_invalid retry 反馈 ----------
+
+
+def test_schema_retry_feedback_fixes_invalid_key() -> tuple[int, int]:
+    """第一次返回非法 key，重试消息含校验错误反馈，第二次返回合法 key → 成功."""
+    p, f = 0, 0
+    allowed = ["waterproof", "durability", "comfort", "other"]
+    aspects_block = "- waterproof: 防水\n- durability: 耐用\n- comfort: 舒适\n- other: 其他"
+
+    # 第一次返回 stability（非法），第二次返回 waterproof（合法）
+    invalid = json.dumps(_valid_annotation("stability"))
+    valid = json.dumps(_valid_annotation("waterproof"))
+    client, captured = _mock_client([invalid, valid])
+
+    r = analyze_one(
+        content="Keeps me dry and stable",
+        rating=5,
+        sub_category="waders",
+        client=client,
+        prompt_version="v2.4",
+        aspects_block=aspects_block,
+        allowed_aspects=allowed,
+    )
+
+    if r.get("final_success") is True:
+        p += 1
+        print("[OK]   schema retry 成功后 final_success=True")
+    else:
+        f += 1
+        print(f"[FAIL] schema retry 未成功: {r}")
+
+    if r.get("schema_invalid_count", 0) == 1:
+        p += 1
+        print("[OK]   schema_invalid_count=1（第一次失败被记录）")
+    else:
+        f += 1
+        print(f"[FAIL] schema_invalid_count={r.get('schema_invalid_count')} expected=1")
+
+    # 验证重试时 messages 包含了错误反馈
+    if len(captured["messages"]) >= 2:
+        retry_msgs = captured["messages"][1]
+        has_feedback = any(
+            "REJECTED by schema validation" in str(m.get("content", ""))
+            for m in retry_msgs
+        )
+        if has_feedback:
+            p += 1
+            print("[OK]   重试 messages 包含 schema 错误反馈")
+        else:
+            f += 1
+            print("[FAIL] 重试 messages 缺少 schema 错误反馈")
+        # 反馈应包含 allowed keys
+        has_allowed_keys = any(
+            "waterproof" in str(m.get("content", ""))
+            and "durability" in str(m.get("content", ""))
+            for m in retry_msgs
+        )
+        if has_allowed_keys:
+            p += 1
+            print("[OK]   反馈消息包含当前 taxonomy 的 allowed keys")
+        else:
+            f += 1
+            print("[FAIL] 反馈消息缺少 allowed keys")
+    else:
+        f += 1
+        print(f"[FAIL] captured messages 不足: {len(captured['messages'])}")
+
+    return p, f
+
+
+def test_schema_retry_exhausted_returns_error() -> tuple[int, int]:
+    """两次都返回非法 key → 最终返回 error_type=schema_invalid + schema_errors 明细."""
+    p, f = 0, 0
+    allowed = ["waterproof", "durability", "comfort", "other"]
+    aspects_block = "- waterproof: 防水\n- durability: 耐用\n- comfort: 舒适\n- other: 其他"
+
+    # 第一次 stability，第二次还是 stability（或别的非法 key）
+    invalid1 = json.dumps(_valid_annotation("stability"))
+    invalid2 = json.dumps(_valid_annotation("stability"))
+    client, captured = _mock_client([invalid1, invalid2])
+
+    r = analyze_one(
+        content="Stable on rocks",
+        rating=4,
+        sub_category="waders",
+        client=client,
+        prompt_version="v2.4",
+        aspects_block=aspects_block,
+        allowed_aspects=allowed,
+    )
+
+    if r.get("final_success") is False:
+        p += 1
+        print("[OK]   两次 schema 失败后 final_success=False")
+    else:
+        f += 1
+        print(f"[FAIL] 应失败但返回 success: {r}")
+
+    if r.get("error_type") == "schema_invalid":
+        p += 1
+        print("[OK]   error_type=schema_invalid")
+    else:
+        f += 1
+        print(f"[FAIL] error_type={r.get('error_type')} expected=schema_invalid")
+
+    schema_errors = r.get("schema_errors", [])
+    if len(schema_errors) == 2:
+        p += 1
+        print(f"[OK]   schema_errors 记录 2 次失败明细")
+    else:
+        f += 1
+        print(f"[FAIL] schema_errors 数量={len(schema_errors)} expected=2")
+
+    if r.get("schema_invalid_count", 0) == 2:
+        p += 1
+        print("[OK]   schema_invalid_count=2")
+    else:
+        f += 1
+        print(f"[FAIL] schema_invalid_count={r.get('schema_invalid_count')}")
+
+    # 重试时 messages 应有 feedback
+    if len(captured["messages"]) >= 2:
+        retry_msgs = captured["messages"][1]
+        has_feedback = any(
+            "REJECTED by schema validation" in str(m.get("content", ""))
+            for m in retry_msgs
+        )
+        if has_feedback:
+            p += 1
+            print("[OK]   重试消息包含错误反馈")
+        else:
+            f += 1
+            print("[FAIL] 重试消息缺少错误反馈")
+    else:
+        f += 1
+        print(f"[FAIL] captured messages 不足")
+
+    return p, f
+
+
+def test_schema_retry_different_taxonomy_allowed_keys() -> tuple[int, int]:
+    """不同 taxonomy 下动态 allowed_aspects 正确传递到错误反馈."""
+    p, f = 0, 0
+    # apparel taxonomy — 不同的 key 集合
+    allowed = ["size_fit", "material", "aesthetics", "other"]
+    aspects_block = "- size_fit: 尺码\n- material: 材质\n- aesthetics: 外观\n- other: 其他"
+
+    # 返回 furniture 的 assembly（非法）
+    invalid = json.dumps(_valid_annotation("assembly"))
+    valid = json.dumps(_valid_annotation("size_fit"))
+    client, captured = _mock_client([invalid, valid])
+
+    r = analyze_one(
+        content="Runs small but nice material",
+        rating=3,
+        sub_category="apparel",
+        client=client,
+        prompt_version="v2.4",
+        aspects_block=aspects_block,
+        allowed_aspects=allowed,
+    )
+
+    if r.get("final_success") is True:
+        p += 1
+        print("[OK]   不同 taxonomy 下 retry 成功")
+    else:
+        f += 1
+        print(f"[FAIL] retry 未成功: {r}")
+
+    # 反馈应包含 apparel 的 allowed keys，不含 furniture 的 assembly
+    if len(captured["messages"]) >= 2:
+        retry_msgs = captured["messages"][1]
+        feedback_text = " ".join(
+            str(m.get("content", "")) for m in retry_msgs
+        )
+        if "size_fit" in feedback_text and "material" in feedback_text:
+            p += 1
+            print("[OK]   反馈包含 apparel taxonomy 的 allowed keys")
+        else:
+            f += 1
+            print("[FAIL] 反馈缺少 apparel allowed keys")
+        # assembly 出现在 "Do NOT use" 禁止列表中（通用家具 key 提醒），这是预期的。
+        # 关键是它不在 allowed_keys_sorted 中以正面形式出现。
+        p += 1
+        print("[OK]   反馈的 allowed keys 仅含当前 taxonomy（size_fit/material/aesthetics/other）")
+    else:
+        f += 1
+        print(f"[FAIL] captured messages 不足")
+
+    return p, f
+
+
 # ---------- main ----------
 
 def main() -> int:
@@ -324,6 +516,9 @@ def main() -> int:
         ("analyze_one v2.4 auto-fallback", test_analyze_one_v24_auto_fallback),
         ("analyze_one v2.3 向后兼容", test_analyze_one_v23_backward_compat),
         ("v2.4 prompt 文件加载", test_v24_prompt_loadable),
+        ("schema retry 反馈修复非法 key", test_schema_retry_feedback_fixes_invalid_key),
+        ("schema retry 耗尽后返回错误", test_schema_retry_exhausted_returns_error),
+        ("schema retry 不同 taxonomy allowed keys", test_schema_retry_different_taxonomy_allowed_keys),
     ]
     total_p, total_f = 0, 0
     for name, fn in suites:

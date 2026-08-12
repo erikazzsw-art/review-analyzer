@@ -275,7 +275,9 @@
           "evidence_span": "Great product",
           "evidence_start": 0,
           "evidence_end": 13,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": []
         },
         {
           "raw_span": "and keeps ou dry",
@@ -284,12 +286,15 @@
           "evidence_span": "and keeps ou dry",
           "evidence_start": 14,
           "evidence_end": 30,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "keeps_water_out",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
       "expected_highlight_keys": [
-        "overall_satisfied",
         "keeps_water_out"
       ],
       "evidence_spans": [
@@ -331,7 +336,15 @@
       },
       "notes": [
         "manual column label `透气性好` ignored because no locatable evidence was available"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-352",
@@ -353,7 +366,11 @@
           "evidence_span": "I bought these for my boyfriend and he is 6’3 300lbs with a size 14 foot, and these fit him perfect! There is a lot of wiggle room in the body/waist area, and the shoes fit EXACTLY to size (a little snug so I would recommend sizing up ESPECIALLY if you wear thick socks).",
           "evidence_start": 0,
           "evidence_end": 271,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "“Very worth it for the price!",
@@ -362,7 +379,11 @@
           "evidence_span": "Very worth it for the price!",
           "evidence_start": 272,
           "evidence_end": 300,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -418,7 +439,15 @@
           "Very worth it for the price!"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 2,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-353",
@@ -439,7 +468,11 @@
           "evidence_span": "Se ve de muy buena calidad",
           "evidence_start": 0,
           "evidence_end": 26,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "looks_good",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -471,7 +504,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-354",
@@ -494,7 +535,11 @@
           "evidence_span": "Great material for price",
           "evidence_start": 0,
           "evidence_end": 24,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "shoe size is maybe 1 size smaller then normal",
@@ -503,7 +548,11 @@
           "evidence_span": "shoe size is maybe 1 size smaller then normal",
           "evidence_start": 27,
           "evidence_end": 72,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "size_fit_problem",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -549,7 +598,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-355",
@@ -573,13 +630,15 @@
           "evidence_span": "Un buen producto",
           "evidence_start": 0,
           "evidence_end": 16,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -608,7 +667,15 @@
       "notes": [
         "manual column label `防水可靠` ignored because no locatable evidence was available",
         "manual column label `防滑` ignored because no locatable evidence was available"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-356",
@@ -629,7 +696,11 @@
           "evidence_span": "Waterproof",
           "evidence_start": 0,
           "evidence_end": 10,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "keeps_water_out",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "decent footing/grip",
@@ -638,7 +709,11 @@
           "evidence_span": "decent footing/grip",
           "evidence_start": 12,
           "evidence_end": 31,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_traction",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Not for super cold water but good for spring fly fishing.",
@@ -647,7 +722,11 @@
           "evidence_span": "Not for super cold water but good for spring fly fishing.",
           "evidence_start": 33,
           "evidence_end": 90,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "insufficient_warmth",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -706,7 +785,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 2,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-357",
@@ -728,7 +815,11 @@
           "evidence_span": "Nice waders for the price.  Will function as desired.",
           "evidence_start": 0,
           "evidence_end": 53,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Not certain of the longevity of the product. Made from thin material. So not certain of durability. Used two time this far. Worked well during thise two outings. Everything is as described.",
@@ -737,13 +828,16 @@
           "evidence_span": "Not certain of the longevity of the product.  Made from thin material.  So not certain of durability.  Used two time this far.  Worked well during thise two outings.  Everything is as described.",
           "evidence_start": 55,
           "evidence_end": 249,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
       "expected_highlight_keys": [
-        "good_value_for_the_price",
-        "overall_satisfied"
+        "good_value_for_the_price"
       ],
       "evidence_spans": [
         {
@@ -791,7 +885,15 @@
           "as described"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-358",
@@ -812,13 +914,15 @@
           "evidence_span": "quality, better than I expected.",
           "evidence_start": 5,
           "evidence_end": 37,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -852,7 +956,15 @@
           "Good quality"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-359",
@@ -874,7 +986,11 @@
           "evidence_span": "product",
           "evidence_start": 5,
           "evidence_end": 12,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "fits good",
@@ -883,13 +999,16 @@
           "evidence_span": "fits good",
           "evidence_start": 13,
           "evidence_end": 22,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
       "expected_highlight_keys": [
-        "fits_as_expected",
-        "overall_satisfied"
+        "fits_as_expected"
       ],
       "evidence_spans": [
         {
@@ -928,7 +1047,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 2,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-360",
@@ -949,13 +1076,15 @@
           "evidence_span": "They're nice waders.",
           "evidence_start": 0,
           "evidence_end": 20,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -981,7 +1110,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-361",
@@ -1002,7 +1139,11 @@
           "evidence_span": "The only thing I hate about these waders is the belt loops are too high and the chest belt tightens around the lower portion of the front pocket. Poor design.",
           "evidence_start": 0,
           "evidence_end": 158,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "size_fit_problem",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -1034,7 +1175,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-362",
@@ -1055,7 +1204,11 @@
           "evidence_span": "Fit me well.  I’m about 5’ 8” and weigh about 180 lbs.  My shoe size is 9 1/2, and I bought a wader boot size of 10.  They fit fine.  I tried them out, and they worked good.",
           "evidence_start": 0,
           "evidence_end": 173,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -1087,7 +1240,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-363",
@@ -1108,7 +1269,11 @@
           "evidence_span": "runs way smaller than listed too small",
           "evidence_start": 0,
           "evidence_end": 38,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "size_fit_problem",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -1149,7 +1314,15 @@
         ],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-364",
@@ -1171,7 +1344,11 @@
           "evidence_span": "Great quality.",
           "evidence_start": 0,
           "evidence_end": 14,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_material_quality",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Excellent fit.",
@@ -1180,7 +1357,11 @@
           "evidence_span": "Excellent fit.",
           "evidence_start": 15,
           "evidence_end": 29,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -1233,7 +1414,15 @@
           "fits good"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 2,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-365",
@@ -1259,7 +1448,11 @@
           "evidence_span": "enough fishing waders for the price.",
           "evidence_start": 5,
           "evidence_end": 41,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Keep me dryish for the most part",
@@ -1268,7 +1461,11 @@
           "evidence_span": "Keep me dryish for the most part",
           "evidence_start": 47,
           "evidence_end": 79,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "candidate:breathes_well_evidence_unclear",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Quick and easy to put on/take off.-Better soles/grip on the boots than I was expecting.-I wear size 14 shoes and these are appropriately sized with a little extra room for thick socks.",
@@ -1277,7 +1474,11 @@
           "evidence_span": "Quick and easy to put on/take off.-Better soles/grip on the boots than I was expecting.-I wear size 14 shoes and these are appropriately sized with a little extra room for thick socks.",
           "evidence_start": 81,
           "evidence_end": 265,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Wader material not super durable: Made it about a month before I snagged em on some thorns walking through the woods and now have a small leak somewhere between knee and hip on one side but it’s not bad enough to matter in the summer.",
@@ -1286,7 +1487,11 @@
           "evidence_span": "Wader material not super durable: Made it about a month before I snagged em on some thorns walking through the woods and now have a small leak somewhere between knee and hip on one side but it’s not bad enough to matter in the summer.",
           "evidence_start": 275,
           "evidence_end": 509,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "breaks_easily",
+          "module_routing": [
+            "product_issue"
+          ]
         },
         {
           "raw_span": "The seam where the boots attach to the waders is rough on the inside. Non-issue if youre wearing pants but when wearing shorts it rubbed my shins raw. Got some leggings to wear under my shorts in the summer and it’s fine.-Boot toe has no padding and toe box collapses in water. Gonna hurt if you kick a rock or catch a tree root. If you’re not standing on flat ground your toes are going to jam into the end of the boots which is uncomfortable.",
@@ -1295,7 +1500,11 @@
           "evidence_span": "The seam where the boots attach to the waders is rough on the inside. Non-issue if youre wearing pants but when wearing shorts it rubbed my shins raw. Got some leggings to wear under my shorts in the summer and it’s fine.-Boot toe has no padding and toe box collapses in water. Gonna hurt if you kick a rock or catch a tree root. If you’re not standing on flat ground your toes are going to jam into the end of the boots which is uncomfortable.",
           "evidence_start": 510,
           "evidence_end": 954,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "uncomfortable_fit",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -1405,7 +1614,15 @@
           "GOOD"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 2,
+        "product_highlight": 3,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-366",
@@ -1428,7 +1645,11 @@
           "evidence_span": "So far so good.",
           "evidence_start": 0,
           "evidence_end": 15,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         },
         {
           "raw_span": "Wish it got a female body a little more snug, but, overall perfect for the pond cleaning I have to do.“ I should have got one more size up for shoes,",
@@ -1437,7 +1658,13 @@
           "evidence_span": "overall perfect for the pond cleaning I have to do",
           "evidence_start": 67,
           "evidence_end": 117,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "runs_too_small",
+          "module_routing": [
+            "consumer_profile"
+          ],
+          "_replaced_by_fine_grained": true,
+          "_replacement_reason": "Wish it got a female body a little more snug indicates boot/body fit too small"
         },
         {
           "raw_span": "but it is good enough.",
@@ -1446,15 +1673,17 @@
           "evidence_span": "but it is good enough.",
           "evidence_start": 165,
           "evidence_end": 187,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [
-        "size_fit_problem"
+        "runs_too_small"
       ],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "issue",
@@ -1505,7 +1734,15 @@
         ],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 1,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 2
+      }
     },
     {
       "id": "waders-351-400-row-367",
@@ -1526,7 +1763,11 @@
           "evidence_span": "First time in the water……leaked.",
           "evidence_start": 0,
           "evidence_end": 32,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "water_leaks_through",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -1565,7 +1806,15 @@
         ],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-368",
@@ -1586,7 +1835,11 @@
           "evidence_span": "Excellent customer service",
           "evidence_start": 0,
           "evidence_end": 26,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "candidate:good_customer_service",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -1618,7 +1871,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-369",
@@ -1639,13 +1900,15 @@
           "evidence_span": "Work great",
           "evidence_start": 0,
           "evidence_end": 10,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -1671,7 +1934,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-370",
@@ -1694,7 +1965,11 @@
           "evidence_span": "Waders are great and work well",
           "evidence_start": 0,
           "evidence_end": 30,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "…except, the boots are terrible. You feel every rock you step on and the water pressure squeezes down on your toes that hurt after a while. There is zero foot support and walking downhill? Forget about it. My feet were killing me after an evening of fishing in Yellowstone. I’ll need to find a water shoe that will fit inside or a thick insole to make them more comfortable. I would not recommend buying these",
@@ -1703,15 +1978,17 @@
           "evidence_span": "…except, the boots are terrible.  You feel every rock you step on and the water pressure squeezes down on your toes that hurt after a while.  There is zero foot support and walking downhill? Forget about it. My feet were killing me after an evening of fishing in Yellowstone.  I’ll need to find a water shoe that will fit inside or a thick insole to make them more comfortable.  I would not recommend buying these",
           "evidence_start": 30,
           "evidence_end": 443,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "uncomfortable_fit",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
         "uncomfortable_fit"
       ],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -1749,7 +2026,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-371",
@@ -1772,7 +2057,11 @@
           "evidence_span": "Wader is good",
           "evidence_start": 0,
           "evidence_end": 13,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         },
         {
           "raw_span": "it keeps me dry just like what it says,",
@@ -1781,7 +2070,11 @@
           "evidence_span": "it keeps me dry just like what it says,",
           "evidence_start": 14,
           "evidence_end": 53,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "keeps_water_out",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "I bought another one for my wife and same review and she she loves it.",
@@ -1790,12 +2083,15 @@
           "evidence_span": "I bought another one for my wife and same review and she she loves it.",
           "evidence_start": 54,
           "evidence_end": 124,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "consumer_profile"
+          ]
         }
       ],
       "expected_issue_keys": [],
       "expected_highlight_keys": [
-        "overall_satisfied",
         "keeps_water_out"
       ],
       "evidence_spans": [
@@ -1848,7 +2144,15 @@
       },
       "notes": [
         "manual column label `透气性好` ignored because no locatable evidence was available"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 1,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-372",
@@ -1872,7 +2176,11 @@
           "evidence_span": "I think these waders are a good choice for light duty.",
           "evidence_start": 0,
           "evidence_end": 54,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "candidate:not_for_hardcore_conditions",
+          "module_routing": [
+            "product_issue"
+          ]
         },
         {
           "raw_span": "They fit find",
@@ -1881,7 +2189,11 @@
           "evidence_span": "They fit find",
           "evidence_start": 56,
           "evidence_end": 69,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "and are comfortable",
@@ -1890,7 +2202,11 @@
           "evidence_span": "and are comfortable",
           "evidence_start": 70,
           "evidence_end": 89,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "comfortable_to_wear",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "but would not be good for hardcore conditions.",
@@ -1899,7 +2215,11 @@
           "evidence_span": "but would  not be good for hardcore conditions.",
           "evidence_start": 90,
           "evidence_end": 137,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "candidate:not_for_hardcore_conditions",
+          "module_routing": [
+            "consumer_profile"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -1966,7 +2286,15 @@
       },
       "notes": [
         "manual column label `舒适度好` ignored because no locatable evidence was available"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 2,
+        "consumer_profile": 1,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-373",
@@ -1987,7 +2315,11 @@
           "evidence_span": "Comfy.",
           "evidence_start": 0,
           "evidence_end": 6,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "comfortable_to_wear",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Strap buckle came off while in use.",
@@ -1996,7 +2328,11 @@
           "evidence_span": "Strap buckle came off while in use.",
           "evidence_start": 8,
           "evidence_end": 43,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "breaks_easily",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -2042,7 +2378,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-374",
@@ -2069,7 +2413,11 @@
           "evidence_span": "(Review written after 4 hrs in these waders)These are half the cost of the closest thing you can get at Cabelas and do the same thing.",
           "evidence_start": 0,
           "evidence_end": 134,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:",
@@ -2078,7 +2426,11 @@
           "evidence_span": "They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:",
           "evidence_start": 134,
           "evidence_end": 299,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Cheap, Serviceable, Size chart was accurate (order +1 size up from shoe size),",
@@ -2087,7 +2439,11 @@
           "evidence_span": "Cheap, Serviceable, Size chart was accurate (order +1 size up from shoe size),",
           "evidence_start": 299,
           "evidence_end": 377,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
@@ -2096,7 +2452,11 @@
           "evidence_span": "comes with extras that other choices make you purchase separate.Cons:The water pressure isn't buffered very much and sucks the material to your body, the boots are thin sole",
           "evidence_start": 378,
           "evidence_end": 551,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "candidate:thin_boot_sole",
+          "module_routing": [
+            "product_issue"
+          ]
         },
         {
           "raw_span": "and my feet got sore after 4 hrs on the rocks, boots need to have cleats attached for better traction,",
@@ -2105,7 +2465,11 @@
           "evidence_span": "and my feet got sore after 4 hrs on the rocks, boots need to have cleats attached for better traction,",
           "evidence_start": 552,
           "evidence_end": 654,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "uncomfortable_fit",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -2114,7 +2478,6 @@
       "expected_highlight_keys": [
         "good_value_for_the_price",
         "fits_as_expected",
-        "overall_satisfied",
         "comfortable_to_wear"
       ],
       "evidence_spans": [
@@ -2234,7 +2597,15 @@
       "notes": [
         "manual column label `舒适度好` supplemented by fallback evidence pattern",
         "manual column label `尺码合适(拍大一码)` supplemented by fallback evidence pattern"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 2,
+        "product_highlight": 3,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-375",
@@ -2279,7 +2650,15 @@
       },
       "notes": [
         "manual column label `收到像二手商品` supplemented by fallback evidence pattern"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-376",
@@ -2306,7 +2685,11 @@
           "evidence_span": "functions as it should!",
           "evidence_start": 0,
           "evidence_end": 23,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         },
         {
           "raw_span": "the fitment is spot on!",
@@ -2315,7 +2698,11 @@
           "evidence_span": "the fitment is spot on!",
           "evidence_start": 24,
           "evidence_end": 47,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "keeps water out and you dry!",
@@ -2324,7 +2711,11 @@
           "evidence_span": "keeps water out and you dry!",
           "evidence_start": 48,
           "evidence_end": 76,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "keeps_water_out",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "very comfortable",
@@ -2333,7 +2724,11 @@
           "evidence_span": "very comfortable",
           "evidence_start": 77,
           "evidence_end": 93,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "comfortable_to_wear",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "and effective with some solid boot bottoms to match! very strong waders!",
@@ -2342,7 +2737,11 @@
           "evidence_span": "and effective with some solid boot bottoms to match! very strong waders!",
           "evidence_start": 94,
           "evidence_end": 166,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "holds_up_well",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "high quality for such a low price!",
@@ -2351,7 +2750,11 @@
           "evidence_span": "high quality for such a low price!",
           "evidence_start": 167,
           "evidence_end": 201,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "will be recommending these to my friends! comes with an awesome protective waterproof case for your phone that functions well!",
@@ -2360,7 +2763,11 @@
           "evidence_span": "will be recommending these to my friends! comes with an awesome protective waterproof case for your phone that functions well!",
           "evidence_start": 202,
           "evidence_end": 328,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "useful_accessories",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -2368,7 +2775,6 @@
         "holds_up_well",
         "fits_as_expected",
         "good_value_for_the_price",
-        "overall_satisfied",
         "comfortable_to_wear",
         "useful_accessories",
         "keeps_water_out"
@@ -2476,7 +2882,15 @@
           "spot on"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 6,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-377",
@@ -2497,13 +2911,15 @@
           "evidence_span": "For good",
           "evidence_start": 0,
           "evidence_end": 8,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -2529,7 +2945,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-378",
@@ -2550,7 +2974,11 @@
           "evidence_span": "I’m 5’5 148lbs size 8, read all the reviews saying get a size up so I got size 9 , threw it on in my kitchen while I was cooking and had oven on so it was pretty warm in my kitchen already and I was only wear shorts on at the time no shirt or socks but was just itching to try it and it feels like the real deal. Definitely nice and sealed up good I was already started to break a sweat or two while wearing it around kitchen to living room for short amount of time but again was cooking so I was already hot. Only reason I gave it a 4 star is because this is definitely made for someone 5inches or more taller than me fits in a way loose but not where I’m stumble to wobble but I’m not complaining nothing really fits me true to size but would be great if it told you ideal height for the wear. But I’d buy it prolly 10 more times even with it being bigger than me jus because of how durable it is , can’t wait to get out in the river fishing trout with this on .",
           "evidence_start": 0,
           "evidence_end": 964,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -2607,7 +3035,15 @@
           "how durable it is"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-379",
@@ -2630,7 +3066,11 @@
           "evidence_span": "Roomy,",
           "evidence_start": 0,
           "evidence_end": 6,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "sturdy",
@@ -2639,7 +3079,11 @@
           "evidence_span": "sturdy",
           "evidence_start": 7,
           "evidence_end": 13,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "holds_up_well",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Dry socks & pants rule",
@@ -2648,7 +3092,11 @@
           "evidence_span": "Dry socks & pants rule",
           "evidence_start": 39,
           "evidence_end": 61,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "keeps_water_out",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -2715,7 +3163,15 @@
           "sturdy"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 3,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-380",
@@ -2736,13 +3192,15 @@
           "evidence_span": "Awesome suit!",
           "evidence_start": 0,
           "evidence_end": 13,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -2768,7 +3226,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-381",
@@ -2789,7 +3255,11 @@
           "evidence_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
           "evidence_start": 0,
           "evidence_end": 97,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "consumer_profile"
+          ]
         },
         {
           "raw_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
@@ -2798,13 +3268,15 @@
           "evidence_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
           "evidence_start": 0,
           "evidence_end": 97,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "consumer_profile"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -2830,7 +3302,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 2,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-382",
@@ -2851,13 +3331,15 @@
           "evidence_span": "Seem to be working out well so far",
           "evidence_start": 0,
           "evidence_end": 34,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -2883,7 +3365,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-383",
@@ -2904,13 +3394,15 @@
           "evidence_span": "As advertised !",
           "evidence_start": 0,
           "evidence_end": 15,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -2936,7 +3428,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-384",
@@ -2958,7 +3458,11 @@
           "evidence_span": "I ordered 2, one for him & one for me.True to size.",
           "evidence_start": 0,
           "evidence_end": 51,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Great quality.",
@@ -2967,7 +3471,11 @@
           "evidence_span": "Great quality.",
           "evidence_start": 53,
           "evidence_end": 67,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_material_quality",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -3021,7 +3529,15 @@
           "Great quality"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 2,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-385",
@@ -3044,7 +3560,11 @@
           "evidence_span": "Great value especially for the price.",
           "evidence_start": 0,
           "evidence_end": 37,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "It held up well without any tears or punctures.",
@@ -3053,7 +3573,11 @@
           "evidence_span": "It held up well without any tears or punctures.",
           "evidence_start": 38,
           "evidence_end": 85,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "holds_up_well",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "I would absolutely buy this again.",
@@ -3062,13 +3586,16 @@
           "evidence_span": "I would absolutely buy this again.",
           "evidence_start": 86,
           "evidence_end": 120,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
       "expected_highlight_keys": [
         "good_value_for_the_price",
-        "overall_satisfied",
         "holds_up_well"
       ],
       "evidence_spans": [
@@ -3138,7 +3665,15 @@
           "Great value especially for the price"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 2,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-386",
@@ -3163,7 +3698,13 @@
           "evidence_span": "BOOTS RUN SMALL.",
           "evidence_start": 0,
           "evidence_end": 16,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "runs_too_small",
+          "module_routing": [
+            "product_issue"
+          ],
+          "_replaced_by_fine_grained": true,
+          "_replacement_reason": "BOOTS RUN SMALL evidence clearly indicates boot/shoe size issue"
         },
         {
           "raw_span": "PURCHASE A LARGER SIZE. OTHERWISE WOULD RECOMMEND THESE WADERS. I USED THEM FOR THE FIRST TIME TODAY AND THEY ARE WATER TIGHT. THEY WILL MAKE YOU SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT.",
@@ -3172,7 +3713,12 @@
           "evidence_span": "PURCHASE A LARGER SIZE. OTHERWISE WOULD RECOMMEND THESE WADERS. I USED THEM FOR THE FIRST TIME TODAY AND THEY ARE WATER TIGHT. THEY WILL MAKE YOU SWEAT AS THEY ARE VERY BREATHABLE DUE TO THEM BEING WATER TIGHT.",
           "evidence_start": 17,
           "evidence_end": 227,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "not_breathable",
+          "module_routing": [
+            "product_issue",
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "THEY SEEM TO BE MADE WELL EVEN AT THE SEAMS.",
@@ -3181,7 +3727,9 @@
           "evidence_span": "THEY SEEM TO BE MADE WELL EVEN AT THE SEAMS.",
           "evidence_start": 228,
           "evidence_end": 272,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_material_quality",
+          "module_routing": []
         },
         {
           "raw_span": "I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
@@ -3190,11 +3738,18 @@
           "evidence_span": "I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
           "evidence_start": 393,
           "evidence_end": 710,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "runs_too_small",
+          "module_routing": [
+            "product_issue",
+            "consumer_profile"
+          ],
+          "_replaced_by_fine_grained": true,
+          "_replacement_reason": "BOOTS RUN SMALL evidence clearly indicates boot/shoe size issue"
         }
       ],
       "expected_issue_keys": [
-        "size_fit_problem",
+        "runs_too_small",
         "not_breathable"
       ],
       "expected_highlight_keys": [
@@ -3288,7 +3843,15 @@
       },
       "notes": [
         "manual column label `舒适度好` supplemented by fallback evidence pattern"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 3,
+        "product_highlight": 1,
+        "consumer_profile": 1,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-387",
@@ -3311,7 +3874,11 @@
           "evidence_span": "Just what I needed. Perfect fit. I ordered 1 foot size larger as suggested by reviewers and glad I did.",
           "evidence_start": 0,
           "evidence_end": 103,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "Not bad at all for the price paid.",
@@ -3320,7 +3887,11 @@
           "evidence_span": "Not bad at all for the price paid.",
           "evidence_start": 104,
           "evidence_end": 138,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -3391,7 +3962,15 @@
       },
       "notes": [
         "manual column label `准时送达` supplemented by fallback evidence pattern"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 2,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-388",
@@ -3414,7 +3993,11 @@
           "evidence_span": "Decent waders for creeks and clean water.",
           "evidence_start": 0,
           "evidence_end": 41,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "works_well_for_use_case",
+          "module_routing": [
+            "consumer_profile"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -3462,7 +4045,15 @@
       },
       "notes": [
         "manual column label `容易被刺破` supplemented by fallback evidence pattern"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 1,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-389",
@@ -3516,7 +4107,15 @@
       },
       "notes": [
         "manual column label `耐用性差` supplemented by fallback evidence pattern"
-      ]
+      ],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-390",
@@ -3538,7 +4137,11 @@
           "evidence_span": "Amazing waders!! Definitely recommend. Worked as intended,",
           "evidence_start": 0,
           "evidence_end": 58,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         },
         {
           "raw_span": "great quality and price point!",
@@ -3547,13 +4150,16 @@
           "evidence_span": "great quality and price point!",
           "evidence_start": 59,
           "evidence_end": 89,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
       "expected_highlight_keys": [
-        "good_value_for_the_price",
-        "overall_satisfied"
+        "good_value_for_the_price"
       ],
       "evidence_spans": [
         {
@@ -3603,7 +4209,15 @@
           "great quality"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-391",
@@ -3624,7 +4238,11 @@
           "evidence_span": "Boots sized right Nice and high on the chest.",
           "evidence_start": 0,
           "evidence_end": 45,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -3656,7 +4274,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-392",
@@ -3679,7 +4305,11 @@
           "evidence_span": "I wore these for 3 days straight, twice a day, in the cold Alaskan waters for salmon fishing.  The boots had a good grip and there were no leaks.",
           "evidence_start": 0,
           "evidence_end": 145,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "keeps_water_out",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "If there's only one thing I would improve, it would be to make the front pocket just a little bit bigger.",
@@ -3688,7 +4318,11 @@
           "evidence_span": "If there's only one thing I would improve, it would be to make the front pocket just a little bit bigger.",
           "evidence_start": 147,
           "evidence_end": 252,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "pocket_too_small",
+          "module_routing": [
+            "unmet_need"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -3749,7 +4383,15 @@
           "no leaks"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 1,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-393",
@@ -3771,7 +4413,11 @@
           "evidence_span": "These are great for the money.",
           "evidence_start": 0,
           "evidence_end": 30,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_value_for_the_price",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "I gave them 4 stars because the second time I wore them they leaked just a tiny bit.",
@@ -3780,7 +4426,11 @@
           "evidence_span": "I gave them 4 stars because the second time I wore them they leaked just a tiny bit.",
           "evidence_start": 31,
           "evidence_end": 115,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "water_leaks_through",
+          "module_routing": [
+            "product_issue"
+          ]
         },
         {
           "raw_span": "Nothing extravagant but definitely uncomfortable.",
@@ -3789,7 +4439,11 @@
           "evidence_span": "Nothing extravagant but definitely uncomfortable.",
           "evidence_start": 116,
           "evidence_end": 165,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "uncomfortable_fit",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -3862,7 +4516,15 @@
           "These are great"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 2,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-394",
@@ -3883,7 +4545,11 @@
           "evidence_span": "Fits perfect!",
           "evidence_start": 0,
           "evidence_end": 13,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -3922,7 +4588,15 @@
           "fits good"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-395",
@@ -3943,7 +4617,12 @@
           "evidence_span": "The good news.  These waders appear to be a quality product for the price point.  The bad news is they run at least 1 size too small.  I wear size 14 and ordered 14 since the vendor states they run true to size.  See attached pictures.  Their 14 is at best a 12.",
           "evidence_start": 0,
           "evidence_end": 262,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "size_fit_problem",
+          "module_routing": [
+            "product_issue",
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -3999,7 +4678,15 @@
           "quality product"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-396",
@@ -4023,7 +4710,12 @@
           "evidence_span": "Ordered these for my wife and daughter.  They don't fish much and I needed a cheap pair of waders but I was pleasantly surprised by the quality",
           "evidence_start": 0,
           "evidence_end": 143,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "good_material_quality",
+          "module_routing": [
+            "product_highlight",
+            "consumer_profile"
+          ]
         },
         {
           "raw_span": "and fit of these Tidwe waders.",
@@ -4032,7 +4724,11 @@
           "evidence_span": "and fit of these Tidwe waders.",
           "evidence_start": 144,
           "evidence_end": 174,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "fits_as_expected",
+          "module_routing": [
+            "product_highlight"
+          ]
         },
         {
           "raw_span": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
@@ -4041,7 +4737,11 @@
           "evidence_span": "I highly recommend them for a backup pair or for someone who doesn't need them often.",
           "evidence_start": 176,
           "evidence_end": 261,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "candidate:not_for_frequent_use",
+          "module_routing": [
+            "consumer_profile"
+          ]
         }
       ],
       "expected_issue_keys": [],
@@ -4113,7 +4813,15 @@
           "highly recommend"
         ]
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 2,
+        "consumer_profile": 2,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-397",
@@ -4134,13 +4842,15 @@
           "evidence_span": "Excellent",
           "evidence_start": 0,
           "evidence_end": 9,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "audit_filter"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -4166,7 +4876,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 1
+      }
     },
     {
       "id": "waders-351-400-row-398",
@@ -4187,13 +4905,15 @@
           "evidence_span": "for work or fishing in lakes",
           "evidence_start": 5,
           "evidence_end": 33,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "overall_satisfied",
+          "module_routing": [
+            "consumer_profile"
+          ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [
-        "overall_satisfied"
-      ],
+      "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "highlight",
@@ -4219,7 +4939,15 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 0,
+        "product_highlight": 0,
+        "consumer_profile": 1,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-399",
@@ -4240,7 +4968,11 @@
           "evidence_span": "Leaks.",
           "evidence_start": 0,
           "evidence_end": 6,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "water_leaks_through",
+          "module_routing": [
+            "product_issue"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -4278,7 +5010,15 @@
         ],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 0,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     },
     {
       "id": "waders-351-400-row-400",
@@ -4301,7 +5041,11 @@
           "evidence_span": "Wear to go fishing in the river! Not insulated",
           "evidence_start": 0,
           "evidence_end": 46,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "insufficient_warmth",
+          "module_routing": [
+            "product_issue"
+          ]
         },
         {
           "raw_span": "but lining has not leaked!",
@@ -4310,7 +5054,11 @@
           "evidence_span": "but lining has not leaked!",
           "evidence_start": 47,
           "evidence_end": 73,
-          "locatable": true
+          "locatable": true,
+          "canonical_key": "keeps_water_out",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -4356,7 +5104,50 @@
         "audit_issue_evidence_spans": [],
         "audit_highlight_evidence_spans": []
       },
-      "notes": []
+      "notes": [],
+      "module_routing_summary": {
+        "product_issue": 1,
+        "product_highlight": 1,
+        "consumer_profile": 0,
+        "purchase_motive": 0,
+        "unmet_need": 0,
+        "audit_filter": 0
+      }
     }
-  ]
+  ],
+  "_revision_notes": {
+    "version": "2026-08-11.a",
+    "description": "5.9 阶段 A 重开：overall_satisfied 口径 + 细粒度标签替换",
+    "changes": [
+      "Review #351: removed overall_satisfied from expected_highlight_keys (['overall_satisfied', 'keeps_water_out'] → ['keeps_water_out'])",
+      "Review #355: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #357: removed overall_satisfied from expected_highlight_keys (['good_value_for_the_price', 'overall_satisfied'] → ['good_value_for_the_price'])",
+      "Review #358: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #359: removed overall_satisfied from expected_highlight_keys (['fits_as_expected', 'overall_satisfied'] → ['fits_as_expected'])",
+      "Review #360: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #366: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #369: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #370: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #371: removed overall_satisfied from expected_highlight_keys (['overall_satisfied', 'keeps_water_out'] → ['keeps_water_out'])",
+      "Review #374: removed overall_satisfied from expected_highlight_keys (['good_value_for_the_price', 'fits_as_expected', 'overall_satisfied', 'comfortable_to_wear'] → ['good_value_for_the_price', 'fits_as_expected', 'comfortable_to_wear'])",
+      "Review #376: removed overall_satisfied from expected_highlight_keys (['holds_up_well', 'fits_as_expected', 'good_value_for_the_price', 'overall_satisfied', 'comfortable_to_wear', 'useful_accessories', 'keeps_water_out'] → ['holds_up_well', 'fits_as_expected', 'good_value_for_the_price', 'comfortable_to_wear', 'useful_accessories', 'keeps_water_out'])",
+      "Review #377: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #380: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #381: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #382: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #383: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #385: removed overall_satisfied from expected_highlight_keys (['good_value_for_the_price', 'overall_satisfied', 'holds_up_well'] → ['good_value_for_the_price', 'holds_up_well'])",
+      "Review #390: removed overall_satisfied from expected_highlight_keys (['good_value_for_the_price', 'overall_satisfied'] → ['good_value_for_the_price'])",
+      "Review #397: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #398: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
+      "Review #386: runs_too_small replaces size_fit_problem in expected_issue_keys (['size_fit_problem', 'not_breathable'] → ['runs_too_small', 'not_breathable'])",
+      "Review #386: annotated_review_labels size_fit_problem → runs_too_small (evidence: BOOTS RUN SMALL.)",
+      "Review #386: annotated_review_labels size_fit_problem → runs_too_small (evidence: I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURC)",
+      "Review #366: runs_too_small replaces size_fit_problem in expected_issue_keys (['size_fit_problem'] → ['runs_too_small'])",
+      "Review #366: annotated_review_labels size_fit_problem → runs_too_small"
+    ],
+    "overall_satisfied_policy": "overall_satisfied 不再进入前台 product_highlight；已从所有 expected_highlight_keys 中移除。后台/审计记录保留。",
+    "fine_grained_policy": "同一证据上 runs_too_small 替换 size_fit_problem，不并存。feels_thin_and_flimsy 仅在原文明确表达薄/脆弱时替换粗标签。easy_to_use 仅在原文明确表达使用便利时加入。",
+    "annotated_review_labels_preserved": "原始人工标注的 annotated_review_labels 保留不动（仅 canonical_key 替换标记 _replaced_by_fine_grained=True），所有调整记录在 _revision_notes.changes 中。"
+  }
 }

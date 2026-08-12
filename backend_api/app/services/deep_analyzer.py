@@ -212,6 +212,7 @@ def analyze_one(
     last_error = ""
     quality_counts: Counter[str] = Counter()
     route_counts: Counter[str] = Counter()
+    schema_errors: list[dict[str, Any]] = []  # 记录每次 schema 失败详情
 
     def _trace_details(**extra: Any) -> dict[str, Any]:
         base = {
@@ -305,6 +306,11 @@ def analyze_one(
             if not ok:
                 last_error = f"schema_invalid: {err}"
                 quality_counts["schema_invalid"] += 1
+                schema_errors.append({
+                    "attempt": _attempt + 1,
+                    "error": err,
+                    "model": model_name,
+                })
                 _emit_trace(
                     trace_callback,
                     "event",
@@ -336,6 +342,29 @@ def analyze_one(
                     retry_count=_attempt,
                     final_success=False,
                 )
+                # 向 LLM 反馈校验错误，使重试有意义
+                if _attempt < max_retries:
+                    if allowed_set:
+                        allowed_keys_sorted = sorted(allowed_set)
+                        feedback = (
+                            f"Your last JSON response was REJECTED by schema validation: {err}.\n"
+                            f"The allowed aspect keys for this review are: {', '.join(allowed_keys_sorted)}.\n"
+                            f"Allowed polarities: positive, negative, neutral.\n"
+                            f"Allowed evidence_levels: certain, probable, uncertain.\n"
+                            f"Please fix the error: replace any invalid key with the most appropriate key "
+                            f"from the allowed list (or use \"other\" if no key fits), fix invalid polarity "
+                            f"values, and ensure ALL fields match the schema. "
+                            f"Output ONLY valid JSON."
+                        )
+                    else:
+                        feedback = (
+                            f"Your last JSON response was REJECTED by schema validation: {err}.\n"
+                            f"Allowed polarities: positive, negative, neutral.\n"
+                            f"Allowed evidence_levels: certain, probable, uncertain.\n"
+                            f"Please fix the error and output ONLY valid JSON that matches "
+                            f"the required schema exactly."
+                        )
+                    messages.append({"role": "user", "content": feedback})
                 continue
             route_counts["llm_provider_success"] += 1 if client is not None else 0
             _emit_trace(
@@ -418,7 +447,7 @@ def analyze_one(
                 retry_count=_attempt,
                 final_success=False,
             )
-    logger.warning("deep_analyzer.analyze_one failed: %s", last_error)
+    logger.warning("deep_analyzer.analyze_one failed: %s (schema_errors=%d)", last_error, len(schema_errors))
     if last_error.startswith("json_decode"):
         final_error_type = "json_decode"
     elif last_error.startswith("schema_invalid"):
@@ -434,6 +463,7 @@ def analyze_one(
         "schema_invalid_count": quality_counts["schema_invalid"],
         "exception_count": quality_counts["exception"],
         "error_type": final_error_type,
+        "schema_errors": schema_errors,
         "llm_route_counts": dict(route_counts),
     }
 

@@ -1,0 +1,1839 @@
+{
+  "fixture": "backend_api/tests/fixtures/customer_label_waders_351_400_human_gold.json",
+  "category": "waders",
+  "prompt_version": "v2.4",
+  "model_name": "gpt-4o-mini",
+  "taxonomy_version": "v1.0",
+  "review_count": 50,
+  "generated_at": "2026-08-11T05:07:56.217233+00:00",
+  "results": [
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "keeps you dry",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "great product",
+        "keeps you dry"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6080,
+      "tokens_out": 91,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 4268,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "fit him perfect",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "boot_fit",
+          "polarity": "positive",
+          "evidence_span": "the shoes fit EXACTLY to size",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "value_for_money",
+          "polarity": "positive",
+          "evidence_span": "Very worth it for the price",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "recommend sizing up for thick socks"
+      ],
+      "highlights": [
+        "fits perfectly",
+        "worth the price"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6153,
+      "tokens_out": 184,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 5213,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "material",
+          "polarity": "positive",
+          "evidence_span": "Se ve de muy buena calidad",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "very good quality"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6080,
+      "tokens_out": 87,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2172,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "material",
+          "polarity": "positive",
+          "evidence_span": "Great material for price",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "size_fit",
+          "polarity": "negative",
+          "evidence_span": "shoe size is maybe 1 size smaller then normal",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "shoe size runs smaller than normal"
+      ],
+      "highlights": [
+        "great material for the price"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6090,
+      "tokens_out": 141,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 3429,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "good product"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6077,
+      "tokens_out": 42,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2269,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "Waterproof",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "grip",
+          "polarity": "positive",
+          "evidence_span": "decent footing/grip",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "temperature_rating",
+          "polarity": "negative",
+          "evidence_span": "Not for super cold water",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "not suitable for super cold water"
+      ],
+      "highlights": [
+        "waterproof",
+        "decent grip"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6092,
+      "tokens_out": 179,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2879,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "error": "schema_invalid: aspect[1].polarity_invalid",
+      "prompt_version": "v2.4",
+      "retry_count": 1,
+      "final_success": false,
+      "json_decode_count": 0,
+      "schema_invalid_count": 2,
+      "exception_count": 0,
+      "error_type": "schema_invalid",
+      "schema_errors": [
+        {
+          "attempt": 1,
+          "error": "aspect[1].polarity_invalid",
+          "model": "gpt-4o-mini"
+        },
+        {
+          "attempt": 2,
+          "error": "aspect[1].polarity_invalid",
+          "model": "gpt-4o-mini"
+        }
+      ],
+      "llm_route_counts": {
+        "llm_router_chain": 2,
+        "llm_provider_attempt": 2,
+        "llm_provider_success": 2
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "material",
+          "polarity": "positive",
+          "evidence_span": "Good quality, better than I expected",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "better than expected quality"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6081,
+      "tokens_out": 89,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2758,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "fits good",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "good product",
+        "fits well"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6078,
+      "tokens_out": 87,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1514,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "nice waders"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6078,
+      "tokens_out": 43,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1357,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "other",
+          "polarity": "negative",
+          "evidence_span": "belt loops are too high",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "ease_of_use",
+          "polarity": "negative",
+          "evidence_span": "chest belt tightens around the lower portion of the front pocket",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "belt loops too high",
+        "chest belt design issue"
+      ],
+      "highlights": [],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6107,
+      "tokens_out": 145,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2054,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "Fit me well",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "boot_fit",
+          "polarity": "positive",
+          "evidence_span": "I bought a wader boot size of 10. They fit fine.",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "other",
+          "polarity": "positive",
+          "evidence_span": "they worked good",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "fit well",
+        "worked good"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6134,
+      "tokens_out": 178,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2802,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "negative",
+          "evidence_span": "runs way smaller than listed",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "runs smaller than listed"
+      ],
+      "highlights": [],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6081,
+      "tokens_out": 88,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1646,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "build_quality",
+          "polarity": "positive",
+          "evidence_span": "Great quality",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "Excellent fit",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "great quality",
+        "excellent fit"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6079,
+      "tokens_out": 126,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2132,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "neutral",
+      "aspects": [
+        {
+          "key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "Keep me dryish for the most part",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "ease_of_use",
+          "polarity": "positive",
+          "evidence_span": "Quick and easy to put on/take off",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "grip",
+          "polarity": "positive",
+          "evidence_span": "Better soles/grip on the boots than I was expecting",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "appropriately sized with a little extra room",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "durability",
+          "polarity": "negative",
+          "evidence_span": "Wader material not super durable",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "seam_integrity",
+          "polarity": "negative",
+          "evidence_span": "seam where the boots attach to the waders is rough",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "comfort",
+          "polarity": "negative",
+          "evidence_span": "rubbed my shins raw",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "other",
+          "polarity": "negative",
+          "evidence_span": "toe box collapses in water",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "small leak after a month",
+        "rough seam rubs shins",
+        "toe box collapses in water"
+      ],
+      "highlights": [
+        "good price for fishing waders",
+        "easy to put on and take off",
+        "better grip than expected"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6289,
+      "tokens_out": 392,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 4215,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "mobility",
+          "polarity": "negative",
+          "evidence_span": "Wish it got a female body a little more snug",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "boot_fit",
+          "polarity": "negative",
+          "evidence_span": "I should have got one more size up for shoes",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "female body fit not snug enough",
+        "should have sized up for shoes"
+      ],
+      "highlights": [
+        "overall perfect for pond cleaning"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6119,
+      "tokens_out": 156,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 10256,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "waterproof",
+          "polarity": "negative",
+          "evidence_span": "leaked",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "leaked in water"
+      ],
+      "highlights": [],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6088,
+      "tokens_out": 85,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 6271,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "customer_service",
+          "polarity": "positive",
+          "evidence_span": "Excellent customer service",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "excellent customer service"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6077,
+      "tokens_out": 85,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1875,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "work great"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6076,
+      "tokens_out": 42,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2239,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "boot_fit",
+          "polarity": "negative",
+          "evidence_span": "the boots are terrible. You feel every rock",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "comfort",
+          "polarity": "negative",
+          "evidence_span": "water pressure squeezes down on your toes that hurt",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "mobility",
+          "polarity": "negative",
+          "evidence_span": "walking downhill? Forget about it.",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "boots provide no foot support",
+        "feet hurt after fishing",
+        "difficult to walk downhill"
+      ],
+      "highlights": [
+        "waders work well"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6171,
+      "tokens_out": 210,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 4876,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "keeps me dry just like what it says",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "keeps me dry",
+        "wife loves it"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6103,
+      "tokens_out": 97,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 3077,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "comfort",
+          "polarity": "positive",
+          "evidence_span": "are comfortable",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "mobility",
+          "polarity": "positive",
+          "evidence_span": "fit find",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "durability",
+          "polarity": "negative",
+          "evidence_span": "would not be good for hardcore conditions",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "not suitable for hardcore conditions"
+      ],
+      "highlights": [
+        "good choice for light duty",
+        "comfortable fit"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6103,
+      "tokens_out": 178,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2350,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "other",
+          "polarity": "negative",
+          "evidence_span": "Strap buckle came off while in use",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "strap buckle came off"
+      ],
+      "highlights": [],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6087,
+      "tokens_out": 90,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2085,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "value_for_money",
+          "polarity": "positive",
+          "evidence_span": "half the cost of the closest thing",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "comfort",
+          "polarity": "positive",
+          "evidence_span": "comfortable enough",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "Size chart was accurate",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "accessory_storage",
+          "polarity": "positive",
+          "evidence_span": "comes with extras that other choices make you purchase separate",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "breathability",
+          "polarity": "negative",
+          "evidence_span": "water pressure isn't buffered very much",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "comfort",
+          "polarity": "negative",
+          "evidence_span": "my feet got sore after 4 hrs on the rocks",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "grip",
+          "polarity": "negative",
+          "evidence_span": "boots need to have cleats attached for better traction",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "durability",
+          "polarity": "negative",
+          "evidence_span": "these will definitely fail some day",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "water pressure sucks material to body",
+        "thin sole boots cause foot soreness",
+        "boots need cleats for better traction",
+        "waders will eventually fail"
+      ],
+      "highlights": [
+        "half the cost of competitors",
+        "comfortable enough for casting",
+        "size chart accurate",
+        "comes with extras"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6229,
+      "tokens_out": 461,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 5480,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "shipping_damage",
+          "polarity": "negative",
+          "evidence_span": "Product came used with mud marks",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "product arrived used with mud marks"
+      ],
+      "highlights": [],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6080,
+      "tokens_out": 91,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1824,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "error": "schema_invalid: aspect[0].key_invalid_'fit'",
+      "prompt_version": "v2.4",
+      "retry_count": 1,
+      "final_success": false,
+      "json_decode_count": 0,
+      "schema_invalid_count": 2,
+      "exception_count": 0,
+      "error_type": "schema_invalid",
+      "schema_errors": [
+        {
+          "attempt": 1,
+          "error": "aspect[0].key_invalid_'fit'",
+          "model": "gpt-4o-mini"
+        },
+        {
+          "attempt": 2,
+          "error": "aspect[0].key_invalid_'fit'",
+          "model": "gpt-4o-mini"
+        }
+      ],
+      "llm_route_counts": {
+        "llm_router_chain": 2,
+        "llm_provider_attempt": 2,
+        "llm_provider_success": 2
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "good"
+      ],
+      "evidence_level_overall": "uncertain",
+      "tokens_in": 6076,
+      "tokens_out": 42,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1747,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "negative",
+          "evidence_span": "fits in a way loose but not where I’m stumble to wobble",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "durability",
+          "polarity": "positive",
+          "evidence_span": "how durable it is",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "breathability",
+          "polarity": "negative",
+          "evidence_span": "I was already started to break a sweat",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "fits loose for shorter height",
+        "sweating while wearing"
+      ],
+      "highlights": [
+        "durable waders",
+        "excited to use for fishing"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6300,
+      "tokens_out": 205,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 3359,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "mobility",
+          "polarity": "positive",
+          "evidence_span": "Roomy, sturdy and the boots fit great!",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "Dry socks & pants rule",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "roomy and sturdy",
+        "boots fit great",
+        "dry socks and pants"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6089,
+      "tokens_out": 145,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1981,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "awesome suit"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6076,
+      "tokens_out": 42,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1182,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "awesome for cleaning out a mucky lake",
+        "everyone wants a pair"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6094,
+      "tokens_out": 54,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2371,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "working out well so far"
+      ],
+      "evidence_level_overall": "uncertain",
+      "tokens_in": 6083,
+      "tokens_out": 46,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1214,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "as advertised"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6076,
+      "tokens_out": 42,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1483,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "True to size",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "build_quality",
+          "polarity": "positive",
+          "evidence_span": "Great quality",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "true to size",
+        "great quality"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6093,
+      "tokens_out": 128,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 3163,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "value_for_money",
+          "polarity": "positive",
+          "evidence_span": "Great value especially for the price",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "durability",
+          "polarity": "positive",
+          "evidence_span": "held up well without any tears or punctures",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "great value for the price",
+        "held up well"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6098,
+      "tokens_out": 142,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2387,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "boot_fit",
+          "polarity": "negative",
+          "evidence_span": "BOOTS RUN SMALL. PURCHASE A LARGER SIZE.",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "THEY ARE WATER TIGHT.",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "breathability",
+          "polarity": "positive",
+          "evidence_span": "THEY WILL MAKE YOU SWEAT AS THEY ARE VERY BREATHABLE",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "build_quality",
+          "polarity": "positive",
+          "evidence_span": "THEY SEEM TO BE MADE WELL EVEN AT THE SEAMS.",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "comfort",
+          "polarity": "positive",
+          "evidence_span": "COMFORTABLE TO WEAR AND MOVE AROUND IN",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "boots run small"
+      ],
+      "highlights": [
+        "water tight",
+        "comfortable to wear",
+        "made well"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6280,
+      "tokens_out": 297,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 4124,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "Perfect fit. I ordered 1 foot size larger",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "value_for_money",
+          "polarity": "positive",
+          "evidence_span": "Not bad at all for the price paid",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "shipping_damage",
+          "polarity": "positive",
+          "evidence_span": "They were delivered overnight. Arrived just in time",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "perfect fit",
+        "great price",
+        "delivered overnight"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6123,
+      "tokens_out": 193,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2694,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "neutral",
+      "aspects": [
+        {
+          "key": "durability",
+          "polarity": "negative",
+          "evidence_span": "the rubber gets punctured very easily",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "other",
+          "polarity": "positive",
+          "evidence_span": "Decent waders for creeks and clean water",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "rubber punctures easily in thorny areas"
+      ],
+      "highlights": [
+        "decent for creeks and clean water"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6105,
+      "tokens_out": 150,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2206,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "waterproof",
+          "polarity": "negative",
+          "evidence_span": "Already leaking after only a few uses",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "leaking after few uses"
+      ],
+      "highlights": [],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6084,
+      "tokens_out": 91,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1917,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "durability",
+          "polarity": "positive",
+          "evidence_span": "great quality",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "value_for_money",
+          "polarity": "positive",
+          "evidence_span": "great quality and price point",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "amazing waders",
+        "definitely recommend"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6090,
+      "tokens_out": 133,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 3323,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "boot_fit",
+          "polarity": "positive",
+          "evidence_span": "Boots sized right",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "mobility",
+          "polarity": "positive",
+          "evidence_span": "Nice and high on the chest",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "boots sized right",
+        "nice and high on the chest"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6083,
+      "tokens_out": 137,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2456,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "grip",
+          "polarity": "positive",
+          "evidence_span": "the boots had a good grip",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "there were no leaks",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "accessory_storage",
+          "polarity": "negative",
+          "evidence_span": "make the front pocket just a little bit bigger",
+          "evidence_level": "probable"
+        }
+      ],
+      "pain_points": [
+        "front pocket could be bigger"
+      ],
+      "highlights": [
+        "good grip",
+        "no leaks",
+        "would buy again"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6141,
+      "tokens_out": 191,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2878,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "value_for_money",
+          "polarity": "positive",
+          "evidence_span": "These are great for the money",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "waterproof",
+          "polarity": "negative",
+          "evidence_span": "they leaked just a tiny bit",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "comfort",
+          "polarity": "negative",
+          "evidence_span": "definitely uncomfortable",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "leaked a tiny bit",
+        "uncomfortable"
+      ],
+      "highlights": [
+        "great for the money"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6116,
+      "tokens_out": 182,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2619,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "Fits perfect!",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "fits perfect"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6076,
+      "tokens_out": 83,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2437,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "neutral",
+      "aspects": [
+        {
+          "key": "size_fit",
+          "polarity": "negative",
+          "evidence_span": "they run at least 1 size too small",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "value_for_money",
+          "polarity": "positive",
+          "evidence_span": "appear to be a quality product for the price point",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "run at least 1 size too small"
+      ],
+      "highlights": [
+        "quality product for the price"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6143,
+      "tokens_out": 150,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 4671,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "build_quality",
+          "polarity": "positive",
+          "evidence_span": "pleasantly surprised by the quality",
+          "evidence_level": "certain"
+        },
+        {
+          "key": "size_fit",
+          "polarity": "positive",
+          "evidence_span": "the fit of these Tidwe waders",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "pleasantly surprised by the quality",
+        "great fit"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6130,
+      "tokens_out": 140,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2451,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "excellent"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6075,
+      "tokens_out": 41,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1729,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [],
+      "pain_points": [],
+      "highlights": [
+        "good for work or fishing in lakes"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6081,
+      "tokens_out": 47,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1338,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "negative",
+      "aspects": [
+        {
+          "key": "waterproof",
+          "polarity": "negative",
+          "evidence_span": "Leaks.",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [
+        "waders leak"
+      ],
+      "highlights": [],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6080,
+      "tokens_out": 83,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 1466,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    },
+    {
+      "sentiment": "positive",
+      "aspects": [
+        {
+          "key": "waterproof",
+          "polarity": "positive",
+          "evidence_span": "lining has not leaked",
+          "evidence_level": "certain"
+        }
+      ],
+      "pain_points": [],
+      "highlights": [
+        "great for fishing",
+        "no leaks"
+      ],
+      "evidence_level_overall": "certain",
+      "tokens_in": 6089,
+      "tokens_out": 90,
+      "prompt_version": "v2.4",
+      "model_used": "gpt-4o-mini",
+      "latency_ms": 2242,
+      "retry_count": 0,
+      "final_success": true,
+      "json_decode_count": 0,
+      "schema_invalid_count": 0,
+      "exception_count": 0,
+      "llm_route_counts": {
+        "llm_router_chain": 1,
+        "llm_provider_attempt": 1,
+        "llm_provider_success": 1
+      }
+    }
+  ]
+}
