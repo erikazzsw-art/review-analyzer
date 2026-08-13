@@ -165,8 +165,8 @@ def test_occurrence_iterator_projects_new_payload_and_fills_comment_id() -> None
                 {
                     "key": "accessory_storage",
                     "polarity": "negative",
-                    "specific_issue": "Pocket Gets Wet",
-                    "canonical_issue_key": "pocket_gets_wet",
+                    "specific_issue": "Pocket Not Waterproof",
+                    "canonical_issue_key": "pocket_not_waterproof",
                     "specific_issue_raw": "pocket gets wet",
                     "issue_confidence": "medium",
                     "display_allowed": True,
@@ -188,9 +188,9 @@ def test_occurrence_iterator_projects_new_payload_and_fills_comment_id() -> None
     occurrence = occurrences[0]
     assert occurrence["comment_id"] == 42
     assert occurrence["type"] == "issue"
-    assert occurrence["canonical_label_key"] == "pocket_gets_wet"
-    assert occurrence["canonical_issue_key"] == "pocket_gets_wet"
-    assert occurrence["specific_issue"] == "Pocket Gets Wet"
+    assert occurrence["canonical_label_key"] == "pocket_not_waterproof"
+    assert occurrence["canonical_issue_key"] == "pocket_not_waterproof"
+    assert occurrence["specific_issue"] == "Pocket Not Waterproof"
     assert occurrence["evidence_verified"] is True
     assert occurrence["verified_evidence"] is True
     assert content[occurrence["evidence_start"] : occurrence["evidence_end"]] == "pocket gets wet"
@@ -1288,8 +1288,8 @@ def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across
                         "key": "size_fit",
                         "aspect_label": "Size & Fit",
                         "polarity": "negative",
-                        "specific_issue": "Runs Too Small",
-                        "canonical_issue_key": "runs_too_small",
+                        "specific_issue": "Size/Fit Problem",
+                        "canonical_issue_key": "size_fit_problem",
                         "issue_confidence": "high",
                         "display_allowed": True,
                         "evidence_span": "runs too small",
@@ -1298,8 +1298,8 @@ def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across
                         "key": "boot_fit",
                         "aspect_label": "Boot Fit",
                         "polarity": "negative",
-                        "specific_issue": "Runs Too Small",
-                        "canonical_issue_key": "runs_too_small",
+                        "specific_issue": "Size/Fit Problem",
+                        "canonical_issue_key": "size_fit_problem",
                         "issue_confidence": "high",
                         "display_allowed": True,
                         "evidence_span": "boot foot is tight",
@@ -1313,7 +1313,7 @@ def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across
 
     assert len(rows) == 2
     breathable = next(row for row in rows if row["canonical_issue_key"] == "not_breathable")
-    runs_small = next(row for row in rows if row["canonical_issue_key"] == "runs_too_small")
+    size_fit = next(row for row in rows if row["canonical_issue_key"] == "size_fit_problem")
     assert breathable["count"] == 1
     assert breathable["mention_count"] == 1
     assert breathable["review_count"] == 1
@@ -1326,12 +1326,12 @@ def test_build_specific_issue_rows_counts_same_canonical_once_per_comment_across
     assert breathable["representative_comments"] == [
         "The material was hot and not breathable. It was stiff and not breathable while walking."
     ]
-    assert runs_small["count"] == 1
-    assert runs_small["mention_count"] == 1
-    assert runs_small["review_count"] == 1
-    assert runs_small["raw_occurrence_count"] == 2
-    assert runs_small["aspect_keys"] == ["size_fit", "boot_fit"]
-    assert runs_small["dimension"] == "Size & Fit, Boot Fit"
+    assert size_fit["count"] == 1
+    assert size_fit["mention_count"] == 1
+    assert size_fit["review_count"] == 1
+    assert size_fit["raw_occurrence_count"] == 2
+    assert size_fit["aspect_keys"] == ["size_fit", "boot_fit"]
+    assert size_fit["dimension"] == "Size & Fit, Boot Fit"
 
 
 def test_customer_highlight_rows_drop_cluster_propagated_only_rows_from_frontstage_top() -> None:

@@ -173,7 +173,7 @@
     "review_count": 50,
     "issue_gold_occurrence_count": 22,
     "highlight_gold_occurrence_count": 70,
-    "needs_new_label_count": 5,
+    "needs_new_label_count": 4,
     "fixture_validation_error_count": 5,
     "current_shadow_after_step4_6": {
       "issue": {
@@ -215,7 +215,7 @@
           "fn": 0
         },
         "issue:water_leaks_through": {
-          "tp": 3,
+          "tp": 4,
           "fp": 0,
           "fn": 0
         }
@@ -1216,9 +1216,7 @@
         }
       ],
       "needs_new_label": [],
-      "blocked_issue_keys": [
-        "runs_too_small"
-      ],
+      "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
       "system_output": {
         "frontstage_issue_keys": [
@@ -1567,7 +1565,7 @@
           "evidence_start": 67,
           "evidence_end": 117,
           "locatable": true,
-          "canonical_key": "runs_too_small",
+          "canonical_key": "size_fit_problem",
           "module_routing": [
             "product_issue"
           ],
@@ -1576,7 +1574,7 @@
         }
       ],
       "expected_issue_keys": [
-        "runs_too_small"
+        "size_fit_problem"
       ],
       "expected_highlight_keys": [],
       "evidence_spans": [
@@ -1611,9 +1609,7 @@
         }
       ],
       "needs_new_label": [],
-      "blocked_issue_keys": [
-        "runs_too_small"
-      ],
+      "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
       "system_output": {
         "frontstage_issue_keys": [
@@ -1731,31 +1727,18 @@
           "evidence_start": 0,
           "evidence_end": 26,
           "locatable": true,
-          "canonical_key": "candidate:good_customer_service",
+          "canonical_key": "customer_service_helpful",
           "module_routing": [
             "product_highlight"
           ]
         }
       ],
       "expected_issue_keys": [],
-      "expected_highlight_keys": [],
-      "evidence_spans": [],
-      "needs_new_label": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "candidate:good_customer_service",
-          "raw_label_zh": "客服服务好",
-          "evidence_spans": [
-            {
-              "evidence_span": "Excellent customer service",
-              "evidence_start": 0,
-              "evidence_end": 26
-            }
-          ],
-          "review_status": "needs_new_label",
-          "reason": "new_or_boundary_label_not_in_display_catalog"
-        }
+      "expected_highlight_keys": [
+        "customer_service_helpful"
       ],
+      "evidence_spans": [],
+      "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
       "system_output": {
@@ -1769,7 +1752,7 @@
       "notes": [],
       "module_routing_summary": {
         "product_issue": 0,
-        "product_highlight": 0,
+        "product_highlight": 1,
         "consumer_profile": 0,
         "purchase_motive": 0,
         "unmet_need": 0,
@@ -2048,19 +2031,6 @@
           "canonical_key": "comfortable_to_wear",
           "module_routing": [
             "product_highlight"
-          ]
-        },
-        {
-          "raw_span": "but would not be good for hardcore conditions.",
-          "raw_label_zh": "不适合极端环境",
-          "source_column": 2,
-          "evidence_span": "but would  not be good for hardcore conditions.",
-          "evidence_start": 90,
-          "evidence_end": 137,
-          "locatable": true,
-          "canonical_key": "candidate:not_for_hardcore_conditions",
-          "module_routing": [
-            "consumer_profile"
           ]
         }
       ],
@@ -2399,9 +2369,7 @@
           "reason": "new_or_boundary_label_not_in_display_catalog"
         }
       ],
-      "blocked_issue_keys": [
-        "runs_too_small"
-      ],
+      "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
       "system_output": {
         "frontstage_issue_keys": [
@@ -2803,8 +2771,7 @@
       ],
       "needs_new_label": [],
       "blocked_issue_keys": [
-        "not_breathable",
-        "runs_too_small"
+        "not_breathable"
       ],
       "blocked_highlight_keys": [
         "holds_up_well"
@@ -3419,7 +3386,7 @@
           "evidence_start": 0,
           "evidence_end": 16,
           "locatable": true,
-          "canonical_key": "runs_too_small",
+          "canonical_key": "size_fit_problem",
           "module_routing": [
             "product_issue"
           ],
@@ -3451,25 +3418,10 @@
           "module_routing": [
             "product_highlight"
           ]
-        },
-        {
-          "raw_span": "I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
-          "raw_label_zh": "尺码不准",
-          "source_column": 2,
-          "evidence_span": "I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURCHASING ANOTHER PAIR BUT WITH A LARGER SIZE BOOT DUE TO THEM RUNNING SMALL. I AM GIVING THE PAIR THAT I HAVE NOW TO A NEIGHBOR OF MYNE THAT ALSO HAS A BOAT AS HIS SHOE SIZE IS SMALLER THAN MYNE. ONLY 4 STARS BECAUSE OF THE BOOT SIZE BEING SMALLER THAN SIZED.",
-          "evidence_start": 393,
-          "evidence_end": 710,
-          "locatable": true,
-          "canonical_key": "runs_too_small",
-          "module_routing": [
-            "product_issue"
-          ],
-          "_replaced_by_fine_grained": true,
-          "_replacement_reason": "BOOTS RUN SMALL evidence clearly indicates boot/shoe size issue"
         }
       ],
       "expected_issue_keys": [
-        "runs_too_small",
+        "size_fit_problem",
         "not_breathable"
       ],
       "expected_highlight_keys": [
@@ -3532,9 +3484,7 @@
         }
       ],
       "needs_new_label": [],
-      "blocked_issue_keys": [
-        "runs_too_small"
-      ],
+      "blocked_issue_keys": [],
       "blocked_highlight_keys": [
         "looks_good"
       ],
@@ -3783,19 +3733,33 @@
       "content": "Already leaking after only a few uses. Disappointed.",
       "rating": 2,
       "human_issue_labels_zh": [
-        "耐用性差"
+        "容易进水"
       ],
       "human_highlight_labels_zh": [],
-      "annotated_review_labels": [],
+      "annotated_review_labels": [
+        {
+          "raw_span": "Already leaking after only a few uses",
+          "raw_label_zh": "容易进水",
+          "source_column": 3,
+          "evidence_span": "Already leaking after only a few uses",
+          "evidence_start": 0,
+          "evidence_end": 37,
+          "locatable": true,
+          "canonical_key": "water_leaks_through",
+          "module_routing": [
+            "product_issue"
+          ]
+        }
+      ],
       "expected_issue_keys": [
-        "breaks_easily"
+        "water_leaks_through"
       ],
       "expected_highlight_keys": [],
       "evidence_spans": [
         {
           "label_type": "issue",
-          "canonical_label_key": "breaks_easily",
-          "raw_label_zh": "耐用性差",
+          "canonical_label_key": "water_leaks_through",
+          "raw_label_zh": "容易进水",
           "evidence_spans": [
             {
               "evidence_span": "Already leaking after only a few uses",
@@ -3806,9 +3770,7 @@
         }
       ],
       "needs_new_label": [],
-      "blocked_issue_keys": [
-        "water_leaks_through"
-      ],
+      "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
       "system_output": {
         "frontstage_issue_keys": [
@@ -4350,9 +4312,7 @@
         }
       ],
       "needs_new_label": [],
-      "blocked_issue_keys": [
-        "runs_too_small"
-      ],
+      "blocked_issue_keys": [],
       "blocked_highlight_keys": [
         "fits_as_expected",
         "good_material_quality",
@@ -4792,39 +4752,7 @@
       }
     }
   ],
-  "_revision_notes": {
-    "version": "2026-08-11.a",
-    "description": "5.9 阶段 A 重开：overall_satisfied 口径 + 细粒度标签替换",
-    "changes": [
-      "Review #351: removed overall_satisfied from expected_highlight_keys (['overall_satisfied', 'keeps_water_out'] → ['keeps_water_out'])",
-      "Review #355: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #357: removed overall_satisfied from expected_highlight_keys (['good_value_for_the_price', 'overall_satisfied'] → ['good_value_for_the_price'])",
-      "Review #358: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #359: removed overall_satisfied from expected_highlight_keys (['fits_as_expected', 'overall_satisfied'] → ['fits_as_expected'])",
-      "Review #360: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #366: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #369: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #370: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #371: removed overall_satisfied from expected_highlight_keys (['overall_satisfied', 'keeps_water_out'] → ['keeps_water_out'])",
-      "Review #374: removed overall_satisfied from expected_highlight_keys (['good_value_for_the_price', 'fits_as_expected', 'overall_satisfied', 'comfortable_to_wear'] → ['good_value_for_the_price', 'fits_as_expected', 'comfortable_to_wear'])",
-      "Review #376: removed overall_satisfied from expected_highlight_keys (['holds_up_well', 'fits_as_expected', 'good_value_for_the_price', 'overall_satisfied', 'comfortable_to_wear', 'useful_accessories', 'keeps_water_out'] → ['holds_up_well', 'fits_as_expected', 'good_value_for_the_price', 'comfortable_to_wear', 'useful_accessories', 'keeps_water_out'])",
-      "Review #377: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #380: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #381: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #382: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #383: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #385: removed overall_satisfied from expected_highlight_keys (['good_value_for_the_price', 'overall_satisfied', 'holds_up_well'] → ['good_value_for_the_price', 'holds_up_well'])",
-      "Review #390: removed overall_satisfied from expected_highlight_keys (['good_value_for_the_price', 'overall_satisfied'] → ['good_value_for_the_price'])",
-      "Review #397: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #398: removed overall_satisfied from expected_highlight_keys (['overall_satisfied'] → [])",
-      "Review #386: runs_too_small replaces size_fit_problem in expected_issue_keys (['size_fit_problem', 'not_breathable'] → ['runs_too_small', 'not_breathable'])",
-      "Review #386: annotated_review_labels size_fit_problem → runs_too_small (evidence: BOOTS RUN SMALL.)",
-      "Review #386: annotated_review_labels size_fit_problem → runs_too_small (evidence: I USE THEM FOR LOADING AND UNLOADING MY BOAT. I WILL BE PURC)",
-      "Review #366: runs_too_small replaces size_fit_problem in expected_issue_keys (['size_fit_problem'] → ['runs_too_small'])",
-      "Review #366: annotated_review_labels size_fit_problem → runs_too_small"
-    ],
-    "overall_satisfied_policy": "overall_satisfied 不再进入前台 product_highlight；已从所有 expected_highlight_keys 中移除。后台/审计记录保留。",
-    "fine_grained_policy": "同一证据上 runs_too_small 替换 size_fit_problem，不并存。feels_thin_and_flimsy 仅在原文明确表达薄/脆弱时替换粗标签。easy_to_use 仅在原文明确表达使用便利时加入。",
-    "annotated_review_labels_preserved": "原始人工标注的 annotated_review_labels 保留不动（仅 canonical_key 替换标记 _replaced_by_fine_grained=True），所有调整记录在 _revision_notes.changes 中。"
-  }
+  "_revision_notes": [
+    "2026-08-13 A-5: runs_too_small / runs_too_large 退役，统一为 size_fit_problem（粗细标签合并）。  #389 breaks_easily → water_leaks_through（Erika 判定：leaking 语义）。  #368 新增 customer_service_helpful 前台标签（Erika 判定：优质客服服务）。"
+  ]
 }

@@ -60,6 +60,7 @@ L2_CATEGORY_SAFE_LABEL_KEYS: dict[str, frozenset[str]] = {
         {
             "arrives_on_time_and_intact",
             "comfortable_to_wear",
+            "customer_service_helpful",
             "easy_to_clean",
             "fast_shipping",
             "first_impression_positive",
@@ -89,8 +90,6 @@ SUB_CATEGORY_SPECIFIC_LABEL_KEYS: dict[str, frozenset[str]] = {
             "pocket_not_waterproof",
             "pocket_too_small",
             "poor_traction",
-            "runs_too_large",
-            "runs_too_small",
             "seam_leaks",
             "soft_soles",
             "uncomfortable_fit",

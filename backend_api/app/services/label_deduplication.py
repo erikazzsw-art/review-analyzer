@@ -46,7 +46,9 @@ def _is_semantic_guard_enabled() -> bool:
 # ---------------------------------------------------------------------------
 
 COARSE_TO_FINE_LABELS: dict[str, frozenset[str]] = {
-    "size_fit_problem": frozenset({"runs_too_small", "runs_too_large"}),
+    # 2026-08-13 A-5：size 域粗细标签已统一为 size_fit_problem（runs_too_small / runs_too_large 退役），
+    # 原 size_fit_problem → {runs_too_small, runs_too_large} 关系作废。
+    # 未来若其它域出现经真实标注验证的粗细关系，在此追加（遵循"只启用已验证关系"原则）。
 }
 
 # 暂不启用的推测关系（待真实标注验证后加入）：

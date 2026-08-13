@@ -73,6 +73,7 @@ _ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
         "not_used_yet": {"other"},
         "overall_satisfied": {"other"},
         "looks_good": {"aesthetics"},
+        "customer_service_helpful": {"customer_service"},
     },
     "issue": {
         "size_fit_problem": {"size_fit", "boot_fit", "mobility"},
@@ -87,8 +88,6 @@ _ALLOWED_ASPECT_KEYS_BY_LABEL: dict[str, dict[str, set[str]]] = {
         "feels_thin_and_flimsy": {"material", "durability", "build_quality"},
         "strong_chemical_smell": {"material", "smell", "scent"},
         "not_breathable": {"breathability", "comfort", "mobility"},
-        "runs_too_small": {"size_fit", "boot_fit"},
-        "runs_too_large": {"size_fit", "boot_fit"},
         "inaccurate_size_chart": {"size_fit", "boot_fit"},
         "not_petite_friendly": {"size_fit"},
         "not_plus_size_friendly": {"size_fit"},
@@ -265,8 +264,6 @@ _SPECIFIC_ISSUE_ZH_BY_KEY = {
     "poor_customer_service": "客服体验差",
     "quality_control_storage_issue": "品控/仓储问题",
     "quality_problem": "质量问题",
-    "runs_too_large": "尺码偏大",
-    "runs_too_small": "尺码偏小",
     "size_fit_problem": "尺码/版型问题",
     "smudges_easily": "容易晕染",
     "soft_soles": "鞋底偏软",
@@ -279,6 +276,7 @@ _SPECIFIC_ISSUE_ZH_BY_KEY = {
 _CUSTOMER_HIGHLIGHT_ZH_BY_KEY = {
     "arrives_on_time_and_intact": "到货及时完好",
     "comfortable_to_wear": "穿着舒适",
+    "customer_service_helpful": "客服服务好",
     "easy_to_clean": "容易清洁",
     "feels_well_made": "做工扎实",
     "first_impression_positive": "初步印象良好",
@@ -766,7 +764,6 @@ def _is_valid_breaks_easily_issue_evidence(evidence: str, content: str) -> bool:
             r"\bholes?\s+in\s+(?:them|it|the\s+material|the\s+waders?|boots?)\b",
             r"\b(?:easily\s+)?(?:rip|ripped|tear|tears|tore|torn)\b",
             r"\bpunctured\s+very\s+easily\b",
-            r"\balready\s+leaking\s+after\s+only\s+a\s+few\s+uses\b",
             r"\b(?:stitching|threads?|seams?)\b[^.!?\n]{0,100}\b(?:broke|came\s+loose|loose|failed|split)\b",
             r"\bbroke\b",
             r"\bdestroyed\b",
@@ -946,7 +943,6 @@ def _is_durability_only_leak_context(text: str) -> bool:
     return _first_regex(
         [
             r"\bsmall\s+leak\s+somewhere\b[^.!?\n]{0,160}\bnot\s+bad\s+enough\s+to\s+matter\b",
-            r"\balready\s+leaking\s+after\s+only\s+a\s+few\s+uses\b",
         ],
         text,
     )
@@ -1509,7 +1505,6 @@ def _waders_issue_rule_occurrences(
                 r"\b(?:stitching|threads?|seams?)\b[^.!?\n]{0,100}\b(?:broke|came\s+loose|loose|failed|split)\b",
                 r"\b(?:rip|ripped|tear|tears|tore|torn)\b[^.!?\n]{0,80}",
                 r"\bpunctured\s+very\s+easily\b",
-                r"\balready\s+leaking\s+after\s+only\s+a\s+few\s+uses\b",
                 r"\bstitching\s+broke\b[^.!?\n]{0,80}",
                 r"\bbroke\b[^.!?\n]{0,80}",
                 r"\bdestroyed\b",
@@ -1559,8 +1554,8 @@ def _waders_issue_rule_occurrences(
         ),
     )
     add(
-        "runs_too_small",
-        "Runs Too Small",
+        "size_fit_problem",
+        "Size/Fit Problem",
         "size_fit",
         _first_content_span(
             content,
@@ -2623,7 +2618,7 @@ def _project_customer_label_occurrence(
         and _first_regex([r"\byou\s+get\s+what\s+you\s+pay\s+for\b"], stored_evidence)
     ):
         context_allowed = False
-    if label_type == "issue" and canonical in {"runs_too_small", "runs_too_large", "inaccurate_size_chart"}:
+    if label_type == "issue" and canonical in {"inaccurate_size_chart"}:
         context_allowed = not bool(
             _is_waders_context(occurrence_sub_category, content)
             and _first_content_span(
@@ -2632,13 +2627,6 @@ def _project_customer_label_occurrence(
                 blocked_patterns=_SIZE_FIT_PROBLEM_BLOCKED_PATTERNS,
             )
         )
-    if (
-        label_type == "issue"
-        and canonical == "runs_too_large"
-        and _first_regex([r"\bshoulder\s+straps?\b[^.!?\n]{0,80}\bloose\b"], stored_evidence)
-        and _first_regex([r"\bnot\s+too\s+bad\b"], _evidence_context_window(content, stored_evidence))
-    ):
-        context_allowed = False
 
     display_en = str(occurrence.get("display_label_en") or "").strip()
     display_zh = str(occurrence.get("display_label_zh") or "").strip()
@@ -2924,9 +2912,17 @@ def _issue_from_rules(aspect_key: str, evidence: str, content: str) -> tuple[str
         ):
             return ("Inaccurate Size Chart", "inaccurate_size_chart", "regex_alias_rule")
         if _first_regex([r"\btoo small\b", r"\bruns (?:very\s+)?small\b", r"\btight\b", r"\bboots?\s+are\s+snug\b"], text):
-            return ("Runs Too Small", "runs_too_small", "regex_alias_rule")
+            return ("Size/Fit Problem", "size_fit_problem", "regex_alias_rule")
         if _first_regex([r"\btoo large\b", r"\bruns large\b", r"\bloose\b"], text):
-            return ("Runs Too Large", "runs_too_large", "regex_alias_rule")
+            # 用户主动拍大一码（看了评价建议/按推荐）+ 正向语气 → 不算尺码问题（第 1 类通用守卫）
+            if not _first_regex(
+                [
+                    r"\bread\s+all\s+the\s+reviews\s+saying\s+get\s+a\s+size\s+up\b",
+                    r"\b(?:ordered|got|bought)\s+(?:a\s+|one\s+)?size\s+up\b[^.!?\n]{0,80}\b(?:as\s+suggested|per\s+reviews?|recommended)\b",
+                ],
+                content,
+            ):
+                return ("Size/Fit Problem", "size_fit_problem", "regex_alias_rule")
 
     if aspect_key in {"comfort", "breathability", "mobility"}:
         if _first_content_span(
@@ -3162,6 +3158,16 @@ def _highlight_from_rules(aspect_key: str, evidence: str, content: str) -> tuple
     text = f"{evidence} {content[:400]}".lower()
     if _is_negative_phrase(text):
         return None
+
+    if aspect_key in {"customer_service"}:
+        if _first_regex(
+            [
+                r"\b(customer service|customer support|support|seller|after[- ]sales)\b.*\b(excellent|great|good|helpful|responsive|friendly|fast|quick|amazing|wonderful|prompt|patient|nice|awesome)\b",
+                r"\b(excellent|great|good|helpful|responsive|friendly|amazing|wonderful|prompt|patient|nice|awesome)\b.*\b(customer service|customer support|support|seller|after[- ]sales)\b",
+            ],
+            text,
+        ):
+            return _highlight_label("Helpful Customer Service", "客服服务好", "customer_service_helpful", "regex_alias_rule")
 
     if aspect_key in {"waterproof", "waterproof_performance", "seam_integrity"}:
         if _first_regex(

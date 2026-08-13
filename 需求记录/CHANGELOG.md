@@ -25,6 +25,38 @@
 
 ---
 
+## 2026-08-13
+
+### 阶段 A 收尾：细粒度尺码标签统一 + 客服亮点 + #389 漏标纠正
+
+- **工作量**: S（`specific_issue.py` 删 4 处 `runs_too_small/large` 引用 + `customer_label_v2_maturity.py` / `label_deduplication.py` 白名单同步 + #389 三处规则清理 + 新增 `customer_service_helpful` 亮点 + gold fixture 修订 + 六指标复跑，约 0.5 人天）
+- **状态**: ✅ 完成，待 Erika 验收 + push
+- **涉及岗位**: 后端开发、算法工程师
+
+**需求描述**：
+Erika 在 A-4 抽检时对 row-366/386 极性反标根因（`runs_too_small` vs `size_fit_problem`）作出判定——细粒度尺码标签「覆盖不全，又分到底是下水库上半身小了还是鞋小了，这样太细了」，要求统一为粗标签。同时纠正两处 gold 标注：**#389**「Already leaking after only a few uses」应为 `water_leaks_through`（leaking 语义），非 `breaks_easily`；**#368**「Excellent customer service」应输出客服亮点 `customer_service_helpful`。
+
+**交付内容**：
+1. **细粒度尺码标签统一**：删除 `runs_too_small` / `runs_too_large` 两个 issue 标签（`_ALLOWED_ASPECT_KEYS_BY_LABEL`、`_SPECIFIC_ISSUE_ZH_BY_KEY`、context guard、白名单），统一归入粗标签 `size_fit_problem`；`inaccurate_size_chart` 按 Erika「保留独立」要求不合并
+2. **#389 漏标纠正**：移除 3 处 stale 规则（`_is_valid_breaks_easily_issue_evidence` 正向、`_is_durability_only_leak_context` 阻断、`breaks_easily` content rule），使「already leaking after only a few uses」正确路由到 `water_leaks_through`
+3. **#368 客服亮点**：`_highlight_from_rules` 新增 `customer_service_helpful` 分支，`customer_label_v2_maturity.py` 的 `L2_CATEGORY_SAFE_LABEL_KEYS["highlight"]` 加入该 key
+4. **通用性**：全部改动为语义守卫（第 1 类），无类目硬编码关键词（第 3 类），不新增一人公司维护负担
+5. gold fixture 修订（#368/#389/runs_too_* 三处）+ 2 个聚焦测试更新，全后端套件 532 passed / 18 pre-existing failed（零新增）
+
+**A-3 → A-5 六指标对比**：
+| 指标 | A-3 Baseline（2026-08-12） | A-5 收尾（本改动） | 变化 |
+|---|---:|---:|---|
+| 错标率 | 18.3% (FP=13/71) | 11.8% (FP=8/68) | FP -5 |
+| 漏标率 | 18.3% (FN=13/71) | 16.7% (FN=12/72) | FN -1 |
+| 极性反标数 | 3 | 0 | -3（细标签统一后 row-366/386 反标消除） |
+| 串台数 | 0 | 0 | 不变 |
+| 模块流向正确率 | 100.0% (52/52) | 100.0% (55/55) | 不变 |
+| other 占比 | 9.9% | 10.2% (14/137) | +0.3pt（分母口径变化） |
+
+> 注：A-5 分母变化（gold 71→72、系统 71→68）来自 Erika 对 gold 的三处修订（#368 新增客服亮点、#389 重分类、细标签统一），非链路行为回归。
+
+---
+
 ## 2026-08-12
 
 ### 阶段 A Task A-3：证据感知粗细标签去重 + D1 语义守卫

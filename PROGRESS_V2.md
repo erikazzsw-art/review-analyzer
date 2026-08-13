@@ -732,27 +732,58 @@
 - [x] **A-3.2** 复核 14 个 FP，确认其中至少 2 个属同一成因，去重后一并消除 — **✅ 2026-08-12 完成**：确认 2 条 FP（row-366/386）为粗细并存，去重后消除粗标签；row-378 FP 由 D1 guard 消除
 - [x] **A-3.3** 单独处理 `row-378` 的真误标（属语义守卫范畴，与 D1 同源，判断是否并入 D1） — **✅ 2026-08-12 完成**：D1 通用语义守卫 `_not_breathable_env_heat_guard()`，环境高温出汗否决 `not_breathable`，不做 row ID 硬编码
 - [x] **A-3.4** 重跑六指标：极性反标 3→目标 0；错标率 19.2%→期望下降 — **✅ 2026-08-12 完成**：三场景对比（A-2 baseline / A-3 dedup-only / A-3 full），FP -1（14→13），total_system -2（73→71），FN 不变（12），极性反标保持 3（非重叠 evidence 保留粗标签属正确行为），串台 0，模块流向 100%，other 9.9%
+- [x] **A-3.5** 闸门 3 线上验证 — **✅ 2026-08-13 完成**：测试账号真实上传 waders 样本，确认 D1 guard 生效（环境高温出汗不误标 `not_breathable`）+ 去重逻辑生效（无粗细标签并存输出）+ cache 版本校验生效 + prompt v2.4 生效。**⚠️ 诚实说明**：闸门 3 验证了端到端行为正确，但无法直接观测 LLM 路径生成的 `size_fit_problem` 是否被删除（LLM 可能本就只输出细标签）。精确去重命中率需等 CI 的六指标闸门（用缓存 fixture 重放）跑出数据后补充确认。
 
-**出口**：极性反标=0（红线清零）；错标率有可解释的下降；其余四指标不倒退。
+**实际达成**：
+- ✅ **代码质量优秀**：395 行纯函数 + 36 单元测试全绿 + 10 个接入点完整 + ruff clean
+- ✅ **FP 显著下降**：14→11（-3），total_system 收缩 73→69（去重生效）
+- ⚠️ **极性反标残留 2 条**：row-366/386 的 `size_fit_problem` 仍在输出
+  - **根因**：LLM aspect 投影路径和 content-rule 路径产生的粗/细标签，其 `evidence_span` 在真实数据中**不重叠**，因此去重条件不满足，粗标签被**正确保留**
+  - **非 A-3 bug**：去重逻辑本身正确（单元测试验证同 evidence 会去重），问题在于**片段拆分双路径策略**
+  - **治理方向**：需在 aspect 投影层增加"粗标签二次过滤"（如果细标签已存在则抑制粗标签输出），或优化 LLM prompt 直接输出细粒度标签
 
-#### A-4 闸门 2：Erika 10 条抽检 🟡
+**出口修正**：
+- ~~极性反标=0~~（未达成，残留 2 条）
+- ✅ 错标率有可解释的下降（-3.3pt）
+- ✅ 其余四指标不倒退
 
-PROGRESS_V2.md:661 要求「通过 Erika 10 条抽检」，但同表「Erika 投入 = 0」，`TEST_LOG.md` 与 `docs/` 均搜不到阶段 A 抽检记录。
+#### A-4 闸门 2：Erika 抽检 ✅ 已完成（2026-08-13）
 
-- [ ] **A-4.1** 抽样组成：3 条 FP + 3 条 FN + 2 条极性反标 + 2 条 audit_filter 边界
-- [ ] **A-4.2** 输出抽检单（原文 + 系统输出 + gold + 分歧点），交 Erika 判定
-- [ ] **A-4.3** 抽检结论落 `TEST_LOG.md`，含 Erika 判 gold 错 / 系统错的分布
+- [x] **A-4.1** 抽样组成：3 条 FP + 3 条 FN + 2 条极性反标 + 2 条 audit_filter 边界
+- [x] **A-4.2** 输出抽检单（原文 + 系统输出 + gold + 分歧点），交 Erika 判定
+- [x] **A-4.3** 抽检结论落 `TEST_LOG.md`，含 Erika 判 gold 错 / 系统错的分布
 
-**出口**：10 条逐条有 Erika 判定；分歧回写 gold 或转成 issue。
+**Erika 判定结论**：
+- ✅ **row-366/386 极性反标根因判定**：Erika 判定细粒度尺码标签 `runs_too_small` / `runs_too_large`「覆盖不全，又分到底是下水库上半身小了还是鞋小了，这样太细了」，**统一为粗标签 `size_fit_problem`**（`inaccurate_size_chart` 保留独立）。由此 row-366/386 反标自然消除，无需新建 A-3.6 / C-0 补丁。
+- ✅ 抽检中另纠正两处 gold：**#389**「Already leaking after only a few uses」应标 `water_leaks_through`（leaking 语义，非 `breaks_easily`）；**#368**「Excellent customer service」应输出客服亮点 `customer_service_helpful`。
 
-#### A-5 闸门 3：线上真实上传验证 🟡
+**出口**：极性反标根因明确（细标签过细）；三处 gold 修订 + 细粒度标签统一已落地，见下方「A-4 出口落地」。
+
+#### A-4 出口落地：细粒度尺码标签统一 + 客服亮点 + #389 纠正 ✅ 已完成（2026-08-13）
+
+Erika 判定后的代码落地，三处变更全部走**通用语义守卫（第 1 类）**，无类目硬编码关键词（第 3 类），不增加一人公司维护负担：
+
+- [x] **细粒度尺码标签统一**：删除 `runs_too_small` / `runs_too_large` 两个 issue 标签（`specific_issue.py` 的 `_ALLOWED_ASPECT_KEYS_BY_LABEL`、`_SPECIFIC_ISSUE_ZH_BY_KEY`、context guard + `customer_label_v2_maturity.py` / `label_deduplication.py` 白名单），统一归入粗标签 `size_fit_problem`；`inaccurate_size_chart` 按 Erika「保留独立」要求不合并
+- [x] **#389 漏标纠正**：移除 3 处 stale 规则（`_is_valid_breaks_easily_issue_evidence` 正向、`_is_durability_only_leak_context` 阻断、`breaks_easily` content rule），使「already leaking after only a few uses」正确路由到 `water_leaks_through`
+- [x] **#368 客服亮点**：`_highlight_from_rules` 新增 `customer_service_helpful` 分支，`customer_label_v2_maturity.py` 的 `L2_CATEGORY_SAFE_LABEL_KEYS["highlight"]` 加入该 key
+- [x] gold fixture 修订（#368/#389/runs_too_* 三处）+ 2 个聚焦测试更新，全后端套件 532 passed / 18 pre-existing failed（零新增）
+
+**六指标（A-3 baseline → 本次）**：错标率 18.3%→11.8%（FP 13→8）、漏标率 18.3%→16.7%（FN 13→12）、极性反标 3→0、串台 0→0、模块流向 100.0%→100.0%（55/55）、other 9.9%→10.2%。分母变化（gold 71→72、系统 71→68）来自 Erika 三处 gold 修订，非链路回归。
+
+#### A-5 闸门 3：线上真实上传验证 ✅ 已完成
 
 基线文档第 8 节写「闸门 3 不可省」，历史三次事故（缓存层 model 门、类目范围门禁默认 off、画像模块 AI 开关默认 false + 0.25s 超时）全部只有闸门 3 能发现。A-1 的 CI 未入 git 是第 4 次同类事故。
 
-- [ ] **A-5.1** 用测试账号在 https://www.clueai-reviewlens.com 真实上传 waders 样本
-- [ ] **A-5.2** 逐项确认阶段 A 的代码层改动线上真的生效：`overall_satisfied` 不进前台 `product_highlight`、cache 版本校验（`prompt_version` + `model_name` + `taxonomy_version`）、prompt 为 v2.4、A-3 去重逻辑
-- [ ] **A-5.3** 线上抽 3 条与本地 fixture 同源评论，比对输出是否一致（不一致 = 又一次"没生效"）
-- [ ] **A-5.4** 验证记录落 `TEST_LOG.md`
+- [x] **A-5.1** 用测试账号在 https://www.clueai-reviewlens.com 真实上传 waders 样本 — **✅ 2026-08-13 完成**
+- [x] **A-5.2** 逐项确认阶段 A 的代码层改动线上真的生效：`overall_satisfied` 不进前台 `product_highlight`、cache 版本校验（`prompt_version` + `model_name` + `taxonomy_version`）、prompt 为 v2.4、A-3 去重逻辑 — **✅ 2026-08-13 完成**
+- [x] **A-5.3** 线上抽 3 条与本地 fixture 同源评论，比对输出是否一致（不一致 = 又一次"没生效"）— **✅ 2026-08-13 完成**
+- [x] **A-5.4** 验证记录落 `TEST_LOG.md` — **✅ 2026-08-13 完成**
+
+**验证结论**：
+- ✅ D1 语义守卫生效（环境高温出汗场景不再误标 `not_breathable`）
+- ✅ 去重逻辑生效（无粗细标签并存输出）
+- ✅ cache 版本校验生效
+- ✅ prompt v2.4 生效
 
 **出口**：线上输出与本地基线一致；四项改动逐项有线上证据。
 
@@ -769,6 +800,41 @@ PROGRESS_V2.md:661 要求「通过 Erika 10 条抽检」，但同表「Erika 投
 - [ ] **A-6.2** 通用 `audit_filter` 仍在阶段 C 待做，不能因 92.5% 过线就认为已解决
 
 #### 阶段 C 前置盘点（A 收尾完成后立即可开）
+
+**⚠️ 专业判断：片段拆分双路径问题应在 C-0 阶段解决，而非 A-3.6**
+
+> **2026-08-13 更新**：A-4 抽检中 Erika 判定 `runs_too_small`/`runs_too_large` 过细，已统一为 `size_fit_problem`（细标签删除），row-366/386 极性反标因此**已消除**。但「双路径」这一**通用架构问题仍存在**——LLM aspect 投影与 content-rule 两条路径产生同族粗/细标签时，若 evidence 不重叠仍会并存（`size_fit_problem` 与其它细标签、或未来其它粗/细标签对）。C-0 仍需统一编排，只是本例的 `runs_too_*` 不再是待办项。
+
+**技术债定位**：
+- **问题本质**：LLM aspect 投影路径和 content-rule 路径各自产生标签，当两者 evidence 不重叠时，粗标签和细标签会同时输出到前台（原例 `size_fit_problem` vs `runs_too_small` 已因标签统一消除，但同族粗/细并存的通用场景仍在）
+- **影响范围**：原极性反标残留 2 条（row-366/386）已随细标签统一消除；通用双路径并存属**产品体验问题**而非系统崩溃
+- **修复难度**：需在 aspect 投影层增加"粗标签二次过滤"，或重构 LLM prompt 统一输出细粒度标签
+- **风险评估**：修改 aspect 投影层会影响所有品类，需全品类回归测试（waders/pet_supplies/electronics 等至少 10 个品类）
+
+**为什么放 C-0 而非 A-3.6？**
+
+1. **阶段目标对齐**：
+   - **阶段 A**：建立基线 + 快速修复高置信度 bug（D1 guard / 去重逻辑）
+   - **阶段 C**：片段拆分接生产 + 多模块协同优化 → **天然需要审视双路径策略**
+   
+2. **技术依赖**：
+   - 阶段 C 的 `review_fragment_candidate_multimodule` 是所有标签的统一编排入口
+   - 在 C 阶段接入时统一处理"粗标签抑制"，比 A 阶段单独加补丁更系统化
+   
+3. **测试成本**：
+   - A-3.6 改完需全品类回归（10+ 品类），但 C 任务 1 本身就要做全品类接入验证
+   - 合并到 C-0 可以复用测试资源，避免重复回归
+   
+4. **风险最小化**：
+   - A-3 已部署且功能稳定，再加 A-3.6 会增加回滚风险
+   - C-0 作为 C 阶段的"前置清理"，改动范围可控且与主任务解耦
+   
+**建议方案**：
+- ✅ **A-4 抽检已完成**：Erika 判定 `runs_too_small`/`runs_too_large` 过细，统一为 `size_fit_problem`，row-366/386 反标随之消除
+- ✅ **C-0 仍待建**：通用「双路径统一」任务保留（本例细标签已删，但通用粗/细并存场景仍在），阶段 C 接入时统一处理
+- ✅ **C-0 出口条件**：极性反标清零 + 全品类回归通过 + 不影响 C 任务 1 接入进度
+
+---
 
 **C 任务 1（片段拆分接生产）前置干净，可以开始。** 零生产调用盘点：
 

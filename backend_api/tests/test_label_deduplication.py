@@ -1,15 +1,15 @@
 """阶段 A Task A-3 单元测试：证据级去重 + D1 语义守卫.
 
 测试覆盖：
-1. 同 evidence 粗细去重
-2. 同 review 不同 evidence → 不去重
-3. 不同 label_type → 不去重
-4. aspect_key 兼容但不同源 → 去重
-5. 同源同置信度 → 不去重（防 FN 回归）
-6. evidence 无法定位 → 不去重
-7. 去重函数幂等
-8. not_breathable 环境高温 guard
-9. 明确产品透气性否定 → guard 不否决
+1. 纯辅助函数（aspect 兼容 / 置信度比较 / 证据重叠 / 来源权威性）
+2. 去重机制边缘情况（空列表 / 单项 / 无关系时 no-op）
+3. not_breathable 环境高温 guard
+4. 明确产品透气性否定 → guard 不否决
+
+注意（2026-08-13 A-5）：size 域粗细标签已统一为 size_fit_problem，
+COARSE_TO_FINE_LABELS 暂时清空，原 size_fit_problem → {runs_too_small, runs_too_large}
+关系作废。因此去重机制当前是 no-op，相关"粗细去重"场景测试已移除，
+待未来出现经真实标注验证的新粗细关系时再补充。
 """
 
 import sys
@@ -63,14 +63,11 @@ def test_coarse_to_fine_labels_version():
     assert SEMANTIC_GUARD_RULESET_VERSION == "2026-08-12-a3-d1-not-breathable-guard"
 
 
-def test_coarse_to_fine_only_validated():
-    """第一版只启用 A-2 已验证的关系."""
-    assert "size_fit_problem" in COARSE_TO_FINE_LABELS
-    assert "runs_too_small" in COARSE_TO_FINE_LABELS["size_fit_problem"]
-    assert "runs_too_large" in COARSE_TO_FINE_LABELS["size_fit_problem"]
-    # 推测关系不应存在
-    assert "quality_problem" not in COARSE_TO_FINE_LABELS
-    assert "breaks_easily" not in COARSE_TO_FINE_LABELS
+def test_coarse_to_fine_labels_empty_after_size_unification():
+    """A-5：size 域统一为 size_fit_problem，粗细关系暂时清空."""
+    # runs_too_small / runs_too_large 已退役，原 size_fit_problem → {runs_too_small, runs_too_large}
+    # 关系作废。未来若其它域出现经真实标注验证的粗细关系再追加。
+    assert COARSE_TO_FINE_LABELS == {}
 
 
 # ===================================================================
@@ -161,186 +158,6 @@ def test_evidence_empty():
 # deduplicate_coarse_occurrences
 # ===================================================================
 
-def test_dedup_same_evidence():
-    """同 evidence 同 aspect → 去重."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            evidence_span="runs too small",
-            source_detail="llm_canonical_hint",  # different source!
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            evidence_span="runs too small",
-            source_detail="waders_content_rule",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    assert len(display) == 1, f"Expected 1 kept, got {len(display)}"
-    assert display[0]["canonical_label_key"] == "runs_too_small"
-    assert len(audit) == 1
-    assert audit[0]["deduplication_applied"] is True
-    assert audit[0]["deduped_by_label"] == "runs_too_small"
-
-
-def test_dedup_runs_too_large():
-    """runs_too_large 也能去重 size_fit_problem."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            evidence_span="way too big",
-            source_detail="llm_canonical_hint",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_large",
-            evidence_span="way too big",
-            source_detail="waders_content_rule",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    assert len(display) == 1
-    assert display[0]["canonical_label_key"] == "runs_too_large"
-
-
-def test_dedup_different_evidence_same_review():
-    """同 review 不同 evidence → 不去重."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            evidence_span="belt loops are too high",
-            evidence_start=0, evidence_end=22,
-            source_detail="llm_canonical_hint",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            evidence_span="size up",
-            evidence_start=50, evidence_end=57,
-            source_detail="waders_content_rule",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    assert len(display) == 2, "Different evidence should both be kept"
-    assert len(audit) == 0
-
-
-def test_dedup_different_label_type():
-    """不同 label_type → 不去重."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            evidence_span="runs too small",
-        ),
-        _make_occ(
-            type="highlight",
-            canonical_label_key="runs_too_small",
-            evidence_span="runs too small",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    assert len(display) == 2
-
-
-def test_dedup_same_source_same_confidence():
-    """同源同置信度 → 不去重（防 #395 FN 回归）."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            evidence_span="too small",
-            source_detail="waders_content_rule",
-            confidence="high",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            evidence_span="too small",
-            source_detail="waders_content_rule",
-            confidence="high",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    assert len(display) == 2, "Same source + same confidence → keep both"
-    assert len(audit) == 0
-
-
-def test_dedup_same_source_higher_fine_confidence():
-    """同源但细标签置信度更高 → 去重."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            evidence_span="too small",
-            source_detail="waders_content_rule",
-            confidence="medium",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            evidence_span="too small",
-            source_detail="waders_content_rule",
-            confidence="high",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    assert len(display) == 1
-    assert display[0]["canonical_label_key"] == "runs_too_small"
-
-
-def test_dedup_no_evidence_overlap():
-    """evidence 不重叠 → 不去重."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            evidence_span="belt loops too high",
-            evidence_start=0, evidence_end=22,
-            source_detail="llm_canonical_hint",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            evidence_span="boots run small",
-            evidence_start=50, evidence_end=65,
-            source_detail="waders_content_rule",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    assert len(display) == 2
-    assert len(audit) == 0
-
-
-def test_dedup_idempotent():
-    """去重应幂等."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            source_detail="llm_canonical_hint",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            source_detail="waders_content_rule",
-        ),
-    ]
-    display1, _ = deduplicate_coarse_occurrences(occ, "test")
-    display2, _ = deduplicate_coarse_occurrences(display1, "test")
-    assert len(display1) == len(display2)
-    assert [d["canonical_label_key"] for d in display1] == [d["canonical_label_key"] for d in display2]
-
-
-def test_dedup_different_aspect_keys():
-    """不同 aspect_key 家族 → 不去重."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            aspect_key="waterproof",
-            source_detail="llm_canonical_hint",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            aspect_key="size_fit",
-            source_detail="waders_content_rule",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    # waterproof is NOT in compatible set for size_fit_problem → should not dedup
-    assert len(display) == 2
-    assert len(audit) == 0
-
-
 def test_dedup_empty_list():
     """空列表."""
     display, audit = deduplicate_coarse_occurrences([], "")
@@ -356,6 +173,26 @@ def test_dedup_single_item():
     assert len(audit) == 0
 
 
+def test_dedup_noop_when_no_relationship():
+    """A-5：COARSE_TO_FINE_LABELS 为空时，去重是 no-op，所有 occurrence 原样保留."""
+    occ = [
+        _make_occ(
+            canonical_label_key="size_fit_problem",
+            evidence_span="runs too small",
+            source_detail="llm_canonical_hint",
+        ),
+        _make_occ(
+            canonical_label_key="size_fit_problem",
+            evidence_span="runs too small",
+            source_detail="waders_content_rule",
+        ),
+    ]
+    display, audit = deduplicate_coarse_occurrences(occ, "test")
+    assert len(display) == 2
+    assert len(audit) == 0
+    assert [o["canonical_label_key"] for o in display] == ["size_fit_problem", "size_fit_problem"]
+
+
 # ===================================================================
 # _not_breathable_env_heat_guard
 # ===================================================================
@@ -369,7 +206,7 @@ ROW_378_CONTENT = (
 
 def test_guard_not_not_breathable():
     """非 not_breathable 标签 → 不否决."""
-    occ = {"canonical_label_key": "runs_too_large", "evidence_span": "too big"}
+    occ = {"canonical_label_key": "size_fit_problem", "evidence_span": "too big"}
     assert not _not_breathable_env_heat_guard(occ, ROW_378_CONTENT)
 
 
@@ -432,18 +269,13 @@ def test_guard_oven_context():
 # apply_label_postprocessing (统一入口)
 # ===================================================================
 
-def test_postprocessing_combined():
-    """去重 + 守卫组合."""
+def test_postprocessing_applies_guard_only():
+    """A-5：粗细关系清空后，apply_label_postprocessing 只做 D1 语义守卫，不再去重."""
     occ = [
         _make_occ(
             canonical_label_key="size_fit_problem",
             evidence_span="runs too small",
             source_detail="llm_canonical_hint",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            evidence_span="runs too small",
-            source_detail="waders_content_rule",
         ),
         {
             "type": "issue",
@@ -458,59 +290,15 @@ def test_postprocessing_combined():
     ]
     content = "kitchen was hot from cooking and I started to break a sweat"
     display, audit = apply_label_postprocessing(occ, content)
-    # size_fit_problem 被 runs_too_small 去重
-    # not_breathable 被 D1 guard 否决
+    # not_breathable 被 D1 guard 否决；size_fit_problem 原样保留（无粗细关系去重）
     assert len(display) == 1
-    assert display[0]["canonical_label_key"] == "runs_too_small"
-    assert len(audit) == 1  # one dedup audit record
+    assert display[0]["canonical_label_key"] == "size_fit_problem"
+    assert audit == []
 
 
 # ===================================================================
-# 回归：row-366 / row-386 / row-378
+# 回归：row-378
 # ===================================================================
-
-def test_row366_scenario():
-    """row-366：粗标签 size_fit_problem (LLM) + 细标签 runs_too_small (rule) → 去重."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            aspect_key="boot_fit",
-            evidence_span="I should have got one more size up for shoes",
-            source_detail="llm_canonical_hint",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            aspect_key="size_fit",
-            evidence_span="size up",
-            source_detail="waders_content_rule",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    # boot_fit size_fit_problem overlaps with runs_too_small → removed
-    assert len(display) == 1
-    assert display[0]["canonical_label_key"] == "runs_too_small"
-
-
-def test_row386_scenario():
-    """row-386：boot_fit size_fit_problem + runs_too_small → 去重."""
-    occ = [
-        _make_occ(
-            canonical_label_key="size_fit_problem",
-            aspect_key="boot_fit",
-            evidence_span="BOOTS RUN SMALL. PURCHASE A LARGER SIZE.",
-            source_detail="llm_canonical_hint",
-        ),
-        _make_occ(
-            canonical_label_key="runs_too_small",
-            aspect_key="size_fit",
-            evidence_span="RUN SMALL",
-            source_detail="waders_content_rule",
-        ),
-    ]
-    display, audit = deduplicate_coarse_occurrences(occ, "test")
-    assert len(display) == 1
-    assert display[0]["canonical_label_key"] == "runs_too_small"
-
 
 def test_row378_scenario():
     """row-378：not_breathable 被 D1 环境高温 guard 否决."""
@@ -525,10 +313,10 @@ def test_row378_scenario():
     assert _not_breathable_env_heat_guard(occ, content)
 
 
-def test_row378_runs_too_large_not_affected():
-    """row-378 的 runs_too_large 不被 guard 影响（guard 只管 not_breathable）."""
+def test_row378_size_fit_problem_not_affected():
+    """row-378 的 size_fit_problem 不被 guard 影响（guard 只管 not_breathable）."""
     occ = {
-        "canonical_label_key": "runs_too_large",
+        "canonical_label_key": "size_fit_problem",
         "evidence_span": "got size 9",
     }
     assert not _not_breathable_env_heat_guard(occ, ROW_378_CONTENT)
