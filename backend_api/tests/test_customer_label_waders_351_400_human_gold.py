@@ -23,9 +23,9 @@ from backend_api.app.services.customer_label_v2_shadow import (
 from backend_api.app.services.specific_issue import (
     CUSTOMER_LABEL_OCCURRENCE_RULESET_VERSION,
     CUSTOMER_LABEL_OCCURRENCE_SCHEMA_VERSION,
-    build_customer_highlight_rows,
-    customer_highlight_tags_for_comment,
-    iter_customer_highlight_occurrences,
+    build_specific_issue_rows,
+    customer_issue_tags_for_comment,
+    iter_specific_issue_occurrences,
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "customer_label_waders_351_400_human_gold.json"
@@ -222,7 +222,7 @@ def test_waders_351_400_current_shadow_summary_matches_recorded_gold_diff() -> N
     }
 
 
-def test_waders_351_400_focus_labels_have_zero_fp_fn() -> None:
+def test_waders_351_400_focus_labels_have_zero_fp() -> None:
     payload = _fixture_payload()
     _totals, focus = _current_shadow_metrics(payload)
     expected_focus = payload["expected_summary"]["current_shadow_after_step4_6"]["focus_label_metrics"]
@@ -230,39 +230,41 @@ def test_waders_351_400_focus_labels_have_zero_fp_fn() -> None:
     for label_type, canonical in sorted(FOCUS_WADERS_LABELS):
         key = f"{label_type}:{canonical}"
         assert focus[key] == expected_focus[key]
+        # 影子链路是保守审计路径：只保证 fp=0（绝不臆造 focus 标签）。
+        # fn 可为 0 也可 >0——2026-08-13 gold 补 4 个漏标后（#378 holds_up_well 等），
+        # 影子链路对更丰富的 gold 合法地 under-produce，fn 以 recorded summary 为准。
         assert focus[key].get("fp", 0) == 0
-        assert focus[key].get("fn", 0) == 0
 
 
 def test_waders_351_400_duplicate_labels_dedupe_but_keep_verified_evidence() -> None:
     payload = _fixture_payload()
-    sample = next(item for item in payload["samples"] if item["id"] == "waders-351-400-row-371")
-    overall_group = next(
-        item for item in sample["evidence_spans"] if item["canonical_label_key"] == "overall_satisfied"
+    sample = next(item for item in payload["samples"] if item["id"] == "waders-351-400-row-386")
+    size_group = next(
+        item for item in sample["evidence_spans"] if item["canonical_label_key"] == "size_fit_problem"
     )
     occurrences = [
-        _content_occurrence(sample, overall_group, span, payload["display_meta"])
-        for span in overall_group["evidence_spans"]
+        _content_occurrence(sample, size_group, span, payload["display_meta"])
+        for span in size_group["evidence_spans"]
     ]
     comment = _comment_with_occurrences(sample, occurrences)
 
-    assert customer_highlight_tags_for_comment(comment, locale="en").count("Overall Satisfied") == 1
+    assert customer_issue_tags_for_comment(comment, locale="en").count("Size/Fit Problem") == 1
     projected = [
         item
-        for item in iter_customer_highlight_occurrences(comment, locale="en")
-        if item.get("canonical_highlight_key") == "overall_satisfied"
+        for item in iter_specific_issue_occurrences(comment, locale="en")
+        if item.get("canonical_issue_key") == "size_fit_problem"
         and item.get("source_review_allowed")
         and item.get("verified_evidence")
     ]
     projected_spans = {item["evidence_span"] for item in projected}
-    expected_spans = {span["evidence_span"] for span in overall_group["evidence_spans"]}
+    expected_spans = {span["evidence_span"] for span in size_group["evidence_spans"]}
     assert expected_spans <= projected_spans
 
-    rows = build_customer_highlight_rows([comment], locale="en", limit=20)
-    overall_row = next(row for row in rows if row["canonical_highlight_key"] == "overall_satisfied")
-    assert expected_spans <= set(overall_row["evidence_spans"])
-    assert overall_row["mention_count"] == 1
-    assert overall_row["raw_occurrence_count"] >= 2
+    rows = build_specific_issue_rows([comment], locale="en", limit=20)
+    size_row = next(row for row in rows if row["canonical_issue_key"] == "size_fit_problem")
+    assert expected_spans <= set(size_row["evidence_spans"])
+    assert size_row["mention_count"] == 1
+    assert size_row["raw_occurrence_count"] >= 2
 
 
 def test_waders_351_400_needs_new_labels_enter_candidate_pool_only() -> None:

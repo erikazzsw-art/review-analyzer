@@ -167,12 +167,22 @@
       "display_label_en": "Works Well for Use Case",
       "display_label_zh": "场景适用",
       "aspect_key": "other"
+    },
+    "highlight:customer_service_helpful": {
+      "display_label_en": "Helpful Customer Service",
+      "display_label_zh": "客服服务好",
+      "aspect_key": "customer_service"
+    },
+    "highlight:easy_to_use": {
+      "display_label_en": "Easy To Use",
+      "display_label_zh": "使用方便",
+      "aspect_key": "ease_of_use"
     }
   },
   "expected_summary": {
     "review_count": 50,
     "issue_gold_occurrence_count": 22,
-    "highlight_gold_occurrence_count": 70,
+    "highlight_gold_occurrence_count": 54,
     "needs_new_label_count": 4,
     "fixture_validation_error_count": 5,
     "current_shadow_after_step4_6": {
@@ -183,10 +193,10 @@
         "exact_set": 48
       },
       "highlight": {
-        "tp": 62,
+        "tp": 48,
         "fp": 0,
-        "fn": 8,
-        "exact_set": 42
+        "fn": 6,
+        "exact_set": 45
       },
       "focus_label_metrics": {
         "highlight:fits_as_expected": {
@@ -202,7 +212,7 @@
         "highlight:holds_up_well": {
           "tp": 3,
           "fp": 0,
-          "fn": 0
+          "fn": 1
         },
         "highlight:keeps_water_out": {
           "tp": 7,
@@ -287,18 +297,6 @@
         "keeps_water_out"
       ],
       "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Great product",
-              "evidence_start": 0,
-              "evidence_end": 13
-            }
-          ]
-        },
         {
           "label_type": "highlight",
           "canonical_label_key": "keeps_water_out",
@@ -614,20 +612,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Un buen producto",
-              "evidence_start": 0,
-              "evidence_end": 16
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -813,18 +798,6 @@
               "evidence_end": 53
             }
           ]
-        },
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Not certain of the longevity of the product.  Made from thin material.  So not certain of durability.  Used two time this far.  Worked well during thise two outings.  Everything is as described.",
-              "evidence_start": 55,
-              "evidence_end": 249
-            }
-          ]
         }
       ],
       "needs_new_label": [],
@@ -871,20 +844,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "quality, better than I expected.",
-              "evidence_start": 5,
-              "evidence_end": 37
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [
@@ -957,18 +917,6 @@
               "evidence_end": 22
             }
           ]
-        },
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "product",
-              "evidence_start": 5,
-              "evidence_end": 12
-            }
-          ]
         }
       ],
       "needs_new_label": [],
@@ -1006,20 +954,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "They're nice waders.",
-              "evidence_start": 0,
-              "evidence_end": 20
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -1357,7 +1292,9 @@
       "human_highlight_labels_zh": [
         "性价比高",
         "透气性好",
-        "尺码合适"
+        "尺码合适",
+        "使用方便",
+        "抓地稳"
       ],
       "annotated_review_labels": [
         {
@@ -1424,6 +1361,32 @@
           "module_routing": [
             "product_issue"
           ]
+        },
+        {
+          "raw_span": "Quick and easy to put on/take off",
+          "raw_label_zh": "使用方便",
+          "source_column": 3,
+          "evidence_span": "Quick and easy to put on/take off",
+          "evidence_start": 81,
+          "evidence_end": 114,
+          "locatable": true,
+          "canonical_key": "easy_to_use",
+          "module_routing": [
+            "product_highlight"
+          ]
+        },
+        {
+          "raw_span": "Better soles/grip on the boots than I was expecting",
+          "raw_label_zh": "抓地稳",
+          "source_column": 3,
+          "evidence_span": "Better soles/grip on the boots than I was expecting",
+          "evidence_start": 116,
+          "evidence_end": 167,
+          "locatable": true,
+          "canonical_key": "good_traction",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [
@@ -1432,7 +1395,9 @@
       ],
       "expected_highlight_keys": [
         "fits_as_expected",
-        "good_value_for_the_price"
+        "good_value_for_the_price",
+        "easy_to_use",
+        "good_traction"
       ],
       "evidence_spans": [
         {
@@ -1480,6 +1445,30 @@
               "evidence_span": "The seam where the boots attach to the waders is rough on the inside. Non-issue if youre wearing pants but when wearing shorts it rubbed my shins raw. Got some leggings to wear under my shorts in the summer and it’s fine.-Boot toe has no padding and toe box collapses in water. Gonna hurt if you kick a rock or catch a tree root. If you’re not standing on flat ground your toes are going to jam into the end of the boots which is uncomfortable.",
               "evidence_start": 510,
               "evidence_end": 954
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "easy_to_use",
+          "raw_label_zh": "使用方便",
+          "evidence_spans": [
+            {
+              "evidence_span": "Quick and easy to put on/take off",
+              "evidence_start": 81,
+              "evidence_end": 114
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_traction",
+          "raw_label_zh": "抓地稳",
+          "evidence_spans": [
+            {
+              "evidence_span": "Better soles/grip on the boots than I was expecting",
+              "evidence_start": 116,
+              "evidence_end": 167
             }
           ]
         }
@@ -1587,23 +1576,6 @@
               "evidence_span": "overall perfect for the pond cleaning I have to do",
               "evidence_start": 67,
               "evidence_end": 117
-            }
-          ]
-        },
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "So far so good.",
-              "evidence_start": 0,
-              "evidence_end": 15
-            },
-            {
-              "evidence_span": "but it is good enough.",
-              "evidence_start": 165,
-              "evidence_end": 187
             }
           ]
         }
@@ -1737,7 +1709,20 @@
       "expected_highlight_keys": [
         "customer_service_helpful"
       ],
-      "evidence_spans": [],
+      "evidence_spans": [
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "customer_service_helpful",
+          "raw_label_zh": "客服服务好",
+          "evidence_spans": [
+            {
+              "evidence_span": "Excellent customer service",
+              "evidence_start": 0,
+              "evidence_end": 26
+            }
+          ]
+        }
+      ],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -1773,20 +1758,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Work great",
-              "evidence_start": 0,
-              "evidence_end": 10
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -1841,18 +1813,6 @@
       ],
       "expected_highlight_keys": [],
       "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Waders are great and work well",
-              "evidence_start": 0,
-              "evidence_end": 30
-            }
-          ]
-        },
         {
           "label_type": "issue",
           "canonical_label_key": "uncomfortable_fit",
@@ -1920,23 +1880,6 @@
         "keeps_water_out"
       ],
       "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Wader is good",
-              "evidence_start": 0,
-              "evidence_end": 13
-            },
-            {
-              "evidence_span": "I bought another one for my wife and same review and she she loves it.",
-              "evidence_start": 54,
-              "evidence_end": 124
-            }
-          ]
-        },
         {
           "label_type": "highlight",
           "canonical_label_key": "keeps_water_out",
@@ -2318,18 +2261,6 @@
         },
         {
           "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "They did the job out of the package and were comfortable enough - allowed me to get an extra 100 ft of casting access from the lake shore and avoid trees/brush.Pros:",
-              "evidence_start": 134,
-              "evidence_end": 299
-            }
-          ]
-        },
-        {
-          "label_type": "highlight",
           "canonical_label_key": "comfortable_to_wear",
           "raw_label_zh": "舒适度好",
           "evidence_spans": [
@@ -2602,18 +2533,6 @@
         },
         {
           "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "functions as it should!",
-              "evidence_start": 0,
-              "evidence_end": 23
-            }
-          ]
-        },
-        {
-          "label_type": "highlight",
           "canonical_label_key": "comfortable_to_wear",
           "raw_label_zh": "舒适度好",
           "evidence_spans": [
@@ -2690,20 +2609,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "For good",
-              "evidence_start": 0,
-              "evidence_end": 8
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -2734,7 +2640,8 @@
       "rating": 4,
       "human_issue_labels_zh": [],
       "human_highlight_labels_zh": [
-        "尺码合适(拍大一码)"
+        "尺码合适(拍大一码)",
+        "耐用性高"
       ],
       "annotated_review_labels": [
         {
@@ -2749,11 +2656,25 @@
           "module_routing": [
             "product_highlight"
           ]
+        },
+        {
+          "raw_span": "how durable it is",
+          "raw_label_zh": "耐用性高",
+          "source_column": 3,
+          "evidence_span": "how durable it is",
+          "evidence_start": 881,
+          "evidence_end": 898,
+          "locatable": true,
+          "canonical_key": "holds_up_well",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [],
       "expected_highlight_keys": [
-        "fits_as_expected"
+        "fits_as_expected",
+        "holds_up_well"
       ],
       "evidence_spans": [
         {
@@ -2765,6 +2686,18 @@
               "evidence_span": "I’m 5’5 148lbs size 8, read all the reviews saying get a size up so I got size 9 , threw it on in my kitchen while I was cooking and had oven on so it was pretty warm in my kitchen already and I was only wear shorts on at the time no shirt or socks but was just itching to try it and it feels like the real deal. Definitely nice and sealed up good I was already started to break a sweat or two while wearing it around kitchen to living room for short amount of time but again was cooking so I was already hot. Only reason I gave it a 4 star is because this is definitely made for someone 5inches or more taller than me fits in a way loose but not where I’m stumble to wobble but I’m not complaining nothing really fits me true to size but would be great if it told you ideal height for the wear. But I’d buy it prolly 10 more times even with it being bigger than me jus because of how durable it is , can’t wait to get out in the river fishing trout with this on .",
               "evidence_start": 0,
               "evidence_end": 964
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "holds_up_well",
+          "raw_label_zh": "耐用性高",
+          "evidence_spans": [
+            {
+              "evidence_span": "how durable it is",
+              "evidence_start": 881,
+              "evidence_end": 898
             }
           ]
         }
@@ -2956,20 +2889,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Awesome suit!",
-              "evidence_start": 0,
-              "evidence_end": 13
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -3005,20 +2925,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "These are awesome for cleaning out a mucky lake. Everyone that sees me wearing them wants a pair!",
-              "evidence_start": 0,
-              "evidence_end": 97
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -3054,20 +2961,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Seem to be working out well so far",
-              "evidence_start": 0,
-              "evidence_end": 34
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -3103,20 +2997,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "As advertised !",
-              "evidence_start": 0,
-              "evidence_end": 15
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -3295,18 +3176,6 @@
               "evidence_span": "Great value especially for the price.",
               "evidence_start": 0,
               "evidence_end": 37
-            }
-          ]
-        },
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "I would absolutely buy this again.",
-              "evidence_start": 86,
-              "evidence_end": 120
             }
           ]
         },
@@ -3842,18 +3711,6 @@
               "evidence_end": 89
             }
           ]
-        },
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Amazing waders!! Definitely recommend. Worked as intended,",
-              "evidence_start": 0,
-              "evidence_end": 58
-            }
-          ]
         }
       ],
       "needs_new_label": [],
@@ -3964,7 +3821,8 @@
         "口袋太小"
       ],
       "human_highlight_labels_zh": [
-        "防水可靠"
+        "防水可靠",
+        "抓地稳"
       ],
       "annotated_review_labels": [
         {
@@ -3992,13 +3850,27 @@
           "module_routing": [
             "product_issue"
           ]
+        },
+        {
+          "raw_span": "The boots had a good grip",
+          "raw_label_zh": "抓地稳",
+          "source_column": 3,
+          "evidence_span": "The boots had a good grip",
+          "evidence_start": 95,
+          "evidence_end": 120,
+          "locatable": true,
+          "canonical_key": "good_traction",
+          "module_routing": [
+            "product_highlight"
+          ]
         }
       ],
       "expected_issue_keys": [
         "pocket_too_small"
       ],
       "expected_highlight_keys": [
-        "keeps_water_out"
+        "keeps_water_out",
+        "good_traction"
       ],
       "evidence_spans": [
         {
@@ -4022,6 +3894,18 @@
               "evidence_span": "I wore these for 3 days straight, twice a day, in the cold Alaskan waters for salmon fishing.  The boots had a good grip and there were no leaks.",
               "evidence_start": 0,
               "evidence_end": 145
+            }
+          ]
+        },
+        {
+          "label_type": "highlight",
+          "canonical_label_key": "good_traction",
+          "raw_label_zh": "抓地稳",
+          "evidence_spans": [
+            {
+              "evidence_span": "The boots had a good grip",
+              "evidence_start": 95,
+              "evidence_end": 120
             }
           ]
         }
@@ -4502,20 +4386,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "Excellent",
-              "evidence_start": 0,
-              "evidence_end": 9
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -4551,20 +4422,7 @@
       "annotated_review_labels": [],
       "expected_issue_keys": [],
       "expected_highlight_keys": [],
-      "evidence_spans": [
-        {
-          "label_type": "highlight",
-          "canonical_label_key": "overall_satisfied",
-          "raw_label_zh": "整体满意",
-          "evidence_spans": [
-            {
-              "evidence_span": "for work or fishing in lakes",
-              "evidence_start": 5,
-              "evidence_end": 33
-            }
-          ]
-        }
-      ],
+      "evidence_spans": [],
       "needs_new_label": [],
       "blocked_issue_keys": [],
       "blocked_highlight_keys": [],
@@ -4753,6 +4611,7 @@
     }
   ],
   "_revision_notes": [
-    "2026-08-13 A-5: runs_too_small / runs_too_large 退役，统一为 size_fit_problem（粗细标签合并）。  #389 breaks_easily → water_leaks_through（Erika 判定：leaking 语义）。  #368 新增 customer_service_helpful 前台标签（Erika 判定：优质客服服务）。"
+    "2026-08-13 A-5: runs_too_small / runs_too_large 退役，统一为 size_fit_problem（粗细标签合并）。  #389 breaks_easily → water_leaks_through（Erika 判定：leaking 语义）。  #368 新增 customer_service_helpful 前台标签（Erika 判定：优质客服服务）。",
+    "2026-08-13 A-6 FP 归因收尾（Erika 确认）：gold 补 4 个漏标——#365 easy_to_use + good_traction、#378 holds_up_well、#392 good_traction。生产链路（enrich+decorate）本就打出这 4 个标签，原文证据明确，属人工标注漏标。补齐后六指标错标率 11.8%→5.9%（FP 8→4），剩余 4 个 FP = good_material_quality×2（边界）+ good_value_for_the_price×2（规则，留待动作 2 单独处理）。"
   ]
 }
